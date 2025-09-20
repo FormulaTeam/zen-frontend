@@ -1,0 +1,180 @@
+@import "../../utils/variables.scss";
+
+.share-form-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  z-index: 11111;
+  width: 600px;
+  padding-left: 1vw;
+  padding-right: 1vw;
+  min-height: 40px;
+  max-height: 500px;
+  background: #f1f2f4;
+  border-radius: 20px;
+  box-shadow: gray 0 0 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  direction: rtl;
+  padding: 15px 45px;
+
+  .share-form-popup-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 400px;
+  }
+  .x-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    cursor: pointer;
+  }
+
+  .share-form-popup-title {
+    font-size: 1.7rem;
+  }
+
+  .shared-with-list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 100%;
+    margin-top: 10px;
+    min-height: 220px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    .user-shared-div {
+      width: 100%;
+      display: grid !important;
+      grid-template-columns: 7fr 4fr 1fr !important;
+      min-height: 55px !important;
+
+      .roles-select {
+      }
+      .x-div {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+        .delete-btn {
+        }
+      }
+    }
+  }
+  .save-btn {
+    width: 100%;
+    background-color: $medium_green !important;
+    margin-top: 15px;
+    color: white !important;
+    font-size: 1.3rem !important;
+    padding-left: 25px !important;
+    padding-right: 15px !important;
+    border-radius: 10px !important;
+    height: 40px;
+    .MuiButtonBase-root {
+      background-color: $medium_green !important;
+      color: white !important;
+    }
+
+    &:disabled {
+      background-color: gainsboro !important;
+    }
+  }
+
+  .MuiAutocomplete-root {
+    .MuiAutocomplete-input {
+    }
+  }
+  .share-with-autocomplete {
+    margin-top: 10px;
+    width: 100%;
+
+    .MuiOutlinedInput-root {
+    }
+  }
+  .user-option {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    cursor: pointer !important;
+    .user-img {
+      width: 50px !important;
+      cursor: pointer !important;
+      margin-right: 5px;
+      margin-left: 5px;
+    }
+
+    .user-lbls {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      .user-name {
+        color: black !important;
+        font-size: 18px !important;
+        cursor: pointer !important;
+      }
+    }
+  }
+
+  .user-in-list {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    cursor: pointer !important;
+
+    .permissions-autocomplete-invalid {
+      .MuiInputBase-root {
+        border: 1px solid red !important;
+      }
+    }
+    .permissions-autocomplete {
+    }
+
+    .user-name-img {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .person-img {
+      width: 38px !important;
+      cursor: pointer !important;
+    }
+    .user-lbls {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      .user-name {
+        color: black !important;
+        font-size: 14px !important;
+        margin-right: 15px !important;
+        cursor: pointer !important;
+      }
+
+      :first-child {
+        font-size: 15px !important;
+      }
+    }
+  }
+  .role-option {
+    padding: 5px;
+    font-size: 16px !important;
+    cursor: pointer;
+    &:hover {
+      background-color: $light_green;
+      color: $medium_green;
+    }
+  }
+}

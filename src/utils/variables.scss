@@ -1,0 +1,20 @@
+$spin_type: spinningBubbles; //spin; //"balls", "bars", "bubbles", "cubes", "cylon", "spin","spinningBubbles","spokes"
+$bg: #f9f9f9;
+$popup_bg: #fbfbfb;
+$light_grey:#fcfcfc;
+$light_green: #c7dac9;
+$medium_green: #4f6a4e;
+$dark_green: #3a4b39;
+$transparent_green: #e9f2ed;
+$subtitle_gray: #aeaeae;
+
+:export {
+    bg: $bg;
+    popup_bg: $popup_bg;
+    light_green: $light_green;
+    medium_green: $medium_green;
+    dark_green: $dark_green;
+    transparent_green: $transparent_green;
+    subtitle_gray: $subtitle_gray;
+    light_grey: $light_grey;
+}

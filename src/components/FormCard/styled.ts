@@ -1,0 +1,171 @@
+import { Box, Button, Typography, Card, Icon } from "@mui/material";
+import styled from "styled-components";
+import { styled as muiStyled } from "@mui/material/styles";
+
+export const ItemCreatedEditedDiv = styled(Box)`
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+export const TextTitleValueDiv = styled(Box).withConfig({
+  shouldForwardProp: (prop) => prop !== "isFirst",
+})<{ isFirst?: boolean }>`
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: ${({ isFirst }) => (isFirst ? "flex-start" : "flex-end")};
+  margin-left: ${({ isFirst }) => (isFirst ? "5%" : "0")};
+`;
+
+export const TextTitle = styled.span`
+  font-weight: 400;
+  font-size: 14px !important;
+  min-width: max-content;
+  margin-left: 5px;
+`;
+
+export const TextValue = styled.span`
+  font-weight: 400;
+  font-size: 14px !important;
+`;
+
+export const DescriptionDiv = styled(Box)`
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  margin-top: 4px;
+  margin-left: 5px;
+  min-height: 30px;
+  max-height: 30px;
+  overflow-y: auto;
+  width: 100%;
+`;
+
+export const ItemDescription = styled(Typography)`
+  font-weight: 400;
+  color: black;
+  font-size: 15px !important;
+`;
+
+export const Img = styled.img`
+  margin-left: 10px;
+  height: 20px;
+`;
+
+export const StyledCard = styled(Card)`
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 20px;
+  width: 100%;
+`;
+
+export const ItemImgAndTitles = styled(Box)`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  overflow-x: auto;
+`;
+
+export const ItemTitles = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+`;
+
+export const ItemTitleAndNum = styled(Box)`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+export const ItemTitle = styled(Typography)`
+  font-size: 20px !important;
+  cursor: pointer;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  font-weight: 600 !important;
+`;
+
+export const ItemResponsesNum = styled(Typography)`
+  min-width: max-content;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+`;
+
+export const ItemBottomDiv = styled(Box)`
+  margin-top: 2%;
+  display: flex;
+  justify-content: space-between;
+  overflow-x: auto;
+  width: 100%;
+`;
+
+export const ItemBtnsDiv = styled(Box)`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 1px;
+  min-height: 28px;
+`;
+
+export const ItemButton = styled(Button)`
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+  font-size: 15px !important;
+  white-space: nowrap;
+  text-align: center;
+  min-width: 100px;
+`;
+
+export const ItemIconsDiv = styled(Box)`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+
+  .item-icon {
+    margin-right: 5px;
+    cursor: pointer;
+  }
+
+  .item-icon-disabled {
+    margin-right: 5px;
+    filter: grayscale(100%);
+  }
+`;
+
+export const LoadingSyncIconBox = styled(Box)`
+  width: 20px;
+  height: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 5px;
+`;
+
+export const CustomStyledIcon = muiStyled(Icon)(({ theme }) => ({
+  fontSize: 30,
+  marginLeft: "10px",
+  color: theme.palette.primary.main,
+}));

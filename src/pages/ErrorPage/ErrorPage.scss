@@ -1,0 +1,40 @@
+.error-page-container {
+  width: 100vw;
+  height: 70vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  .error-top {
+    margin: 50px;
+    width: 40%;
+    border-radius: 50px;
+  }
+  .error-lbls-div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    .error404-lbl {
+      font-size: 3.5rem;
+      font-weight: bold;
+    }
+    .error-lbl {
+      font-size: 2.5rem;
+      text-align: right;
+      direction: rtl;
+    }
+  }
+
+  .back-to-main-btn {
+    color: white !important;
+    font-size: 1.5rem !important;
+    padding: 25px !important;
+    border-radius: 10px !important;
+    height: 50px !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    margin-top: 50px;
+  }
+}

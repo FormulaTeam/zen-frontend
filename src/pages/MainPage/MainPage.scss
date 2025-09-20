@@ -1,0 +1,82 @@
+@import "../../utils/variables.scss";
+
+.main-page-loading {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.main-page-container {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
+  direction: rtl;
+  padding: 2%;
+
+  .no-data-div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    .no-data-img {
+      margin-top: 50px;
+    }
+    .no-data-lbl {
+      margin-top: 10px;
+      font-size: 2rem;
+    }
+  }
+
+  .tabs-and-select-div {
+    width: 94.8%;
+    margin-right: 24px;
+    margin-left: 24px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    .MuiAutocomplete-root {
+      direction: rtl !important;
+      padding: 2.5px 8px 5px 4px !important;
+    }
+  }
+
+  .forms-grid {
+    width: 100%;
+    overflow-x: hidden;
+    margin: 0 !important;
+    height: 98%;
+    max-height: 98%;
+    padding: 20px !important;
+    padding-bottom: 10vh !important;
+    overflow-y: scroll !important;
+    position: relative;
+    align-content: start;
+    .bottom-lbl {
+      min-height: 50px;
+      width: 100%;
+      position: absolute;
+      bottom: -10px;
+    }
+  }
+
+  .bottom-grid-loading {
+    min-height: 100px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: 1%;
+  }
+}

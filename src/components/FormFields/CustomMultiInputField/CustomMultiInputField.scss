@@ -1,0 +1,46 @@
+@import "../../../utils/variables.scss";
+
+.multi-value-input-container {
+  width: calc( 100% - 5px );
+}
+
+.multi-input-field-list-items {
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+
+    p {
+      padding: 0px 10px;
+      font-size: smaller;
+      flex: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 2; // Limits text to 2 lines
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: normal; // Allow wrapping for multi-line ellipsis
+      word-break: break-word;
+    }
+
+    .MuiButtonBase-root {
+      svg {
+        width: 20px;
+        height: 100%;
+      }
+    }
+
+    .is-edit {
+      background-color: #c7dac9;
+    }
+  }
+}

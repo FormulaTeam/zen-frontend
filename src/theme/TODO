@@ -1,0 +1,139 @@
+figma link:  
+https://www.figma.com/design/B7txrFsJvLblwMmI9mFiFa/infotale?node-id=70-11790&t=UH8B2qwGearbl1zX-0
+
+ICONS:
+    ☐ add icons for all field types
+    ☐ implement them in the UI - make an icon component
+    (note that there are some icons from mui and not svgs)
+
+THEME:
+    - keep it simple and readable
+    - DO NOT use colors if they are not in the palette - if a color is missing, add it to the palette
+
+GENERAL:
+    ☐ add missing icons/images from figma
+
+STEPS TO ACHIEVE:
+    1. make sure that at least all the needed colors are in the palette
+    2. start from pages, header and layouts first - focus on cleaning unused styles and seeing that the theme is working
+    3. proceed to components, like form cards in main page
+    4. implement the icons for the fields
+    5. implement the popup component
+    6. after you're done, check EVERYTHING :)
+
+MISSIONS:
+    ☐ re-renders - check if there are any unnecessary re-renders and fix them
+    APPLIES TO ALL:
+        ☐ remove inline styles and unused css!!!!
+        ☐ components like inputs are all the same across the site (colors, border radius and color) - make sure to configure them in the theme
+        - if icons/images are missing, add them
+        - avoid using inline style (like sx) and css unless necessary so the components will use the theme
+        - if inline style is needed, use colors from the palette like this:
+            const { theme } = useTheme();
+            ...
+            <div style={{ color: theme.palette.primary.main }} />
+        - keep it simple and readable
+        - DO NOT use colors if they are not in the palette - if a color is missing, add it to the palette
+        - do some testing as you go to see that everything is responsive
+
+    *by priority order*
+    HEADER:
+        ☐ adjust height, colors and positions
+        ☐ move greeting message to MainPage
+    PAGES:
+        > start from layouts and "big" stuff - containers, positions, padding, etc..
+        > proceed to smaller components after the page is ready
+        MainPage:
+            layout:
+                ☐ add greeting message from the header
+                ☐ move tabs to the center
+                ☐ change the sorting Autocomplete to look like in figma
+                ☐ adjust the grid spacing
+
+            form cards:
+                ☐ remove borders, adjust border radius
+                ☐ move icon to be with the form name
+                ☐ change buttons to icons
+                ☐ add divider between info and buttons
+        Form (new/edit):
+            avital
+            > as of now, ignore "הגדרות הטופס" "שמור כטיוטה" "תצוגה מקדימה""
+            layout:
+                ☐ move the field menu to the right side
+                ☐ stretch the main area
+                ☐ delete form is missing from figma - put it in the upper left corner for now
+            components:
+                field menu:
+                    - first, we will display all the "base" fields and below them add the the fields from the catalog by category
+                    ☐ move catalog from popup to the menu
+                    ☐ add search - it will filter both base and catalog fields
+                    ☐ add catalog category search autocomplete (multiple selection, display as chips)
+                    ☐ above the menu add the form name and description
+                field cards in main area:
+                    > ignore duplicate and the three dots buttons in the upper and lower left side
+                    > ignore the + between each card, the --- lines are okay
+                    ☐ research how to implement the drag and drop from the side (instead from the whole card)
+                    ☐ if there's time, check how to minimize the cards on drag to display only the field name
+                    ☐ increase width
+                    ☐ remove borders, adjust border radius and change colors according to figma
+                    ☐ change inputs from "outlined" to "standard" variant
+        Responses (new/edit):
+            > there are a few response page variations in figma, we will use "טופס גרסא 2"
+            > ignore sections, just display "תגובה חדשה - שם הטופס" at the top right corner
+            > ignore the paper background OR figure out how to make it more responsible, because right now when a field is invalid
+                and theres an error message it messes the whole layout
+            layout:
+                ☐ stretch the main area
+                ☐ change inputs to fit how they look in figma (consider customizing a variant)
+                ☐ add a "back" or "cancel" button (missing from figma)
+                ☐ move buttons to be in the top right corner
+        Responses (table):
+            layout:
+                ☐ add a little spacing below header
+                ☐ move desc below the form name
+                ☐ form id above the form name
+                ☐ add form created by below desc
+            components:
+                > instead of "תגובות על הטפסים שנשלחו" we will display "כל התגובות"
+                ResponseToolbar:
+                    > instead of edit button being with text below the icons, add edit icon before the three dots
+                    > put excel in three dots menu
+                    ☐ change it to fit figma, consider changing the name of the file too..
+                table:
+                    > ignore the "בחר פעולה"
+                    > ignore excel
+                    ☐ table actions - add edit and view buttons, enabled only if one field is selected (similar logic exists with delete button)
+                    ☐ remove separators and change bg color
+                    ☐ all rows should have the same bg color
+                    ☐ update metro icons
+                    ☐ add the excel button next to the search
+                    ☐ remove edit and view from rows
+                    - file fields - do not use carousel
+            
+    POPUPS:
+        ☐ create a base popup component, for example: (just look at how they look in figma)
+            <container>
+                <image?/>
+                <text/>
+                <buttons/>
+            </container>
+        the popup should receive props like:
+            - title: string
+            v if empty won't be displayed
+            - content?: string or element
+            - image?: path to image
+            - mainButton?: {
+            -   text: string
+            -   onClick: function
+            -   buttonProps: ButtonProps (for disabled and more if needed)
+            -   }
+            - cancelButton?: {
+            -   text: string
+            -   onClick: function
+            -   buttonProps: ButtonProps
+            -   }
+        ☐ title should be 24px and 600 weight
+        ☐ mainButton should be filled, cancelButton should be outlined
+        ☐ if the popup is too big, it should be scrollable
+        ☐ popup should be centered
+        ☐ replace the current popups using the new one

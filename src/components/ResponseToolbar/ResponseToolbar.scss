@@ -1,0 +1,20 @@
+
+.gifs-div {
+  width: 400px;
+  position: relative;
+  height: 250px;
+  .sync-gif {
+    width: 250px;
+    position: absolute;
+    top: 0;
+    left: 80px;
+    z-index: 10000;
+  }
+  .m-gif {
+    width: 100px;
+    position: absolute;
+    top: 80px;
+    left: 155px;
+    z-index: 10001;
+  }
+}

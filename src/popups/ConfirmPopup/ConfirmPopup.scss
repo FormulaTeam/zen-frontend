@@ -1,0 +1,79 @@
+@import "../../utils/variables.scss";
+
+.confirm-popup-container {
+  position: fixed;
+  top: 0%;
+  left: 0%;
+  z-index: 22222;
+  width: 100vw;
+  height: 100vw;
+  background-color: rgba(0, 0, 0, 0.181);
+
+  .confirm-popup-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    z-index: 22223;
+    width: 20vw;
+    padding-left: 1vw;
+    padding-right: 1vw;
+    min-height: 200px;
+    max-height: 90vh;
+    background-color: $light_grey;
+    border-radius: 20px;
+    padding: 50px;
+    box-shadow: gray 0 0 10px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    direction: rtl;
+
+    .x-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      cursor: pointer;
+    }
+    .confirm-popup-img {
+      width: 100px;
+    }
+    .confirm-popup-msg {
+      width: 100%;
+      margin-top: 30px;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+  }
+  .confirm-popup-btns-div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 50px;
+    width: 100%;
+    gap: 10px;
+
+    .save-btn,
+    .cancel-btn {
+      width: 100%;
+      background-color: rgb(5, 103, 5) !important;
+      color: white !important;
+      font-size: 1.5rem !important;
+      padding-left: 25px !important;
+      padding-right: 15px !important;
+      border-radius: 10px !important;
+
+      .MuiButtonBase-root {
+        background-color: $medium_green !important;
+        color: white !important;
+      }
+    }
+
+    .save-btn {
+      background-color: $medium_green !important;
+    }
+  }
+}

@@ -1,0 +1,144 @@
+import MenuItem from "@mui/material/MenuItem";
+import { ConditionsRoot, FormField, ConditionUtils, AffectedTarget } from "../../utils/interfaces";
+import {
+  AffectedTargetsContainer,
+  AffectedTargetsListContainer,
+  AffectedTargetsListTitle,
+  AffectedTargetsWrapper,
+  AffectedTargetItem,
+  AffectedTargetText,
+  AffectedTargetRemoveButton,
+  AffectedTargetsSelectContainer,
+  AffectedTargetsSelect,
+  AffectedTargetsEmptyMessage,
+} from "./styled";
+
+interface AffectedTargetsSectionProps {
+  conditionsRoot: ConditionsRoot;
+  formFields: FormField[];
+  onAddAffectedTarget: (target: AffectedTarget) => void;
+  onRemoveAffectedTarget: (targetType: "section" | "field", targetId: string) => void;
+}
+
+const AffectedTargetsSection: React.FC<AffectedTargetsSectionProps> = ({
+  conditionsRoot,
+  formFields,
+  onAddAffectedTarget,
+  onRemoveAffectedTarget,
+}: AffectedTargetsSectionProps) => {
+  return (
+    <AffectedTargetsContainer elevation={2}>
+      {/* Current affected targets */}
+      {conditionsRoot.affectedTargets.length > 0 && (
+        <AffectedTargetsListContainer>
+          <AffectedTargetsListTitle variant="subtitle2">מה יוצג:</AffectedTargetsListTitle>
+          <AffectedTargetsWrapper>
+            {conditionsRoot.affectedTargets.map((target) => (
+              <AffectedTargetItem
+                key={`${target.type}-${target.id}`}
+                elevation={1}
+                targetType={target.type}>
+                <AffectedTargetText variant="body2">
+                  {target.type === "section" ? "מקטע" : "שדה"}: {target.name}
+                </AffectedTargetText>
+                <AffectedTargetRemoveButton
+                  size="small"
+                  onClick={() => onRemoveAffectedTarget(target.type, target.id)}>
+                  ✕
+                </AffectedTargetRemoveButton>
+              </AffectedTargetItem>
+            ))}
+          </AffectedTargetsWrapper>
+        </AffectedTargetsListContainer>
+      )}
+
+      {/* Add new affected targets */}
+      <AffectedTargetsSelectContainer>
+        {/* Add Section */}
+        {ConditionUtils.getAvailableSections(formFields, conditionsRoot).length > 0 && (
+          <AffectedTargetsSelect
+            displayEmpty
+            size="small"
+            onChange={(e) => {
+              const sectionId = e.target.value as string;
+              if (sectionId) {
+                const sections = ConditionUtils.getAvailableSections(formFields, conditionsRoot);
+                const section = sections.find((s) => s.id === sectionId);
+                if (section) {
+                  onAddAffectedTarget({
+                    type: "section",
+                    id: section.id,
+                    name: section.name,
+                  });
+                }
+                // Reset the select value
+                (e.target as HTMLSelectElement).value = "";
+              }
+            }}
+            value="">
+            <MenuItem value="">
+              <em>הוסף מקטע...</em>
+            </MenuItem>
+            {ConditionUtils.getAvailableSections(formFields, conditionsRoot)
+              .filter(
+                (section) =>
+                  !conditionsRoot.affectedTargets.some(
+                    (target) => target.type === "section" && target.id === section.id,
+                  ),
+              )
+              .map((section) => (
+                <MenuItem key={section.id} value={section.id}>
+                  מקטע: {section.name}
+                </MenuItem>
+              ))}
+          </AffectedTargetsSelect>
+        )}
+
+        {/* Add Field */}
+        <AffectedTargetsSelect
+          displayEmpty
+          size="small"
+          onChange={(e) => {
+            const fieldId = e.target.value as string;
+            if (fieldId) {
+              const field = formFields.find((f) => f.uniqueId === fieldId);
+              if (field) {
+                onAddAffectedTarget({
+                  type: "field",
+                  id: field.uniqueId,
+                  name: field.displayName,
+                });
+              }
+              (e.target as HTMLSelectElement).value = "";
+            }
+          }}
+          value="">
+          <MenuItem value="">
+            <em>הוסף שדה...</em>
+          </MenuItem>
+          {ConditionUtils.getAvailableFields(formFields, conditionsRoot, true)
+            .filter((field) => !field.required)
+            .filter(
+              (field) =>
+                !conditionsRoot.affectedTargets.some(
+                  (target) => target.type === "field" && target.id === field.uniqueId,
+                ),
+            )
+            .map((field) => (
+              <MenuItem key={field.uniqueId} value={field.uniqueId}>
+                שדה: {field.displayName}
+              </MenuItem>
+            ))}
+        </AffectedTargetsSelect>
+      </AffectedTargetsSelectContainer>
+
+      {conditionsRoot.affectedTargets.length === 0 && (
+        <AffectedTargetsEmptyMessage variant="body2" color="warning.main">
+          לא נבחרו שדות או מקטעים מושפעים (שדות חובה לא יוצגו)
+        </AffectedTargetsEmptyMessage>
+      )}
+    </AffectedTargetsContainer>
+  );
+};
+
+export default AffectedTargetsSection;

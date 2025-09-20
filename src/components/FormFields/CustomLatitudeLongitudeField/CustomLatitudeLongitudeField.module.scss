@@ -1,0 +1,11 @@
+.location-text-field-container {
+  display: flex;
+  align-items: start;
+  gap: 15px;
+  width: 100%;
+
+  input {
+    direction: ltr;
+    padding-inline-start: 8px;
+  }
+}

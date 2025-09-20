@@ -1,0 +1,12 @@
+.link-text-field-container {
+  display: flex;
+  align-items: start;
+  gap: 15px;
+  width: 100%;
+}
+
+.url-input {
+  input {
+    direction: ltr;
+  }
+}

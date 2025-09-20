@@ -1,0 +1,15 @@
+@font-face {
+  font-family: "assistant";
+  src: url("../public/fonts/Assistant-Regular.ttf") format("truetype");
+  font-weight: "normal";
+  font-style: "normal";
+}
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+ul,
+ol {
+  list-style-type: none;
+}

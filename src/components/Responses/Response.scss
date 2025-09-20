@@ -1,0 +1,21 @@
+.response-page {
+  height: 100vh;
+  overflow: auto;
+  overflow: hidden;
+  .MuiContainer-root {
+    padding: 2rem 5rem;
+    height: 100%;
+    border-radius: 0;
+  }
+  .input-wrapper {
+    align-items: start;
+    min-height: 93px;
+    .MuiFormControl-root {
+      width: 100%;
+      textarea {
+        max-height: 120px !important;
+        overflow-y: auto !important;
+      }
+    }
+  }
+}
