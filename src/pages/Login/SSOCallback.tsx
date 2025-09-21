@@ -1,44 +1,61 @@
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth, User } from "../../contexts/AuthContext";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import { useAuth, User } from "../../contexts/AuthContext";
 import { UserPayLoad } from "../../contexts/AppContext/utils";
 
-const SSOCallback: React.FC = () => {
+export const SSOCallback = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { login, user } = useAuth();
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        // Assuming the SSO provider redirects back with a token in the URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get("accessToken");
-        const refreshToken = urlParams.get("refreshToken");
-        if (token && refreshToken) {
+    const handleTokensFromUrl = async () => {
+      const urlParams = new URLSearchParams(location.search);
+      const token = urlParams.get("accessToken");
+      const refreshToken = urlParams.get("refreshToken");
+
+      if (token && refreshToken) {
+        console.log("[TOKEN HANDLER] Tokens found in URL:", {
+          accessToken: `Found (length: ${token.length})`,
+          refreshToken: `Found (length: ${refreshToken.length})`,
+          currentPath: location.pathname,
+        });
+
+        try {
           const decodedToken = jwtDecode<UserPayLoad>(token);
-          const user2: User = {
-            upn: decodedToken.UPN || decodedToken.upn || "",
+          const decodedRefreshToken = jwtDecode<UserPayLoad>(refreshToken);
+          console.log("[TOKEN HANDLER] Decoded token:", decodedToken);
+          console.log("[TOKEN HANDLER] Decoded refresh token:", decodedRefreshToken);
+
+          const userObj: User = {
+            upn: decodedToken.UPN || decodedToken.upn || decodedToken.email || "",
             gender: decodedToken.gender ?? undefined,
             firstName: decodedToken.FirstName || decodedToken.given_name,
             lastName: decodedToken.LastName || decodedToken.family_name,
             displayName: decodedToken.name,
           };
 
-          login(user2, token, refreshToken);
-        } else {
-          console.error("No token found in URL");
+          console.log("[TOKEN HANDLER] Created user object:", userObj);
+          login(userObj, token, refreshToken);
+
+          const cleanUrl = window.location.pathname;
+          console.log("[TOKEN HANDLER] Cleaning URL and redirecting to:", cleanUrl);
+
+          navigate(cleanUrl, { replace: true });
+        } catch (error) {
+          console.error("[TOKEN HANDLER] Error processing tokens:", error);
         }
-      } catch (error) {
-        console.error("Error in SSO callback:", error);
       }
     };
-    fetchUserData();
-  }, []);
+    if (!user && location.search.includes("accessToken")) {
+      handleTokensFromUrl();
+    }
+  }, [location.search, login, user]);
 
   useEffect(() => {
     if (user) {
-      const lastVisitedPath: any = localStorage.getItem("lastVisitedPath");
+      const lastVisitedPath = localStorage.getItem("lastVisitedPath");
       if (lastVisitedPath) {
         navigate(lastVisitedPath);
       } else {
@@ -47,7 +64,5 @@ const SSOCallback: React.FC = () => {
     }
   }, [user]);
 
-  return <div>Loading...</div>;
+  return null; // This component doesn't render anything
 };
-
-export default SSOCallback;

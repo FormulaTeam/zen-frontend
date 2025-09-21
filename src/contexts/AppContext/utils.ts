@@ -9,6 +9,7 @@ export interface UserPayLoad {
   name: string;
   UPN?: string;
   upn?: string;
+  email?: string;
   azp: string;
   FirstName: string;
   LastName: string;

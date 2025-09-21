@@ -17,7 +17,7 @@ const Login: React.FC = () => {
       navigate("/");
       return;
     }
-  }, []);
+  }, [user, navigate]);
 
   const handleLogin = async () => {
     const authUrl = await loginSSO();

@@ -11,13 +11,31 @@ import { Roles } from "../utils/interfaces";
 import { getRoles } from "../api/rolesApi";
 
 const getCookie = (name: string): string | null => {
+  console.log(`[COOKIE DEBUG] Looking for cookie: ${name}`);
+  console.log(`[COOKIE DEBUG] All cookies: ${document.cookie}`);
   const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-  return match ? decodeURIComponent(match[2]) : null;
+  const result = match ? decodeURIComponent(match[2]) : null;
+  console.log(
+    `[COOKIE DEBUG] Result for ${name}:`,
+    result ? `Found (length: ${result.length})` : "Not found",
+  );
+  return result;
 };
 
 const setCookie = (name: string, value: string, days = 1) => {
   const expires = new Date(Date.now() + days * 86400000).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+  const cookieString = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+  console.log(`[COOKIE DEBUG] Setting cookie: ${name} with value length: ${value.length}`);
+  console.log(`[COOKIE DEBUG] Cookie string: ${cookieString}`);
+  document.cookie = cookieString;
+
+  // Verify the cookie was set
+  setTimeout(() => {
+    const verification = getCookie(name);
+    console.log(
+      `[COOKIE DEBUG] Verification - ${name} was ${verification ? "successfully set" : "NOT set"}`,
+    );
+  }, 100);
 };
 
 export interface User {
@@ -60,6 +78,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<Roles>([]);
 
+  // TEMPORARILY COMMENTED OUT FOR DEBUGGING
+  // TODO: Remove this demo user logic completely for production
+  /*
+  useEffect(() => {
+    const setUserDemo = async () => {
+      setUser({
+        displayName: "s9126860",
+        firstName: "s9126860",
+        lastName: "s9126860",
+        upn: "s9126860@idfts.il",
+      });
+    };
+
+    const timeoutId = setTimeout(setUserDemo, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+  */
+
   useEffect(() => {
     if (user) {
       getRoles()
@@ -69,7 +106,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [user]);
 
   const loadUser = useCallback(async () => {
-    const token = getCookie("accessToken");
+    const token = getCookie("accessToken"); // this doesnt work returns null all the time
+    console.log("Access Token:", token);
     if (!token) return;
 
     try {
@@ -85,20 +123,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [loadUser]);
 
   const login = (user: User, accessToken: string, refreshToken: string) => {
+    console.log("[LOGIN DEBUG] Login function called with:", {
+      user: user,
+      accessTokenLength: accessToken?.length || 0,
+      refreshTokenLength: refreshToken?.length || 0,
+    });
+
     setUser(user);
     setCookie("accessToken", accessToken);
     setCookie("refreshToken", refreshToken);
+
+    console.log("[LOGIN DEBUG] User state set and cookies should be stored");
   };
 
   return (
     <AuthContext.Provider
       value={{
-        user: {
-          displayName: "s9126860",
-          firstName: "s9126860",
-          lastName: "s9126860",
-          upn: "s9126860@idfts.il",
-        },
+        user,
         login,
         loading,
         roles,

@@ -1,23 +1,7 @@
 import apiClient from "./config";
-import { TableView, FormViewFilter } from "../types/interfaces/tableViews.types";
+import { TableView } from "../types/interfaces/tableViews.types";
 
-const viewsBaseUrl = "/form-views";
-
-/**
- * Fetch form views with optional query parameters.
- *
- * @param filter - Optional filter parameters for querying form views.
- * @returns A promise that resolves to an array of form views.
- */
-export const getFormViews = async (filter?: FormViewFilter): Promise<TableView[]> => {
-  try {
-    const response = await apiClient.post<TableView[]>(`${viewsBaseUrl}/get-views`, filter || {});
-    return response?.data || [];
-  } catch (error) {
-    console.error("Failed to fetch form views:", error);
-    throw error;
-  }
-};
+const viewsBaseUrl = "/forms";
 
 /**
  * Fetch form views for a specific form.
@@ -27,7 +11,7 @@ export const getFormViews = async (filter?: FormViewFilter): Promise<TableView[]
  */
 export const getFormViewsForForm = async (formId: string): Promise<TableView[]> => {
   try {
-    const response = await apiClient.get<TableView[]>(`${viewsBaseUrl}/form/${formId}`);
+    const response = await apiClient.get<TableView[]>(`${viewsBaseUrl}/${formId}`);
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch form views for form:", error);
@@ -50,25 +34,6 @@ export const getDefaultFormView = async (formId: string): Promise<TableView | nu
       return null; // No default view found
     }
     console.error("Failed to fetch default form view:", error);
-    throw error;
-  }
-};
-
-/**
- * Fetch a specific form view by ID.
- *
- * @param viewId - The numeric ID of the form view to retrieve.
- * @returns A promise that resolves to the form view or null if not found.
- */
-export const getFormViewById = async (viewId: number): Promise<TableView | null> => {
-  try {
-    const response = await apiClient.get<TableView>(`${viewsBaseUrl}/${viewId}`);
-    return response?.data || null;
-  } catch (error: any) {
-    if (error?.response?.status === 404) {
-      return null; // View not found
-    }
-    console.error("Failed to fetch form view by ID:", error);
     throw error;
   }
 };
@@ -123,22 +88,6 @@ export const deleteFormView = async (viewId: number): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error("Failed to delete form view:", error);
-    throw error;
-  }
-};
-
-/**
- * Get the count of form views matching the filter.
- *
- * @param filter - Optional filter criteria for counting form views.
- * @returns A promise that resolves to the count of matching form views.
- */
-export const getFormViewsCount = async (filter?: FormViewFilter): Promise<number> => {
-  try {
-    const response = await apiClient.post<{ count: number }>(`${viewsBaseUrl}/count`, filter || {});
-    return response?.data?.count || 0;
-  } catch (error) {
-    console.error("Failed to get form views count:", error);
     throw error;
   }
 };

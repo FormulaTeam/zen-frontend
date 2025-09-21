@@ -9,7 +9,7 @@ import ResponsesPage from "./pages/ResponsesPage/ResponsesPage";
 import ProtectedRoute from "./components/ProrectedRoute/ProtectedRoute";
 import Navbar from "./components/Navbar/Navbar";
 import { ToastContainer } from "react-toastify";
-import SSOCallback from "./pages/Login/SSOCallback";
+import { SSOCallback } from "./pages/Login/SSOCallback";
 import ErrorPage from "./pages/ErrorPage/ErrorPage";
 import CreateForm from "./pages/CreateForm/CreateForm";
 import EditForm from "./pages/EditForm/EditForm";

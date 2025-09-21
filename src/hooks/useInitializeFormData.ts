@@ -31,7 +31,7 @@ export const useInitializeFormData = () => {
     console.log("[INIT FORM DATA] user:", user);
     console.log("[INIT FORM DATA] isSuperAdmin:", isSuperAdmin);
 
-    if (!roles || roles.length === 0 || !id) {
+    if (!id) {
       console.log("[INIT FORM DATA] fuck off");
       return;
     }
