@@ -1,5 +1,7 @@
 import apiClient from "./config";
 import { TableView } from "../types/interfaces/tableViews.types";
+import { useFetch } from "../utils/useFetch";
+import { UseQueryResult } from "@tanstack/react-query";
 
 const viewsBaseUrl = "/forms";
 
@@ -9,14 +11,11 @@ const viewsBaseUrl = "/forms";
  * @param formId - The ID of the form to get views for.
  * @returns A promise that resolves to an array of form views for the form.
  */
-export const getFormViewsForForm = async (formId: string): Promise<TableView[]> => {
-  try {
-    const response = await apiClient.get<TableView[]>(`${viewsBaseUrl}/${formId}`);
-    return response?.data || [];
-  } catch (error) {
-    console.error("Failed to fetch form views for form:", error);
-    throw error;
-  }
+export const useGetFormViews = (formId: string): UseQueryResult<TableView[], Error> => {
+  return useFetch<{}, TableView[]>({
+    endpoint: `${viewsBaseUrl}/${formId}`,
+    queryKey: () => [viewsBaseUrl],
+  });
 };
 
 /**

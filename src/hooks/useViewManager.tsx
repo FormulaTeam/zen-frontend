@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  getFormViewsForForm,
   getDefaultFormView,
   createFormView,
   updateFormView,
   deleteFormView,
+  useGetFormViews,
 } from "../api/formViewsApi";
 import { TableView, ViewColumn } from "../types/interfaces/tableViews.types";
 import { showErrorNotification, showSuccessNotification, getUserName } from "../utils/utils";
@@ -31,21 +31,25 @@ export const useViewManager = ({
   const [selectedViewId, setSelectedViewId] = useState<number | string>("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Load form views when form changes
-  useEffect(() => {
-    if (form?.id) {
-      const loadViewsAndDefaults = async () => {
-        try {
-          // Load views and default view in parallel
-          await Promise.all([loadFormViews(), loadDefaultView()]);
-        } catch (error) {
-          console.error("Failed to load views:", error);
-        }
-      };
+  // Yahel's changes
+  const {
+    data: formViews,
+    error: formViewsError,
+    refetch: refetchFormViews,
+  } = useGetFormViews(form?.id);
 
-      loadViewsAndDefaults();
+  useEffect(() => {
+    if (formViewsError) {
+      console.error("Error fetching form views:", formViewsError);
+      showErrorNotification("נכשל בטעינת התצוגות");
     }
-  }, [form?.id]);
+  }, [formViewsError]);
+
+  const filteredFormViews = useMemo(() => {
+    if (!formViews || !user) return [];
+    const userUpn = user?.upn;
+    return formViews;
+  }, [formViews, user]);
 
   // Notify parent component when view config changes
   useEffect(() => {
@@ -68,51 +72,6 @@ export const useViewManager = ({
       setSorting([]);
     }
   }, [setSorting, tableColumns, currentViewConfig]);
-
-  const loadFormViews = async () => {
-    if (!form?.id) return;
-
-    try {
-      // Fetch all views for the current form
-      const allViews = await getFormViewsForForm(form.id.toString());
-
-      // Filter to show only:
-      // 1. Public views (visible to everyone)
-      // 2. Private views created by the current user
-      console.log("Loaded form views:", allViews);
-
-      const userUpn = user?.upn;
-      const filteredViews = allViews.filter(
-        (view) => view.isPublic || view.createdBy.toLowerCase() === userUpn?.toLowerCase(),
-      );
-
-      setSavedViews(filteredViews);
-    } catch (error) {
-      console.error("Failed to load form views:", error);
-      showErrorNotification("נכשל בטעינת התצוגות");
-    }
-  };
-
-  const loadDefaultView = async () => {
-    if (!form?.id) return;
-
-    try {
-      const defaultView = await getDefaultFormView(form.id.toString());
-      if (defaultView) {
-        // Set the current view and config
-        setCurrentView(defaultView);
-        setCurrentViewConfig(defaultView.config.columns);
-        setSelectedViewId(defaultView.id || "");
-
-        // Apply sorting from default view configuration (triggers searchBySorting via useEffect)
-        if (setSorting && tableColumns && defaultView.config.columns) {
-          applyViewSorting(setSorting, defaultView.config.columns, tableColumns);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to load default view:", error);
-    }
-  };
 
   const handleSaveView = async (view: TableView) => {
     setIsSaving(true);
@@ -155,7 +114,7 @@ export const useViewManager = ({
 
       // If this view is set as default, reload the views to update other views' default status
       if (view.isDefault) {
-        await loadFormViews();
+        await refetchFormViews();
       }
       handleApplyView(savedView.config.columns);
     } catch (error) {
@@ -193,7 +152,7 @@ export const useViewManager = ({
       }
     } else {
       // Load selected view
-      const selectedView = savedViews.find((v) => v.id?.toString() === viewId.toString());
+      const selectedView = filteredFormViews.find((v) => v.id?.toString() === viewId.toString());
       if (selectedView) {
         console.log("Selected view found:", selectedView);
 
@@ -241,7 +200,7 @@ export const useViewManager = ({
   return {
     // State
     currentView,
-    savedViews,
+    savedViews: filteredFormViews,
     currentViewConfig,
     selectedViewId,
     isSaving,
@@ -251,8 +210,5 @@ export const useViewManager = ({
     handleViewDropdownChange,
     handleApplyView,
     handleDeleteView,
-    // Utility functions
-    loadFormViews,
-    loadDefaultView,
   };
 };

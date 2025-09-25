@@ -14,12 +14,11 @@ const setCookie = (name: string, value: string, days = 1) => {
   console.log(`[COOKIE] Set ${name}: length ${value.length}, expires ${expires}`);
 };
 
-const deleteCookie = (name: string) => {
+export const deleteCookie = (name: string) => {
   document.cookie = `${name}=; Max-Age=0; path=/`;
   console.log(`[COOKIE] Deleted ${name}`);
 };
 
-// Axios instance
 const apiClient = axios.create({
   baseURL: (window as any).RUNTIME_ENV
     ? (window as any).RUNTIME_ENV.REACT_APP_API_URL
@@ -27,7 +26,8 @@ const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // Allow cookies to be sent with requests
+  withCredentials: true,
+  timeout: 20000, // 20 second timeout
 });
 
 // Refresh token function
@@ -183,3 +183,57 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+
+// Utility function to handle API errors in a consistent way for React Query
+export const handleApiError = (error: any) => {
+  if (error.response) {
+    // Server responded with error status
+    const { status, data } = error.response;
+
+    switch (status) {
+      case 400:
+        throw new Error(data?.message || "Bad Request");
+      case 401:
+        throw new Error("Authentication required");
+      case 403:
+        throw new Error("Access forbidden");
+      case 404:
+        throw new Error("Resource not found");
+      case 422:
+        throw new Error(data?.message || "Validation error");
+      case 500:
+        throw new Error("Internal server error");
+      default:
+        throw new Error(data?.message || `Server error: ${status}`);
+    }
+  } else if (error.request) {
+    // Network error
+    throw new Error("Network error - please check your connection");
+  } else {
+    // Something else happened
+    throw new Error(error.message || "An unexpected error occurred");
+  }
+};
+
+// Utility function to create API request functions for React Query
+export const createApiRequest = <T = any>(
+  method: "get" | "post" | "put" | "patch" | "delete",
+  url: string,
+) => {
+  return async (data?: any): Promise<T> => {
+    try {
+      const config = method === "get" || method === "delete" ? { params: data } : { data };
+
+      const response = await apiClient[method](
+        url,
+        method === "get" || method === "delete" ? config : data,
+        method === "get" || method === "delete" ? {} : config,
+      );
+
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+      throw error; // This line won't be reached due to handleApiError throwing
+    }
+  };
+};

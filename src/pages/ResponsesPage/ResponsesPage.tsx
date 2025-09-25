@@ -164,7 +164,6 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     handleViewDropdownChange,
     handleApplyView,
     handleDeleteView,
-    isSaving,
   } = useViewManager({
     form,
     user,

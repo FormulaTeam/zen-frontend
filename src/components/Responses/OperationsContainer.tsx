@@ -220,14 +220,14 @@ const OperationsContainer: React.FC<any> = ({
                 <MenuItem value="">
                   <em>כל השדות</em>
                 </MenuItem>
-                {allViews?.map((view) => (
+                {/* {allViews?.map((view) => (
                   <MenuItem key={view.id} value={view.id}>
                     <ViewMenuItem>
                       <span>{getViewDisplayName(view)}</span>
                       {isViewDefault(view) && <ViewDefaultBadge>ברירת מחדל</ViewDefaultBadge>}
                     </ViewMenuItem>
                   </MenuItem>
-                ))}
+                ))} */}
               </Select>
             </StyledViewFormControl>
 

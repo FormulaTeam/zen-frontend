@@ -10,6 +10,8 @@
     "@mui/lab": "^7.0.0-beta.11",
     "@mui/material": "^7.0.2",
     "@mui/x-date-pickers": "^7.12.1",
+    "@tanstack/react-query": "^5.89.0",
+    "@tanstack/react-query-devtools": "^5.89.0",
     "axios": "^1.7.2",
     "dayjs": "^1.11.12",
     "file-saver": "^2.0.5",
