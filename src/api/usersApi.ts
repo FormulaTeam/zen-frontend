@@ -1,5 +1,8 @@
 import apiClient from "./config";
 import { SuperAdmin, User } from "../utils/interfaces";
+import { useUpdate } from "../utils/useUpdate";
+import { useFetch } from "../utils/useFetch";
+import { UseQueryResult } from "@tanstack/react-query";
 
 /**
  * Fetch all forms with optional query parameters.
@@ -33,4 +36,14 @@ export const getIsSuperAdmin = async (user: User | null) => {
     console.error("Failed to fetch super admins:", error);
     throw error;
   }
+};
+
+// Yahels changes
+export const useGetIsSuperAdmin = ({ user }: { user: User | null }): UseQueryResult<boolean> => {
+  return useFetch<User | null, boolean>({
+    endpoint: "/users/super-admin",
+    params: user,
+    queryKey: () => ["super-admin", user],
+    queryOptions: { enabled: !!user },
+  });
 };

@@ -1,6 +1,7 @@
 import React from "react";
 import moment from "moment";
 import { Box, Tooltip } from "@mui/material";
+import { type MRT_ColumnDef, MRT_Column } from "material-react-table";
 import cloudSync from "../images/cloud.png";
 import { CustomIcon } from "../theme/icons";
 import { FieldTypeIds } from "../utils/interfaces";
@@ -9,7 +10,6 @@ import CustomCarousel from "../components/FilePreview/CustomCarousel";
 import ZoomCell from "../components/formInForm/ZoomCell";
 import FormFieldRenderer from "../components/Responses/FormFieldRenderer";
 import { ViewColumn } from "../types/interfaces/tableViews.types";
-import { useNavigate } from "react-router-dom";
 
 export const useTableColumns = (
   setColumns,
@@ -27,9 +27,8 @@ export const useTableColumns = (
   forceRenderCounter?: number,
   fieldOptions?: Record<string, any>,
 ) => {
-  const navigate = useNavigate();
   const createTableColumns = (form, permissionTypes, viewConfig?: ViewColumn[]) => {
-    let cols: any = [];
+    let cols: any[] = [];
 
     // Create a timestamp to force re-render when called
     const timestamp = Date.now();
@@ -116,8 +115,6 @@ export const useTableColumns = (
       ),
       enableResizing: false,
     });
-
-    const indexCounter = 4;
 
     const buildDynamicFieldColumn = (field: any, orderIndex: number = 0) => {
       if (field.typeId === FieldTypeIds.form) return; // skip connected forms
@@ -357,7 +354,6 @@ export const useTableColumns = (
     };
 
     if (viewConfig && viewConfig.length > 0) {
-      const allConfigIds = new Set(viewConfig.map((vc) => vc.columnId));
       const visibleConfigs = viewConfig
         .filter((vc) => vc.visible)
         .sort((a, b) => a.order - b.order);

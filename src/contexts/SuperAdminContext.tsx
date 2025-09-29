@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { getIsSuperAdmin } from "../api/usersApi";
+import { getIsSuperAdmin, useGetIsSuperAdmin } from "../api/usersApi";
 import { useAuth } from "./AuthContext";
 
 interface SuperAdminContextType {
@@ -25,21 +25,13 @@ export const SuperAdminProvider: React.FC<SuperAdminProviderProps> = ({ children
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
 
   const { user } = useAuth();
-
-  const fetchSuperAdmins = async () => {
-    try {
-      const isSuperAdmin = await getIsSuperAdmin(user);
-      setIsSuperAdmin(isSuperAdmin);
-    } catch (error) {
-      console.error("Error fetching super admins:", error);
-    }
-  };
+  const { data: getIsSuperAdmin, isSuccess } = useGetIsSuperAdmin({ user });
 
   useEffect(() => {
-    if (user) {
-      fetchSuperAdmins();
+    if (user && isSuccess) {
+      setIsSuperAdmin(getIsSuperAdmin);
     }
-  }, [user]);
+  }, [user, isSuccess]);
 
   return (
     <SuperAdminContext.Provider value={{ isSuperAdmin }}>{children}</SuperAdminContext.Provider>

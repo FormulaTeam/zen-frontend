@@ -6,7 +6,7 @@ export interface UserData {
 }
 
 export interface ErrorMessageType {
-  key: string;    
+  key: string;
   message: string;
   fieldId: string;
 }

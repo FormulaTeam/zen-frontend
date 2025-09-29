@@ -3,7 +3,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import ReactLoading from "react-loading";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "@mui/material/styles";
-import { loginSSO } from "../../api";
+import { loginSSO, useGetLoginSSOUrl } from "../../api";
 import { IPath } from "../../types/enums/global.enums";
 
 /**
@@ -23,32 +23,32 @@ const LoadingScreen: React.FC<{ message: string }> = ({ message }) => {
  * ProtectedRoute: Ensures a user is authenticated before rendering nested routes.
  */
 const ProtectedRoute: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-
-  const loginUser = async () => {
-    console.log("Checking user authentication status...");
-    // If user is not authenticated, redirect to SSO login
-    console.log("Current user:", user);
-    if (!user) {
-      try {
-        const authUrl = await loginSSO();
-        console.log("Redirecting to SSO login:", authUrl);
-        window.location.href = authUrl;
-      } catch (error) {
-        console.error("Login redirect failed", error);
-        navigate(IPath.ERROR);
-      }
-    }
-  };
+  const {
+    data: ssoAuthUrl,
+    isLoading: getLoginSSOUrlLoading,
+    isSuccess: getLoginSSOUrlSuccess,
+    error: getLoginSSOUrlError,
+  } = useGetLoginSSOUrl({});
 
   useEffect(() => {
-    if (!user && !loading) {
-      loginUser();
+    if (user && getLoginSSOUrlSuccess) {
+      console.log("User is authenticated:", user);
+      return;
     }
-  }, [user, loading, loginUser]);
+    if (!user && getLoginSSOUrlSuccess) {
+      console.log("User not authenticated, redirecting to SSO:", ssoAuthUrl);
+      window.location.href = ssoAuthUrl;
+      return;
+    }
+    if (getLoginSSOUrlError) {
+      console.error("Failed to get SSO URL:", getLoginSSOUrlError);
+      navigate(IPath.ERROR);
+    }
+  }, [user, getLoginSSOUrlSuccess]);
 
-  if (loading) return <LoadingScreen message="מאמת את המשתמש..." />;
+  if (getLoginSSOUrlLoading) return <LoadingScreen message="מאמת את המשתמש..." />;
   if (user) return <Outlet />;
 
   // While redirecting to SSO, show a loading state
