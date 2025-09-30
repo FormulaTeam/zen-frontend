@@ -2,6 +2,16 @@ import { IRetrieveDataType } from "../types/enums/dashboard";
 import { CountResult } from "../types/interfaces/dashboard.types";
 import apiClient from "./config";
 
+const fetchStaticStats = async (): Promise<CountResult | null> => {
+  try {
+    const response = await apiClient.post("/dashboard/get-static-stats");
+    return response?.data;
+  } catch (error) {
+    console.error("Failed to fetch static stats:", error);
+    throw error;
+  }
+}
+
 /**
  * Fetch basic forms count stats (total & zero responses).
  */
@@ -79,6 +89,7 @@ const fetchUnitsByRange = async (range: {
 };
 
 export {
+  fetchStaticStats,
   fetchFormsStats,
   fetchFormsActivityStats,
   fetchLoginAndMirageStats,

@@ -5,6 +5,7 @@ import {
   fetchLoginAndMirageStats,
   fetchMonthlyFormsStats,
   fetchUnitsByRange,
+  fetchStaticStats,
 } from "../api";
 import { IRetrieveDataType, IDashboardStatic } from "../types/enums/dashboard";
 import { MonthName } from "../consts/charts";
@@ -29,46 +30,24 @@ export const useDashboardStatistics = () => {
 
   const refreshStats = useCallback(async (year: number = new Date().getUTCFullYear()) => {
     try {
-      const formsStats = await fetchFormsStats(year);
-      if (!formsStats) throw new Error("Failed to fetch forms statistics");
-      setStats((prev) => {
-        const next = new Map(prev);
-        next.set(IDashboardStatic.TOTAL_FORMS, formsStats?.totalCount);
-        next.set(IDashboardStatic.ZERO_COMMENTS, formsStats?.zeroCommentsCount);
-        return next;
-      });
-    } catch (err) {
-      console.error("Failed to fetch formsStats", err);
-      showErrorNotification("שגיאה בטעינת כמות הטפסים");
-    }
+      const staticStats = await fetchStaticStats();
+      if (!staticStats) throw new Error("Failed to fetch static statistics");
 
-    try {
-      const activityStats = await fetchFormsActivityStats();
-      if (!activityStats) throw new Error("Failed to fetch forms activity statistics");
       setStats((prev) => {
         const next = new Map(prev);
-        next.set(IDashboardStatic.ACTIVE_FORMS, activityStats?.activeCount);
-        next.set(IDashboardStatic.INACTIVE_FORMS, activityStats?.inactiveCount);
+        next.set(IDashboardStatic.TOTAL_FORMS, staticStats?.totalCount);
+        next.set(IDashboardStatic.ZERO_COMMENTS, staticStats?.zeroCommentsCount);
+        next.set(IDashboardStatic.ACTIVE_FORMS, staticStats?.activeCount);
+        next.set(IDashboardStatic.INACTIVE_FORMS, staticStats?.inactiveCount);
+        next.set(IDashboardStatic.DAILY_USERS, staticStats?.loginLogs?.dailyUsers);
+        next.set(IDashboardStatic.MONTHLY_USERS, staticStats?.loginLogs?.monthlyUsers);
         return next;
       });
-    } catch (err) {
-      console.error("Failed to fetch formsActivityStats", err);
-      showErrorNotification("שגיאה בטעינת סטטיסטיקות פעילות הטפסים");
-    }
 
-    try {
-      const loginStats = await fetchLoginAndMirageStats();
-      if (!loginStats) throw new Error("Failed to fetch login and mirage statistics");
-      setStats((prev) => {
-        const next = new Map(prev);
-        next.set(IDashboardStatic.DAILY_USERS, loginStats?.loginLogs?.dailyUsers);
-        next.set(IDashboardStatic.MONTHLY_USERS, loginStats?.loginLogs?.monthlyUsers);
-        return next;
-      });
-      setMirageUsers(loginStats?.mirageUsers ?? []);
+      setMirageUsers(staticStats?.mirageUsers ?? []);
     } catch (err) {
-      console.error("Failed to fetch loginStats", err);
-      showErrorNotification("שגיאה בטעינת סטטיסטיקות כניסות משתמשים");
+      console.error("Failed to fetch static stats", err);
+      showErrorNotification("שגיאה בטעינת נתוני סטטיסטיקות");
     }
 
     try {
