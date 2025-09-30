@@ -49,7 +49,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
 
-  const { data: fetchedRoles, isSuccess: getRolesisSuccess } = useGetRoles();
+  const { data: fetchedRoles, isSuccess: getRolesisSuccess } = useGetRoles({
+    queryOptions: { enabled: !!user },
+  });
 
   useEffect(() => {
     if (user && getRolesisSuccess) {
