@@ -104,12 +104,12 @@ const MenusContainer: React.FC<MenusContainerProps> = ({
         anchorElMoreActions={anchorElMoreActions}
       />
 
-      <SyncTypeMenu
+      {/* <SyncTypeMenu
         anchorElSourceType={anchorElSourceType}
         handleCloseMoreActions={handleCloseMoreActions}
         handleManualSource={handleManualSource}
         handleAutomaticSource={handleAutomaticSource}
-      />
+      /> */}
     </Box>
   );
 };

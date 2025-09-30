@@ -1,28 +1,40 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { Button, Box, Typography } from "@mui/material";
-import { loginSSO } from "../../api";
+import { useGetLoginSSOUrl } from "../../api";
 import "./Login.scss";
 
-const Login: React.FC = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const Login = () => {
+  const [clickedLogin, setClickedLogin] = useState(false);
+  const navigate = useNavigate();
 
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const {
+    data: ssoAuthUrl,
+    isLoading: getLoginSSOUrlLoading,
+    isSuccess: getLoginSSOUrlSuccess,
+    error: getLoginSSOUrlError,
+    refetch,
+  } = useGetLoginSSOUrl({ queryOptions: { enabled: !!user && clickedLogin } });
 
   useEffect(() => {
     if (user) {
       navigate("/");
       return;
     }
-  }, [user, navigate]);
+  }, [user]);
 
-  const handleLogin = async () => {
-    const authUrl = await loginSSO();
-    window.location.href = authUrl; // Redirect to the SSO login page
-  };
+  useEffect(() => {
+    if (getLoginSSOUrlSuccess) {
+      window.location.href = ssoAuthUrl;
+      return;
+    }
+
+    if (clickedLogin) {
+      refetch();
+    }
+  }, [getLoginSSOUrlSuccess, clickedLogin]);
 
   return (
     <Box
@@ -45,16 +57,16 @@ const Login: React.FC = () => {
         <Typography variant="h4" gutterBottom sx={{ color: "#3a4b39" }}>
           התחברות למערכת
         </Typography>
-        {error && (
+        {getLoginSSOUrlError && (
           <Typography variant="body2" color="error" gutterBottom>
-            {error}
+            {getLoginSSOUrlError.message}
           </Typography>
         )}
         <Button
-          onClick={handleLogin}
+          onClick={() => setClickedLogin(true)}
           variant="contained"
           fullWidth
-          disabled={loading}
+          disabled={getLoginSSOUrlLoading}
           sx={{
             padding: "10px",
             borderRadius: "10px",
@@ -64,7 +76,7 @@ const Login: React.FC = () => {
             "&:hover": { backgroundColor: "#3a4b39" },
             "&:disabled": { backgroundColor: "#c7dac9" },
           }}>
-          {loading ? "מתחבר..." : "התחבר"}
+          {getLoginSSOUrlLoading ? "מתחבר..." : "התחבר"}
         </Button>
       </Box>
     </Box>

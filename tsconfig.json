@@ -15,7 +15,7 @@
     "isolatedModules": false,
     "noEmit": true,
     "jsx": "react-jsx",
-    "noImplicitAny": false, // Disable the noImplicitAny error
+    "noImplicitAny": false // Enable warnings for implicit any types
   },
   "include": ["src", "declaration.d.ts", "SP/**/*.js", "framework.ts"]
 }

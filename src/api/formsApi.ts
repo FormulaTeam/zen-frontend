@@ -1,6 +1,8 @@
 import apiClient from "./config";
 import { NewForm, Form, Filter, MetroReturnedData, User } from "../utils/interfaces";
 import { UserData } from "../types/interfaces/forms.types";
+import { useFetch } from "../utils/useFetch";
+import { UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
 
 /**
  * Fetch all forms with optional query parameters.
@@ -197,4 +199,24 @@ export const editSourceToMetro = async (id: number): Promise<any> => {
     console.error("Failed to edit source to Metro:", error);
     throw error;
   }
+};
+
+// Yahel's edits - above is the original file - below are the changes
+// ============================================================
+
+export const useGetForm = ({
+  formId,
+  config,
+}: {
+  formId?: string;
+  config?: Omit<
+    UseQueryOptions<Form | null, Error, Form | null, readonly unknown[]>,
+    "queryKey" | "queryFn"
+  >;
+}): UseQueryResult<Form | null> => {
+  return useFetch<undefined, Form | null>({
+    endpoint: `/forms/${formId}`,
+    queryKey: () => [formId],
+    queryOptions: config,
+  });
 };

@@ -43,7 +43,7 @@ export interface Role {
   form_id: null | number;
 }
 
-export type Roles = Role[];
+// export type Roles = Role[];
 
 declare module "@mui/material/Button" {
   interface ButtonPropsVariantOverrides {

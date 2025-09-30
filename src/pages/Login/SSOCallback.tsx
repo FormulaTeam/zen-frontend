@@ -10,7 +10,7 @@ export const SSOCallback = () => {
   const { login, user } = useAuth();
 
   useEffect(() => {
-    const handleTokensFromUrl = async () => {
+    const handleTokensFromUrl = () => {
       const urlParams = new URLSearchParams(location.search);
       const token = urlParams.get("accessToken");
       const refreshToken = urlParams.get("refreshToken");
@@ -37,7 +37,7 @@ export const SSOCallback = () => {
           };
 
           console.log("[TOKEN HANDLER] Created user object:", userObj);
-          login(userObj, token, refreshToken);
+          login({ user: userObj });
 
           const cleanUrl = window.location.pathname;
           console.log("[TOKEN HANDLER] Cleaning URL and redirecting to:", cleanUrl);
