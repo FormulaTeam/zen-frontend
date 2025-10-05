@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import CardContent from "@mui/material/CardContent";
 import SectionTitle from "./SectionTitle";
 import ColumnChart from "../Charts/ColumnChart";
@@ -39,8 +39,15 @@ const FormsChart: React.FC<FormsChartProps> = ({ type, chartType, yearFilter, da
     getUnitsByRange,
   } = useDashboardStatisticsContext();
 
-  const { range, year, loading, nextYear, prevYear, handleDateChange, handleClearRange } =
-    useStatisticsDateFilter(getUnitsByRange, getMonthlyFormsStats, type);
+  const {
+    range,
+    year,
+    loading,
+    nextYear,
+    prevYear,
+    handleDateChange,
+    handleClearRange,
+  } = useStatisticsDateFilter(getUnitsByRange, getMonthlyFormsStats, type);
 
   const theme = useTheme();
 

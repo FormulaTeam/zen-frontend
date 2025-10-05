@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Paper,
@@ -37,11 +37,18 @@ const LoginLogsTable: React.FC = () => {
 
   const { getUnitsByRange, mirageUsers } = useDashboardStatisticsContext();
 
-  const { handleDateChange, handleClearRange, range } = useStatisticsDateFilter(
-    getUnitsByRange,
-    async (year: number, type: any) => {},
-    IRetrieveDataType.UNITS,
-  );
+  const { handleDateChange, handleClearRange, range, triggerFetch } =
+    useStatisticsDateFilter(getUnitsByRange, async () => {}, IRetrieveDataType.UNITS);
+
+  useEffect(() => {
+    triggerFetch();
+  }, []);
+
+  useEffect(() => {
+    if (range.from || range.to) {
+      triggerFetch();
+    }
+  }, [range, triggerFetch]);
 
   /* sorted mirageUsers */
   const sortedmirageUsers = useMemo(

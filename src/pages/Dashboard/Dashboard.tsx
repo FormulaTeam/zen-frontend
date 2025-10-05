@@ -20,7 +20,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     refreshStats();
-  }, []);
+  }, [refreshStats]);
 
   return (
     <Container>
