@@ -1,8 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import {
-  fetchFormsStats,
-  fetchFormsActivityStats,
-  fetchLoginAndMirageStats,
   fetchMonthlyFormsStats,
   fetchUnitsByRange,
   fetchStaticStats,

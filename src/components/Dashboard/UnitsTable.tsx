@@ -13,13 +13,12 @@ import {
 import dayjs from "dayjs";
 import ChartFromToPicker from "../Charts/ChartFromToPicker";
 import { useStatisticsDateFilter } from "../../hooks/useStatisticsDateFilter";
-import { useDashboardStatistics } from "../../hooks/useDashboardStatistics";
 import { IRetrieveDataType } from "../../types/enums/dashboard";
+import { useDashboardStatisticsContext } from "../../contexts/DashboardStatisticsContext";
 
 interface Row {
   id: string;
   upn: string;
-  chail: string;
   yechidaHatzava: string;
   loginAt: Date;
 }
@@ -36,7 +35,7 @@ const LoginLogsTable: React.FC = () => {
   const [sortField, setSortField] = useState<keyof Row>("loginAt");
   const [asc, setAsc] = useState(false);
 
-  const { getUnitsByRange, mirageUsers } = useDashboardStatistics();
+  const { getUnitsByRange, mirageUsers } = useDashboardStatisticsContext();
 
   const { handleDateChange, handleClearRange, range } = useStatisticsDateFilter(
     getUnitsByRange,
@@ -88,7 +87,6 @@ const LoginLogsTable: React.FC = () => {
             <TableRow>
               {header("תאריך ושעה", "loginAt")}
               {header("יוזר", "id")}
-              {header("חיל", "chail")}
               {header("יחידה", "yechidaHatzava")}
             </TableRow>
           </TableHead>
@@ -100,8 +98,6 @@ const LoginLogsTable: React.FC = () => {
                 sx={{ "& td": { textAlign: "right" } }}>
                 <TableCell>{dayjs(row.loginAt).format("DD/MM/YYYY HH:mm")}</TableCell>
                 <TableCell>{row.id}</TableCell>
-                <TableCell>{row?.chail || "לא ידוע"
-                  }</TableCell>
                 <TableCell>{row?.yechidaHatzava || "לא ידוע"}</TableCell>
               </TableRow>
             ))}

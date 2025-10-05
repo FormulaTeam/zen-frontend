@@ -4,51 +4,10 @@ import apiClient from "./config";
 
 const fetchStaticStats = async (): Promise<CountResult | null> => {
   try {
-    const response = await apiClient.post("/dashboard/get-static-stats");
+    const response = await apiClient.get("/dashboard/get-static-stats");
     return response?.data;
   } catch (error) {
     console.error("Failed to fetch static stats:", error);
-    throw error;
-  }
-}
-
-/**
- * Fetch basic forms count stats (total & zero responses).
- */
-const fetchFormsStats = async (
-  year: number = new Date().getUTCFullYear(),
-): Promise<CountResult | null> => {
-  try {
-    const response = await apiClient.post("/dashboard/get-forms-count", { year });
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to fetch forms count stats:", error);
-    throw error;
-  }
-};
-
-/**
- * Fetch active and inactive forms stats.
- */
-const fetchFormsActivityStats = async (): Promise<CountResult | null> => {
-  try {
-    const response = await apiClient.post("/dashboard/get-forms-activity");
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to fetch forms activity stats:", error);
-    throw error;
-  }
-};
-
-/**
- * Fetch login logs and serialized Mirage users.
- */
-const fetchLoginAndMirageStats = async (): Promise<CountResult | null> => {
-  try {
-    const response = await apiClient.post("/dashboard/get-login-stats");
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to fetch login stats:", error);
     throw error;
   }
 };
@@ -61,9 +20,8 @@ const fetchMonthlyFormsStats = async (
   operation: IRetrieveDataType = IRetrieveDataType.CREATED,
 ): Promise<CountResult | null> => {
   try {
-    const response = await apiClient.post("/dashboard/get-forms-by-month", {
-      year,
-      operation,
+    const response = await apiClient.get("/dashboard/get-forms-by-month", {
+      params: { year, operation },
     });
     return response?.data;
   } catch (error) {
@@ -80,7 +38,9 @@ const fetchUnitsByRange = async (range: {
   to: string | null;
 }): Promise<CountResult | null> => {
   try {
-    const response = await apiClient.post("/dashboard/get-units-by-range-date", { range });
+    const response = await apiClient.get("/dashboard/get-units-by-range-date", {
+      params: { range },
+    });
     return response?.data;
   } catch (error) {
     console.error("Failed to fetch units by range:", error);
@@ -90,9 +50,6 @@ const fetchUnitsByRange = async (range: {
 
 export {
   fetchStaticStats,
-  fetchFormsStats,
-  fetchFormsActivityStats,
-  fetchLoginAndMirageStats,
   fetchMonthlyFormsStats,
   fetchUnitsByRange,
 };

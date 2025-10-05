@@ -3,7 +3,6 @@ import CardContent from "@mui/material/CardContent";
 import SectionTitle from "./SectionTitle";
 import ColumnChart from "../Charts/ColumnChart";
 import ChartYearNavigator from "../Charts/ChartYearNavigator";
-import { useDashboardStatistics } from "../../hooks/useDashboardStatistics";
 import { IChartType, IRetrieveDataType } from "../../types/enums/dashboard";
 import { useTheme } from "@mui/material";
 import ReactLoading from "react-loading";
@@ -12,6 +11,7 @@ import PieChart from "../Charts/PieChart";
 import ChartFromToPicker from "../Charts/ChartFromToPicker";
 import styled from "styled-components";
 import { useStatisticsDateFilter } from "../../hooks/useStatisticsDateFilter";
+import { useDashboardStatisticsContext } from "../../contexts/DashboardStatisticsContext";
 
 const PickerRow = styled.div`
   display: flex;
@@ -37,7 +37,7 @@ const FormsChart: React.FC<FormsChartProps> = ({ type, chartType, yearFilter, da
     getFormsChartConfig,
     serializeMirageUsers,
     getUnitsByRange,
-  } = useDashboardStatistics();
+  } = useDashboardStatisticsContext();
 
   const { range, year, loading, nextYear, prevYear, handleDateChange, handleClearRange } =
     useStatisticsDateFilter(getUnitsByRange, getMonthlyFormsStats, type);
