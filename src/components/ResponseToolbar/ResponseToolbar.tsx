@@ -102,10 +102,7 @@ function ResponseToolbar({
         pushToMetro={pushToMetro}
         anchorElMoreActions={anchorElMoreActions}
         anchorElSourceType={anchorElSourceType}
-        handleManualSource={handleManualSource}
-        handleAutomaticSource={handleAutomaticSource}
         setAnchorElSourceType={setAnchorElSourceType}
-        handleCloseMoreActions={handleCloseMoreActions}
       />
       <HiddenInput
         type="file"
