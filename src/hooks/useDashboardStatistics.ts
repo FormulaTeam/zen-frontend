@@ -3,7 +3,7 @@ import {
   fetchMonthlyFormsStats,
   fetchUnitsByRange,
   fetchStaticStats,
-} from "../api";
+} from "../api/dashboardApi";
 import { IRetrieveDataType, IDashboardStatic } from "../types/enums/dashboard";
 import { MonthName } from "../consts/charts";
 import { showErrorNotification } from "../utils/utils";
@@ -32,16 +32,16 @@ export const useDashboardStatistics = () => {
 
       setStats((prev) => {
         const next = new Map(prev);
-        next.set(IDashboardStatic.TOTAL_FORMS, staticStats?.totalCount);
-        next.set(IDashboardStatic.ZERO_COMMENTS, staticStats?.zeroCommentsCount);
-        next.set(IDashboardStatic.ACTIVE_FORMS, staticStats?.activeCount);
-        next.set(IDashboardStatic.INACTIVE_FORMS, staticStats?.inactiveCount);
-        next.set(IDashboardStatic.DAILY_USERS, staticStats?.loginLogs?.dailyUsers);
-        next.set(IDashboardStatic.MONTHLY_USERS, staticStats?.loginLogs?.monthlyUsers);
+        next.set(IDashboardStatic.TOTAL_FORMS, staticStats.totalForms ?? 0);
+        next.set(IDashboardStatic.ZERO_COMMENTS, staticStats.zeroResponsesCount ?? 0);
+        next.set(IDashboardStatic.ACTIVE_FORMS, staticStats.activeForms ?? 0);
+        next.set(IDashboardStatic.INACTIVE_FORMS, staticStats.inactiveForms ?? 0);
+        next.set(IDashboardStatic.DAILY_USERS, staticStats.dailyUsers ?? 0);
+        next.set(IDashboardStatic.MONTHLY_USERS, staticStats.monthlyUsers ?? 0);
         return next;
       });
 
-      setMirageUsers(staticStats?.mirageUsers ?? []);
+      setMirageUsers(staticStats.mirageUsers ?? []);
     } catch (err) {
       console.error("Failed to fetch static stats", err);
       showErrorNotification("שגיאה בטעינת נתוני סטטיסטיקות");
@@ -51,10 +51,10 @@ export const useDashboardStatistics = () => {
       const created = await fetchMonthlyFormsStats(year, IRetrieveDataType.CREATED);
       if (!created) throw new Error("Failed to fetch created forms statistics");
       setFormsByMonth(
-        created?.formsByMonth?.map(({ count, month }) => ({
+        created.map(({ count, month }) => ({
           count,
           month: MonthName[month],
-        })) ?? [],
+        })),
       );
     } catch (err) {
       console.error("Failed to fetch created forms stats", err);
@@ -65,10 +65,10 @@ export const useDashboardStatistics = () => {
       const deleted = await fetchMonthlyFormsStats(year, IRetrieveDataType.DELETED);
       if (!deleted) throw new Error("Failed to fetch deleted forms statistics");
       setDeletedFormsByMonth(
-        deleted?.deletedFormsByMonth?.map(({ count, month }) => ({
+        deleted.map(({ count, month }) => ({
           count,
           month: MonthName[month],
-        })) ?? [],
+        })),
       );
     } catch (err) {
       console.error("Failed to fetch deleted forms stats", err);
@@ -80,19 +80,18 @@ export const useDashboardStatistics = () => {
     async (year: number = new Date().getUTCFullYear(), operation: IRetrieveDataType) => {
       try {
         const res = await fetchMonthlyFormsStats(year, operation);
+        if (!res) return;
 
-        if (res?.formsByMonth) {
+        if (operation === IRetrieveDataType.CREATED) {
           setFormsByMonth(
-            res.formsByMonth.map(({ count, month }) => ({
+            res.map(({ count, month }) => ({
               count,
               month: MonthName[month],
             })),
           );
-        }
-
-        if (res?.deletedFormsByMonth) {
+        } else if (operation === IRetrieveDataType.DELETED) {
           setDeletedFormsByMonth(
-            res.deletedFormsByMonth.map(({ count, month }) => ({
+            res.map(({ count, month }) => ({
               count,
               month: MonthName[month],
             })),
@@ -109,7 +108,7 @@ export const useDashboardStatistics = () => {
   const getUnitsByRange = useCallback(async (range: { from: string | null; to: string | null }) => {
     try {
       const res = await fetchUnitsByRange(range);
-      setMirageUsers(res?.mirageUsers ?? []);
+      setMirageUsers(res ?? []);
     } catch (err) {
       console.error("Failed to fetch units by range", err);
       showErrorNotification("שגיאה בטעינת נתוני יחידות");
@@ -147,7 +146,6 @@ export const useDashboardStatistics = () => {
         };
     }
   };
-
 
   const summaryCards = [
     {

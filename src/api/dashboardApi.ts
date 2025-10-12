@@ -1,8 +1,8 @@
 import { IRetrieveDataType } from "../types/enums/dashboard";
-import { CountResult } from "../types/interfaces/dashboard.types";
 import apiClient from "./config";
 
-const fetchStaticStats = async (): Promise<CountResult | null> => {
+// Fetch static statistics (forms, users, etc.)
+export const fetchStaticStats = async (): Promise<any | null> => {
   try {
     const response = await apiClient.get("/dashboard/get-static-stats");
     return response?.data;
@@ -12,13 +12,11 @@ const fetchStaticStats = async (): Promise<CountResult | null> => {
   }
 };
 
-/**
- * Fetch forms by month (created & deleted) based on operation.
- */
-const fetchMonthlyFormsStats = async (
+// Fetch monthly form statistics (created or deleted)
+export const fetchMonthlyFormsStats = async (
   year: number = new Date().getUTCFullYear(),
   operation: IRetrieveDataType = IRetrieveDataType.CREATED,
-): Promise<CountResult | null> => {
+): Promise<any[] | null> => {
   try {
     const response = await apiClient.get("/dashboard/get-forms-by-month", {
       params: { year, operation },
@@ -30,26 +28,18 @@ const fetchMonthlyFormsStats = async (
   }
 };
 
-/**
- * Fetch units (Mirage users) within a date range.
- */
-const fetchUnitsByRange = async (range: {
+// Fetch Mirage users by date range
+export const fetchUnitsByRange = async (range: {
   from: string | null;
   to: string | null;
-}): Promise<CountResult | null> => {
+}): Promise<any[] | null> => {
   try {
     const response = await apiClient.get("/dashboard/get-units-by-range-date", {
-      params: { range },
+      params: { from: range.from, to: range.to },
     });
     return response?.data;
   } catch (error) {
     console.error("Failed to fetch units by range:", error);
     throw error;
   }
-};
-
-export {
-  fetchStaticStats,
-  fetchMonthlyFormsStats,
-  fetchUnitsByRange,
 };
