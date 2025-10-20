@@ -21,7 +21,7 @@ interface SuperAdminProviderProps {
   currentUserEmail?: string;
 }
 
-export const SuperAdminProvider: React.FC<SuperAdminProviderProps> = ({ children }) => {
+export const SuperAdminProvider = ({ children }: SuperAdminProviderProps) => {
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
 
   const { user } = useAuth();

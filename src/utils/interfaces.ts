@@ -175,7 +175,7 @@ export interface FormFieldEditableMetaData {
 /**
  * Represents the data required to create a new form.
  */
-export type NewForm = Omit<Form, "id" | "created" | "edited">;
+export type NewForm = Omit<Form, "id" | "created" | "edited" | "permissions">;
 
 export type FormsTab = (typeof formsTabs)[keyof typeof formsTabs];
 
@@ -199,6 +199,7 @@ export interface Form {
   deleted?: string;
   numberOfResponses: number;
   lastEditedResponse?: string;
+  permissions: number[];
 
   isPublic?: boolean;
   formPermission?: {
