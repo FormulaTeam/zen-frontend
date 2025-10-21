@@ -14,8 +14,8 @@ export function useDelete<TData = unknown, TResponse = unknown>({
   mutationKey = [endpoint, "delete"],
 }: UseDeleteOptions<TData, TResponse>): UseMutationResult<TResponse, Error, TData, unknown> {
   return useMutation({
-    mutationFn: async (data: TData) => {
-      const response = await apiClient.delete<TResponse>(endpoint, { data });
+    mutationFn: async (params: TData) => {
+      const response = await apiClient.delete<TResponse>(endpoint, { params });
       return response.data;
     },
     mutationKey,
