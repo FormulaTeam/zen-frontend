@@ -12,7 +12,7 @@ export type IGetFormsData = (
   from: string,
   currentFilter: Filter,
   additionalFilter?: Filter,
-  deleted?: boolean
+  deleted?: boolean,
 ) => Promise<Form[] | undefined>;
 
 export function useGetFormsData(initialForms: Form[] = [], maxInPage = 24) {
@@ -24,21 +24,25 @@ export function useGetFormsData(initialForms: Form[] = [], maxInPage = 24) {
   const pendingFilter = useRef<Filter | null>(null);
 
   const { data: cachedForms, isLoading: isQueryLoading } = useFormsQuery();
-  console.log("===============cachedForms in useGetFormsData:==========", cachedForms);
 
   useEffect(() => {
-    if (!cachedForms?.length || !pendingFilter.current || isFetching.current) return;
+    if (!cachedForms) return;
 
-    const filter = pendingFilter.current;
-    pendingFilter.current = null;
+    const filter = pendingFilter.current ?? {
+      query: {},
+      sortBy: "name",
+      orderBy: "ASC",
+      pageNumber: 1,
+      pageSize: maxInPage,
+    };
 
     const filtered = paginateForms(
       sortForms(filterForms(cachedForms, filter.query), filter.sortBy, filter.orderBy),
       filter.pageNumber,
-      filter.pageSize
+      filter.pageSize,
     );
 
-    setFormsData((prev) => (filter.pageNumber === 1 ? filtered : [...prev, ...filtered]));
+    setFormsData(filtered);
   }, [cachedForms]);
 
   const getData: IGetFormsData = async (
@@ -46,7 +50,7 @@ export function useGetFormsData(initialForms: Form[] = [], maxInPage = 24) {
     from,
     currentFilter = {},
     additionalFilter = {},
-    deleted = false
+    deleted = false,
   ) => {
     if (isFetching.current) return;
 
@@ -82,7 +86,7 @@ export function useGetFormsData(initialForms: Form[] = [], maxInPage = 24) {
       const processed = paginateForms(
         sortForms(filterForms(baseForms, filter.query), filter.sortBy, filter.orderBy),
         filter.pageNumber,
-        filter.pageSize
+        filter.pageSize,
       );
 
       setFormsData((prev) => (isFirstPage ? processed : [...prev, ...processed]));
@@ -111,7 +115,7 @@ export function useGetFormsData(initialForms: Form[] = [], maxInPage = 24) {
     setFormsData((prev) => {
       const merged = new Map(prev.map((f) => [f.id, f]));
       available.forEach((form) => merged.set(form.id, form));
-      
+
       return Array.from(merged.values());
     });
 

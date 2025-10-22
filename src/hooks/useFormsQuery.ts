@@ -18,12 +18,13 @@ export function useFormsQuery() {
             console.error(`Failed to get count for form ${form.id}:`, error);
             return { ...form, numberOfResponses: 0 } as Form;
           }
-        })
+        }),
       );
 
       return formsWithCounts;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }
