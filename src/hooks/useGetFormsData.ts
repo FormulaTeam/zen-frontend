@@ -28,7 +28,7 @@ export function useGetFormsData(initialForms: Form[] = [], maxInPage = 24) {
   useEffect(() => {
     if (!cachedForms) return;
 
-    const filter = pendingFilter.current ?? {
+    const filter = pendingFilter.current || {
       query: {},
       sortBy: "name",
       orderBy: "ASC",
@@ -77,9 +77,9 @@ export function useGetFormsData(initialForms: Form[] = [], maxInPage = 24) {
     try {
       const baseForms = cachedForms ?? [];
 
-      if (isQueryLoading && !baseForms.length) {
-        pendingFilter.current = filter;
+      pendingFilter.current = filter;
 
+      if (!baseForms.length) {
         return;
       }
 

@@ -25,6 +25,5 @@ export function useFormsQuery() {
     },
     staleTime: 0,
     refetchOnMount: "always",
-    refetchOnWindowFocus: true,
   });
 }
