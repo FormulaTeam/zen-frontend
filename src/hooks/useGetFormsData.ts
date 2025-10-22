@@ -1,11 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Form, Filter } from "../utils/interfaces";
-import { useAuth } from "../contexts/AuthContext";
 import { useFormsQuery } from "./useFormsQuery";
 import { IOrderBy } from "../types/enums/filtersAndSorts.enum";
 import { showErrorNotification } from "../utils/utils";
-import { getForms } from "../api/formsApi";
-import { getResponsesCount } from "../api/responsesApi";
 import { sortForms } from "./helpers/sortForms";
 import { filterForms } from "./helpers/filterFroms";
 import { paginateForms } from "./helpers/paginateForms";
@@ -15,23 +12,33 @@ export type IGetFormsData = (
   from: string,
   currentFilter: Filter,
   additionalFilter?: Filter,
-  deleted?: boolean,
+  deleted?: boolean
 ) => Promise<Form[] | undefined>;
 
 export function useGetFormsData(initialForms: Form[] = [], maxInPage = 24) {
-  const { user } = useAuth();
   const [formsData, setFormsData] = useState<Form[]>(initialForms);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [loadingBottom, setLoadingBottom] = useState(false);
 
-  // React Query cache
-  const { data: cachedForms, isFetching, refetch } = useFormsQuery();
+  const isFetching = useRef(false);
+  const pendingFilter = useRef<Filter | null>(null);
+
+  const { data: cachedForms, isLoading: isQueryLoading } = useFormsQuery();
+  console.log("===============cachedForms in useGetFormsData:==========", cachedForms);
 
   useEffect(() => {
-    if (cachedForms?.length) {
-      setFormsData(cachedForms);
-      setLoading(false);
-    }
+    if (!cachedForms?.length || !pendingFilter.current || isFetching.current) return;
+
+    const filter = pendingFilter.current;
+    pendingFilter.current = null;
+
+    const filtered = paginateForms(
+      sortForms(filterForms(cachedForms, filter.query), filter.sortBy, filter.orderBy),
+      filter.pageNumber,
+      filter.pageSize
+    );
+
+    setFormsData((prev) => (filter.pageNumber === 1 ? filtered : [...prev, ...filtered]));
   }, [cachedForms]);
 
   const getData: IGetFormsData = async (
@@ -39,133 +46,86 @@ export function useGetFormsData(initialForms: Form[] = [], maxInPage = 24) {
     from,
     currentFilter = {},
     additionalFilter = {},
-    deleted = false,
+    deleted = false
   ) => {
-    const sortBy = additionalFilter.sortBy || currentFilter?.sortBy || "name";
-    const orderBy = additionalFilter.orderBy || currentFilter?.orderBy || "ASC";
-    let query = { ...currentFilter?.query, ...additionalFilter?.query };
+    if (isFetching.current) return;
+
+    const sortBy = additionalFilter.sortBy ?? currentFilter.sortBy ?? "name";
+    const orderBy = (additionalFilter.orderBy ?? currentFilter.orderBy ?? "ASC") as
+      | IOrderBy.ASC
+      | IOrderBy.DESC;
 
     const filter: Filter = {
-      query,
+      query: { ...currentFilter.query, ...additionalFilter.query },
       pageSize: maxInPage,
       pageNumber: nextPage,
       sortBy,
-      orderBy: orderBy as IOrderBy.ASC | IOrderBy.DESC,
-      signal: additionalFilter?.signal,
+      orderBy,
+      signal: additionalFilter.signal,
       deleted,
     };
 
-    if (nextPage === 1) setLoading(true);
-    else setLoadingBottom(true);
+    const isFirstPage = nextPage === 1;
+    setLoading(isFirstPage);
+    setLoadingBottom(!isFirstPage);
+    isFetching.current = true;
 
     try {
-      // Use cache first
-      let forms: Form[] = cachedForms ?? [];
+      const baseForms = cachedForms ?? [];
 
-      if (forms.length > 0) {
-        forms = filterForms(forms, filter.query);
-        forms = sortForms(forms, filter.sortBy, filter.orderBy);
-        forms = paginateForms(forms, filter.pageNumber, filter.pageSize);
+      if (isQueryLoading && !baseForms.length) {
+        pendingFilter.current = filter;
 
-        // Merge paginated results
-        if (filter.pageNumber === 1) setFormsData(forms);
-        else setFormsData((prev) => [...prev, ...forms]);
-
-        return forms;
+        return;
       }
 
-      // Fallback to server
-      const fetched = (await getForms(filter)) || [];
-      if (!fetched.length) return [];
-
-      // Attach response counts
-      const withCounts: Form[] = await Promise.all(
-        fetched.map(async (f) => {
-          try {
-            const userInForm = f.users?.find(
-              (u: any) => u.upn?.toLowerCase() === user?.upn?.toLowerCase(),
-            );
-            if (!userInForm) return f;
-            const resp = await getResponsesCount(f.id);
-            return { ...f, numberOfResponses: resp.count };
-          } catch {
-            return f;
-          }
-        }),
+      const processed = paginateForms(
+        sortForms(filterForms(baseForms, filter.query), filter.sortBy, filter.orderBy),
+        filter.pageNumber,
+        filter.pageSize
       );
 
-      const result = filter.pageNumber === 1 ? withCounts : [...formsData, ...withCounts];
-      setFormsData(result);
-      return withCounts;
+      setFormsData((prev) => (isFirstPage ? processed : [...prev, ...processed]));
+
+      return processed;
     } catch (err: any) {
-      if (err?.message === "canceled") return;
-      console.error("useGetFormsData getData error", err);
-      showErrorNotification("שליפת הטפסים נכשלה");
+      if (err?.message !== "canceled") {
+        console.error("useGetFormsData error:", err);
+        showErrorNotification("שליפת הטפסים נכשלה");
+      }
+
       return [];
     } finally {
+      isFetching.current = false;
       setLoading(false);
       setLoadingBottom(false);
     }
   };
 
   const getFormsByIds = async (ids: number[]) => {
-    if (ids.length === 0) return [];
+    if (!ids.length) return [];
 
-    // Try cache first
-    if (cachedForms?.length) {
-      const found = cachedForms.filter((f) => ids.includes(f.id));
-      if (found.length === ids.length) return found;
-    }
+    const available = cachedForms?.filter((f) => ids.includes(f.id)) ?? [];
+    if (!available.length) return [];
 
-    // Server fallback
-    const filter: Filter = {
-      query: { id: { $in: ids } },
-      pageSize: ids.length,
-      pageNumber: 1,
-      sortBy: "id",
-      orderBy: IOrderBy.ASC,
-    };
+    setFormsData((prev) => {
+      const merged = new Map(prev.map((f) => [f.id, f]));
+      available.forEach((form) => merged.set(form.id, form));
+      
+      return Array.from(merged.values());
+    });
 
-    try {
-      const newForms = (await getForms(filter)) || [];
-      const newWithCounts: Form[] = await Promise.all(
-        newForms.map(async (f) => {
-          try {
-            const userInForm = f.users?.find(
-              (u: any) => u.upn?.toLowerCase() === user?.upn?.toLowerCase(),
-            );
-            if (!userInForm) return f;
-            const resp = await getResponsesCount(f.id);
-            return { ...f, numberOfResponses: resp.count };
-          } catch {
-            return f;
-          }
-        }),
-      );
-
-      setFormsData((prev) => {
-        const map = new Map(prev.map((p) => [p.id, p]));
-        newWithCounts.forEach((nf) => map.set(nf.id, nf));
-        return Array.from(map.values());
-      });
-
-      return newWithCounts;
-    } catch (err) {
-      console.error("useGetFormsData getFormsByIds error", err);
-      showErrorNotification("טעינת טפסים לפי מזהים נכשלה");
-      return [];
-    }
+    return available;
   };
 
   return {
     formsData,
     setFormsData,
-    loading: loading || isFetching,
+    loading: loading || isQueryLoading,
     setLoading,
     loadingBottom,
     setLoadingBottom,
     getData,
     getFormsByIds,
-    refetchForms: refetch,
   };
 }
