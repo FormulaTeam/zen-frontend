@@ -1,12 +1,9 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
-import {
-  fetchMonthlyFormsStats,
-  fetchUnitsByRange,
-  fetchStaticStats,
-} from "../api/dashboardApi";
+import { useState, useCallback, useMemo } from "react";
+import { fetchMonthlyFormsStats, fetchUnitsByRange, fetchStaticStats } from "../api/dashboardApi";
 import { IRetrieveDataType, IDashboardStatic } from "../types/enums/dashboard";
 import { MonthName } from "../consts/charts";
 import { showErrorNotification } from "../utils/utils";
+import { ChartData, IMirageUser } from "../types/interfaces/dashboard.types";
 
 export const useDashboardStatistics = () => {
   const [stats, setStats] = useState<Map<IDashboardStatic, number | undefined>>(
@@ -21,9 +18,9 @@ export const useDashboardStatistics = () => {
       ]),
   );
 
-  const [formsByMonth, setFormsByMonth] = useState<any[]>([]);
-  const [deletedFormsByMonth, setDeletedFormsByMonth] = useState<any[]>([]);
-  const [mirageUsers, setMirageUsers] = useState<any[]>([]);
+  const [formsByMonthData, setFormsByMonthData] = useState<ChartData[]>([]);
+  const [deletedFormsByMonthData, setDeletedFormsByMonthData] = useState<ChartData[]>([]);
+  const [mirageUsers, setMirageUsers] = useState<IMirageUser[]>([]);
 
   const refreshStats = useCallback(async (year: number = new Date().getUTCFullYear()) => {
     try {
@@ -32,12 +29,12 @@ export const useDashboardStatistics = () => {
 
       setStats((prev) => {
         const next = new Map(prev);
-        next.set(IDashboardStatic.TOTAL_FORMS, staticStats.totalForms ?? 0);
-        next.set(IDashboardStatic.ZERO_COMMENTS, staticStats.zeroResponsesCount ?? 0);
-        next.set(IDashboardStatic.ACTIVE_FORMS, staticStats.activeForms ?? 0);
-        next.set(IDashboardStatic.INACTIVE_FORMS, staticStats.inactiveForms ?? 0);
-        next.set(IDashboardStatic.DAILY_USERS, staticStats.dailyUsers ?? 0);
-        next.set(IDashboardStatic.MONTHLY_USERS, staticStats.monthlyUsers ?? 0);
+        next.set(IDashboardStatic.TOTAL_FORMS, staticStats.totalCount ?? 0);
+        next.set(IDashboardStatic.ZERO_COMMENTS, staticStats.zeroCommentsCount ?? 0);
+        next.set(IDashboardStatic.ACTIVE_FORMS, staticStats.activeCount ?? 0);
+        next.set(IDashboardStatic.INACTIVE_FORMS, staticStats.inactiveCount ?? 0);
+        next.set(IDashboardStatic.DAILY_USERS, staticStats.loginLogs?.dailyUsers ?? 0);
+        next.set(IDashboardStatic.MONTHLY_USERS, staticStats.loginLogs?.monthlyUsers ?? 0);
         return next;
       });
 
@@ -49,11 +46,12 @@ export const useDashboardStatistics = () => {
 
     try {
       const created = await fetchMonthlyFormsStats(year, IRetrieveDataType.CREATED);
-      if (!created) throw new Error("Failed to fetch created forms statistics");
-      setFormsByMonth(
+      if (!created) return;
+
+      setFormsByMonthData(
         created.map(({ count, month }) => ({
-          count,
-          month: MonthName[month],
+          value: count,
+          name: MonthName[month],
         })),
       );
     } catch (err) {
@@ -63,11 +61,12 @@ export const useDashboardStatistics = () => {
 
     try {
       const deleted = await fetchMonthlyFormsStats(year, IRetrieveDataType.DELETED);
-      if (!deleted) throw new Error("Failed to fetch deleted forms statistics");
-      setDeletedFormsByMonth(
+      if (!deleted) return;
+
+      setDeletedFormsByMonthData(
         deleted.map(({ count, month }) => ({
-          count,
-          month: MonthName[month],
+          value: count,
+          name: MonthName[month],
         })),
       );
     } catch (err) {
@@ -82,20 +81,15 @@ export const useDashboardStatistics = () => {
         const res = await fetchMonthlyFormsStats(year, operation);
         if (!res) return;
 
+        const mapped = res.map(({ count, month }) => ({
+          value: count,
+          name: MonthName[month],
+        }));
+
         if (operation === IRetrieveDataType.CREATED) {
-          setFormsByMonth(
-            res.map(({ count, month }) => ({
-              count,
-              month: MonthName[month],
-            })),
-          );
+          setFormsByMonthData(mapped);
         } else if (operation === IRetrieveDataType.DELETED) {
-          setDeletedFormsByMonth(
-            res.map(({ count, month }) => ({
-              count,
-              month: MonthName[month],
-            })),
-          );
+          setDeletedFormsByMonthData(mapped);
         }
       } catch (err) {
         console.error("Failed to fetch monthly forms stats", err);
@@ -108,18 +102,21 @@ export const useDashboardStatistics = () => {
   const getUnitsByRange = useCallback(async (range: { from: string | null; to: string | null }) => {
     try {
       const res = await fetchUnitsByRange(range);
-      setMirageUsers(res ?? []);
+      if (!res) return;
+      setMirageUsers(res);
     } catch (err) {
       console.error("Failed to fetch units by range", err);
       showErrorNotification("שגיאה בטעינת נתוני יחידות");
     }
   }, []);
 
-  const serializeMirageUsers = useMemo(() => {
+  const serializeMirageUsers = useMemo<ChartData[]>(() => {
     const map = new Map<string, number>();
-    mirageUsers.forEach(({ yechidaHatzava = "לא ידוע" }) => {
-      map.set(yechidaHatzava, (map.get(yechidaHatzava) ?? 0) + 1);
+    mirageUsers.forEach(({ yechidaHatzava }) => {
+      const unit = yechidaHatzava ?? "לא ידוע";
+      map.set(unit, (map.get(unit) ?? 0) + 1);
     });
+
     return Array.from(map, ([name, value]) => ({ name, value }));
   }, [mirageUsers]);
 
@@ -127,7 +124,7 @@ export const useDashboardStatistics = () => {
     switch (type) {
       case IRetrieveDataType.DELETED:
         return {
-          data: deletedFormsByMonth,
+          data: deletedFormsByMonthData,
           title: "כמות טפסים שנמחקו לפי חודשים",
           tooltip: "כמות טפסים שנמחקו לפי חודשים",
         };
@@ -140,7 +137,7 @@ export const useDashboardStatistics = () => {
       case IRetrieveDataType.CREATED:
       default:
         return {
-          data: formsByMonth,
+          data: formsByMonthData,
           title: "כמות טפסים שנוצרו לפי חודשים",
           tooltip: "כמות טפסים שנוצרו לפי חודשים",
         };
@@ -156,7 +153,7 @@ export const useDashboardStatistics = () => {
     {
       title: "כמות טפסים פעילים",
       value: stats.get(IDashboardStatic.ACTIVE_FORMS),
-      tooltip: "טפסים עם יותר מ־5 תגובות, כשלפחות תגובה אחת נוצרה ב־7 הימים האחרונים",
+      tooltip: "טפסים עם יותר מ־5 תגובות...",
     },
     {
       title: "כמות טפסים ללא תגובות",
@@ -185,8 +182,8 @@ export const useDashboardStatistics = () => {
     summaryCards,
     refreshStats,
     getMonthlyFormsStats,
-    formsByMonth,
-    deletedFormsByMonth,
+    formsByMonth: formsByMonthData,
+    deletedFormsByMonth: deletedFormsByMonthData,
     serializeMirageUsers,
     mirageUsers,
     getFormsChartConfig,
