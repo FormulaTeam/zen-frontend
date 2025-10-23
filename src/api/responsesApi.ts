@@ -12,6 +12,10 @@ import {
   LocationValue,
 } from "../utils/interfaces";
 import { ResponseCount } from "../types/interfaces/responses.types";
+import { useDelete } from "../utils/useDelete";
+import queryClient from "./queryClient";
+import { useCreate } from "../utils/useCreate";
+import { ExcelImportResult } from "../types/interfaces/forms.types";
 
 /**
  * Fetch all responses with optional query parameters.
@@ -289,4 +293,36 @@ export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseFo
     console.error("Failed to fetch deleted responses:", error);
     throw error;
   }
+};
+
+// Yahel's changes - above is the original file - below are the changes
+// ============================================================
+
+export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
+  return useDelete<{ form_id: string }, void>({
+    endpoint: `/responses/delete-all-form-responses`,
+    mutationKey: ["delete-all-form-responses", formId],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [formId] });
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+    },
+  });
+};
+
+export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
+  return useCreate<FormData, ExcelImportResult>({
+    endpoint: `/responses/create-form-file?form_id=${formId}`,
+    mutationKey: ["import-responses-from-file", formId],
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [formId] });
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+    },
+  });
 };

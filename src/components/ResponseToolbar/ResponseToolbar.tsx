@@ -35,8 +35,6 @@ function ResponseToolbar({
     setShowMetroInputsPopup,
     theForm,
     pushToMetro,
-    syncSourceToMetro,
-    editSource,
     copied,
     setCopied,
     metroInputsPopupLoading,
@@ -61,32 +59,12 @@ function ResponseToolbar({
     setShowErrorsFromExcelPopup,
     showErrorFileTooBig,
     excelErrorPopupLoading,
-    setExcelErrorPopupLoading,
     errorFromExcel,
     setErrorsFromExcel,
-    createExcelMold,
   } = useExcel({
     form: theForm,
     setShouldRefreshPage,
   });
-  const handleCloseMoreActions = () => {
-    setAnchorElMoreActions(null);
-    setAnchorElSourceType(null);
-  };
-
-  const handleAutomaticSource = () => {
-    if (theForm?.metro_access_url) {
-      editSource();
-    } else {
-      syncSourceToMetro();
-    }
-    handleCloseMoreActions();
-  };
-
-  const handleManualSource = () => {
-    setShowMetroInputsPopup(true);
-    handleCloseMoreActions();
-  };
 
   return (
     <Stack gap={1}>
@@ -130,7 +108,7 @@ function ResponseToolbar({
           copySchemaToClipboard={copySchemaToClipboard}
         />
       )}
-      {showImportFromExcelPopup && (
+      {/* {showImportFromExcelPopup && (
         <ImportFromExcelPopup
           form={theForm}
           setShouldRefreshPage={setShouldRefreshPage}
@@ -140,12 +118,10 @@ function ResponseToolbar({
           setShowErrorsFromExcelPopup={setShowErrorsFromExcelPopup}
           showErrorFileTooBig={showErrorFileTooBig}
           excelErrorPopupLoading={excelErrorPopupLoading}
-          setExcelErrorPopupLoading={setExcelErrorPopupLoading}
           errorFromExcel={errorFromExcel}
           setErrorsFromExcel={setErrorsFromExcel}
-          createExcelMold={createExcelMold}
         />
-      )}
+      )} */}
       <Portal>
         <Snackbar
           open={copied}

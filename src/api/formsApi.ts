@@ -4,6 +4,7 @@ import { UserData } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
 import { useDelete } from "../utils/useDelete";
+import queryClient from "./queryClient";
 
 /**
  * Fetch all forms with optional query parameters.
@@ -226,12 +227,10 @@ export const useDeleteForm = ({ id }: { id: string }) => {
   return useDelete<null, { upn: string | undefined; userName: string | undefined }>({
     endpoint: `/forms/delete/${id}`,
     mutationKey: ["deleteForm", id],
-  });
-};
-
-export const useDeleteAllFormsResponses = ({ id }: { id: string }) => {
-  return useDelete<string, { upn: string | undefined; userName: string | undefined }>({
-    endpoint: `/delete-all-form-responses`,
-    mutationKey: ["delete-all-form-responses", id],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["forms"] });
+      },
+    },
   });
 };

@@ -79,6 +79,5 @@ export const useExcel = ({
     setErrorsFromExcel,
     onChangeFile,
     downloadExcelTemplate,
-    createExcelMold
   };
 };
