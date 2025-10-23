@@ -29,12 +29,12 @@ export const useDashboardStatistics = () => {
 
       setStats((prev) => {
         const next = new Map(prev);
-        next.set(IDashboardStatic.TOTAL_FORMS, staticStats.totalCount ?? 0);
-        next.set(IDashboardStatic.ZERO_COMMENTS, staticStats.zeroCommentsCount ?? 0);
-        next.set(IDashboardStatic.ACTIVE_FORMS, staticStats.activeCount ?? 0);
-        next.set(IDashboardStatic.INACTIVE_FORMS, staticStats.inactiveCount ?? 0);
-        next.set(IDashboardStatic.DAILY_USERS, staticStats.loginLogs?.dailyUsers ?? 0);
-        next.set(IDashboardStatic.MONTHLY_USERS, staticStats.loginLogs?.monthlyUsers ?? 0);
+        next.set(IDashboardStatic.TOTAL_FORMS, staticStats.totalForms ?? 0);
+        next.set(IDashboardStatic.ZERO_COMMENTS, staticStats.zeroResponsesCount ?? 0);
+        next.set(IDashboardStatic.ACTIVE_FORMS, staticStats.activeForms ?? 0);
+        next.set(IDashboardStatic.INACTIVE_FORMS, staticStats.inactiveForms ?? 0);
+        next.set(IDashboardStatic.DAILY_USERS, staticStats.dailyUsers ?? 0);
+        next.set(IDashboardStatic.MONTHLY_USERS, staticStats.monthlyUsers ?? 0);
         return next;
       });
 
@@ -49,9 +49,9 @@ export const useDashboardStatistics = () => {
       if (!created) return;
 
       setFormsByMonthData(
-        created.map(({ count, month }) => ({
-          value: count,
+        created.map(({ month, count }) => ({
           name: MonthName[month],
+          value: count,
         })),
       );
     } catch (err) {
@@ -64,9 +64,9 @@ export const useDashboardStatistics = () => {
       if (!deleted) return;
 
       setDeletedFormsByMonthData(
-        deleted.map(({ count, month }) => ({
-          value: count,
+        deleted.map(({ month, count }) => ({
           name: MonthName[month],
+          value: count,
         })),
       );
     } catch (err) {
@@ -82,8 +82,8 @@ export const useDashboardStatistics = () => {
         if (!res) return;
 
         const mapped = res.map(({ count, month }) => ({
-          value: count,
           name: MonthName[month],
+          value: count,
         }));
 
         if (operation === IRetrieveDataType.CREATED) {

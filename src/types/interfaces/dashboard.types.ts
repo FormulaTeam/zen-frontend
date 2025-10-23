@@ -16,12 +16,14 @@ export interface LoginLogs {
 }
 
 export interface CountResult {
-  totalCount?: number;
-  zeroCommentsCount?: number;
-  activeCount?: number;
-  inactiveCount?: number;
+  totalForms: number;
+  zeroResponsesCount: number;
+  activeForms: number;
+  inactiveForms: number;
   formsByMonth?: formsByMonth[];
   deletedFormsByMonth?: formsByMonth[];
+  dailyUsers?: number;
+  monthlyUsers?: number;
   loginLogs?: LoginLogs;
   mirageUsers?: IMirageUser[];
 }

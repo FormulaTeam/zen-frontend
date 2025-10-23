@@ -76,7 +76,7 @@ const FormsChart: React.FC<FormsChartProps> = ({ type, chartType, yearFilter, da
           </LoadingOverlay>
         )}
         {chartType === IChartType.COLUMN ? (
-          <ColumnChart data={data} xKey="month" yKey="count" />
+          <ColumnChart data={data} xKey="name" yKey="value" />
         ) : (
           <PieChart data={serializeMirageUsers} />
         )}
