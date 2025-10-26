@@ -1,7 +1,8 @@
 import React, { createContext, useContext } from "react";
 import { useDashboardStatistics } from "../hooks/useDashboardStatistics";
 
-const DashboardStatisticsContext = createContext<ReturnType<typeof useDashboardStatistics> | null>(null);
+type DashboardStatisticsContextType = ReturnType<typeof useDashboardStatistics> | null;
+const DashboardStatisticsContext = createContext<DashboardStatisticsContextType>(null);
 
 export const DashboardStatisticsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const value = useDashboardStatistics();
