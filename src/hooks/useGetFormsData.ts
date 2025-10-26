@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Form, Filter } from "../utils/interfaces";
 import { useFormsQuery } from "./useFormsQuery";
 import { IOrderBy } from "../types/enums/filtersAndSorts.enum";
@@ -9,7 +9,6 @@ import { paginateForms } from "./helpers/paginateForms";
 
 export type IGetFormsData = (
   nextPage: number,
-  from: string,
   currentFilter: Filter,
   additionalFilter?: Filter,
   deleted?: boolean,
@@ -17,105 +16,82 @@ export type IGetFormsData = (
 
 export function useGetFormsData(initialForms: Form[] = [], maxInPage = 24) {
   const [formsData, setFormsData] = useState<Form[]>(initialForms);
-  const [loading, setLoading] = useState(false);
   const [loadingBottom, setLoadingBottom] = useState(false);
 
+  const { data: cachedForms, isLoading } = useFormsQuery();
   const isFetching = useRef(false);
   const pendingFilter = useRef<Filter | null>(null);
-
-  const { data: cachedForms, isLoading: isQueryLoading } = useFormsQuery();
+  const hasInitialized = useRef(false);
+  const lastAppliedFilter = useRef<Filter | null>(null);
 
   useEffect(() => {
-    if (!cachedForms) return;
-
-    const filter = pendingFilter.current || {
-      query: {},
-      sortBy: "name",
-      orderBy: "ASC",
-      pageNumber: 1,
-      pageSize: maxInPage,
-    };
-
-    const filtered = paginateForms(
-      sortForms(filterForms(cachedForms, filter.query), filter.sortBy, filter.orderBy),
-      filter.pageNumber,
-      filter.pageSize,
-    );
-
-    setFormsData(filtered);
+    if (!cachedForms || !lastAppliedFilter.current) return;
+    const filter = lastAppliedFilter.current;
+    const filtered = filterForms(cachedForms, filter.query);
+    const sorted = sortForms(filtered, filter.sortBy, filter.orderBy);
+    const processed = paginateForms(sorted, filter.pageNumber, filter.pageSize);
+    setFormsData(processed);
   }, [cachedForms]);
 
   const getData: IGetFormsData = async (
     nextPage,
-    from,
     currentFilter = {},
     additionalFilter = {},
     deleted = false,
   ) => {
     if (isFetching.current) return;
+    isFetching.current = true;
+    hasInitialized.current = true;
 
-    const sortBy = additionalFilter.sortBy ?? currentFilter.sortBy ?? "name";
-    const orderBy = (additionalFilter.orderBy ?? currentFilter.orderBy ?? "ASC") as
-      | IOrderBy.ASC
-      | IOrderBy.DESC;
+    const isFirstPage = nextPage === 1;
+    if (!isFirstPage) setLoadingBottom(true);
 
     const filter: Filter = {
       query: { ...currentFilter.query, ...additionalFilter.query },
       pageSize: maxInPage,
       pageNumber: nextPage,
-      sortBy,
-      orderBy,
+      sortBy: additionalFilter.sortBy ?? currentFilter.sortBy ?? "name",
+      orderBy: (additionalFilter.orderBy ?? currentFilter.orderBy ?? "ASC") as
+        | IOrderBy.ASC
+        | IOrderBy.DESC,
       signal: additionalFilter.signal,
       deleted,
     };
 
-    const isFirstPage = nextPage === 1;
-    setLoading(isFirstPage);
-    setLoadingBottom(!isFirstPage);
-    isFetching.current = true;
+    pendingFilter.current = filter;
+    lastAppliedFilter.current = filter;
 
     try {
       const baseForms = cachedForms ?? [];
+      if (!baseForms.length) return [];
 
-      pendingFilter.current = filter;
-
-      if (!baseForms.length) {
-        return;
-      }
-
-      const processed = paginateForms(
-        sortForms(filterForms(baseForms, filter.query), filter.sortBy, filter.orderBy),
-        filter.pageNumber,
-        filter.pageSize,
-      );
+      const filtered = filterForms(baseForms, filter.query);
+      const sorted = sortForms(filtered, filter.sortBy, filter.orderBy);
+      const processed = paginateForms(sorted, filter.pageNumber, filter.pageSize);
 
       setFormsData((prev) => (isFirstPage ? processed : [...prev, ...processed]));
-
       return processed;
     } catch (err: any) {
       if (err?.message !== "canceled") {
         console.error("useGetFormsData error:", err);
         showErrorNotification("שליפת הטפסים נכשלה");
       }
-
       return [];
     } finally {
       isFetching.current = false;
-      setLoading(false);
-      setLoadingBottom(false);
+      if (!isFirstPage) setLoadingBottom(false);
     }
   };
 
   const getFormsByIds = async (ids: number[]) => {
-    if (!ids.length) return [];
+    if (!ids.length || !cachedForms?.length) return [];
 
-    const available = cachedForms?.filter((f) => ids.includes(f.id)) ?? [];
+    const available = cachedForms.filter((f) => ids.includes(f.id));
     if (!available.length) return [];
 
     setFormsData((prev) => {
       const merged = new Map(prev.map((f) => [f.id, f]));
-      available.forEach((form) => merged.set(form.id, form));
-
+      available.forEach((f) => merged.set(f.id, f));
       return Array.from(merged.values());
     });
 
@@ -125,11 +101,9 @@ export function useGetFormsData(initialForms: Form[] = [], maxInPage = 24) {
   return {
     formsData,
     setFormsData,
-    loading: loading || isQueryLoading,
-    setLoading,
     loadingBottom,
-    setLoadingBottom,
     getData,
     getFormsByIds,
+    isLoading,
   };
 }

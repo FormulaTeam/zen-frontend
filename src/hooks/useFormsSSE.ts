@@ -37,7 +37,7 @@ export function useFormsSSE(currentUserUpn: string) {
 
           if (data.affectedUsers && !data.affectedUsers.includes(currentUserUpn)) return;
 
-          queryClient.setQueryData(["forms"], (old: any) => {
+          queryClient.setQueryData(["forms"], (old: Form[]) => {
             if (!Array.isArray(old)) return old ?? [];
 
             switch (data.type) {
@@ -51,7 +51,7 @@ export function useFormsSSE(currentUserUpn: string) {
 
               case "form-deleted":
                 if (!data.formId) return old;
-                return old.filter((f) => f.id !== data.formId);
+                return old.filter((f) => f.id !== Number(data.formId));
 
               case "form-restored":
                 if (!data.form) return old;
@@ -66,7 +66,7 @@ export function useFormsSSE(currentUserUpn: string) {
             }
           });
         } catch (err) {
-          console.error("❌ SSE parse error:", err);
+          console.error("SSE parse error:", err);
         }
       };
 

@@ -9,5 +9,6 @@ export function useFormsQuery() {
       const forms = await getForms();
       return forms;
     },
+    refetchOnMount: "always",
   });
 }

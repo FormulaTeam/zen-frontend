@@ -80,7 +80,7 @@ export const useDeletedResponses = (
    * @returns Array of forms.
    */
   const wrappedGetForms = async (filter: Filter): Promise<Form[]> => {
-    const result = await getData(1, "deleted-responses-search", filter);
+    const result = await getData(1, filter);
     return result || [];
   };
 
@@ -110,7 +110,7 @@ export const useDeletedResponses = (
 
         const userUpn = user?.upn?.toLowerCase();
 
-        const loadedForms = await getData(1, "auto-load-for-permissions", {
+        const loadedForms = await getData(1, {
           query: {
             $or: [{ owner_upn: userUpn }, { "users.upn": userUpn }],
           },

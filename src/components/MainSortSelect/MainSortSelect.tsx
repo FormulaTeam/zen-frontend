@@ -8,7 +8,7 @@ import rtlPlugin from "stylis-plugin-rtl";
 import { StyledAutocomplete, StyledTextField } from "./styled";
 import { IOrderBy } from "../../types/enums/filtersAndSorts.enum";
 
-const MainSortSelect = ({ setFormsData, setPage, getSortFilter, setLoading, setCurrentFilter }) => {
+const MainSortSelect = ({ setFormsData, setPage, getSortFilter, setCurrentFilter }) => {
   useEffect(() => {}, []);
   const cacheRtl = createCache({
     key: "muirtl",
@@ -31,7 +31,6 @@ const MainSortSelect = ({ setFormsData, setPage, getSortFilter, setLoading, setC
     };
 
     filter = getSortFilter(newValue?.value, filter);
-    setLoading(true);
     setCurrentFilter(filter);
 
     if (newValue && newValue?.label.length !== 1) {
