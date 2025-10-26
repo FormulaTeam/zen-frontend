@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Box,
   Paper,
@@ -16,8 +16,8 @@ import { useStatisticsDateFilter } from "../../hooks/useStatisticsDateFilter";
 import { IRetrieveDataType } from "../../types/enums/dashboard";
 import { useDashboardStatisticsContext } from "../../contexts/DashboardStatisticsContext";
 import { IMirageUser } from "../../types/interfaces/dashboard.types";
+import ReactLoading from "react-loading";
 
-/** Safe sort helper that handles nulls */
 const getComparator =
   (field: keyof IMirageUser, asc: boolean) =>
   (a: IMirageUser, b: IMirageUser): number => {
@@ -31,29 +31,21 @@ const UnitsTable: React.FC = () => {
   const [sortField, setSortField] = useState<keyof IMirageUser>("loginAt");
   const [asc, setAsc] = useState(false);
 
-  const { getUnitsByRange, mirageUsers } = useDashboardStatisticsContext();
+  const { unitsRangeQuery } = useDashboardStatisticsContext();
 
-  const { handleDateChange, handleClearRange, range, triggerFetch } =
-    useStatisticsDateFilter(getUnitsByRange, async () => {}, IRetrieveDataType.UNITS);
+  const { range, handleDateChange, handleClearRange } = useStatisticsDateFilter(
+    async () => Promise.resolve(),
+    async () => Promise.resolve(),
+    IRetrieveDataType.UNITS,
+  );
 
-  // Fetch initial data
-  useEffect(() => {
-    triggerFetch();
-  }, []);
+  const mirageUsers = unitsRangeQuery.data ?? [];
+  const isLoading = unitsRangeQuery.isLoading;
 
-  // Refetch when range changes
-  useEffect(() => {
-    if (range.from || range.to) {
-      triggerFetch();
-    }
-  }, [range, triggerFetch]);
-
-  /** Sort the mirage users */
   const sortedMirageUsers = useMemo(() => {
     return [...mirageUsers].sort(getComparator(sortField, asc));
   }, [mirageUsers, sortField, asc]);
 
-  /** Totals per unit */
   const totals = useMemo(() => {
     const map = new Map<string, number>();
     mirageUsers.forEach((r) => {
@@ -75,8 +67,7 @@ const UnitsTable: React.FC = () => {
     <TableCell
       align="right"
       sx={{ fontWeight: 700, cursor: "pointer" }}
-      onClick={() => onHeaderClick(field)}
-    >
+      onClick={() => onHeaderClick(field)}>
       {label}
       {sortField === field ? (asc ? " ↑" : " ↓") : ""}
     </TableCell>
@@ -90,7 +81,25 @@ const UnitsTable: React.FC = () => {
         handleClearRange={handleClearRange}
       />
 
-      <TableContainer component={Paper} sx={{ flex: 1, maxHeight: 500 }}>
+      <TableContainer component={Paper} sx={{ flex: 1, maxHeight: 500, position: "relative" }}>
+        {isLoading && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(255,255,255,0.6)",
+              zIndex: 1,
+            }}>
+            <ReactLoading type="spinningBubbles" color="#1976d2" />
+          </Box>
+        )}
+
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
@@ -104,12 +113,9 @@ const UnitsTable: React.FC = () => {
             {sortedMirageUsers.map((row) => (
               <TableRow
                 key={`${row.id}-${row.loginAt ?? "unknown"}`}
-                sx={{ "& td": { textAlign: "right" } }}
-              >
+                sx={{ "& td": { textAlign: "right" } }}>
                 <TableCell>
-                  {row.loginAt
-                    ? dayjs(row.loginAt).format("DD/MM/YYYY HH:mm")
-                    : "לא ידוע"}
+                  {row.loginAt ? dayjs(row.loginAt).format("DD/MM/YYYY HH:mm") : "לא ידוע"}
                 </TableCell>
                 <TableCell>{row.id}</TableCell>
                 <TableCell>{row.yechidaHatzava ?? "לא ידוע"}</TableCell>

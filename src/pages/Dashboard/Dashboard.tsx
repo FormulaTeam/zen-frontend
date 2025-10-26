@@ -15,12 +15,8 @@ export const Header = styled(Box)`
 `;
 
 const Dashboard: React.FC = () => {
-  const { summaryCards, refreshStats } = useDashboardStatisticsContext();
+  const { summaryCards } = useDashboardStatisticsContext();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    refreshStats();
-  }, [refreshStats]);
 
   return (
     <Container>

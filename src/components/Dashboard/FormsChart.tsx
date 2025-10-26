@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import CardContent from "@mui/material/CardContent";
 import SectionTitle from "./SectionTitle";
 import ColumnChart from "../Charts/ColumnChart";
@@ -31,30 +31,33 @@ type FormsChartProps = {
 
 const FormsChart: React.FC<FormsChartProps> = ({ type, chartType, yearFilter, dateFilter }) => {
   const {
-    formsByMonth,
-    deletedFormsByMonth,
-    getMonthlyFormsStats,
+    createdFormsQuery,
+    deletedFormsQuery,
+    unitsRangeQuery,
     getFormsChartConfig,
     serializeMirageUsers,
-    getUnitsByRange,
   } = useDashboardStatisticsContext();
 
-  const {
-    range,
-    year,
-    loading,
-    nextYear,
-    prevYear,
-    handleDateChange,
-    handleClearRange,
-  } = useStatisticsDateFilter(getUnitsByRange, getMonthlyFormsStats, type);
+  const { range, year, nextYear, prevYear, handleDateChange, handleClearRange } =
+    useStatisticsDateFilter(
+      async () => Promise.resolve(),
+      async () => Promise.resolve(),
+      type,
+    );
 
   const theme = useTheme();
 
   const { data, title, tooltip } = useMemo(
     () => getFormsChartConfig(type),
-    [type, formsByMonth, deletedFormsByMonth, serializeMirageUsers],
+    [type, createdFormsQuery.data, deletedFormsQuery.data, serializeMirageUsers],
   );
+
+  const isLoading =
+    type === IRetrieveDataType.CREATED
+      ? createdFormsQuery.isLoading
+      : type === IRetrieveDataType.DELETED
+      ? deletedFormsQuery.isLoading
+      : unitsRangeQuery.isLoading;
 
   return (
     <CardContent>
@@ -69,8 +72,9 @@ const FormsChart: React.FC<FormsChartProps> = ({ type, chartType, yearFilter, da
           />
         </PickerRow>
       )}
+
       <ChartContainer>
-        {loading && (
+        {isLoading && (
           <LoadingOverlay>
             <ReactLoading type="spinningBubbles" color={theme.palette.primary.main} />
           </LoadingOverlay>
