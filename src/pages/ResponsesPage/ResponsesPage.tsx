@@ -19,7 +19,7 @@ interface ResponsesPageProps {
   roles: Role[];
 }
 
-export default function ResponsesPagez({
+export default function ResponsesPage({
   user,
   shouldRefreshPage,
   setShouldRefreshPage,
