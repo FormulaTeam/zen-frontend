@@ -134,7 +134,7 @@ export const formsTabs = {
 
 export interface SortOption {
   label: string;
-  value: string;
+  value: number;
 }
 
 export interface UserPickerOption {
