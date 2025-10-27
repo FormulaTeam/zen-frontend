@@ -19,10 +19,7 @@ interface MenusContainerProps {
   pushToMetro: () => void;
   anchorElMoreActions: HTMLElement | null;
   anchorElSourceType: HTMLElement | null;
-  handleManualSource: () => void;
-  handleAutomaticSource: () => void;
   setAnchorElSourceType: (value: HTMLElement | null) => void;
-  handleCloseMoreActions: () => void;
 }
 
 const MenusContainer: React.FC<MenusContainerProps> = ({
@@ -36,11 +33,7 @@ const MenusContainer: React.FC<MenusContainerProps> = ({
   setShowImportFromExcelPopup,
   pushToMetro,
   anchorElMoreActions,
-  anchorElSourceType,
-  handleManualSource,
-  handleAutomaticSource,
   setAnchorElSourceType,
-  handleCloseMoreActions,
 }) => {
   const navigate = useNavigate();
   const { isSuperAdmin } = useSuperAdmin();

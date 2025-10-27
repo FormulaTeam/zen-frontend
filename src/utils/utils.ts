@@ -100,7 +100,31 @@ export const RESPONSE_ACCESS_PERMISSIONS = [
   PERMISSION_TYPES.EXPORT_FORM,
 ];
 
+export type LegacyPermission = (typeof PERMISSION_TYPES)[keyof typeof PERMISSION_TYPES];
+
 export const CREATE_RESPONSE_PERMISSIONS = [PERMISSION_TYPES.CREATE_RESPONSE];
+// human labels for debug/admin UI
+export const PERMISSION_LABELS: Record<LegacyPermission, string> = {
+  [PERMISSION_TYPES.CREATE_FORM]: "Create form",
+  [PERMISSION_TYPES.DELETE_FORM]: "Delete form",
+  [PERMISSION_TYPES.EDIT_FORM]: "Edit form",
+  [PERMISSION_TYPES.SHARE_FORM]: "Share form",
+  [PERMISSION_TYPES.SYNC_FORM]: "Sync form",
+  [PERMISSION_TYPES.EXPORT_FORM]: "Export form",
+  [PERMISSION_TYPES.CREATE_RESPONSE]: "Create response",
+  [PERMISSION_TYPES.DELETE_RESPONSE]: "Delete response",
+  [PERMISSION_TYPES.EDIT_RESPONSE]: "Edit response",
+  [PERMISSION_TYPES.VIEW_RESPONSE]: "View any response",
+  [PERMISSION_TYPES.VIEW_YOUR_RESPONSES]: "View your own responses",
+};
+
+export function makePermSet(perms?: number[] | null) {
+  return new Set<number>(perms ?? []);
+}
+
+export function hasPerm(permsSet: Set<number>, p: LegacyPermission) {
+  return permsSet.has(p);
+}
 
 export const formsTabs = {
   currentUserCreated: 0,
@@ -110,7 +134,7 @@ export const formsTabs = {
 
 export interface SortOption {
   label: string;
-  value: string;
+  value: number;
 }
 
 export interface UserPickerOption {
@@ -453,7 +477,7 @@ export function getFieldType(field: FormField) {
 export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
   // Sort responses by id in ascending order to maintain consistent order
   const sortedResponses = [...responsesArr].sort((a, b) => (a.id || 0) - (b.id || 0));
-  
+
   const formFields = form.fields;
   const formFieldsIds: string[] = [];
   const data: any[] = [];
@@ -1116,7 +1140,11 @@ export const isOnlyBlankStrings = (arr: string[] | undefined | null): boolean =>
  * @param description - Optional description for the form (empty string for new forms)
  * @returns Initial form object structure
  */
-export const getInitialNewForm = (currentUser: any, title: string = "", description: string = "") => {
+export const getInitialNewForm = (
+  currentUser: any,
+  title: string = "",
+  description: string = "",
+) => {
   const currentUserLowerCaseUpn = currentUser?.upn?.toLowerCase();
   const userName = getUserName(currentUser.firstName, currentUser.lastName);
 

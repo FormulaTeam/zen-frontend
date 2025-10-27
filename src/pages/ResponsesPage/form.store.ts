@@ -1,11 +1,12 @@
 import { create } from "zustand";
 import { Form } from "../../utils/interfaces";
+import { LegacyPermission } from "../../utils/utils";
 
 interface FormsState {
   form: Form | null;
   setForm: (form: Form | null) => void;
   columns?: any[];
-  permissions?: number[];
+  permissions?: LegacyPermission[];
   setPermissions: (permissions: number[]) => void;
 }
 
