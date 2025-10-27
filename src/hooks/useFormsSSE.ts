@@ -34,7 +34,6 @@ export function useFormsSSE(currentUserUpn: string) {
       es.onmessage = (ev) => {
         try {
           const data: FormEventPayload = JSON.parse(ev.data);
-
           if (data.affectedUsers && !data.affectedUsers.includes(currentUserUpn)) return;
 
           queryClient.setQueryData(["forms"], (old: Form[]) => {
