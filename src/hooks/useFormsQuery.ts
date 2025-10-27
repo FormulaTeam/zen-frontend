@@ -1,13 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { getForms } from "../api/formsApi";
 import { Form } from "../utils/interfaces";
+import { useFetch } from "../utils/useFetch";
 
 export function useGetFormsQuery() {
-  return useQuery<Form[], Error>({
-    queryKey: ["forms"],
-    queryFn: async (): Promise<Form[]> => {
-      const forms = await getForms();
-      return forms;
-    },
+  return useFetch<undefined, Form[]>({
+    queryKey: () => ["forms"],
+    endpoint: "/forms/get-forms",
   });
 }

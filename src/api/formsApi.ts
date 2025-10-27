@@ -19,8 +19,9 @@ export const getForms = async (filter?: Filter): Promise<Form[]> => {
     pageNumber: filter?.pageNumber,
   };
   try {
-    const response = await apiClient.post<Form>("/forms/get-forms", params, {
-      signal: filter?.signal, // pass a signal if attached to the filter
+    const response = await apiClient.get<Form[]>("/forms/get-forms", {
+      params,
+      signal: filter?.signal,
     });
     if (!Array.isArray(response?.data)) {
       console.log("response:", response, "type: ", typeof response);
