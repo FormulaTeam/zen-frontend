@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { sortByOptions, SortOption } from "../../utils/utils";
-import { Filter } from "../../utils/interfaces";
+import { Filter, Form } from "../../utils/interfaces";
 import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
 import { prefixer } from "stylis";
@@ -8,7 +8,14 @@ import rtlPlugin from "stylis-plugin-rtl";
 import { StyledAutocomplete, StyledTextField } from "./styled";
 import { IOrderBy } from "../../types/enums/filtersAndSorts.enum";
 
-const MainSortSelect = ({ setFormsData, setPage, getSortFilter, setCurrentFilter }) => {
+interface MainSortSelectProps {
+  setFormsData: React.Dispatch<React.SetStateAction<Form[]>>;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+  getSortFilter: (newValueInt: number, filter: Filter) => Filter;
+  setCurrentFilter: React.Dispatch<React.SetStateAction<Filter | null>>;
+}
+
+const MainSortSelect: React.FC<MainSortSelectProps> = ({ setFormsData, setPage, getSortFilter, setCurrentFilter }) => {
   useEffect(() => {}, []);
   const cacheRtl = createCache({
     key: "muirtl",
@@ -30,7 +37,7 @@ const MainSortSelect = ({ setFormsData, setPage, getSortFilter, setCurrentFilter
       orderBy: IOrderBy.ASC,
     };
 
-    filter = getSortFilter(newValue?.value, filter);
+    filter = getSortFilter(newValue?.value || 0, filter);
     setCurrentFilter(filter);
 
     if (newValue && newValue?.label.length !== 1) {

@@ -4,7 +4,7 @@ import { styled } from "@mui/material/styles";
 
 type SortOption = {
   label: string;
-  value: string;
+  value: number;
 };
 
 interface StyledAutocompleteProps {
