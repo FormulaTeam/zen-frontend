@@ -14,7 +14,7 @@ import {
 } from "@mui/icons-material";
 import { FieldsIcons } from "../utils/interfaces";
 
-export const fieldsIcons: FieldsIcons = {
+export const FORM_ELEMENT_ICONS: FieldsIcons = {
   menu: <Menu />,
   dragHandle: <DragHandle />,
   moreVert: <MoreVert />,

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FieldTypeIds, Filter, FormField, NotificationTexts, Role } from "../utils/interfaces";
+import { ElementTypeIds, Filter, FormField, NotificationTexts, Role } from "../utils/interfaces";
 import {
   checkUserAccessForResponse,
   showErrorNotification,
@@ -63,7 +63,7 @@ export const useChildForms = ({
     let childrenIds = [
       ...new Set<number>(
         formFields
-          .filter((child) => child.connectedFormId && child.typeId === FieldTypeIds.form)
+          .filter((child) => child.connectedFormId && child.typeId === ElementTypeIds.form)
           .map((child) => child.connectedFormId),
       ),
     ]; // Check user permissions for child forms
@@ -159,7 +159,7 @@ export const useChildForms = ({
       }
     } else {
       const children = formFields
-        .filter((field) => field.typeId === FieldTypeIds.form && field.connectedFormId)
+        .filter((field) => field.typeId === ElementTypeIds.form && field.connectedFormId)
         .map((field) => ({ ...field, shouldSave: true }));
 
       const newChildForms = childrenIds.map((id) => {
@@ -275,7 +275,7 @@ export const useChildForms = ({
         if (childForm) {
           const fieldTemplate = formFields.find(
             (field) =>
-              field.typeId === FieldTypeIds.form && field.connectedFormId === childForm.formId,
+              field.typeId === ElementTypeIds.form && field.connectedFormId === childForm.formId,
           );
           if (fieldTemplate) {
             // Create a unique copy with a new unique identifier for each instance

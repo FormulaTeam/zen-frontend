@@ -6,7 +6,7 @@ import {
   upsertSourceToMetro,
 } from "../api";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
-import { FieldTypeIds } from "../utils/interfaces";
+import { ElementTypeIds } from "../utils/interfaces";
 
 export const useMetro = ({
   form,
@@ -106,7 +106,7 @@ export const useMetro = ({
           (field) => `{
           "name": "${field.name}",
         "type": ${
-          field.typeId === FieldTypeIds.number // if field is a number field
+          field.typeId === ElementTypeIds.number // if field is a number field
             ? '["null", "double", "int"]'
             : '["null", "string"]'
         },

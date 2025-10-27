@@ -11,6 +11,7 @@ import {
   FormGroup,
   Grid,
   InputLabel,
+  LinearProgress,
   MenuItem,
   Radio,
   RadioGroup,
@@ -19,15 +20,14 @@ import {
   Tooltip,
   Typography,
   useTheme,
-  LinearProgress,
 } from "@mui/material";
 
 import { Close, Info } from "@mui/icons-material";
 import {
   connectionTypes,
   DRAGGED_ITEM_ID,
+  ElementTypeIds,
   fieldConnectionTooltipTexts,
-  FieldTypeIds,
   Form,
   FormField,
 } from "../../utils/interfaces";
@@ -39,7 +39,6 @@ import Loading from "react-loading";
 import BaseFormInput from "../BaseFormInput/BaseFormInput";
 import DefaultValueAutocomplete from "./DefaultValueAutocomplete";
 import ErrorMessage from "../CreateForm/ErrorMessage";
-import { isOnlyBlankStrings } from "../../utils/utils";
 
 export interface ParentField {
   parentFieldId?: string;
@@ -201,7 +200,7 @@ export default function OptionsField({
   function getFilteredOptionsForSelection() {
     // if the field is connected to another field, we only show options that are not already connected
     const baseFilter = (item: FormField) =>
-      item.uniqueId !== formField.uniqueId && item.typeId === FieldTypeIds.options;
+      item.uniqueId !== formField.uniqueId && item.typeId === ElementTypeIds.options;
 
     // form connection type
     const formConnectionFilter = (item: FormField) =>
@@ -446,9 +445,9 @@ export default function OptionsField({
               // It won't affect the functionality since it is not used as a real typeId
               const filtered = options.filter((option) => {
                 return [
-                  FieldTypeIds.smallText,
-                  FieldTypeIds.longText,
-                  FieldTypeIds.number,
+                  ElementTypeIds.smallText,
+                  ElementTypeIds.longText,
+                  ElementTypeIds.number,
                   DRAGGED_ITEM_ID,
                 ].includes(option.typeId);
               });

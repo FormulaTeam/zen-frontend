@@ -1,5 +1,5 @@
 import { FormField } from "../types/interfaces/tableViews.types";
-import { DEFAULT_FIELDS } from "../utils/interfaces";
+import { FORM_ELEMENTS } from "../utils/interfaces";
 
 // System columns meta (not part of form.fields)
 const SYSTEM_COLUMNS_META: Record<string, { displayName: string; type: string }> = {
@@ -33,9 +33,8 @@ export const useViewFieldHelpers = ({
   const getFieldType = (columnId: string): string => {
     const field = form?.fields?.find((f: FormField) => f.uniqueId === columnId);
     if (field) {
-      const defaultField = DEFAULT_FIELDS.find(
-        (defField) => defField.typeId === (field as any).typeId,
-      );
+      const defaultField = FORM_ELEMENTS[(field as any).typeId];
+
       return defaultField?.name || field.fieldType || "לא ידוע";
     }
     // System column type

@@ -1,0 +1,8 @@
+.templateDragOverlay{
+    /*opacity: 0.25;*/
+    border-radius: 15px;
+    border: 2px dashed teal;
+    height: 50px;
+    width: 100px;
+}
+

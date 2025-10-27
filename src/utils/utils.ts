@@ -6,12 +6,12 @@ import moment from "moment";
 import { searchResponses } from "../api";
 import {
   CustomFormField,
-  FieldTypeIds,
-  FieldTypes,
+  ElementTypeIds,
+  FieldDataTypes,
   Filter,
   Form,
+  FormElementTypeId,
   FormField,
-  FormFieldTypeId,
   FormUser,
   LinkValue,
   LocationValue,
@@ -132,8 +132,10 @@ export const permissionsOptions = [
   { value: 3, label: "רק למי שאני שיתפתי את הטופס" },
 ];
 
+const DEFAULT_ICON_NAME = "defaultIcon";
+
 export const formIconsNamesMap = new Map<string, any>([
-  ["defaultIcon", formX],
+  [DEFAULT_ICON_NAME, formX],
   ["examDefault", examDefault],
   ["examDefault", examDefault],
   ["binoculars", binoculars],
@@ -163,6 +165,10 @@ export const formIconsNamesMap = new Map<string, any>([
   ["txt", txt],
   ["xls", xls],
 ]);
+
+export function getFormIconByName(iconName?:string){
+  return formIconsNamesMap.get(iconName ?? DEFAULT_ICON_NAME);
+}
 
 export const numberToHebrewLetterMap = new Map<number, string>([
   [1, "א"],
@@ -369,7 +375,7 @@ export function createExcelMold(form) {
   //add column for each field and save fields order with arr of names
   let names: string[] = [];
   formFields.forEach((field, j) => {
-    if (field.typeId === FieldTypeIds.form) {
+    if (field.typeId === ElementTypeIds.form) {
       // If the field is of type 'form', we skip it as it doesn't have a value in the response
       return;
     }
@@ -441,7 +447,7 @@ export function getFieldType(field: FormField) {
       case 3:
       case 4:
       case 6:
-      case FieldTypeIds.list:
+      case ElementTypeIds.list:
         return "string";
       case 5:
         return "Date";
@@ -453,7 +459,7 @@ export function getFieldType(field: FormField) {
 export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
   // Sort responses by id in ascending order to maintain consistent order
   const sortedResponses = [...responsesArr].sort((a, b) => (a.id || 0) - (b.id || 0));
-  
+
   const formFields = form.fields;
   const formFieldsIds: string[] = [];
   const data: any[] = [];
@@ -471,7 +477,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
     //add column for each field and save fields order with arr of names
     let names: string[] = [];
     formFields.forEach((field, j) => {
-      if (field.typeId === FieldTypeIds.form) {
+      if (field.typeId === ElementTypeIds.form) {
         delete data[i][field.displayName];
         return;
       }
@@ -493,7 +499,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
 
   formFields.forEach((field, i) => {
     let uniqueId = field?.uniqueId;
-    if (uniqueId && uniqueId === FieldTypeIds.form.toString()) {
+    if (uniqueId && uniqueId === ElementTypeIds.form.toString()) {
       // If the field is of type 'form', we skip it as it doesn't have a value in the response
       return;
     }
@@ -509,7 +515,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
       const fieldValuesWithMetaData = element.data.reduce<
         (ResponseFieldValue & {
           displayName: string;
-          typeId: (typeof FieldTypeIds)[keyof typeof FieldTypeIds];
+          typeId: (typeof ElementTypeIds)[keyof typeof ElementTypeIds];
           dateAndTime?: boolean;
         })[]
       >((acc, field) => {
@@ -518,7 +524,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
         );
         if (currentFieldMetaData) {
           const { displayName, typeId, dateAndTime } = currentFieldMetaData;
-          const validTypeId = typeId as FormFieldTypeId;
+          const validTypeId = typeId as FormElementTypeId;
           const { value, uniqueId } = field;
           acc.push({ displayName, value, uniqueId, dateAndTime, typeId: validTypeId });
         }
@@ -528,7 +534,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
       for (const { displayName, typeId, value, uniqueId, dateAndTime } of fieldValuesWithMetaData) {
         if (formFieldsIds.includes(uniqueId)) {
           let formattedValue: string | { f: string } = "";
-          if (typeId === FieldTypeIds.form) {
+          if (typeId === ElementTypeIds.form) {
             // If the field is of type 'form', we skip it as it doesn't have a value in the response
             continue;
           }
@@ -537,26 +543,26 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
             continue;
           }
           switch (typeId) {
-            case FieldTypeIds.longText:
+            case ElementTypeIds.longText:
               formattedValue = value as string;
               break;
-            case FieldTypeIds.smallText:
+            case ElementTypeIds.smallText:
               formattedValue = value as string;
               break;
-            case FieldTypeIds.options:
+            case ElementTypeIds.options:
               if (Array.isArray(value)) {
                 formattedValue = value.join(",");
               } else {
                 formattedValue = value as string;
               }
               break;
-            case FieldTypeIds.link:
+            case ElementTypeIds.link:
               const linkValue = value as LinkValue;
               formattedValue = {
                 f: '=HYPERLINK("' + linkValue.link + `","${linkValue.linkTxt}")`,
               };
               break;
-            case FieldTypeIds.date:
+            case ElementTypeIds.date:
               const dateValue = value as string;
               const isValidDate = moment(dateValue).isValid();
               if (!isValidDate) {
@@ -566,7 +572,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
                 formattedValue = moment(dateValue).format(DEFAULT_DATE_FORMAT);
               }
               break;
-            case FieldTypeIds.hour:
+            case ElementTypeIds.hour:
               const timeValue = value as string;
               // If it's already in the correct format, use it directly
               if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(timeValue)) {
@@ -578,19 +584,19 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
               }
               break;
 
-            case FieldTypeIds.location:
+            case ElementTypeIds.location:
               const locationValue = value as LocationValue;
               formattedValue = locationValue.x + "," + locationValue.y;
               break;
-            case FieldTypeIds.number:
+            case ElementTypeIds.number:
               formattedValue = String(value);
               break;
-            case FieldTypeIds.checkbox:
+            case ElementTypeIds.checkbox:
               if (value === false) formattedValue = "לא";
               if (value === true) formattedValue = "כן";
               break;
 
-            case FieldTypeIds.list:
+            case ElementTypeIds.list:
               const multiInputFieldValue = value as MultiInputFieldValues;
 
               formattedValue = multiInputFieldValue.join(";");
@@ -976,9 +982,9 @@ export function generateNewFormFieldData(item: Partial<CustomFormField>) {
     uniqueId,
     name: "",
     displayName: "",
-    typeId: item.typeId as FormFieldTypeId,
+    typeId: item.typeId as FormElementTypeId,
     required: false,
-    fieldType: item.fieldType || FieldTypes.string,
+    fieldType: item.fieldType || FieldDataTypes.string,
     index: 0,
     // would have make more sense to use item.displayName over item.name but,
     // for default formfields, name is the only property that avaliable so we use it.
@@ -992,7 +998,7 @@ export function generateNewFormFieldData(item: Partial<CustomFormField>) {
     sectionOrder: item.sectionId && item.sectionOrder ? item.sectionOrder : 0,
   };
 
-  if (item.typeId === FieldTypeIds.options) {
+  if (item.typeId === ElementTypeIds.options) {
     newField.options = ["", ""];
   }
   return newField;

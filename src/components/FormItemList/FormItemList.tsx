@@ -1,36 +1,29 @@
-import { Droppable, Draggable, DraggableProvided, DraggableStateSnapshot } from "@hello-pangea/dnd";
-import {
-  Autocomplete,
-  Box,
-  Button,
-  Paper,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-  useTheme,
-} from "@mui/material";
-import { fieldsIcons } from "../FieldsIcons";
+import { Draggable, DraggableProvided, DraggableStateSnapshot, Droppable } from "@hello-pangea/dnd";
+import { Box, Button, Paper, Stack, Tooltip, Typography, useTheme } from "@mui/material";
+import { FORM_ELEMENT_ICONS } from "../FORM_ELEMENT_ICONS";
 import { useEffect, useState } from "react";
-import { Add, Info, Search, Settings } from "@mui/icons-material";
-import BaseFormInput from "../BaseFormInput/BaseFormInput";
+import { Add, Info, Settings } from "@mui/icons-material";
 import { texts } from "../../utils/texts";
+import { FormElements } from "../../utils/interfaces";
+
+interface Props {
+  items: Partial<FormElements>;
+  addItemToFormFields: any;
+  customFields: any;
+  addSection: any;
+  openConditionsPopup: any;
+}
 
 function FormItemList({
-  items,
-  addItemToFormFields,
-  customFields,
-  addSection,
-  openConditionsPopup,
-}) {
+                        items,
+                        addItemToFormFields,
+                        customFields,
+                        addSection,
+                        openConditionsPopup,
+                      }: Props) {
   const theme = useTheme();
 
-  const [searchTerm, setSearchTerm] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
-
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [filteredFields, setFilteredFields] = useState(items);
-  const [filteredCustomFields, setFilteredCustomFields] = useState(customFields);
 
   useEffect(() => {
     const categories: string[] = Array.from(
@@ -38,23 +31,6 @@ function FormItemList({
     );
     setCategories(categories);
   }, [customFields]);
-
-  useEffect(() => {
-    setFilteredFields(
-      items.filter(
-        (item) =>
-          item.name?.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          (selectedCategories.length === 0 || selectedCategories.includes(item.category)),
-      ),
-    );
-    setFilteredCustomFields(
-      customFields.filter(
-        (item) =>
-          item.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          (selectedCategories.length === 0 || selectedCategories.includes(item.category)),
-      ),
-    );
-  }, [searchTerm, selectedCategories, items, customFields]);
 
   return (
     <Box
@@ -91,58 +67,7 @@ function FormItemList({
           <Info color="disabled" sx={{ cursor: "pointer" }} />
         </Tooltip>
       </Box>
-      <Box
-        mb={0}
-        textAlign="right"
-        display="flex"
-        alignItems="center"
-        justifyContent="flex-start"
-        gap={1}></Box>
-      <BaseFormInput
-        slotProps={{
-          input: {
-            endAdornment: <Search />,
-          },
-        }}
-        value={searchTerm}
-        onChange={(e) => {
-          setSearchTerm(e.target.value);
-          setFilteredFields(
-            customFields.filter((item) =>
-              item.displayName?.toLowerCase().includes(e.target.value.toLowerCase()),
-            ),
-          );
-        }}
-        variant="standard"
-        label="חיפוש שדה טופס.."
-      />
-
-      <Autocomplete
-        fullWidth
-        disablePortal
-        onChange={(e, val) => {
-          setSelectedCategories(val);
-        }}
-        value={selectedCategories || []}
-        size="small"
-        options={categories}
-        loadingText="מחפש..."
-        multiple
-        slotProps={{
-          chip: {
-            sx: {
-              ".MuiSvgIcon-root": {
-                m: "auto 2px",
-              },
-            },
-          },
-        }}
-        renderInput={(params) => (
-          <TextField onChange={() => {}} {...params} label="חיפוש קטגוריה" />
-        )}
-      />
-
-      {filteredFields.length > 0 && (
+      {Object.keys(items).length > 0 && (
         <>
           <Typography variant="subtitle1">שדות מובנים</Typography>
           <Droppable droppableId="items" isDropDisabled={true}>
@@ -157,9 +82,9 @@ function FormItemList({
                   flexWrap: "wrap",
                 }}
                 ref={provided.innerRef}>
-                {filteredFields.map((item, index) => (
+                {Object.keys(items).map((elementId, index) => (
                   <Draggable
-                    draggableId={`c1_item_${item.typeId}_${index}`}
+                    draggableId={`c1_item_${elementId}_${index}`}
                     key={`item_${index}`}
                     index={index}
                     isDragDisabled={false}>
@@ -188,12 +113,12 @@ function FormItemList({
                         }}
                         onClick={() => {
                           if (!snapshot.isDragging) {
-                            addItemToFormFields(item, 1000);
+                            addItemToFormFields({ ...items[elementId], typeId: +elementId }, 1000);
                           }
                         }}>
-                        <Typography>{fieldsIcons[item.icon]}</Typography>
+                        <Typography>{FORM_ELEMENT_ICONS[items[elementId].icon]}</Typography>
                         <Typography variant="subtitle2" sx={{ overflowY: "auto" }}>
-                          {item.name}
+                          {items[elementId].name}
                         </Typography>
                       </Stack>
                     )}
@@ -209,7 +134,7 @@ function FormItemList({
       {categories.length > 0 &&
         categories.map(
           (category, index) =>
-            filteredCustomFields.filter((item) => item.category === category).length > 0 && (
+            customFields.filter((item) => item.category === category).length > 0 && (
               <Box key={index} display={"flex"} flexDirection={"column"} gap={2}>
                 <Typography key={`${index}_0`} variant="subtitle1">
                   {category}
@@ -226,51 +151,51 @@ function FormItemList({
                         flexWrap: "wrap",
                       }}
                       ref={provided.innerRef}>
-                      {filteredCustomFields
-                        .filter((item) => item.category === category)
-                        .map((item, index) => (
-                          <Draggable
-                            draggableId={`c1_item_${customFields.indexOf(item)}`}
-                            key={`item_${customFields.indexOf(item)}`}
-                            index={customFields.indexOf(item)}
-                            isDragDisabled={false}>
-                            {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
-                              <Stack
-                                alignItems={"center"}
-                                justifyContent={"center"}
-                                textAlign={"center"}
-                                component={Paper}
-                                key={index}
-                                sx={{
-                                  "&:hover": {
-                                    backgroundColor: theme.palette.background.default,
-                                  },
-                                  width: "31%",
-                                  height: "95px",
-                                  fontSize: "14px",
-                                  padding: "0.5rem",
-                                  boxShadow: `0px 4px 20.4px 0px ${theme.palette.shadow}`,
-                                }}
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                id={"item-div-" + index}
-                                style={{
-                                  ...provided.draggableProps.style,
-                                }}
-                                onClick={() => {
-                                  if (!snapshot.isDragging) {
-                                    addItemToFormFields(item, 1000);
-                                  }
-                                }}>
-                                <Typography>{fieldsIcons[item.icon]}</Typography>
-                                <Typography variant="subtitle2" sx={{ overflowY: "auto" }}>
-                                  {item.name}
-                                </Typography>
-                              </Stack>
-                            )}
-                          </Draggable>
-                        ))}
+                      {customFields
+                      .filter((item) => item.category === category)
+                      .map((item, index) => (
+                        <Draggable
+                          draggableId={`c1_item_${customFields.indexOf(item)}`}
+                          key={`item_${customFields.indexOf(item)}`}
+                          index={customFields.indexOf(item)}
+                          isDragDisabled={false}>
+                          {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
+                            <Stack
+                              alignItems={"center"}
+                              justifyContent={"center"}
+                              textAlign={"center"}
+                              component={Paper}
+                              key={index}
+                              sx={{
+                                "&:hover": {
+                                  backgroundColor: theme.palette.background.default,
+                                },
+                                width: "31%",
+                                height: "95px",
+                                fontSize: "14px",
+                                padding: "0.5rem",
+                                boxShadow: `0px 4px 20.4px 0px ${theme.palette.shadow}`,
+                              }}
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              id={"item-div-" + index}
+                              style={{
+                                ...provided.draggableProps.style,
+                              }}
+                              onClick={() => {
+                                if (!snapshot.isDragging) {
+                                  addItemToFormFields(item, 1000);
+                                }
+                              }}>
+                              <Typography>{FORM_ELEMENT_ICONS[item.icon]}</Typography>
+                              <Typography variant="subtitle2" sx={{ overflowY: "auto" }}>
+                                {item.name}
+                              </Typography>
+                            </Stack>
+                          )}
+                        </Draggable>
+                      ))}
                       {provided.placeholder}
                     </Box>
                   )}
@@ -279,7 +204,7 @@ function FormItemList({
             ),
         )}
 
-      {filteredCustomFields.length === 0 && filteredFields.length === 0 && (
+      {customFields.length === 0 && Object.keys(items).length === 0 && (
         <Typography>לא נמצאו שדות</Typography>
       )}
     </Box>

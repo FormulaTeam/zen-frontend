@@ -1,17 +1,15 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  connectionTypes,
-  FieldTypeIds,
+  ConditionUtils,
+  ElementTypeIds,
   Form,
   FormField,
   ResponseFieldValue,
   ResponseForm,
   Role,
   SearchResponsesFilter,
-  ConditionUtils,
-  ConditionGroup,
 } from "../utils/interfaces";
-import { getFormById, getResponses, searchResponses } from "../api";
+import { getFormById, searchResponses } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
 import {
   checkUserAccessForResponse,
@@ -22,6 +20,10 @@ import {
   wktLongitudeRegexX,
 } from "../utils/utils";
 import { NOT_A_SECTION_ID } from "../utils/sections/consts";
+import { useNavigate } from "react-router-dom";
+import { IPath } from "../types/enums/global.enums";
+import { isDifferent } from "../utils/responses";
+import { isEmptyValue } from "../utils/strings";
 
 interface SectionsMap {
   [sectionId: string]: {
@@ -32,10 +34,6 @@ interface SectionsMap {
     id?: string;
   };
 }
-import { useNavigate } from "react-router-dom";
-import { IPath } from "../types/enums/global.enums";
-import { isDifferent } from "../utils/responses";
-import { isEmptyValue } from "../utils/strings";
 
 export const useResponseState = (
   formId: string | undefined,
@@ -122,17 +120,17 @@ export const useResponseState = (
         formFieldsByIdMap.set(uniqueId, field);
         // Handle different field types for default values
         let defaultValue = field?.value;
-        if (field.typeId === FieldTypeIds.number && field?.initialNumberValue !== undefined) {
+        if (field.typeId === ElementTypeIds.number && field?.initialNumberValue !== undefined) {
           defaultValue = field.initialNumberValue;
-        } else if (field.typeId === FieldTypeIds.checkbox && field?.defaultValue !== undefined) {
+        } else if (field.typeId === ElementTypeIds.checkbox && field?.defaultValue !== undefined) {
           defaultValue = field.defaultValue;
         }
 
         formFieldsValuesMap.set(uniqueId, defaultValue);
 
-        if (field.typeId === FieldTypeIds.link) {
+        if (field.typeId === ElementTypeIds.link) {
           formFieldsValidMap.set(uniqueId, { link: true, linkTxt: true });
-        } else if (field.typeId === FieldTypeIds.location) {
+        } else if (field.typeId === ElementTypeIds.location) {
           formFieldsValidMap.set(uniqueId, { x: true, y: true });
         } else {
           formFieldsValidMap.set(uniqueId, true);
@@ -302,18 +300,18 @@ export const useResponseState = (
           }
         } else {
           const excludedTypeIds: number[] = [
-            FieldTypeIds.link,
-            FieldTypeIds.date,
-            FieldTypeIds.hour,
-            FieldTypeIds.location,
-            FieldTypeIds.checkbox,
-            FieldTypeIds.number,
-            FieldTypeIds.file,
-            FieldTypeIds.list,
+            ElementTypeIds.link,
+            ElementTypeIds.date,
+            ElementTypeIds.hour,
+            ElementTypeIds.location,
+            ElementTypeIds.checkbox,
+            ElementTypeIds.number,
+            ElementTypeIds.file,
+            ElementTypeIds.list,
           ];
           if (isRequired && !excludedTypeIds.includes(field.typeId)) {
             //אפשרויות
-            if (field.typeId === FieldTypeIds.options) {
+            if (field.typeId === ElementTypeIds.options) {
               if ((val && Array.isArray(val) && val.length === 0) || !val) {
                 newFormFieldsValidMap.set(uniqueId, false);
                 ans = false;
@@ -333,7 +331,7 @@ export const useResponseState = (
           }
 
           //היפר-קישור
-          else if (field.typeId === FieldTypeIds.link) {
+          else if (field.typeId === ElementTypeIds.link) {
             const urlRegex = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,6})([/\w .-]*)*\/?$/i;
 
             let validObj = { link: true, linkTxt: true };
@@ -375,7 +373,7 @@ export const useResponseState = (
           }
 
           //תאריך
-          else if (field.typeId === FieldTypeIds.date) {
+          else if (field.typeId === ElementTypeIds.date) {
             //if no value and not required - is valid
             if (!val && !field.required) {
               newFormFieldsValidMap.set(uniqueId, true);
@@ -390,7 +388,7 @@ export const useResponseState = (
           }
 
           //שעה
-          else if (field.typeId === FieldTypeIds.hour) {
+          else if (field.typeId === ElementTypeIds.hour) {
             //if no value and not required - is valid
             if (!val && !field.required) {
               newFormFieldsValidMap.set(uniqueId, true);
@@ -412,7 +410,7 @@ export const useResponseState = (
               newFormFieldsValidMap.set(uniqueId, false);
               ans = false;
             }
-          } else if (field.typeId === FieldTypeIds.file) {
+          } else if (field.typeId === ElementTypeIds.file) {
             if (
               (!val?.files && field.required) ||
               (val?.files?.newFiles?.length === 0 &&
@@ -427,7 +425,7 @@ export const useResponseState = (
           }
 
           //נקודת ציון - if not empty check 6 digits for x and y
-          else if (field.typeId === FieldTypeIds.location) {
+          else if (field.typeId === ElementTypeIds.location) {
             // let val = formFieldsValuesMap.get(uniqueId);
             let validObj = { x: true, y: true };
 
@@ -472,7 +470,7 @@ export const useResponseState = (
                 return;
               }
             }
-          } else if (field.typeId === FieldTypeIds.list) {
+          } else if (field.typeId === ElementTypeIds.list) {
             if (isRequired) {
               if (!val || val.length === 0) {
                 newFormFieldsValidMap.set(uniqueId, false);
@@ -486,7 +484,7 @@ export const useResponseState = (
             }
           }
           //מספר
-          else if (field.typeId === FieldTypeIds.number) {
+          else if (field.typeId === ElementTypeIds.number) {
             const { minValue, maxValue, numberType, required } = field;
             const isEmpty = isEmptyValue(val);
             if (isEmpty) {
@@ -525,7 +523,7 @@ export const useResponseState = (
             }
 
             newFormFieldsValidMap.set(uniqueId, true);
-          } else if (field.typeId === FieldTypeIds.checkbox) {
+          } else if (field.typeId === ElementTypeIds.checkbox) {
             return true;
           }
           //all other fields
@@ -576,7 +574,7 @@ export const useResponseState = (
         const uniqueId = field?.uniqueId + "";
         // Clear value
         if (formFieldsValuesMap.get(uniqueId)) {
-          formFieldsValuesMap.set(uniqueId, field.typeId === FieldTypeIds.checkbox ? false : "");
+          formFieldsValuesMap.set(uniqueId, field.typeId === ElementTypeIds.checkbox ? false : "");
           setFormFieldsValuesMap(new Map(formFieldsValuesMap));
         }
         // Clear validation

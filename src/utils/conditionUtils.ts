@@ -1,13 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
-import { ALLOWED_FIELD_TYPES_FOR_CONDITION, FieldTypeIds, connectionTypes } from "./interfaces";
-import type {
-  ConditionGroup,
-  ConditionsRoot,
-  Condition,
-  AffectedTarget,
-  FormField,
-  FormFieldTypeId,
-} from "./interfaces";
+import type { AffectedTarget, Condition, ConditionGroup, ConditionsRoot, FormField } from "./interfaces";
+import { ALLOWED_FIELD_TYPES_FOR_CONDITION, connectionTypes, ElementTypeIds } from "./interfaces";
 
 // Condition operators enum for better type safety
 export const ConditionOperators = {
@@ -214,7 +207,7 @@ export const ConditionUtils = {
     // Handle special field types
     if (formField) {
       // Handle checkbox (yes/no) fields - boolean values stored as strings in conditions
-      if (formField.typeId === FieldTypeIds.checkbox) {
+      if (formField.typeId === ElementTypeIds.checkbox) {
         // Convert boolean field values to string for comparison
         if (typeof fieldValue === "boolean") {
           fieldValue = fieldValue.toString();
@@ -226,7 +219,7 @@ export const ConditionUtils = {
       }
 
       // Handle options fields - can be stored as array or string
-      else if (formField.typeId === FieldTypeIds.options) {
+      else if (formField.typeId === ElementTypeIds.options) {
         // For connected form fields, handle the special case where values might be from connected forms
         if (formField.connectionType === connectionTypes.form) {
           // For connected form fields, the field value should be the actual value from the connected form
@@ -339,7 +332,7 @@ export const ConditionUtils = {
 
       case ConditionOperators.greater_than:
         // Handle numeric comparison
-        if (formField?.typeId === FieldTypeIds.number) {
+        if (formField?.typeId === ElementTypeIds.number) {
           const numFieldValue = Number(fieldValue);
           const numConditionValue = Number(conditionValue);
           return (
@@ -348,7 +341,7 @@ export const ConditionUtils = {
         }
         // Handle date comparison
         if (
-          formField?.typeId === FieldTypeIds.date &&
+          formField?.typeId === ElementTypeIds.date &&
           conditionValue &&
           (typeof conditionValue === "string" || typeof conditionValue === "number")
         ) {
@@ -364,7 +357,7 @@ export const ConditionUtils = {
 
       case ConditionOperators.less_than:
         // Handle numeric comparison
-        if (formField?.typeId === FieldTypeIds.number) {
+        if (formField?.typeId === ElementTypeIds.number) {
           const numFieldValue = Number(fieldValue);
           const numConditionValue = Number(conditionValue);
           return (
@@ -373,7 +366,7 @@ export const ConditionUtils = {
         }
         // Handle date comparison
         if (
-          formField?.typeId === FieldTypeIds.date &&
+          formField?.typeId === ElementTypeIds.date &&
           conditionValue &&
           (typeof conditionValue === "string" || typeof conditionValue === "number")
         ) {
@@ -389,7 +382,7 @@ export const ConditionUtils = {
 
       case ConditionOperators.greater_than_or_equal:
         // Handle numeric comparison
-        if (formField?.typeId === FieldTypeIds.number) {
+        if (formField?.typeId === ElementTypeIds.number) {
           const numFieldValue = Number(fieldValue);
           const numConditionValue = Number(conditionValue);
           return (
@@ -398,7 +391,7 @@ export const ConditionUtils = {
         }
         // Handle date comparison
         if (
-          formField?.typeId === FieldTypeIds.date &&
+          formField?.typeId === ElementTypeIds.date &&
           conditionValue &&
           (typeof conditionValue === "string" || typeof conditionValue === "number")
         ) {
@@ -414,7 +407,7 @@ export const ConditionUtils = {
 
       case ConditionOperators.less_than_or_equal:
         // Handle numeric comparison
-        if (formField?.typeId === FieldTypeIds.number) {
+        if (formField?.typeId === ElementTypeIds.number) {
           const numFieldValue = Number(fieldValue);
           const numConditionValue = Number(conditionValue);
           return (
@@ -423,7 +416,7 @@ export const ConditionUtils = {
         }
         // Handle date comparison
         if (
-          formField?.typeId === FieldTypeIds.date &&
+          formField?.typeId === ElementTypeIds.date &&
           conditionValue &&
           (typeof conditionValue === "string" || typeof conditionValue === "number")
         ) {

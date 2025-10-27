@@ -1,0 +1,6 @@
+.managementButtonsContainer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+}

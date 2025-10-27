@@ -1,15 +1,15 @@
 import apiClient from "./config";
 import {
-  ResponseForm,
-  NewResponse,
-  Filter,
   DeleteMultipleResponsesRequest,
-  FieldTypeIds,
-  ResponseFieldValue,
-  FormField,
+  ElementTypeIds,
   FieldValue,
+  Filter,
+  FormField,
   LinkValue,
   LocationValue,
+  NewResponse,
+  ResponseFieldValue,
+  ResponseForm,
 } from "../utils/interfaces";
 import { ResponseCount } from "../types/interfaces/responses.types";
 
@@ -116,26 +116,26 @@ export const getResponseWithFlatFields = (
       const fieldName = fieldMetaData.name;
 
       switch (fieldMetaData.typeId) {
-        case FieldTypeIds.options:
+        case ElementTypeIds.options:
           if (field.value) {
             acc[fieldName] = field.value.join(",");
           } else {
             acc[fieldName] = null;
           }
           break;
-        case FieldTypeIds.link:
+        case ElementTypeIds.link:
           const linkValue = field.value as LinkValue | null;
           if (linkValue && linkValue.linkTxt) {
             acc[fieldName] = linkValue.linkTxt;
           }
           break;
-        case FieldTypeIds.location:
+        case ElementTypeIds.location:
           const locationValue = field.value as LocationValue | null;
           if (locationValue && locationValue.x && locationValue.y) {
             acc[fieldName] = `${locationValue.x},${locationValue.y}`;
           }
           break;
-        case FieldTypeIds.file:
+        case ElementTypeIds.file:
           const deletedFilesForField = deletedFiles?.filter(
             (deletedFile) => deletedFile.uniqueId === field.uniqueId,
           );

@@ -1,0 +1,14 @@
+.editorContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background-color: #FAFAFA;
+    padding: 0 48px;
+}
+
+.sandboxContainer {
+    display: flex;
+    width: 100%;
+    padding: 32px 0;
+    border-top: #1976D21A solid 1px;
+}

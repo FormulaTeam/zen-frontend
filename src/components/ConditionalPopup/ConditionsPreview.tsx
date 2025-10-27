@@ -1,20 +1,20 @@
 import React from "react";
 import Typography from "@mui/material/Typography";
 import {
-  ConditionsRoot,
-  FormField,
   Condition,
-  ConditionOperators,
   conditionOperatorLabels,
-  logicalOperatorLabels,
+  ConditionOperators,
+  ConditionsRoot,
   DEFAULT_LOGICAL_OPERATOR,
-  FieldTypeIds,
+  ElementTypeIds,
+  FormField,
+  logicalOperatorLabels,
 } from "../../utils/interfaces";
 import {
-  ConditionsPreviewContainer,
-  ConditionsPreviewTitle,
-  ConditionsPreviewDescription,
   ConditionsPreviewAffectedTitle,
+  ConditionsPreviewContainer,
+  ConditionsPreviewDescription,
+  ConditionsPreviewTitle,
 } from "./styled";
 
 interface ConditionsPreviewProps {
@@ -37,9 +37,9 @@ const ConditionsPreview: React.FC<ConditionsPreviewProps> = ({ conditionsRoot, f
     }
 
     let valueDisplay = "";
-    if (formField.typeId === FieldTypeIds.date && typeof condition.value === "string") {
+    if (formField.typeId === ElementTypeIds.date && typeof condition.value === "string") {
       valueDisplay = condition.value ? new Date(condition.value).toLocaleDateString("he-IL") : "";
-    } else if (formField.typeId === FieldTypeIds.checkbox) {
+    } else if (formField.typeId === ElementTypeIds.checkbox) {
       valueDisplay = condition.value === "true" ? "כן" : "לא";
     } else if (Array.isArray(condition.value)) {
       valueDisplay = condition.value.join(", ");

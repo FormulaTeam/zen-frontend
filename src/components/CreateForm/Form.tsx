@@ -5,10 +5,11 @@ import ConfirmPopup from "../../popups/ConfirmPopup/ConfirmPopup";
 import {
   connectionTypes,
   CustomFormField,
-  DEFAULT_FIELDS,
   DRAGGED_ITEM_ID,
-  FieldTypeIds,
+  ElementTypeIds,
   Form,
+  FORM_ELEMENTS,
+  FormElements,
   FormField,
 } from "../../utils/interfaces";
 import AlertMsg from "../AlertMsg/AlertMsg";
@@ -24,28 +25,21 @@ import { ResponseCount } from "../../types/interfaces/responses.types";
 import { createForm, getResponsesCount, updateForm } from "../../api";
 import {
   generateNewFormFieldData,
+  getInitialNewForm,
   getUserName,
   showErrorNotification,
   showSuccessNotification,
-  getInitialNewForm,
 } from "../../utils/utils";
 import { ABC_AND_DASH_REGEX, HEBREW_REGEX } from "../../utils/formRegex";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorMessageType, ReservedFieldName } from "../../types/interfaces/forms.types";
 import { useSectionManagement } from "../../hooks/Forms/useSectionManagement";
-import {
-  FORM_FIELD_PREFIX,
-  FORM_FIELDS_PREFIX,
-  NOT_A_SECTION_ID,
-} from "../../utils/sections/consts";
+import { FORM_FIELD_PREFIX, FORM_FIELDS_PREFIX, NOT_A_SECTION_ID } from "../../utils/sections/consts";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 import { IPath } from "../../types/enums/global.enums";
 import { texts } from "../../utils/texts";
 import ConditionalPopup from "../ConditionalPopup/ConditionalPopup";
-import {
-  handleFieldAddedToSection,
-  handleFieldMovedBetweenSections,
-} from "../../utils/sectionConditionUtils";
+import { handleFieldAddedToSection, handleFieldMovedBetweenSections } from "../../utils/sectionConditionUtils";
 import { RESERVED_FIELD_NAMES } from "../../consts/form";
 
 interface FormProps {
@@ -68,7 +62,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   const [formFields, setFormFields] = useState<FormField[]>([] as FormField[]);
   const [showCustomFieldsDialog, setShowCustomFieldsDialog] = useState<boolean>(false);
   const [confirmBtnText, setConfirmBtnText] = useState<string>("מחק עמודה");
-  const [items, setItems] = useState<Partial<CustomFormField>[]>(DEFAULT_FIELDS);
+  const [items, setItems] = useState<Partial<FormElements>>({ ...FORM_ELEMENTS });
   const [formIconName, setFormIconName] = useState<any>(formToEdit.icon);
   const [parentFieldId, setParentFieldId] = useState<any>("");
   const [showConditionsPopup, setShowConditionsPopup] = useState(false);
@@ -116,26 +110,26 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   };
 
   const {
-    sections,
-    setSections,
-    addSection,
-    removeSection,
-    renameSection,
-    toggleCollapse,
-    changeSectionDescription,
-    anounceRemoveSection,
-    moveSection,
-    orderSections,
-    handleScrollToLastSection,
-  } = useSectionManagement({
-    formFields,
-    setFormFields,
-    validateUnsavedChanges,
-    setAlertMsgs,
-    setShowAlertMsg,
-    setCurrentSectionId,
-    setShowButtonsOnPopup,
-  });
+          sections,
+          setSections,
+          addSection,
+          removeSection,
+          renameSection,
+          toggleCollapse,
+          changeSectionDescription,
+          anounceRemoveSection,
+          moveSection,
+          orderSections,
+          handleScrollToLastSection,
+        } = useSectionManagement({
+                                   formFields,
+                                   setFormFields,
+                                   validateUnsavedChanges,
+                                   setAlertMsgs,
+                                   setShowAlertMsg,
+                                   setCurrentSectionId,
+                                   setShowButtonsOnPopup,
+                                 });
 
   useEffect(() => {
     validateUnsavedChanges();
@@ -163,9 +157,9 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
 
   const clearErrors = (key: string, fieldId: string) => {
     setErrors((prevErrors) =>
-      prevErrors.filter(
-        (error) => error.key !== key || (fieldId !== "" && error.fieldId !== fieldId),
-      ),
+                prevErrors.filter(
+                  (error) => error.key !== key || (fieldId !== "" && error.fieldId !== fieldId),
+                ),
     );
 
     if (key === "title") {
@@ -193,8 +187,8 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     const isNewForm = formToEdit.fields?.length === 0;
     if (isNewForm) {
       setSections([
-        { id: NOT_A_SECTION_ID, name: texts.heb.mainSection, collapsed: false, order: 0 },
-      ]);
+                    { id: NOT_A_SECTION_ID, name: texts.heb.mainSection, collapsed: false, order: 0 },
+                  ]);
     } else if (!hasSectionIds) {
       setSections([]);
     } else {
@@ -345,25 +339,25 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
 
   const getFormPropertyTitleTextField = (formField: FormField, index: number) => {
     const isNameValid =
-      formFieldsNamesValidMap.get(index) !== undefined &&
-      formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
-        ? formFieldsNamesValidMap.get(index) && !formFieldsUniqueNamesValidMap.get(formField.name)
-        : formFieldsNamesValidMap.get(index) !== undefined
-        ? formFieldsNamesValidMap.get(index)
-        : formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
-        ? !formFieldsUniqueNamesValidMap.get(formField.name)
-        : true;
+            formFieldsNamesValidMap.get(index) !== undefined &&
+            formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
+              ? formFieldsNamesValidMap.get(index) && !formFieldsUniqueNamesValidMap.get(formField.name)
+              : formFieldsNamesValidMap.get(index) !== undefined
+                ? formFieldsNamesValidMap.get(index)
+                : formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
+                  ? !formFieldsUniqueNamesValidMap.get(formField.name)
+                  : true;
 
     const isDisplayNameValid =
-      formFieldsDisplayNamesValidMap.get(index) !== undefined &&
-      formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
-        ? formFieldsDisplayNamesValidMap.get(index) &&
-          !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
-        : formFieldsDisplayNamesValidMap.get(index) !== undefined
-        ? formFieldsDisplayNamesValidMap.get(index)
-        : formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
-        ? !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
-        : true;
+            formFieldsDisplayNamesValidMap.get(index) !== undefined &&
+            formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
+              ? formFieldsDisplayNamesValidMap.get(index) &&
+              !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
+              : formFieldsDisplayNamesValidMap.get(index) !== undefined
+                ? formFieldsDisplayNamesValidMap.get(index)
+                : formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
+                  ? !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
+                  : true;
 
     const showNameError = !isNameValid;
     const showDisplayNameError = !isDisplayNameValid;
@@ -427,7 +421,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     condition: boolean,
     message: string,
     fieldType: string = "general",
-    uniqueId: string = "",
+    uniqueId: string  = "",
   ): boolean => {
     if (condition) {
       handleErrorMessage(message, fieldType, uniqueId);
@@ -442,21 +436,21 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
 
     if (!title.match(HEBREW_REGEX)) {
       setTitleInvalid(true);
-      if (addErrorIf(true, "לתשומת ליבך! שם הטופס מורכב מאותיות שאינן עברית.", "title")) {
+      if (addErrorIf(true, "שם הטופס מורכב מאותיות שאינן עברית.", "title")) {
         hasError = true;
       }
     }
 
     if (title.length < 5) {
       setTitleInvalid(true);
-      if (addErrorIf(true, "לתשומת ליבך! שם הטופס פחות מ5 אותיות.", "title")) {
+      if (addErrorIf(true, "שם הטופס פחות מ5 אותיות.", "title")) {
         hasError = true;
       }
     }
 
     if (!title || title === "") {
       setTitleInvalid(true);
-      if (addErrorIf(true, "לתשומת ליבך! שם הטופס ריק", "title")) {
+      if (addErrorIf(true, "שם הטופס ריק", "title")) {
         hasError = true;
       }
     }
@@ -546,7 +540,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
         }
       }
 
-      if (field.typeId === FieldTypeIds.form && !field.connectedFormId) {
+      if (field.typeId === ElementTypeIds.form && !field.connectedFormId) {
         hasEmptyFormInFormConnection = true;
         addErrorIf(true, "שדה לא מחובר לטופס", "form", field.uniqueId);
       }
@@ -556,7 +550,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
           if (!option) {
             optionsValidMap.set(option, false);
             hasEmptyOptionName = false;
-            addErrorIf(true, "לא ניתן להשאיר אפשרות ריקה", "options", field.uniqueId);
+            // addErrorIf(true, "לא ניתן להשאיר אפשרות ריקה", "options", field.uniqueId);
           } else {
             optionsValidMap.set(option, true);
           }
@@ -564,14 +558,14 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
       }
 
       // בדיקת שדות מספר
-      if (field.typeId === FieldTypeIds.number) {
+      if (field.typeId === ElementTypeIds.number) {
         const { minValue, maxValue, initialNumberValue } = field;
         const hasInvalidRange =
-          minValue !== undefined && maxValue !== undefined && minValue > maxValue;
+                minValue !== undefined && maxValue !== undefined && minValue > maxValue;
         const defaultOutOfRange =
-          initialNumberValue !== undefined &&
-          ((minValue !== undefined && initialNumberValue < minValue) ||
-            (maxValue !== undefined && initialNumberValue > maxValue));
+                initialNumberValue !== undefined &&
+                ((minValue !== undefined && initialNumberValue < minValue) ||
+                  (maxValue !== undefined && initialNumberValue > maxValue));
 
         if (hasInvalidRange) {
           addErrorIf(true, "טווח ערכים לא תקין", "number", field.uniqueId);
@@ -626,34 +620,34 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     const fieldErrors = validateFormFields();
 
     if (fieldErrors.has2FieldsSameNames) {
-      addErrorIf(true, "לתשומת ליבך! ישנן עמודות בטופס עם אותו שם פנימי...", "general");
+      addErrorIf(true, "ישנן עמודות בטופס עם אותו שם פנימי...", "general");
       setShowAlertMsg(true);
     }
 
     if (fieldErrors.has2FieldsSameDisplayNames) {
-      addErrorIf(true, "לתשומת ליבך! ישנן עמודות בטופס עם אותו שם תצוגה...", "general");
+      addErrorIf(true, "ישנן עמודות בטופס עם אותו שם תצוגה...", "general");
       setShowAlertMsg(true);
     }
 
     if (!fieldErrors.hasEmptyColumnName) {
-      addErrorIf(true, "לתשומת ליבך! ישנן עמודות ללא שם פנימי...", "general");
+      addErrorIf(true, "ישנן עמודות ללא שם פנימי...", "general");
       setShowAlertMsg(true);
     }
 
     if (!fieldErrors.hasEmptyColumnDisplayName) {
-      addErrorIf(true, "לתשומת ליבך! ישנן עמודות ללא שם תצוגה...", "general");
+      addErrorIf(true, "ישנן עמודות ללא שם תצוגה...", "general");
       setShowAlertMsg(true);
     }
 
     if (!fieldErrors.hasEmptyOptionName) {
-      addErrorIf(true, "לתשומת ליבך! ישנן אפשרויות ריקות בטופס...", "general");
+      addErrorIf(true, "ישנן אפשרויות ריקות בטופס...", "general");
       setShowAlertMsg(true);
     }
 
     // מעבר על כל השדות השמורים
     for (const [name, found] of fieldErrors.reservedFlags.entries()) {
       if (found) {
-        addErrorIf(true, `לתשומת ליבך! יש עמודה עם שם פנימי שמור "${name}"`, "general");
+        addErrorIf(true, `יש עמודה עם שם פנימי שמור "${name}"`, "general");
         setShowAlertMsg(true);
       }
     }
@@ -661,7 +655,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     if (fieldErrors.hasInvalidNumberField) {
       addErrorIf(
         true,
-        "לתשומת ליבך! יש שדות מספר עם טווחים לא תקינים או ערכי ברירת מחדל לא חוקיים...",
+        "יש שדות מספר עם טווחים לא תקינים או ערכי ברירת מחדל לא חוקיים...",
         "general",
       );
       setShowAlertMsg(true);
@@ -784,8 +778,15 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   };
 
   const removeDuplicateItemFromItemsList = () => {
-    const itemsWithoutDuplicate = items.filter((item) => item.typeId !== DRAGGED_ITEM_ID);
-    setItems(itemsWithoutDuplicate);
+    const res: Partial<FormElements> = {};
+
+    Object.keys(items).forEach((typeId) => {
+      if (+typeId !== DRAGGED_ITEM_ID) {
+        res[typeId] = items[typeId];
+      }
+    });
+
+    setItems(res);
   };
 
   const moveFieldBetweenSections = (source: DraggableLocation, destination: DraggableLocation) => {
@@ -819,8 +820,9 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   };
 
   const addNewFieldToForm = (source, destination) => {
+    const draggedItemTypeId = source.droppableId === "items" ? Object.keys(items)[source.index] : null;
     const draggedItem =
-      source.droppableId === "items" ? items[source.index] : customFields[source.index];
+            source.droppableId === "items" && draggedItemTypeId !== null ? items[draggedItemTypeId] : customFields[source.index];
     if (draggedItem) {
       // Extract section ID without prefix and find the section order
       const sectionIdNoPrefix = destination.droppableId.replace(FORM_FIELDS_PREFIX, "");
@@ -829,6 +831,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
       // Create the item with section information
       const itemWithSection = {
         ...draggedItem,
+        ...(draggedItemTypeId && { typeId: +draggedItemTypeId }),
         sectionId: destination.droppableId,
         sectionOrder: targetSection?.order || 0,
       };
@@ -970,8 +973,8 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
             currentSectionId
               ? () => removeSection(currentSectionId)
               : hasUnsavedChanges && showButtonsOnPopup
-              ? () => saveForm(true)
-              : undefined
+                ? () => saveForm(true)
+                : undefined
           }
           onClose={
             hasUnsavedChanges && showButtonsOnPopup && !currentSectionId ? exitForm : undefined

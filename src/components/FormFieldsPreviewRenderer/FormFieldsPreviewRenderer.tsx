@@ -1,4 +1,4 @@
-import { FieldTypeIds, LinkValue, LocationValueError } from "../../utils/interfaces";
+import { ElementTypeIds, LinkValue, LocationValueError } from "../../utils/interfaces";
 import CustomDateTime from "../FormFields/CustomDateTime/CustomDateTime";
 import CustomDropDownSelect from "../FormFields/CustomDropDownSelect/CustomDropDownSelect";
 import CustomFileInputField from "../FormFields/CustomFileInputField/CustomFileInputField";
@@ -16,7 +16,7 @@ function FormFieldsPreviewRenderer({ formField }) {
   const valid = true;
 
   switch (formField.typeId) {
-    case FieldTypeIds.longText: //מס' שורות טקסט
+    case ElementTypeIds.longText: //מס' שורות טקסט
       return (
         <CustomTextField
           label={formField.displayName}
@@ -30,7 +30,7 @@ function FormFieldsPreviewRenderer({ formField }) {
         />
       );
 
-    case FieldTypeIds.smallText: //שורה אחת
+    case ElementTypeIds.smallText: //שורה אחת
       console.log(formField);
 
       return (
@@ -45,7 +45,7 @@ function FormFieldsPreviewRenderer({ formField }) {
         />
       );
 
-    case FieldTypeIds.options: //אפשרויות
+    case ElementTypeIds.options: //אפשרויות
       // Filter options for child fields based on parent selection
       let availableOptions: any = [];
 
@@ -62,7 +62,7 @@ function FormFieldsPreviewRenderer({ formField }) {
         />
       );
 
-    case FieldTypeIds.link: //היפר-קישור
+    case ElementTypeIds.link: //היפר-קישור
       return (
         <LinkTextField
           label={formField.displayName}
@@ -77,7 +77,7 @@ function FormFieldsPreviewRenderer({ formField }) {
         />
       );
 
-    case FieldTypeIds.date: //תאריך
+    case ElementTypeIds.date: //תאריך
       return (
         <CustomDateTime
           label={formField.displayName}
@@ -91,7 +91,7 @@ function FormFieldsPreviewRenderer({ formField }) {
         />
       );
 
-    case FieldTypeIds.hour: //שעה
+    case ElementTypeIds.hour: //שעה
       return (
         <CustomTimePicker
           label={formField.displayName}
@@ -105,7 +105,7 @@ function FormFieldsPreviewRenderer({ formField }) {
         />
       );
 
-    case FieldTypeIds.location: //מיקום
+    case ElementTypeIds.location: //מיקום
       return (
         <CustomLatitudeLongitudeField
           label={formField.displayName}
@@ -118,7 +118,7 @@ function FormFieldsPreviewRenderer({ formField }) {
         />
       );
 
-    case FieldTypeIds.checkbox: //
+    case ElementTypeIds.checkbox: //
       // generate input from type checkbox that if the initial value is empty, it will be nonChceked and if true or "כן" it will be checked
       return (
         <CustomSwitch
@@ -130,7 +130,7 @@ function FormFieldsPreviewRenderer({ formField }) {
         />
       );
 
-    case FieldTypeIds.list: //
+    case ElementTypeIds.list: //
       return (
         <CustomMultiInputField
           label={formField.displayName}
@@ -142,7 +142,7 @@ function FormFieldsPreviewRenderer({ formField }) {
         />
       );
 
-    case FieldTypeIds.number:
+    case ElementTypeIds.number:
       return (
         <CustomNumberField
           label={formField.displayName}
@@ -157,7 +157,7 @@ function FormFieldsPreviewRenderer({ formField }) {
         />
       );
 
-    case FieldTypeIds.file:
+    case ElementTypeIds.file:
       return (
         <CustomFileInputField
           label={formField.displayName}

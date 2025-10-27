@@ -1,20 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { FieldTypeIds, ResponseForm } from "../../utils/interfaces";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Container,
-  Tooltip,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { ElementTypeIds, ResponseForm } from "../../utils/interfaces";
+import { Box, Button, Container, Tooltip, Typography } from "@mui/material";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useResponseSave } from "../../hooks/useResponseSave";
 import { useResponseState } from "../../hooks/useResponseState";
 import { showErrorNotification } from "../../utils/utils";
 import { Add } from "@mui/icons-material";
-import { FieldsWrapper, FormSectionsContainer, LoadingContainer, SectionContainer } from "./styled";
+import { FormSectionsContainer } from "./styled";
 import ConnectedFormSection from "../../components/FormSection/ConnectedFormSection";
 import { useChildForms } from "../../hooks/useChildForms";
 import { resolveUserPermissions } from "../../utils/formFieldsResponses";
@@ -188,7 +180,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
   };
 
   const getFormInFormProperty = (formField: any) => {
-    if (formField.typeId !== FieldTypeIds.form || !formField.connectedFormId) {
+    if (formField.typeId !== ElementTypeIds.form || !formField.connectedFormId) {
       return null;
     }
 

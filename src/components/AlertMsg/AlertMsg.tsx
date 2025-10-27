@@ -14,35 +14,38 @@ interface AlertMsgProps {
 }
 
 const AlertMsg: React.FC<AlertMsgProps> = ({
-  msg,
-  closePopup,
-  onOk,
-  onClose,
-  isSuccess = false,
-  sectionId = "",
-  isTabularEdit = false,
-}) => {
+                                             msg,
+                                             closePopup,
+                                             onOk,
+                                             onClose,
+                                             isSuccess = false,
+                                             sectionId = "",
+                                             isTabularEdit = false,
+                                           }) => {
   return (
-    <Container>
+    <Container style={{ padding: "5px 20px" }}>
       <Popup>
         <CloseBtn onClick={closePopup} />
         {isSuccess ? <SuccessIcon fontSize="large" /> : <AlertIcon fontSize="large" />}
         {msg.map((error, index: number) => (
-          <Message key={index}>{error}</Message>
+          <Message key={index} style={{ textAlign: "right" }}>{`${msg.length > 1 ? '-' : ''} ${error}`}</Message>
         ))}
         {onOk && (
           <ButtonRow>
             <Button variant="contained" onClick={onOk}>
               {sectionId || isTabularEdit ? "אישור" : "שמירה ויציאה"}
             </Button>
-            <Button variant="outlined" onClick={closePopup}>
-              ביטול
-            </Button>
-            {onClose && (
-              <Button variant="contained" onClick={onClose}>
-                יציאה ללא שמירה
-              </Button>
-            )}
+            {
+              onClose ? (
+                  <Button variant="outlined" onClick={onClose}>
+                    יציאה ללא שמירה
+                  </Button>
+                ) :
+                (
+                  <Button variant="outlined" onClick={closePopup}>
+                    ביטול
+                  </Button>
+                )}
           </ButtonRow>
         )}
       </Popup>

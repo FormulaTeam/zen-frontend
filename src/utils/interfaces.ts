@@ -16,6 +16,7 @@ declare module "@mui/material/styles" {
     };
     darkPaper: string;
   }
+
   interface ThemeOptions {
     borders: {
       base: string;
@@ -64,7 +65,8 @@ export interface RequestConfig {
   RowLimit?: number;
   StartRow?: number;
 }
-export const FieldTypeIds = {
+
+export const ElementTypeIds = {
   longText: 1,
   smallText: 2,
   options: 3,
@@ -77,9 +79,9 @@ export const FieldTypeIds = {
   number: 10,
   file: 11,
   form: 12,
-} as const;
+} as const satisfies Record<string, number>;
 
-export const FieldTypes = {
+export const FieldDataTypes = {
   string: "string",
   boolean: "boolean",
   date: "Date",
@@ -94,15 +96,16 @@ export const connectionTypes = {
 
 export enum IConnectionType {
   manual = "manual",
-  form = "form",
+  form   = "form",
 }
 
 /**
  * Represents a field within a form.
  */
 
-export type FormFieldTypeId = (typeof FieldTypeIds)[keyof typeof FieldTypeIds];
-export type FormFieldFieldType = (typeof FieldTypes)[keyof typeof FieldTypes];
+export type FormElementTypeId = (typeof ElementTypeIds)[keyof typeof ElementTypeIds];
+export type FormFieldDataType = (typeof FieldDataTypes)[keyof typeof FieldDataTypes];
+
 export interface FormField {
   uniqueId: string;
   uniqId?: string;
@@ -110,8 +113,8 @@ export interface FormField {
   displayName: string;
   required: boolean;
   index: number;
-  typeId: FormFieldTypeId | typeof DRAGGED_ITEM_ID;
-  fieldType: FormFieldFieldType;
+  typeId: FormElementTypeId | typeof DRAGGED_ITEM_ID;
+  fieldType: FormFieldDataType;
   options?: string[];
   parentFieldId?: string;
   parentFieldName?: string;
@@ -166,12 +169,14 @@ export type FieldsIconsNames =
 export type FieldsIcons = {
   [key in FieldsIconsNames]: JSX.Element;
 };
+
 export interface FormFieldEditableMetaData {
-  typeId: FormFieldTypeId | typeof DRAGGED_ITEM_ID;
+  typeId: FormElementTypeId | typeof DRAGGED_ITEM_ID;
   name: string;
   icon: FieldsIconsNames;
-  fieldType: FormFieldFieldType;
+  fieldType: FormFieldDataType;
 }
+
 /**
  * Represents the data required to create a new form.
  */
@@ -304,10 +309,10 @@ export interface MetroReturnedData {
  */
 export interface Config {
   [key: string]: {
-    description: string;
-    title: string;
-    value: any;
-  } | null;
+                   description: string;
+                   title: string;
+                   value: any;
+                 } | null;
 }
 
 /**
@@ -327,21 +332,21 @@ export interface DeleteMultipleResponsesRequest {
 }
 
 export enum NotificationTexts {
-  CreateFormFailed = "יצירת הטופס נכשלה",
-  OptionsMinAmount = "לא ניתן להכין אפשרויות עם פחות מ-2 אפשרויות",
+  CreateFormFailed       = "יצירת הטופס נכשלה",
+  OptionsMinAmount       = "לא ניתן להכין אפשרויות עם פחות מ-2 אפשרויות",
   FailedLoadingResponses = "שליפת התגובות לטופס נכשלה",
-  CreateResponseFailed = "יצירת התגובה נכשלה",
-  UpdateResponseFailed = "עידכון התגובה נכשל",
-  CreatedButSyncFaild = "התגובה נוצרה אך הסנכרון נכשל",
-  UpdateButSyncFaild = "התגובה עודכנה אך הסנכרון נכשל",
-  DeletedSuccessfully = "התגובה נמחקה בהצלחה",
-  DeletedFailed = "התגובה לא נמחקה",
+  CreateResponseFailed   = "יצירת התגובה נכשלה",
+  UpdateResponseFailed   = "עידכון התגובה נכשל",
+  CreatedButSyncFaild    = "התגובה נוצרה אך הסנכרון נכשל",
+  UpdateButSyncFaild     = "התגובה עודכנה אך הסנכרון נכשל",
+  DeletedSuccessfully    = "התגובה נמחקה בהצלחה",
+  DeletedFailed          = "התגובה לא נמחקה",
 }
 
 export enum fieldConnectionTooltipTexts {
-  FormConnection = "ייבוא האפשרויות מתגובות בטופס אחר - נדרש לתת הרשאות למשתמשים לראות את התגובות בטופס המקורי",
+  FormConnection   = "ייבוא האפשרויות מתגובות בטופס אחר - נדרש לתת הרשאות למשתמשים לראות את התגובות בטופס המקורי",
   ManualConnection = "מילוי ידני",
-  AllowedFields = "שדות טקסט ומספר בלבד",
+  AllowedFields    = "שדות טקסט ומספר בלבד",
 }
 
 export type LocationValue = {
@@ -383,16 +388,16 @@ export type CustomFormField = Pick<
   FormField,
   "typeId" | "fieldType" | "validationRegex" | "fieldName" | "fieldIcon" | "shouldSyncToMetro"
 > & {
-  name: string;
-  category: string;
-  displayName: string;
-  icon: FieldsIconsNames;
-  deleted?: string;
-  sectionId?: string;
-  sectionName?: string;
-  sectionDescription?: string;
-  sectionOrder?: number;
-};
+                                name: string;
+                                category: string;
+                                displayName: string;
+                                icon: FieldsIconsNames;
+                                deleted?: string;
+                                sectionId?: string;
+                                sectionName?: string;
+                                sectionDescription?: string;
+                                sectionOrder?: number;
+                              };
 
 export type MultiInputFieldValues = string[];
 
@@ -404,89 +409,79 @@ export interface CustomInputFormFieldProps {
   onChangeHandler: (value: any, valid: boolean) => void;
   validationRegex?: string;
 }
+
 // Add this type to define the structure of a field blueprint
 export interface DefaultField {
-  typeId: FormFieldTypeId;
   name: string;
   icon: FieldsIconsNames;
-  fieldType: FormFieldFieldType;
+  fieldType: FormFieldDataType;
 }
 
+export type FormElements = Record<FormElementTypeId, DefaultField>;
+
 // Default field options for the form builder
-export const DEFAULT_FIELDS: DefaultField[] = [
-  {
-    typeId: FieldTypeIds.longText,
+export const FORM_ELEMENTS: FormElements = {
+  [ElementTypeIds.longText]: {
     name: "מס' שורות טקסט",
     icon: "menu",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.smallText,
+  [ElementTypeIds.smallText]: {
     name: "שורה אחת",
     icon: "dragHandle",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.options,
+  [ElementTypeIds.options]: {
     name: "אפשרויות",
     icon: "moreVert",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.link,
+  [ElementTypeIds.link]: {
     name: "היפר-קישור",
     icon: "link",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.date,
+  [ElementTypeIds.date]: {
     name: "תאריך",
     icon: "dateRange",
-    fieldType: FieldTypes.date,
+    fieldType: FieldDataTypes.date,
   },
-  {
-    typeId: FieldTypeIds.hour,
+  [ElementTypeIds.hour]: {
     name: "שעה",
     icon: "accessTime",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.location,
+  [ElementTypeIds.location]: {
     name: "נקודת ציון",
     icon: "location",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.checkbox,
+  [ElementTypeIds.checkbox]: {
     name: "כן/לא",
     icon: "checkbox",
-    fieldType: FieldTypes.boolean,
+    fieldType: FieldDataTypes.boolean,
   },
-  {
-    typeId: FieldTypeIds.list,
+  [ElementTypeIds.list]: {
     name: "רשימה",
     icon: "list",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.number,
+  [ElementTypeIds.number]: {
     name: "מספר",
     icon: "numbers",
-    fieldType: FieldTypes.number,
+    fieldType: FieldDataTypes.number,
   },
-  {
-    typeId: FieldTypeIds.file,
+  [ElementTypeIds.file]: {
     name: "קובץ",
     icon: "file",
-    fieldType: FieldTypes.file,
+    fieldType: FieldDataTypes.file,
   },
-  {
-    typeId: FieldTypeIds.form,
+  [ElementTypeIds.form]: {
     name: "טופס בתוך טופס",
     icon: "forms",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-];
+};
 
 export interface Section {
   id: string;
@@ -504,6 +499,7 @@ export interface IResponseSection {
   order: number;
   id?: string;
 }
+
 export const DEFAULT_FORM_ICONS: IconNameObj[] = [
   {
     name: "track_changes",
@@ -826,10 +822,10 @@ export interface Condition {
 }
 
 export const ALLOWED_FIELD_TYPES_FOR_CONDITION: number[] = [
-  FieldTypeIds.smallText,
-  FieldTypeIds.longText,
-  FieldTypeIds.number,
-  FieldTypeIds.date,
-  FieldTypeIds.options,
-  FieldTypeIds.checkbox,
+  ElementTypeIds.smallText,
+  ElementTypeIds.longText,
+  ElementTypeIds.number,
+  ElementTypeIds.date,
+  ElementTypeIds.options,
+  ElementTypeIds.checkbox,
 ];

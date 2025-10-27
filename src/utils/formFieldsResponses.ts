@@ -1,4 +1,4 @@
-import { FieldTypeIds, Form, Role, User } from "./interfaces";
+import { ElementTypeIds, Form, Role, User } from "./interfaces";
 import { getKeyByValue, PERMISSION_TYPES } from "./utils";
 
 // Function to check the importance of a permission - higher priority permissions get higher scores
@@ -33,14 +33,14 @@ export const prioritizePermissions = (userPermissions: number[], publicPermissio
 
 export const normalizeFieldValue = (field: any, value: any): any => {
   let newValue = value;
-  let key = getKeyByValue(FieldTypeIds, field.typeId);
+  let key = getKeyByValue(ElementTypeIds, field.typeId);
   if (key) {
     if (!["date", "hour", "checkbox", "number"].includes(key) && newValue === undefined) {
       newValue = "";
     }
   }
 
-  if (field.typeId === FieldTypeIds.options) {
+  if (field.typeId === ElementTypeIds.options) {
     if (field.multiSelect && newValue && !Array.isArray(newValue)) {
       newValue = [newValue];
     } else if (!field.multiSelect && Array.isArray(newValue)) {
