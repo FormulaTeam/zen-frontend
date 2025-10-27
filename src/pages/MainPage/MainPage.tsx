@@ -22,7 +22,6 @@ import BasePopup from "../../components/BasePopup/BasePopup";
 import { AutoDelete } from "@mui/icons-material";
 import { RowBox, StyledTypography } from "./styled";
 import { getSortedFilter } from "../../utils/filters";
-import { useFormsSSE } from "../../hooks/useFormsSSE";
 
 function MainPage({
   user,
@@ -46,8 +45,6 @@ function MainPage({
 
   const { getFilter } = useActiveTabFilter({ isSuperAdmin: !!isSuperAdmin, tabValue, user });
   const { formsData, setFormsData, loadingBottom, getData, isLoading } = useGetFormsData([]);
-
-  useFormsSSE(user.upn);
 
   useEffect(() => {
     const tabFromStorage = localStorage.getItem("tabValue");

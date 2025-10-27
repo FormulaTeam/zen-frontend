@@ -21,12 +21,15 @@ import { IPath } from "./types/enums/global.enums";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import HelpBtn from "./components/HelpBtn/HelpBtn";
 import HelpDiv from "./components/HelpBtn/HelpDiv";
+import { useFormsSSE } from "./hooks/useFormsSSE";
 
 const AppRouter = () => {
   const { user, roles } = useAuth();
   const [searchValue, setSearchValue] = useState("");
   const [showHelpCard, setShowHelpCard] = useState(false);
   const [shouldRefreshPage, setShouldRefreshPage] = useState(false);
+
+  useFormsSSE(user?.upn || "");
 
   function resetSearchValue() {
     setSearchValue("");
