@@ -48,10 +48,7 @@ const FormsChart: React.FC<FormsChartProps> = ({ type, chartType, yearFilter, da
 
   const theme = useTheme();
 
-  const { data, title, tooltip } = useMemo(
-    () => getFormsChartConfig(type),
-    [type, year, createdFormsQuery.data, deletedFormsQuery.data, serializeMirageUsers],
-  );
+  const { data, title, tooltip } = getFormsChartConfig(type);
 
   const isLoading =
     type === IRetrieveDataType.CREATED
