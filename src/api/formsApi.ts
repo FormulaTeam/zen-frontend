@@ -3,6 +3,8 @@ import { NewForm, Form, Filter, MetroReturnedData, User } from "../utils/interfa
 import { UserData } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
+import { useDelete } from "../utils/useDelete";
+import queryClient from "./queryClient";
 
 /**
  * Fetch all forms with optional query parameters.
@@ -218,5 +220,17 @@ export const useGetForm = ({
     endpoint: `/forms/${formId}`,
     queryKey: () => [formId],
     queryOptions: config,
+  });
+};
+
+export const useDeleteForm = ({ id }: { id: string }) => {
+  return useDelete<null, { upn: string | undefined; userName: string | undefined }>({
+    endpoint: `/forms/delete/${id}`,
+    mutationKey: ["deleteForm", id],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["forms"] });
+      },
+    },
   });
 };

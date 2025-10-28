@@ -23,12 +23,12 @@ interface UserPickerProps {
   currentUser: User;
 }
 
-const UserPicker: React.FC<UserPickerProps> = ({
+const UserPicker = ({
   form,
   closeSharePopupAndRefreshForm,
   roles,
   currentUser,
-}) => {
+}: UserPickerProps) => {
   const { user } = useAuth();
   const {
     loading,
