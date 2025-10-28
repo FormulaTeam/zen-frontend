@@ -1,13 +1,21 @@
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useFormEditorContext } from "../../context/FormEditorContext";
+import { useFormStructureContext } from "../../context/FormStructureContext";
+import { FormSection } from "./FormSection";
+import { useMemo } from "react";
+import styles from './style.module.css';
 
 function FormStructure() {
-  const {} = useFormEditorContext();
+  const { formStructure } = useFormStructureContext();
+  const sectionIds = useMemo(() => Object.keys(formStructure.sections), [formStructure.sections]);
 
   return (
-    <SortableContext items={[]} strategy={verticalListSortingStrategy}>
-
-    </SortableContext>
+    <div className={styles.container}>
+      <SortableContext items={sectionIds} strategy={verticalListSortingStrategy}>
+        {
+          sectionIds.map((sectionId) => <FormSection id={sectionId} />)
+        }
+      </SortableContext>
+    </div>
   );
 }
 

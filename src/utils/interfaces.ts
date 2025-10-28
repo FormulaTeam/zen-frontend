@@ -96,7 +96,7 @@ export const connectionTypes = {
 
 export enum IConnectionType {
   manual = "manual",
-  form   = "form",
+  form = "form",
 }
 
 /**
@@ -309,10 +309,10 @@ export interface MetroReturnedData {
  */
 export interface Config {
   [key: string]: {
-                   description: string;
-                   title: string;
-                   value: any;
-                 } | null;
+    description: string;
+    title: string;
+    value: any;
+  } | null;
 }
 
 /**
@@ -332,21 +332,21 @@ export interface DeleteMultipleResponsesRequest {
 }
 
 export enum NotificationTexts {
-  CreateFormFailed       = "יצירת הטופס נכשלה",
-  OptionsMinAmount       = "לא ניתן להכין אפשרויות עם פחות מ-2 אפשרויות",
+  CreateFormFailed = "יצירת הטופס נכשלה",
+  OptionsMinAmount = "לא ניתן להכין אפשרויות עם פחות מ-2 אפשרויות",
   FailedLoadingResponses = "שליפת התגובות לטופס נכשלה",
-  CreateResponseFailed   = "יצירת התגובה נכשלה",
-  UpdateResponseFailed   = "עידכון התגובה נכשל",
-  CreatedButSyncFaild    = "התגובה נוצרה אך הסנכרון נכשל",
-  UpdateButSyncFaild     = "התגובה עודכנה אך הסנכרון נכשל",
-  DeletedSuccessfully    = "התגובה נמחקה בהצלחה",
-  DeletedFailed          = "התגובה לא נמחקה",
+  CreateResponseFailed = "יצירת התגובה נכשלה",
+  UpdateResponseFailed = "עידכון התגובה נכשל",
+  CreatedButSyncFaild = "התגובה נוצרה אך הסנכרון נכשל",
+  UpdateButSyncFaild = "התגובה עודכנה אך הסנכרון נכשל",
+  DeletedSuccessfully = "התגובה נמחקה בהצלחה",
+  DeletedFailed = "התגובה לא נמחקה",
 }
 
 export enum fieldConnectionTooltipTexts {
-  FormConnection   = "ייבוא האפשרויות מתגובות בטופס אחר - נדרש לתת הרשאות למשתמשים לראות את התגובות בטופס המקורי",
+  FormConnection = "ייבוא האפשרויות מתגובות בטופס אחר - נדרש לתת הרשאות למשתמשים לראות את התגובות בטופס המקורי",
   ManualConnection = "מילוי ידני",
-  AllowedFields    = "שדות טקסט ומספר בלבד",
+  AllowedFields = "שדות טקסט ומספר בלבד",
 }
 
 export type LocationValue = {
@@ -388,16 +388,16 @@ export type CustomFormField = Pick<
   FormField,
   "typeId" | "fieldType" | "validationRegex" | "fieldName" | "fieldIcon" | "shouldSyncToMetro"
 > & {
-                                name: string;
-                                category: string;
-                                displayName: string;
-                                icon: FieldsIconsNames;
-                                deleted?: string;
-                                sectionId?: string;
-                                sectionName?: string;
-                                sectionDescription?: string;
-                                sectionOrder?: number;
-                              };
+  name: string;
+  category: string;
+  displayName: string;
+  icon: FieldsIconsNames;
+  deleted?: string;
+  sectionId?: string;
+  sectionName?: string;
+  sectionDescription?: string;
+  sectionOrder?: number;
+};
 
 export type MultiInputFieldValues = string[];
 

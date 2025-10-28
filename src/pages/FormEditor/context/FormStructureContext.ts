@@ -1,58 +1,74 @@
-import { FormField, Section } from "../../../utils/interfaces";
-import { createContext, Dispatch, SetStateAction, useCallback, useContext, useEffect } from "react";
+import { createContext, useContext } from "react";
 import { EMPTY_FORM } from "./constants";
-import { texts } from "../../../utils/texts";
+
+interface Section {
+  title: string;
+  description?: string;
+  collapsed: boolean;
+  order: number;
+  expanded?: boolean;
+  fieldIds: string[];
+}
+
+interface FormField {
+  id: string;
+  name: string; // Internal name
+  displayName: string;
+  required: boolean;
+  // typeId: FormElementTypeId | typeof DRAGGED_ITEM_ID;
+  // fieldType: FormFieldDataType;
+
+  // options?: string[];
+  // parentFieldId?: string;
+  // parentFieldName?: string;
+  // parentDependencies?: ParentDependencies[];
+  // connectionType?: (typeof connectionTypes)[keyof typeof connectionTypes];
+  // connectedFormId?: number;
+  // connectedFieldId?: string;
+  // childFieldId?: string;
+  // childFieldName?: string;
+  // validationRegex?: string;
+  // initialValType?: string;
+  // multiSelect?: boolean;
+  // showSeconds?: boolean;
+  // dateAndTime?: boolean;
+  // numberType?: string;
+  // coordinateType?: string;
+  // maxValue?: number;
+  // minValue?: number;
+  // initialNumberValue?: number;
+  // fieldName?: string;
+  // fieldIcon?: string;
+  // shouldSyncToMetro?: boolean;
+  // defaultValue?: string | null;
+  // sectionId: string; // ID of the section this field belongs to
+  // sectionName?: string; // Name of the section this field belongs to
+  // sectionDescription?: string; // Description of the section this field belongs to
+  // sectionOrder: number; // Order of the section this field belongs to
+  // conditions?: ConditionGroup[]; // Conditional display rules for this field
+}
 
 interface FormStructure {
   title: string | null;
-  sections: Section[];
-  fields: FormField[];
+  sections: Record<string, Section>;
+  fields: Record<string, FormField>;
 
   description?: string;
 }
 
 interface FormStructureContext {
   formStructure: FormStructure;
-  setFormStructure: Dispatch<SetStateAction<FormStructure>>;
+  appendSection: () => void;
 }
 
 const FormStructureContext = createContext<FormStructureContext>({
   formStructure: { ...EMPTY_FORM },
-  setFormStructure: () => null,
+  appendSection: () => null,
 });
 
 function useFormStructureContext() {
-  const { formStructure, setFormStructure } = useContext(FormStructureContext);
-
-  useEffect(() => {
-    console.log(formStructure.sections);
-  }, [formStructure]);
-
-  const appendSection = useCallback(() => {
-
-    setFormStructure((prev) => {
-      const previousLastInOrder = Math.max(...prev.sections.map((s) => s.order), -1);
-
-      return {
-        ...prev,
-        sections: [
-          ...prev.sections,
-          {
-            id: `section_${Date.now()}`,
-            name: texts.heb.undefinedSection,
-            order: previousLastInOrder + 1,
-            collapsed: false,
-          },
-        ],
-      };
-    });
-  }, []);
-
-  return {
-    formStructure,
-    appendSection,
-  };
+  return useContext(FormStructureContext);
 }
 
 export { FormStructureContext, useFormStructureContext };
-export type { FormStructure };
+export type { FormStructure, Section, FormField };

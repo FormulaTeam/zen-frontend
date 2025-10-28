@@ -1,10 +1,20 @@
-import { FormStructure } from "./FormStructureContext";
+import { FormStructure, Section } from "./FormStructureContext";
 import { DraggingState } from "./FormSandboxContext";
+import { texts } from "../../../utils/texts";
+
+const INITIAL_SECTION: Section = {
+  title: texts.heb.mainSection,
+  order: 0,
+  collapsed: false,
+  fieldIds: [],
+};
 
 const EMPTY_FORM: FormStructure = {
   title: null,
-  sections: [],
-  fields: [],
+  sections: {
+    [`section_${Date.now()}`]: { ...INITIAL_SECTION }, //TODO change section id to UUID
+  },
+  fields: {},
 };
 
 const DEFAULT_DRAGGING_STATE: DraggingState = {

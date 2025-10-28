@@ -1,0 +1,11 @@
+.container{
+    flex-grow: 1;
+    border-radius: 4px;
+    border: 1px solid black;
+    height: 250px;
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 24px;
+    box-sizing: border-box;
+}
+
