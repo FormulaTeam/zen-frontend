@@ -1,6 +1,6 @@
 import { useDraggable } from "@dnd-kit/core";
 import styles from "./style.module.css";
-import { FORM_ELEMENT_ICONS } from "../../../../FORM_ELEMENT_ICONS";
+import { FORM_ELEMENT_ICONS } from "../../../../../components/FORM_ELEMENT_ICONS";
 import { FORM_ELEMENTS, FormElementTypeId } from "../../../../../utils/interfaces";
 import { Typography } from "@mui/material";
 import { CSS } from "@dnd-kit/utilities";

@@ -36,7 +36,7 @@ function FormEditor({ mode, editedForm }: Props) {
   return (
     <div className={styles.editorContainer}>
       <FormContextProvider editorContext={{ mode }}
-                           structureContext={{ formStructure, appendSection: () => null }}
+                           structureContext={{ formStructure, setFormStructure}}
                            sandboxContext={{ draggingState }}>
         <FormEditorHeader />
         <div className={styles.sandboxContainer}>

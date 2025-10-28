@@ -21,7 +21,7 @@ import { IPath } from "./types/enums/global.enums";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import HelpBtn from "./components/HelpBtn/HelpBtn";
 import HelpDiv from "./components/HelpBtn/HelpDiv";
-import { FormEditor } from "./components/FormEditor";
+import { FormEditor } from "./pages/FormEditor";
 
 const AppRouter = () => {
   const { user, roles } = useAuth();

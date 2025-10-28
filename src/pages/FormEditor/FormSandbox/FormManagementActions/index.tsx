@@ -5,14 +5,15 @@ import { Button, Tooltip } from "@mui/material";
 import { useFormStructureContext } from "../../context/FormStructureContext";
 
 function FormManagementActions() {
-  const {} = useFormStructureContext();
+  const { appendSection } = useFormStructureContext();
 
   return (
     <div className={styles.managementButtonsContainer}>
       <>
         <Button startIcon={<Add />}
                 variant={"contained"}
-                size={"medium"}>
+                size={"medium"}
+                onClick={appendSection}>
           יצירת מקטע
         </Button>
         <Tooltip title={texts.heb.createSectionAnnounce}>

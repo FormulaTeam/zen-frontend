@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Section, FormField } from "../../utils/interfaces";
+import { FormField, Section } from "../../utils/interfaces";
 import { texts } from "../../utils/texts";
 import { DraggableLocation } from "@hello-pangea/dnd";
 
@@ -15,14 +15,14 @@ interface UseSectionManagementProps {
 }
 
 export function useSectionManagement({
-  formFields,
-  setFormFields,
-  validateUnsavedChanges,
-  setAlertMsgs,
-  setShowAlertMsg,
-  setCurrentSectionId,
-  setShowButtonsOnPopup,
-}: UseSectionManagementProps) {
+                                       formFields,
+                                       setFormFields,
+                                       validateUnsavedChanges,
+                                       setAlertMsgs,
+                                       setShowAlertMsg,
+                                       setCurrentSectionId,
+                                       setShowButtonsOnPopup,
+                                     }: UseSectionManagementProps) {
   const [sections, setSections] = useState<Section[]>([]);
 
   const upsertSection = (newSection: Section, prevSections: Section[]) => {
