@@ -1,5 +1,5 @@
 import apiClient from "./config";
-import { NewForm, Form, Filter, MetroReturnedData, User } from "../utils/interfaces";
+import { Filter, Form, MetroReturnedData, NewForm, User } from "../utils/interfaces";
 import { UserData } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
@@ -21,9 +21,7 @@ export const getForms = async (filter?: Filter): Promise<Form[]> => {
     pageNumber: filter?.pageNumber,
   };
   try {
-    const response = await apiClient.post<Form>("/forms/get-forms", params, {
-      signal: filter?.signal, // pass a signal if attached to the filter
-    });
+    const response = await apiClient.get<Form>("/forms/get-forms", { params, signal: filter?.signal });
     if (!Array.isArray(response?.data)) {
       console.log("response:", response, "type: ", typeof response);
       console.log("response?.data:", response?.data, "type: ", typeof response?.data);
@@ -207,9 +205,9 @@ export const editSourceToMetro = async (id: number): Promise<any> => {
 // ============================================================
 
 export const useGetForm = ({
-  formId,
-  config,
-}: {
+                             formId,
+                             config,
+                           }: {
   formId?: string;
   config?: Omit<
     UseQueryOptions<Form | null, Error, Form | null, readonly unknown[]>,

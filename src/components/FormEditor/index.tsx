@@ -30,12 +30,14 @@ function yieldFormStructure(form: object) {
 }
 
 function FormEditor({ mode, editedForm }: Props) {
-  const [form, setForm] = useState<FormStructure>(editedForm ? yieldFormStructure(editedForm) : { ...EMPTY_FORM });
+  const [formStructure, setFormStructure] = useState<FormStructure>(editedForm ? yieldFormStructure(editedForm) : { ...EMPTY_FORM });
   const [draggingState, setDraggingState] = useState<DraggingState>({ ...DEFAULT_DRAGGING_STATE });
 
   return (
     <div className={styles.editorContainer}>
-      <FormContextProvider editorContext={{ mode }} structureContext={form} sandboxContext={{ draggingState }}>
+      <FormContextProvider editorContext={{ mode }}
+                           structureContext={{ formStructure, appendSection: () => null }}
+                           sandboxContext={{ draggingState }}>
         <FormEditorHeader />
         <div className={styles.sandboxContainer}>
           <FormSandbox />

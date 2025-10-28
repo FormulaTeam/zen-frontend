@@ -1,4 +1,4 @@
-import { verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useFormEditorContext } from "../../context/FormEditorContext";
 
 function FormStructure() {

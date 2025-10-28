@@ -1,11 +1,11 @@
 import { ReactNode } from "react";
 import { FormEditorContext } from "./FormEditorContext";
-import { FormStructure, FormStructureContext } from "./FormStructureContext";
+import { FormStructureContext } from "./FormStructureContext";
 import { FormSandboxContext } from "./FormSandboxContext";
 
 interface Props {
   editorContext: FormEditorContext;
-  structureContext: FormStructure;
+  structureContext: FormStructureContext;
   sandboxContext: FormSandboxContext;
 
   children?: ReactNode;
