@@ -19,7 +19,7 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
       const newSectionId = `section_${Date.now()}`;
       const newSection: Section = {
         title: texts.heb.undefinedSection,
-        order: Object.keys(prev.sections).length,
+        index: Object.keys(prev.sections).length,
         collapsed: false,
         fieldIds: [],
       };

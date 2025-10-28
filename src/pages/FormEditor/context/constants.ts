@@ -4,7 +4,7 @@ import { texts } from "../../../utils/texts";
 
 const INITIAL_SECTION: Section = {
   title: texts.heb.mainSection,
-  order: 0,
+  index: 0,
   collapsed: false,
   fieldIds: [],
 };

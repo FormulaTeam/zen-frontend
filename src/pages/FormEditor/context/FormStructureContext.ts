@@ -5,7 +5,7 @@ interface Section {
   title: string;
   description?: string;
   collapsed: boolean;
-  order: number;
+  index: number;
   expanded?: boolean;
   fieldIds: string[];
 }
