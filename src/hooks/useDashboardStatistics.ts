@@ -6,12 +6,11 @@ import { staticStats, monthlyFormsStats, unitsByRange } from "../api/dashboardAp
 
 export const useDashboardStatistics = (year = new Date().getUTCFullYear()) => {
   const staticStatsQuery = staticStats();
-
   const createdFormsQuery = monthlyFormsStats(year, IRetrieveDataType.CREATED);
   const deletedFormsQuery = monthlyFormsStats(year, IRetrieveDataType.DELETED);
-
   const unitsRangeQuery = unitsByRange({ from: null, to: null });
 
+  // ---------- Summary cards ----------
   const summaryCards = useMemo(() => {
     const stats = staticStatsQuery.data;
     if (!stats) return [];
@@ -50,32 +49,46 @@ export const useDashboardStatistics = (year = new Date().getUTCFullYear()) => {
     ];
   }, [staticStatsQuery.data]);
 
+  // ---------- Column chart data ----------
   const formsByMonth = useMemo<ChartData[]>(() => {
     if (!createdFormsQuery.data) return [];
     return createdFormsQuery.data.map(({ month, count }) => ({
       name: MonthName[month],
       value: count,
+      date: new Date(year, month, 1),
     }));
-  }, [createdFormsQuery.data]);
+  }, [createdFormsQuery.data, year]);
 
   const deletedFormsByMonth = useMemo<ChartData[]>(() => {
     if (!deletedFormsQuery.data) return [];
     return deletedFormsQuery.data.map(({ month, count }) => ({
       name: MonthName[month],
       value: count,
+      date: new Date(year, month, 1),
     }));
-  }, [deletedFormsQuery.data]);
+  }, [deletedFormsQuery.data, year]);
 
+  // ---------- Pie chart data ----------
   const serializeMirageUsers = useMemo<ChartData[]>(() => {
     if (!unitsRangeQuery.data) return [];
-    const map = new Map<string, number>();
-    unitsRangeQuery.data.forEach(({ yechidaHatzava }) => {
+    const map = new Map<string, { value: number; lastLogin: Date }>();
+    unitsRangeQuery.data.forEach(({ yechidaHatzava, loginAt }) => {
       const unit = yechidaHatzava ?? "לא ידוע";
-      map.set(unit, (map.get(unit) ?? 0) + 1);
+      const loginDate = new Date(loginAt || "");
+      const existing = map.get(unit);
+      map.set(unit, {
+        value: (existing?.value ?? 0) + 1,
+        lastLogin: !existing || loginDate > existing.lastLogin ? loginDate : existing.lastLogin,
+      });
     });
-    return Array.from(map, ([name, value]) => ({ name, value }));
+    return Array.from(map, ([name, { value, lastLogin }]) => ({
+      name,
+      value,
+      date: lastLogin,
+    }));
   }, [unitsRangeQuery.data]);
 
+  // ---------- Chart config getter ----------
   const getFormsChartConfig = (type: IRetrieveDataType) => {
     switch (type) {
       case IRetrieveDataType.DELETED:
