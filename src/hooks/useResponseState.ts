@@ -277,264 +277,267 @@ export const useResponseState = (
   const validateRequiredFields = () => {
     let ans = true;
     let newFormFieldsValidMap = new Map();
-    if (form?.fields) {
-      form.fields.forEach((field) => {
-        let uniqueId = field?.uniqueId + "";
-        let isRequired = field.required;
-        let val = formFieldsValuesMap.get(uniqueId);
-        // If there is a regex validation rule
-        if (!!field.validationRegex) {
-          // If the field is empty check if it's not required
-          if (val === "" || val === null || val === undefined) {
-            // If the field is not required, it's valid
-            if (!field.required) {
-              newFormFieldsValidMap.set(uniqueId, true);
-            } else {
-              // If the field is empty and required, it's invalid
-              newFormFieldsValidMap.set(uniqueId, false);
-              ans = false;
-            }
-            // If the field is not empty, check if it matches the regex
-          } else if (validateByRegex(val, field.validationRegex) == false) {
-            // If the field does not match the regex, it's invalid
+
+    const fieldsToValidate = visibleFormFields || [];
+
+    fieldsToValidate.forEach((field) => {
+      // skip fields that are not visible due to conditions
+      let uniqueId = field?.uniqueId + "";
+      let isRequired = field.required;
+      let val = formFieldsValuesMap.get(uniqueId);
+      // If there is a regex validation rule
+      if (!!field.validationRegex) {
+        // If the field is empty check if it's not required
+        if (val === "" || val === null || val === undefined) {
+          // If the field is not required, it's valid
+          if (!field.required) {
+            newFormFieldsValidMap.set(uniqueId, true);
+          } else {
+            // If the field is empty and required, it's invalid
             newFormFieldsValidMap.set(uniqueId, false);
             ans = false;
           }
-        } else {
-          const excludedTypeIds: number[] = [
-            FieldTypeIds.link,
-            FieldTypeIds.date,
-            FieldTypeIds.hour,
-            FieldTypeIds.location,
-            FieldTypeIds.checkbox,
-            FieldTypeIds.number,
-            FieldTypeIds.file,
-            FieldTypeIds.list,
-          ];
-          if (isRequired && !excludedTypeIds.includes(field.typeId)) {
-            //אפשרויות
-            if (field.typeId === FieldTypeIds.options) {
-              if ((val && Array.isArray(val) && val.length === 0) || !val) {
-                newFormFieldsValidMap.set(uniqueId, false);
-                ans = false;
-              } else {
-                newFormFieldsValidMap.set(uniqueId, true);
-              }
-            }
-            //שאר השדות שלא ברשימה
-            else {
-              if (!val) {
-                newFormFieldsValidMap.set(uniqueId, false);
-                ans = false;
-              } else {
-                newFormFieldsValidMap.set(uniqueId, true);
-              }
-            }
-          }
-
-          //היפר-קישור
-          else if (field.typeId === FieldTypeIds.link) {
-            const urlRegex = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,6})([/\w .-]*)*\/?$/i;
-
-            let validObj = { link: true, linkTxt: true };
-            //if no value
-            if (!val?.link || !val.linkTxt) {
-              //if no value and not required - true in both
-              if (!field.required) {
-                newFormFieldsValidMap.set(uniqueId, validObj);
-              }
-              //if no value and is required - false in both
-              if (field.required) {
-                newFormFieldsValidMap.set(uniqueId, {
-                  link: false,
-                  linkTxt: false,
-                });
-                ans = false;
-              }
-            }
-            //if has value
-            else {
-              //if has value in link or linkTxt
-              if (val && (val.link || val.linkTxt)) {
-                //no value in linkTxt
-                if (val.link && !val.linkTxt) {
-                  validObj.linkTxt = false;
-                  ans = false;
-                }
-                //no value in link
-                else if (!val.link && val.linkTxt) {
-                  validObj.link = false;
-                  ans = false;
-                } else if (!urlRegex.test(val.link)) {
-                  validObj.link = false;
-                  ans = false;
-                }
-                newFormFieldsValidMap.set(uniqueId, validObj);
-              }
-            }
-          }
-
-          //תאריך
-          else if (field.typeId === FieldTypeIds.date) {
-            //if no value and not required - is valid
-            if (!val && !field.required) {
-              newFormFieldsValidMap.set(uniqueId, true);
-            }
-            // //if no value and is required - not valid
-            else if (!val && field.required) {
+          // If the field is not empty, check if it matches the regex
+        } else if (validateByRegex(val, field.validationRegex) == false) {
+          // If the field does not match the regex, it's invalid
+          newFormFieldsValidMap.set(uniqueId, false);
+          ans = false;
+        }
+      } else {
+        const excludedTypeIds: number[] = [
+          FieldTypeIds.link,
+          FieldTypeIds.date,
+          FieldTypeIds.hour,
+          FieldTypeIds.location,
+          FieldTypeIds.checkbox,
+          FieldTypeIds.number,
+          FieldTypeIds.file,
+          FieldTypeIds.list,
+        ];
+        if (isRequired && !excludedTypeIds.includes(field.typeId)) {
+          //אפשרויות
+          if (field.typeId === FieldTypeIds.options) {
+            if ((val && Array.isArray(val) && val.length === 0) || !val) {
               newFormFieldsValidMap.set(uniqueId, false);
               ans = false;
             } else {
               newFormFieldsValidMap.set(uniqueId, true);
             }
           }
-
-          //שעה
-          else if (field.typeId === FieldTypeIds.hour) {
-            //if no value and not required - is valid
-            if (!val && !field.required) {
-              newFormFieldsValidMap.set(uniqueId, true);
-            }
-            //if no value and is required - not valid
-            else if (!val && field.required) {
+          //שאר השדות שלא ברשימה
+          else {
+            if (!val) {
               newFormFieldsValidMap.set(uniqueId, false);
               ans = false;
+            } else {
+              newFormFieldsValidMap.set(uniqueId, true);
             }
-            //if has value - validate time string format
-            else if (val) {
-              if (timeRegex.test(val)) {
-                newFormFieldsValidMap.set(uniqueId, true);
-              } else {
-                newFormFieldsValidMap.set(uniqueId, false);
+          }
+        }
+
+        //היפר-קישור
+        else if (field.typeId === FieldTypeIds.link) {
+          const urlRegex = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,6})([/\w .-]*)*\/?$/i;
+
+          let validObj = { link: true, linkTxt: true };
+          //if no value
+          if (!val?.link || !val.linkTxt) {
+            //if no value and not required - true in both
+            if (!field.required) {
+              newFormFieldsValidMap.set(uniqueId, validObj);
+            }
+            //if no value and is required - false in both
+            if (field.required) {
+              newFormFieldsValidMap.set(uniqueId, {
+                link: false,
+                linkTxt: false,
+              });
+              ans = false;
+            }
+          }
+          //if has value
+          else {
+            //if has value in link or linkTxt
+            if (val && (val.link || val.linkTxt)) {
+              //no value in linkTxt
+              if (val.link && !val.linkTxt) {
+                validObj.linkTxt = false;
                 ans = false;
               }
+              //no value in link
+              else if (!val.link && val.linkTxt) {
+                validObj.link = false;
+                ans = false;
+              } else if (!urlRegex.test(val.link)) {
+                validObj.link = false;
+                ans = false;
+              }
+              newFormFieldsValidMap.set(uniqueId, validObj);
+            }
+          }
+        }
+
+        //תאריך
+        else if (field.typeId === FieldTypeIds.date) {
+          //if no value and not required - is valid
+          if (!val && !field.required) {
+            newFormFieldsValidMap.set(uniqueId, true);
+          }
+          // //if no value and is required - not valid
+          else if (!val && field.required) {
+            newFormFieldsValidMap.set(uniqueId, false);
+            ans = false;
+          } else {
+            newFormFieldsValidMap.set(uniqueId, true);
+          }
+        }
+
+        //שעה
+        else if (field.typeId === FieldTypeIds.hour) {
+          //if no value and not required - is valid
+          if (!val && !field.required) {
+            newFormFieldsValidMap.set(uniqueId, true);
+          }
+          //if no value and is required - not valid
+          else if (!val && field.required) {
+            newFormFieldsValidMap.set(uniqueId, false);
+            ans = false;
+          }
+          //if has value - validate time string format
+          else if (val) {
+            if (timeRegex.test(val)) {
+              newFormFieldsValidMap.set(uniqueId, true);
             } else {
               newFormFieldsValidMap.set(uniqueId, false);
               ans = false;
             }
-          } else if (field.typeId === FieldTypeIds.file) {
-            if (
-              (!val?.files && field.required) ||
-              (val?.files?.newFiles?.length === 0 &&
-                val?.files?.attachedFiles?.length === 0 &&
-                field.required)
-            ) {
-              newFormFieldsValidMap.set(uniqueId, false);
+          } else {
+            newFormFieldsValidMap.set(uniqueId, false);
+            ans = false;
+          }
+        } else if (field.typeId === FieldTypeIds.file) {
+          if (
+            (!val?.files && field.required) ||
+            (val?.files?.newFiles?.length === 0 &&
+              val?.files?.attachedFiles?.length === 0 &&
+              field.required)
+          ) {
+            newFormFieldsValidMap.set(uniqueId, false);
+            ans = false;
+            return;
+          }
+          newFormFieldsValidMap.set(uniqueId, true);
+        }
+
+        //נקודת ציון - if not empty check 6 digits for x and y
+        else if (field.typeId === FieldTypeIds.location) {
+          // let val = formFieldsValuesMap.get(uniqueId);
+          let validObj = { x: true, y: true };
+
+          //if no value
+          if (!val || (!val.x && !val.y)) {
+            //if no value and not required - true in both
+            if (!field.required) {
+              newFormFieldsValidMap.set(uniqueId, validObj);
+            }
+            //if no value and is required - false in both
+            if (field.required) {
+              newFormFieldsValidMap.set(uniqueId, { x: false, y: false });
               ans = false;
               return;
             }
-            newFormFieldsValidMap.set(uniqueId, true);
           }
-
-          //נקודת ציון - if not empty check 6 digits for x and y
-          else if (field.typeId === FieldTypeIds.location) {
-            // let val = formFieldsValuesMap.get(uniqueId);
-            let validObj = { x: true, y: true };
-
-            //if no value
-            if (!val || (!val.x && !val.y)) {
-              //if no value and not required - true in both
-              if (!field.required) {
-                newFormFieldsValidMap.set(uniqueId, validObj);
-              }
-              //if no value and is required - false in both
-              if (field.required) {
-                newFormFieldsValidMap.set(uniqueId, { x: false, y: false });
-                ans = false;
-                return;
-              }
-            }
-            //if has value
-            else {
-              //if has value in x or y
-              if (val && (val.x || val.y)) {
-                //no value in y
-                if (!field.coordinateType || field.coordinateType === "UTM") {
-                  if (!utmRegex.test(val.x)) {
-                    validObj.x = false;
-                    ans = false;
-                  }
-                  if (!utmRegex.test(val.y)) {
-                    validObj.y = false;
-                    ans = false;
-                  }
-                } else {
-                  if (!wktLongitudeRegexX.test(val.x)) {
-                    validObj.x = false;
-                    ans = false;
-                  }
-                  if (!wktLatitudeRegexY.test(val.y)) {
-                    validObj.y = false;
-                    ans = false;
-                  }
+          //if has value
+          else {
+            //if has value in x or y
+            if (val && (val.x || val.y)) {
+              //no value in y
+              if (!field.coordinateType || field.coordinateType === "UTM") {
+                if (!utmRegex.test(val.x)) {
+                  validObj.x = false;
+                  ans = false;
                 }
-                newFormFieldsValidMap.set(uniqueId, validObj);
-                return;
-              }
-            }
-          } else if (field.typeId === FieldTypeIds.list) {
-            if (isRequired) {
-              if (!val || val.length === 0) {
-                newFormFieldsValidMap.set(uniqueId, false);
-                ans = false;
-                return;
+                if (!utmRegex.test(val.y)) {
+                  validObj.y = false;
+                  ans = false;
+                }
               } else {
-                newFormFieldsValidMap.set(uniqueId, true);
+                if (!wktLongitudeRegexX.test(val.x)) {
+                  validObj.x = false;
+                  ans = false;
+                }
+                if (!wktLatitudeRegexY.test(val.y)) {
+                  validObj.y = false;
+                  ans = false;
+                }
               }
+              newFormFieldsValidMap.set(uniqueId, validObj);
+              return;
+            }
+          }
+        } else if (field.typeId === FieldTypeIds.list) {
+          if (isRequired) {
+            if (!val || val.length === 0) {
+              newFormFieldsValidMap.set(uniqueId, false);
+              ans = false;
+              return;
             } else {
               newFormFieldsValidMap.set(uniqueId, true);
             }
-          }
-          //מספר
-          else if (field.typeId === FieldTypeIds.number) {
-            const { minValue, maxValue, numberType, required } = field;
-            const isEmpty = isEmptyValue(val);
-            if (isEmpty) {
-              if (required) {
-                newFormFieldsValidMap.set(uniqueId, false);
-                ans = false;
-              } else {
-                newFormFieldsValidMap.set(uniqueId, true);
-              }
-              return;
-            }
-
-            const numericValue = Number(val);
-
-            if (isNaN(numericValue)) {
-              newFormFieldsValidMap.set(uniqueId, false);
-              ans = false;
-              return;
-            }
-
-            if (numberType === "integer" && !Number.isInteger(numericValue)) {
-              newFormFieldsValidMap.set(uniqueId, false);
-              ans = false;
-              return;
-            }
-
-            if ((minValue || minValue === 0) && numericValue < minValue) {
-              newFormFieldsValidMap.set(uniqueId, false);
-              ans = false;
-              return;
-            }
-            if ((maxValue || maxValue === 0) && numericValue > maxValue) {
-              newFormFieldsValidMap.set(uniqueId, false);
-              ans = false;
-              return;
-            }
-
-            newFormFieldsValidMap.set(uniqueId, true);
-          } else if (field.typeId === FieldTypeIds.checkbox) {
-            return true;
-          }
-          //all other fields
-          else if (isRequired === false) {
+          } else {
             newFormFieldsValidMap.set(uniqueId, true);
           }
-        } //end if no regex
-      });
-    }
+        }
+        //מספר
+        else if (field.typeId === FieldTypeIds.number) {
+          const { minValue, maxValue, numberType, required } = field;
+          const isEmpty = isEmptyValue(val);
+          if (isEmpty) {
+            if (required) {
+              newFormFieldsValidMap.set(uniqueId, false);
+              ans = false;
+            } else {
+              newFormFieldsValidMap.set(uniqueId, true);
+            }
+            return;
+          }
+
+          const numericValue = Number(val);
+
+          if (isNaN(numericValue)) {
+            newFormFieldsValidMap.set(uniqueId, false);
+            ans = false;
+            return;
+          }
+
+          if (numberType === "integer" && !Number.isInteger(numericValue)) {
+            newFormFieldsValidMap.set(uniqueId, false);
+            ans = false;
+            return;
+          }
+
+          if ((minValue || minValue === 0) && numericValue < minValue) {
+            newFormFieldsValidMap.set(uniqueId, false);
+            ans = false;
+            return;
+          }
+          if ((maxValue || maxValue === 0) && numericValue > maxValue) {
+            newFormFieldsValidMap.set(uniqueId, false);
+            ans = false;
+            return;
+          }
+
+          newFormFieldsValidMap.set(uniqueId, true);
+        } else if (field.typeId === FieldTypeIds.checkbox) {
+          return true;
+        }
+        //all other fields
+        else if (isRequired === false) {
+          newFormFieldsValidMap.set(uniqueId, true);
+        }
+      } //end if no regex
+    });
+
     setFormFieldsValidMap(newFormFieldsValidMap);
     return ans;
   };
