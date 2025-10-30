@@ -165,11 +165,6 @@ export const AffectedTargetsSelect = styled(Select)(({ theme }) => ({
   minWidth: 200,
 }));
 
-export const AffectedTargetsEmptyMessage = styled(Typography)(({ theme }) => ({
-  marginTop: theme.spacing(1),
-  fontStyle: "italic",
-}));
-
 // ConditionItem styled components
 export const ConditionItemContainer = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
