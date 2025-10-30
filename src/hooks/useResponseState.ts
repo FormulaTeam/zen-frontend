@@ -278,9 +278,7 @@ export const useResponseState = (
     let ans = true;
     let newFormFieldsValidMap = new Map();
 
-    const fieldsToValidate = visibleFormFields || [];
-
-    fieldsToValidate.forEach((field) => {
+    visibleFormFields.forEach((field) => {
       // skip fields that are not visible due to conditions
       let uniqueId = field?.uniqueId + "";
       let isRequired = field.required;
