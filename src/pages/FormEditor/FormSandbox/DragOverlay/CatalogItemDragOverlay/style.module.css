@@ -1,11 +1,3 @@
-.catalogContainer {
-    margin: 16px 0 16px 8px;
-}
-
-.catalogTitle {
-    margin-bottom: 16px;
-}
-
 .dragOverlay {
     display: flex;
     justify-content: space-around;

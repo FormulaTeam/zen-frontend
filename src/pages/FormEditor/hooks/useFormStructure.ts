@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { FormStructure, Section } from "../context/FormStructureContext";
 import { EMPTY_FORM } from "../context/constants";
 import { texts } from "../../../utils/texts";
@@ -9,10 +9,6 @@ function yieldFormStructure(form: object) {
 
 function useFormStructure(editedForm?: object) { //TODO consider making singleton
   const [formStructure, setFormStructure] = useState<FormStructure>(editedForm ? yieldFormStructure(editedForm) : { ...EMPTY_FORM });
-
-  useEffect(() => {
-    console.log(formStructure.sections);
-  }, [formStructure.sections]);
 
   const appendSection = useCallback(() => {
     setFormStructure((prev) => {
@@ -34,9 +30,44 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
     });
   }, [setFormStructure]);
 
+  const deleteSection = useCallback((sectionId: string) => {
+    setFormStructure((prev) => {
+      const remainingSections = { ...prev.sections };
+
+      if (Object.keys(remainingSections).length > 1) { // TODO show error popup when trying to delete the last section
+        delete remainingSections[sectionId];
+
+        return {
+          ...prev,
+          sections: { ...remainingSections },
+        };
+      }
+
+      return prev;
+    });
+  }, []);
+
+  const renameSection = useCallback((sectionId: string, title: string) => {
+    setFormStructure((prev) => {
+      const changedSection = prev.sections[sectionId];
+      changedSection.title = title;
+
+      return {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [sectionId]: changedSection,
+        },
+      };
+    });
+  }, [setFormStructure]);
+
   return {
     formStructure,
+    setFormStructure,
     appendSection,
+    deleteSection,
+    renameSection,
   };
 }
 

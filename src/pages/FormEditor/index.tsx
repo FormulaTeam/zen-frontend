@@ -1,12 +1,9 @@
 import styles from "./style.module.css";
 import { FormEditorHeader } from "./FormEditorHeader";
 import { FormSandbox } from "./FormSandbox";
-import { FormEditorMode } from "./context/FormEditorContext";
-import { useState } from "react";
-import { DEFAULT_DRAGGING_STATE } from "./context/constants";
-import { FormContextProvider } from "./context/FormContextProvider";
-import { DraggingState } from "./context/FormSandboxContext";
+import { FormEditorContext, FormEditorMode } from "./context/FormEditorContext";
 import { useFormStructure } from "./hooks/useFormStructure";
+import { FormStructureContext } from "./context/FormStructureContext";
 
 interface EditorProps {
   mode: FormEditorMode;
@@ -26,19 +23,24 @@ interface CreateModeProps extends EditorProps {
 type Props = CreateModeProps | EditModeProps;
 
 function FormEditor({ mode, editedForm }: Props) {
-  const { formStructure, appendSection } = useFormStructure(editedForm);
-  const [draggingState, setDraggingState] = useState<DraggingState>({ ...DEFAULT_DRAGGING_STATE });
+  const { formStructure, setFormStructure, appendSection, deleteSection, renameSection } = useFormStructure(editedForm);
 
   return (
     <div className={styles.editorContainer}>
-      <FormContextProvider editorContext={{ mode }}
-                           structureContext={{ formStructure, appendSection }}
-                           sandboxContext={{ draggingState }}>
-        <FormEditorHeader />
-        <div className={styles.sandboxContainer}>
-          <FormSandbox />
-        </div>
-      </FormContextProvider>
+      <FormEditorContext.Provider value={{ mode }}>
+        <FormStructureContext.Provider value={{
+          formStructure,
+          setFormStructure,
+          appendSection,
+          deleteSection,
+          renameSection,
+        }}>
+          <FormEditorHeader />
+          <div className={styles.sandboxContainer}>
+            <FormSandbox />
+          </div>
+        </FormStructureContext.Provider>
+      </FormEditorContext.Provider>
     </div>
   );
 }

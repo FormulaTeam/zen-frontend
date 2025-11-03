@@ -3,28 +3,36 @@ import styles from "./style.module.css";
 import { FORM_ELEMENT_ICONS } from "../../../../../components/FORM_ELEMENT_ICONS";
 import { FORM_ELEMENTS, FormElementTypeId } from "../../../../../utils/interfaces";
 import { Typography } from "@mui/material";
-import { CSS } from "@dnd-kit/utilities";
 import { useEffect, useMemo } from "react";
+import { DraggableElementData } from "../../../context/FormSandboxContext";
 
 interface Props {
   id: FormElementTypeId;
+
+  onDrag?: (elementId: FormElementTypeId) => void;
+  onDrop?: () => void;
 }
 
-function FormElementCatalogItem({ id }: Props) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
+function FormElementCatalogItem({ id, onDrag, onDrop }: Props) {
+  const {
+          attributes,
+          listeners,
+          setNodeRef,
+          isDragging,
+        } = useDraggable({
+                           id,
+                           data: {
+                             elementType: "catalogItem",
+                           } as DraggableElementData,
+                         });
 
   const style = useMemo(() => ({
-    transform: CSS.Translate.toString(transform),
-    cursor: isDragging ? "unset" : "grab",
-  }), [isDragging, transform]);
+    opacity: isDragging ? 0.25 : 1,
+  }), [isDragging]);
 
   useEffect(() => {
-    if (isDragging) {
-      document.body.style.cursor = "grabbing";
-    } else {
-      document.body.style.cursor = "unset";
-    }
-  }, [isDragging]);
+    isDragging ? onDrag?.(id) : null;
+  }, [isDragging, onDrag, onDrop]);
 
   return (
     <div ref={setNodeRef} style={style} className={styles.catalogBlock} {...attributes} {...listeners}>

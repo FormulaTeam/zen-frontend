@@ -18,8 +18,8 @@ const EMPTY_FORM: FormStructure = {
 };
 
 const DEFAULT_DRAGGING_STATE: DraggingState = {
-  origin: null,
   isDragging: false,
+  draggingElement: null,
 };
 
 export { EMPTY_FORM, DEFAULT_DRAGGING_STATE };

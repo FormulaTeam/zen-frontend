@@ -37,7 +37,7 @@ function FormEditorHeader({ formIconName }: Props) {
         </div>
       </div>
       <div className={styles.headerEnd}>
-        <Button variant={"outlined"} color={"primary"}>שמירה</Button>
+        <Button variant={"contained"} color={"primary"}>שמירה</Button>
         <Button variant={"outlined"} color={"error"}>יציאה</Button>
       </div>
     </div>
