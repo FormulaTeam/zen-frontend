@@ -90,21 +90,6 @@ export const getResponsesCount = async (form_id: number): Promise<ResponseCount>
   }
 };
 
-export const useCreateResponse = () => {
-  return useCreate<NewResponse | NewResponse[], ResponseForm | ResponseForm[]>({
-    endpoint: "/responses/create",
-    mutationKey: ["create-response"],
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["responses"] });
-      },
-      onError: (error) => {
-        console.error("Failed to create response:", error);
-      },
-    },
-  });
-};
-
 export const getResponseWithFlatFields = (
   responseData: ResponseFieldValue[],
   fieldsMetaData: FormField[],
@@ -152,21 +137,6 @@ export const getResponseWithFlatFields = (
     return acc;
   }, {});
   return fieldsNameValueObj;
-};
-
-export const useUpdateResponse = (formId: number, id: number) => {
-  return useUpdate<Partial<ResponseForm>, ResponseForm>({
-    endpoint: `/responses/edit/${formId}/${id}`,
-    mutationKey: ["update-response", formId, id],
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["responses"] });
-      },
-      onError: (error) => {
-        console.error("Failed to update response:", error);
-      },
-    },
-  });
 };
 
 /**
@@ -280,4 +250,36 @@ export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseFo
     console.error("Failed to fetch deleted responses:", error);
     throw error;
   }
+};
+
+// Gali's changes
+// ========================
+export const useCreateResponse = () => {
+  return useCreate<NewResponse | NewResponse[], ResponseForm | ResponseForm[]>({
+    endpoint: "/responses/create",
+    mutationKey: ["create-response"],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+      onError: (error) => {
+        console.error("Failed to create response:", error);
+      },
+    },
+  });
+};
+
+export const useUpdateResponse = (formId: number, id: number) => {
+  return useUpdate<Partial<ResponseForm>, ResponseForm>({
+    endpoint: `/responses/edit/${formId}/${id}`,
+    mutationKey: ["update-response", formId, id],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+      onError: (error) => {
+        console.error("Failed to update response:", error);
+      },
+    },
+  });
 };

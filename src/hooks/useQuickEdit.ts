@@ -332,8 +332,8 @@ export const useQuickEdit = ({
                 typeof newValue === "object" ? JSON.stringify(newValue) : newValue;
             }
           });
-          const updateMutation = useUpdateResponse(form.id, originalResponse.id);
-          updates.push(updateMutation.mutateAsync(updatedData));
+          const {mutateAsync: mutateUpdateResponseAsync} = useUpdateResponse(form.id, originalResponse.id);
+          updates.push(mutateUpdateResponseAsync(updatedData));
         }
       });
 
