@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { updateResponse, createResponse } from "../api/responsesApi";
+import { useCreateResponse, useUpdateResponse } from "../api/responsesApi";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
 import isEqual from "lodash/isEqual";
 
@@ -305,7 +305,8 @@ export const useQuickEdit = ({
             }
           });
 
-          creates.push(createResponse(newResponsePayload));
+          const createResponseMutation = useCreateResponse();
+          creates.push(createResponseMutation.mutateAsync(newResponsePayload));
         } else {
           const originalResponse = allFilteredResponses.find((r) => r.id.toString() === responseId);
           if (!originalResponse) return;
@@ -331,8 +332,8 @@ export const useQuickEdit = ({
                 typeof newValue === "object" ? JSON.stringify(newValue) : newValue;
             }
           });
-
-          updates.push(updateResponse(form.id, parseInt(responseId), updatedData));
+          const {mutateAsync: mutateUpdateResponseAsync} = useUpdateResponse(form.id, originalResponse.id);
+          updates.push(mutateUpdateResponseAsync(updatedData));
         }
       });
 
