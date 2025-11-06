@@ -5,8 +5,11 @@ import { FormChangesProvider } from "./contexts/FormChangesContext";
 import { SuperAdminProvider } from "./contexts/SuperAdminContext";
 import AppRouter from "./Router";
 import { queryClient } from "./api/queryClient";
+import { LicenseInfo } from "@mui/x-license-pro";
+import { muiLicenseKey } from "./muiLicense";
 
 function App() {
+  LicenseInfo.setLicenseKey(muiLicenseKey);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -17,7 +20,7 @@ function App() {
         </SuperAdminProvider>
       </AuthProvider>
       {/* React Query Devtools - only shows in development */}
-      <ReactQueryDevtools initialIsOpen={false} />
+      {/* <ReactQueryDevtools initialIsOpen={false} /> */}
     </QueryClientProvider>
   );
 }

@@ -5,6 +5,7 @@ import { useFetch } from "../utils/useFetch";
 import { UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
 import { useDelete } from "../utils/useDelete";
 import queryClient from "./queryClient";
+import { useUpdate } from "../utils/useUpdate";
 
 /**
  * Fetch all forms with optional query parameters.
@@ -217,9 +218,12 @@ export const useGetForm = ({
   >;
 }): UseQueryResult<Form | null> => {
   return useFetch<undefined, Form | null>({
-    endpoint: `/forms/${formId}`,
+    endpoint: `/forms/${formId ?? "10"}`,
     queryKey: () => [formId],
-    queryOptions: config,
+    queryOptions: {
+      enabled: !!formId,
+      ...config,
+    },
   });
 };
 
@@ -229,6 +233,19 @@ export const useDeleteForm = ({ id }: { id: string }) => {
     mutationKey: ["deleteForm", id],
     mutationOptions: {
       onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["forms"] });
+      },
+    },
+  });
+};
+
+export const useUpdateForm = ({ formId }: { formId: string }) => {
+  return useUpdate<Partial<Form>, Form>({
+    endpoint: `/forms/edit/${formId}`,
+    mutationKey: ["updateForm", formId],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [formId] });
         queryClient.invalidateQueries({ queryKey: ["forms"] });
       },
     },

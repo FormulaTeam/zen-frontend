@@ -94,7 +94,6 @@ function ResponseToolbar({
       {showMetroPopup && <MetroSyncingPopup setShowMetroPopup={setShowMetroPopup} />}
       {showMetroInputsPopup && (
         <ManualMetroSource
-          getResponsesForCurrentPage={getResponsesForCurrentPage}
           form={form}
           setShowMetroInputsPopup={setShowMetroInputsPopup}
           metroInputsPopupLoading={metroInputsPopupLoading}

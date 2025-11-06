@@ -1,45 +1,50 @@
-import React, { useState } from "react";
-import AlertMsg from "../AlertMsg/AlertMsg";
-import { IconButton, Tooltip, useTheme, Select, MenuItem, InputLabel } from "@mui/material";
 import {
-  Delete,
-  Edit,
   Add,
-  Visibility,
   CalendarViewWeek,
-  EditNote,
   CheckOutlined,
   Close,
+  Delete,
+  Edit,
+  EditNote,
+  Visibility,
 } from "@mui/icons-material";
-import { PERMISSION_TYPES, searchResponsesWithFilterAndExportToExcel } from "../../utils/utils";
-import { CustomIcon } from "../../theme/icons";
+import {
+  Container,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  Tooltip,
+  useTheme,
+} from "@mui/material";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useViewControls } from "../../hooks/useViewControls";
+import { useViewControls } from "../../../hooks/useViewControls";
+import { CustomIcon } from "../../../theme/icons";
+import { PERMISSION_TYPES, searchResponsesWithFilterAndExportToExcel } from "../../../utils/utils";
+
+import AlertMsg from "../../../components/AlertMsg/AlertMsg";
+import LoadingOverlay from "../../../components/LoadingOverlay/LoadingOverlay";
 import {
   ActionGroup,
-  Container,
-  LoadingBtnBox,
   RightActions,
   SmallRoundButton,
   StyledAddButton,
-  ViewControlsContainer,
   StyledViewFormControl,
+  ViewControlsContainer,
   ViewDefaultBadge,
-  ViewMenuItem,
   ViewManageButton,
-} from "./styled";
-import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
+  ViewMenuItem,
+} from "../../../components/Responses/styled";
+import { useFormStore } from "../stores/form.store";
+import { PermissionGate } from "../PermissionGate";
+import { Filter } from "../../../utils/interfaces";
+import { TableView } from "../../../types/interfaces/tableViews.types";
+import { useResponsesList } from "../../../hooks/useResponsesList";
 
-const OperationsContainer: React.FC<any> = ({
-  permissionTypes,
-  viewResponse,
+const OperationsContainer = ({
   rowSelection,
-  editResponse,
-  deleteAllSelectedResponses,
-  user,
-  form,
   allResponsesCount,
-  currentFilter,
   isQuickEditMode = false,
   onToggleQuickEdit,
   onSaveChanges,
@@ -54,11 +59,39 @@ const OperationsContainer: React.FC<any> = ({
   handleViewDropdownChange,
   setIsSidePanelOpen,
   isSidePanelOpen,
+}: {
+  viewResponse: () => void;
+  rowSelection: any;
+  editResponse: () => void;
+  deleteAllSelectedResponses: () => void;
+  allResponsesCount: number;
+  currentFilter: Filter;
+  isQuickEditMode?: boolean;
+  onToggleQuickEdit: () => void;
+  onSaveChanges: () => Promise<void>;
+  onCancelChanges: () => void;
+  onAddNewResponse: () => void;
+  hasUnsavedChanges?: boolean;
+  isEditButtonDisabled?: boolean;
+  editButtonDisabledReason?: string;
+  // View management props
+  allViews: TableView[];
+  selectedViewId: string | number;
+  handleViewDropdownChange: (event: any) => void;
+  setIsSidePanelOpen?: (isOpen: boolean) => void;
+  isSidePanelOpen?: boolean;
 }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [showSaveLoader, setShowSaveLoader] = useState<boolean>(false);
+  const { form, permissions } = useFormStore();
+
+  const { currentFilter, deleteAllSelectedResponses, editResponse, viewResponse } =
+    useResponsesList({
+      setShouldRefreshPage: () => {},
+      user: null,
+    }); // to avoid errors
 
   // Use the view controls hook
   const { getViewDisplayName, isViewDefault } = useViewControls({
@@ -111,8 +144,8 @@ const OperationsContainer: React.FC<any> = ({
                 disabled={
                   isQuickEditMode ||
                   Object.entries(rowSelection)?.length !== 1 ||
-                  (!permissionTypes.includes(PERMISSION_TYPES.VIEW_RESPONSE) &&
-                    !permissionTypes.includes(PERMISSION_TYPES.VIEW_YOUR_RESPONSES))
+                  (!permissions.includes(PERMISSION_TYPES.VIEW_RESPONSE) &&
+                    !permissions.includes(PERMISSION_TYPES.VIEW_YOUR_RESPONSES))
                 }>
                 <Visibility />
               </IconButton>
@@ -128,7 +161,7 @@ const OperationsContainer: React.FC<any> = ({
                 disabled={
                   isQuickEditMode ||
                   Object.entries(rowSelection)?.length !== 1 ||
-                  !permissionTypes.includes(PERMISSION_TYPES.EDIT_RESPONSE)
+                  !permissions.includes(PERMISSION_TYPES.EDIT_RESPONSE)
                 }>
                 <Edit />
               </IconButton>
@@ -141,7 +174,7 @@ const OperationsContainer: React.FC<any> = ({
                 disabled={
                   isQuickEditMode ||
                   Object.entries(rowSelection)?.length === 0 ||
-                  !permissionTypes.includes(PERMISSION_TYPES.DELETE_RESPONSE)
+                  !permissions.includes(PERMISSION_TYPES.DELETE_RESPONSE)
                 }
                 onClick={deleteAllSelectedResponses}>
                 <Delete />
@@ -162,8 +195,7 @@ const OperationsContainer: React.FC<any> = ({
                 onClick={isQuickEditMode ? handleSaveAndExit : onToggleQuickEdit}
                 disabled={
                   !isQuickEditMode &&
-                  (isEditButtonDisabled ||
-                    !permissionTypes.includes(PERMISSION_TYPES.EDIT_RESPONSE))
+                  (isEditButtonDisabled || !permissions.includes(PERMISSION_TYPES.EDIT_RESPONSE))
                 }
                 color={isQuickEditMode ? "secondary" : "default"}>
                 {isQuickEditMode ? <CheckOutlined /> : <EditNote />}
@@ -207,14 +239,14 @@ const OperationsContainer: React.FC<any> = ({
                 <MenuItem value="">
                   <em>כל השדות</em>
                 </MenuItem>
-                {/* {allViews?.map((view) => (
+                {allViews?.map((view) => (
                   <MenuItem key={view.id} value={view.id}>
                     <ViewMenuItem>
                       <span>{getViewDisplayName(view)}</span>
                       {isViewDefault(view) && <ViewDefaultBadge>ברירת מחדל</ViewDefaultBadge>}
                     </ViewMenuItem>
                   </MenuItem>
-                ))} */}
+                ))}
               </Select>
             </StyledViewFormControl>
 
@@ -239,12 +271,14 @@ const OperationsContainer: React.FC<any> = ({
             disabled={
               isQuickEditMode ||
               !(form?.fields?.length > 0) ||
-              !permissionTypes.includes(PERMISSION_TYPES.CREATE_RESPONSE)
+              !permissions.includes(PERMISSION_TYPES.CREATE_RESPONSE)
             }>
             הוספת תגובה חדשה
           </StyledAddButton>
 
-          {(user?.isSuperAdmin || permissionTypes.includes(PERMISSION_TYPES.EXPORT_FORM)) && (
+          <PermissionGate
+            permissions={[PERMISSION_TYPES.EXPORT_FORM]}
+            userPermissions={permissions}>
             <Tooltip
               title={
                 isQuickEditMode
@@ -259,7 +293,7 @@ const OperationsContainer: React.FC<any> = ({
                 <CustomIcon iconName="excel" forcePointer />
               </SmallRoundButton>
             </Tooltip>
-          )}
+          </PermissionGate>
         </RightActions>
 
         {/* Confirm unsaved changes */}

@@ -28,6 +28,8 @@ const AppRouter = () => {
   const [showHelpCard, setShowHelpCard] = useState(false);
   const [shouldRefreshPage, setShouldRefreshPage] = useState(false);
 
+  console.log("AppRouter render with user:===========", user);
+
   function resetSearchValue() {
     setSearchValue("");
   }

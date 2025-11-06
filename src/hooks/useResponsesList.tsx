@@ -8,11 +8,12 @@ import {
   showSuccessNotification,
 } from "../utils/utils";
 import { MRT_ColumnFiltersState, MRT_PaginationState } from "material-react-table";
-import { SearchResponsesFilter } from "../utils/interfaces";
+import { Filter, SearchResponsesFilter } from "../utils/interfaces";
 import { IOrderBy } from "../types/enums/filtersAndSorts.enum";
 import moment from "moment";
 import { downloadFileFromResponse } from "../api/filesApi";
 import { ViewColumn } from "../types/interfaces/tableViews.types";
+import { useAuth } from "../contexts/AuthContext";
 
 interface UseResponsesListProps {
   setShouldRefreshPage: (value: boolean) => void;
@@ -25,6 +26,8 @@ export const useResponsesList = ({
   user,
   currentViewConfig,
 }: UseResponsesListProps) => {
+  // const { user } = useAuth();
+
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(true);
   const [loadingInsideTable, setLoadingInsideTable] = useState(false);
@@ -42,7 +45,7 @@ export const useResponsesList = ({
   const [showConfirmMsg, setShowConfirmMsg] = useState<boolean>(false);
   const [confirmMsg, setConfirmMsg] = useState<string>("");
   const [confirmOkFunc, setConfirmOkFunc] = useState<any>(null);
-  const [currentFilter, setCurrentFilter] = useState<any>(null);
+  const [currentFilter, setCurrentFilter] = useState<Filter | null>(null);
   const [rowSelection, setRowSelection] = useState<any>({}); //ts type available
   const [confirmBtnText, setConfirmBtnText] = useState<string>("");
   const { id } = useParams();
@@ -349,8 +352,8 @@ export const useResponsesList = ({
       setConfirmMsg("האם את/ה בטוח/ה שברצונך למחוק את הטופס?");
       setConfirmOkFunc(() => async () => {
         const currentUserLowerCaseUpn = user?.upn?.toLowerCase();
-        const userName = getUserName(user.firstName, user.lastName);
-        await deleteForm(form.id, { upn: currentUserLowerCaseUpn, userName: userName });
+        const userName = getUserName(user?.firstName ?? "", user?.lastName ?? "");
+        await deleteForm(form.id, { upn: currentUserLowerCaseUpn ?? "", userName: userName });
         let notInMainPage = location.pathname !== "/";
         if (notInMainPage) {
           navigate("/", { replace: true });

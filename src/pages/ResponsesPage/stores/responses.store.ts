@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Form, ResponseForm } from "../../utils/interfaces";
+import { Form, ResponseForm } from "../../../utils/interfaces";
 
 interface ResponsesState {
   responses: ResponseForm[] | null;

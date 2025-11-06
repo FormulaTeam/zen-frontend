@@ -102,6 +102,8 @@ export const RESPONSE_ACCESS_PERMISSIONS = [
 
 export type LegacyPermission = (typeof PERMISSION_TYPES)[keyof typeof PERMISSION_TYPES];
 
+export const allLegacyPermissions: LegacyPermission[] = Object.values(PERMISSION_TYPES);
+
 export const CREATE_RESPONSE_PERMISSIONS = [PERMISSION_TYPES.CREATE_RESPONSE];
 // human labels for debug/admin UI
 export const PERMISSION_LABELS: Record<LegacyPermission, string> = {
@@ -368,9 +370,12 @@ function preferredOrder(obj, order) {
   return newObject;
 }
 
-export const searchResponsesWithFilterAndExportToExcel = async (form: Form, filter: Filter) => {
+export const searchResponsesWithFilterAndExportToExcel = async (
+  form: Form,
+  filter: Filter | null,
+) => {
   try {
-    let responses: any = await searchResponses(filter);
+    let responses: any = await searchResponses(filter ?? {});
     if (responses && responses.responses) {
       exportToExcel(responses.responses, form);
     }

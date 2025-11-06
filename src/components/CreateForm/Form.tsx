@@ -47,6 +47,7 @@ import {
   handleFieldMovedBetweenSections,
 } from "../../utils/sectionConditionUtils";
 import { RESERVED_FIELD_NAMES } from "../../consts/form";
+import queryClient from "../../api/queryClient";
 
 interface FormProps {
   formToEdit: any;
@@ -340,6 +341,8 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
       showErrorNotification("עידכון הטופס נכשל");
     } finally {
       setLoading(false);
+      // future teamate please remove this; in the future massive refactor is needs to be done here; change to react-query mutation
+      queryClient.invalidateQueries({ queryKey: [`${formId}`] });
     }
   };
 

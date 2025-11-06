@@ -5,6 +5,8 @@ import { Role, User } from "../../utils/interfaces";
 import { FormActionsToolbar } from "./components/FormActionsToolbar";
 import { useFormLoader } from "./hooks/useFormLoader";
 import { MainContentWrapper, PageWrapper, TopSection } from "./styled";
+import SearchInfo from "../../components/Responses/SearchInfo";
+import { ResponsesTable } from "./components/ResponsesTable";
 
 interface ResponsesPageProps {
   user: User | null;
@@ -40,7 +42,9 @@ export default function ResponsesPage({
         <TopSection>
           <Header />
           <FormActionsToolbar />
+          {/* <SearchInfo search={search} setSearch={setSearch} allResponsesCount={allResponsesCount} /> */}
         </TopSection>
+        <ResponsesTable />
       </MainContentWrapper>
     </PageWrapper>
   );

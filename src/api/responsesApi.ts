@@ -16,6 +16,7 @@ import { useDelete } from "../utils/useDelete";
 import queryClient from "./queryClient";
 import { useCreate } from "../utils/useCreate";
 import { ExcelImportResult } from "../types/interfaces/forms.types";
+import { useFetch } from "../utils/useFetch";
 
 /**
  * Fetch all responses with optional query parameters.
@@ -36,11 +37,11 @@ export const getResponses = async (filter?: Filter): Promise<ResponseForm[]> => 
       console.error("Form ID is required to fetch responses.");
       return [];
     }
-    const response = await apiClient.get<ResponseForm[]>(
-      `/responses/get-responses?form_id=${filter?.form_id}`,
-      { params },
-    );
-    return response?.data || [];
+    // const response = await apiClient.get<ResponseForm[]>(
+    //   `/responses/get-responses?form_id=${filter?.form_id}`,
+    //   { params },
+    // );
+    return [];
   } catch (error) {
     console.error("Failed to fetch responses:", error);
     throw error;
@@ -297,6 +298,24 @@ export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseFo
 
 // Yahel's changes - above is the original file - below are the changes
 // ============================================================
+
+export const useGetResponses = ({ filter }: { filter?: Filter }) => {
+  return useFetch<Filter, ResponseForm[]>({
+    endpoint: `/responses/get-responses`,
+    queryKey: () => ["responses", filter],
+    params: filter,
+    // queryOptions: { enabled: !!filter?.form_id },
+  });
+};
+
+export const useGetResponsesRows = ({ filter }: { filter?: Filter }) => {
+  return useFetch<Filter, { [key: string]: string }[]>({
+    endpoint: `/responses/get-rows`,
+    queryKey: () => ["rows", filter],
+    params: filter,
+    // queryOptions: { enabled: !!formId },
+  });
+};
 
 export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
   return useDelete<{ form_id: string }, void>({

@@ -13,8 +13,11 @@ const viewsBaseUrl = "/forms";
  */
 export const useGetFormViews = (formId: string): UseQueryResult<TableView[], Error> => {
   return useFetch<{}, TableView[]>({
-    endpoint: `${viewsBaseUrl}/${formId}`,
+    endpoint: `${viewsBaseUrl}/views/${formId}`,
     queryKey: () => [viewsBaseUrl],
+    queryOptions: {
+      enabled: !!formId,
+    },
   });
 };
 
