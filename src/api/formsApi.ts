@@ -51,6 +51,7 @@ export const getFormById = async (formId?: number): Promise<Form | null> => {
   let forms = await getForms(filter);
   return forms && forms[0] ? forms[0] : null;
 };
+
 /**
  * Create a new form.
  *
