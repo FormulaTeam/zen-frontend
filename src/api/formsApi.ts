@@ -13,22 +13,28 @@ import { useDelete } from "../utils/useDelete";
  */
 export const getForms = async (filter?: Filter): Promise<Form[]> => {
   const params = {
-    query: filter?.query ? filter.query : undefined,
+    query:
+      filter?.query && typeof filter.query !== "string"
+        ? JSON.stringify(filter.query)
+        : filter?.query,
     sortBy: filter?.sortBy,
     orderBy: filter?.orderBy,
     pageSize: filter?.pageSize,
     pageNumber: filter?.pageNumber,
   };
+
   try {
     const response = await apiClient.get<Form[]>("/forms/get-forms", {
       params,
       signal: filter?.signal,
     });
+
     if (!Array.isArray(response?.data)) {
       console.log("response:", response, "type: ", typeof response);
       console.log("response?.data:", response?.data, "type: ", typeof response?.data);
       return [];
     }
+
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch forms:", error);
@@ -45,6 +51,7 @@ export const getFormById = async (formId?: number): Promise<Form | null> => {
   let forms = await getForms(filter);
   return forms && forms[0] ? forms[0] : null;
 };
+
 /**
  * Create a new form.
  *

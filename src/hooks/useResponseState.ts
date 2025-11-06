@@ -11,7 +11,7 @@ import {
   ConditionUtils,
   ConditionGroup,
 } from "../utils/interfaces";
-import { getFormById, getResponses, searchResponses } from "../api";
+import { getFormById, searchResponses } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
 import {
   checkUserAccessForResponse,
