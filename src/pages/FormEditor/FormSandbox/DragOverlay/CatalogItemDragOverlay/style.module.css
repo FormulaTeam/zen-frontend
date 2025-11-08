@@ -28,13 +28,3 @@
     height: 40px;
     width: 30px;
 }
-
-.fadeOut {
-    animation: fade-out 250ms ease-in forwards;
-}
-
-@keyframes fade-out {
-    50%, 100% {
-        opacity: 0;
-    }
-}

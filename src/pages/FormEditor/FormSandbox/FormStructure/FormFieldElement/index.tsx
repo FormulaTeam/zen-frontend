@@ -6,12 +6,9 @@ import { DraggableElementData } from "../../../context/FormSandboxContext";
 
 interface Props {
   field: FormField;
-
-  onDrag?: (sectionId: string) => void;
-  onDrop?: () => void;
 }
 
-function FormFieldElement({ field, onDrag, onDrop }: Props) {
+function FormFieldElement({ field }: Props) {
   const {
           attributes,
           listeners,
@@ -28,10 +25,6 @@ function FormFieldElement({ field, onDrag, onDrop }: Props) {
     setNodeRef(ref.current);
     ref.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
-
-  useEffect(() => {
-    isDragging ? onDrag?.(field.id) : onDrop?.();
-  }, [isDragging, onDrag, onDrop]);
 
   const style = {
     transform: CSS.Transform.toString(transform),

@@ -6,7 +6,7 @@ import { useFormSandboxContext } from "../../../context/FormSandboxContext";
 
 function FieldDragOverlay() {
   const { formStructure } = useFormStructureContext();
-  const { draggingState } = useFormSandboxContext("section");
+  const { draggingState } = useFormSandboxContext();
 
   return (
     <DragOverlay zIndex={1500} modifiers={[snapCenterToCursor]}>

@@ -34,6 +34,7 @@ function FormEditor({ mode, editedForm }: Props) {
           appendSection,
           deleteSection,
           renameSection,
+          appendFieldToMainSection : () => null
         }}>
           <FormEditorHeader />
           <div className={styles.sandboxContainer}>

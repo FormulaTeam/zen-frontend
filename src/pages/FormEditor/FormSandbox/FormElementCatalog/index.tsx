@@ -3,11 +3,9 @@ import { FORM_ELEMENTS, FormElementTypeId } from "../../../../utils/interfaces";
 import styles from "./style.module.css";
 import { Typography } from "@mui/material";
 import { FormElementCatalogItem } from "./FormElementCatalogItem";
-import { useFormSandboxContext } from "../../context/FormSandboxContext";
+import { useFormStructureContext } from "../../context/FormStructureContext";
 
 function FormElementCatalog() {
-  const { handleDrag, handleDrop } = useFormSandboxContext("catalogItem");
-
   return (
     <>
       <div className={styles.catalogContainer}>
@@ -21,9 +19,7 @@ function FormElementCatalog() {
 
               return (
                 <Grid size={1} key={id}>
-                  <FormElementCatalogItem id={id}
-                                          onDrag={handleDrag}
-                                          onDrop={handleDrop} />
+                  <FormElementCatalogItem id={id}/>
                 </Grid>
               );
             })

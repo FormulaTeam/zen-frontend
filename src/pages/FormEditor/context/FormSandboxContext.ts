@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext } from "react";
+import { createContext, useContext } from "react";
 import { DEFAULT_DRAGGING_STATE } from "./constants";
 import { UniqueIdentifier } from "@dnd-kit/core";
 
@@ -29,21 +29,11 @@ const FormSandboxContext = createContext<FormSandboxContext>({
                                                                setDragging: () => null,
                                                              });
 
-function useFormSandboxContext(elementType: DraggableElementType) {
-  const { draggingState, setDragging } = useContext(FormSandboxContext);
-
-  const handleDrag = useCallback((elementId: UniqueIdentifier) => {
-    setDragging(true, { id: elementId, type: elementType });
-  }, [setDragging]);
-
-  const handleDrop = useCallback(() => {
-    elementType === draggingState.draggingElement?.type && setDragging(false);
-  }, [draggingState.draggingElement?.type, setDragging]);
+function useFormSandboxContext() {
+  const { draggingState } = useContext(FormSandboxContext);
 
   return {
     draggingState,
-    handleDrag,
-    handleDrop,
   };
 }
 

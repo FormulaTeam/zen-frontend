@@ -11,15 +11,12 @@ interface Section {
   fieldIds: string[];
 }
 
-type PlaceholderElementTypeId = -1
-
 interface FormField {
   id: string;
   name: string; // Internal name
-  typeId: FormElementTypeId | PlaceholderElementTypeId;
+  typeId: FormElementTypeId;
   parentSectionId: string; // ID of the section this field belongs to
   required: boolean;
-  // fieldType: FormFieldDataType;
   displayName?: string;
 
   // options?: string[];
@@ -65,6 +62,7 @@ interface FormStructureContext {
   appendSection: () => void;
   deleteSection: (sectionId: string) => void;
   renameSection: (sectionId: string, title: string) => void;
+  appendFieldToMainSection: (elementTypeId: FormElementTypeId) => void;
 }
 
 const FormStructureContext = createContext<FormStructureContext>({
@@ -73,6 +71,7 @@ const FormStructureContext = createContext<FormStructureContext>({
                                                                    appendSection: () => null,
                                                                    deleteSection: () => null,
                                                                    renameSection: () => null,
+                                                                   appendFieldToMainSection: () => null,
                                                                  });
 
 function useFormStructureContext() {

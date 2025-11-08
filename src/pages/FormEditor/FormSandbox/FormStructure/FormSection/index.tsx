@@ -3,7 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Accordion, AccordionDetails, AccordionSummary, Button, Input, Typography } from "@mui/material";
 import { useFormStructureContext } from "../../../context/FormStructureContext";
 import styles from "./style.module.css";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   Close,
@@ -13,16 +13,13 @@ import {
   KeyboardDoubleArrowRight,
 } from "@mui/icons-material";
 import { FormFieldElement } from "../FormFieldElement";
-import { DraggableElementData, useFormSandboxContext } from "../../../context/FormSandboxContext";
+import { DraggableElementData } from "../../../context/FormSandboxContext";
 
 interface Props {
   id: string;
-
-  onDrag?: (sectionId: string) => void;
-  onDrop?: () => void;
 }
 
-function FormSection({ id, onDrag, onDrop }: Props) {
+function FormSection({ id }: Props) {
   const {
           attributes,
           listeners,
@@ -34,15 +31,16 @@ function FormSection({ id, onDrag, onDrop }: Props) {
           isDragging,
         } = useSortable({ id, data: { elementType: "section" } as DraggableElementData });
 
-  const { handleDrag, handleDrop } = useFormSandboxContext("field");
   const { formStructure, deleteSection, renameSection } = useFormStructureContext();
 
-  const self = formStructure.sections[id];
   const isLastSection = Object.keys(formStructure.sections).length <= 1;
+
   const [isExpanded, setIsExpanded] = useState(true);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
+
+  const self = useMemo(() => formStructure.sections[id], [formStructure.sections, id]);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -53,10 +51,6 @@ function FormSection({ id, onDrag, onDrop }: Props) {
     setDroppableNodeRef(containerRef.current);
     containerRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
-
-  useEffect(() => {
-    isDragging ? onDrag?.(id) : onDrop?.();
-  }, [isDragging, onDrag, onDrop]);
 
   useEffect(() => {
     isDragging && setIsEditingTitle(false);
@@ -169,10 +163,7 @@ function FormSection({ id, onDrag, onDrop }: Props) {
         <AccordionDetails className={styles.content}>
           {
             self.fieldIds.length ?
-              self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId}
-                                                               field={formStructure.fields[fieldId]}
-                                                               onDrag={handleDrag}
-                                                               onDrop={handleDrop} />)
+              self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId} field={formStructure.fields[fieldId]} />)
               : (
                 <div className={styles.emptySectionPlaceholder}>
                   <KeyboardDoubleArrowRight className={styles.catalogArrowIcon}
