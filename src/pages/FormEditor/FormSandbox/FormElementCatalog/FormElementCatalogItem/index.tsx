@@ -3,39 +3,47 @@ import styles from "./style.module.css";
 import { FORM_ELEMENT_ICONS } from "../../../../../components/FORM_ELEMENT_ICONS";
 import { FORM_ELEMENTS, FormElementTypeId } from "../../../../../utils/interfaces";
 import { Typography } from "@mui/material";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DraggableElementData } from "../../../context/FormSandboxContext";
 
 interface Props {
   id: FormElementTypeId;
 
-  onDrag?: (elementId: FormElementTypeId) => void;
-  onDrop?: () => void;
+  onClick?: () => void;
 }
 
-function FormElementCatalogItem({ id, onDrag, onDrop }: Props) {
+function FormElementCatalogItem({ id, onClick }: Props) {
   const {
-          attributes,
-          listeners,
-          setNodeRef,
-          isDragging,
-        } = useDraggable({
-                           id,
-                           data: {
-                             elementType: "catalogItem",
-                           } as DraggableElementData,
-                         });
+    attributes,
+    listeners,
+    setNodeRef,
+    isDragging,
+  } = useDraggable({
+    id,
+    data: {
+      elementType: "catalogItem",
+    } as DraggableElementData,
+  });
+
+  const [isClicking, setIsClicking] = useState(false);
 
   const style = useMemo(() => ({
-    opacity: isDragging ? 0.25 : 1,
-  }), [isDragging]);
+    opacity: isDragging || isClicking ? 0.25 : 1,
+  }), [isDragging, isClicking]);
 
   useEffect(() => {
-    isDragging ? onDrag?.(id) : null;
-  }, [isDragging, onDrag, onDrop]);
+    setIsClicking(false);
+  }, [isDragging]);
 
   return (
-    <div ref={setNodeRef} style={style} className={styles.catalogBlock} {...attributes} {...listeners}>
+    <div ref={setNodeRef}
+         style={style}
+         className={styles.catalogBlock}
+         {...attributes}
+         {...listeners}
+         onClick={onClick}
+         onMouseDown={() => setIsClicking(true)}
+         onMouseUp={() => setIsClicking(false)}>
       {FORM_ELEMENT_ICONS[FORM_ELEMENTS[id].icon]}
       <Typography variant={"subtitle2"} align={"center"} sx={{ userSelect: "none" }}>
         {FORM_ELEMENTS[id].name}

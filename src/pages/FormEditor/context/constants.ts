@@ -1,27 +1,32 @@
 import { FormStructure, Section } from "./FormStructureContext";
 import { DraggingState } from "./FormSandboxContext";
 import { texts } from "../../../utils/texts";
-import { v4 as uuid4 } from "uuid";
+import { generateSectionId } from "../utils";
+
+const PLACEHOLDER_FIELD_ID: string = "__PLACEHOLDER__" as const;
 
 const INITIAL_SECTION: Section = {
   title: texts.heb.mainSection,
-  index: 0,
-  collapsed: false,
+  expanded: true,
   fieldIds: [],
 };
 
-const EMPTY_FORM: FormStructure = {
-  title: null,
-  sections: {
-    [`section_${uuid4()}`]: { ...INITIAL_SECTION },
-  },
-  fields: {},
-};
+function getEmptyForm(): FormStructure {
+  const sectionId = generateSectionId();
 
+  return {
+    title: null,
+    sections: {
+      [sectionId]: { ...INITIAL_SECTION },
+    },
+    orderedSectionIds: [sectionId],
+    fields: {},
+  };
+}
 
 const DEFAULT_DRAGGING_STATE: DraggingState = {
   isDragging: false,
   draggingElement: null,
 };
 
-export { EMPTY_FORM, DEFAULT_DRAGGING_STATE };
+export { getEmptyForm, DEFAULT_DRAGGING_STATE, PLACEHOLDER_FIELD_ID };

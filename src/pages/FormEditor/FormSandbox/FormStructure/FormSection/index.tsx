@@ -1,5 +1,5 @@
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { CSS, usePrevious } from "@dnd-kit/utilities";
 import { Accordion, AccordionDetails, AccordionSummary, Button, Input, Typography } from "@mui/material";
 import { useFormStructureContext } from "../../../context/FormStructureContext";
 import styles from "./style.module.css";
@@ -14,6 +14,7 @@ import {
 } from "@mui/icons-material";
 import { FormFieldElement } from "../FormFieldElement";
 import { DraggableElementData } from "../../../context/FormSandboxContext";
+import { useDndContext } from "@dnd-kit/core";
 
 interface Props {
   id: string;
@@ -21,34 +22,35 @@ interface Props {
 
 function FormSection({ id }: Props) {
   const {
-          attributes,
-          listeners,
-          setNodeRef,
-          setActivatorNodeRef,
-          setDroppableNodeRef,
-          transform,
-          transition,
-          isDragging,
-        } = useSortable({ id, data: { elementType: "section" } as DraggableElementData });
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, data: { elementType: "section" } as DraggableElementData });
 
-  const { formStructure, deleteSection, renameSection } = useFormStructureContext();
+  const { formStructure, deleteSection, renameSection, toggleSectionExpanded } = useFormStructureContext();
+  const { active: draggingElement } = useDndContext();
+
 
   const isLastSection = Object.keys(formStructure.sections).length <= 1;
-
-  const [isExpanded, setIsExpanded] = useState(true);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
 
   const self = useMemo(() => formStructure.sections[id], [formStructure.sections, id]);
 
+  const previousFieldCount = usePrevious(self.fieldIds.length);
+
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const titleInputRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setNodeRef(containerRef.current);
-    setDroppableNodeRef(containerRef.current);
     containerRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
@@ -61,9 +63,14 @@ function FormSection({ id }: Props) {
   }, [isEditingTitle, titleInputRef.current]);
 
   useEffect(() => {
-    isExpanded &&
+    self.fieldIds.length > (previousFieldCount ?? 0) &&
+    scrollAreaRef.current?.scrollTo({ left: 0, top: scrollAreaRef.current.scrollHeight, behavior: "smooth" });
+  }, [self.fieldIds.length]);
+
+  useEffect(() => {
+    self.expanded &&
     containerRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [isExpanded]);
+  }, [self.expanded]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -79,7 +86,7 @@ function FormSection({ id }: Props) {
                }}
                ref={containerRef}
                style={style} {...attributes}
-               expanded={isExpanded}>
+               expanded={self.expanded}>
       <AccordionSummary ref={setActivatorNodeRef}
                         onClick={(e) => e.preventDefault()}
                         sx={{
@@ -131,7 +138,7 @@ function FormSection({ id }: Props) {
                 <Typography variant={"body1"}>{self.title}</Typography>
                 <Button className={styles.button}
                         onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
+                        onClick={(_) => {
                           setEditedTitle(self.title);
                           setIsEditingTitle(true);
                         }}>
@@ -144,10 +151,10 @@ function FormSection({ id }: Props) {
         <Button className={styles.button}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
-                  setIsExpanded((prev) => !prev);
+                  toggleSectionExpanded(id);
                   e.stopPropagation();
                 }}>
-          <ExpandMore sx={{ fontSize: 25 }} style={{ rotate: isExpanded ? "180deg" : "0deg" }} />
+          <ExpandMore sx={{ fontSize: 25 }} style={{ rotate: self.expanded ? "180deg" : "0deg" }} />
         </Button>
         <Button className={styles.button}
                 disabled={isLastSection}
@@ -159,8 +166,10 @@ function FormSection({ id }: Props) {
           <DeleteOutlined sx={{ fontSize: 25, color: isLastSection ? "#85878D" : "#b53442" }} />
         </Button>
       </AccordionSummary>
-      <SortableContext items={formStructure.sections[id].fieldIds} strategy={verticalListSortingStrategy}>
-        <AccordionDetails className={styles.content}>
+      <SortableContext items={formStructure.sections[id].fieldIds}
+                       strategy={verticalListSortingStrategy}
+                       disabled={(draggingElement?.data.current as DraggableElementData)?.elementType === "section"}>
+        <AccordionDetails className={styles.content} ref={scrollAreaRef}>
           {
             self.fieldIds.length ?
               self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId} field={formStructure.fields[fieldId]} />)

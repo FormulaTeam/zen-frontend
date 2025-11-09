@@ -6,6 +6,8 @@ import { FormElementCatalogItem } from "./FormElementCatalogItem";
 import { useFormStructureContext } from "../../context/FormStructureContext";
 
 function FormElementCatalog() {
+  const { appendFieldToFirstSection } = useFormStructureContext();
+
   return (
     <>
       <div className={styles.catalogContainer}>
@@ -19,7 +21,7 @@ function FormElementCatalog() {
 
               return (
                 <Grid size={1} key={id}>
-                  <FormElementCatalogItem id={id}/>
+                  <FormElementCatalogItem id={id} onClick={() => appendFieldToFirstSection(id)} />
                 </Grid>
               );
             })

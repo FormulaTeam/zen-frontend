@@ -1,24 +1,23 @@
 import { useCallback, useState } from "react";
-import { FormStructure, Section } from "../context/FormStructureContext";
-import { EMPTY_FORM } from "../context/constants";
+import { FormField, FormStructure, Section } from "../context/FormStructureContext";
+import { getEmptyForm } from "../context/constants";
 import { texts } from "../../../utils/texts";
-import {v4 as uuid4} from "uuid";
 import { FormElementTypeId } from "../../../utils/interfaces";
+import { generateFieldId, generateFieldName, generateSectionId } from "../utils";
 
 function yieldFormStructure(form: object) {
   return form as FormStructure; // TODO change to actual logic that translates form json to form structure
 }
 
 function useFormStructure(editedForm?: object) { //TODO consider making singleton
-  const [formStructure, setFormStructure] = useState<FormStructure>(editedForm ? yieldFormStructure(editedForm) : { ...EMPTY_FORM });
+  const [formStructure, setFormStructure] = useState<FormStructure>(editedForm ? yieldFormStructure(editedForm) : { ...getEmptyForm() });
 
   const appendSection = useCallback(() => {
     setFormStructure((prev) => {
-      const newSectionId = `section_${uuid4()}`;
+      const newSectionId = generateSectionId();
       const newSection: Section = {
         title: texts.heb.undefinedSection,
-        index: Object.keys(prev.sections).length,
-        collapsed: false,
+        expanded: true,
         fieldIds: [],
       };
 
@@ -28,22 +27,24 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
           ...prev.sections,
           [newSectionId]: newSection,
         },
+        orderedSectionIds: [...prev.orderedSectionIds, newSectionId],
       };
     });
   }, [setFormStructure]);
 
   const deleteSection = useCallback((sectionId: string) => {
-    // TODO add orderedSectionIds to formStructure that makes sure the ids stay on track and will also make stuff
-    //  like updating indexes on section delete and to append a field to the first section
-     setFormStructure((prev) => {
-      const remainingSections = { ...prev.sections };
+    setFormStructure((prev) => {
+      const sections = { ...prev.sections };
+      const orderedSectionIds = [...prev.orderedSectionIds];
 
-      if (Object.keys(remainingSections).length > 1) { // TODO show error popup when trying to delete the last section
-        delete remainingSections[sectionId];
+      if (Object.keys(sections).length > 1) {
+        delete sections[sectionId];
+        orderedSectionIds.splice(orderedSectionIds.indexOf(sectionId), 1);
 
         return {
           ...prev,
-          sections: { ...remainingSections },
+          sections,
+          orderedSectionIds,
         };
       }
 
@@ -66,19 +67,57 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
     });
   }, [setFormStructure]);
 
-  const appendFieldToMainSection = useCallback((elementTypeId: FormElementTypeId) => {
-    // setFormStructure((prev) => {
-    //   const changedSection = prev.sections[sectionId];
-    //   changedSection.title = title;
-    //
-    //   return {
-    //     ...prev,
-    //     sections: {
-    //       ...prev.sections,
-    //       [sectionId]: changedSection,
-    //     },
-    //   };
-    // });
+  const toggleSectionExpanded = useCallback((sectionId: string) => {
+    setFormStructure((prev) => {
+      if (sectionId in prev.sections) {
+        const editedSection = {...prev.sections[sectionId]};
+
+        return {
+          ...prev,
+          sections: {
+            ...prev.sections,
+            [sectionId]: {
+              ...editedSection,
+              expanded: !editedSection.expanded,
+            },
+          },
+        };
+      }
+
+      return prev;
+    });
+  }, []);
+
+  const appendFieldToFirstSection = useCallback((elementTypeId: FormElementTypeId) => {
+    setFormStructure((prev) => {
+      const changedSectionId = prev.orderedSectionIds[0];
+      const changedSection = prev.sections[changedSectionId];
+
+      const newField: FormField = {
+        id: generateFieldId(),
+        parentSectionId: changedSectionId,
+        name: generateFieldName(elementTypeId),
+        typeId: elementTypeId,
+        required: false,
+      };
+
+      const fieldIds = [...changedSection.fieldIds, newField.id];
+
+      return {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [changedSectionId]: {
+            ...changedSection,
+            fieldIds,
+          },
+        },
+        fields: {
+          ...prev.fields,
+          [newField.id]: newField,
+        },
+      };
+    });
   }, [setFormStructure]);
 
   return {
@@ -87,6 +126,8 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
     appendSection,
     deleteSection,
     renameSection,
+    toggleSectionExpanded,
+    appendFieldToFirstSection,
   };
 }
 

@@ -6,7 +6,6 @@ import {
   DragStartEvent,
   PointerSensor,
   pointerWithin,
-  rectIntersection,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -21,8 +20,9 @@ import { ReactNode, useEffect } from "react";
 import { FieldDragOverlay } from "./DragOverlay/FieldDragOverlay";
 import { useFormStructureContext } from "../context/FormStructureContext";
 import { FormElementTypeId } from "../../../utils/interfaces";
-import { v4 as uuid4 } from "uuid";
 import { arrayMove } from "@dnd-kit/sortable";
+import { generateFieldId, generateFieldName } from "../utils";
+import { PLACEHOLDER_FIELD_ID } from "../context/constants";
 
 const DRAG_OVERLAYS: Record<DraggableElementType, ReactNode> = {
   catalogItem: <CatalogItemDragOverlay />,
@@ -32,18 +32,18 @@ const DRAG_OVERLAYS: Record<DraggableElementType, ReactNode> = {
 
 const COLLISION_DETECTION: Record<DraggableElementType, CollisionDetection> = {
   catalogItem: pointerWithin,
-  section: rectIntersection,
-  field: rectIntersection,
+  section: pointerWithin,
+  field: pointerWithin,
 } as const;
-
-const PLACEHOLDER_FIELD_ID: string = "__PLACEHOLDER__" as const;
 
 function FormSandbox() {
   const { draggingState, setDragging } = useFormDraggingState();
   const { formStructure, setFormStructure } = useFormStructureContext();
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    }),
   );
 
   useEffect(() => {
@@ -72,15 +72,15 @@ function FormSandbox() {
             return prevFormStructure;
           }
 
-          const sections = { ...prevFormStructure.sections };
-          const originalIndex = sections[active.id].index;
-
-          sections[active.id].index = sections[sectionId].index;
-          sections[sectionId].index = originalIndex;
+          const orderedSectionIds = [...prevFormStructure.orderedSectionIds];
 
           return {
             ...prevFormStructure,
-            sections,
+            orderedSectionIds: arrayMove(
+              orderedSectionIds,
+              orderedSectionIds.indexOf(active.id as string),
+              orderedSectionIds.indexOf(sectionId),
+            ),
           };
         } else if (activeElementType === "field" || activeElementType === "catalogItem") {
           if (activeElementType === "field" && over) {
@@ -93,7 +93,7 @@ function FormSandbox() {
               const newParentSectionId = over.id as string;
               const newParentSection = { ...prevFormStructure.sections[newParentSectionId] };
 
-              if (newParentSection.fieldIds.length == 0) {
+              if (newParentSection.fieldIds.length == 0 && newParentSection.expanded) {
                 // insert field id into the current section
                 newParentSection.fieldIds = [activeFieldId];
 
@@ -127,8 +127,8 @@ function FormSandbox() {
 
               if (newParentSectionId === currentParentSectionId) {
                 newParentSection.fieldIds = arrayMove(currentParentSection.fieldIds,
-                                                      currentParentSection.fieldIds.indexOf(activeFieldId), // TODO add index attribute to Field
-                                                      currentParentSection.fieldIds.indexOf(overFieldId));
+                  currentParentSection.fieldIds.indexOf(activeFieldId), // TODO add index attribute to Field
+                  currentParentSection.fieldIds.indexOf(overFieldId));
 
                 return {
                   ...prevFormStructure,
@@ -311,31 +311,33 @@ function FormSandbox() {
 
             const editedParentSection = { ...prevFormStructure.sections[parentSectionId] };
 
-            editedParentSection.fieldIds = editedParentSection.fieldIds.filter(
+            const parentFieldIds = editedParentSection.fieldIds.filter(
               (fieldId) => (fieldId !== PLACEHOLDER_FIELD_ID),
             );
 
-            delete prevFormStructure.fields[PLACEHOLDER_FIELD_ID];
+            const editedFields = { ...prevFormStructure.fields };
+            delete editedFields[PLACEHOLDER_FIELD_ID];
 
-            const newConcreteFieldId = `${Object.keys(prevFormStructure.fields).length}`;
-
-            editedParentSection.fieldIds.push(newConcreteFieldId); //TODO only when parentSection.fieldIds.length == 0
+            const newField = {
+              id: generateFieldId(),
+              name: generateFieldName(placeholderFieldTypeId),
+              typeId: placeholderFieldTypeId,
+              parentSectionId,
+              required: false,
+            };
 
             return {
               ...prevFormStructure,
               sections: {
                 ...prevFormStructure.sections,
-                [parentSectionId]: editedParentSection,
+                [parentSectionId]: {
+                  ...editedParentSection,
+                  fieldIds: [...parentFieldIds, newField.id],
+                },
               },
               fields: {
-                ...prevFormStructure.fields,
-                [newConcreteFieldId]: {
-                  id: newConcreteFieldId,
-                  name: `field_${uuid4()}`, // TODO adapt to type-based prefix
-                  typeId: placeholderFieldTypeId,
-                  parentSectionId,
-                  required: false,
-                },
+                ...editedFields,
+                [newField.id]: newField,
               },
             };
           }

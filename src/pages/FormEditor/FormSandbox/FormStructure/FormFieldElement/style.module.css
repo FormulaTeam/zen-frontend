@@ -1,56 +1,25 @@
 .container {
-    flex-grow: 1;
-    border: 1px solid #85878D;
-    width: 100%;
-    border-radius: 8px !important;
-    margin-bottom: 24px;
-    overflow: hidden;
-}
-
-.title{
     display: flex;
-    align-items: center;
-    width: 100%;
-    height: fit-content;
 }
 
-.button.button{
-    border-radius: 50%;
-    min-width: 0;
-    height: 40px;
-    width: 40px;
-    color: black;
+.field {
+    flex: 1;
+    background-color: white;
+    min-height: 300px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px 0 #1976D21A;
+    padding: 8px;
 }
 
-.content{
+.dragHandle {
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    max-height: 500px;
-    flex: 1 0 auto;
-    overflow-y: scroll;
-}
-
-.emptySectionPlaceholder{
-    display: flex;
     justify-content: center;
     align-items: center;
-    height: 300px;
+    background-color: #e8f1fa;
+    border-radius: 16px;
+    border: 6px solid white;
+    margin-inline-end: 10px;
+    cursor: grab;
+    box-shadow: 0 4px 20px 0 #1976D21A;
 }
-
-.catalogArrowIcon{
-    animation: bounceRight 1s ease-in-out infinite;
-}
-
-@keyframes bounceRight {
-    0%{
-        transform: translateX(0);
-    }
-    50%{
-        transform: translateX(-5px);
-    }
-    100%{
-        transform: translateX(0);
-    }
-}
-
