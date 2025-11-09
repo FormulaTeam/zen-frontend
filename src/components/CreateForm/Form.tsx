@@ -21,7 +21,7 @@ import useCustomFormFields from "../../hooks/Forms/useCustomFormFields";
 import FormSectionsList from "./FormSectionsList";
 import FormPropertyRenderer from "./FormPropertyRenderer";
 import { ResponseCount } from "../../types/interfaces/responses.types";
-import { useCreateForm, getResponsesCount, updateForm } from "../../api";
+import { useCreateForm, getResponsesCount, useUpdateForm } from "../../api";
 import {
   generateNewFormFieldData,
   getUserName,
@@ -57,10 +57,10 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { initCustomFields, customFields } = useCustomFormFields();
-  const { mutateAsync: mutateCreateFormAsync } = useCreateForm();
 
   const [loading, setLoading] = useState<boolean>(false);
   const [currentFormId, setCurrentFormId] = useState<number>(formToEdit.id);
+  const [isFormCreated, setIsFormCreated] = useState(!!formToEdit?.id);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
   const [title, setTitle] = useState("");
   const [showTitleRedText, setShowTitleRedText] = useState(false);
@@ -79,6 +79,9 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   const [formFieldsDisplayErrors, setFormFieldsDisplayErrors] = useState<Map<string, string[]>>(
     new Map(),
   );
+
+  const { mutateAsync: mutateCreateFormAsync } = useCreateForm();
+  const { mutateAsync: mutateUpdateFormAsync } = useUpdateForm(currentFormId || 0);
 
   const [originalTitle, setOriginalTitle] = useState("");
   const [originalDescription, setOriginalDescription] = useState("");
@@ -310,7 +313,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     const userName = getUserName(currentUser.firstName, currentUser.lastName);
 
     // Check if this is a new form (no ID or no fields initially)
-    const isNewForm = !formToEdit.id || formToEdit.fields?.length === 0;
+    const isNewForm = !isFormCreated;
     let formId = formToEdit?.id || currentFormId;
 
     if (isNewForm) {
@@ -324,6 +327,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
 
         // Update formToEdit with the created form data for the updateForm call
         Object.assign(formToEdit, createdForm);
+        setIsFormCreated(true);
       } catch (error) {
         showErrorNotification("יצירת הטופס נכשלה");
         return;
@@ -341,7 +345,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     };
 
     try {
-      await updateForm(formId, form, isUpdateMetro);
+      await mutateUpdateFormAsync({ id: formId, formData: form, isUpdateMetro });
     } catch (error) {
       showErrorNotification("עידכון הטופס נכשל");
     } finally {

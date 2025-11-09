@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Form, User } from "../utils/interfaces";
 import { showErrorNotification } from "../utils/utils";
-import { updateForm } from "../api";
+import { useUpdateForm } from "../api";
 import { getUsers } from "../api/usersApi";
 
 interface UseUserPickerProps {
@@ -42,6 +42,8 @@ export const useUserPicker = ({
   // Local state for form permissions
   const [formPublicState, setFormPublicState] = useState<boolean>(!!form.isPublic);
   const [formPermissionState, setFormPermissionState] = useState<any>(form.formPermission || null);
+
+  const { mutateAsync: mutateUpdateFormAsync } = useUpdateForm(form.id);
 
   // update local state when form changes
   useEffect(() => {
@@ -120,7 +122,10 @@ export const useUserPicker = ({
         ...updatedFormData, // if there are any other updates to the form, include them
       };
 
-      const updatedForm = await updateForm(form.id, finalFormData);
+      const updatedForm = await mutateUpdateFormAsync({
+        id: form.id,
+        formData: finalFormData,
+      });
 
       // update local state if form permissions were changed
       if (updatedForm) {
@@ -211,7 +216,10 @@ export const useUserPicker = ({
 
       console.log("שמירת הרשאות טופס:", updatedFormData);
 
-      const updatedForm = await updateForm(form.id, updatedFormData);
+      const updatedForm = await mutateUpdateFormAsync({
+        id: form.id,
+        formData: updatedFormData,
+      });
       console.log("הרשאות טופס עודכנו בהצלחה, התוצאה:", updatedForm);
 
       // update local state if form permissions were changed
