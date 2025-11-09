@@ -4,6 +4,8 @@ import { UserData } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
 import { useDelete } from "../utils/useDelete";
+import { useCreate } from "../utils/useCreate";
+import queryClient from "./queryClient";
 
 /**
  * Fetch all forms with optional query parameters.
@@ -58,15 +60,15 @@ export const getFormById = async (formId?: number): Promise<Form | null> => {
  * @param form - The new form data.
  * @returns A promise that resolves to the created form.
  */
-export const createForm = async (form: NewForm): Promise<Form> => {
-  try {
-    const response = await apiClient.post<Form>("/forms/create", form);
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to create form:", error);
-    throw error;
-  }
-};
+// export const createForm = async (form: NewForm): Promise<Form> => {
+//   try {
+//     const response = await apiClient.post<Form>("/forms/create", form);
+//     return response?.data;
+//   } catch (error) {
+//     console.error("Failed to create form:", error);
+//     throw error;
+//   }
+// };
 
 /**
  * Update an existing form.
@@ -210,7 +212,25 @@ export const editSourceToMetro = async (id: number): Promise<any> => {
   }
 };
 
-// Yahel's edits - above is the original file - below are the changes
+// Gali's edits
+// ============================================================
+
+export const useCreateForm = () => {
+  return useCreate<NewForm, Form>({
+    endpoint: "/forms/create",
+    mutationKey: ["create-form"],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["forms"] });
+      },
+      onError: (error) => {
+        console.error("Failed to create form:", error);
+      },
+    },
+  });
+};
+
+// Yahel's edits
 // ============================================================
 
 export const useGetForm = ({

@@ -21,7 +21,7 @@ import useCustomFormFields from "../../hooks/Forms/useCustomFormFields";
 import FormSectionsList from "./FormSectionsList";
 import FormPropertyRenderer from "./FormPropertyRenderer";
 import { ResponseCount } from "../../types/interfaces/responses.types";
-import { createForm, getResponsesCount, updateForm } from "../../api";
+import { useCreateForm, getResponsesCount, updateForm } from "../../api";
 import {
   generateNewFormFieldData,
   getUserName,
@@ -57,6 +57,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { initCustomFields, customFields } = useCustomFormFields();
+  const { mutateAsync: mutateCreateFormAsync } = useCreateForm();
 
   const [loading, setLoading] = useState<boolean>(false);
   const [currentFormId, setCurrentFormId] = useState<number>(formToEdit.id);
@@ -315,13 +316,18 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     if (isNewForm) {
       const newFormStructure = getInitialNewForm(currentUser, title, description);
 
-      const createdForm = await createForm(newFormStructure);
-      // Update the form ID and formToEdit with the newly created form data
-      formId = createdForm.id;
-      setCurrentFormId(createdForm.id);
+      try {
+        const createdForm = await mutateCreateFormAsync(newFormStructure);
+        // Update the form ID and formToEdit with the newly created form data
+        formId = createdForm.id;
+        setCurrentFormId(createdForm.id);
 
-      // Update formToEdit with the created form data for the updateForm call
-      Object.assign(formToEdit, createdForm);
+        // Update formToEdit with the created form data for the updateForm call
+        Object.assign(formToEdit, createdForm);
+      } catch (error) {
+        showErrorNotification("יצירת הטופס נכשלה");
+        return;
+      }
     }
 
     const form: Partial<Form> = {
