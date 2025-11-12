@@ -70,7 +70,7 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
   const toggleSectionExpanded = useCallback((sectionId: string) => {
     setFormStructure((prev) => {
       if (sectionId in prev.sections) {
-        const editedSection = {...prev.sections[sectionId]};
+        const editedSection = { ...prev.sections[sectionId] };
 
         return {
           ...prev,
@@ -120,6 +120,27 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
     });
   }, [setFormStructure]);
 
+  const deleteField = useCallback((fieldId: string) => {
+    setFormStructure((prev) => {
+      const fields = { ...prev.fields };
+      const sectionId = fields[fieldId].parentSectionId;
+      const section = { ...prev.sections[sectionId] };
+
+      section.fieldIds.splice(section.fieldIds.indexOf(fieldId), 1);
+
+      delete fields[fieldId];
+
+      return {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [sectionId]: section,
+        },
+        fields,
+      };
+    });
+  }, []);
+
   return {
     formStructure,
     setFormStructure,
@@ -127,7 +148,9 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
     deleteSection,
     renameSection,
     toggleSectionExpanded,
+
     appendFieldToFirstSection,
+    deleteField,
   };
 }
 

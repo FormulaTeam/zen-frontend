@@ -63,17 +63,19 @@ interface FormStructureContext {
   renameSection: (sectionId: string, title: string) => void;
   toggleSectionExpanded: (sectionId: string) => void;
   appendFieldToFirstSection: (elementTypeId: FormElementTypeId) => void;
+  deleteField: (field: string) => void;
 }
 
 const FormStructureContext = createContext<FormStructureContext>({
-  formStructure: { ...getEmptyForm() },
-  setFormStructure: () => null,
-  appendSection: () => null,
-  deleteSection: () => null,
-  renameSection: () => null,
-  toggleSectionExpanded: () => null,
-  appendFieldToFirstSection: () => null,
-});
+                                                                   formStructure: { ...getEmptyForm() },
+                                                                   setFormStructure: () => null,
+                                                                   appendSection: () => null,
+                                                                   deleteSection: () => null,
+                                                                   renameSection: () => null,
+                                                                   toggleSectionExpanded: () => null,
+                                                                   appendFieldToFirstSection: () => null,
+                                                                   deleteField: () => null,
+                                                                 });
 
 function useFormStructureContext() {
   return useContext(FormStructureContext);

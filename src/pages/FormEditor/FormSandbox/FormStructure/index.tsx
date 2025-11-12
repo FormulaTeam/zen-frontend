@@ -3,7 +3,7 @@ import { useFormStructureContext } from "../../context/FormStructureContext";
 import { FormSection } from "./FormSection";
 import styles from "./style.module.css";
 
-function FormStructureElement() {
+function FormStructureContainer() {
   const { formStructure } = useFormStructureContext();
 
   return (
@@ -19,4 +19,4 @@ function FormStructureElement() {
   );
 }
 
-export { FormStructureElement };
+export { FormStructureContainer };

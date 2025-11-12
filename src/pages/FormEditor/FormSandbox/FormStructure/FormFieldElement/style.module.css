@@ -5,10 +5,32 @@
 .field {
     flex: 1;
     background-color: white;
-    min-height: 300px;
+    /*min-height: 300px;*/
     border-radius: 10px;
     box-shadow: 0 4px 20px 0 #1976D21A;
-    padding: 8px;
+    padding: 8px 12px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #85878D;
+}
+
+.deleteButton.deleteButton {
+    color: #c86671;
+    font-size: 24px;
+    border-radius: 50%;
+    min-width: 0;
+    height: 42px;
+    width: 42px;
 }
 
 .dragHandle {

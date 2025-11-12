@@ -11,7 +11,7 @@ import {
 } from "@dnd-kit/core";
 import { FormManagementActions } from "./FormManagementActions";
 import { FormElementCatalog } from "./FormElementCatalog";
-import { FormStructureElement } from "./FormStructure";
+import { FormStructureContainer } from "./FormStructure";
 import { DraggableElementData, DraggableElementType, FormSandboxContext } from "../context/FormSandboxContext";
 import { useFormDraggingState } from "../hooks/useFormDraggingState";
 import { CatalogItemDragOverlay } from "./DragOverlay/CatalogItemDragOverlay";
@@ -86,8 +86,11 @@ function FormSandbox() {
           if (activeElementType === "field" && over) {
             const activeFieldId = active.id as string;
             const overElementType = (over.data.current as DraggableElementData).elementType;
-            const currentParentSectionId = prevFormStructure.fields[activeFieldId].parentSectionId;
-            const currentParentSection = { ...prevFormStructure.sections[currentParentSectionId] };
+            const oldParentSectionId = prevFormStructure.fields[activeFieldId].parentSectionId;
+            const oldParentSection = {
+              ...prevFormStructure.sections[oldParentSectionId],
+              fieldIds: [...prevFormStructure.sections[oldParentSectionId].fieldIds],
+            };
 
             if (overElementType === "section") {
               const newParentSectionId = over.id as string;
@@ -97,18 +100,15 @@ function FormSandbox() {
                 // insert field id into the current section
                 newParentSection.fieldIds = [activeFieldId];
 
-                // If placeholder element is already defined, remove it from the previous parent section
-                currentParentSection.fieldIds =
-                  currentParentSection.fieldIds.filter(
-                    (fieldId) => (fieldId !== activeFieldId),
-                  );
+                // If field is already defined, remove it from the previous parent section
+                oldParentSection.fieldIds.splice(oldParentSection.fieldIds.indexOf(activeFieldId), 1);
 
                 return {
                   ...prevFormStructure,
                   sections: {
                     ...prevFormStructure.sections,
                     [newParentSectionId]: newParentSection,
-                    [currentParentSectionId]: currentParentSection,
+                    [oldParentSectionId]: oldParentSection,
                   },
                   fields: {
                     ...prevFormStructure.fields,
@@ -123,12 +123,15 @@ function FormSandbox() {
             if (overElementType === "field") {
               const overFieldId = over.id as string;
               const newParentSectionId = prevFormStructure.fields[overFieldId].parentSectionId;
-              const newParentSection = { ...prevFormStructure.sections[newParentSectionId] };
+              const newParentSection = {
+                ...prevFormStructure.sections[newParentSectionId],
+                fieldIds: [...prevFormStructure.sections[newParentSectionId].fieldIds],
+              };
 
-              if (newParentSectionId === currentParentSectionId) {
-                newParentSection.fieldIds = arrayMove(currentParentSection.fieldIds,
-                  currentParentSection.fieldIds.indexOf(activeFieldId), // TODO add index attribute to Field
-                  currentParentSection.fieldIds.indexOf(overFieldId));
+              if (newParentSectionId === oldParentSectionId) {
+                newParentSection.fieldIds = arrayMove(oldParentSection.fieldIds,
+                                                      oldParentSection.fieldIds.indexOf(activeFieldId), // TODO add index attribute to Field
+                                                      oldParentSection.fieldIds.indexOf(overFieldId));
 
                 return {
                   ...prevFormStructure,
@@ -139,18 +142,14 @@ function FormSandbox() {
                 };
               }
 
-              currentParentSection.fieldIds =
-                currentParentSection.fieldIds.filter(
-                  (fieldId) => (fieldId !== activeFieldId),
-                );
-
-              newParentSection.fieldIds.splice(currentParentSection.fieldIds.indexOf(overFieldId), 0, activeFieldId);
+              oldParentSection.fieldIds.splice(oldParentSection.fieldIds.indexOf(activeFieldId), 1);
+              newParentSection.fieldIds.splice(oldParentSection.fieldIds.indexOf(overFieldId), 0, activeFieldId);
 
               return {
                 ...prevFormStructure,
                 sections: {
                   ...prevFormStructure.sections,
-                  [currentParentSectionId]: currentParentSection,
+                  [oldParentSectionId]: oldParentSection,
                   [newParentSectionId]: newParentSection,
                 },
                 fields: {
@@ -174,25 +173,22 @@ function FormSandbox() {
                   // insert placeholder into the current section
                   newParentSection.fieldIds = [PLACEHOLDER_FIELD_ID];
 
-                  const currentParentSectionId = (prevFormStructure.fields[PLACEHOLDER_FIELD_ID] ?? {}).parentSectionId;
-
-                  if (currentParentSectionId) {
-                    const currentParentSection = {
-                      ...prevFormStructure.sections[currentParentSectionId],
+                  if (PLACEHOLDER_FIELD_ID in prevFormStructure.fields) {
+                    const oldParentSectionId = prevFormStructure.fields[PLACEHOLDER_FIELD_ID].parentSectionId;
+                    const oldParentSection = {
+                      ...prevFormStructure.sections[oldParentSectionId],
+                      fieldIds: [...prevFormStructure.sections[oldParentSectionId].fieldIds],
                     };
 
                     // If placeholder element is already defined, remove it from the previous parent section
-                    currentParentSection.fieldIds =
-                      currentParentSection.fieldIds.filter(
-                        (fieldId) => (fieldId !== PLACEHOLDER_FIELD_ID),
-                      );
+                    oldParentSection.fieldIds.splice(oldParentSection.fieldIds.indexOf(PLACEHOLDER_FIELD_ID), 1);
 
                     return {
                       ...prevFormStructure,
                       sections: {
                         ...prevFormStructure.sections,
                         [newParentSectionId]: newParentSection,
-                        [currentParentSectionId]: currentParentSection,
+                        [oldParentSectionId]: oldParentSection,
                       },
                       fields: {
                         ...prevFormStructure.fields,
@@ -224,60 +220,62 @@ function FormSandbox() {
                 }
 
                 return prevFormStructure;
-              } else if (overElementType === "field") {
-                //   const overFieldId = over.id as string;
-                //   const newParentSectionId = prevFormStructure.fields[overFieldId].parentSectionId;
-                //   const newParentSection = { ...prevFormStructure.sections[newParentSectionId] };
-                //
-                //   if (newParentSectionId === currentParentSectionId) {
-                //     newParentSection.fieldIds = arrayMove(currentParentSection.fieldIds,
-                //                                           currentParentSection.fieldIds.indexOf(activeFieldId), // TODO add index attribute to Field
-                //                                           currentParentSection.fieldIds.indexOf(overFieldId));
-                //
-                //     return {
-                //       ...prevFormStructure,
-                //       sections: {
-                //         ...prevFormStructure.sections,
-                //         [newParentSectionId]: newParentSection,
-                //       },
-                //     };
-                //   }
-                //
-                //   currentParentSection.fieldIds =
-                //     currentParentSection.fieldIds.filter(
-                //       (fieldId) => (fieldId !== activeFieldId),
-                //     );
-                //
-                //   newParentSection.fieldIds.splice(currentParentSection.fieldIds.indexOf(overFieldId), 0, activeFieldId);
-                //
-                //   return {
-                //     ...prevFormStructure,
-                //     sections: {
-                //       ...prevFormStructure.sections,
-                //       [currentParentSectionId]: currentParentSection,
-                //       [newParentSectionId]: newParentSection,
-                //     },
-                //     fields: {
-                //       ...prevFormStructure.fields,
-                //       [activeFieldId]: {
-                //         ...formStructure.fields[activeFieldId],
-                //         parentSectionId: newParentSectionId,
-                //       },
-                //     },
-                //   };
+              } else if (overElementType === "field" && over.id !== PLACEHOLDER_FIELD_ID) {
+                const fields = { ...prevFormStructure.fields };
+                const sections = { ...prevFormStructure.sections };
+
+                const newParentSectionId = fields[over.id].parentSectionId;
+                const newParentSection = {
+                  ...sections[newParentSectionId],
+                  fieldIds: [...sections[newParentSectionId].fieldIds],
+                };
+
+                if (!(PLACEHOLDER_FIELD_ID in fields)) {
+                  fields[PLACEHOLDER_FIELD_ID] = {
+                    id: PLACEHOLDER_FIELD_ID,
+                    name: PLACEHOLDER_FIELD_ID,
+                    typeId: +active.id as FormElementTypeId,
+                    parentSectionId: newParentSectionId,
+                    required: false,
+                  };
+
+                  newParentSection.fieldIds.splice(newParentSection.fieldIds.indexOf(over.id as string), 0, PLACEHOLDER_FIELD_ID);
+                } else if (fields[PLACEHOLDER_FIELD_ID].parentSectionId !== newParentSectionId) {
+                  const oldParentSectionId = fields[PLACEHOLDER_FIELD_ID].parentSectionId;
+                  const oldParentSection = {
+                    ...sections[oldParentSectionId],
+                    fieldIds: [...sections[oldParentSectionId].fieldIds],
+                  };
+
+                  oldParentSection.fieldIds.splice(oldParentSection.fieldIds.indexOf(PLACEHOLDER_FIELD_ID), 1);
+
+                  sections[oldParentSectionId] = oldParentSection;
+                  newParentSection.fieldIds.splice(newParentSection.fieldIds.indexOf(over.id as string), 0, PLACEHOLDER_FIELD_ID);
+                } else {
+                  newParentSection.fieldIds = arrayMove(newParentSection.fieldIds, newParentSection.fieldIds.indexOf(PLACEHOLDER_FIELD_ID), newParentSection.fieldIds.indexOf(over.id as string));
+                }
+
+                sections[newParentSectionId] = newParentSection;
+
+                return {
+                  ...prevFormStructure,
+                  sections,
+                  fields,
+                };
               }
-            } else {
-              // If placeholder element is already defined, remove it from the previous parent section
-              if (PLACEHOLDER_FIELD_ID in prevFormStructure.fields) {
-                const parentSectionId = prevFormStructure.fields[PLACEHOLDER_FIELD_ID].parentSectionId;
-                const parentSection = { ...prevFormStructure.sections[parentSectionId] };
+            } else { // remove element placeholder when dragging outside the dnd context area
+              const fields = { ...prevFormStructure.fields };
 
-                parentSection.fieldIds =
-                  parentSection.fieldIds.filter(
-                    (fieldId) => (fieldId !== PLACEHOLDER_FIELD_ID),
-                  );
+              if (PLACEHOLDER_FIELD_ID in fields) {
+                const parentSectionId = fields[PLACEHOLDER_FIELD_ID].parentSectionId;
+                const parentSection = {
+                  ...prevFormStructure.sections[parentSectionId],
+                  fieldIds: [...prevFormStructure.sections[parentSectionId].fieldIds],
+                };
 
-                delete prevFormStructure.fields[PLACEHOLDER_FIELD_ID];
+                parentSection.fieldIds.splice(parentSection.fieldIds.indexOf(PLACEHOLDER_FIELD_ID), 1);
+
+                delete fields[PLACEHOLDER_FIELD_ID];
 
                 return {
                   ...prevFormStructure,
@@ -285,11 +283,11 @@ function FormSandbox() {
                     ...prevFormStructure.sections,
                     [parentSectionId]: parentSection,
                   },
-                  fields: {
-                    ...prevFormStructure.fields,
-                  },
+                  fields,
                 };
               }
+
+              return prevFormStructure;
             }
           }
         }
@@ -305,18 +303,13 @@ function FormSandbox() {
     if (over && active.id !== over.id) {
       if ((active.data.current as DraggableElementData).elementType === "catalogItem") {
         setFormStructure((prevFormStructure) => {
-          if (PLACEHOLDER_FIELD_ID in prevFormStructure.fields) {
-            const placeholderFieldTypeId = prevFormStructure.fields[PLACEHOLDER_FIELD_ID].typeId;
-            const parentSectionId = prevFormStructure.fields[PLACEHOLDER_FIELD_ID].parentSectionId;
+          const fields = { ...prevFormStructure.fields };
 
-            const editedParentSection = { ...prevFormStructure.sections[parentSectionId] };
+          if (PLACEHOLDER_FIELD_ID in fields) {
+            const placeholderFieldTypeId = fields[PLACEHOLDER_FIELD_ID].typeId;
+            const parentSectionId = fields[PLACEHOLDER_FIELD_ID].parentSectionId;
 
-            const parentFieldIds = editedParentSection.fieldIds.filter(
-              (fieldId) => (fieldId !== PLACEHOLDER_FIELD_ID),
-            );
-
-            const editedFields = { ...prevFormStructure.fields };
-            delete editedFields[PLACEHOLDER_FIELD_ID];
+            delete fields[PLACEHOLDER_FIELD_ID];
 
             const newField = {
               id: generateFieldId(),
@@ -326,19 +319,22 @@ function FormSandbox() {
               required: false,
             };
 
+            fields[newField.id] = newField;
+
+            const editedParentSection = {
+              ...prevFormStructure.sections[parentSectionId],
+              fieldIds: [...prevFormStructure.sections[parentSectionId].fieldIds],
+            };
+
+            editedParentSection.fieldIds.splice(editedParentSection.fieldIds.indexOf(PLACEHOLDER_FIELD_ID), 1, newField.id);
+
             return {
               ...prevFormStructure,
               sections: {
                 ...prevFormStructure.sections,
-                [parentSectionId]: {
-                  ...editedParentSection,
-                  fieldIds: [...parentFieldIds, newField.id],
-                },
+                [parentSectionId]: editedParentSection,
               },
-              fields: {
-                ...editedFields,
-                [newField.id]: newField,
-              },
+              fields,
             };
           }
 
@@ -365,7 +361,7 @@ function FormSandbox() {
           <FormManagementActions />
           <FormElementCatalog />
         </div>
-        <FormStructureElement />
+        <FormStructureContainer />
         {DRAG_OVERLAYS[draggingState.draggingElement?.type!]}
       </DndContext>
     </FormSandboxContext.Provider>

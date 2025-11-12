@@ -15,6 +15,8 @@ import {
 import { FormFieldElement } from "../FormFieldElement";
 import { DraggableElementData } from "../../../context/FormSandboxContext";
 import { useDndContext } from "@dnd-kit/core";
+import { PLACEHOLDER_FIELD_ID } from "../../../context/constants";
+import { ResizableBox } from "react-resizable";
 
 interface Props {
   id: string;
@@ -22,18 +24,17 @@ interface Props {
 
 function FormSection({ id }: Props) {
   const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id, data: { elementType: "section" } as DraggableElementData });
+          attributes,
+          listeners,
+          setNodeRef,
+          setActivatorNodeRef,
+          transform,
+          transition,
+          isDragging,
+        } = useSortable({ id, data: { elementType: "section" } as DraggableElementData });
 
-  const { formStructure, deleteSection, renameSection, toggleSectionExpanded } = useFormStructureContext();
+  const { formStructure, deleteSection, renameSection, toggleSectionExpanded, deleteField } = useFormStructureContext();
   const { active: draggingElement } = useDndContext();
-
 
   const isLastSection = Object.keys(formStructure.sections).length <= 1;
 
@@ -63,7 +64,7 @@ function FormSection({ id }: Props) {
   }, [isEditingTitle, titleInputRef.current]);
 
   useEffect(() => {
-    self.fieldIds.length > (previousFieldCount ?? 0) &&
+    (self.fieldIds.length > (previousFieldCount ?? 0) && !self.fieldIds.includes(PLACEHOLDER_FIELD_ID)) &&
     scrollAreaRef.current?.scrollTo({ left: 0, top: scrollAreaRef.current.scrollHeight, behavior: "smooth" });
   }, [self.fieldIds.length]);
 
@@ -169,26 +170,30 @@ function FormSection({ id }: Props) {
       <SortableContext items={formStructure.sections[id].fieldIds}
                        strategy={verticalListSortingStrategy}
                        disabled={(draggingElement?.data.current as DraggableElementData)?.elementType === "section"}>
-        <AccordionDetails className={styles.content} ref={scrollAreaRef}>
-          {
-            self.fieldIds.length ?
-              self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId} field={formStructure.fields[fieldId]} />)
-              : (
-                <div className={styles.emptySectionPlaceholder}>
-                  <KeyboardDoubleArrowRight className={styles.catalogArrowIcon}
-                                            sx={{
-                                              fontSize: 35,
-                                              marginTop: 0.5,
-                                              marginInlineEnd: 1,
-                                              color: "#A3A6AE",
-                                            }} />
-                  <Typography color={"#a7abb1"} variant={"h4"} align={"center"}>
-                    להוספת שדה לטופס ניתן לגרור שדה מקטלוג השדות בצד
-                  </Typography>
-                </div>
-              )
-          }
-        </AccordionDetails>
+        <ResizableBox axis={"y"} height={300} handle={<div style={{backgroundColor:"blue", cursor:'ns-resize', width: '100%', height: 10}}/>}>
+          <AccordionDetails className={styles.content} ref={scrollAreaRef}>
+            {
+              self.fieldIds.length ?
+                self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId}
+                                                                 field={formStructure.fields[fieldId]}
+                                                                 onDelete={() => deleteField(fieldId)} />)
+                : (
+                  <div className={styles.emptySectionPlaceholder}>
+                    <KeyboardDoubleArrowRight className={styles.catalogArrowIcon}
+                                              sx={{
+                                                fontSize: 35,
+                                                marginTop: 0.5,
+                                                marginInlineEnd: 1,
+                                                color: "#A3A6AE",
+                                              }} />
+                    <Typography color={"#a7abb1"} variant={"h4"} align={"center"} sx={{ userSelect: "none" }}>
+                      להוספת שדה לטופס ניתן לגרור שדה מקטלוג השדות בצד
+                    </Typography>
+                  </div>
+                )
+            }
+          </AccordionDetails>
+        </ResizableBox>
       </SortableContext>
     </Accordion>
   );

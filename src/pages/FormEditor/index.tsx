@@ -24,14 +24,15 @@ type Props = CreateModeProps | EditModeProps;
 
 function FormEditor({ mode, editedForm }: Props) {
   const {
-    formStructure,
-    setFormStructure,
-    appendSection,
-    deleteSection,
-    renameSection,
-    toggleSectionExpanded,
-    appendFieldToFirstSection,
-  } = useFormStructure(editedForm);
+          formStructure,
+          setFormStructure,
+          appendSection,
+          deleteSection,
+          renameSection,
+          toggleSectionExpanded,
+          appendFieldToFirstSection,
+          deleteField,
+        } = useFormStructure(editedForm);
 
   return (
     <div className={styles.editorContainer}>
@@ -44,6 +45,7 @@ function FormEditor({ mode, editedForm }: Props) {
           renameSection,
           toggleSectionExpanded,
           appendFieldToFirstSection,
+          deleteField,
         }}>
           <FormEditorHeader />
           <div className={styles.sandboxContainer}>
