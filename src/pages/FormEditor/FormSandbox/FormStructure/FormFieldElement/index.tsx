@@ -29,7 +29,8 @@ function FormFieldElement({ field, onDelete }: Props) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging || field.id === PLACEHOLDER_FIELD_ID ? 0.25 : 1,
+    opacity: isDragging || field.id === PLACEHOLDER_FIELD_ID ? 0.5 : 1,
+    filter: field.id === PLACEHOLDER_FIELD_ID ? 'sepia(100%) hue-rotate(160deg) saturate(300%)' : 'none',
   };
 
   return (

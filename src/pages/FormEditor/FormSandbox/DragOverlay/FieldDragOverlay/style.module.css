@@ -3,10 +3,19 @@
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    background-color: #fafafa;
-    border: 2px dashed #004680;
+    background-color: white;
+    border-right: 8px solid #dee8f1;
     height: 45px;
     width: fit-content;
     padding: 0 8px;
     cursor: grabbing;
+    box-shadow: 0 4px 10px 0 #1976D21A;
+}
+
+.title{
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    gap: 8px;
+    color: #85878D;
 }
