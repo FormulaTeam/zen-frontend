@@ -7,23 +7,24 @@ import styles from "./style.module.css";
 import { PLACEHOLDER_FIELD_ID } from "../../../context/constants";
 import { FORM_ELEMENT_ICONS } from "../../../../../components/FORM_ELEMENT_ICONS";
 import { FORM_ELEMENTS } from "../../../../../utils/interfaces";
-import { Button, Typography } from "@mui/material";
+import { Button, Input, Typography } from "@mui/material";
 
 interface Props {
   field: FormField;
+  // onEdit: (changedField: Partial<FormField>, value?: string | number) => void;
   onDelete: () => void;
 }
 
 function FormFieldElement({ field, onDelete }: Props) {
   const {
-          attributes,
-          listeners,
-          setNodeRef,
-          setActivatorNodeRef,
-          transform,
-          transition,
-          isDragging,
-        } = useSortable({ id: field.id, data: { elementType: "field" } as DraggableElementData });
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: field.id, data: { elementType: "field" } as DraggableElementData });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -48,6 +49,11 @@ function FormFieldElement({ field, onDelete }: Props) {
                   onClick={onDelete}>
             <DeleteOutlined />
           </Button>
+        </div>
+        <div className={styles.body}>
+          {/*<Input value={field.displayName}*/}
+          {/*       disabled={isDragging}*/}
+          {/*       onChange={(e) => onEdit(e.target.value)} />*/}
         </div>
       </div>
     </div>

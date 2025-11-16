@@ -46,7 +46,7 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
 
   switch (formField.typeId) {
     case ElementTypeIds.longText:
-    case ElementTypeIds.smallText:
+    case ElementTypeIds.shortText:
       return (
         <CustomTextField
           value={condition.value || ""}

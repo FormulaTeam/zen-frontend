@@ -170,7 +170,7 @@ function FormSection({ id }: Props) {
       <SortableContext items={formStructure.sections[id].fieldIds}
                        strategy={verticalListSortingStrategy}
                        disabled={(draggingElement?.data.current as DraggableElementData)?.elementType === "section"}>
-        <ResizableBox axis={"y"} height={300} handle={<div style={{backgroundColor:"blue", cursor:'ns-resize', width: '100%', height: 10}}/>}>
+        {/*<ResizableBox axis={"y"} height={300} handle={<div style={{backgroundColor:"blue", cursor:'ns-resize', width: '100%', height: 10}}/>}>*/}
           <AccordionDetails className={styles.content} ref={scrollAreaRef}>
             {
               self.fieldIds.length ?
@@ -193,7 +193,7 @@ function FormSection({ id }: Props) {
                 )
             }
           </AccordionDetails>
-        </ResizableBox>
+        {/*</ResizableBox>*/}
       </SortableContext>
     </Accordion>
   );

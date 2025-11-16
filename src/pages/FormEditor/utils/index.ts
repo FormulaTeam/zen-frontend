@@ -11,7 +11,7 @@ function generateFieldId() {
 
 const FormElementTypeIdToKey = {
   [ElementTypeIds.longText]: 'long_text',
-  [ElementTypeIds.smallText]: 'small_text',
+  [ElementTypeIds.shortText]: 'short_text',
   [ElementTypeIds.options]: 'options',
   [ElementTypeIds.link]: 'link',
   [ElementTypeIds.date]: 'date',

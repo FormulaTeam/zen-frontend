@@ -445,7 +445,7 @@ export default function OptionsField({
               // It won't affect the functionality since it is not used as a real typeId
               const filtered = options.filter((option) => {
                 return [
-                  ElementTypeIds.smallText,
+                  ElementTypeIds.shortText,
                   ElementTypeIds.longText,
                   ElementTypeIds.number,
                   DRAGGED_ITEM_ID,

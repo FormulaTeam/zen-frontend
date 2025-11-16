@@ -66,7 +66,7 @@ export default function FormPropertyRenderer({
   // Field‐type specific rendering
   switch (formField.typeId) {
     case ElementTypeIds.longText:
-    case ElementTypeIds.smallText:
+    case ElementTypeIds.shortText:
       input = getFormPropertyTitleTextField(formField, index);
       break;
 

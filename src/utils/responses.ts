@@ -6,7 +6,7 @@ export function getResponseFieldStringValue(field: FormField, value: any) {
   if ([undefined, null].includes(value)) return "";
   switch (field.typeId) {
     case ElementTypeIds.longText:
-    case ElementTypeIds.smallText:
+    case ElementTypeIds.shortText:
       return value;
     case ElementTypeIds.number:
       return value.toString();

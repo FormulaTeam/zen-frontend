@@ -2,6 +2,19 @@
     display: flex;
 }
 
+.dragHandle {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #e8f1fa;
+    border-radius: 16px;
+    border: 6px solid white;
+    margin-inline-end: 10px;
+    cursor: grab;
+    box-shadow: 0 4px 20px 0 #1976D21A;
+}
+
 .field {
     flex: 1;
     background-color: white;
@@ -33,15 +46,6 @@
     width: 42px;
 }
 
-.dragHandle {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: #e8f1fa;
-    border-radius: 16px;
-    border: 6px solid white;
-    margin-inline-end: 10px;
-    cursor: grab;
-    box-shadow: 0 4px 20px 0 #1976D21A;
+.body{
+
 }

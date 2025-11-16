@@ -89,7 +89,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case ElementTypeIds.smallText: //שורה אחת
+    case ElementTypeIds.shortText: //שורה אחת
       input = (
         <CustomTextField
           key={index}

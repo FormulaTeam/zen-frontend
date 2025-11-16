@@ -570,7 +570,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
             case ElementTypeIds.longText:
               formattedValue = value as string;
               break;
-            case ElementTypeIds.smallText:
+            case ElementTypeIds.shortText:
               formattedValue = value as string;
               break;
             case ElementTypeIds.options:

@@ -30,7 +30,7 @@ function FormFieldsPreviewRenderer({ formField }) {
         />
       );
 
-    case ElementTypeIds.smallText: //שורה אחת
+    case ElementTypeIds.shortText: //שורה אחת
       console.log(formField);
 
       return (

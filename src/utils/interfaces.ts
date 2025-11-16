@@ -68,7 +68,7 @@ export interface RequestConfig {
 
 export const ElementTypeIds = {
   longText: 1,
-  smallText: 2,
+  shortText: 2,
   options: 3,
   link: 4,
   date: 5,
@@ -426,7 +426,7 @@ export const FORM_ELEMENTS: FormElements = {
     icon: "menu",
     fieldType: FieldDataTypes.string,
   },
-  [ElementTypeIds.smallText]: {
+  [ElementTypeIds.shortText]: {
     name: "שורה אחת",
     icon: "dragHandle",
     fieldType: FieldDataTypes.string,
@@ -822,7 +822,7 @@ export interface Condition {
 }
 
 export const ALLOWED_FIELD_TYPES_FOR_CONDITION: number[] = [
-  ElementTypeIds.smallText,
+  ElementTypeIds.shortText,
   ElementTypeIds.longText,
   ElementTypeIds.number,
   ElementTypeIds.date,
