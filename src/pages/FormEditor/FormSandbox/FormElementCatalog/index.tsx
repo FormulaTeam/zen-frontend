@@ -12,7 +12,7 @@ function FormElementCatalog() {
     <>
       <div className={styles.catalogContainer}>
         <div className={styles.catalogTitle}>
-          <Typography variant={"subtitle1"}>שדות מובנים</Typography>
+          <Typography variant={"subtitle1"}>קטלוג שדות</Typography>
         </div>
         <Grid container spacing={1} columns={3} sx={{ width: 305 }}>
           {
