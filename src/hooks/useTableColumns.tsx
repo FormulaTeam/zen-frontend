@@ -116,7 +116,7 @@ export const useTableColumns = (
     });
 
     const buildDynamicFieldColumn = (field: any, orderIndex: number = 0) => {
-      if (field.typeId === ElementTypeIds.form) return; // skip connected forms
+      if (field.typeId === ElementTypeIds.linkedForm) return; // skip connected forms
       let displayName = field.displayName + "";
       let uniqueId = field?.uniqueId;
       let col: any = {
@@ -218,7 +218,7 @@ export const useTableColumns = (
                 <></>
               );
             }
-            if (field.typeId === ElementTypeIds.hour) {
+            if (field.typeId === ElementTypeIds.time) {
               if (value && value !== "") {
                 if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(value)) {
                   return (

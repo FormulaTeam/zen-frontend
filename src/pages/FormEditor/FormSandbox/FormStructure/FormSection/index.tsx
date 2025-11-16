@@ -16,7 +16,6 @@ import { FormFieldElement } from "../FormFieldElement";
 import { DraggableElementData } from "../../../context/FormSandboxContext";
 import { useDndContext } from "@dnd-kit/core";
 import { PLACEHOLDER_FIELD_ID } from "../../../context/constants";
-import { ResizableBox } from "react-resizable";
 
 interface Props {
   id: string;
@@ -24,14 +23,14 @@ interface Props {
 
 function FormSection({ id }: Props) {
   const {
-          attributes,
-          listeners,
-          setNodeRef,
-          setActivatorNodeRef,
-          transform,
-          transition,
-          isDragging,
-        } = useSortable({ id, data: { elementType: "section" } as DraggableElementData });
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, data: { elementType: "section" } as DraggableElementData });
 
   const { formStructure, deleteSection, renameSection, toggleSectionExpanded, deleteField } = useFormStructureContext();
   const { active: draggingElement } = useDndContext();
@@ -171,28 +170,28 @@ function FormSection({ id }: Props) {
                        strategy={verticalListSortingStrategy}
                        disabled={(draggingElement?.data.current as DraggableElementData)?.elementType === "section"}>
         {/*<ResizableBox axis={"y"} height={300} handle={<div style={{backgroundColor:"blue", cursor:'ns-resize', width: '100%', height: 10}}/>}>*/}
-          <AccordionDetails className={styles.content} ref={scrollAreaRef}>
-            {
-              self.fieldIds.length ?
-                self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId}
-                                                                 field={formStructure.fields[fieldId]}
-                                                                 onDelete={() => deleteField(fieldId)} />)
-                : (
-                  <div className={styles.emptySectionPlaceholder}>
-                    <KeyboardDoubleArrowRight className={styles.catalogArrowIcon}
-                                              sx={{
-                                                fontSize: 35,
-                                                marginTop: 0.5,
-                                                marginInlineEnd: 1,
-                                                color: "#A3A6AE",
-                                              }} />
-                    <Typography color={"#a7abb1"} variant={"h4"} align={"center"} sx={{ userSelect: "none" }}>
-                      להוספת שדה לטופס ניתן לגרור שדה מקטלוג השדות בצד
-                    </Typography>
-                  </div>
-                )
-            }
-          </AccordionDetails>
+        <AccordionDetails className={styles.content} ref={scrollAreaRef}>
+          {
+            self.fieldIds.length ?
+              self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId}
+                                                               field={formStructure.fields[fieldId]}
+                                                               onDelete={() => deleteField(fieldId)} />)
+              : (
+                <div className={styles.emptySectionPlaceholder}>
+                  <KeyboardDoubleArrowRight className={styles.catalogArrowIcon}
+                                            sx={{
+                                              fontSize: 35,
+                                              marginTop: 0.5,
+                                              marginInlineEnd: 1,
+                                              color: "#A3A6AE",
+                                            }} />
+                  <Typography color={"#a7abb1"} variant={"h4"} align={"center"} sx={{ userSelect: "none" }}>
+                    להוספת שדות למקטע ניתן לגרורם מהקטלוג
+                  </Typography>
+                </div>
+              )
+          }
+        </AccordionDetails>
         {/*</ResizableBox>*/}
       </SortableContext>
     </Accordion>

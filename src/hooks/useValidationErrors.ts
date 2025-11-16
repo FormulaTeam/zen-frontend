@@ -86,7 +86,7 @@ export const useValidationErrors = ({
         return `${fieldName}: יש לבחור אפשרות`;
       } else if (field.typeId === ElementTypeIds.date) {
         return `${fieldName}: יש להזין תאריך תקף`;
-      } else if (field.typeId === ElementTypeIds.hour) {
+      } else if (field.typeId === ElementTypeIds.time) {
         return `${fieldName}: יש להזין שעה תקפה`;
       } else if (field.typeId === ElementTypeIds.number) {
         if (field.minValue !== undefined || field.maxValue !== undefined) {
@@ -115,7 +115,7 @@ export const useValidationErrors = ({
       // Field is not required but has validation errors (e.g., regex, format)
       if (field.validationRegex) {
         return `${fieldName}: הפורמט אינו תקין`;
-      } else if (field.typeId === ElementTypeIds.hour) {
+      } else if (field.typeId === ElementTypeIds.time) {
         return `${fieldName}: פורמט השעה אינו תקין`;
       } else if (field.typeId === ElementTypeIds.number) {
         return `${fieldName}: פורמט המספר אינו תקין`;

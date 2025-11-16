@@ -95,7 +95,7 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
             .sort((a, b) => a.index - b.index)
             .map((formField, index) => {
               // getFormInFormProperty – full width
-              if (formField.typeId === ElementTypeIds.form && getFormInFormProperty) {
+              if (formField.typeId === ElementTypeIds.linkedForm && getFormInFormProperty) {
                 return (
                   <GridItemFull
                     key={formField.uniqueId || formField.uniqId || `${sectionId}-${index}`}>

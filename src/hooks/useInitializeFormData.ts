@@ -57,11 +57,11 @@ export const useInitializeFormData = () => {
         setCurrentFilter({ form_id: form.id });
         getResponsesForCurrentPage(form, allPermissions);
 
-        if (form.fields.some((f) => f.typeId === ElementTypeIds.form)) {
+        if (form.fields.some((f) => f.typeId === ElementTypeIds.linkedForm)) {
           console.log("[INIT FORM DATA] Form has fields with typeId FORM");
           setResponsesWithChildren([]);
           form.fields.forEach((field) => {
-            if (field.typeId === ElementTypeIds.form) {
+            if (field.typeId === ElementTypeIds.linkedForm) {
               console.log("[INIT FORM DATA] Processing child form field:", field);
               getResponses({
                 form_id: field.connectedFormId,
@@ -159,11 +159,11 @@ export const useInitializeFormData = () => {
         console.log("[INIT FORM DATA] User has permission to see form");
         setForm(form);
 
-        if (form.fields.some((f) => f.typeId === ElementTypeIds.form)) {
+        if (form.fields.some((f) => f.typeId === ElementTypeIds.linkedForm)) {
           console.log("[INIT FORM DATA] Form has fields with typeId FORM");
           setResponsesWithChildren([]);
           form.fields.forEach((field) => {
-            if (field.typeId === ElementTypeIds.form) {
+            if (field.typeId === ElementTypeIds.linkedForm) {
               console.log("[INIT FORM DATA] Processing child form field:", field);
               getResponses({
                 form_id: field.connectedFormId,

@@ -1,6 +1,7 @@
 import { createContext, SetStateAction, useContext } from "react";
 import { FormElementTypeId } from "../../../utils/interfaces";
 import { getEmptyForm } from "./constants";
+import { FormFieldData } from "../schemas";
 
 interface Section {
   title: string;
@@ -11,39 +12,9 @@ interface Section {
 
 interface FormField {
   id: string;
-  name: string; // Internal name
-  typeId: FormElementTypeId;
   parentSectionId: string; // ID of the section this field belongs to
-  required: boolean;
-  displayName?: string;
 
-  // options?: string[];
-  // parentFieldId?: string;
-  // parentFieldName?: string;
-  // parentDependencies?: ParentDependencies[];
-  // connectionType?: (typeof connectionTypes)[keyof typeof connectionTypes];
-  // connectedFormId?: number;
-  // connectedFieldId?: string;
-  // childFieldId?: string;
-  // childFieldName?: string;
-  // validationRegex?: string;
-  // initialValType?: string;
-  // multiSelect?: boolean;
-  // showSeconds?: boolean;
-  // dateAndTime?: boolean;
-  // numberType?: string;
-  // coordinateType?: string;
-  // maxValue?: number;
-  // minValue?: number;
-  // initialNumberValue?: number;
-  // fieldName?: string;
-  // fieldIcon?: string;
-  // shouldSyncToMetro?: boolean;
-  // defaultValue?: string | null;
-  // sectionName?: string; // Name of the section this field belongs to
-  // sectionDescription?: string; // Description of the section this field belongs to
-  // sectionOrder: number; // Order of the section this field belongs to
-  // conditions?: ConditionGroup[]; // Conditional display rules for this field
+  data: FormFieldData;
 }
 
 interface FormStructure {
@@ -67,15 +38,15 @@ interface FormStructureContext {
 }
 
 const FormStructureContext = createContext<FormStructureContext>({
-                                                                   formStructure: { ...getEmptyForm() },
-                                                                   setFormStructure: () => null,
-                                                                   appendSection: () => null,
-                                                                   deleteSection: () => null,
-                                                                   renameSection: () => null,
-                                                                   toggleSectionExpanded: () => null,
-                                                                   appendFieldToFirstSection: () => null,
-                                                                   deleteField: () => null,
-                                                                 });
+  formStructure: { ...getEmptyForm() },
+  setFormStructure: () => null,
+  appendSection: () => null,
+  deleteSection: () => null,
+  renameSection: () => null,
+  toggleSectionExpanded: () => null,
+  appendFieldToFirstSection: () => null,
+  deleteField: () => null,
+});
 
 function useFormStructureContext() {
   return useContext(FormStructureContext);

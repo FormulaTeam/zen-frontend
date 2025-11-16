@@ -47,7 +47,7 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
       }
 
       // Check if the value is a valid time string for hour fields
-      if (field.typeId === ElementTypeIds.hour && value) {
+      if (field.typeId === ElementTypeIds.time && value) {
         const isValidTimeValue =
           /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(value) ||
           (value instanceof Date && moment(value).isValid());

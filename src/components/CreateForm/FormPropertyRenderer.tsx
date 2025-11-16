@@ -236,7 +236,7 @@ export default function FormPropertyRenderer({
       );
       break;
 
-    case ElementTypeIds.hour:
+    case ElementTypeIds.time:
       input = (
         <HourField
           getBaseFieldElement={() => getFormPropertyTitleTextField(formField, index)}
@@ -315,7 +315,7 @@ export default function FormPropertyRenderer({
       input = <>{getFormPropertyTitleTextField(formField, index)}</>;
       break;
 
-    case ElementTypeIds.form: //טופס
+    case ElementTypeIds.linkedForm: //טופס
       formField.shouldSyncToMetro = false;
       showRequiredToggle = false;
 

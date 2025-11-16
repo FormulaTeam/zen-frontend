@@ -15,13 +15,13 @@ const FormElementTypeIdToKey = {
   [ElementTypeIds.options]: 'options',
   [ElementTypeIds.link]: 'link',
   [ElementTypeIds.date]: 'date',
-  [ElementTypeIds.hour]: 'hour',
+  [ElementTypeIds.time]: 'hour',
   [ElementTypeIds.location]: 'location',
   [ElementTypeIds.checkbox]: 'checkbox',
   [ElementTypeIds.list]: 'list',
   [ElementTypeIds.number]: 'number',
   [ElementTypeIds.file]: 'file',
-  [ElementTypeIds.form]: 'form',
+  [ElementTypeIds.linkedForm]: 'form',
 } as const satisfies Record<FormElementTypeId, string>;
 
 function generateFieldName(elementTypeId: FormElementTypeId){

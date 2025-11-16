@@ -40,21 +40,30 @@ function FormFieldElement({ field, onDelete }: Props) {
       <div className={styles.field}>
         <div className={styles.header}>
           <div className={styles.title}>
-            {FORM_ELEMENT_ICONS[FORM_ELEMENTS[field.typeId].icon]}
+            {FORM_ELEMENT_ICONS[FORM_ELEMENTS[field.data.typeId].icon]}
             <Typography variant={"subtitle1"} align={"center"} sx={{ userSelect: "none" }}>
-              {FORM_ELEMENTS[field.typeId].name}
+              {FORM_ELEMENTS[field.data.typeId].name}
             </Typography>
           </div>
-          <Button className={styles.deleteButton}
-                  onClick={onDelete}>
-            <DeleteOutlined />
-          </Button>
         </div>
         <div className={styles.body}>
-          {/*<Input value={field.displayName}*/}
-          {/*       disabled={isDragging}*/}
-          {/*       onChange={(e) => onEdit(e.target.value)} />*/}
+          <Input value={field.data.name}
+                 placeholder={"שם פנימי"}
+                 disabled={isDragging}
+            // onChange={(e) => onEdit(e.target.value)}
+          />
+          <Input value={field.data.displayName}
+                 placeholder={"שם תצוגה"}
+                 disabled={isDragging}
+            // onChange={(e) => onEdit(e.target.value)}
+          />
         </div>
+      </div>
+      <div className={styles.deleteButtonContainer}>
+        <Button className={styles.deleteButton}
+                onClick={onDelete}>
+          <DeleteOutlined />
+        </Button>
       </div>
     </div>
   );

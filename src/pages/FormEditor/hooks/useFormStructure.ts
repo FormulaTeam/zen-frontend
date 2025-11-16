@@ -96,9 +96,12 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
       const newField: FormField = {
         id: generateFieldId(),
         parentSectionId: changedSectionId,
-        name: generateFieldName(elementTypeId),
-        typeId: elementTypeId,
-        required: false,
+        data: {
+          typeId: elementTypeId,
+          name: generateFieldName(elementTypeId),
+          displayName: '',
+          required: false,
+        },
       };
 
       const fieldIds = [...changedSection.fieldIds, newField.id];

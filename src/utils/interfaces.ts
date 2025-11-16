@@ -72,13 +72,13 @@ export const ElementTypeIds = {
   options: 3,
   link: 4,
   date: 5,
-  hour: 6,
+  time: 6,
   location: 7,
   checkbox: 8,
   list: 9,
   number: 10,
   file: 11,
-  form: 12,
+  linkedForm: 12,
 } as const satisfies Record<string, number>;
 
 export const FieldDataTypes = {
@@ -446,7 +446,7 @@ export const FORM_ELEMENTS: FormElements = {
     icon: "dateRange",
     fieldType: FieldDataTypes.date,
   },
-  [ElementTypeIds.hour]: {
+  [ElementTypeIds.time]: {
     name: "שעה",
     icon: "accessTime",
     fieldType: FieldDataTypes.string,
@@ -476,7 +476,7 @@ export const FORM_ELEMENTS: FormElements = {
     icon: "file",
     fieldType: FieldDataTypes.file,
   },
-  [ElementTypeIds.form]: {
+  [ElementTypeIds.linkedForm]: {
     name: "טופס בתוך טופס",
     icon: "forms",
     fieldType: FieldDataTypes.string,

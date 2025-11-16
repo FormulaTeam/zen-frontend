@@ -60,7 +60,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   field.name = formField.name;
   let formFieldValue: any = formFieldsValuesMap.get(uniqueId);
   if (
-    ![ElementTypeIds.date, ElementTypeIds.hour, ElementTypeIds.checkbox, ElementTypeIds.number].includes(
+    ![ElementTypeIds.date, ElementTypeIds.time, ElementTypeIds.checkbox, ElementTypeIds.number].includes(
       field.typeId,
     ) &&
     !formFieldValue
@@ -373,7 +373,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case ElementTypeIds.hour: //שעה
+    case ElementTypeIds.time: //שעה
       input = (
         <CustomTimePicker
           key={index}

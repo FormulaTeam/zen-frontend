@@ -399,7 +399,7 @@ export function createExcelMold(form) {
   //add column for each field and save fields order with arr of names
   let names: string[] = [];
   formFields.forEach((field, j) => {
-    if (field.typeId === ElementTypeIds.form) {
+    if (field.typeId === ElementTypeIds.linkedForm) {
       // If the field is of type 'form', we skip it as it doesn't have a value in the response
       return;
     }
@@ -501,7 +501,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
     //add column for each field and save fields order with arr of names
     let names: string[] = [];
     formFields.forEach((field, j) => {
-      if (field.typeId === ElementTypeIds.form) {
+      if (field.typeId === ElementTypeIds.linkedForm) {
         delete data[i][field.displayName];
         return;
       }
@@ -523,7 +523,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
 
   formFields.forEach((field, i) => {
     let uniqueId = field?.uniqueId;
-    if (uniqueId && uniqueId === ElementTypeIds.form.toString()) {
+    if (uniqueId && uniqueId === ElementTypeIds.linkedForm.toString()) {
       // If the field is of type 'form', we skip it as it doesn't have a value in the response
       return;
     }
@@ -558,7 +558,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
       for (const { displayName, typeId, value, uniqueId, dateAndTime } of fieldValuesWithMetaData) {
         if (formFieldsIds.includes(uniqueId)) {
           let formattedValue: string | { f: string } = "";
-          if (typeId === ElementTypeIds.form) {
+          if (typeId === ElementTypeIds.linkedForm) {
             // If the field is of type 'form', we skip it as it doesn't have a value in the response
             continue;
           }
@@ -596,7 +596,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
                 formattedValue = moment(dateValue).format(DEFAULT_DATE_FORMAT);
               }
               break;
-            case ElementTypeIds.hour:
+            case ElementTypeIds.time:
               const timeValue = value as string;
               // If it's already in the correct format, use it directly
               if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(timeValue)) {

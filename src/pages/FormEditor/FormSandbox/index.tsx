@@ -18,7 +18,7 @@ import { CatalogItemDragOverlay } from "./DragOverlay/CatalogItemDragOverlay";
 import { SectionDragOverlay } from "./DragOverlay/SectionDragOverlay";
 import { ReactNode, useEffect } from "react";
 import { FieldDragOverlay } from "./DragOverlay/FieldDragOverlay";
-import { useFormStructureContext } from "../context/FormStructureContext";
+import { FormField, useFormStructureContext } from "../context/FormStructureContext";
 import { FormElementTypeId } from "../../../utils/interfaces";
 import { arrayMove } from "@dnd-kit/sortable";
 import { generateFieldId, generateFieldName } from "../utils";
@@ -130,8 +130,8 @@ function FormSandbox() {
 
               if (newParentSectionId === oldParentSectionId) {
                 newParentSection.fieldIds = arrayMove(oldParentSection.fieldIds,
-                                                      oldParentSection.fieldIds.indexOf(activeFieldId), // TODO add index attribute to Field
-                                                      oldParentSection.fieldIds.indexOf(overFieldId));
+                  oldParentSection.fieldIds.indexOf(activeFieldId), // TODO add index attribute to Field
+                  oldParentSection.fieldIds.indexOf(overFieldId));
 
                 return {
                   ...prevFormStructure,
@@ -210,10 +210,13 @@ function FormSandbox() {
                       ...prevFormStructure.fields,
                       [PLACEHOLDER_FIELD_ID]: {
                         id: PLACEHOLDER_FIELD_ID,
-                        name: PLACEHOLDER_FIELD_ID,
-                        typeId: +active.id as FormElementTypeId,
                         parentSectionId: newParentSectionId,
-                        required: false,
+                        data: {
+                          name: "",
+                          displayName: "",
+                          typeId: +active.id as FormElementTypeId,
+                          required: false,
+                        },
                       },
                     },
                   };
@@ -233,10 +236,13 @@ function FormSandbox() {
                 if (!(PLACEHOLDER_FIELD_ID in fields)) {
                   fields[PLACEHOLDER_FIELD_ID] = {
                     id: PLACEHOLDER_FIELD_ID,
-                    name: PLACEHOLDER_FIELD_ID,
-                    typeId: +active.id as FormElementTypeId,
                     parentSectionId: newParentSectionId,
-                    required: false,
+                    data: {
+                      name: "",
+                      displayName: "",
+                      typeId: +active.id as FormElementTypeId,
+                      required: false,
+                    },
                   };
 
                   newParentSection.fieldIds.splice(newParentSection.fieldIds.indexOf(over.id as string), 0, PLACEHOLDER_FIELD_ID);
@@ -306,17 +312,20 @@ function FormSandbox() {
           const fields = { ...prevFormStructure.fields };
 
           if (PLACEHOLDER_FIELD_ID in fields) {
-            const placeholderFieldTypeId = fields[PLACEHOLDER_FIELD_ID].typeId;
+            const placeholderFieldTypeId = fields[PLACEHOLDER_FIELD_ID].data.typeId;
             const parentSectionId = fields[PLACEHOLDER_FIELD_ID].parentSectionId;
 
             delete fields[PLACEHOLDER_FIELD_ID];
 
-            const newField = {
+            const newField: FormField = {
               id: generateFieldId(),
-              name: generateFieldName(placeholderFieldTypeId),
-              typeId: placeholderFieldTypeId,
               parentSectionId,
-              required: false,
+              data: {
+                name: generateFieldName(placeholderFieldTypeId),
+                displayName: "",
+                typeId: placeholderFieldTypeId,
+                required: false,
+              },
             };
 
             fields[newField.id] = newField;

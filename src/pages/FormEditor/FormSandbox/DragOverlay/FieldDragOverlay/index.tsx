@@ -11,7 +11,7 @@ function FieldDragOverlay() {
   return (
     <DragOverlay zIndex={1500} modifiers={[snapCenterToCursor]}>
       <div className={styles.dragOverlay}>
-        {formStructure.fields[draggingState.draggingElement?.id!].displayName}
+        {formStructure.fields[draggingState.draggingElement?.id!].data.displayName}
       </div>
     </DragOverlay>
   );

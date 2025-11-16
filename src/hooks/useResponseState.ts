@@ -302,7 +302,7 @@ export const useResponseState = (
           const excludedTypeIds: number[] = [
             ElementTypeIds.link,
             ElementTypeIds.date,
-            ElementTypeIds.hour,
+            ElementTypeIds.time,
             ElementTypeIds.location,
             ElementTypeIds.checkbox,
             ElementTypeIds.number,
@@ -388,7 +388,7 @@ export const useResponseState = (
           }
 
           //שעה
-          else if (field.typeId === ElementTypeIds.hour) {
+          else if (field.typeId === ElementTypeIds.time) {
             //if no value and not required - is valid
             if (!val && !field.required) {
               newFormFieldsValidMap.set(uniqueId, true);

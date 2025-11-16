@@ -12,7 +12,7 @@
     border: 6px solid white;
     margin-inline-end: 10px;
     cursor: grab;
-    box-shadow: 0 4px 20px 0 #1976D21A;
+    box-shadow: 0 4px 10px 0 #1976D21A;
 }
 
 .field {
@@ -20,8 +20,8 @@
     background-color: white;
     /*min-height: 300px;*/
     border-radius: 10px;
-    box-shadow: 0 4px 20px 0 #1976D21A;
-    padding: 8px 12px;
+    box-shadow: 0 4px 10px 0 #1976D21A;
+    padding: 8px 12px 20px 12px;
 }
 
 .header {
@@ -37,15 +37,31 @@
     color: #85878D;
 }
 
+.body {
+    display: flex;
+    flex-direction: column;
+}
+
+.deleteButtonContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-inline-start: 10px;
+}
+
 .deleteButton.deleteButton {
-    color: #c86671;
+    color: white;
+    background-color: #bc535f;
     font-size: 24px;
     border-radius: 50%;
     min-width: 0;
+    border: 6px solid white;
     height: 42px;
     width: 42px;
+    box-shadow: 0 4px 10px 0 #1976D21A;
 }
 
-.body{
-
+.deleteButton.deleteButton:hover{
+    background-color: #d55262;
 }

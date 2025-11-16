@@ -540,7 +540,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
         }
       }
 
-      if (field.typeId === ElementTypeIds.form && !field.connectedFormId) {
+      if (field.typeId === ElementTypeIds.linkedForm && !field.connectedFormId) {
         hasEmptyFormInFormConnection = true;
         addErrorIf(true, "שדה לא מחובר לטופס", "form", field.uniqueId);
       }

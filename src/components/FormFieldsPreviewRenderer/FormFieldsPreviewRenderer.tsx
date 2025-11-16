@@ -91,7 +91,7 @@ function FormFieldsPreviewRenderer({ formField }) {
         />
       );
 
-    case ElementTypeIds.hour: //שעה
+    case ElementTypeIds.time: //שעה
       return (
         <CustomTimePicker
           label={formField.displayName}
