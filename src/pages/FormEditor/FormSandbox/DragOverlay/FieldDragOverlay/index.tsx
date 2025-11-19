@@ -15,12 +15,18 @@ function FieldDragOverlay() {
 
   return (
     <DragOverlay zIndex={1500} modifiers={[snapCenterToCursor]}>
-      <div className={styles.dragOverlay}>
-        <div className={styles.title}>
-          {FORM_ELEMENT_ICONS[FORM_ELEMENTS[field.data.typeId].icon]}
-          <Typography variant={"subtitle1"} align={"center"} sx={{ userSelect: "none" }}>
-            {FORM_ELEMENTS[field.data.typeId].name}
-          </Typography>
+      <div style={{
+        position:'relative',
+        paddingRight: 'calc(50% + 10px)'
+        }}>
+        <div className={styles.dragOverlay}>
+          <div className={styles.dragHandle}/>
+          <div className={styles.title}>
+            {FORM_ELEMENT_ICONS[FORM_ELEMENTS[field.data.typeId].icon]}
+            <Typography variant={"subtitle1"} align={"center"} sx={{ userSelect: "none" }}>
+              {FORM_ELEMENTS[field.data.typeId].name}
+            </Typography>
+          </div>
         </div>
       </div>
     </DragOverlay>

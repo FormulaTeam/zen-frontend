@@ -11,7 +11,10 @@ function SectionDragOverlay() {
   return (
     <DragOverlay zIndex={1500} modifiers={[snapCenterToCursor]}>
       <div className={styles.dragOverlay}>
-        {formStructure.sections[draggingState.draggingElement?.id!].title}
+        <div className={styles.title}>
+          {formStructure.sections[draggingState.draggingElement?.id!].title}
+        </div>
+      <div className={styles.body}/>
       </div>
     </DragOverlay>
   );

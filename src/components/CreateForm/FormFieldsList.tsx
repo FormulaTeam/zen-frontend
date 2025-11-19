@@ -72,11 +72,6 @@ export default function FormFieldsList({
     }
   }, [formFields.length]);
 
-
-  useEffect(() => {
-    console.log(formFields);
-  }, [formFields]);
-
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isResizing.current && containerRef.current) {

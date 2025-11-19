@@ -11,11 +11,13 @@ function CatalogItemDragOverlay() {
 
   return (
     <DragOverlay zIndex={1500} modifiers={[snapCenterToCursor]}>
-      <div className={styles.dragOverlay}>
-        <div className={styles.overlayItem}>
-          {FORM_ELEMENT_ICONS[FORM_ELEMENTS[draggingState.draggingElement?.id!].icon]}
+      <div className={styles.wrapper}>
+        <div className={styles.dragOverlay}>
+          <Add className={styles.overlayAdd} />
+          <div className={styles.overlayItem}>
+            {FORM_ELEMENT_ICONS[FORM_ELEMENTS[draggingState.draggingElement?.id!].icon]}
+          </div>
         </div>
-        <Add className={styles.overlayAdd} />
       </div>
     </DragOverlay>
   );

@@ -7,7 +7,7 @@ enum LocationFormat {
   WKT = "WKT",
 }
 
-const timeSchema = baseFormFieldSchema.safeExtend({
+const locationSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(ElementTypeIds.location),
 
   extra: strictObject({
@@ -15,4 +15,5 @@ const timeSchema = baseFormFieldSchema.safeExtend({
   }).optional(),
 });
 
-export default timeSchema;
+export { LocationFormat };
+export default locationSchema;

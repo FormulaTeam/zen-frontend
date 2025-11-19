@@ -1,19 +1,11 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { sortByOptions, SortOption } from "../../utils/utils";
 import { Filter } from "../../utils/interfaces";
-import { CacheProvider } from "@emotion/react";
-import createCache from "@emotion/cache";
-import { prefixer } from "stylis";
-import rtlPlugin from "stylis-plugin-rtl";
 import { StyledAutocomplete, StyledTextField } from "./styled";
 import { IOrderBy } from "../../types/enums/filtersAndSorts.enum";
 
 const MainSortSelect = ({ setFormsData, setPage, getSortFilter, setLoading, setCurrentFilter }) => {
   useEffect(() => {}, []);
-  const cacheRtl = createCache({
-    key: "muirtl",
-    stylisPlugins: [prefixer, rtlPlugin],
-  });
   const [sortByOption, setSortByOption] = useState<any>(null);
   const DEFAULT_INPUT_WIDTH = 125;
   const FONT_SIZE = 16;
@@ -42,7 +34,6 @@ const MainSortSelect = ({ setFormsData, setPage, getSortFilter, setLoading, setC
   };
 
   return (
-    <CacheProvider value={cacheRtl}>
       <StyledAutocomplete
         sortInputWidth={sortInputWidth}
         isOptionEqualToValue={(option, value) => {
@@ -69,7 +60,6 @@ const MainSortSelect = ({ setFormsData, setPage, getSortFilter, setLoading, setC
           />
         )}
       />
-    </CacheProvider>
   );
 };
 

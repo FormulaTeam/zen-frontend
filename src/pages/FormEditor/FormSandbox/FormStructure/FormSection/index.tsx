@@ -1,5 +1,5 @@
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { CSS, usePrevious } from "@dnd-kit/utilities";
+import { CSS } from "@dnd-kit/utilities";
 import { Accordion, AccordionDetails, AccordionSummary, Button, Input, Typography } from "@mui/material";
 import { useFormStructureContext } from "../../../context/FormStructureContext";
 import styles from "./style.module.css";
@@ -15,7 +15,6 @@ import {
 import { FormFieldElement } from "../FormFieldElement";
 import { DraggableElementData } from "../../../context/FormSandboxContext";
 import { useDndContext } from "@dnd-kit/core";
-import { PLACEHOLDER_FIELD_ID } from "../../../context/constants";
 
 interface Props {
   id: string;
@@ -42,10 +41,7 @@ function FormSection({ id }: Props) {
 
   const self = useMemo(() => formStructure.sections[id], [formStructure.sections, id]);
 
-  const previousFieldCount = usePrevious(self.fieldIds.length);
-
   const containerRef = useRef<HTMLDivElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const titleInputRef = useRef<HTMLDivElement>(null);
 
@@ -55,22 +51,18 @@ function FormSection({ id }: Props) {
   }, []);
 
   useEffect(() => {
+    if (!self.expanded) {
+      toggleSectionExpanded(id);
+    }
+  }, [self.fieldIds.length]);
+
+  useEffect(() => {
     isDragging && setIsEditingTitle(false);
   }, [isDragging]);
 
   useEffect(() => {
     isEditingTitle && titleInputRef.current?.focus();
   }, [isEditingTitle, titleInputRef.current]);
-
-  useEffect(() => {
-    (self.fieldIds.length > (previousFieldCount ?? 0) && !self.fieldIds.includes(PLACEHOLDER_FIELD_ID)) &&
-    scrollAreaRef.current?.scrollTo({ left: 0, top: scrollAreaRef.current.scrollHeight, behavior: "smooth" });
-  }, [self.fieldIds.length]);
-
-  useEffect(() => {
-    self.expanded &&
-    containerRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [self.expanded]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -170,7 +162,7 @@ function FormSection({ id }: Props) {
                        strategy={verticalListSortingStrategy}
                        disabled={(draggingElement?.data.current as DraggableElementData)?.elementType === "section"}>
         {/*<ResizableBox axis={"y"} height={300} handle={<div style={{backgroundColor:"blue", cursor:'ns-resize', width: '100%', height: 10}}/>}>*/}
-        <AccordionDetails className={styles.content} ref={scrollAreaRef}>
+        <AccordionDetails className={styles.content}>
           {
             self.fieldIds.length ?
               self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId}

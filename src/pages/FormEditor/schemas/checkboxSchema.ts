@@ -15,4 +15,5 @@ const checkboxSchema = baseFormFieldSchema.safeExtend({
   }).optional(),
 });
 
+export { CheckboxValue };
 export default checkboxSchema;

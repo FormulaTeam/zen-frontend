@@ -16,4 +16,5 @@ const timeSchema = baseFormFieldSchema.safeExtend({
   }).optional(),
 });
 
+export { DefaultTimeValue };
 export default timeSchema;

@@ -50,4 +50,5 @@ const numberSchema = baseFormFieldSchema.safeExtend({
   }).optional(),
 });
 
+export { NumberFormat };
 export default numberSchema;

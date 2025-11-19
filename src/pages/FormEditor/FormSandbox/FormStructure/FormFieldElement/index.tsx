@@ -6,8 +6,11 @@ import { DeleteOutlined, DragIndicator } from "@mui/icons-material";
 import styles from "./style.module.css";
 import { PLACEHOLDER_FIELD_ID } from "../../../context/constants";
 import { FORM_ELEMENT_ICONS } from "../../../../../components/FORM_ELEMENT_ICONS";
-import { FORM_ELEMENTS } from "../../../../../utils/interfaces";
-import { Button, Input, Typography } from "@mui/material";
+import { ElementTypeIds, FORM_ELEMENTS } from "../../../../../utils/interfaces";
+import { Button, FormControlLabel, Switch, TextField, Typography } from "@mui/material";
+import { useEffect, useRef } from "react";
+import { DateFieldExtra } from "./elementExtras";
+import { DefaultDateValues } from "../../../schemas/dateSchema";
 
 interface Props {
   field: FormField;
@@ -26,15 +29,26 @@ function FormFieldElement({ field, onDelete }: Props) {
     isDragging,
   } = useSortable({ id: field.id, data: { elementType: "field" } as DraggableElementData });
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const isPlaceholder = field.id === PLACEHOLDER_FIELD_ID;
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging || field.id === PLACEHOLDER_FIELD_ID ? 0.5 : 1,
-    filter: field.id === PLACEHOLDER_FIELD_ID ? 'sepia(100%) hue-rotate(160deg) saturate(300%)' : 'none',
+    opacity: isDragging || isPlaceholder ? 0.5 : 1,
+    filter: isPlaceholder ? "sepia(100%) brightness(90%) hue-rotate(170deg) saturate(500%)" : "none",
   };
 
+  useEffect(() => {
+    setNodeRef(containerRef.current);
+
+    field.id !== PLACEHOLDER_FIELD_ID &&
+    containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, []);
+
   return (
-    <div ref={setNodeRef} className={styles.container} style={style}>
+    <div ref={containerRef} className={styles.container} style={style}>
       <div className={styles.dragHandle} ref={setActivatorNodeRef} {...listeners} {...attributes}>
         <DragIndicator />
       </div>
@@ -46,25 +60,38 @@ function FormFieldElement({ field, onDelete }: Props) {
               {FORM_ELEMENTS[field.data.typeId].name}
             </Typography>
           </div>
+          <FormControlLabel sx={{ marginInlineEnd: "2px" }} control={<Switch checked={field.data.required} />}
+                            label="שדה חובה" />
         </div>
         <div className={styles.body}>
-          <Input value={field.data.name}
-                 placeholder={"שם פנימי"}
-                 disabled={isDragging}
+          <TextField value={field.data.name}
+                     className={styles.input}
+                     variant={"standard"}
+                     label={"שם פנימי"}
+                     disabled={isDragging}
             // onChange={(e) => onEdit(e.target.value)}
           />
-          <Input value={field.data.displayName}
-                 placeholder={"שם תצוגה"}
-                 disabled={isDragging}
+          <TextField value={field.data.displayName}
+                     className={styles.input}
+                     variant={"standard"}
+                     label={"שם תצוגה"}
+                     disabled={isDragging}
             // onChange={(e) => onEdit(e.target.value)}
           />
+          {
+            field.data.typeId === ElementTypeIds.date &&
+            <DateFieldExtra extra={field.data.extra ?? { defaultValue: DefaultDateValues.EMPTY }} disabled={isDragging} />
+          }
         </div>
       </div>
       <div className={styles.deleteButtonContainer}>
-        <Button className={styles.deleteButton}
-                onClick={onDelete}>
-          <DeleteOutlined />
-        </Button>
+        {
+          !isPlaceholder &&
+          <Button className={styles.deleteButton}
+                  onClick={onDelete}>
+            <DeleteOutlined />
+          </Button>
+        }
       </div>
     </div>
   );

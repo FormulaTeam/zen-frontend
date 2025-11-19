@@ -16,4 +16,5 @@ const dateSchema = baseFormFieldSchema.safeExtend({
   }).optional(),
 });
 
+export { DefaultDateValues };
 export default dateSchema;

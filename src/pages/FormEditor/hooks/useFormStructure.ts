@@ -35,15 +35,19 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
   const deleteSection = useCallback((sectionId: string) => {
     setFormStructure((prev) => {
       const sections = { ...prev.sections };
+      const fields = { ...prev.fields };
       const orderedSectionIds = [...prev.orderedSectionIds];
 
       if (Object.keys(sections).length > 1) {
+        sections[sectionId].fieldIds.forEach((fieldId) => delete fields[fieldId]);
         delete sections[sectionId];
+
         orderedSectionIds.splice(orderedSectionIds.indexOf(sectionId), 1);
 
         return {
           ...prev,
           sections,
+          fields,
           orderedSectionIds,
         };
       }
@@ -99,7 +103,7 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
         data: {
           typeId: elementTypeId,
           name: generateFieldName(elementTypeId),
-          displayName: '',
+          displayName: "",
           required: false,
         },
       };
