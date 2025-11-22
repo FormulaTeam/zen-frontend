@@ -1,16 +1,16 @@
 import moment from "moment";
-import { ElementTypeIds, FormField } from "./interfaces";
+import { FieldTypeIds, FormField } from "./interfaces";
 import { DEFAULT_DATE_FORMAT, DEFAULT_DATE_TIME_FORMAT } from "./utils";
 
 export function getResponseFieldStringValue(field: FormField, value: any) {
   if ([undefined, null].includes(value)) return "";
   switch (field.typeId) {
-    case ElementTypeIds.longText:
-    case ElementTypeIds.shortText:
+    case FieldTypeIds.longText:
+    case FieldTypeIds.shortText:
       return value;
-    case ElementTypeIds.number:
+    case FieldTypeIds.number:
       return value.toString();
-    case ElementTypeIds.time:
+    case FieldTypeIds.time:
       if (value && value !== "") {
         const validTimeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/;
         // Check if it's already in the correct format
@@ -27,17 +27,17 @@ export function getResponseFieldStringValue(field: FormField, value: any) {
         }
       }
       return "";
-    case ElementTypeIds.date:
+    case FieldTypeIds.date:
       if (!moment(value).isValid()) return "";
       if (field.dateAndTime) return moment(value).format(DEFAULT_DATE_TIME_FORMAT);
       return moment(value).format(DEFAULT_DATE_FORMAT);
 
-    case ElementTypeIds.checkbox:
+    case FieldTypeIds.checkbox:
       return value === "true" || value === true ? "כן" : "לא";
-    case ElementTypeIds.location:
+    case FieldTypeIds.location:
       if (!value || (!value.latitude && !value.longitude)) return "";
       return value ? `x: ${value.x}, y: ${value.y}` : "";
-    case ElementTypeIds.link:
+    case FieldTypeIds.link:
       return value.linkTxt;
     default:
       break;

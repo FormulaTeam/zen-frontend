@@ -6,7 +6,7 @@ import {
   ConditionOperators,
   ConditionsRoot,
   DEFAULT_LOGICAL_OPERATOR,
-  ElementTypeIds,
+  FieldTypeIds,
   FormField,
   logicalOperatorLabels,
 } from "../../utils/interfaces";
@@ -37,9 +37,9 @@ const ConditionsPreview: React.FC<ConditionsPreviewProps> = ({ conditionsRoot, f
     }
 
     let valueDisplay = "";
-    if (formField.typeId === ElementTypeIds.date && typeof condition.value === "string") {
+    if (formField.typeId === FieldTypeIds.date && typeof condition.value === "string") {
       valueDisplay = condition.value ? new Date(condition.value).toLocaleDateString("he-IL") : "";
-    } else if (formField.typeId === ElementTypeIds.checkbox) {
+    } else if (formField.typeId === FieldTypeIds.checkbox) {
       valueDisplay = condition.value === "true" ? "כן" : "לא";
     } else if (Array.isArray(condition.value)) {
       valueDisplay = condition.value.join(", ");

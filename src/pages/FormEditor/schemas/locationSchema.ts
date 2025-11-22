@@ -1,5 +1,5 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
-import { ElementTypeIds } from "../../../utils/interfaces";
+import { FieldTypeIds } from "../../../utils/interfaces";
 import { enum as zod_enum, literal, strictObject } from "zod";
 
 enum LocationFormat {
@@ -8,7 +8,7 @@ enum LocationFormat {
 }
 
 const locationSchema = baseFormFieldSchema.safeExtend({
-  typeId: literal(ElementTypeIds.location),
+  typeId: literal(FieldTypeIds.location),
 
   extra: strictObject({
     format: zod_enum(LocationFormat).default(LocationFormat.UTM),

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getFormById, getResponses } from "../api";
-import { ElementTypeIds, Form, ResponseForm, Role } from "../utils/interfaces";
+import { FieldTypeIds, Form, ResponseForm, Role } from "../utils/interfaces";
 import { getUserRole, PERMISSION_TYPES } from "../utils/utils";
 import { prioritizePermissions } from "../utils/formFieldsResponses";
 import { IPath } from "../types/enums/global.enums";
@@ -57,11 +57,11 @@ export const useInitializeFormData = () => {
         setCurrentFilter({ form_id: form.id });
         getResponsesForCurrentPage(form, allPermissions);
 
-        if (form.fields.some((f) => f.typeId === ElementTypeIds.linkedForm)) {
+        if (form.fields.some((f) => f.typeId === FieldTypeIds.linkedForm)) {
           console.log("[INIT FORM DATA] Form has fields with typeId FORM");
           setResponsesWithChildren([]);
           form.fields.forEach((field) => {
-            if (field.typeId === ElementTypeIds.linkedForm) {
+            if (field.typeId === FieldTypeIds.linkedForm) {
               console.log("[INIT FORM DATA] Processing child form field:", field);
               getResponses({
                 form_id: field.connectedFormId,
@@ -159,11 +159,11 @@ export const useInitializeFormData = () => {
         console.log("[INIT FORM DATA] User has permission to see form");
         setForm(form);
 
-        if (form.fields.some((f) => f.typeId === ElementTypeIds.linkedForm)) {
+        if (form.fields.some((f) => f.typeId === FieldTypeIds.linkedForm)) {
           console.log("[INIT FORM DATA] Form has fields with typeId FORM");
           setResponsesWithChildren([]);
           form.fields.forEach((field) => {
-            if (field.typeId === ElementTypeIds.linkedForm) {
+            if (field.typeId === FieldTypeIds.linkedForm) {
               console.log("[INIT FORM DATA] Processing child form field:", field);
               getResponses({
                 form_id: field.connectedFormId,

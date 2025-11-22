@@ -1,9 +1,9 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
-import { ElementTypeIds } from "../../../utils/interfaces";
+import { FieldTypeIds } from "../../../utils/interfaces";
 import { literal } from "zod";
 
 const fileSchema = baseFormFieldSchema.safeExtend({
-  typeId: literal(ElementTypeIds.file),
+  typeId: literal(FieldTypeIds.file),
 });
 
 export default fileSchema;

@@ -1,5 +1,5 @@
 import { createContext, SetStateAction, useContext } from "react";
-import { FormElementTypeId } from "../../../utils/interfaces";
+import { FormFieldTypeId } from "../../../utils/interfaces";
 import { getEmptyForm } from "./constants";
 import { FormFieldData } from "../schemas";
 
@@ -33,7 +33,7 @@ interface FormStructureContext {
   deleteSection: (sectionId: string) => void;
   renameSection: (sectionId: string, title: string) => void;
   toggleSectionExpanded: (sectionId: string) => void;
-  appendFieldToFirstSection: (elementTypeId: FormElementTypeId) => void;
+  appendFieldToFirstSection: (elementTypeId: FormFieldTypeId) => void;
   deleteField: (field: string) => void;
 }
 
@@ -49,7 +49,11 @@ const FormStructureContext = createContext<FormStructureContext>({
 });
 
 function useFormStructureContext() {
-  return useContext(FormStructureContext);
+  const { ...restContext } = useContext(FormStructureContext);
+
+  return {
+    ...restContext,
+  };
 }
 
 export { FormStructureContext, useFormStructureContext };

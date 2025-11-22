@@ -26,7 +26,7 @@ import { Close, Info } from "@mui/icons-material";
 import {
   connectionTypes,
   DRAGGED_ITEM_ID,
-  ElementTypeIds,
+  FieldTypeIds,
   fieldConnectionTooltipTexts,
   Form,
   FormField,
@@ -200,7 +200,7 @@ export default function OptionsField({
   function getFilteredOptionsForSelection() {
     // if the field is connected to another field, we only show options that are not already connected
     const baseFilter = (item: FormField) =>
-      item.uniqueId !== formField.uniqueId && item.typeId === ElementTypeIds.options;
+      item.uniqueId !== formField.uniqueId && item.typeId === FieldTypeIds.options;
 
     // form connection type
     const formConnectionFilter = (item: FormField) =>
@@ -445,9 +445,9 @@ export default function OptionsField({
               // It won't affect the functionality since it is not used as a real typeId
               const filtered = options.filter((option) => {
                 return [
-                  ElementTypeIds.shortText,
-                  ElementTypeIds.longText,
-                  ElementTypeIds.number,
+                  FieldTypeIds.shortText,
+                  FieldTypeIds.longText,
+                  FieldTypeIds.number,
                   DRAGGED_ITEM_ID,
                 ].includes(option.typeId);
               });

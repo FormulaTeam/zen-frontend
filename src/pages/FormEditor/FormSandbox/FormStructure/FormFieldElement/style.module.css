@@ -40,13 +40,29 @@
 .body {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 24px;
     margin-block-start: 8px;
+    padding: 2px 24px;
+}
+
+.baseData {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 290px);
+    gap: 24px;
+}
+
+.baseData > * {
+    max-width: 290px;
+}
+
+.extraData {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 290px);
+    gap: 24px;
 }
 
 .input {
     width: 100%;
-    max-width: 550px;
 }
 
 .deleteButtonContainer {
@@ -72,4 +88,9 @@
 
 .deleteButton.deleteButton:hover {
     background-color: #d55262;
+}
+
+.deleteButton.deleteButton:disabled {
+    color: white;
+    background-color: #e4e4e4;
 }

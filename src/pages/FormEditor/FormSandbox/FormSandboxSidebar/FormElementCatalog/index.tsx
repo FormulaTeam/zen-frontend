@@ -1,9 +1,9 @@
 import Grid from "@mui/material/Grid";
-import { FORM_ELEMENTS, FormElementTypeId } from "../../../../utils/interfaces";
+import { FORM_ELEMENTS, FormFieldTypeId } from "../../../../../utils/interfaces";
 import styles from "./style.module.css";
 import { Typography } from "@mui/material";
 import { FormElementCatalogItem } from "./FormElementCatalogItem";
-import { useFormStructureContext } from "../../context/FormStructureContext";
+import { useFormStructureContext } from "../../../context/FormStructureContext";
 
 function FormElementCatalog() {
   const { appendFieldToFirstSection } = useFormStructureContext();
@@ -17,7 +17,7 @@ function FormElementCatalog() {
         <Grid container spacing={1} columns={3} sx={{ width: 305 }}>
           {
             Object.keys(FORM_ELEMENTS).map((typeId) => {
-              const id = +typeId as FormElementTypeId;
+              const id = +typeId as FormFieldTypeId;
 
               return (
                 <Grid size={1} key={id}>

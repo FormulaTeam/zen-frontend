@@ -66,7 +66,7 @@ export interface RequestConfig {
   StartRow?: number;
 }
 
-export const ElementTypeIds = {
+export const FieldTypeIds = {
   longText: 1,
   shortText: 2,
   options: 3,
@@ -103,7 +103,7 @@ export enum IConnectionType {
  * Represents a field within a form.
  */
 
-export type FormElementTypeId = (typeof ElementTypeIds)[keyof typeof ElementTypeIds];
+export type FormFieldTypeId = (typeof FieldTypeIds)[keyof typeof FieldTypeIds];
 export type FormFieldDataType = (typeof FieldDataTypes)[keyof typeof FieldDataTypes];
 
 export interface FormField {
@@ -113,7 +113,7 @@ export interface FormField {
   displayName: string;
   required: boolean;
   index: number;
-  typeId: FormElementTypeId | typeof DRAGGED_ITEM_ID;
+  typeId: FormFieldTypeId | typeof DRAGGED_ITEM_ID;
   fieldType: FormFieldDataType;
   options?: string[];
   parentFieldId?: string;
@@ -171,7 +171,7 @@ export type FieldsIcons = {
 };
 
 export interface FormFieldEditableMetaData {
-  typeId: FormElementTypeId | typeof DRAGGED_ITEM_ID;
+  typeId: FormFieldTypeId | typeof DRAGGED_ITEM_ID;
   name: string;
   icon: FieldsIconsNames;
   fieldType: FormFieldDataType;
@@ -417,66 +417,66 @@ export interface DefaultField {
   fieldType: FormFieldDataType;
 }
 
-export type FormElements = Record<FormElementTypeId, DefaultField>;
+export type FormElements = Record<FormFieldTypeId, DefaultField>;
 
 // Default field options for the form builder
 export const FORM_ELEMENTS: FormElements = {
-  [ElementTypeIds.longText]: {
+  [FieldTypeIds.longText]: {
     name: "מס' שורות טקסט",
     icon: "menu",
     fieldType: FieldDataTypes.string,
   },
-  [ElementTypeIds.shortText]: {
+  [FieldTypeIds.shortText]: {
     name: "שורה אחת",
     icon: "dragHandle",
     fieldType: FieldDataTypes.string,
   },
-  [ElementTypeIds.options]: {
+  [FieldTypeIds.options]: {
     name: "אפשרויות",
     icon: "moreVert",
     fieldType: FieldDataTypes.string,
   },
-  [ElementTypeIds.link]: {
+  [FieldTypeIds.link]: {
     name: "היפר-קישור",
     icon: "link",
     fieldType: FieldDataTypes.string,
   },
-  [ElementTypeIds.date]: {
+  [FieldTypeIds.date]: {
     name: "תאריך",
     icon: "dateRange",
     fieldType: FieldDataTypes.date,
   },
-  [ElementTypeIds.time]: {
+  [FieldTypeIds.time]: {
     name: "שעה",
     icon: "accessTime",
     fieldType: FieldDataTypes.string,
   },
-  [ElementTypeIds.location]: {
+  [FieldTypeIds.location]: {
     name: "נקודת ציון",
     icon: "location",
     fieldType: FieldDataTypes.string,
   },
-  [ElementTypeIds.checkbox]: {
+  [FieldTypeIds.checkbox]: {
     name: "כן/לא",
     icon: "checkbox",
     fieldType: FieldDataTypes.boolean,
   },
-  [ElementTypeIds.list]: {
+  [FieldTypeIds.list]: {
     name: "רשימה",
     icon: "list",
     fieldType: FieldDataTypes.string,
   },
-  [ElementTypeIds.number]: {
+  [FieldTypeIds.number]: {
     name: "מספר",
     icon: "numbers",
     fieldType: FieldDataTypes.number,
   },
-  [ElementTypeIds.file]: {
+  [FieldTypeIds.file]: {
     name: "קובץ",
     icon: "file",
     fieldType: FieldDataTypes.file,
   },
-  [ElementTypeIds.linkedForm]: {
+  [FieldTypeIds.linkedForm]: {
     name: "טופס בתוך טופס",
     icon: "forms",
     fieldType: FieldDataTypes.string,
@@ -822,10 +822,10 @@ export interface Condition {
 }
 
 export const ALLOWED_FIELD_TYPES_FOR_CONDITION: number[] = [
-  ElementTypeIds.shortText,
-  ElementTypeIds.longText,
-  ElementTypeIds.number,
-  ElementTypeIds.date,
-  ElementTypeIds.options,
-  ElementTypeIds.checkbox,
+  FieldTypeIds.shortText,
+  FieldTypeIds.longText,
+  FieldTypeIds.number,
+  FieldTypeIds.date,
+  FieldTypeIds.options,
+  FieldTypeIds.checkbox,
 ];

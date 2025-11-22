@@ -1,9 +1,9 @@
 import { any, boolean, literal, record, strictObject, string, union } from "zod";
 import { EMPTY_FIELD_ERROR_MESSAGE } from "./constants/errorMessage";
-import { ElementTypeIds, FormElementTypeId } from "../../../utils/interfaces";
+import { FieldTypeIds, FormFieldTypeId } from "../../../utils/interfaces";
 
 const literalTypeId = union(
-  Object.values(ElementTypeIds).map((v: FormElementTypeId) => literal(v)),
+  Object.values(FieldTypeIds).map((v: FormFieldTypeId) => literal(v)),
 );
 
 const baseFormFieldSchema = strictObject({

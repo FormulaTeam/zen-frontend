@@ -1,19 +1,13 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
-import { ElementTypeIds } from "../../../utils/interfaces";
-import { enum as zod_enum, literal, strictObject } from "zod";
-
-enum CheckboxValue {
-  NO,
-  YES,
-}
+import { FieldTypeIds } from "../../../utils/interfaces";
+import { boolean, literal, strictObject } from "zod";
 
 const checkboxSchema = baseFormFieldSchema.safeExtend({
-  typeId: literal(ElementTypeIds.checkbox),
+  typeId: literal(FieldTypeIds.checkbox),
 
   extra: strictObject({
-    defaultValue: zod_enum(CheckboxValue).default(CheckboxValue.NO),
+    defaultValue: boolean().default(false),
   }).optional(),
 });
 
-export { CheckboxValue };
 export default checkboxSchema;

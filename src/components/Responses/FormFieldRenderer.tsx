@@ -1,7 +1,7 @@
 import React from "react";
 import {
   connectionTypes,
-  ElementTypeIds,
+  FieldTypeIds,
   FormField,
   LinkValue,
   LocationValueError,
@@ -60,7 +60,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   field.name = formField.name;
   let formFieldValue: any = formFieldsValuesMap.get(uniqueId);
   if (
-    ![ElementTypeIds.date, ElementTypeIds.time, ElementTypeIds.checkbox, ElementTypeIds.number].includes(
+    ![FieldTypeIds.date, FieldTypeIds.time, FieldTypeIds.checkbox, FieldTypeIds.number].includes(
       field.typeId,
     ) &&
     !formFieldValue
@@ -70,7 +70,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   let valid: any = formFieldsValidMap.get(uniqueId);
 
   switch (formField.typeId) {
-    case ElementTypeIds.longText: //מס' שורות טקסט
+    case FieldTypeIds.longText: //מס' שורות טקסט
       input = (
         <CustomTextField
           key={index}
@@ -89,7 +89,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case ElementTypeIds.shortText: //שורה אחת
+    case FieldTypeIds.shortText: //שורה אחת
       input = (
         <CustomTextField
           key={index}
@@ -107,7 +107,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case ElementTypeIds.options: //אפשרויות
+    case FieldTypeIds.options: //אפשרויות
       if (formField.multiSelect && formFieldValue && Array.isArray(formFieldValue) === false) {
         formFieldValue = [formFieldValue];
       } else if (!formField.multiSelect && Array.isArray(formFieldValue) === true) {
@@ -334,7 +334,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case ElementTypeIds.link: //היפר-קישור
+    case FieldTypeIds.link: //היפר-קישור
       input = (
         <LinkTextField
           key={index}
@@ -354,7 +354,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case ElementTypeIds.date: //תאריך
+    case FieldTypeIds.date: //תאריך
       input = (
         <CustomDateTime
           key={index}
@@ -373,7 +373,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case ElementTypeIds.time: //שעה
+    case FieldTypeIds.time: //שעה
       input = (
         <CustomTimePicker
           key={index}
@@ -392,7 +392,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case ElementTypeIds.location: //מיקום
+    case FieldTypeIds.location: //מיקום
       input = (
         <CustomLatitudeLongitudeField
           key={index}
@@ -410,7 +410,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case ElementTypeIds.checkbox: //
+    case FieldTypeIds.checkbox: //
       input = (
         <CustomSwitch
           key={index}
@@ -426,7 +426,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case ElementTypeIds.list: //
+    case FieldTypeIds.list: //
       input = (
         <CustomMultiInputField
           key={index}
@@ -443,7 +443,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case ElementTypeIds.number:
+    case FieldTypeIds.number:
       input = (
         <CustomNumberField
           key={index}
@@ -463,7 +463,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case ElementTypeIds.file:
+    case FieldTypeIds.file:
       input = (
         <CustomFileInputField
           key={index}

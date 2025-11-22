@@ -1,5 +1,5 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
-import { ElementTypeIds } from "../../../utils/interfaces";
+import { FieldTypeIds } from "../../../utils/interfaces";
 import { boolean, enum as zod_enum, literal, strictObject } from "zod";
 
 enum DefaultTimeValue {
@@ -8,7 +8,7 @@ enum DefaultTimeValue {
 }
 
 const timeSchema = baseFormFieldSchema.safeExtend({
-  typeId: literal(ElementTypeIds.time),
+  typeId: literal(FieldTypeIds.time),
 
   extra: strictObject({
     includeSeconds: boolean().optional(),

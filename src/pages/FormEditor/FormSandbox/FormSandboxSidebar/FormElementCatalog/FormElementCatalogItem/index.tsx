@@ -1,13 +1,13 @@
 import { useDraggable } from "@dnd-kit/core";
 import styles from "./style.module.css";
-import { FORM_ELEMENT_ICONS } from "../../../../../components/FORM_ELEMENT_ICONS";
-import { FORM_ELEMENTS, FormElementTypeId } from "../../../../../utils/interfaces";
+import { FORM_ELEMENT_ICONS } from "../../../../../../components/FORM_ELEMENT_ICONS";
+import { FORM_ELEMENTS, FormFieldTypeId } from "../../../../../../utils/interfaces";
 import { Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import { DraggableElementData } from "../../../context/FormSandboxContext";
+import { DraggableElementData } from "../../../../context/FormSandboxContext";
 
 interface Props {
-  id: FormElementTypeId;
+  id: FormFieldTypeId;
 
   onClick?: () => void;
 }

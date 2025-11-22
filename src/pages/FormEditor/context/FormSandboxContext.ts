@@ -16,8 +16,9 @@ interface DraggingState {
 }
 
 interface FormSandboxContext {
+  isInternalNamesShown: boolean;
+  toggleInternalNamesShown: () => void;
   draggingState: DraggingState;
-  setDragging: (isDragging: boolean, draggingElement?: DraggingElement | null) => void;
 }
 
 interface DraggableElementData {
@@ -25,14 +26,17 @@ interface DraggableElementData {
 }
 
 const FormSandboxContext = createContext<FormSandboxContext>({
-                                                               draggingState: { ...DEFAULT_DRAGGING_STATE },
-                                                               setDragging: () => null,
-                                                             });
+  isInternalNamesShown: false,
+  toggleInternalNamesShown: () => null,
+  draggingState: { ...DEFAULT_DRAGGING_STATE },
+});
 
 function useFormSandboxContext() {
-  const { draggingState } = useContext(FormSandboxContext);
+  const { draggingState, isInternalNamesShown, toggleInternalNamesShown } = useContext(FormSandboxContext);
 
   return {
+    isInternalNamesShown,
+    toggleInternalNamesShown,
     draggingState,
   };
 }

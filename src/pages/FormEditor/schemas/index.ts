@@ -11,7 +11,7 @@ import listSchema from "./listSchema";
 import numberSchema from "./numberSchema";
 import fileSchema from "./fileSchema";
 import linkedFormSchema from "./linkedFormSchema";
-import { FormElementTypeId } from "../../../utils/interfaces";
+import { FormFieldTypeId } from "../../../utils/interfaces";
 
 const formFieldSchema = discriminatedUnion("typeId", [
   shortTextSchema,
@@ -30,7 +30,7 @@ const formFieldSchema = discriminatedUnion("typeId", [
 
 type FormFieldData = zod_infer<typeof formFieldSchema>;
 
-type FormFieldExtra<A extends FormElementTypeId> = Partial<NonNullable<(FormFieldData & { typeId: A })["extra"]>>;
+type FormFieldExtra<T extends FormFieldTypeId> = Partial<NonNullable<(FormFieldData & { typeId: T })["extra"]>>;
 
 export { formFieldSchema };
 export type { FormFieldData, FormFieldExtra };

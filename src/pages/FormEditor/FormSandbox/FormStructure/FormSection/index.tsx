@@ -28,6 +28,7 @@ function FormSection({ id }: Props) {
     setActivatorNodeRef,
     transform,
     transition,
+    active,
     isDragging,
   } = useSortable({ id, data: { elementType: "section" } as DraggableElementData });
 
@@ -57,8 +58,8 @@ function FormSection({ id }: Props) {
   }, [self.fieldIds.length]);
 
   useEffect(() => {
-    isDragging && setIsEditingTitle(false);
-  }, [isDragging]);
+    active && setIsEditingTitle(false);
+  }, [active]);
 
   useEffect(() => {
     isEditingTitle && titleInputRef.current?.focus();

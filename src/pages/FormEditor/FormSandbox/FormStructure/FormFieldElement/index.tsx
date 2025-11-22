@@ -1,16 +1,15 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { FormField } from "../../../context/FormStructureContext";
-import { DraggableElementData } from "../../../context/FormSandboxContext";
+import { DraggableElementData, useFormSandboxContext } from "../../../context/FormSandboxContext";
 import { DeleteOutlined, DragIndicator } from "@mui/icons-material";
 import styles from "./style.module.css";
 import { PLACEHOLDER_FIELD_ID } from "../../../context/constants";
 import { FORM_ELEMENT_ICONS } from "../../../../../components/FORM_ELEMENT_ICONS";
-import { ElementTypeIds, FORM_ELEMENTS } from "../../../../../utils/interfaces";
+import { FORM_ELEMENTS } from "../../../../../utils/interfaces";
 import { Button, FormControlLabel, Switch, TextField, Typography } from "@mui/material";
-import { useEffect, useRef } from "react";
-import { DateFieldExtra } from "./elementExtras";
-import { DefaultDateValues } from "../../../schemas/dateSchema";
+import { useEffect, useMemo, useRef } from "react";
+import { getExtraElement } from "./extraElements";
 
 interface Props {
   field: FormField;
@@ -27,11 +26,16 @@ function FormFieldElement({ field, onDelete }: Props) {
     transform,
     transition,
     isDragging,
+    active,
   } = useSortable({ id: field.id, data: { elementType: "field" } as DraggableElementData });
+
+  const { isInternalNamesShown } = useFormSandboxContext();
 
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isPlaceholder = field.id === PLACEHOLDER_FIELD_ID;
+
+  const isInputDisabled = !!active;
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -47,6 +51,8 @@ function FormFieldElement({ field, onDelete }: Props) {
     containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
 
+  const extraElement = useMemo(() => getExtraElement(field.data.typeId, field.data.extra, isInputDisabled), [field.data.typeId, field.data.extra, isInputDisabled]);
+
   return (
     <div ref={containerRef} className={styles.container} style={style}>
       <div className={styles.dragHandle} ref={setActivatorNodeRef} {...listeners} {...attributes}>
@@ -60,27 +66,34 @@ function FormFieldElement({ field, onDelete }: Props) {
               {FORM_ELEMENTS[field.data.typeId].name}
             </Typography>
           </div>
-          <FormControlLabel sx={{ marginInlineEnd: "2px" }} control={<Switch checked={field.data.required} />}
+          <FormControlLabel sx={{ marginInlineEnd: "2px" }}
+                            control={<Switch checked={field.data.required} disabled={isInputDisabled} />}
                             label="שדה חובה" />
         </div>
         <div className={styles.body}>
-          <TextField value={field.data.name}
-                     className={styles.input}
-                     variant={"standard"}
-                     label={"שם פנימי"}
-                     disabled={isDragging}
-            // onChange={(e) => onEdit(e.target.value)}
-          />
-          <TextField value={field.data.displayName}
-                     className={styles.input}
-                     variant={"standard"}
-                     label={"שם תצוגה"}
-                     disabled={isDragging}
-            // onChange={(e) => onEdit(e.target.value)}
-          />
+          <div className={styles.baseData}>
+            <TextField value={field.data.displayName}
+                       className={styles.input}
+                       variant={"standard"}
+                       label={"שם תצוגה"}
+                       disabled={isInputDisabled}
+              // onChange={(e) => onEdit(e.target.value)}
+            />
+            {
+              isInternalNamesShown &&
+              <TextField value={field.data.name}
+                         className={styles.input}
+                         variant={"standard"}
+                         label={"שם פנימי"}
+                         disabled={isInputDisabled}
+                // onChange={(e) => onEdit(e.target.value)}
+              />}
+          </div>
           {
-            field.data.typeId === ElementTypeIds.date &&
-            <DateFieldExtra extra={field.data.extra ?? { defaultValue: DefaultDateValues.EMPTY }} disabled={isDragging} />
+            extraElement &&
+            <div className={styles.extraData}>
+              {extraElement}
+            </div>
           }
         </div>
       </div>
@@ -88,7 +101,8 @@ function FormFieldElement({ field, onDelete }: Props) {
         {
           !isPlaceholder &&
           <Button className={styles.deleteButton}
-                  onClick={onDelete}>
+                  onClick={onDelete}
+                  disabled={isInputDisabled}>
             <DeleteOutlined />
           </Button>
         }

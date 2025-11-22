@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createResponse, updateResponse, getResponseWithFlatFields } from "../api";
 import { getUserName, showErrorNotification } from "../utils/utils";
 import { uploadFilesToS3 } from "../api/filesApi";
-import { ElementTypeIds, NotificationTexts, ResponseFieldValue } from "../utils/interfaces";
+import { FieldTypeIds, NotificationTexts, ResponseFieldValue } from "../utils/interfaces";
 import moment from "moment";
 
 export const useResponseSave = (form: any, response: any, user: any, parentResponse?: string) => {
@@ -47,7 +47,7 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
       }
 
       // Check if the value is a valid time string for hour fields
-      if (field.typeId === ElementTypeIds.time && value) {
+      if (field.typeId === FieldTypeIds.time && value) {
         const isValidTimeValue =
           /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(value) ||
           (value instanceof Date && moment(value).isValid());

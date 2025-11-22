@@ -1,4 +1,4 @@
-import { ElementTypeIds } from "../utils/interfaces";
+import { FieldTypeIds } from "../utils/interfaces";
 
 interface UseValidationErrorsParams {
   form: any;
@@ -28,7 +28,7 @@ export const useValidationErrors = ({
           const fieldName = field.displayName || field.name || `שדה ${uniqueId}`;
           
           // Handle different field types and their specific validation errors
-          if (field.typeId === ElementTypeIds.link && typeof isValid === 'object') {
+          if (field.typeId === FieldTypeIds.link && typeof isValid === 'object') {
             if (!isValid.link && !isValid.linkTxt) {
               errors.push(`${fieldName}: שדה זה הינו חובה`);
             } else if (!isValid.link) {
@@ -36,7 +36,7 @@ export const useValidationErrors = ({
             } else if (!isValid.linkTxt) {
               errors.push(`${fieldName}: יש להזין תיאור לקישור`);
             }
-          } else if (field.typeId === ElementTypeIds.location && typeof isValid === 'object') {
+          } else if (field.typeId === FieldTypeIds.location && typeof isValid === 'object') {
             if (!isValid.x && !isValid.y) {
               errors.push(`${fieldName}: שדה זה הינו חובה`);
             } else if (!isValid.x) {
@@ -82,13 +82,13 @@ export const useValidationErrors = ({
   const generateFieldErrorMessage = (field: any, fieldName: string): string => {
     // Handle general validation errors based on field type
     if (field.required) {
-      if (field.typeId === ElementTypeIds.options) {
+      if (field.typeId === FieldTypeIds.options) {
         return `${fieldName}: יש לבחור אפשרות`;
-      } else if (field.typeId === ElementTypeIds.date) {
+      } else if (field.typeId === FieldTypeIds.date) {
         return `${fieldName}: יש להזין תאריך תקף`;
-      } else if (field.typeId === ElementTypeIds.time) {
+      } else if (field.typeId === FieldTypeIds.time) {
         return `${fieldName}: יש להזין שעה תקפה`;
-      } else if (field.typeId === ElementTypeIds.number) {
+      } else if (field.typeId === FieldTypeIds.number) {
         if (field.minValue !== undefined || field.maxValue !== undefined) {
           let rangeText = "";
           if (field.minValue !== undefined && field.maxValue !== undefined) {
@@ -102,9 +102,9 @@ export const useValidationErrors = ({
         } else {
           return `${fieldName}: יש להזין מספר תקף`;
         }
-      } else if (field.typeId === ElementTypeIds.file) {
+      } else if (field.typeId === FieldTypeIds.file) {
         return `${fieldName}: יש להעלות קובץ`;
-      } else if (field.typeId === ElementTypeIds.list) {
+      } else if (field.typeId === FieldTypeIds.list) {
         return `${fieldName}: יש להוסיף פריט אחד לפחות`;
       } else if (field.validationRegex) {
         return `${fieldName}: הפורמט אינו תקין`;
@@ -115,9 +115,9 @@ export const useValidationErrors = ({
       // Field is not required but has validation errors (e.g., regex, format)
       if (field.validationRegex) {
         return `${fieldName}: הפורמט אינו תקין`;
-      } else if (field.typeId === ElementTypeIds.time) {
+      } else if (field.typeId === FieldTypeIds.time) {
         return `${fieldName}: פורמט השעה אינו תקין`;
-      } else if (field.typeId === ElementTypeIds.number) {
+      } else if (field.typeId === FieldTypeIds.number) {
         return `${fieldName}: פורמט המספר אינו תקין`;
       } else {
         return `${fieldName}: הערך אינו תקין`;

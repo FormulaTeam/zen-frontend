@@ -4,7 +4,7 @@ import {
   conditionOperatorLabels,
   ConditionOperators,
   ConditionOperatorType,
-  ElementTypeIds,
+  FieldTypeIds,
   FormField,
   ResponseFieldValue,
 } from "../../utils/interfaces";
@@ -76,8 +76,8 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
     if (!field) return [];
 
     switch (field.typeId) {
-      case ElementTypeIds.shortText:
-      case ElementTypeIds.longText:
+      case FieldTypeIds.shortText:
+      case FieldTypeIds.longText:
         return [
           ConditionOperators.equals,
           ConditionOperators.not_equals,
@@ -87,7 +87,7 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
           ConditionOperators.not_empty,
         ];
 
-      case ElementTypeIds.options:
+      case FieldTypeIds.options:
         return [
           ConditionOperators.equals,
           ConditionOperators.not_equals,
@@ -97,11 +97,11 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
           ConditionOperators.not_empty,
         ];
 
-      case ElementTypeIds.checkbox:
+      case FieldTypeIds.checkbox:
         return [ConditionOperators.equals];
 
-      case ElementTypeIds.number:
-      case ElementTypeIds.date:
+      case FieldTypeIds.number:
+      case FieldTypeIds.date:
         return [
           ConditionOperators.equals,
           ConditionOperators.not_equals,
@@ -137,7 +137,7 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
     }
 
     let valueDisplay = "";
-    if (formField.typeId === ElementTypeIds.date && typeof condition.value === "string") {
+    if (formField.typeId === FieldTypeIds.date && typeof condition.value === "string") {
       valueDisplay = condition.value ? new Date(condition.value).toLocaleDateString("he-IL") : "";
     } else if (Array.isArray(condition.value)) {
       valueDisplay = condition.value.join(", ");

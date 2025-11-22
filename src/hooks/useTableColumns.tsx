@@ -3,7 +3,7 @@ import moment from "moment";
 import { Box, Tooltip } from "@mui/material";
 import cloudSync from "../images/cloud.png";
 import { CustomIcon } from "../theme/icons";
-import { ElementTypeIds } from "../utils/interfaces";
+import { FieldTypeIds } from "../utils/interfaces";
 import { DEFAULT_DATE_FORMAT, DEFAULT_DATE_TIME_FORMAT } from "../utils/utils";
 import CustomCarousel from "../components/FilePreview/CustomCarousel";
 import ZoomCell from "../components/formInForm/ZoomCell";
@@ -116,7 +116,7 @@ export const useTableColumns = (
     });
 
     const buildDynamicFieldColumn = (field: any, orderIndex: number = 0) => {
-      if (field.typeId === ElementTypeIds.linkedForm) return; // skip connected forms
+      if (field.typeId === FieldTypeIds.linkedForm) return; // skip connected forms
       let displayName = field.displayName + "";
       let uniqueId = field?.uniqueId;
       let col: any = {
@@ -194,7 +194,7 @@ export const useTableColumns = (
               );
             }
             // Display modes
-            if (field.typeId === ElementTypeIds.link) {
+            if (field.typeId === FieldTypeIds.link) {
               return (
                 <Box className="cell-box" component="span">
                   <label title={value && value.link ? value?.link : ""}>
@@ -207,7 +207,7 @@ export const useTableColumns = (
                 </Box>
               );
             }
-            if (field.typeId === ElementTypeIds.file) {
+            if (field.typeId === FieldTypeIds.file) {
               return value.files?.length > 0 ? (
                 <CustomCarousel
                   formId={form.id}
@@ -218,7 +218,7 @@ export const useTableColumns = (
                 <></>
               );
             }
-            if (field.typeId === ElementTypeIds.time) {
+            if (field.typeId === FieldTypeIds.time) {
               if (value && value !== "") {
                 if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(value)) {
                   return (
@@ -245,7 +245,7 @@ export const useTableColumns = (
                 </Box>
               );
             }
-            if (field.typeId === ElementTypeIds.date) {
+            if (field.typeId === FieldTypeIds.date) {
               if (value && value !== "" && moment(value).isValid()) {
                 value = field.dateAndTime
                   ? moment(value).format(DEFAULT_DATE_TIME_FORMAT)
@@ -257,7 +257,7 @@ export const useTableColumns = (
                 );
               }
             }
-            if (field.typeId === ElementTypeIds.location) {
+            if (field.typeId === FieldTypeIds.location) {
               if (value?.x && value?.y) {
                 return (
                   <div className="cell-box">
@@ -272,8 +272,8 @@ export const useTableColumns = (
               }
               return null;
             }
-            if (field.typeId === ElementTypeIds.checkbox) return <div>{value ? "כן" : "לא"}</div>;
-            if (field.typeId === ElementTypeIds.number) return <div dir="ltr">{String(value)}</div>;
+            if (field.typeId === FieldTypeIds.checkbox) return <div>{value ? "כן" : "לא"}</div>;
+            if (field.typeId === FieldTypeIds.number) return <div dir="ltr">{String(value)}</div>;
             if (value && (typeof value === "string" || typeof value === "number")) {
               return (
                 <Box className="cell-box" component="span">
@@ -292,7 +292,7 @@ export const useTableColumns = (
           return <Box className="cell-box" component="span"></Box>;
         },
       };
-      if (field.typeId === ElementTypeIds.options) {
+      if (field.typeId === FieldTypeIds.options) {
         col.filterFn = "equals";
         col.filterSelectOptions =
           (fieldOptions?.[field.uniqueId] && [
@@ -302,7 +302,7 @@ export const useTableColumns = (
           [];
         col.filterVariant = "select";
       }
-      if (field.typeId === ElementTypeIds.number) {
+      if (field.typeId === FieldTypeIds.number) {
         col.filterVariant = "number";
         col.sortingFn = (rowA, rowB, columnId) => {
           const valueA = rowA.getValue(columnId);
@@ -311,8 +311,8 @@ export const useTableColumns = (
         };
         col.muiFilterTextFieldProps = { type: "number" };
       }
-      if (field.typeId === ElementTypeIds.file) col.grow = false;
-      if (field.typeId === ElementTypeIds.checkbox) {
+      if (field.typeId === FieldTypeIds.file) col.grow = false;
+      if (field.typeId === FieldTypeIds.checkbox) {
         col.filterVariant = "select";
         col.filterSelectOptions = [
           { value: true, label: "כן" },

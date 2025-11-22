@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ElementTypeIds, ResponseForm } from "../../utils/interfaces";
+import { FieldTypeIds, ResponseForm } from "../../utils/interfaces";
 import { Box, Button, Container, Tooltip, Typography } from "@mui/material";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useResponseSave } from "../../hooks/useResponseSave";
@@ -180,7 +180,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
   };
 
   const getFormInFormProperty = (formField: any) => {
-    if (formField.typeId !== ElementTypeIds.linkedForm || !formField.connectedFormId) {
+    if (formField.typeId !== FieldTypeIds.linkedForm || !formField.connectedFormId) {
       return null;
     }
 

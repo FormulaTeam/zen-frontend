@@ -11,7 +11,7 @@ function FormStructureContainer() {
       <div className={styles.container}>
         <SortableContext items={formStructure.orderedSectionIds} strategy={verticalListSortingStrategy}>
           {
-            formStructure.orderedSectionIds.map((sectionId) => <FormSection key={sectionId} id={sectionId}/>)
+            formStructure.orderedSectionIds.map((sectionId) => <FormSection key={sectionId} id={sectionId} />)
           }
         </SortableContext>
       </div>

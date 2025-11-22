@@ -2,7 +2,7 @@ import React from "react";
 import { DraggableProvidedDragHandleProps } from "@hello-pangea/dnd";
 import { SelectChangeEvent } from "@mui/material";
 import {
-  ElementTypeIds,
+  FieldTypeIds,
   Form,
   FormField,
   IConnectionType,
@@ -65,12 +65,12 @@ export default function FormPropertyRenderer({
 
   // Field‐type specific rendering
   switch (formField.typeId) {
-    case ElementTypeIds.longText:
-    case ElementTypeIds.shortText:
+    case FieldTypeIds.longText:
+    case FieldTypeIds.shortText:
       input = getFormPropertyTitleTextField(formField, index);
       break;
 
-    case ElementTypeIds.options: {
+    case FieldTypeIds.options: {
       // default‐value helper
       const getDefaultValue = () => {
         if (typeof formField.defaultValue === "string") return formField.defaultValue;
@@ -205,13 +205,13 @@ export default function FormPropertyRenderer({
       break;
     }
 
-    case ElementTypeIds.link:
+    case FieldTypeIds.link:
       input = (
         <div className="link-inputs-div">{getFormPropertyTitleTextField(formField, index)}</div>
       );
       break;
 
-    case ElementTypeIds.date:
+    case FieldTypeIds.date:
       input = (
         <DateField
           getBaseFieldElement={() => getFormPropertyTitleTextField(formField, index)}
@@ -236,7 +236,7 @@ export default function FormPropertyRenderer({
       );
       break;
 
-    case ElementTypeIds.time:
+    case FieldTypeIds.time:
       input = (
         <HourField
           getBaseFieldElement={() => getFormPropertyTitleTextField(formField, index)}
@@ -261,7 +261,7 @@ export default function FormPropertyRenderer({
       );
       break;
 
-    case ElementTypeIds.location:
+    case FieldTypeIds.location:
       input = (
         <>
           <div className="link-inputs-div">{getFormPropertyTitleTextField(formField, index)}</div>
@@ -275,7 +275,7 @@ export default function FormPropertyRenderer({
       );
       break;
 
-    case ElementTypeIds.checkbox:
+    case FieldTypeIds.checkbox:
       showRequiredToggle = false;
       input = (
         <>
@@ -290,13 +290,13 @@ export default function FormPropertyRenderer({
       );
       break;
 
-    case ElementTypeIds.list:
+    case FieldTypeIds.list:
       input = (
         <div className="list-inputs-div">{getFormPropertyTitleTextField(formField, index)}</div>
       );
       break;
 
-    case ElementTypeIds.number:
+    case FieldTypeIds.number:
       if (!formField.numberType) formField.numberType = "integer";
       input = (
         <>
@@ -311,11 +311,11 @@ export default function FormPropertyRenderer({
       );
       break;
 
-    case ElementTypeIds.file:
+    case FieldTypeIds.file:
       input = <>{getFormPropertyTitleTextField(formField, index)}</>;
       break;
 
-    case ElementTypeIds.linkedForm: //טופס
+    case FieldTypeIds.linkedForm: //טופס
       formField.shouldSyncToMetro = false;
       showRequiredToggle = false;
 

@@ -7,7 +7,7 @@ import {
   FormField,
   ResponseFieldValue,
   IResponseSection,
-  ElementTypeIds,
+  FieldTypeIds,
 } from "../../utils/interfaces";
 import { NOT_A_SECTION_ID } from "../../utils/sections/consts";
 import { texts } from "../../utils/texts";
@@ -95,7 +95,7 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
             .sort((a, b) => a.index - b.index)
             .map((formField, index) => {
               // getFormInFormProperty – full width
-              if (formField.typeId === ElementTypeIds.linkedForm && getFormInFormProperty) {
+              if (formField.typeId === FieldTypeIds.linkedForm && getFormInFormProperty) {
                 return (
                   <GridItemFull
                     key={formField.uniqueId || formField.uniqId || `${sectionId}-${index}`}>

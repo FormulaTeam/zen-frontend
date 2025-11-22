@@ -1,8 +1,8 @@
 import { Add, Info, Settings } from "@mui/icons-material";
 import styles from "./style.module.css";
-import { texts } from "../../../../utils/texts";
+import { texts } from "../../../../../utils/texts";
 import { Button, Tooltip } from "@mui/material";
-import { useFormStructureContext } from "../../context/FormStructureContext";
+import { useFormStructureContext } from "../../../context/FormStructureContext";
 
 function FormManagementActions() {
   const { appendSection } = useFormStructureContext();

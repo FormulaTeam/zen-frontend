@@ -1,34 +1,34 @@
-import { ElementTypeIds, FormElementTypeId } from "../../../utils/interfaces";
+import { FieldTypeIds, FormFieldTypeId } from "../../../utils/interfaces";
 import {customAlphabet} from "nanoid";
+import {v4 as uuid4} from "uuid";
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const nanoid5 = customAlphabet(alphabet, 5);
-const nanoid6 = customAlphabet(alphabet, 6);
 
 function generateSectionId() {
-  return nanoid6();
+  return uuid4();
 }
 
 function generateFieldId() {
-  return nanoid6();
+  return uuid4();
 }
 
 const FormElementTypeIdToKey = {
-  [ElementTypeIds.longText]: 'long_text',
-  [ElementTypeIds.shortText]: 'short_text',
-  [ElementTypeIds.options]: 'options',
-  [ElementTypeIds.link]: 'link',
-  [ElementTypeIds.date]: 'date',
-  [ElementTypeIds.time]: 'time',
-  [ElementTypeIds.location]: 'location',
-  [ElementTypeIds.checkbox]: 'checkbox',
-  [ElementTypeIds.list]: 'list',
-  [ElementTypeIds.number]: 'number',
-  [ElementTypeIds.file]: 'file',
-  [ElementTypeIds.linkedForm]: 'form',
-} as const satisfies Record<FormElementTypeId, string>;
+  [FieldTypeIds.longText]: 'long_text',
+  [FieldTypeIds.shortText]: 'short_text',
+  [FieldTypeIds.options]: 'options',
+  [FieldTypeIds.link]: 'link',
+  [FieldTypeIds.date]: 'date',
+  [FieldTypeIds.time]: 'time',
+  [FieldTypeIds.location]: 'location',
+  [FieldTypeIds.checkbox]: 'checkbox',
+  [FieldTypeIds.list]: 'list',
+  [FieldTypeIds.number]: 'number',
+  [FieldTypeIds.file]: 'file',
+  [FieldTypeIds.linkedForm]: 'form',
+} as const satisfies Record<FormFieldTypeId, string>;
 
-function generateFieldName(elementTypeId: FormElementTypeId){
+function generateFieldName(elementTypeId: FormFieldTypeId){
   return `${FormElementTypeIdToKey[elementTypeId]}_${nanoid5()}`;
 }
 

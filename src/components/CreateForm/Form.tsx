@@ -6,7 +6,7 @@ import {
   connectionTypes,
   CustomFormField,
   DRAGGED_ITEM_ID,
-  ElementTypeIds,
+  FieldTypeIds,
   Form,
   FORM_ELEMENTS,
   FormElements,
@@ -540,7 +540,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
         }
       }
 
-      if (field.typeId === ElementTypeIds.linkedForm && !field.connectedFormId) {
+      if (field.typeId === FieldTypeIds.linkedForm && !field.connectedFormId) {
         hasEmptyFormInFormConnection = true;
         addErrorIf(true, "שדה לא מחובר לטופס", "form", field.uniqueId);
       }
@@ -558,7 +558,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
       }
 
       // בדיקת שדות מספר
-      if (field.typeId === ElementTypeIds.number) {
+      if (field.typeId === FieldTypeIds.number) {
         const { minValue, maxValue, initialNumberValue } = field;
         const hasInvalidRange =
                 minValue !== undefined && maxValue !== undefined && minValue > maxValue;

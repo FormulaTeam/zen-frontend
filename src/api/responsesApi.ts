@@ -1,7 +1,7 @@
 import apiClient from "./config";
 import {
   DeleteMultipleResponsesRequest,
-  ElementTypeIds,
+  FieldTypeIds,
   FieldValue,
   Filter,
   FormField,
@@ -120,26 +120,26 @@ export const getResponseWithFlatFields = (
       const fieldName = fieldMetaData.name;
 
       switch (fieldMetaData.typeId) {
-        case ElementTypeIds.options:
+        case FieldTypeIds.options:
           if (field.value) {
             acc[fieldName] = field.value.join(",");
           } else {
             acc[fieldName] = null;
           }
           break;
-        case ElementTypeIds.link:
+        case FieldTypeIds.link:
           const linkValue = field.value as LinkValue | null;
           if (linkValue && linkValue.linkTxt) {
             acc[fieldName] = linkValue.linkTxt;
           }
           break;
-        case ElementTypeIds.location:
+        case FieldTypeIds.location:
           const locationValue = field.value as LocationValue | null;
           if (locationValue && locationValue.x && locationValue.y) {
             acc[fieldName] = `${locationValue.x},${locationValue.y}`;
           }
           break;
-        case ElementTypeIds.file:
+        case FieldTypeIds.file:
           const deletedFilesForField = deletedFiles?.filter(
             (deletedFile) => deletedFile.uniqueId === field.uniqueId,
           );

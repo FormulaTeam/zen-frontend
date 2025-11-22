@@ -24,7 +24,7 @@ import HelpDiv from "./components/HelpBtn/HelpDiv";
 import { FormEditor } from "./pages/FormEditor";
 
 const AppRouter = () => {
-  const { user, roles } = useAuth();
+  const { user={}, roles={} } = {  };
   const [searchValue, setSearchValue] = useState("");
   const [showHelpCard, setShowHelpCard] = useState(false);
   const [shouldRefreshPage, setShouldRefreshPage] = useState(false);
@@ -44,58 +44,58 @@ const AppRouter = () => {
         }}>
         <Navbar searchValue={searchValue} handleSearch={(val) => setSearchValue(val)} />
         <Routes>
-          <Route path={IPath.ERROR} element={<ErrorPage />} />
-          <Route path={IPath.LOGIN} element={<Login />} />
-          <Route path={IPath.SSO_CALLBACK} element={<SSOCallback />} />
-          <Route path={IPath.DASHBOARD} element={<Dashboard />} />
-
-          <Route element={<ProtectedRoute />}>
-            <Route
-              path={IPath.HOME}
-              element={
-                <MainPage
-                  user={user}
-                  searchValue={searchValue}
-                  shouldRefreshPage={shouldRefreshPage}
-                  setShouldRefreshPage={setShouldRefreshPage}
-                  resetSearchValue={resetSearchValue}
-                  roles={roles}
-                />
-              }
-            />
-            <Route
-              path={IPath.FORM_CREATE}
-              element={<CreateForm currentUser={user} formToEdit={null} />}
-            />
+          {/*<Route path={IPath.ERROR} element={<ErrorPage />} />*/}
+          {/*<Route path={IPath.LOGIN} element={<Login />} />*/}
+          {/*<Route path={IPath.SSO_CALLBACK} element={<SSOCallback />} />*/}
+          {/*<Route path={IPath.DASHBOARD} element={<Dashboard />} />*/}
             <Route
               path={IPath.FORM_CREATE_NEW}
+
               element={<FormEditor mode={"create"} />}
             />
-            <Route path={IPath.FORM_EDIT} element={<EditForm user={user} />} />
-            <Route
-              path={IPath.RESPONSES}
-              element={
-                <ResponsesPage
-                  user={user}
-                  shouldRefreshPage={shouldRefreshPage}
-                  setShouldRefreshPage={setShouldRefreshPage}
-                  roles={roles}
-                />
-              }
-            />
-            <Route path={IPath.RESPONSE_CREATE} element={<Response roles={roles} user={user} />} />
-            <Route
-              path={IPath.RESPONSE_CREATE_COPY}
-              element={<Response roles={roles} user={user} copyMode />}
-            />
-            <Route path={IPath.RESPONSE_EDIT} element={<Response roles={roles} user={user} />} />
-            <Route
-              path={IPath.RESPONSE_VIEW}
-              element={<Response roles={roles} user={user} viewMode />}
-            />
-            <Route path={IPath.DOWNLOAD_FILE} element={<DownloadPage />} />
-            <Route path={IPath.DELETED_FORMS} element={<DeletedForms user={user} />} />
-          </Route>
+          {/*<Route element={<ProtectedRoute />}>*/}
+          {/*  <Route*/}
+          {/*    path={IPath.HOME}*/}
+          {/*    element={*/}
+          {/*      <MainPage*/}
+          {/*        user={user}*/}
+          {/*        searchValue={searchValue}*/}
+          {/*        shouldRefreshPage={shouldRefreshPage}*/}
+          {/*        setShouldRefreshPage={setShouldRefreshPage}*/}
+          {/*        resetSearchValue={resetSearchValue}*/}
+          {/*        roles={roles}*/}
+          {/*      />*/}
+          {/*    }*/}
+          {/*  />*/}
+          {/*<Route*/}
+          {/*  path={IPath.FORM_CREATE}*/}
+          {/*  element={<CreateForm currentUser={user} formToEdit={null} />}*/}
+          {/*/>*/}
+          {/*  <Route path={IPath.FORM_EDIT} element={<EditForm user={user} />} />*/}
+          {/*  <Route*/}
+          {/*    path={IPath.RESPONSES}*/}
+          {/*    element={*/}
+          {/*      <ResponsesPage*/}
+          {/*        user={user}*/}
+          {/*        shouldRefreshPage={shouldRefreshPage}*/}
+          {/*        setShouldRefreshPage={setShouldRefreshPage}*/}
+          {/*        roles={roles}*/}
+          {/*      />*/}
+          {/*    }*/}
+          {/*  />*/}
+          {/*  <Route path={IPath.RESPONSE_CREATE} element={<Response roles={roles} user={user} />} />*/}
+          {/*  <Route*/}
+          {/*    path={IPath.RESPONSE_CREATE_COPY}*/}
+          {/*    element={<Response roles={roles} user={user} copyMode />}*/}
+          {/*  />*/}
+          {/*  <Route path={IPath.RESPONSE_EDIT} element={<Response roles={roles} user={user} />} />*/}
+          {/*  <Route*/}
+          {/*    path={IPath.RESPONSE_VIEW}*/}
+          {/*    element={<Response roles={roles} user={user} viewMode />}*/}
+          {/*  />*/}
+          {/*  <Route path={IPath.DOWNLOAD_FILE} element={<DownloadPage />} />*/}
+          {/*  <Route path={IPath.DELETED_FORMS} element={<DeletedForms user={user} />} />*/}
+          {/*</Route>*/}
         </Routes>
         <ToastContainer rtl />
         <HelpBtn showHelpCard={() => setShowHelpCard(true)} />

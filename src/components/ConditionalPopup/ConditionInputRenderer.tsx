@@ -5,7 +5,7 @@ import {
   ConditionOperators,
   ConditionUtils,
   connectionTypes,
-  ElementTypeIds,
+  FieldTypeIds,
   FormField,
   ResponseFieldValue,
 } from "../../utils/interfaces";
@@ -45,8 +45,8 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
   }
 
   switch (formField.typeId) {
-    case ElementTypeIds.longText:
-    case ElementTypeIds.shortText:
+    case FieldTypeIds.longText:
+    case FieldTypeIds.shortText:
       return (
         <CustomTextField
           value={condition.value || ""}
@@ -58,7 +58,7 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
         />
       );
 
-    case ElementTypeIds.options:
+    case FieldTypeIds.options:
       const isMultiSelect = ConditionUtils.isMultiValueOperator(condition.operator);
       const selectValue = isMultiSelect
         ? Array.isArray(condition.value)
@@ -101,7 +101,7 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
         />
       );
 
-    case ElementTypeIds.checkbox:
+    case FieldTypeIds.checkbox:
       if (!condition.value) condition.value = "false";
       return (
         <FormControl>
@@ -122,7 +122,7 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
         </FormControl>
       );
 
-    case ElementTypeIds.number:
+    case FieldTypeIds.number:
       return (
         <CustomNumberField
           value={condition.value}
@@ -137,7 +137,7 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
         />
       );
 
-    case ElementTypeIds.date:
+    case FieldTypeIds.date:
       return (
         <CustomDateTime
           value={String(condition.value) || null}

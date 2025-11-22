@@ -1,5 +1,5 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
-import { ElementTypeIds } from "../../../utils/interfaces";
+import { FieldTypeIds } from "../../../utils/interfaces";
 import { enum as zod_enum, literal, number, strictObject } from "zod";
 
 enum NumberFormat {
@@ -8,7 +8,7 @@ enum NumberFormat {
 }
 
 const numberSchema = baseFormFieldSchema.safeExtend({
-  typeId: literal(ElementTypeIds.number),
+  typeId: literal(FieldTypeIds.number),
 
   extra: strictObject({
     format: zod_enum(NumberFormat).default(NumberFormat.DECIMAL),

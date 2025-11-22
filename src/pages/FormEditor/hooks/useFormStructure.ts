@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { FormField, FormStructure, Section } from "../context/FormStructureContext";
 import { getEmptyForm } from "../context/constants";
 import { texts } from "../../../utils/texts";
-import { FormElementTypeId } from "../../../utils/interfaces";
+import { FormFieldTypeId } from "../../../utils/interfaces";
 import { generateFieldId, generateFieldName, generateSectionId } from "../utils";
 
 function yieldFormStructure(form: object) {
@@ -92,7 +92,7 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
     });
   }, []);
 
-  const appendFieldToFirstSection = useCallback((elementTypeId: FormElementTypeId) => {
+  const appendFieldToFirstSection = useCallback((elementTypeId: FormFieldTypeId) => {
     setFormStructure((prev) => {
       const changedSectionId = prev.orderedSectionIds[0];
       const changedSection = prev.sections[changedSectionId];

@@ -9,20 +9,19 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { FormManagementActions } from "./FormManagementActions";
-import { FormElementCatalog } from "./FormElementCatalog";
 import { FormStructureContainer } from "./FormStructure";
 import { DraggableElementData, DraggableElementType, FormSandboxContext } from "../context/FormSandboxContext";
 import { useFormDraggingState } from "../hooks/useFormDraggingState";
 import { CatalogItemDragOverlay } from "./DragOverlay/CatalogItemDragOverlay";
 import { SectionDragOverlay } from "./DragOverlay/SectionDragOverlay";
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import { FieldDragOverlay } from "./DragOverlay/FieldDragOverlay";
 import { FormField, useFormStructureContext } from "../context/FormStructureContext";
-import { FormElementTypeId } from "../../../utils/interfaces";
+import { FormFieldTypeId } from "../../../utils/interfaces";
 import { arrayMove } from "@dnd-kit/sortable";
 import { generateFieldId, generateFieldName } from "../utils";
 import { PLACEHOLDER_FIELD_ID } from "../context/constants";
+import { FormSandboxSidebar } from "./FormSandboxSidebar";
 
 const DRAG_OVERLAYS: Record<DraggableElementType, ReactNode> = {
   catalogItem: <CatalogItemDragOverlay />,
@@ -37,6 +36,7 @@ const COLLISION_DETECTION: Record<DraggableElementType, CollisionDetection> = {
 } as const;
 
 function FormSandbox() {
+  const [isInternalNamesShown, setIsInternalNamesShown] = useState(false);
   const { draggingState, setDragging } = useFormDraggingState();
   const { formStructure, setFormStructure } = useFormStructureContext();
 
@@ -50,11 +50,14 @@ function FormSandbox() {
     console.log(formStructure);
   }, [formStructure]);
 
+  const toggleInternalNamesShown = useCallback(() => setIsInternalNamesShown((prev) => !prev), []);
+
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
 
     setDragging(true, { id: active.id, type: (active.data.current as DraggableElementData).elementType });
   };
+
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
 
@@ -214,7 +217,7 @@ function FormSandbox() {
                         data: {
                           name: "",
                           displayName: "",
-                          typeId: +active.id as FormElementTypeId,
+                          typeId: +active.id as FormFieldTypeId,
                           required: false,
                         },
                       },
@@ -240,7 +243,7 @@ function FormSandbox() {
                     data: {
                       name: "",
                       displayName: "",
-                      typeId: +active.id as FormElementTypeId,
+                      typeId: +active.id as FormFieldTypeId,
                       required: false,
                     },
                   };
@@ -356,7 +359,7 @@ function FormSandbox() {
   };
 
   return (
-    <FormSandboxContext.Provider value={{ draggingState, setDragging }}>
+    <FormSandboxContext.Provider value={{ draggingState, isInternalNamesShown, toggleInternalNamesShown }}>
       <DndContext sensors={sensors}
                   collisionDetection={
                     draggingState.draggingElement?.type ?
@@ -366,10 +369,7 @@ function FormSandbox() {
                   onDragStart={handleDragStart}
                   onDragOver={handleDragOver}
                   onDragEnd={handleDragEnd}>
-        <div>
-          <FormManagementActions />
-          <FormElementCatalog />
-        </div>
+        <FormSandboxSidebar />
         <FormStructureContainer />
         {DRAG_OVERLAYS[draggingState.draggingElement?.type!]}
       </DndContext>

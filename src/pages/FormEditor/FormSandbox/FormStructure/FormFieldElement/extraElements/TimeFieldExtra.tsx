@@ -1,0 +1,34 @@
+import { FieldTypeIds } from "../../../../../../utils/interfaces";
+import { Checkbox, FormControl, FormControlLabel, InputLabel, MenuItem, Select } from "@mui/material";
+import { DefaultTimeValue } from "../../../../schemas/timeSchema";
+import { ExtraElementProps } from "./index";
+
+type Props = ExtraElementProps<typeof FieldTypeIds.time>;
+
+function TimeFieldExtra({ extra, disabled }: Props) {
+  const {
+    defaultValue = DefaultTimeValue.EMPTY,
+    includeSeconds = false,
+  } = extra;
+
+  return (
+    <>
+      <FormControlLabel disabled={disabled}
+                        control={<Checkbox checked={includeSeconds} onChange={() => null} />}
+                        label="הצגת שניות" />
+      <FormControl fullWidth disabled={disabled}>
+        <InputLabel id="default-value-label">ערך ברירת מחדל</InputLabel>
+        <Select labelId="default-value-label"
+                value={defaultValue}
+                label="ערך ברירת מחדל"
+                onChange={() => {
+                }}>
+          <MenuItem value={DefaultTimeValue.EMPTY}>ריק</MenuItem>
+          <MenuItem value={DefaultTimeValue.NOW}>שעה נוכחית</MenuItem>
+        </Select>
+      </FormControl>
+    </>
+  );
+}
+
+export { TimeFieldExtra };
