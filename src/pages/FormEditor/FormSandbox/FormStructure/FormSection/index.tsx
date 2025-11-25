@@ -3,7 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Accordion, AccordionDetails, AccordionSummary, Button, Input, Typography } from "@mui/material";
 import { useFormStructureContext } from "../../../context/FormStructureContext";
 import styles from "./style.module.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   Close,
@@ -15,6 +15,7 @@ import {
 import { FormFieldElement } from "../FormFieldElement";
 import { DraggableElementData } from "../../../context/FormSandboxContext";
 import { useDndContext } from "@dnd-kit/core";
+import { FormFieldData } from "../../../schemas";
 
 interface Props {
   id: string;
@@ -32,7 +33,14 @@ function FormSection({ id }: Props) {
     isDragging,
   } = useSortable({ id, data: { elementType: "section" } as DraggableElementData });
 
-  const { formStructure, deleteSection, renameSection, toggleSectionExpanded, deleteField } = useFormStructureContext();
+  const {
+    formStructure,
+    deleteSection,
+    renameSection,
+    toggleSectionExpanded,
+    deleteField,
+    setFieldData,
+  } = useFormStructureContext();
   const { active: draggingElement } = useDndContext();
 
   const isLastSection = Object.keys(formStructure.sections).length <= 1;
@@ -70,6 +78,8 @@ function FormSection({ id }: Props) {
     transition,
     opacity: isDragging ? 0.25 : 1,
   };
+
+  const handleFieldDataChange = useCallback((fieldId: string) => (data: Partial<FormFieldData>) => setFieldData(fieldId, data), []);
 
   return (
     <Accordion className={styles.container}
@@ -168,6 +178,7 @@ function FormSection({ id }: Props) {
             self.fieldIds.length ?
               self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId}
                                                                field={formStructure.fields[fieldId]}
+                                                               onDataChange={handleFieldDataChange(fieldId)}
                                                                onDelete={() => deleteField(fieldId)} />)
               : (
                 <div className={styles.emptySectionPlaceholder}>

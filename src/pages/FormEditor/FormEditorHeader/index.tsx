@@ -11,7 +11,7 @@ interface Props {
 
 function FormEditorHeader({ formIconName }: Props) {
   const { mode } = useFormEditorContext();
-  const { formStructure } = useFormStructureContext();
+  const { formStructure, validateForm } = useFormStructureContext();
 
   const { title, description } = formStructure;
 
@@ -37,7 +37,7 @@ function FormEditorHeader({ formIconName }: Props) {
         </div>
       </div>
       <div className={styles.headerEnd}>
-        <Button variant={"contained"} color={"primary"}>שמירה</Button>
+        <Button variant={"contained"} color={"primary"} onClick={validateForm}>שמירה</Button>
         <Button variant={"outlined"} color={"error"}>יציאה</Button>
       </div>
     </div>

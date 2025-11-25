@@ -1,11 +1,11 @@
-import { FieldTypeIds } from "../../../../../../utils/interfaces";
-import { ExtraElementProps } from "./index";
-import { NumberFormat } from "../../../../schemas/numberSchema";
+import { FieldTypeIds } from "../../../../../../../utils/interfaces";
+import { ExtraElementProps } from "../index";
+import { NumberFormat } from "../../../../../schemas/numberSchema";
 import { FormControl, Input, InputLabel, MenuItem, Select } from "@mui/material";
 
 type Props = ExtraElementProps<typeof FieldTypeIds.number>;
 
-function NumberFieldExtra({ extra, disabled }: Props) {
+function NumberFieldExtra({ extra, onChange, disabled }: Props) {
   const {
     format = NumberFormat.INTEGER,
     defaultValue,
@@ -20,7 +20,8 @@ function NumberFieldExtra({ extra, disabled }: Props) {
         <Select labelId="format-label"
                 value={format}
                 label="סוג מספר"
-                onChange={() => {
+                onChange={(e) => {
+                  onChange({format: e.target.value});
                 }}>
           <MenuItem value={NumberFormat.INTEGER}>שלם</MenuItem>
           <MenuItem value={NumberFormat.DECIMAL}>עשרוני</MenuItem>
@@ -30,7 +31,8 @@ function NumberFieldExtra({ extra, disabled }: Props) {
         <InputLabel id="default-value-label">ערך ברירת מחדל</InputLabel>
         <Input type={"number"}
                value={defaultValue}
-               onChange={() => {
+               onChange={(e) => {
+                 onChange({defaultValue: +e.target.value});
                }}>
         </Input>
       </FormControl>
@@ -38,7 +40,8 @@ function NumberFieldExtra({ extra, disabled }: Props) {
         <InputLabel id="default-value-label">ערך מינמלי</InputLabel>
         <Input type={"number"}
                value={min}
-               onChange={() => {
+               onChange={(e) => {
+                 onChange({min: +e.target.value});
                }}>
         </Input>
       </FormControl>
@@ -46,7 +49,8 @@ function NumberFieldExtra({ extra, disabled }: Props) {
         <InputLabel id="default-value-label">ערך מקסימלי</InputLabel>
         <Input type={"number"}
                value={max}
-               onChange={() => {
+               onChange={(e) => {
+                 onChange({max: +e.target.value});
                }}>
         </Input>
       </FormControl>

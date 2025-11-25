@@ -14,7 +14,7 @@ import { DraggableElementData, DraggableElementType, FormSandboxContext } from "
 import { useFormDraggingState } from "../hooks/useFormDraggingState";
 import { CatalogItemDragOverlay } from "./DragOverlay/CatalogItemDragOverlay";
 import { SectionDragOverlay } from "./DragOverlay/SectionDragOverlay";
-import { ReactNode, useCallback, useEffect, useState } from "react";
+import { ReactNode, useCallback, useState } from "react";
 import { FieldDragOverlay } from "./DragOverlay/FieldDragOverlay";
 import { FormField, useFormStructureContext } from "../context/FormStructureContext";
 import { FormFieldTypeId } from "../../../utils/interfaces";
@@ -45,10 +45,6 @@ function FormSandbox() {
       activationConstraint: { distance: 5 },
     }),
   );
-
-  useEffect(() => {
-    console.log(formStructure);
-  }, [formStructure]);
 
   const toggleInternalNamesShown = useCallback(() => setIsInternalNamesShown((prev) => !prev), []);
 

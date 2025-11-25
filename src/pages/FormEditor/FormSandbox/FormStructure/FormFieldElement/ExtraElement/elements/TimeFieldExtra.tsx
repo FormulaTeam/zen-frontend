@@ -1,11 +1,11 @@
-import { FieldTypeIds } from "../../../../../../utils/interfaces";
+import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { Checkbox, FormControl, FormControlLabel, InputLabel, MenuItem, Select } from "@mui/material";
-import { DefaultTimeValue } from "../../../../schemas/timeSchema";
-import { ExtraElementProps } from "./index";
+import { DefaultTimeValue } from "../../../../../schemas/timeSchema";
+import { ExtraElementProps } from "../index";
 
 type Props = ExtraElementProps<typeof FieldTypeIds.time>;
 
-function TimeFieldExtra({ extra, disabled }: Props) {
+function TimeFieldExtra({ extra, onChange, disabled }: Props) {
   const {
     defaultValue = DefaultTimeValue.EMPTY,
     includeSeconds = false,
@@ -14,14 +14,18 @@ function TimeFieldExtra({ extra, disabled }: Props) {
   return (
     <>
       <FormControlLabel disabled={disabled}
-                        control={<Checkbox checked={includeSeconds} onChange={() => null} />}
+                        control={<Checkbox checked={includeSeconds}
+                                           onChange={(e) => {
+                                             onChange({ includeSeconds: e.target.checked });
+                                           }} />}
                         label="הצגת שניות" />
       <FormControl fullWidth disabled={disabled}>
         <InputLabel id="default-value-label">ערך ברירת מחדל</InputLabel>
         <Select labelId="default-value-label"
                 value={defaultValue}
                 label="ערך ברירת מחדל"
-                onChange={() => {
+                onChange={(e) => {
+                  onChange({ defaultValue: e.target.value });
                 }}>
           <MenuItem value={DefaultTimeValue.EMPTY}>ריק</MenuItem>
           <MenuItem value={DefaultTimeValue.NOW}>שעה נוכחית</MenuItem>

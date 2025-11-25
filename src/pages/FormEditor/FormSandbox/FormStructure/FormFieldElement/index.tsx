@@ -8,16 +8,17 @@ import { PLACEHOLDER_FIELD_ID } from "../../../context/constants";
 import { FORM_ELEMENT_ICONS } from "../../../../../components/FORM_ELEMENT_ICONS";
 import { FORM_ELEMENTS } from "../../../../../utils/interfaces";
 import { Button, FormControlLabel, Switch, TextField, Typography } from "@mui/material";
-import { useEffect, useMemo, useRef } from "react";
-import { getExtraElement } from "./extraElements";
+import { useEffect, useRef } from "react";
+import { ExtraElement } from "./ExtraElement";
+import { FormFieldData } from "../../../schemas";
 
 interface Props {
   field: FormField;
-  // onEdit: (changedField: Partial<FormField>, value?: string | number) => void;
+  onDataChange: (data: Partial<FormFieldData>) => void;
   onDelete: () => void;
 }
 
-function FormFieldElement({ field, onDelete }: Props) {
+function FormFieldElement({ field, onDelete, onDataChange }: Props) {
   const {
     attributes,
     listeners,
@@ -51,8 +52,6 @@ function FormFieldElement({ field, onDelete }: Props) {
     containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
 
-  const extraElement = useMemo(() => getExtraElement(field.data.typeId, field.data.extra, isInputDisabled), [field.data.typeId, field.data.extra, isInputDisabled]);
-
   return (
     <div ref={containerRef} className={styles.container} style={style}>
       <div className={styles.dragHandle} ref={setActivatorNodeRef} {...listeners} {...attributes}>
@@ -67,7 +66,11 @@ function FormFieldElement({ field, onDelete }: Props) {
             </Typography>
           </div>
           <FormControlLabel sx={{ marginInlineEnd: "2px" }}
-                            control={<Switch checked={field.data.required} disabled={isInputDisabled} />}
+                            control={<Switch checked={field.data.required}
+                                             disabled={isInputDisabled}
+                                             onChange={(e) => {
+                                               onDataChange({ required: e.target.checked });
+                                             }} />}
                             label="שדה חובה" />
         </div>
         <div className={styles.body}>
@@ -76,8 +79,10 @@ function FormFieldElement({ field, onDelete }: Props) {
                        className={styles.input}
                        variant={"standard"}
                        label={"שם תצוגה"}
+                       error={!!field.validationErrors?.displayName}
+                       helperText={field.validationErrors?.displayName?.[0]}
                        disabled={isInputDisabled}
-              // onChange={(e) => onEdit(e.target.value)}
+                       onChange={(e) => onDataChange({ displayName: e.target.value })}
             />
             {
               isInternalNamesShown &&
@@ -85,16 +90,16 @@ function FormFieldElement({ field, onDelete }: Props) {
                          className={styles.input}
                          variant={"standard"}
                          label={"שם פנימי"}
+                         error={!!field.validationErrors?.name}
+                         helperText={field.validationErrors?.name?.[0]}
                          disabled={isInputDisabled}
-                // onChange={(e) => onEdit(e.target.value)}
+                         onChange={(e) => onDataChange({ name: e.target.value })}
               />}
           </div>
-          {
-            extraElement &&
-            <div className={styles.extraData}>
-              {extraElement}
-            </div>
-          }
+          <ExtraElement typeId={field.data.typeId}
+                        extra={field.data.extra ?? {}}
+                        onChange={(extra) => onDataChange({ extra })}
+                        disabled={isInputDisabled} />
         </div>
       </div>
       <div className={styles.deleteButtonContainer}>

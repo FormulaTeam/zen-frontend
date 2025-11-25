@@ -4,9 +4,45 @@ import { getEmptyForm } from "../context/constants";
 import { texts } from "../../../utils/texts";
 import { FormFieldTypeId } from "../../../utils/interfaces";
 import { generateFieldId, generateFieldName, generateSectionId } from "../utils";
+import { FormFieldData, FormFieldSchema } from "../schemas";
+import { z } from "zod";
 
 function yieldFormStructure(form: object) {
   return form as FormStructure; // TODO change to actual logic that translates form json to form structure
+}
+
+function mergeKeys(
+  objA: object,
+  objB: object,
+  keys: (string | number)[],
+) {
+  return {
+    ...objA,
+    ...Object.fromEntries(keys.map(key => [key, objB[key]])),
+  };
+}
+
+function pickFieldsFromUnion<T extends z.ZodDiscriminatedUnion<any, any>>(
+  union: T,
+  discriminatorValue: FormFieldTypeId,
+  fields: string[],
+) {
+  const options = union.options || (union as any)._def?.options;
+  const discriminatorKey = (union as any).discriminator || (union as any)._def?.discriminator;
+
+  const specificSchema = options.find(
+    (option: any) => option.shape[discriminatorKey]?.value === discriminatorValue,
+  );
+
+  if (!specificSchema) {
+    throw new Error(`No schema found for discriminator: ${discriminatorValue}`);
+  }
+
+  const pickMap = Object.fromEntries(
+    fields.map(key => [key, true]),
+  ) as Record<string, true>;
+
+  return specificSchema.pick(pickMap);
 }
 
 function useFormStructure(editedForm?: object) { //TODO consider making singleton
@@ -129,6 +165,10 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
 
   const deleteField = useCallback((fieldId: string) => {
     setFormStructure((prev) => {
+      if (!(fieldId in prev.fields)) {
+        return prev;
+      }
+
       const fields = { ...prev.fields };
       const sectionId = fields[fieldId].parentSectionId;
       const section = { ...prev.sections[sectionId] };
@@ -148,6 +188,86 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
     });
   }, []);
 
+  const setFieldData = useCallback(
+    <T extends FormFieldTypeId>(fieldId: string, data: Partial<FormFieldData & { typeId: T }>) => {
+      setFormStructure((prev) => {
+        if (!(fieldId in prev.fields)) {
+          return prev;
+        }
+
+        const fields = { ...prev.fields };
+        const field = fields[fieldId];
+        const originalData = field.data;
+        const originalValidationErrors = field.validationErrors;
+
+        const validationErrors = mergeKeys(
+          originalValidationErrors ?? {} as Partial<FormFieldData>,
+          validateFieldData(field.data.typeId, data), Object.keys(data) as (keyof FormFieldData)[],
+        );
+
+        return {
+          ...prev,
+          fields: {
+            ...fields,
+            [fieldId]: {
+              ...field,
+              data: {
+                ...originalData,
+                ...data,
+                extra: data.extra ?
+                  {
+                    ...originalData.extra,
+                    ...data.extra,
+                  } :
+                  undefined,
+              } as FormFieldData & { typeId: T },
+              validationErrors,
+            },
+          },
+        };
+      });
+    }, []);
+
+  const validateFieldData = useCallback(<T extends FormFieldTypeId>(typeId: T, data: Partial<FormFieldData & {
+    typeId: T
+  }>) => {
+    const result = pickFieldsFromUnion(FormFieldSchema, typeId, Object.keys(data)).safeParse(data);
+
+    if (!result.success) {
+      return z.flattenError(result.error).fieldErrors;
+    }
+
+    return {};
+  }, []);
+
+  const validateField = useCallback((prev: FormStructure, fieldId: string) => {
+    const result = FormFieldSchema.safeParse(prev.fields[fieldId].data);
+
+    if (!result.success) {
+      return z.flattenError(result.error).fieldErrors;
+    }
+
+    return null;
+  }, []);
+
+  const validateForm = useCallback(() => {
+    setFormStructure((prev) => {
+      const fields = { ...prev.fields };
+
+      Object.keys(fields).forEach((fieldId) => {
+        fields[fieldId] = {
+          ...fields[fieldId],
+          validationErrors: validateField(prev, fieldId),
+        };
+      });
+
+      return {
+        ...prev,
+        fields,
+      };
+    });
+  }, []);
+
   return {
     formStructure,
     setFormStructure,
@@ -158,6 +278,8 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
 
     appendFieldToFirstSection,
     deleteField,
+    setFieldData,
+    validateForm,
   };
 }
 

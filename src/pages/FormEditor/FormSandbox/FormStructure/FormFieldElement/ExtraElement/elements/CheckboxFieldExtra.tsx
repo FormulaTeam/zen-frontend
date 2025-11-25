@@ -1,10 +1,10 @@
-import { FieldTypeIds } from "../../../../../../utils/interfaces";
+import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
-import { ExtraElementProps } from "./index";
+import { ExtraElementProps } from "../index";
 
 type Props = ExtraElementProps<typeof FieldTypeIds.checkbox>;
 
-function CheckboxFieldExtra({ extra, disabled }: Props) {
+function CheckboxFieldExtra({ extra, onChange, disabled }: Props) {
   const {
     defaultValue = false,
   } = extra;
@@ -16,7 +16,8 @@ function CheckboxFieldExtra({ extra, disabled }: Props) {
         <Select labelId="default-value-label"
                 value={+defaultValue}
                 label="ערך ברירת מחדל"
-                onChange={() => {
+                onChange={(e) => {
+                  onChange({ defaultValue: Boolean(e.target.value) });
                 }}>
           <MenuItem value={+false}>לא</MenuItem>
           <MenuItem value={+true}>כן</MenuItem>

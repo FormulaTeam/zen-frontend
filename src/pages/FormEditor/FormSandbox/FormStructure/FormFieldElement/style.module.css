@@ -49,6 +49,8 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, 290px);
     gap: 24px;
+    padding-block-end: 8px;
+    box-sizing: border-box;
 }
 
 .baseData > * {

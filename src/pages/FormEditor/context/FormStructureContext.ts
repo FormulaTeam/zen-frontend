@@ -2,6 +2,7 @@ import { createContext, SetStateAction, useContext } from "react";
 import { FormFieldTypeId } from "../../../utils/interfaces";
 import { getEmptyForm } from "./constants";
 import { FormFieldData } from "../schemas";
+import { z } from "zod";
 
 interface Section {
   title: string;
@@ -12,9 +13,10 @@ interface Section {
 
 interface FormField {
   id: string;
-  parentSectionId: string; // ID of the section this field belongs to
+  parentSectionId: string;
 
   data: FormFieldData;
+  validationErrors?: z.ZodFlattenedError<FormFieldData>["fieldErrors"] | null;
 }
 
 interface FormStructure {
@@ -34,7 +36,9 @@ interface FormStructureContext {
   renameSection: (sectionId: string, title: string) => void;
   toggleSectionExpanded: (sectionId: string) => void;
   appendFieldToFirstSection: (elementTypeId: FormFieldTypeId) => void;
-  deleteField: (field: string) => void;
+  deleteField: (fieldId: string) => void;
+  setFieldData: (fieldId: string, data: Partial<FormFieldData>) => void;
+  validateForm: () => void;
 }
 
 const FormStructureContext = createContext<FormStructureContext>({
@@ -46,6 +50,8 @@ const FormStructureContext = createContext<FormStructureContext>({
   toggleSectionExpanded: () => null,
   appendFieldToFirstSection: () => null,
   deleteField: () => null,
+  setFieldData: () => null,
+  validateForm: () => null,
 });
 
 function useFormStructureContext() {
