@@ -80,7 +80,7 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
                        variant={"standard"}
                        label={"שם תצוגה"}
                        error={!!field.validationErrors?.displayName}
-                       helperText={field.validationErrors?.displayName?.[0]}
+                       helperText={field.validationErrors?.displayName?.errors[0]}
                        disabled={isInputDisabled}
                        onChange={(e) => onDataChange({ displayName: e.target.value })}
             />
@@ -91,13 +91,14 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
                          variant={"standard"}
                          label={"שם פנימי"}
                          error={!!field.validationErrors?.name}
-                         helperText={field.validationErrors?.name?.[0]}
+                         helperText={field.validationErrors?.name?.errors[0]}
                          disabled={isInputDisabled}
                          onChange={(e) => onDataChange({ name: e.target.value })}
               />}
           </div>
           <ExtraElement typeId={field.data.typeId}
                         extra={field.data.extra ?? {}}
+                        validationErrors={field.validationErrors?.extra}
                         onChange={(extra) => onDataChange({ extra })}
                         disabled={isInputDisabled} />
         </div>

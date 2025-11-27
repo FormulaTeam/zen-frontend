@@ -2,7 +2,7 @@ import { createContext, SetStateAction, useContext } from "react";
 import { FormFieldTypeId } from "../../../utils/interfaces";
 import { getEmptyForm } from "./constants";
 import { FormFieldData } from "../schemas";
-import { z } from "zod";
+import { $ZodErrorTree } from "zod/v4/core";
 
 interface Section {
   title: string;
@@ -16,7 +16,7 @@ interface FormField {
   parentSectionId: string;
 
   data: FormFieldData;
-  validationErrors?: z.ZodFlattenedError<FormFieldData>["fieldErrors"] | null;
+  validationErrors?: $ZodErrorTree<FormFieldData>["properties"] | null;
 }
 
 interface FormStructure {

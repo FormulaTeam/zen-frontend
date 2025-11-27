@@ -1,17 +1,19 @@
 import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { ExtraElementProps } from "../index";
 import { NumberFormat } from "../../../../../schemas/numberSchema";
-import { FormControl, Input, InputLabel, MenuItem, Select } from "@mui/material";
+import { FormControl, FormHelperText, Input, InputLabel, MenuItem, Select } from "@mui/material";
 
 type Props = ExtraElementProps<typeof FieldTypeIds.number>;
 
-function NumberFieldExtra({ extra, onChange, disabled }: Props) {
+function NumberFieldExtra({ extra, validationErrors, onChange, disabled }: Props) {
   const {
     format = NumberFormat.INTEGER,
     defaultValue,
     max,
     min,
   } = extra;
+
+  console.log(validationErrors);
 
   return (
     <>
@@ -21,38 +23,50 @@ function NumberFieldExtra({ extra, onChange, disabled }: Props) {
                 value={format}
                 label="סוג מספר"
                 onChange={(e) => {
-                  onChange({format: e.target.value});
+                  onChange({ format: e.target.value });
                 }}>
           <MenuItem value={NumberFormat.INTEGER}>שלם</MenuItem>
           <MenuItem value={NumberFormat.DECIMAL}>עשרוני</MenuItem>
         </Select>
       </FormControl>
       <FormControl fullWidth disabled={disabled}>
-        <InputLabel id="default-value-label">ערך ברירת מחדל</InputLabel>
+        <InputLabel>ערך ברירת מחדל</InputLabel>
         <Input type={"number"}
-               value={defaultValue}
+               aria-describedby="default-value-helper-text"
+               value={defaultValue !== undefined ? +defaultValue : ''}
                onChange={(e) => {
-                 onChange({defaultValue: +e.target.value});
+                 onChange({ defaultValue: e.target.value.length ? +e.target.value : undefined });
                }}>
         </Input>
+        <FormHelperText id="default-value-helper-text">
+          {validationErrors?.properties?.defaultValue?.errors[0]}
+        </FormHelperText>
       </FormControl>
       <FormControl fullWidth disabled={disabled}>
-        <InputLabel id="default-value-label">ערך מינמלי</InputLabel>
+        <InputLabel>ערך מינמלי</InputLabel>
         <Input type={"number"}
-               value={min}
+               value={min !== undefined ? +min : ''}
+               aria-describedby={'min-helper-text'}
                onChange={(e) => {
-                 onChange({min: +e.target.value});
+                 onChange({ min: e.target.value.length ? +e.target.value : undefined });
                }}>
         </Input>
+        <FormHelperText id="min-helper-text">
+          {validationErrors?.properties?.min?.errors[0]}
+        </FormHelperText>
       </FormControl>
       <FormControl fullWidth disabled={disabled}>
-        <InputLabel id="default-value-label">ערך מקסימלי</InputLabel>
+        <InputLabel>ערך מקסימלי</InputLabel>
         <Input type={"number"}
-               value={max}
+               value={max !== undefined ? +max : ''}
+               aria-describedby={'max-helper-text'}
                onChange={(e) => {
-                 onChange({max: +e.target.value});
+                 onChange({ max: e.target.value.length ? +e.target.value : undefined });
                }}>
         </Input>
+        <FormHelperText id="max-helper-text">
+          {validationErrors?.properties?.max?.errors[0]}
+        </FormHelperText>
       </FormControl>
     </>
   );

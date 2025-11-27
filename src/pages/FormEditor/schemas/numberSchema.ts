@@ -11,11 +11,12 @@ const numberSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.number),
 
   extra: strictObject({
-    format: zod_enum(NumberFormat).default(NumberFormat.DECIMAL),
-    defaultValue: number().optional(),
+    format: zod_enum(NumberFormat).default(NumberFormat.DECIMAL).optional(),
+    defaultValue: number().optional(), 
     min: number().optional(),
     max: number().optional(),
   }).superRefine(({ min, max, defaultValue, format }, ctx) => {
+    console.log('test');
     if (format === NumberFormat.INTEGER) {
       if ((min !== undefined && min % 1 != 0) || (max !== undefined && max % 1 != 0)) {
         ctx.addIssue({
@@ -32,6 +33,7 @@ const numberSchema = baseFormFieldSchema.safeExtend({
         });
       }
     }
+
     if (min !== undefined && max !== undefined && max <= min) {
       ctx.addIssue({
         code: "custom",
@@ -39,6 +41,7 @@ const numberSchema = baseFormFieldSchema.safeExtend({
         path: ["max"],
       });
     }
+
     if (defaultValue !== undefined &&
       ((min !== undefined && defaultValue < min) || (max !== undefined && defaultValue > max))) {
       ctx.addIssue({

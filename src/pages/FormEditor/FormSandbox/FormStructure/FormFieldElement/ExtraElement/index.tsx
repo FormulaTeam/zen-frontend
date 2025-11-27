@@ -3,6 +3,7 @@ import { FieldTypeIds, FormFieldTypeId } from "../../../../../../utils/interface
 import { FormFieldExtra, SpecificFormFieldData } from "../../../../schemas";
 import styles from "../style.module.css";
 import { ReactElement } from "react";
+import { $ZodErrorTree } from "zod/v4/core";
 
 type SetExtra<T extends FormFieldTypeId> = <D extends SpecificFormFieldData<T>>(extra: Partial<D["extra"]>) => void;
 
@@ -10,6 +11,8 @@ type ExtraElementProps<T extends FormFieldTypeId> = {
   extra: FormFieldExtra<T>;
   onChange: SetExtra<T>;
   disabled: boolean;
+
+  validationErrors?: $ZodErrorTree<FormFieldExtra<T>>;
 };
 
 function ExtraElement<T extends FormFieldTypeId>(props: ExtraElementProps<T> & { typeId: T }) {

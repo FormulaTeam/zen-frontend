@@ -22,17 +22,17 @@ function mergeKeys(
   };
 }
 
-function pickFieldsFromUnion<T extends z.ZodDiscriminatedUnion<any, any>>(
-  union: T,
-  discriminatorValue: FormFieldTypeId,
+function pickFieldsFromSchema<T extends FormFieldTypeId>(
+  union: typeof FormFieldSchema,
+  discriminatorValue: T,
   fields: string[],
 ) {
-  const options = union.options || (union as any)._def?.options;
-  const discriminatorKey = (union as any).discriminator || (union as any)._def?.discriminator;
+  const options = union.options;
+  const discriminatorKey = union.def.discriminator;
 
   const specificSchema = options.find(
-    (option: any) => option.shape[discriminatorKey]?.value === discriminatorValue,
-  );
+    (option) => option.shape[discriminatorKey]!.value === discriminatorValue,
+  )!;
 
   if (!specificSchema) {
     throw new Error(`No schema found for discriminator: ${discriminatorValue}`);
@@ -44,6 +44,30 @@ function pickFieldsFromUnion<T extends z.ZodDiscriminatedUnion<any, any>>(
 
   return specificSchema.pick(pickMap);
 }
+
+const validateFieldData = <T extends FormFieldTypeId>(
+  typeId: T,
+  data: Partial<FormFieldData & { typeId: T }>,
+) => {
+  const result = pickFieldsFromSchema(FormFieldSchema, typeId, Object.keys(data)).safeParse(data);
+
+  if (!result.success) {
+    // @ts-ignore
+    return z.treeifyError(result.error)?.properties ?? {};
+  }
+
+  return {};
+};
+
+const validateField = (prev: FormStructure, fieldId: string) => {
+  const result = FormFieldSchema.safeParse(prev.fields[fieldId].data);
+
+  if (!result.success) {
+    return z.treeifyError(result.error)?.properties ?? {};
+  }
+
+  return {};
+};
 
 function useFormStructure(editedForm?: object) { //TODO consider making singleton
   const [formStructure, setFormStructure] = useState<FormStructure>(editedForm ? yieldFormStructure(editedForm) : { ...getEmptyForm() });
@@ -202,8 +226,15 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
 
         const validationErrors = mergeKeys(
           originalValidationErrors ?? {} as Partial<FormFieldData>,
-          validateFieldData(field.data.typeId, data), Object.keys(data) as (keyof FormFieldData)[],
+          validateFieldData(field.data.typeId, data) ?? {} as Partial<FormFieldData>,
+          Object.keys(data) as (keyof FormFieldData)[],
         );
+
+        console.log(
+          {
+            ...originalData.extra,
+            ...data.extra,
+          });
 
         return {
           ...prev,
@@ -227,28 +258,6 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
         };
       });
     }, []);
-
-  const validateFieldData = useCallback(<T extends FormFieldTypeId>(typeId: T, data: Partial<FormFieldData & {
-    typeId: T
-  }>) => {
-    const result = pickFieldsFromUnion(FormFieldSchema, typeId, Object.keys(data)).safeParse(data);
-
-    if (!result.success) {
-      return z.flattenError(result.error).fieldErrors;
-    }
-
-    return {};
-  }, []);
-
-  const validateField = useCallback((prev: FormStructure, fieldId: string) => {
-    const result = FormFieldSchema.safeParse(prev.fields[fieldId].data);
-
-    if (!result.success) {
-      return z.flattenError(result.error).fieldErrors;
-    }
-
-    return null;
-  }, []);
 
   const validateForm = useCallback(() => {
     setFormStructure((prev) => {
