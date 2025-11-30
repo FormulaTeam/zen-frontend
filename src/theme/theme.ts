@@ -307,6 +307,13 @@ theme.components = {
       },
     },
   },
+  MuiSelect: {
+    defaultProps: {
+      MenuProps: {
+        disableScrollLock: true,
+      },
+    },
+  },
 };
 theme = responsiveFontSizes(theme);
 declare module "@mui/material/Button" {

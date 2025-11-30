@@ -25,11 +25,15 @@ const FormElementTypeIdToKey = {
   [FieldTypeIds.list]: 'list',
   [FieldTypeIds.number]: 'number',
   [FieldTypeIds.file]: 'file',
-  [FieldTypeIds.linkedForm]: 'form',
+  [FieldTypeIds.linkedForm]: 'linked_form',
 } as const satisfies Record<FormFieldTypeId, string>;
 
 function generateFieldName(elementTypeId: FormFieldTypeId){
   return `${FormElementTypeIdToKey[elementTypeId]}_${nanoid5()}`;
 }
 
-export { generateSectionId, generateFieldId, generateFieldName };
+function generateOptionItemId() {
+  return nanoid5();
+}
+
+export { generateSectionId, generateFieldId, generateFieldName, generateOptionItemId };

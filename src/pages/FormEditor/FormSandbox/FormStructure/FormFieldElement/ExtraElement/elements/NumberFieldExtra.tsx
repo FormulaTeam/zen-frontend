@@ -2,6 +2,7 @@ import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { ExtraElementProps } from "../index";
 import { NumberFormat } from "../../../../../schemas/numberSchema";
 import { FormControl, FormHelperText, Input, InputLabel, MenuItem, Select } from "@mui/material";
+import { useEffect } from "react";
 
 type Props = ExtraElementProps<typeof FieldTypeIds.number>;
 
@@ -13,7 +14,9 @@ function NumberFieldExtra({ extra, validationErrors, onChange, disabled }: Props
     min,
   } = extra;
 
-  console.log(validationErrors);
+  useEffect(() => {
+    onChange({ format });
+  }, []);
 
   return (
     <>
@@ -29,11 +32,11 @@ function NumberFieldExtra({ extra, validationErrors, onChange, disabled }: Props
           <MenuItem value={NumberFormat.DECIMAL}>עשרוני</MenuItem>
         </Select>
       </FormControl>
-      <FormControl fullWidth disabled={disabled}>
+      <FormControl fullWidth disabled={disabled} error={!!validationErrors?.properties?.defaultValue?.errors[0]}>
         <InputLabel>ערך ברירת מחדל</InputLabel>
         <Input type={"number"}
                aria-describedby="default-value-helper-text"
-               value={defaultValue !== undefined ? +defaultValue : ''}
+               value={defaultValue !== undefined ? +defaultValue : ""}
                onChange={(e) => {
                  onChange({ defaultValue: e.target.value.length ? +e.target.value : undefined });
                }}>
@@ -42,11 +45,11 @@ function NumberFieldExtra({ extra, validationErrors, onChange, disabled }: Props
           {validationErrors?.properties?.defaultValue?.errors[0]}
         </FormHelperText>
       </FormControl>
-      <FormControl fullWidth disabled={disabled}>
+      <FormControl fullWidth disabled={disabled} error={!!validationErrors?.properties?.min?.errors[0]}>
         <InputLabel>ערך מינמלי</InputLabel>
         <Input type={"number"}
-               value={min !== undefined ? +min : ''}
-               aria-describedby={'min-helper-text'}
+               value={min !== undefined ? +min : ""}
+               aria-describedby={"min-helper-text"}
                onChange={(e) => {
                  onChange({ min: e.target.value.length ? +e.target.value : undefined });
                }}>
@@ -55,11 +58,11 @@ function NumberFieldExtra({ extra, validationErrors, onChange, disabled }: Props
           {validationErrors?.properties?.min?.errors[0]}
         </FormHelperText>
       </FormControl>
-      <FormControl fullWidth disabled={disabled}>
+      <FormControl fullWidth disabled={disabled} error={!!validationErrors?.properties?.max?.errors[0]}>
         <InputLabel>ערך מקסימלי</InputLabel>
         <Input type={"number"}
-               value={max !== undefined ? +max : ''}
-               aria-describedby={'max-helper-text'}
+               value={max !== undefined ? +max : ""}
+               aria-describedby={"max-helper-text"}
                onChange={(e) => {
                  onChange({ max: e.target.value.length ? +e.target.value : undefined });
                }}>

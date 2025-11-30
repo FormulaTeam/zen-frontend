@@ -1,6 +1,6 @@
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Accordion, AccordionDetails, AccordionSummary, Button, Input, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Button, TextField, Typography } from "@mui/material";
 import { useFormStructureContext } from "../../../context/FormStructureContext";
 import styles from "./style.module.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -16,6 +16,7 @@ import { FormFieldElement } from "../FormFieldElement";
 import { DraggableElementData } from "../../../context/FormSandboxContext";
 import { useDndContext } from "@dnd-kit/core";
 import { FormFieldData } from "../../../schemas";
+import { Resizable } from "re-resizable";
 
 interface Props {
   id: string;
@@ -79,17 +80,18 @@ function FormSection({ id }: Props) {
     opacity: isDragging ? 0.25 : 1,
   };
 
-  const handleFieldDataChange = useCallback((fieldId: string) => (data: Partial<FormFieldData>) => setFieldData(fieldId, data), []);
+  const handleFieldDataChange = useCallback((fieldId: string) => (data: Partial<FormFieldData>) => setFieldData(fieldId, data), [setFieldData]);
 
   return (
     <Accordion className={styles.container}
+               expanded={self.expanded}
                sx={{
                  backgroundColor: "transparent",
                  boxShadow: "none",
                }}
                ref={containerRef}
-               style={style} {...attributes}
-               expanded={self.expanded}>
+               style={style}
+               {...attributes}>
       <AccordionSummary ref={setActivatorNodeRef}
                         onClick={(e) => e.preventDefault()}
                         sx={{
@@ -115,11 +117,12 @@ function FormSection({ id }: Props) {
           {
             isEditingTitle ? (
               <>
-                <Input value={editedTitle}
-                       inputRef={titleInputRef}
-                       onPointerDown={(e) => e.stopPropagation()}
-                       onClick={(e) => e.stopPropagation()}
-                       onChange={(e) => setEditedTitle(e.target.value)} />
+                <TextField value={editedTitle}
+                           variant={"standard"}
+                           inputRef={titleInputRef}
+                           onPointerDown={(e) => e.stopPropagation()}
+                           onClick={(e) => e.stopPropagation()}
+                           onChange={(e) => setEditedTitle(e.target.value)} />
                 <Button className={styles.button}
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={(_) => {
@@ -172,14 +175,46 @@ function FormSection({ id }: Props) {
       <SortableContext items={formStructure.sections[id].fieldIds}
                        strategy={verticalListSortingStrategy}
                        disabled={(draggingElement?.data.current as DraggableElementData)?.elementType === "section"}>
-        {/*<ResizableBox axis={"y"} height={300} handle={<div style={{backgroundColor:"blue", cursor:'ns-resize', width: '100%', height: 10}}/>}>*/}
-        <AccordionDetails className={styles.content}>
+        <Resizable minHeight={200}
+                   enable={{ bottom: true }}
+                   style={{
+                     display: "flex",
+                     position: "relative",
+                     paddingBottom: 20,
+                     backgroundColor: "rgb(240, 244, 246)",
+                   }}
+                   handleComponent={{
+                     bottom: (
+                       <div style={{
+                         position: "absolute",
+                         bottom: 4,
+                         width: "100%",
+                         height: 20,
+                         display: "flex",
+                         alignItems: "center",
+                         justifyContent: "center",
+                         backgroundColor: "#FAFAFA",
+                         cursor: "s-resize",
+                       }}>
+                         <div style={{
+                           width: 48,
+                           height: 4,
+                           background: "#a3a7ae",
+                           borderRadius: 4,
+                         }} />
+                       </div>
+                     ),
+                   }}>
           {
             self.fieldIds.length ?
-              self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId}
-                                                               field={formStructure.fields[fieldId]}
-                                                               onDataChange={handleFieldDataChange(fieldId)}
-                                                               onDelete={() => deleteField(fieldId)} />)
+              <AccordionDetails className={styles.content}>
+                {
+                  self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId}
+                                                                   field={formStructure.fields[fieldId]}
+                                                                   onDataChange={handleFieldDataChange(fieldId)}
+                                                                   onDelete={() => deleteField(fieldId)} />)
+                }
+              </AccordionDetails>
               : (
                 <div className={styles.emptySectionPlaceholder}>
                   <KeyboardDoubleArrowRight className={styles.catalogArrowIcon}
@@ -195,11 +230,11 @@ function FormSection({ id }: Props) {
                 </div>
               )
           }
-        </AccordionDetails>
-        {/*</ResizableBox>*/}
+        </Resizable>
       </SortableContext>
     </Accordion>
-  );
+  )
+    ;
 }
 
 export { FormSection };

@@ -9,16 +9,17 @@ import { queryClient } from "./api/queryClient";
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      {/*<AuthProvider>*/}
-        {/*<SuperAdminProvider>*/}
+      <AuthProvider>
+        <SuperAdminProvider>
           <FormChangesProvider>
             <AppRouter />
           </FormChangesProvider>
-        {/*</SuperAdminProvider>*/}
-      {/*</AuthProvider>*/}
-      {/* React Query Devtools - only shows in development */}
+        </SuperAdminProvider>
+      </AuthProvider>
+      {/*React Query Devtools - only shows in development*/}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }
+
 export default App;

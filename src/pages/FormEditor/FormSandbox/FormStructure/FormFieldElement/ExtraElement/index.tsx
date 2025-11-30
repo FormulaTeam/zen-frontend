@@ -1,4 +1,11 @@
-import { CheckboxFieldExtra, DateFieldExtra, LocationFieldExtra, NumberFieldExtra, TimeFieldExtra } from "./elements";
+import {
+  CheckboxFieldExtra,
+  DateFieldExtra,
+  LinkedFormFieldExtra,
+  LocationFieldExtra,
+  NumberFieldExtra, OptionsFieldExtra,
+  TimeFieldExtra,
+} from "./elements";
 import { FieldTypeIds, FormFieldTypeId } from "../../../../../../utils/interfaces";
 import { FormFieldExtra, SpecificFormFieldData } from "../../../../schemas";
 import styles from "../style.module.css";
@@ -21,7 +28,7 @@ function ExtraElement<T extends FormFieldTypeId>(props: ExtraElementProps<T> & {
 
   switch (typeId) {
     case FieldTypeIds.options:
-      extraElement = <div />;
+      extraElement = <OptionsFieldExtra {...restProps} />;
       break;
     case FieldTypeIds.date:
       extraElement = <DateFieldExtra {...restProps} />;
@@ -39,7 +46,7 @@ function ExtraElement<T extends FormFieldTypeId>(props: ExtraElementProps<T> & {
       extraElement = <NumberFieldExtra {...restProps} />;
       break;
     case FieldTypeIds.linkedForm:
-      extraElement = <div />;
+      extraElement = <LinkedFormFieldExtra {...restProps}/>;
       break;
     default:
       return null;

@@ -6,7 +6,7 @@ import { DeleteOutlined, DragIndicator } from "@mui/icons-material";
 import styles from "./style.module.css";
 import { PLACEHOLDER_FIELD_ID } from "../../../context/constants";
 import { FORM_ELEMENT_ICONS } from "../../../../../components/FORM_ELEMENT_ICONS";
-import { FORM_ELEMENTS } from "../../../../../utils/interfaces";
+import { FieldTypeIds, FORM_ELEMENTS } from "../../../../../utils/interfaces";
 import { Button, FormControlLabel, Switch, TextField, Typography } from "@mui/material";
 import { useEffect, useRef } from "react";
 import { ExtraElement } from "./ExtraElement";
@@ -85,7 +85,7 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
                        onChange={(e) => onDataChange({ displayName: e.target.value })}
             />
             {
-              isInternalNamesShown &&
+              (isInternalNamesShown && field.data.typeId !== FieldTypeIds.linkedForm) &&
               <TextField value={field.data.name}
                          className={styles.input}
                          variant={"standard"}
@@ -94,7 +94,8 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
                          helperText={field.validationErrors?.name?.errors[0]}
                          disabled={isInputDisabled}
                          onChange={(e) => onDataChange({ name: e.target.value })}
-              />}
+              />
+            }
           </div>
           <ExtraElement typeId={field.data.typeId}
                         extra={field.data.extra ?? {}}

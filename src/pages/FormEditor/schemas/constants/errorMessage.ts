@@ -1,3 +1,0 @@
-const EMPTY_FIELD_ERROR_MESSAGE = 'שדה חובה';
-
-export {EMPTY_FIELD_ERROR_MESSAGE};

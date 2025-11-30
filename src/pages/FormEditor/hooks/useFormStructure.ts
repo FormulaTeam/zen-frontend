@@ -6,53 +6,49 @@ import { FormFieldTypeId } from "../../../utils/interfaces";
 import { generateFieldId, generateFieldName, generateSectionId } from "../utils";
 import { FormFieldData, FormFieldSchema } from "../schemas";
 import { z } from "zod";
+import { $ZodErrorTree } from "zod/v4/core";
+import merge from "lodash.merge";
 
 function yieldFormStructure(form: object) {
   return form as FormStructure; // TODO change to actual logic that translates form json to form structure
 }
 
-function mergeKeys(
-  objA: object,
-  objB: object,
-  keys: (string | number)[],
-) {
-  return {
-    ...objA,
-    ...Object.fromEntries(keys.map(key => [key, objB[key]])),
-  };
-}
+function pickSharedKeysDeep<T extends object>(
+  source: T,
+  reference: T,
+): $ZodErrorTree<FormFieldData>["properties"] {
+  const result: any = {};
 
-function pickFieldsFromSchema<T extends FormFieldTypeId>(
-  union: typeof FormFieldSchema,
-  discriminatorValue: T,
-  fields: string[],
-) {
-  const options = union.options;
-  const discriminatorKey = union.def.discriminator;
+  for (const key in reference) {
+    if (key in source) {
+      const sourceValue = source[key as keyof T];
+      const refValue = reference[key as keyof T];
 
-  const specificSchema = options.find(
-    (option) => option.shape[discriminatorKey]!.value === discriminatorValue,
-  )!;
-
-  if (!specificSchema) {
-    throw new Error(`No schema found for discriminator: ${discriminatorValue}`);
+      if (Array.isArray(sourceValue) && Array.isArray(refValue)) {
+        // Copy arrays directly (or handle them specially if needed)
+        result[key] = sourceValue;
+      } else if (
+        sourceValue !== null &&
+        refValue !== null &&
+        typeof sourceValue === "object" &&
+        typeof refValue === "object"
+      ) {
+        result[key] = pickSharedKeysDeep(sourceValue, refValue);
+      } else {
+        result[key] = sourceValue;
+      }
+    }
   }
 
-  const pickMap = Object.fromEntries(
-    fields.map(key => [key, true]),
-  ) as Record<string, true>;
-
-  return specificSchema.pick(pickMap);
+  return result;
 }
 
 const validateFieldData = <T extends FormFieldTypeId>(
-  typeId: T,
   data: Partial<FormFieldData & { typeId: T }>,
 ) => {
-  const result = pickFieldsFromSchema(FormFieldSchema, typeId, Object.keys(data)).safeParse(data);
+  const result = FormFieldSchema.safeParse(data);
 
   if (!result.success) {
-    // @ts-ignore
     return z.treeifyError(result.error)?.properties ?? {};
   }
 
@@ -60,7 +56,10 @@ const validateFieldData = <T extends FormFieldTypeId>(
 };
 
 const validateField = (prev: FormStructure, fieldId: string) => {
-  const result = FormFieldSchema.safeParse(prev.fields[fieldId].data);
+  const result = FormFieldSchema.safeParse({
+    ...prev.fields[fieldId].data,
+    extra: prev.fields[fieldId].data.extra ?? {}, // empty object fallback is added to be able to validate required extra fields in case the extra object itself has yet to be defined
+  });
 
   if (!result.success) {
     return z.treeifyError(result.error)?.properties ?? {};
@@ -224,17 +223,16 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
         const originalData = field.data;
         const originalValidationErrors = field.validationErrors;
 
-        const validationErrors = mergeKeys(
-          originalValidationErrors ?? {} as Partial<FormFieldData>,
-          validateFieldData(field.data.typeId, data) ?? {} as Partial<FormFieldData>,
-          Object.keys(data) as (keyof FormFieldData)[],
-        );
+        const dataToValidate = merge(
+          originalData,
+          data,
+        ) as FormFieldData & { typeId: T };
 
-        console.log(
-          {
-            ...originalData.extra,
-            ...data.extra,
-          });
+        const validationErrors =
+          pickSharedKeysDeep( // TODO doesn't work well for arrays (i.e. in options)
+            validateFieldData(dataToValidate),
+            originalValidationErrors ?? {},
+          );
 
         return {
           ...prev,
@@ -242,16 +240,7 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
             ...fields,
             [fieldId]: {
               ...field,
-              data: {
-                ...originalData,
-                ...data,
-                extra: data.extra ?
-                  {
-                    ...originalData.extra,
-                    ...data.extra,
-                  } :
-                  undefined,
-              } as FormFieldData & { typeId: T },
+              data: dataToValidate,
               validationErrors,
             },
           },
