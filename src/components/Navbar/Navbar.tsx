@@ -11,7 +11,7 @@ import { NavAppBar, NavToolbar, LogoContainer, ButtonsContainer } from "./styled
 import NavbarButton from "./NavbarButton";
 
 const Navbar = ({ handleSearch, searchValue }) => {
-  // const { isSuperAdmin } = useSuperAdmin();
+  const { isSuperAdmin } = useSuperAdmin();
   const [showMainStuff, setShowMainStuff] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -58,7 +58,7 @@ const Navbar = ({ handleSearch, searchValue }) => {
             />
           )}
 
-          {showMainStuff && true && (
+          {showMainStuff && isSuperAdmin && (
             <NavbarButton
               onClick={() => navigate(IPath.DASHBOARD)}
               bgColor={theme.palette.background.paper}
