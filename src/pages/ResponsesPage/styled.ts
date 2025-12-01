@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import Box, { BoxProps } from "@mui/material/Box";
 import { styled as MuiStyled } from "@mui/material/styles";
-import { TableContainer as MuiTableContainer } from "@mui/material";
+import { Button, TableContainer as MuiTableContainer } from "@mui/material";
 
 export const DetailsContainer = MuiStyled(Box)<BoxProps>(({ theme }) => ({
   display: "flex",
@@ -82,3 +82,11 @@ export const PageWrapper = MuiStyled(Box)<BoxProps>(({ theme }) => ({
   display: "flex",
   overflow: "hidden",
 }));
+
+export const StyledButton = styled(Button)<{ backgroundcolor?: string }>`
+  padding: 8px;
+  flex: 1;
+  width: auto;
+  text-align: left;
+  cursor: pointer;
+`;

@@ -1,4 +1,4 @@
-import { Portal, Snackbar, Stack } from "@mui/material";
+import { Box, Portal, Snackbar, Stack } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useExcel } from "../../hooks/useExcel";
 import { useMetro } from "../../hooks/useMetro";
@@ -8,6 +8,9 @@ import MetroSyncingPopup from "./Popups/MetroSyncingPopup";
 import MenusContainer from "./Menus/MenusContainer";
 import "./ResponseToolbar.scss";
 import styled from "styled-components";
+import { StyledButton } from "../../pages/ResponsesPage/styled";
+import { Add } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
 export const HiddenInput = styled("input")`
   display: none !important;
@@ -24,6 +27,8 @@ function ResponseToolbar({
   setShouldRefreshPage,
 }) {
   const uploadRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+
 
   const [anchorElMoreActions, setAnchorElMoreActions] = useState<null | HTMLElement>(null);
   const [anchorElSourceType, setAnchorElSourceType] = useState<null | HTMLElement>(null);
@@ -154,6 +159,16 @@ function ResponseToolbar({
           message="הסכמה הועתקה בהצלחה"
         />
       </Portal>
+      <Box>
+        <StyledButton
+          color="primary"
+          variant="contained"
+          onClick={() => {navigate(`/response/create/${form.id}`)}}
+          startIcon={<Add />}
+        >
+          הוספת תגובה חדשה
+        </StyledButton>
+      </Box>
     </Stack>
   );
 }
