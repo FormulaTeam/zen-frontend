@@ -7,7 +7,6 @@ import { generateFieldId, generateFieldName, generateSectionId } from "../utils"
 import { FormFieldData, FormFieldSchema } from "../schemas";
 import { z } from "zod";
 import { $ZodErrorTree } from "zod/v4/core";
-import merge from "lodash.merge";
 
 function yieldFormStructure(form: object) {
   return form as FormStructure; // TODO change to actual logic that translates form json to form structure
@@ -223,10 +222,19 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
         const originalData = field.data;
         const originalValidationErrors = field.validationErrors;
 
-        const dataToValidate = merge(
-          originalData,
-          data,
-        ) as FormFieldData & { typeId: T };
+        // const dataToValidate = merge(
+        //   originalData,
+        //   data,
+        // ) as FormFieldData & { typeId: T };
+
+        const dataToValidate = {
+          ...originalData,
+          ...data,
+          extra: {
+            ...originalData.extra,
+            ...data.extra,
+          }
+        } as FormFieldData & { typeId: T };
 
         const validationErrors =
           pickSharedKeysDeep( // TODO doesn't work well for arrays (i.e. in options)

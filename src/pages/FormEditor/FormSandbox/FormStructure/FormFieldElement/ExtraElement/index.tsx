@@ -22,7 +22,12 @@ type ExtraElementProps<T extends FormFieldTypeId> = {
   validationErrors?: $ZodErrorTree<FormFieldExtra<T>>;
 };
 
-function ExtraElement<T extends FormFieldTypeId>(props: ExtraElementProps<T> & { typeId: T }) {
+type Props<T extends FormFieldTypeId> = ExtraElementProps<T> & {
+  typeId: T,
+  fieldId: string,
+};
+
+function ExtraElement<T extends FormFieldTypeId>(props: Props<T>) {
   const { typeId, ...restProps } = props;
   let extraElement: ReactElement;
 
@@ -46,7 +51,7 @@ function ExtraElement<T extends FormFieldTypeId>(props: ExtraElementProps<T> & {
       extraElement = <NumberFieldExtra {...restProps} />;
       break;
     case FieldTypeIds.linkedForm:
-      extraElement = <LinkedFormFieldExtra {...restProps}/>;
+      extraElement = <LinkedFormFieldExtra {...restProps} />;
       break;
     default:
       return null;

@@ -33,7 +33,7 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
         <Select labelId="linked-form-label"
                 variant={"standard"}
                 aria-describedby={"linked-form-helper-text"}
-                value={linkedFormId}
+                value={linkedFormId ?? ''}
                 label={"בחירת טופס"}
                 onChange={(e) => {
                   onChange({ linkedFormId: e.target.value });
@@ -47,10 +47,10 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
         <FormHelperText id="linked-form-helper-text">
           {validationErrors?.properties?.linkedFormId?.errors[0]}
         </FormHelperText>
-        <h5 style={{ width: "100%", marginTop: 8 }}>
-          שימו לב! על מנת שמשתמש יוכל ליצור תגובות בטופס שנבחר, נדרש שיהיו לו הרשאות מתאימות לטופס שנבחר
-        </h5>
       </FormControl>
+      <h5 style={{ width: "100%", marginTop: 8, gridColumn: 'span 4' }}>
+        שימו לב! על מנת שמשתמש יוכל ליצור תגובות בטופס שנבחר, נדרש שיהיו לו הרשאות מתאימות לטופס שנבחר
+      </h5>
     </>
   );
 }

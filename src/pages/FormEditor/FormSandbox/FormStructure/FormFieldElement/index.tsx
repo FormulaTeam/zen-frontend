@@ -97,7 +97,8 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
               />
             }
           </div>
-          <ExtraElement typeId={field.data.typeId}
+          <ExtraElement fieldId={field.id}
+                        typeId={field.data.typeId}
                         extra={field.data.extra ?? {}}
                         validationErrors={field.validationErrors?.extra}
                         onChange={(extra) => onDataChange({ extra })}

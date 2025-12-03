@@ -24,12 +24,12 @@ const manualOptionsSchema = baseOptionsExtraSchema.safeExtend({
     items: array(object({
       id: string().min(1),
       text: string().min(1, "חובה לציין טקסט לכל אפשרות"),
-      controllingOptionsIds: array(string().min(1)).optional(),
+      controllingItemsIds: array(string().min(1)).optional(),
     })).min(2, "על השדה להכיל 2 או יותר אפשרויות"),
     controllingOptionsFieldId: string().min(1).optional(),
     defaultOptionId: string().min(1).optional(),
   }).superRefine(({ items, defaultOptionId }, ctx) => {
-    if (!items.find(({ id }) => defaultOptionId === id)) {
+    if (defaultOptionId && !items.find(({ id }) => defaultOptionId === id)) {
       ctx.addIssue({
         code: "custom",
         message: "אפשרות אינה קיימת",

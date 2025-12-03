@@ -54,7 +54,7 @@ function FormFieldResponsesOptions(props: Props) {
 
   return (
     <>
-      <FormControl>
+      <FormControl style={{gridColumn: "span 4", width: "40%" }}>
         <FormControl error={!!validationErrors?.properties?.formId}>
           <InputLabel id="source-form-label">{availableForms.length ? "בחירת טופס" : "אין טפסים זמינים"}</InputLabel>
           <Select labelId="source-form-label"

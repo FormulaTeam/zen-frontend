@@ -206,16 +206,17 @@ function FormSection({ id }: Props) {
                      ),
                    }}>
           {
-            self.fieldIds.length ?
-              <AccordionDetails className={styles.content}>
-                {
-                  self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId}
-                                                                   field={formStructure.fields[fieldId]}
-                                                                   onDataChange={handleFieldDataChange(fieldId)}
-                                                                   onDelete={() => deleteField(fieldId)} />)
-                }
-              </AccordionDetails>
-              : (
+            self.fieldIds.length ? (
+                <AccordionDetails className={styles.content}>
+                  {
+                    self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId}
+                                                                     field={formStructure.fields[fieldId]}
+                                                                     onDataChange={handleFieldDataChange(fieldId)}
+                                                                     onDelete={() => deleteField(fieldId)} />)
+                  }
+                </AccordionDetails>
+              ) :
+              (
                 <div className={styles.emptySectionPlaceholder}>
                   <KeyboardDoubleArrowRight className={styles.catalogArrowIcon}
                                             sx={{

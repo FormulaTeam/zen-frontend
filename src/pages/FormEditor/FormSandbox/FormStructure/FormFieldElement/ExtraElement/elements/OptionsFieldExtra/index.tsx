@@ -16,12 +16,14 @@ type FieldTypeId = typeof FieldTypeIds.options;
 type SpecificOptions<Source extends OptionsSource> = SpecificDiscriminatedUnionSubObject<FormFieldExtra<FieldTypeId>, "source", Source, "options">;
 type SpecificOptionsErrors<Source extends OptionsSource> = SpecificDiscriminatedUnionSubObjectErrorTree<FormFieldExtra<FieldTypeId>, "source", Source, "options">;
 
-type Props = ExtraElementProps<FieldTypeId>;
+interface Props extends ExtraElementProps<FieldTypeId> {
+  fieldId: string;
+}
 
-function OptionsFieldExtra({ extra, onChange, validationErrors, disabled }: Props) {
+function OptionsFieldExtra({ fieldId, extra, onChange, validationErrors, disabled }: Props) {
   const {
     source = OptionsSource.MANUAL,
-    multiple,
+    multiple = false,
   } = extra;
 
   let optionsElement: ReactElement | null = null;
@@ -41,7 +43,8 @@ function OptionsFieldExtra({ extra, onChange, validationErrors, disabled }: Prop
       options = extra.options as SpecificOptions<OptionsSource.MANUAL>;
       optionsValidationErrors = validationErrors?.properties?.options as SpecificOptionsErrors<OptionsSource.MANUAL> | undefined;
 
-      optionsElement = <ManualOptions options={options}
+      optionsElement = <ManualOptions fieldId={fieldId}
+                                      options={options}
                                       validationErrors={optionsValidationErrors}
                                       onChange={onChange} />;
       break;
@@ -49,7 +52,7 @@ function OptionsFieldExtra({ extra, onChange, validationErrors, disabled }: Prop
 
   return (
     <>
-      <FormControl disabled={disabled}>
+      <FormControl disabled={disabled} style={{ gridColumn: "span 4" }}>
         <FormLabel>מקור אפשרויות</FormLabel>
         <RadioGroup row value={source} onChange={(e) => {
           onChange({ source: +e.target.value as OptionsSource, options: undefined });
@@ -61,7 +64,8 @@ function OptionsFieldExtra({ extra, onChange, validationErrors, disabled }: Prop
 
       {optionsElement}
 
-      <FormControlLabel disabled={disabled}
+      <FormControlLabel style={{ gridColumn: "span 2" }}
+                        disabled={disabled}
                         control={<Checkbox checked={multiple}
                                            onChange={(e) => {
                                              onChange({ multiple: e.target.checked });
