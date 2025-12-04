@@ -11,7 +11,7 @@ interface CustomNumberFieldProps extends CustomInputFormFieldProps {
 }
 
 const CustomNumberField: React.FC<CustomNumberFieldProps> = ({
-  value,
+  value="",
   isDisabled,
   onChangeHandler,
   isValid,
@@ -32,9 +32,7 @@ const CustomNumberField: React.FC<CustomNumberFieldProps> = ({
       ? `המספר חייב להיות קטן מ- ${maxValue}`
       : `המספר חייב להיות גדול מ- ${minValue} וקטן מ- ${maxValue}`;
 
-  const [inputValue, setInputValue] = useState(
-    value !== undefined && value !== null ? value.toString() : "",
-  );
+  const [inputValue, setInputValue] = useState(value);
   const [errorMessage, setErrorMessage] = useState(isRequired ? initialErrorMessage : "");
   const [fieldIsValid, setFieldIsValid] = useState<boolean>(isValid);
 

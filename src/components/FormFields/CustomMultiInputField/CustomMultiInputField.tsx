@@ -40,7 +40,6 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
   const theme = useTheme();
 
   const errorMessageNoInputText = "לא ניתן לשמור שדה ריק";
-  const errorMessageNoListValues = "אין אפשרות לשמור את הרשימה ריקה";
 
   const [inputValue, setInputValue] = useState("");
   const [listValues, setListValues] = useState<string[]>([]);
@@ -48,18 +47,11 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
   const [isEditItemMode, setIsEditItemMode] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ListItem>();
 
-  const [hasError, setHasError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(errorMessageNoInputText);
+  const [errorMessage, setErrorMessage] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showSuccessIcon, setShowSuccessIcon] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Handle dropdown selection
-  const handleDropdownChange = (event: any) => {
-    // Close dropdown when clicking on items
-    setDropdownOpen(false);
-  };
 
   // Add a state to control when to show input in tabular edit mode
   const [showInputInTabular, setShowInputInTabular] = useState(false);
@@ -106,7 +98,7 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
     }
     setListValues((prev) => [...prev, inputValue]);
     setInputValue("");
-    setHasError(false);
+    //setHasError(false);
     setErrorMessage("");
 
     // Show success icon only in tabular edit mode
@@ -152,14 +144,20 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
 
   // Delete Item Function
   const onDeleteListItemClickHandler = (item: ListItem) => {
-    const newListValueArray = listValues.filter((listItem, index) => index !== item.index);
+    const newListValueArray = listValues.filter((listItem, index) => index !== item.index);    
+    if(newListValueArray.length<=0 && isRequired){
+      setErrorMessage("נדרש להזין לפחות ערך אחד");
+    }
     setListValues(newListValueArray);
   };
 
   // Update The Form Values State on the parent component
-  useEffect(() => {
-    onChangeHandler(listValues, hasError);
-  }, [listValues, hasError]);
+  useEffect(() => {    
+    if(listValues.length<=0 && isRequired){
+    !isValid&& setErrorMessage("נדרש להזין לפחות ערך אחד");
+    }
+    listValues.length!==0 && onChangeHandler(listValues, errorMessage?false:true);
+  }, [listValues, errorMessage,isValid]);
 
   // Set List Values from parent Form component (Edit Mode)
   useEffect(() => {
@@ -167,6 +165,14 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
       setListValues(value);
     }
   }, []);
+
+  // useEffect(()=>{
+  //   console.log("isValid",isValid);
+    
+  //   if(!isValid){
+  //     isRequired && setErrorMessage("נדרש להזין לפחות ערך אחד");
+  //   }
+  // },[isValid]);
 
   return (
     <div
@@ -178,7 +184,6 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
           gap: "4px",
         }),
       }}>
-      {/* Always show regular input field with + icon and chevron if items exist */}
       <BaseFieldInput
         isTabularEdit={isTabularEdit}
         fullWidth={true}
@@ -195,8 +200,8 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
         required={isRequired}
         value={inputValue}
         onChange={onChangeValueHandler}
-        error={hasError}
-        helperText={hasError ? errorMessage || errorMessageNoListValues : ""}
+        error={errorMessage?true:false}
+        helperText={errorMessage}
         disabled={isDisabled}
         onKeyUp={handleKeyUp}
         size={isTabularEdit ? "medium" : undefined}
@@ -241,7 +246,6 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
           endAdornment: (
             <InputAdornment position="end">
               <div style={{ display: "flex", alignItems: "center" }}>
-                {/* Always show plus icon */}
                 {!isDisabled && (
                   <IconButton
                     sx={{

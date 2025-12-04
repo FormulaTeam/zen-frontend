@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { CustomInputFormFieldProps } from "../../../utils/interfaces";
-import { useTheme } from "@mui/material/styles";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
 import { Chrome90RTLFixContainer } from "../Chrome90RTLFix/Chrome90RTLFix";
 import "dayjs/locale/he";
@@ -46,7 +45,6 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
     if (defaultValue === "currentTime") return dayjs();
     return null;
   });
-  const theme = useTheme();
 
   useEffect(() => {
     if (timeValue && timeValue.isValid()) {
@@ -92,7 +90,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
               isTabularEdit,
               required: isRequired,
               error: !isValid,
-              helperText: (!isValid && "יש להזין שעה בפורמט תקין") || " ",
+              helperText: !isValid ? isRequired && "שדה זה הינו חובה" :"יש להזין שעה בפורמט תקין",
               size: isTabularEdit ? "medium" : undefined,
             } as any,
             inputAdornment: {

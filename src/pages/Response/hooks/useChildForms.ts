@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FieldTypeIds, Filter, FormField, NotificationTexts, Role } from "../utils/interfaces";
+import { FieldTypeIds, Filter, FormField, NotificationTexts, Role } from "../../../utils/interfaces";
 import {
   checkUserAccessForResponse,
   showErrorNotification,
   showSuccessNotification,
-} from "../utils/utils";
-import { deleteResponse, getForms, getResponses } from "../api";
-import { User } from "../contexts/AuthContext";
+} from "../../../utils/utils";
+import { deleteResponse, getForms, getResponses } from "../../../api";
+import { User } from "../../../contexts/AuthContext";
 
 type ChildFormProps = {
   formId: number;

@@ -1,21 +1,18 @@
 import { DatePicker, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import React, { useEffect, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import classes from "./CustomDateTime.module.scss";
 import { CustomInputFormFieldProps } from "../../../utils/interfaces";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
-import { useTheme } from "@mui/material/styles";
-import InputLabel from "@mui/material/InputLabel";
 import { Chrome90RTLFixContainer } from "../Chrome90RTLFix/Chrome90RTLFix";
 import "dayjs/locale/he";
 
 dayjs.extend(utc);
 
 interface CustomDateTimeProps extends CustomInputFormFieldProps {
-  value: string | null; // Expecting an ISO string
+  value: string | null;
   defaultValue?: string;
   dateAndTime?: boolean;
   isTabularEdit?: boolean;
@@ -33,7 +30,6 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   isTabularEdit = false,
 }) => {
   const [dateValue, setDateValue] = useState<Dayjs | null>(value ? dayjs(value) : null);
-  const theme = useTheme();
   useEffect(() => {
     if (value && dayjs(value).isValid()) {
       setDateValue(dayjs(value));
@@ -120,7 +116,10 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
               isTabularEdit,
               required: isRequired,
               error: !isValid, // Show error style if there's an error
-              helperText: (!isValid && "יש להזין תאריך בפורמט תקין") || " ", // Display error message
+              helperText:
+                !isValid && isRequired && dateValue !== null
+                  ? "שדה זה הינו חובה"
+                  : "יש להזין שעה בפורמט תקין", // Display error message
               size: isTabularEdit ? "medium" : undefined,
             } as any,
             inputAdornment: {
@@ -167,7 +166,9 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
               textField: {
                 required: isRequired,
                 error: !isValid, // Show error style if there's an error
-                helperText: (!isValid && "יש להזין שעה בפורמט תקין") || " ", // Display error message
+                helperText: !isValid
+                  ? isRequired && "שדה זה הינו חובה"
+                  : "יש להזין שעה בפורמט תקין",
                 size: isTabularEdit ? "medium" : undefined,
               },
               inputAdornment: {

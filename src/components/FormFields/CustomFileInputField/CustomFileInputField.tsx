@@ -24,6 +24,8 @@ interface CustomFileInputFieldProps extends CustomInputFormFieldProps {
   isTabularEdit?: boolean;
 }
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB in bytes
+
 const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   value,
   isDisabled,
@@ -34,6 +36,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   isTabularEdit = false,
 }) => {
   const [responseFiles, setResponseFiles] = useState<any>(value || []);
+  const [errorMsg, setErrorMsg] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [combinedFiles, setCombinedFiles] = useState<any>({
     newFiles: [],
@@ -46,16 +49,32 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    setFiles((prev) => [...prev, ...acceptedFiles]);
+    const validFiles = acceptedFiles.filter(file => file.size <= MAX_FILE_SIZE);
+    
+    if (validFiles.length !== acceptedFiles.length) {
+      setErrorMsg("קובץ אחד או יותר גדול מ-10 MB ולא הועלה. גודל מקסימלי: 10 MB");
+    } else {
+      setErrorMsg("");
+    }
+    setFiles(validFiles);
   }, []);
 
-  const onDeleteFileItem = (event, file, index) => {
-    event.stopPropagation();
-    setDeletedFiles((prevFiles) => [...prevFiles, file]);
-  };
+  const onDropRejected = useCallback((fileRejections: any[]) => {
+    const rejectedFiles = fileRejections.map(rejection => rejection.file);
+    const tooLargeFiles = rejectedFiles.filter(file => file.size > MAX_FILE_SIZE);
+    
+    if (tooLargeFiles.length > 0) {
+      const fileNames = tooLargeFiles.map(f => f.name).join(", ");
+      setErrorMsg(`הקבצים הבאים גדולים מ-10 MB ולא הועלו: ${fileNames}. גודל מקסימלי: 10 MB`);
+    }
+  }, []);
 
   const deleteFileBeforeUpload = (event, file, index) => {
     event.stopPropagation();
+    if(isRequired && combinedFiles?.newFiles.length === 1){
+      setErrorMsg("שדה זה הינו חובה");
+    }
+    //setCombinedFiles((prevFiles) => ({...prevFiles.filter((_, idx) => idx !== index)}));
     setFiles((prevFiles) => prevFiles.filter((_, idx) => idx !== index));
   };
 
@@ -69,7 +88,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
     setDeletedFiles((prevFiles) => [...prevFiles, file]);
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, maxSize:MAX_FILE_SIZE, onDropRejected });
 
   useEffect(() => {
     setCombinedFiles({
@@ -82,10 +101,16 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
     onChangeHandler({ files: combinedFiles, deletedFiles }, true);
   }, [combinedFiles]);
 
+  useEffect(()=>{    
+    if(isRequired && combinedFiles?.newFiles.length === 0 && combinedFiles?.newFiles.length === 0  && !isValid){
+      setErrorMsg("שדה זה הינו חובה");
+    }
+  },[isValid])
+
   return (
-    <FormControl className={!isValid ? classes.invalid : ""}>
+    <FormControl className={isRequired && combinedFiles?.newFiles.length === 0 && combinedFiles?.newFiles.length === 0 && !isValid ? classes.invalid : !isValid ? classes.invalid : ""}>
       {!isTabularEdit && (
-        <FormLabel style={{ fontSize: 14 }} error={!isValid} required={isRequired}>
+        <FormLabel style={{ fontSize: 14, color: errorMsg && "red" }} error={!isValid} required={isRequired}>
           {label}
         </FormLabel>
       )}
@@ -132,6 +157,12 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
               )}
             </section>
           </Box>
+          <Box sx={{
+            display:'flex',
+            alignSelf:'end',
+            fontSize:14,
+            color:'red'
+          }}>{errorMsg}</Box>
           <section className={classes["items-preview"]}>
             {files?.map((file, index) => {
               const fileExtension = getFileExtension(file.name);

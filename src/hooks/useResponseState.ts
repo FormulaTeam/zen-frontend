@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  connectionTypes,
   FieldTypeIds,
   Form,
   FormField,
@@ -9,7 +8,6 @@ import {
   Role,
   SearchResponsesFilter,
   ConditionUtils,
-  ConditionGroup,
 } from "../utils/interfaces";
 import { getFormById, searchResponses } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
@@ -59,6 +57,7 @@ export const useResponseState = (
   const [response, setResponse] = useState<ResponseForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const navigate = useNavigate();
 
   const { fieldOptions, isLoading: loadingConnections } = useConnectedFormOptions({
     formFields: form?.fields || [],
@@ -70,7 +69,7 @@ export const useResponseState = (
       [sectionId]: !prev[sectionId],
     }));
   };
-  const navigate = useNavigate();
+
   useEffect(() => {
     if (formId) {
       getFormById(Number(formId)).then((form) => {
@@ -312,6 +311,7 @@ export const useResponseState = (
           FieldTypeIds.file,
           FieldTypeIds.list,
         ];
+        
         if (isRequired && !excludedTypeIds.includes(field.typeId)) {
           //אפשרויות
           if (field.typeId === FieldTypeIds.options) {
@@ -413,7 +413,9 @@ export const useResponseState = (
             newFormFieldsValidMap.set(uniqueId, false);
             ans = false;
           }
-        } else if (field.typeId === FieldTypeIds.file) {
+        } 
+        //קובץ
+        else if (field.typeId === FieldTypeIds.file) {
           if (
             (!val?.files && field.required) ||
             (val?.files?.newFiles?.length === 0 &&
@@ -473,7 +475,9 @@ export const useResponseState = (
               return;
             }
           }
-        } else if (field.typeId === FieldTypeIds.list) {
+        } 
+        //רשימה
+        else if (field.typeId === FieldTypeIds.list) {
           if (isRequired) {
             if (!val || val.length === 0) {
               newFormFieldsValidMap.set(uniqueId, false);

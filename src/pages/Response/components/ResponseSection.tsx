@@ -1,18 +1,18 @@
 import React from "react";
 import { Collapse, IconButton, Typography, useTheme, Box, CircularProgress } from "@mui/material";
-import FormFieldRenderer from "../Responses/FormFieldRenderer";
-import { FieldsWrapper } from "../../pages/Response/styled";
+import FormFieldRenderer from "../../../components/Responses/FormFieldRenderer";
+import { FieldsWrapper } from "../styled";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import {
   FormField,
   ResponseFieldValue,
   IResponseSection,
   FieldTypeIds,
-} from "../../utils/interfaces";
-import { NOT_A_SECTION_ID } from "../../utils/sections/consts";
-import { texts } from "../../utils/texts";
+} from "../../../utils/interfaces";
+import { NOT_A_SECTION_ID } from "../../../utils/sections/consts";
+import { texts } from "../../../utils/texts";
 import styled from "styled-components";
-import { LoadingContainer } from "../FormInFormField/styled";
+import { LoadingContainer } from "../styled";
 
 const GridContainer = styled.div`
   display: grid;

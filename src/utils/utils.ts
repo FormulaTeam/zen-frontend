@@ -215,19 +215,22 @@ export const numberToHebrewLetterMap = new Map<number, string>([
 
 export const utmRegex = /^\d{6}$/;
 
+export const latitudeRegexX = /^(100000|[1-8]\d{5}|900000)$/;
+export const latitudeRegexY = /^([0-9]|[1-9]\d{1,6}|[1-9]\d{6}|10000000)$/;
+
 /**
 1.Must start with 34. or 31.
 2.Must be a positive number
 3.Must have exactly 9 digits after the decimal
 */
-export const wktLatitudeRegexY = /^\d{2}\.\d+$/;
+export const wktLatitudeRegexY = /^[-+]?(90(\.0+)?|([1-8]?\d(\.\d+)?))$/;
 
 /**
 1.Must start with 29-37 before the decimal
 2.Must be a positive number
 3.Must have exactly 9 digits after the decimal
 */
-export const wktLongitudeRegexX = /^\d{2}\.\d+$/;
+export const wktLongitudeRegexX = /^[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
 
 /**
  * 1. Must start with 00-23 to represent hours in 24-hour format

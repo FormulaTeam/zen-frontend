@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { LocationValue, LocationValueError } from "../../../utils/interfaces";
 import classes from "./CustomLatitudeLongitudeField.module.scss";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
-import { utmRegex, wktLatitudeRegexY, wktLongitudeRegexX } from "../../../utils/utils";
+import { utmRegex, wktLatitudeRegexY, wktLongitudeRegexX,latitudeRegexX,latitudeRegexY } from "../../../utils/utils";
 
 type CustomLatitudeLongitudeFieldProps = {
   value: LocationValue;
@@ -23,85 +23,77 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
   isValid,
   label,
   isRequired,
-  coordinateType,
+  coordinateType="UTM",
   isTabularEdit = false,
 }) => {
-  const [latitude, setLatitude] = useState(value?.x || "");
-  const [latitudeIsValid, setLatitudeIsValid] = useState(true);
 
-  const [longitude, setLongitude] = useState(value?.y || "");
-  const [longitudeIsValid, setLongitudeIsValid] = useState(true);
+  const [coords, setCoords] = useState<LocationValue>({
+    x: value?.x || "",
+    y: value?.y || "",
+  });
+
+  const [valid, setValid] = useState<LocationValueError>({
+    x: true,
+    y: true,
+  });
 
   useEffect(() => {
-    setLatitudeIsValid(isValid.x);
-    setLongitudeIsValid(isValid.y);
+    setValid(isValid);
   }, [isValid]);
 
-  const onChangeLatitudeInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setLatitude(event?.target.value);
-    if (event?.target.value === "" && !isRequired) {
-      setLatitudeIsValid(true);
-      return;
-    }
-    if (coordinateType === "UTM" && !utmRegex.test(event?.target.value)) {
-      setLatitudeIsValid(false);
-      return;
-    } else {
-      setLatitudeIsValid(true);
+  const validateField = (name: "x" | "y", val: string): boolean => {    
+    if (val === "" && !isRequired) return true;
+
+    if (coordinateType === "UTM") {
+      return name === "x" ? latitudeRegexX.test(val) : latitudeRegexY.test(val);
     }
 
-    if (coordinateType === "WKT" && !wktLatitudeRegexY.test(event?.target.value)) {
-      setLatitudeIsValid(false);
-      return;
-    } else {
-      setLatitudeIsValid(true);
+    if (coordinateType === "WKT") {
+      return name === "x" 
+        ? wktLongitudeRegexX.test(val) 
+        : wktLatitudeRegexY.test(val);
     }
+
+    return true;
   };
 
-  const onChangeLongitudeInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setLongitude(event?.target.value);
-    if (event?.target.value === "" && !isRequired) {
-      setLongitudeIsValid(true);
-      return;
-    }
-    if (coordinateType === "UTM" && !utmRegex.test(event?.target.value)) {
-      setLongitudeIsValid(false);
-      return;
-    } else {
-      setLongitudeIsValid(true);
-    }
-    if (coordinateType === "WKT" && !wktLongitudeRegexX.test(event?.target.value)) {
-      setLongitudeIsValid(false);
-      return;
-    } else {
-      setLongitudeIsValid(true);
-    }
+  const onChangeHandlerInput = (
+    event: React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement>,
+    field: "x" | "y"
+  ) => {
+    const val = event.target.value;
+
+    setCoords(prev => ({ ...prev, [field]: val }));
+
+    const isFieldValid = validateField(field, val);
+
+    setValid(prev => ({ ...prev, [field]: isFieldValid }));
   };
 
   useEffect(() => {
-    onChangeHandler({ x: latitude, y: longitude }, { x: latitudeIsValid, y: longitudeIsValid });
-  }, [latitude, longitude]);
+    onChangeHandler(coords, valid);
+  }, [coords]);
+  
 
   return (
-    <div className={classes["location-text-field-container"]} style={isTabularEdit ? { display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' } : {}}>
-      <Box sx={isTabularEdit ? { width: '100%' } : {}}>
+    <div
+      className={classes["location-text-field-container"]}
+      style={isTabularEdit ? { display: "flex", flexDirection: "column", gap: "4px", width: "100%" } : {}}
+    >
+      {/* Y FIELD */}
+      <Box sx={isTabularEdit ? { width: "100%" } : {}}>
         <BaseFieldInput
           isTabularEdit={isTabularEdit}
-          fullWidth={true}
+          fullWidth
           label={isTabularEdit ? "" : label}
-          key={"latitude"}
           required={isRequired}
-          value={latitude}
-          onChange={onChangeLatitudeInputHandler}
-          error={!latitudeIsValid}
-          helperText={
-            (
-              !coordinateType || coordinateType === "UTM"
-                ? !latitudeIsValid && "יש להזין שדה עם 6 ספרות בלבד"
-                : coordinateType === "WKT"
-                ? !latitudeIsValid && "יש להזין מספר בסגנון 34.242342342"
-                : " "
-            )
+          value={coords.y}
+          onChange={(e) => onChangeHandlerInput(e, "y")}
+          error={!valid.y}
+          helperText={isRequired && !coords.y ? "שדה זה הינו חובה":
+            coordinateType === "WKT"
+              ? (!valid.y && "יש להזין מספר בין 90- ל90 בפורמט עשרוני תקין")
+              : (!valid.y && "חייב להכין מספר בין 0–10,000,000")
           }
           disabled={isDisabled}
           adornment={isTabularEdit ? undefined : "Y"}
@@ -110,23 +102,20 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
         />
       </Box>
 
-      <Box sx={isTabularEdit ? { width: '100%' } : {}}>
+      {/* X FIELD */}
+      <Box sx={isTabularEdit ? { width: "100%" } : {}}>
         <BaseFieldInput
           isTabularEdit={isTabularEdit}
-          fullWidth={true}
+          fullWidth
           label={isTabularEdit ? "" : " "}
-          value={longitude}
-          key={"longitude"}
-          onChange={onChangeLongitudeInputHandler}
-          error={!longitudeIsValid}
-          helperText={
-            (
-              !coordinateType || coordinateType === "UTM"
-                ? !longitudeIsValid && "יש להזין שדה עם 6 ספרות בלבד"
-                : coordinateType === "WKT"
-                ? !longitudeIsValid && "יש להזין מספר בסגנון 31.235345345"
-                : " "
-            )
+          value={coords.x}
+          required={isRequired}
+          onChange={(e) => onChangeHandlerInput(e, "x")}
+          error={!valid.x}
+          helperText={isRequired && !coords.x ? "שדה זה הינו חובה" :
+            coordinateType === "WKT"
+              ? (!valid.x && "יש להזין מספר בין 180- ל180 בפורמט עשרוני תקין")
+              : (!valid.x && "חייב להכיל 6 ספרות תקינות (100000–900000)")
           }
           disabled={isDisabled}
           adornment={isTabularEdit ? undefined : "X"}

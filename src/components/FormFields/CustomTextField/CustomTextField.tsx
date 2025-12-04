@@ -1,4 +1,3 @@
-import { TextField } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { CustomInputFormFieldProps } from "../../../utils/interfaces";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
@@ -21,12 +20,7 @@ const CustomTextField: React.FC<CustomTextFieldProps> = ({
   isTabularEdit = false,
 }) => {
   const [inputValue, setInputValue] = useState(value || "");
-  const [inputValueValid, setInputValueValid] = useState<boolean>(isValid ?? true);
   const [helperText, setHelperText] = useState("");
-
-  useEffect(() => {
-    setInputValue(value || "");
-  }, [value]);
 
   const onChangeInputHandler = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -34,28 +28,23 @@ const CustomTextField: React.FC<CustomTextFieldProps> = ({
     validationRegex?: string,
   ) => {
     if (isRequired && !event.target.value) {
-      setInputValueValid(false);
       setHelperText("שדה זה הינו חובה");
     } else if (!!event.target.value && !!validationRegex) {
       const reg = new RegExp(validationRegex);
       const isValid = reg.test(event.target.value);
       if (!isValid) {
-        setInputValueValid(false);
         setHelperText("הפורמט אינו תקין");
       } else {
-        setInputValueValid(true);
         setHelperText("");
       }
     } else {
-      setInputValueValid(true);
       setHelperText("");
     }
     setInputValue(event.target.value);
     onChangeHandler(event.target.value, isValid);
   };
 
-  useEffect(() => {
-    setInputValueValid(isValid);
+  useEffect(() => {    
     if (isRequired && !isValid) {
       setHelperText("שדה זה הינו חובה");
     }
@@ -72,10 +61,9 @@ const CustomTextField: React.FC<CustomTextFieldProps> = ({
         onChangeInputHandler(e, isRequired, validationRegex);
       }}
       multiline={multiline && !isTabularEdit}
-      error={!inputValueValid}
+      error={!isValid&&!!helperText}
       helperText={helperText || " "}
       size={isTabularEdit ? "medium" : undefined}
-      // inputMode=""
       slotProps={{
         htmlInput: {
           pattern: validationRegex,
