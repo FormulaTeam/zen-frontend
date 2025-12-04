@@ -17,6 +17,7 @@ function getEmptyForm(): FormStructure {
   return {
     metadata: {
       title: "",
+      validationErrors: null,
     },
     sections: {
       [sectionId]: { ...INITIAL_SECTION },

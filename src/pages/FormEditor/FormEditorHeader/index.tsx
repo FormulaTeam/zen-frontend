@@ -15,6 +15,11 @@ function FormEditorHeader() {
 
   const { title, description, iconId, validationErrors } = formStructure.metadata;
 
+  function handleSaveForm() {
+    validateForm();
+    console.log(formStructure);
+  }
+
   return (
     <div className={styles.header}>
       <div className={styles.headerStart}>
@@ -90,7 +95,7 @@ function FormEditorHeader() {
         </div>
       </div>
       <div className={styles.headerEnd}>
-        <Button variant={"contained"} color={"primary"} onClick={validateForm}>שמירה</Button>
+        <Button variant={"contained"} color={"primary"} onClick={handleSaveForm}>שמירה</Button>
         <Button variant={"outlined"} color={"error"}>יציאה</Button>
       </div>
     </div>

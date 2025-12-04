@@ -211,7 +211,7 @@ function ManualOptions(props: Props) {
                       const checked = items[selectedControlledItemIndex].controllingItemsIds?.includes(controllingItem.id) ?? false;
 
                       return (
-                        <div className={styles.controllingItem}>
+                        <div key={controllingItem.id} className={styles.controllingItem}>
                           <div className={styles.controllingItemBranch} />
                           <FormControlLabel label={controllingItem.text}
                                             disabled={disabled}

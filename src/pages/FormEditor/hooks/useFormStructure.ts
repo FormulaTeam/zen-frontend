@@ -292,6 +292,7 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
   const validateForm = useCallback(() => {
     setFormStructure((prev) => {
       const fields = { ...prev.fields };
+      const { validationErrors: _, ...metadata } = { ...prev.metadata };
 
       Object.keys(fields).forEach((fieldId) => {
         fields[fieldId] = {
@@ -303,6 +304,10 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
       return {
         ...prev,
         fields,
+        metadata: {
+          ...metadata,
+          validationErrors: validateMetadata(metadata),
+        },
       };
     });
   }, []);
