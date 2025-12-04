@@ -82,11 +82,3 @@ export const PageWrapper = MuiStyled(Box)<BoxProps>(({ theme }) => ({
   display: "flex",
   overflow: "hidden",
 }));
-
-export const StyledButton = styled(Button)<{ backgroundcolor?: string }>`
-  padding: 8px;
-  flex: 1;
-  width: auto;
-  text-align: left;
-  cursor: pointer;
-`;

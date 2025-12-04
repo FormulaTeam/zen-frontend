@@ -8,9 +8,10 @@ import MetroSyncingPopup from "./Popups/MetroSyncingPopup";
 import MenusContainer from "./Menus/MenusContainer";
 import "./ResponseToolbar.scss";
 import styled from "styled-components";
-import { StyledButton } from "../../pages/ResponsesPage/styled";
 import { Add } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { IPath } from "../../types/enums/global.enums";
+import { Button } from "@mui/material";
 
 export const HiddenInput = styled("input")`
   display: none !important;
@@ -28,7 +29,6 @@ function ResponseToolbar({
 }) {
   const uploadRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-
 
   const [anchorElMoreActions, setAnchorElMoreActions] = useState<null | HTMLElement>(null);
   const [anchorElSourceType, setAnchorElSourceType] = useState<null | HTMLElement>(null);
@@ -160,14 +160,15 @@ function ResponseToolbar({
         />
       </Portal>
       <Box>
-        <StyledButton
+        <Button
           color="primary"
           variant="contained"
-          onClick={() => {navigate(`/response/create/${form.id}`)}}
-          startIcon={<Add />}
-        >
+          onClick={() => {
+            navigate(IPath.RESPONSE_CREATE.replace(":formId", form.id));
+          }}
+          startIcon={<Add />}>
           הוספת תגובה חדשה
-        </StyledButton>
+        </Button>
       </Box>
     </Stack>
   );
