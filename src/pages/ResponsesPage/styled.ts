@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import Box, { BoxProps } from "@mui/material/Box";
 import { styled as MuiStyled } from "@mui/material/styles";
-import { Button, TableContainer as MuiTableContainer } from "@mui/material";
+import { TableContainer as MuiTableContainer } from "@mui/material";
 
 export const DetailsContainer = MuiStyled(Box)<BoxProps>(({ theme }) => ({
   display: "flex",
