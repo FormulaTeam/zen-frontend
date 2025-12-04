@@ -1,5 +1,5 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
-import { FieldTypeIds } from "../../../utils/interfaces";
+import { FieldTypeIds } from "../../../../utils/interfaces";
 import { boolean, literal, strictObject } from "zod";
 
 const checkboxSchema = baseFormFieldSchema.safeExtend({

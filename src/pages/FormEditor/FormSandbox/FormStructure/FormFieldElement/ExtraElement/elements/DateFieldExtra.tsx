@@ -1,6 +1,6 @@
 import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { Checkbox, FormControl, FormControlLabel, InputLabel, MenuItem, Select } from "@mui/material";
-import { DefaultDateValue } from "../../../../../schemas/dateSchema";
+import { DefaultDateValue } from "../../../../../schemas/fields/dateSchema";
 import { ExtraElementProps } from "../index";
 
 type Props = ExtraElementProps<typeof FieldTypeIds.date>;

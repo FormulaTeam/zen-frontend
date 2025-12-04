@@ -5,8 +5,6 @@
     border-radius: 16px !important;
     margin-bottom: 24px;
     overflow: hidden;
-    /*background-color: white !important;*/
-    /*box-shadow: 0 4px 20px 0 #1976D21A !important;*/
 }
 
 .title{
@@ -32,6 +30,7 @@
     flex: 1 0 auto;
     overflow-y: scroll;
     min-height: 180px;
+    width: 100%;
 }
 
 .emptySectionPlaceholder{

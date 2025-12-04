@@ -1,11 +1,11 @@
 import { FieldTypeIds } from "../../../../../../../../utils/interfaces";
 import { ExtraElementProps } from "../../index";
-import { OptionsSource } from "../../../../../../schemas/optionsSchema";
+import { OptionsSource } from "../../../../../../schemas/fields/optionsSchema";
 import {
   SpecificDiscriminatedUnionSubObject,
   SpecificDiscriminatedUnionSubObjectErrorTree,
 } from "../../../../../../schemas/types";
-import { FormFieldExtra } from "../../../../../../schemas";
+import { FormFieldExtra } from "../../../../../../schemas/fields";
 import { ReactElement } from "react";
 import { FormFieldResponsesOptions } from "./FormFieldResponsesOptions";
 import { Checkbox, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mui/material";
@@ -52,7 +52,7 @@ function OptionsFieldExtra({ fieldId, extra, onChange, validationErrors, disable
 
   return (
     <>
-      <FormControl disabled={disabled} style={{ gridColumn: "span 4" }}>
+      <FormControl disabled={disabled} style={{ gridColumn: "1 / -1" }}>
         <FormLabel>מקור אפשרויות</FormLabel>
         <RadioGroup row value={source} onChange={(e) => {
           onChange({ source: +e.target.value as OptionsSource, options: undefined });

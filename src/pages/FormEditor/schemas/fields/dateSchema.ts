@@ -1,5 +1,5 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
-import { FieldTypeIds } from "../../../utils/interfaces";
+import { FieldTypeIds } from "../../../../utils/interfaces";
 import { boolean, enum as zod_enum, literal, strictObject } from "zod";
 
 enum DefaultDateValue {

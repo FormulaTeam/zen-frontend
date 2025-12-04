@@ -1,12 +1,13 @@
 import { useCallback, useState } from "react";
-import { FormField, FormStructure, Section } from "../context/FormStructureContext";
+import { FormField, FormMetadata, FormStructure, Section } from "../context/FormStructureContext";
 import { getEmptyForm } from "../context/constants";
 import { texts } from "../../../utils/texts";
 import { FormFieldTypeId } from "../../../utils/interfaces";
 import { generateFieldId, generateFieldName, generateSectionId } from "../utils";
-import { FormFieldData, FormFieldSchema } from "../schemas";
+import { FormFieldData, FormFieldSchema } from "../schemas/fields";
 import { z } from "zod";
 import { $ZodErrorTree } from "zod/v4/core";
+import { FormMetadataSchema } from "../schemas/metadata";
 
 function yieldFormStructure(form: object) {
   return form as FormStructure; // TODO change to actual logic that translates form json to form structure
@@ -41,6 +42,16 @@ function pickSharedKeysDeep<T extends object>(
 
   return result;
 }
+
+const validateMetadata = (metadata: FormMetadata) => {
+  const result = FormMetadataSchema.safeParse(metadata);
+
+  if (!result.success) {
+    return z.flattenError(result.error).fieldErrors;
+  }
+
+  return null;
+};
 
 const validateFieldData = <T extends FormFieldTypeId>(
   data: Partial<FormFieldData & { typeId: T }>,
@@ -233,7 +244,7 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
           extra: {
             ...originalData.extra,
             ...data.extra,
-          }
+          },
         } as FormFieldData & { typeId: T };
 
         const validationErrors =
@@ -255,6 +266,28 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
         };
       });
     }, []);
+
+  const setFormMetadata = useCallback((metadata: Partial<FormMetadata>) => {
+    let validationErrors: FormStructure["metadata"]["validationErrors"] = {};
+
+    setFormStructure((prev) => {
+      const { validationErrors: _, ...prevMetadata } = prev.metadata;
+
+      const combinedMetadata = { ...prevMetadata, ...metadata };
+
+      validationErrors = validateMetadata(combinedMetadata);
+
+      return {
+        ...prev,
+        metadata: {
+          ...combinedMetadata,
+          validationErrors,
+        },
+      };
+    });
+
+    return !validationErrors;
+  }, []);
 
   const validateForm = useCallback(() => {
     setFormStructure((prev) => {
@@ -285,6 +318,8 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
     appendFieldToFirstSection,
     deleteField,
     setFieldData,
+
+    setFormMetadata,
     validateForm,
   };
 }

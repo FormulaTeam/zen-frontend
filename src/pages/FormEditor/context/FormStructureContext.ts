@@ -1,8 +1,10 @@
 import { createContext, SetStateAction, useContext } from "react";
 import { FormFieldTypeId } from "../../../utils/interfaces";
 import { getEmptyForm } from "./constants";
-import { FormFieldData } from "../schemas";
+import { FormFieldData } from "../schemas/fields";
 import { $ZodErrorTree } from "zod/v4/core";
+import { FormMetadata } from "../schemas/metadata";
+import { typeToFlattenedError } from "zod/v3";
 
 interface Section {
   title: string;
@@ -20,12 +22,10 @@ interface FormField {
 }
 
 interface FormStructure {
-  title: string | null;
+  metadata: FormMetadata & { validationErrors?: typeToFlattenedError<FormMetadata>['fieldErrors'] | null };
   sections: Record<string, Section>;
   orderedSectionIds: string[];
   fields: Record<string, FormField>;
-
-  description?: string;
 }
 
 interface FormStructureContext {
@@ -39,6 +39,7 @@ interface FormStructureContext {
   deleteField: (fieldId: string) => void;
   setFieldData: (fieldId: string, data: Partial<FormFieldData>) => void;
   validateForm: () => void;
+  setFormMetadata: (metadata: Partial<FormMetadata>) => boolean;
 }
 
 const FormStructureContext = createContext<FormStructureContext>({
@@ -52,6 +53,7 @@ const FormStructureContext = createContext<FormStructureContext>({
   deleteField: () => null,
   setFieldData: () => null,
   validateForm: () => null,
+  setFormMetadata: () => false,
 });
 
 function useFormStructureContext() {
@@ -63,4 +65,4 @@ function useFormStructureContext() {
 }
 
 export { FormStructureContext, useFormStructureContext };
-export type { FormStructure, Section, FormField };
+export type { FormStructure, Section, FormField, FormMetadata };

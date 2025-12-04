@@ -10,7 +10,7 @@ import { FieldTypeIds, FORM_ELEMENTS } from "../../../../../utils/interfaces";
 import { Button, FormControlLabel, Switch, TextField, Typography } from "@mui/material";
 import { useEffect, useRef } from "react";
 import { ExtraElement } from "./ExtraElement";
-import { FormFieldData } from "../../../schemas";
+import { FormFieldData } from "../../../schemas/fields";
 
 interface Props {
   field: FormField;

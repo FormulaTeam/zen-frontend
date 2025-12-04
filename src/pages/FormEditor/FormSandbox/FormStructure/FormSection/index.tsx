@@ -15,7 +15,7 @@ import {
 import { FormFieldElement } from "../FormFieldElement";
 import { DraggableElementData } from "../../../context/FormSandboxContext";
 import { useDndContext } from "@dnd-kit/core";
-import { FormFieldData } from "../../../schemas";
+import { FormFieldData } from "../../../schemas/fields";
 import { Resizable } from "re-resizable";
 
 interface Props {

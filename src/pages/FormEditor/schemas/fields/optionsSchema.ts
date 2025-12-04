@@ -1,5 +1,5 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
-import { FieldTypeIds } from "../../../utils/interfaces";
+import { FieldTypeIds } from "../../../../utils/interfaces";
 import { any, array, boolean, discriminatedUnion, enum as zod_enum, literal, object, record, string } from "zod";
 
 enum OptionsSource {

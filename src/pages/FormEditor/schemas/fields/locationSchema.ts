@@ -1,5 +1,5 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
-import { FieldTypeIds } from "../../../utils/interfaces";
+import { FieldTypeIds } from "../../../../utils/interfaces";
 import { enum as zod_enum, literal, strictObject } from "zod";
 
 enum LocationFormat {

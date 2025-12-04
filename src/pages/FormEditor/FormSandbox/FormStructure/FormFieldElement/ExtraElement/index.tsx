@@ -7,7 +7,7 @@ import {
   TimeFieldExtra,
 } from "./elements";
 import { FieldTypeIds, FormFieldTypeId } from "../../../../../../utils/interfaces";
-import { FormFieldExtra, SpecificFormFieldData } from "../../../../schemas";
+import { FormFieldExtra, SpecificFormFieldData } from "../../../../schemas/fields";
 import styles from "../style.module.css";
 import { ReactElement } from "react";
 import { $ZodErrorTree } from "zod/v4/core";

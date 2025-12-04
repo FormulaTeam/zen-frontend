@@ -1,7 +1,7 @@
 import { any, boolean, literal, record, strictObject, string, union } from "zod";
-import { FieldTypeIds, FormFieldTypeId } from "../../../utils/interfaces";
+import { FieldTypeIds, FormFieldTypeId } from "../../../../utils/interfaces";
 
-const EMPTY_FIELD_ERROR_MESSAGE = 'שדה חובה';
+const EMPTY_FIELD_ERROR_MESSAGE = "שדה חובה";
 
 const literalTypeId = union(
   Object.values(FieldTypeIds).map((v: FormFieldTypeId) => literal(v)),

@@ -15,7 +15,9 @@ function getEmptyForm(): FormStructure {
   const sectionId = generateSectionId();
 
   return {
-    title: null,
+    metadata: {
+      title: "",
+    },
     sections: {
       [sectionId]: { ...INITIAL_SECTION },
     },

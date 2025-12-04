@@ -1,4 +1,4 @@
-import { OptionsSource } from "../../../../../../../schemas/optionsSchema";
+import { OptionsSource } from "../../../../../../../schemas/fields/optionsSchema";
 import { FormControl, FormHelperText, InputLabel, MenuItem, Select } from "@mui/material";
 import { ExtraElementProps } from "../../../index";
 import { OptionsFieldTypeId, SpecificOptions, SpecificOptionsErrors } from "../index";

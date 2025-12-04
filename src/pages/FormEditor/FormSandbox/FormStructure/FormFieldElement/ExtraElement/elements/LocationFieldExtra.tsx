@@ -1,7 +1,7 @@
 import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mui/material";
 import { ExtraElementProps } from "../index";
-import { LocationFormat } from "../../../../../schemas/locationSchema";
+import { LocationFormat } from "../../../../../schemas/fields/locationSchema";
 
 type Props = ExtraElementProps<typeof FieldTypeIds.location>;
 

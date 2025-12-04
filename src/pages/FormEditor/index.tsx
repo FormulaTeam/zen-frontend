@@ -34,6 +34,7 @@ function FormEditor({ mode, editedForm }: Props) {
     deleteField,
     setFieldData,
     validateForm,
+    setFormMetadata,
   } = useFormStructure(editedForm);
 
   return (
@@ -50,6 +51,7 @@ function FormEditor({ mode, editedForm }: Props) {
           deleteField,
           setFieldData,
           validateForm,
+          setFormMetadata,
         }}>
           <FormEditorHeader />
           <div className={styles.sandboxContainer}>

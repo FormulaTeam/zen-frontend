@@ -1,6 +1,6 @@
 import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { ExtraElementProps } from "../index";
-import { NumberFormat } from "../../../../../schemas/numberSchema";
+import { NumberFormat } from "../../../../../schemas/fields/numberSchema";
 import { FormControl, FormHelperText, Input, InputLabel, MenuItem, Select } from "@mui/material";
 import { useEffect } from "react";
 

@@ -11,8 +11,8 @@ import listSchema from "./listSchema";
 import numberSchema from "./numberSchema";
 import fileSchema from "./fileSchema";
 import linkedFormSchema from "./linkedFormSchema";
-import { FormFieldTypeId } from "../../../utils/interfaces";
-import { SpecificDiscriminatedUnionObject } from "./types";
+import { FormFieldTypeId } from "../../../../utils/interfaces";
+import { SpecificDiscriminatedUnionObject } from "../types";
 
 const FormFieldSchema = discriminatedUnion("typeId", [
   shortTextSchema,

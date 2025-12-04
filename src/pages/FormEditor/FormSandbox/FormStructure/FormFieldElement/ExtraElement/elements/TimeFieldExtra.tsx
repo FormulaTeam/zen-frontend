@@ -1,6 +1,6 @@
 import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { Checkbox, FormControl, FormControlLabel, InputLabel, MenuItem, Select } from "@mui/material";
-import { DefaultTimeValue } from "../../../../../schemas/timeSchema";
+import { DefaultTimeValue } from "../../../../../schemas/fields/timeSchema";
 import { ExtraElementProps } from "../index";
 
 type Props = ExtraElementProps<typeof FieldTypeIds.time>;
