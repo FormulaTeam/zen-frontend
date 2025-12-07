@@ -1,18 +1,7 @@
-import { useTheme } from "@mui/material/styles";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { Button, Select, MenuItem, FormControl, InputLabel, Box, IconButton } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import { getFormById, getResponses, getResponsesCount } from "../../api";
-import { Form } from "../../utils/interfaces";
-import { showErrorNotification, showSuccessNotification } from "../../utils/utils";
-import UserPicker from "../../components/USerPicker/UserPicker";
-import ConfirmPopup from "../../popups/ConfirmPopup/ConfirmPopup";
-import AlertMsg from "../../components/AlertMsg/AlertMsg";
 import { MaterialReactTable } from "material-react-table";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
-import deleteResponseImg from "../../images/delete_response.png";
 import ResponseToolbar from "../../components/ResponseToolbar/ResponseToolbar";
 import { useInitializeFormData } from "../../hooks/useInitializeFormData";
 import { useViewManager } from "../../hooks/useViewManager";
@@ -28,16 +17,20 @@ import {
 } from "./styled";
 import Header from "../../components/Responses/Header";
 import SearchInfo from "../../components/Responses/SearchInfo";
-import OperationsContainer from "../../components/Responses/OperationsContainer";
 import { useResponsesTable } from "../../hooks/useResponsesTable";
 import { useTableColumns } from "../../hooks/useTableColumns";
 import { useResponsesList } from "../../hooks/useResponsesList";
-import { ResponseCount } from "../../types/interfaces/responses.types";
 import ResponseDetailsPanel from "../../components/ResponseDetailsPanel/ResponseDetailsPanel";
 import SidePanel from "../../components/SidePanel/SidePanel";
-import { TableView, ViewColumn } from "../../types/interfaces/tableViews.types";
+import { ViewColumn } from "../../types/interfaces/tableViews.types";
 import { useQuickEdit } from "../../hooks/useQuickEdit";
 import { useConnectedFormOptions } from "../../hooks/useConnectedFormOptions";
+import UserPicker from "../../components/USerPicker/UserPicker";
+import ConfirmPopup from "../../popups/ConfirmPopup/ConfirmPopup";
+import deleteResponseImg from "../../images/delete_response.png";
+import { Form } from "../../utils/interfaces";
+import { useResponsesQuery } from "../../hooks/useResponsesQuery";
+import { useQueryClient } from "@tanstack/react-query";
 
 function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles }) {
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
@@ -138,6 +131,29 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     formFields: form?.fields,
   });
 
+  const queryClient = useQueryClient();
+
+  const { data: responsesData, isLoading: responsesLoading } = useResponsesQuery({
+    formId: form?.id,
+    pageIndex: pagination.pageIndex,
+    pageSize: pagination.pageSize,
+  });
+
+  useEffect(() => {
+    if (responsesData) {
+      setAllFilteredResponses(responsesData.responses);
+      setAllResponsesCount(responsesData.count);
+      setSearchCount(responsesData.count);
+      setLoadingTable(false);
+      setLoadingInsideTable(false);
+    }
+  }, [responsesData]);
+
+  const getResponsesForCurrentPage = async (form: Form, permissionTypes1: number[]) => {
+    if (!form?.id) return;
+    await queryClient.invalidateQueries({ queryKey: ["responses", form.id] });
+  };
+
   // Initialize table columns with Quick Edit support
   const { createTableColumns } = useTableColumns(
     setColumns,
@@ -155,6 +171,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     forceRenderCounter,
     fieldOptions,
   );
+
   const {
     currentView,
     savedViews: allViews,
@@ -195,7 +212,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
 
   useEffect(() => {
     setResponsesHaveParents(allFilteredResponses.some((response) => response.parentResponse));
-  }, [allFilteredResponses]);
+  }, [allFilteredResponses, setResponsesHaveParents]);
 
   useEffect(() => {
     if (sorting.length > 0) {
@@ -240,30 +257,6 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
       createTableColumns(form, permissionTypes, currentViewConfig);
     }
   }, [forceRenderCounter, fieldOptions]);
-
-  /** if shouldRefreshPage true - get data in page again */
-  // useEffect(() => {
-  //   if (shouldRefreshPage) {
-  //     setShouldRefreshPage(false);
-
-  //     let formId: any = id;
-  //     if (formId && typeof formId === "string") {
-  //       formId = parseInt(formId);
-  //     }
-  //     setLoadingTable(true);
-
-  //     getFormById(formId)
-  //       .then((form: any) => {
-  //         setForm(form);
-  //         setRowSelection({});
-  //         getResponsesForCurrentPage(form, permissionTypes);
-  //       })
-  //       .catch((e) => {
-  //         setLoadingTable(false);
-  //         showErrorNotification("שליפת הטופס לא הצליחה");
-  //       });
-  //   }
-  // }, [shouldRefreshPage]);
 
   /** when search value changes */
   useEffect(() => {
@@ -348,65 +341,6 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     );
   };
 
-  /** get Responses by Form id */
-  const getResponsesForCurrentPage = async (form: Form, permissionTypes1: number[]) => {
-    try {
-      let responses: ResponseCount = await getResponsesCount(form.id);
-      let responsesCount: number = responses?.count || 0;
-      setAllResponsesCount(responsesCount);
-      setSearchCount(responsesCount);
-      let filter: any = {
-        form_id: form.id,
-        pageSize: pagination.pageSize,
-        pageNumber: pagination.pageIndex + 1,
-        searchFilters: [],
-      };
-      try {
-        let responses: any[] = await getResponses(filter);
-        if (responses) {
-          // Add debugging to see what we're getting from the database
-          // Check for any malformed responses
-          const validResponses = responses.filter((response, index) => {
-            if (!response || typeof response !== "object") {
-              console.error(`Invalid response at index ${index}:`, response);
-              return false;
-            }
-            if (!response.id) {
-              console.error(`Response missing ID at index ${index}:`, response);
-              return false;
-            }
-            return true;
-          });
-
-          if (validResponses.length !== responses.length) {
-            console.warn(
-              `Filtered out ${responses.length - validResponses.length} invalid responses`,
-            );
-          }
-
-          setAllFilteredResponses(validResponses);
-          setLoadingTable(false);
-          setLoadingInsideTable(false);
-        }
-      } catch (error) {
-        console.error("Error getting responses:", error);
-        showErrorNotification("שליפת התגובות לעמוד זה נכשלה"); //Failed get responses for current page:" + error);
-        setLoadingTable(false);
-        setLoadingInsideTable(false);
-      } finally {
-        setLoadingTable(false);
-        setLoadingInsideTable(false);
-      }
-    } catch (error) {
-      showErrorNotification("שליפת כמות התגובות נכשלה"); //Failed to fetch responses count:" + error);
-      setLoadingTable(false);
-      setLoadingInsideTable(false);
-    } finally {
-      setLoadingTable(false);
-      setLoadingInsideTable(false);
-    }
-  };
-
   // Get the data to display in the table (combined responses in edit mode)
   const tableData = isQuickEditMode ? getCombinedResponses() : allFilteredResponses;
 
@@ -420,7 +354,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     setPagination,
     columnFilters,
     setColumnFilters,
-    loadingInsideTable: loadingInsideTable || loadingConnections,
+    loadingInsideTable: loadingInsideTable || loadingConnections || responsesLoading,
     rowSelection,
     setRowSelection: (newSelection) => {
       setRowSelection(newSelection);
@@ -435,7 +369,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     currentViewConfig,
   });
 
-  if (loading) {
+  if (loading || responsesLoading) {
     return <Loader />;
   }
 

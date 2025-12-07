@@ -8,6 +8,7 @@ interface UseCreateOptions<TData = unknown, TResponse = unknown> {
     "mutationFn" | "mutationKey"
   >;
   mutationKey: readonly unknown[];
+  axiosConfig?: Record<string, any>;
 }
 
 // Generic useCreate hook for POST requests
@@ -15,10 +16,11 @@ export function useCreate<TData = unknown, TResponse = unknown>({
   endpoint,
   mutationOptions,
   mutationKey = [endpoint, "create"],
+  axiosConfig,
 }: UseCreateOptions<TData, TResponse>): UseMutationResult<TResponse, Error, TData, unknown> {
   return useMutation({
     mutationFn: async (data: TData) => {
-      const response = await apiClient.post<TResponse>(endpoint, data);
+      const response = await apiClient.post<TResponse>(endpoint, data, axiosConfig);
       return response.data;
     },
     mutationKey,
