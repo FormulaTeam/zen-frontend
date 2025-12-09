@@ -3,8 +3,8 @@ import { FieldTypeIds } from "../../../../utils/interfaces";
 import { enum as zod_enum, literal, strictObject } from "zod";
 
 enum LocationFormat {
-  UTM = "UTM",
-  WKT = "WKT",
+  UTM = 1,
+  WKT = 2,
 }
 
 const locationSchema = baseFormFieldSchema.safeExtend({

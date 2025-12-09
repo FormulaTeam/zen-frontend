@@ -15,7 +15,7 @@ function LocationFieldExtra({ extra, onChange, disabled }: Props) {
       <FormControl disabled={disabled}>
         <FormLabel>פורמט</FormLabel>
         <RadioGroup row value={format} onChange={(e) => {
-          onChange({format: e.target.value as LocationFormat});
+          onChange({format: +e.target.value as LocationFormat});
         }}>
           <FormControlLabel value={LocationFormat.UTM} control={<Radio />} label="UTM" />
           <FormControlLabel value={LocationFormat.WKT} control={<Radio />} label="WKT" />

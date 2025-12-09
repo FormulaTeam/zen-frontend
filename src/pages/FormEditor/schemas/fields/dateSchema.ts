@@ -3,8 +3,8 @@ import { FieldTypeIds } from "../../../../utils/interfaces";
 import { boolean, enum as zod_enum, literal, strictObject } from "zod";
 
 enum DefaultDateValue {
-  EMPTY,
-  NOW,
+  EMPTY = 1,
+  NOW = 2,
 }
 
 const dateSchema = baseFormFieldSchema.safeExtend({

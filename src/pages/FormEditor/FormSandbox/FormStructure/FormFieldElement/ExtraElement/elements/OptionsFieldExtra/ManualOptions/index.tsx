@@ -100,6 +100,9 @@ function ManualOptions(props: Props) {
                      placeholder={`הזנת אפשרות ${index + 1}`}
                      error={!!validationErrors?.properties?.items?.items?.[index]?.properties?.text}
                      helperText={validationErrors?.properties?.items?.items?.[index]?.properties?.text?.errors[0]}
+                     onFocus={(_) => {
+                       setSelectedControlledItemIndex(index);
+                     }}
                      onChange={(e) => onChange({
                        options: {
                          ...options,

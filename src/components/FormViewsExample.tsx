@@ -6,7 +6,7 @@
 //   useUpdateFormView,
 //   useDeleteFormView,
 // } from "../api/formViewsQueries";
-// import { TableView } from "../types/interfaces/tableViews.types";
+// import { TableView } from "../conditionTypes/interfaces/tableViews.conditionTypes";
 
 // interface FormViewsExampleProps {
 //   formId: string;

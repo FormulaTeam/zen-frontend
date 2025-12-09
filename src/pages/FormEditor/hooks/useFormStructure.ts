@@ -233,11 +233,6 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
         const originalData = field.data;
         const originalValidationErrors = field.validationErrors;
 
-        // const dataToValidate = merge(
-        //   originalData,
-        //   data,
-        // ) as FormFieldData & { typeId: T };
-
         const dataToValidate = {
           ...originalData,
           ...data,
@@ -248,7 +243,7 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
         } as FormFieldData & { typeId: T };
 
         const validationErrors =
-          pickSharedKeysDeep( // TODO doesn't work well for arrays (i.e. in options)
+          pickSharedKeysDeep(
             validateFieldData(dataToValidate),
             originalValidationErrors ?? {},
           );

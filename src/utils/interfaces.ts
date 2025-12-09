@@ -53,7 +53,7 @@ declare module "@mui/material/Button" {
   }
 }
 
-// types.ts (optional, if you want to separate types)
+// conditionTypes.ts (optional, if you want to separate conditionTypes)
 export interface RouteContextType {
   path: string;
   changePath: (newPath: string) => void;
@@ -767,7 +767,7 @@ export const DEFAULT_FORM_ICONS: IconNameObj[] = [
   },
 ];
 
-// Import condition-related types and utilities from conditionUtils
+// Import condition-related conditionTypes and utilities from conditionUtils
 import type { ConditionOperatorType, LogicalOperatorType } from "./conditionUtils";
 
 // Re-export condition utilities for backward compatibility
@@ -811,13 +811,13 @@ export interface ConditionsRoot {
   name?: string; // Optional name for the condition set
 }
 
-// Condition value types for better type safety
+// Condition value conditionTypes for better type safety
 export type ConditionValue = string | string[] | boolean | number | null;
 
 export interface Condition {
   field: string; // Unique ID of the field
   operator: ConditionOperatorType; // Single operator, not array
-  value: ConditionValue; // Value to compare against - can be various types
+  value: ConditionValue; // Value to compare against - can be various conditionTypes
   id?: string; // Optional ID for the condition, useful for editing or deleting
 }
 

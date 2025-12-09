@@ -3,8 +3,8 @@ import { FieldTypeIds } from "../../../../utils/interfaces";
 import { enum as zod_enum, literal, number, strictObject } from "zod";
 
 enum NumberFormat {
-  INTEGER = 0,
-  DECIMAL = 1,
+  INTEGER = 1,
+  DECIMAL = 2,
 }
 
 const ErrorMessages = {

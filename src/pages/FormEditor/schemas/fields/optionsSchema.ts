@@ -3,8 +3,8 @@ import { FieldTypeIds } from "../../../../utils/interfaces";
 import { any, array, boolean, discriminatedUnion, enum as zod_enum, literal, object, record, string } from "zod";
 
 enum OptionsSource {
-  MANUAL = 0,
-  FORM_FIELD_RESPONSES = 1, // TODO make extra object a discriminated union based on this enum
+  MANUAL = 1,
+  FORM_FIELD_RESPONSES = 2,
 }
 
 const noFormSelectedErrorMessage = "לא נבחר טופס";
