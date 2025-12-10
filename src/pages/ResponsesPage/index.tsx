@@ -456,7 +456,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
           />
         </TopSection>
         <SearchInfo search={search} setSearch={setSearch} allResponsesCount={allResponsesCount} />
-        {/* <OperationsContainer
+        <OperationsContainer
           user={user}
           form={form}
           allResponsesCount={allResponsesCount}
@@ -481,7 +481,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
           hasUnsavedChanges={hasUnsavedChanges}
           isEditButtonDisabled={isEditButtonDisabled}
           editButtonDisabledReason={editButtonDisabledReason}
-        /> */}
+        />
         <ContentContainer>
           <MainContent $sidePanelOpen={isSidePanelOpen}>
             {loadingTable ? <Loader /> : <MaterialReactTable table={responsesTable} />}

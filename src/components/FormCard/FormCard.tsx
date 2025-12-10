@@ -5,7 +5,7 @@ import { Box, Divider, Icon, Tooltip, useTheme } from "@mui/material";
 import {
   formIconsNamesMap,
   PERMISSION_TYPES,
-  searchResponsesWithFilterAndExportToExcel,
+  getResponsesAndExportToExcel,
   showErrorNotification,
   showSuccessNotification,
 } from "../../utils/utils";
@@ -63,7 +63,7 @@ const FormCard = ({
     let filter: Filter = {
       form_id: form.id,
     };
-    await searchResponsesWithFilterAndExportToExcel(form, filter);
+    await getResponsesAndExportToExcel(form);
     setShowLoadingExportBtn(false);
     setLoadingForFormId(0);
   };

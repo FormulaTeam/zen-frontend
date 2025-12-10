@@ -11,7 +11,7 @@ import {
   CheckOutlined,
   Close,
 } from "@mui/icons-material";
-import { PERMISSION_TYPES, searchResponsesWithFilterAndExportToExcel } from "../../utils/utils";
+import { PERMISSION_TYPES, getResponsesAndExportToExcel } from "../../utils/utils";
 import { CustomIcon } from "../../theme/icons";
 import { useNavigate } from "react-router-dom";
 import { useViewControls } from "../../hooks/useViewControls";
@@ -76,7 +76,7 @@ const OperationsContainer: React.FC<any> = ({
   }, [showLoadingExcelBtn]);
 
   const exportExcelAndStopLoading = async () => {
-    await searchResponsesWithFilterAndExportToExcel(form, currentFilter);
+    await getResponsesAndExportToExcel(form);
     setShowLoadingExcelBtn(false);
   };
 
@@ -262,7 +262,9 @@ const OperationsContainer: React.FC<any> = ({
               title={
                 isQuickEditMode
                   ? "לא זמין במצב עריכה מהירה"
-                  : `ייצוא ${allResponsesCount} תגובות לאקסל`
+                  : allResponsesCount > 0
+                  ? `ייצוא ${allResponsesCount} תגובות לאקסל`
+                  : "אין תגובות לייצוא"
               }>
               {showLoadingExcelBtn ? (
                 <LoadingBtnBox bgcolor={theme.palette.primary.main}>
@@ -277,7 +279,7 @@ const OperationsContainer: React.FC<any> = ({
                 <div>
                   <SmallRoundButton
                     backgroundcolor={theme.palette.success.main}
-                    onClick={() => searchResponsesWithFilterAndExportToExcel(form, currentFilter)}
+                    onClick={() => getResponsesAndExportToExcel(form)}
                     disabled={
                       isQuickEditMode || !(form?.fields?.length > 0) || allResponsesCount === 0
                     }
