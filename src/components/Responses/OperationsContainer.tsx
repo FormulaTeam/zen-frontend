@@ -227,13 +227,14 @@ const OperationsContainer: React.FC<any> = ({
                       {isViewDefault(view) && <ViewDefaultBadge>ברירת מחדל</ViewDefaultBadge>}
                     </ViewMenuItem>
                   </MenuItem>
-                ))} */}
+                ))}  */}
               </Select>
             </StyledViewFormControl>
 
             <Tooltip title="ניהול תצוגות">
               <div>
                 <ViewManageButton
+                  color="secondary"
                   variant="contained"
                   onClick={() => setIsSidePanelOpen?.(true)}
                   disabled={isSidePanelOpen}>
@@ -244,7 +245,7 @@ const OperationsContainer: React.FC<any> = ({
           </ViewControlsContainer>
 
           <StyledAddButton
-            color="secondary"
+            color="primary"
             variant="contained"
             title={isQuickEditMode ? "לא זמין במצב עריכה מהירה" : "הוסף תגובה חדשה לטופס זה"}
             onClick={() => navigate(`/response/create/${form.id}`)}

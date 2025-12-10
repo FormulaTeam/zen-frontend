@@ -375,7 +375,7 @@ export const getResponsesAndExportToExcel = async (form: Form) => {
     if (responses?.length > 0) {
       exportToExcel(responses, form);
     }
-    
+
     showSuccessNotification(NotificationTexts.SuccessfulExportToExcel);
   } catch (error) {
     showErrorNotification(NotificationTexts.FailedExportToExcel);
