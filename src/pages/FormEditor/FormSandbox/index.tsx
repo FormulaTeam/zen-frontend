@@ -4,7 +4,8 @@ import { DraggableElementType, FormSandboxContext } from "../context/FormSandbox
 import { useCallback, useState } from "react";
 import { FormSandboxSidebar } from "./FormSandboxSidebar";
 import { useFormDndHandlers } from "../hooks/useFormDndHandlers";
-import { DRAG_OVERLAYS } from "./DragOverlay";
+import { DRAG_OVERLAYS } from "./FormDragOverlay";
+import { FormConditionsModal } from "./FormConditionsModal";
 
 const COLLISION_DETECTION: Record<DraggableElementType, CollisionDetection> = {
   catalogItem: pointerWithin,
@@ -14,6 +15,7 @@ const COLLISION_DETECTION: Record<DraggableElementType, CollisionDetection> = {
 
 function FormSandbox() {
   const [isInternalNamesShown, setIsInternalNamesShown] = useState(false);
+  const [isConditionsDialogOpen, setIsConditionsDialogOpen] = useState(false);
   const { handleDragStart, handleDragOver, handleDragEnd, draggingElement } = useFormDndHandlers();
 
   const sensors = useSensors(
@@ -25,7 +27,12 @@ function FormSandbox() {
   const toggleInternalNamesShown = useCallback(() => setIsInternalNamesShown((prev) => !prev), []);
 
   return (
-    <FormSandboxContext.Provider value={{ isInternalNamesShown, toggleInternalNamesShown }}>
+    <FormSandboxContext.Provider value={{
+      isInternalNamesShown,
+      toggleInternalNamesShown,
+      isConditionsDialogOpen,
+      setIsConditionsDialogOpen,
+    }}>
       <DndContext sensors={sensors}
                   collisionDetection={
                     draggingElement ?
@@ -42,6 +49,7 @@ function FormSandbox() {
           DRAG_OVERLAYS[draggingElement.type]({ draggingElement })
         }
       </DndContext>
+      <FormConditionsModal />
     </FormSandboxContext.Provider>
   );
 }
