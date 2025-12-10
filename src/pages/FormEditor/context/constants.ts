@@ -1,5 +1,4 @@
 import { FormStructure, Section } from "./FormStructureContext";
-import { DraggingState } from "./FormSandboxContext";
 import { texts } from "../../../utils/texts";
 import { generateSectionId } from "../utils";
 
@@ -27,9 +26,4 @@ function getEmptyForm(): FormStructure {
   };
 }
 
-const DEFAULT_DRAGGING_STATE: DraggingState = {
-  isDragging: false,
-  draggingElement: null,
-};
-
-export { getEmptyForm, DEFAULT_DRAGGING_STATE, PLACEHOLDER_FIELD_ID };
+export { getEmptyForm, PLACEHOLDER_FIELD_ID };

@@ -9,6 +9,7 @@ enum OptionsSource {
 
 const noFormSelectedErrorMessage = "לא נבחר טופס";
 const noFieldSelectedErrorMessage = "לא נבחר שדה";
+const duplicateOptionErrorMessage = "לא ניתן לחזור על אפשרות קיימת";
 
 const baseOptionsExtraSchema = object({
   source: zod_enum(OptionsSource),
@@ -29,6 +30,28 @@ const manualOptionsSchema = baseOptionsExtraSchema.safeExtend({
     controllingOptionsFieldId: string().min(1).optional(),
     defaultOptionId: string().min(1).optional(),
   }).superRefine(({ items, defaultOptionId }, ctx) => {
+    if (items.length) {
+      const erroredItemIndices = new Set();
+
+      for (let i = 0; i < items.length - 1; i++) {
+        if (erroredItemIndices.has(i)) continue;
+
+        for (let j = i + 1; j < items.length; j++) {
+          if (erroredItemIndices.has(j)) continue;
+
+          if (items[i].text === items[j].text) {
+            ctx.addIssue({
+              code: "custom",
+              message: duplicateOptionErrorMessage,
+              path: ["items", j, "text"],
+            });
+
+            erroredItemIndices.add(j);
+          }
+        }
+      }
+    }
+
     if (defaultOptionId && !items.find(({ id }) => defaultOptionId === id)) {
       ctx.addIssue({
         code: "custom",

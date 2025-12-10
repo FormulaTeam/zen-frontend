@@ -1,36 +1,35 @@
 import styles from "./style.module.css";
-import { DragOverlay } from "@dnd-kit/core";
-import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import { useFormStructureContext } from "../../../context/FormStructureContext";
-import { useFormSandboxContext } from "../../../context/FormSandboxContext";
 import { FORM_ELEMENT_ICONS } from "../../../../../components/FORM_ELEMENT_ICONS";
 import { FORM_ELEMENTS } from "../../../../../utils/interfaces";
 import { Typography } from "@mui/material";
+import { DraggingElement } from "../../../context/FormSandboxContext";
+import { withDragOverlay } from "../withDragOverlay";
 
-function FieldDragOverlay() {
+interface Props {
+  draggingElement: DraggingElement;
+}
+
+function FieldDragOverlay({ draggingElement }: Props) {
   const { formStructure } = useFormStructureContext();
-  const { draggingState } = useFormSandboxContext();
-
-  const field = formStructure.fields[draggingState.draggingElement?.id!];
+  const field = formStructure.fields[draggingElement.id];
 
   return (
-    <DragOverlay zIndex={1500} modifiers={[snapCenterToCursor]}>
-      <div style={{
-        position:'relative',
-        paddingRight: 'calc(50% + 10px)'
-        }}>
-        <div className={styles.dragOverlay}>
-          <div className={styles.dragHandle}/>
-          <div className={styles.title}>
-            {FORM_ELEMENT_ICONS[FORM_ELEMENTS[field.data.typeId].icon]}
-            <Typography variant={"subtitle1"} align={"center"} sx={{ userSelect: "none" }}>
-              {FORM_ELEMENTS[field.data.typeId].name}
-            </Typography>
-          </div>
+    <div style={{
+      position: "relative",
+      paddingRight: "calc(50% + 10px)",
+    }}>
+      <div className={styles.dragOverlay}>
+        <div className={styles.dragHandle} />
+        <div className={styles.title}>
+          {FORM_ELEMENT_ICONS[FORM_ELEMENTS[field.data.typeId].icon]}
+          <Typography variant={"subtitle1"} align={"center"} sx={{ userSelect: "none" }}>
+            {FORM_ELEMENTS[field.data.typeId].name}
+          </Typography>
         </div>
       </div>
-    </DragOverlay>
+    </div>
   );
 }
 
-export { FieldDragOverlay };
+export default withDragOverlay(FieldDragOverlay);
