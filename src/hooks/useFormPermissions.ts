@@ -43,9 +43,7 @@ export const useFormPermissions = ({
   // calculate public form permissions
   const publicFormPermissions = useMemo(() => {
     if (form.isPublic && form.formPermission?.role_id) {
-      // TODO: change to use role constants and type in formPermission so we don't have to search roles array
       const publicRole = roles.find((r) => r.role_id === form.formPermission?.role_id);
-
       return publicRole ? publicRole.permission_types || [] : [];
     }
     return [];
