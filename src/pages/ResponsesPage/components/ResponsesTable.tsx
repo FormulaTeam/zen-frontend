@@ -3,9 +3,9 @@ import { MaterialReactTable } from "material-react-table";
 import Loader from "../../../components/Responses/Loader";
 import { ContentContainer, MainContent } from "../styled";
 import { useResponsesTable } from "../../../hooks/useResponsesTable";
-import { DataGridPro, useGridApiRef, GridPreferencePanelsValue } from "@mui/x-data-grid-pro";
+import { DataGridPro, useGridApiRef, GridPreferencePanelsValue, GridRowModel } from "@mui/x-data-grid-pro";
 import { useFormStore } from "../stores/form.store";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import { Box, IconButton, Tooltip, Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
@@ -15,9 +15,15 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
 import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import CancelIcon from "@mui/icons-material/Cancel";
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "../../../components/formInForm/ZoomCell";
 import { Row } from "../../../utils/interfaces";
+import { showSuccessNotification, showErrorNotification } from "../../../utils/utils";
+import { useBatchUpdateResponses, useGetResponses } from "../../../api/responsesApi";
+import { useAuth } from "../../../contexts/AuthContext";
 
 const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   "&.MuiDataGrid-root": {
@@ -56,9 +62,22 @@ const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
 
 export const ResponsesTable = () => {
   // const responsesTable = useResponsesTable({});
-  const { responses, form, rows } = useFormStore();
+  const { responses, form, rows, setRows, filter } = useFormStore();
+  const { user } = useAuth();
   const apiRef = useGridApiRef();
   const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedRows, setEditedRows] = useState<Map<string, any>>(new Map());
+  const [localRows, setLocalRows] = useState<any[]>([]);
+
+  // Fetch full responses when we need them for editing
+  const { data: fullResponses } = useGetResponses({
+    filter: { ...filter, form_id: form?.id },
+  });
+
+  const { mutateAsync: batchUpdateResponses, isPending: isUpdating } = useBatchUpdateResponses({
+    formId: form?.id || 0,
+  });
 
   const handleOpenColumnsPanel = () => {
     if (apiRef.current) {
@@ -66,11 +85,111 @@ export const ResponsesTable = () => {
     }
   };
 
-  if (!form.columns) return null;
+  const handleToggleEditMode = () => {
+    if (isEditMode) {
+      // Exiting edit mode - revert to original rows
+      setEditedRows(new Map());
+      setLocalRows(responsesRows);
+    } else {
+      // Entering edit mode - initialize local rows from current data
+      setLocalRows([...responsesRows]);
+    }
+    setIsEditMode(!isEditMode);
+  };
 
-  // console.log("=======", responses);
-  console.log("====responses===", responses);
-  console.log("====form===", form);
+  const handleProcessRowUpdate = (newRow: GridRowModel, oldRow: GridRowModel) => {
+    // Update local rows immediately so changes persist when moving between cells
+    setLocalRows((prevRows) =>
+      prevRows.map((row) => {
+        const rowId = row.id ?? row._id ?? row.responseId;
+        const newRowId = newRow.id ?? newRow._id ?? newRow.responseId;
+        return String(rowId) === String(newRowId) ? { ...row, ...newRow } : row;
+      })
+    );
+
+    // Track the edited row
+    const rowId = newRow.id ?? newRow._id ?? newRow.responseId;
+    setEditedRows((prev) => {
+      const updated = new Map(prev);
+      updated.set(String(rowId), newRow);
+      return updated;
+    });
+
+    return newRow;
+  };
+
+  const handleSaveChanges = async () => {
+    if (editedRows.size === 0) {
+      showSuccessNotification("אין שינויים לשמירה");
+      return;
+    }
+
+    if (!fullResponses || fullResponses.length === 0) {
+      showErrorNotification("לא נמצאו תגובות לעדכון");
+      return;
+    }
+
+    try {
+      const updatesToSend = Array.from(editedRows.entries()).map(([rowId, editedRowData]) => {
+        const originalResponse = fullResponses?.find((r) => String(r.id) === String(rowId));
+
+        if (!originalResponse) {
+          return null;
+        }
+
+        // Map column field names to uniqueIds
+        const uniqueIdToColumnField = new Map();
+        form.columns?.forEach((col: any) => {
+          const field = form.fields?.find(f =>
+            f.displayName === col.field || f.name === col.field
+          );
+          if (field && field.uniqueId) {
+            uniqueIdToColumnField.set(field.uniqueId, col.field);
+          }
+        });
+
+        // Build updated response with full structure
+        const updatedData: any = {
+          ...originalResponse,
+          edited_by: user?.upn?.toLowerCase() || originalResponse.edited_by,
+          edited_by_name: user?.displayName || originalResponse.edited_by_name,
+          data: originalResponse.data.map((field) => {
+            const columnFieldName = uniqueIdToColumnField.get(field.uniqueId);
+            if (columnFieldName && editedRowData.hasOwnProperty(columnFieldName)) {
+              return {
+                ...field,
+                value: editedRowData[columnFieldName],
+              };
+            }
+            return field;
+          }),
+        };
+
+
+        return {
+          id: Number(originalResponse.id),
+          responseData: updatedData,
+        };
+      }).filter((item): item is { id: number; responseData: any } => item !== null && !isNaN(item.id));
+
+      if (updatesToSend.length === 0) {
+        showErrorNotification("לא נמצאו שינויים תקינים לשמירה");
+        return;
+      }
+
+      await batchUpdateResponses(updatesToSend);
+      setRows(localRows);
+      setEditedRows(new Map());
+      setIsEditMode(false);
+
+      showSuccessNotification(`נשמרו ${editedRows.size} שינויים בהצלחה!`);
+    } catch (error) {
+      console.error("Error saving changes:", error);
+      showErrorNotification("שגיאה בשמירת השינויים");
+    }
+  };
+
+  if (!form.columns) return null;
 
   const responsesRows = Array.isArray(rows)
     ? rows.reduce((rows, currRow: Row) => {
@@ -191,7 +310,12 @@ export const ResponsesTable = () => {
 
   const getFormColumns = () => {
     const baseFormColumns = Array.isArray(form?.columns)
-      ? form?.columns.map((col: any) => ({ flex: 1, ...col }))
+      ? form?.columns.map((col: any) => ({
+        flex: 1,
+        ...col,
+        // Make id field non-editable, allow editing of other form columns
+        editable: col.field !== "id" && col.field !== "_id" && col.field !== "responseId",
+      }))
       : [];
 
     const syncColumn = {
@@ -199,6 +323,7 @@ export const ResponsesTable = () => {
       headerName: "",
       renderHeader: () => <CloudUploadIcon fontSize="large" />,
       flex: 1,
+      editable: false,
       renderCell: (params: any) => (
         <SyncStatusIcon pushedToMetro={params.row?.pushed_to_metro} />
       ),
@@ -211,6 +336,7 @@ export const ResponsesTable = () => {
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
+      editable: false,
       align: "center" as const,
       headerAlign: "center" as const,
       renderHeader: () => renderExpandAllHeader(),
@@ -221,12 +347,14 @@ export const ResponsesTable = () => {
       field: "editedByName",
       headerName: "השתנה ע״י",
       flex: 1,
+      editable: false,
     };
 
     const editedAtColumn = {
       field: "edited",
       headerName: "השתנה",
       flex: 1,
+      editable: false,
     };
 
     const parentResponseColumns = hasParentResponses
@@ -235,6 +363,7 @@ export const ResponsesTable = () => {
           field: "parentResponse",
           headerName: "תגובת אב",
           flex: 1,
+          editable: false,
           renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
         },
       ]
@@ -255,7 +384,47 @@ export const ResponsesTable = () => {
     <ContentContainer>
       <MainContent $sidePanelOpen={false}>
         {/* {loadingTable ? <Loader /> :  */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            {!isEditMode ? (
+              <Tooltip title="מצב עריכה">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<EditIcon />}
+                  onClick={handleToggleEditMode}
+                >
+                  ערוך
+                </Button>
+              </Tooltip>
+            ) : (
+              <>
+                <Tooltip title="שמור שינויים">
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="primary"
+                    startIcon={<SaveIcon />}
+                    onClick={handleSaveChanges}
+                    disabled={editedRows.size === 0 || isUpdating}
+                  >
+                    {isUpdating ? "שומר..." : `שמור ${editedRows.size > 0 ? `(${editedRows.size})` : ""}`}
+                  </Button>
+                </Tooltip>
+                <Tooltip title="בטל עריכה">
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    color="error"
+                    startIcon={<CancelIcon />}
+                    onClick={handleToggleEditMode}
+                  >
+                    בטל
+                  </Button>
+                </Tooltip>
+              </>
+            )}
+          </Box>
           <Tooltip title="ניהול תצוגות">
             <IconButton size="small" onClick={handleOpenColumnsPanel}>
               <ViewColumnIcon />
@@ -265,21 +434,24 @@ export const ResponsesTable = () => {
         <StyledDataGrid
           apiRef={apiRef}
           isRowSelectable={({ row }) => true}
-
+          editMode="cell"
+          processRowUpdate={handleProcessRowUpdate}
+          onProcessRowUpdateError={(error) => {
+            console.error("Error updating row:", error);
+          }}
           density="comfortable"
           rowHeight={38}
           loading={!rows}
           pagination
           pageSizeOptions={[25, 50, 100]}
           checkboxSelection
-
           getRowId={(row) => row.id ?? row._id ?? row.responseId ?? `${row.formId ?? ""}-${row.responseId ?? row._id ?? row.id}`}
           localeText={{
             ...heIL.components.MuiDataGrid.defaultProps.localeText,
             columnMenuLabel: "פעולות",
           }}
           columns={getFormColumns()}
-          rows={responsesRows}
+          rows={isEditMode && localRows.length > 0 ? localRows : responsesRows}
         />
       </MainContent>
     </ContentContainer>

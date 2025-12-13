@@ -17,6 +17,7 @@ import queryClient from "./queryClient";
 import { useCreate } from "../utils/useCreate";
 import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
+import { useMutation } from "@tanstack/react-query";
 
 /**
  * Fetch all responses with optional query parameters.
@@ -342,6 +343,23 @@ export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
         queryClient.invalidateQueries({ queryKey: [formId] });
         queryClient.invalidateQueries({ queryKey: ["responses"] });
       },
+    },
+  });
+};
+
+export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
+  return useMutation({
+    mutationFn: async (responses: Array<{ id: number; responseData: Partial<ResponseForm> }>) => {
+      const promises = responses.map(({ id, responseData }) => {
+        return apiClient.put<ResponseForm>(`/responses/edit/${formId}/${id}`, responseData);
+      });
+      const results = await Promise.all(promises);
+      return results.map(r => r.data);
+    },
+    mutationKey: ["batch-update-responses", formId],
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses"] });
+      queryClient.invalidateQueries({ queryKey: ["rows"] });
     },
   });
 };
