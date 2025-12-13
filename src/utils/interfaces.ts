@@ -835,3 +835,6 @@ export const ALLOWED_FIELD_TYPES_FOR_CONDITION: number[] = [
   FieldTypeIds.options,
   FieldTypeIds.checkbox,
 ];
+
+export type Row = { [key: string]: string } | null;
+
