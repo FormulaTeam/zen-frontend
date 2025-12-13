@@ -36,4 +36,8 @@ function generateOptionItemId() {
   return nanoid5();
 }
 
-export { generateSectionId, generateFieldId, generateFieldName, generateOptionItemId };
+function generateConditionId() {
+  return nanoid5();
+}
+
+export { generateSectionId, generateFieldId, generateFieldName, generateOptionItemId, generateConditionId };

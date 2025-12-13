@@ -1,16 +1,17 @@
 import { any, literal, strictObject, string, union } from "zod";
 import { FieldTypeIds, FormFieldTypeId } from "../../../../../utils/interfaces";
 
+const ConditionFieldTypeId = {
+  shortText: FieldTypeIds.shortText,
+  longText: FieldTypeIds.longText,
+  options: FieldTypeIds.options,
+  date: FieldTypeIds.date,
+  checkbox: FieldTypeIds.checkbox,
+  number: FieldTypeIds.number,
+} as const satisfies Partial<typeof FieldTypeIds>;
+
 const literalConditionFieldTypeId = union(
-  [
-    FieldTypeIds.shortText,
-    FieldTypeIds.longText,
-    FieldTypeIds.options,
-    FieldTypeIds.date,
-    FieldTypeIds.time,
-    FieldTypeIds.checkbox,
-    FieldTypeIds.number,
-  ].map((v: FormFieldTypeId) => literal(v)),
+  Object.values(ConditionFieldTypeId).map((v: FormFieldTypeId) => literal(v)),
 );
 
 const baseConditionFieldSchema = strictObject({
@@ -20,4 +21,5 @@ const baseConditionFieldSchema = strictObject({
   targetValue: any(),
 });
 
+export { ConditionFieldTypeId };
 export default baseConditionFieldSchema;

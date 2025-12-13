@@ -8,6 +8,7 @@ import { FormFieldData, FormFieldSchema } from "../schemas/fields";
 import { z } from "zod";
 import { $ZodErrorTree } from "zod/v4/core";
 import { FormMetadataSchema } from "../schemas/metadata";
+import { FormConditions, FormConditionsSchema } from "../schemas/conditions";
 
 function yieldFormStructure(form: object) {
   return form as FormStructure; // TODO change to actual logic that translates form json to form structure
@@ -76,6 +77,16 @@ const validateField = (prev: FormStructure, fieldId: string) => {
   }
 
   return {};
+};
+
+const validateConditions = (conditions: FormConditions) => {
+  const result = FormConditionsSchema.safeParse(conditions);
+
+  if (!result.success) {
+    return z.treeifyError(result.error) ?? null;
+  }
+
+  return null;
 };
 
 function useFormStructure(editedForm?: object) { //TODO consider making singleton
@@ -284,6 +295,33 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
     return !validationErrors;
   }, []);
 
+  const deleteConditionAt = useCallback((index: number) => {
+    setFormStructure((prev) => {
+      const conditions = prev.conditions.toSpliced(index, 1);
+
+      return {
+        ...prev,
+        conditions,
+      };
+    });
+  }, []);
+
+  // const setFormConditions = useCallback((conditions: FormConditions) => {
+  //   let validationErrors = validateConditions(conditions);
+  //
+  //   if (!validationErrors) {
+  //     setFormStructure((prev) => {
+  //
+  //       return {
+  //         ...prev,
+  //         conditions: [...conditions],
+  //       };
+  //     });
+  //   }
+  //
+  //   return validationErrors;
+  // }, []);
+
   const validateForm = useCallback(() => {
     setFormStructure((prev) => {
       const fields = { ...prev.fields };
@@ -320,6 +358,9 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
     setFieldData,
 
     setFormMetadata,
+
+    deleteConditionAt,
+
     validateForm,
   };
 }

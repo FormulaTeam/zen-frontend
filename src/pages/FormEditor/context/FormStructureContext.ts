@@ -5,6 +5,7 @@ import { FormFieldData } from "../schemas/fields";
 import { $ZodErrorTree } from "zod/v4/core";
 import { FormMetadata } from "../schemas/metadata";
 import { typeToFlattenedError } from "zod/v3";
+import { FormConditions } from "../schemas/conditions";
 
 interface Section {
   title: string;
@@ -22,10 +23,11 @@ interface FormField {
 }
 
 interface FormStructure {
-  metadata: FormMetadata & { validationErrors?: typeToFlattenedError<FormMetadata>['fieldErrors'] | null };
+  metadata: FormMetadata & { validationErrors?: typeToFlattenedError<FormMetadata>["fieldErrors"] | null };
   sections: Record<string, Section>;
   orderedSectionIds: string[];
   fields: Record<string, FormField>;
+  conditions: FormConditions;
 }
 
 interface FormStructureContext {
@@ -38,6 +40,7 @@ interface FormStructureContext {
   appendFieldToFirstSection: (elementTypeId: FormFieldTypeId) => void;
   deleteField: (fieldId: string) => void;
   setFieldData: (fieldId: string, data: Partial<FormFieldData>) => void;
+  deleteConditionAt: (index: number) => void;
   validateForm: () => void;
   setFormMetadata: (metadata: Partial<FormMetadata>) => boolean;
 }
@@ -52,6 +55,7 @@ const FormStructureContext = createContext<FormStructureContext>({
   appendFieldToFirstSection: () => null,
   deleteField: () => null,
   setFieldData: () => null,
+  deleteConditionAt: () => null,
   validateForm: () => null,
   setFormMetadata: () => false,
 });

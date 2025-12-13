@@ -1,4 +1,4 @@
-import { array, enum as zod_enum, strictObject, string } from "zod";
+import { array, enum as zod_enum, infer as zod_infer, strictObject, string } from "zod";
 import { conditionFieldSchema } from "./conditionField";
 
 enum FormConditionOperator {
@@ -26,7 +26,10 @@ const conditionsSchema = array(strictObject({
   dependantComponents: array(strictObject({
     id: string(),
     type: zod_enum(FormComponentType),
-  })),
-})).optional();
+  })).min(1),
+}));
 
-export default conditionsSchema;
+type FormConditions = zod_infer<typeof conditionsSchema>;
+
+export { conditionsSchema as FormConditionsSchema, FormConditionOperator, FormComponentType };
+export type { FormConditions };

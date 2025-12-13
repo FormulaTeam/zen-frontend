@@ -33,6 +33,7 @@ function FormEditor({ mode, editedForm }: Props) {
     appendFieldToFirstSection,
     deleteField,
     setFieldData,
+    deleteConditionAt,
     validateForm,
     setFormMetadata,
   } = useFormStructure(editedForm);
@@ -50,6 +51,7 @@ function FormEditor({ mode, editedForm }: Props) {
           appendFieldToFirstSection,
           deleteField,
           setFieldData,
+          deleteConditionAt,
           validateForm,
           setFormMetadata,
         }}>

@@ -1,5 +1,5 @@
 .container {
-    flex-grow: 1;
+    flex: 1;
     border: 2px solid rgba(84, 119, 152, 0.32);
     width: 100%;
     border-radius: 16px !important;
@@ -17,8 +17,8 @@
 .button.button{
     border-radius: 50%;
     min-width: 0;
-    height: 40px;
-    width: 40px;
+    height: 45px;
+    width: 45px;
     color: black;
 }
 
@@ -28,8 +28,8 @@
     gap: 18px;
     padding: 20px 12px !important;
     flex: 1 0 auto;
+    max-height: 100%;
     overflow-y: scroll;
-    min-height: 180px;
     width: 100%;
 }
 

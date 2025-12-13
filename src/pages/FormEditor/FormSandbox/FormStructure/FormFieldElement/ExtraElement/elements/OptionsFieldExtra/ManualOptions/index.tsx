@@ -91,6 +91,7 @@ function ManualOptions(props: Props) {
     items.map((item, index) => {
       const isDefined = !!item.text?.length;
 
+      //TODO Export to a child component
       return (
         <div key={item.id} className={styles.itemContainer}>
           <TextField variant={"standard"}
@@ -178,6 +179,7 @@ function ManualOptions(props: Props) {
 
     const disabled = !items[selectedControlledItemIndex].text?.length || !controllingFieldItems?.length;
 
+    //TODO Export to a child component
     return (
       <div className={styles.controllingItemsContainer}>
         {

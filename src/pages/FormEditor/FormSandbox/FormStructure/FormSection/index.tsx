@@ -164,6 +164,7 @@ function FormSection({ id }: Props) {
         </Button>
         <Button className={styles.button}
                 disabled={isLastSection}
+                color={'error'}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   deleteSection(id);
