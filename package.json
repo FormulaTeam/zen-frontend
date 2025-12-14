@@ -15,6 +15,7 @@
     "axios": "^1.7.2",
     "dayjs": "^1.11.12",
     "file-saver": "^2.0.5",
+    "formik": "^2.4.9",
     "jwt-decode": "^4.0.0",
     "material-icons": "^1.13.14",
     "material-react-table": "^2.0.2",
@@ -23,6 +24,7 @@
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.3.5",
     "react-file-icon": "^1.6.0",
+    "react-hook-form": "^7.68.0",
     "react-loading": "^2.0.3",
     "react-router-dom": "^6.26.0",
     "react-scripts": "^5.0.1",
@@ -35,6 +37,7 @@
     "stylis": "^4.3.2",
     "stylis-plugin-rtl": "^2.1.0",
     "uuid": "^10.0.0",
+    "zod": "^4.1.13",
     "zustand": "^5.0.8"
   },
   "scripts": {

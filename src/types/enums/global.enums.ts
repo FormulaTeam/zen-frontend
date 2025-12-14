@@ -10,7 +10,8 @@ export enum IPath {
   DELETED_FORMS = "/deleted-forms",
 
   RESPONSES = "/responses/:id",
-  RESPONSE_CREATE = "/response/create/:formId",
+  RESPONSE_CREATE = "/response/page/create/:formId",
+  RESPONSE_PAGE_CREATE = "/response/create/:formId",
   RESPONSE_CREATE_COPY = "/response/create/:formId/:id",
   RESPONSE_EDIT = "/response/edit/:formId/:id",
   RESPONSE_VIEW = "/response/view/:formId/:id",

@@ -50,5 +50,17 @@ export const texts = {
     createSection: "יצירת מקטע",
     mainSection: "מקטע ראשי",
     manageConditions: "ניהול התניות",
+
+    // validation messages
+    required: "שדה זה הינו חובה",
+    number: "ערך זה חייב להיות מספר",
+    number_min: "ערך חייב להיות גדול מ-",
+    number_max: "ערך חייב להיות קטן מ-",
+    date: "יש להזין ערך תקין",
+    link: "יש להזין קישור תקף",
+    location_utm_latitude: "חייב להכיל מספר בין 0 ל־10,000,000",
+    location_utm_longitude: "חייב להכיל מספר בן 6 ספרות בין 100000 ל־900000",
+    location_wkt_latitude: "חייב להכיל מספר בין 90- למספר 90 בפורמט עשרוני תקין",
+    location_wkt_longitude: "יש להזין מספר בין 180- למספר 180 בפורמט עשרוני תקין",
   },
 };

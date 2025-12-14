@@ -23,6 +23,7 @@ import HelpBtn from "./components/HelpBtn/HelpBtn";
 import HelpDiv from "./components/HelpBtn/HelpDiv";
 import { DashboardStatisticsProvider } from "./contexts/DashboardStatisticsContext";
 import { useFormsSSE } from "./hooks/useFormsSSE";
+import ResponsePage from "./pages/ResponsePage/Response";
 
 const AppRouter = () => {
   const { user, roles } = useAuth();
@@ -89,11 +90,13 @@ const AppRouter = () => {
               }
             />
             <Route path={IPath.RESPONSE_CREATE} element={<Response roles={roles} user={user} />} />
+            <Route path={IPath.RESPONSE_PAGE_CREATE} element={<ResponsePage />} />
             <Route
               path={IPath.RESPONSE_CREATE_COPY}
               element={<Response roles={roles} user={user} copyMode />}
             />
             <Route path={IPath.RESPONSE_EDIT} element={<Response roles={roles} user={user} />} />
+            <Route path={"/response/editt/:formId/:id"} element={<ResponsePage />} />
             <Route
               path={IPath.RESPONSE_VIEW}
               element={<Response roles={roles} user={user} viewMode />}

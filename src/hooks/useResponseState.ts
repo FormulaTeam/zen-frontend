@@ -9,7 +9,6 @@ import {
   Role,
   SearchResponsesFilter,
   ConditionUtils,
-  ConditionGroup,
 } from "../utils/interfaces";
 import { getFormById, searchResponses } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
@@ -23,6 +22,17 @@ import {
 } from "../utils/utils";
 import { NOT_A_SECTION_ID } from "../utils/sections/consts";
 
+
+type ChildFormChildProps = FormField & {
+  id?: number;
+};
+type ChildFormProps = {
+  formId: number;
+  children: ChildFormChildProps[];
+  saved?: boolean[];
+  valid?: boolean[];
+  shown?: boolean;
+};
 interface SectionsMap {
   [sectionId: string]: {
     name?: string;
@@ -71,6 +81,7 @@ export const useResponseState = (
     }));
   };
   const navigate = useNavigate();
+
   useEffect(() => {
     if (formId) {
       getFormById(Number(formId)).then((form) => {
@@ -221,8 +232,8 @@ export const useResponseState = (
                   const newValue = childField.multiSelect
                     ? validValues
                     : validValues.length > 0
-                    ? validValues[0]
-                    : "";
+                      ? validValues[0]
+                      : "";
 
                   newFormFieldsValuesMap.set(childUniqueId, newValue);
 

@@ -21,7 +21,8 @@ import useCustomFormFields from "../../hooks/Forms/useCustomFormFields";
 import FormSectionsList from "./FormSectionsList";
 import FormPropertyRenderer from "./FormPropertyRenderer";
 import { ResponseCount } from "../../types/interfaces/responses.types";
-import { createForm, getResponsesCount, updateForm } from "../../api";
+import { createForm, updateForm } from "api/formsApi";
+import { getResponsesCount } from "api/responsesApi";
 import {
   generateNewFormFieldData,
   getUserName,

@@ -15,7 +15,18 @@
     "isolatedModules": false,
     "noEmit": true,
     "jsx": "react-jsx",
-    "noImplicitAny": false // Enable warnings for implicit any types
+    "noImplicitAny": false, 
+    "baseUrl": "src",
+    "paths": {
+      "@utils/*": ["utils/*"],
+      "@components/*": ["components/*"],
+      "@pages/*": ["pages/*"],
+      "@types/*": ["types/*"],
+      "@hooks/*": ["hooks/*"],
+      "api/*": ["api/*"],
+      "@contexts/*": ["contexts/*"],
+      "@popups/*": ["popups/*"]
+    }
   },
   "include": ["src", "declaration.d.ts", "SP/**/*.js", "framework.ts"]
 }

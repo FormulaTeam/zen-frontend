@@ -1,0 +1,21 @@
+.response-page {
+  min-height: 100vh;
+  overflow-y: auto;
+  .response-header {
+    padding: 2rem 5rem;
+    z-index: 1000;
+    background-color: white;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .response-content {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 5rem;
+    align-items: center;
+    overflow-y: auto;
+  }
+}
