@@ -4,15 +4,15 @@ import { useState } from "react";
 import styles from "./style.module.css";
 import { FormConditionsOverview } from "./FormConditionsOverview";
 import { Add, Close } from "@mui/icons-material";
-import { FormConditionEditor } from "./FormConditionEditor";
+import { FormConditionEditor, ModifiedCondition } from "./FormConditionEditor";
 
 function FormConditionsModal() {
   const { isConditionsDialogOpen, setIsConditionsDialogOpen } = useFormSandboxContext();
-  const [editedConditionIndex, setEditedConditionIndex] = useState<number | null>(null);
+  const [modifiedCondition, setModifiedCondition] = useState<ModifiedCondition | null>(null);
 
   const handleClose = () => {
     setIsConditionsDialogOpen(false);
-    setEditedConditionIndex(null);
+    setModifiedCondition(null);
   };
 
   return (
@@ -27,19 +27,25 @@ function FormConditionsModal() {
           <Typography variant={"h5"}>ניהול התניות</Typography>
         </div>
         {
-          editedConditionIndex !== null ?
-            <FormConditionEditor /> :
+          modifiedCondition !== null ? (
+            <div className={styles.editorContainer}>
+              <FormConditionEditor modifiedCondition={modifiedCondition} />
+            </div>
+          ) : (
             <div className={styles.overviewContainer}>
               <div className={styles.overviewWrapper}>
-                <FormConditionsOverview onEditCondition={setEditedConditionIndex} />
+                <FormConditionsOverview onEditCondition={(index) => (
+                  setModifiedCondition({ index, status: "existing" })
+                )} />
               </div>
               <Button startIcon={<Add />}
                       variant={"contained"}
                       size={"large"}
-                      onClick={() => setEditedConditionIndex(-1)}>
+                      onClick={() => setModifiedCondition({ status: "new" })}>
                 הוספת התנייה חדשה
               </Button>
             </div>
+          )
         }
       </div>
     </Modal>

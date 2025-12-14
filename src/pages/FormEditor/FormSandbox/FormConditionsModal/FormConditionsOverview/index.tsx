@@ -1,9 +1,9 @@
 import { useFormStructureContext } from "../../../context/FormStructureContext";
 import { useMemo } from "react";
 import styles from "./style.module.css";
-import { Button, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { FormComponentType } from "../../../schemas/conditions";
-import { Delete, Edit } from "@mui/icons-material";
+import { FormConditionsListItem } from "./FormConditionsListItem";
 
 interface Props {
   onEditCondition: (index: number) => void;
@@ -27,35 +27,20 @@ function FormConditionsOverview({ onEditCondition }: Props) {
           }
         }).join(", ");
 
-        //TODO export to a child component
         return (
-          <div key={id} className={styles.itemContainer}>
-            <div className={styles.itemDetails}>
-              <Typography variant={"h6"}>
-                {name ?? `התנייה #${index + 1}`}
-              </Typography>
-              <Typography variant={"body1"}>
-                {`${conditionCount} תנאים מוחלים על: ${dependantComponentNames}`}
-              </Typography>
-            </div>
-            <div className={styles.itemActions}>
-              <Button className={styles.actionButton}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={() => onEditCondition(index)}>
-                <Edit sx={{ fontSize: 25 }} />
-              </Button>
-              <Button className={styles.actionButton}
-                      color={"error"}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={() => deleteConditionAt(index)}>
-                <Delete sx={{ fontSize: 25, color: "#b53442" }} />
-              </Button>
-            </div>
-          </div>
+          <FormConditionsListItem key={id}
+                                  id={id}
+                                  index={index}
+                                  name={name}
+                                  conditionCount={conditionCount}
+                                  dependantComponentNames={dependantComponentNames}
+                                  onEdit={() => onEditCondition(index)}
+                                  onDelete={() => deleteConditionAt(index)} />
+
         );
       })
     ) : null
-  ), [formStructure.conditions, formStructure.sections, formStructure.fields]);
+  ), [formStructure.conditions, formStructure.sections, formStructure.fields, onEditCondition]);
 
   return (
     <div className={styles.content}>
