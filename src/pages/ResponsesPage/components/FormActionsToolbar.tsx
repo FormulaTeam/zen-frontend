@@ -1,4 +1,4 @@
-import { Box, Button, Stack, Tooltip } from "@mui/material";
+import { Button, Tooltip } from "@mui/material";
 
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -8,6 +8,7 @@ import { useFormStore } from "../stores/form.store";
 import { PermissionGate } from "../PermissionGate";
 import { MoreOptions } from "./MoreOptions";
 import UserPicker from "../../../components/USerPicker/UserPicker";
+import { FormActionsContainer } from "../styled";
 
 export const FormActionsToolbar = () => {
   const { permissions, form, setForm } = useFormStore();
@@ -18,7 +19,7 @@ export const FormActionsToolbar = () => {
   if (!permissions || !form || !formId) return null;
 
   return (
-    <Box>
+    <FormActionsContainer>
       <PermissionGate permissions={[PERMISSION_TYPES.SYNC_FORM]} userPermissions={permissions}>
         <MoreOptions />
       </PermissionGate>
@@ -58,19 +59,12 @@ export const FormActionsToolbar = () => {
           />
         )}
       </PermissionGate>
-
-      <Tooltip title="חזרה">
-        <Button onClick={() => navigate("/")} variant="customIcon">
-          <CustomIcon forcePointer iconName="arrowBack" />
-        </Button>
-      </Tooltip>
-
       {/* <SyncTypeMenu
         anchorElSourceType={anchorElSourceType}
         handleCloseMoreActions={handleCloseMoreActions}
         handleManualSource={handleManualSource}
         handleAutomaticSource={handleAutomaticSource}
       /> */}
-    </Box>
+    </FormActionsContainer>
   );
 };
