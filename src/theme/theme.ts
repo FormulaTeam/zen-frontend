@@ -62,7 +62,7 @@ export let theme = createTheme(
     direction: "rtl",
     typography: {
       fontFamily: "assistant, sans-serif",
-      fontSize: 16,
+      fontSize: 19,
     },
     palette,
     components: {},

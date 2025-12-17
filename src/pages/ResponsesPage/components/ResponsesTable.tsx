@@ -106,16 +106,16 @@ export const ResponsesTable = ({
 
 
   const SyncStatusIcon: React.FC<{ pushedToMetro?: string | null }> = ({ pushedToMetro }) => (
-    <>
+    <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
       {pushedToMetro ? <CloudDoneIcon fontSize="small" /> : <CloudOffIcon fontSize="small" />}
-    </>
+    </Box>
   );
 
 
   const renderRowExpandIcon = (row: Row) => {
     const expanded = isRowExpanded(row);
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
         <Tooltip title={expanded ? "כיווץ" : "הרחבה"}>
           <IconButton
             size="small"
@@ -165,7 +165,8 @@ export const ResponsesTable = ({
   const getFormColumns = () => {
     const baseFormColumns = Array.isArray(form?.columns)
       ? form?.columns.map((col: any) => ({
-        flex: 1,
+        flex: (col.field === "id" || col.field === "_id" || col.field === "responseId") ? 0 : 2,
+        minWidth: (col.field === "id" || col.field === "_id" || col.field === "responseId") ? 120 : 400,
         ...col,
         // Make id field non-editable, allow editing of other form columns
         editable: col.field !== "id" && col.field !== "_id" && col.field !== "responseId",
@@ -176,7 +177,7 @@ export const ResponsesTable = ({
       field: "sync",
       headerName: "",
       renderHeader: () => <CloudUploadIcon fontSize="large" />,
-      flex: 1,
+      minWidth: 100,
       editable: false,
       renderCell: (params: any) => (
         <SyncStatusIcon pushedToMetro={params.row?.pushed_to_metro} />
@@ -186,7 +187,7 @@ export const ResponsesTable = ({
     const expandColumn = {
       field: "expand",
       headerName: "",
-      flex: 1,
+      minWidth: 100,
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
@@ -201,13 +202,15 @@ export const ResponsesTable = ({
       field: "editedByName",
       headerName: "השתנה ע״י",
       flex: 1,
+      minWidth: 200,
       editable: false,
     };
 
     const editedAtColumn = {
       field: "edited",
-      headerName: "השתנה",
+      headerName: "תאריך שינוי",
       flex: 1,
+      minWidth: 200,
       editable: false,
     };
 
@@ -248,17 +251,18 @@ export const ResponsesTable = ({
         <StyledDataGrid
           apiRef={apiRef}
           isRowSelectable={({ row }) => true}
-          editMode="cell"
+          editMode="row"
           processRowUpdate={handleProcessRowUpdate}
           onProcessRowUpdateError={(error) => {
             console.error("Error updating row:", error);
           }}
           density="comfortable"
-          rowHeight={38}
+          rowHeight={65}
           loading={!rows}
           pagination
           pageSizeOptions={[25, 50, 100]}
           checkboxSelection
+          getRowClassName={(params) => params.indexRelativeToCurrentPage % 2 === 0 ? 'MuiDataGrid-row--even' : 'MuiDataGrid-row--odd'}
           getRowId={(row) => row.id ?? row._id ?? row.responseId ?? `${row.formId ?? ""}-${row.responseId ?? row._id ?? row.id}`}
           localeText={{
             ...heIL.components.MuiDataGrid.defaultProps.localeText,

@@ -1,14 +1,15 @@
 import { useParams } from "react-router";
-import Header from "../../components/Responses/Header";
+
 import Loader from "../../components/Responses/Loader";
 import { Role, User } from "../../utils/interfaces";
 import { FormActionsToolbar } from "./components/FormActionsToolbar";
 import { EditResponsesButton } from "./components/EditResponsesButton";
 import { useFormLoader } from "./hooks/useFormLoader";
 import { useResponsesEdit } from "./hooks/useResponsesEdit";
-import { BoxWrapper, MainContentWrapper, PageWrapper, TopSection } from "./styled";
+import { MainContentWrapper, PageWrapper, TopSection } from "./styled";
 import SearchInfo from "../../components/Responses/SearchInfo";
 import { ResponsesTable } from "./components/ResponsesTable";
+import Header from "./components/Header";
 
 interface ResponsesPageProps {
   user: User | null;
@@ -52,19 +53,17 @@ export default function ResponsesPage({
     <PageWrapper>
       <MainContentWrapper>
         <TopSection>
-          <BoxWrapper>
-            <Header />
-            <FormActionsToolbar />
-          </BoxWrapper>
-          <EditResponsesButton
-            isInEditMode={isInEditMode}
-            editedRowsCount={editedRows.size}
-            isUpdating={isUpdating}
-            onToggleEditMode={handleToggleEditMode}
-            onSaveChanges={handleSaveChanges}
-          />
+          <Header />
+          <FormActionsToolbar />
           {/* <SearchInfo search={search} setSearch={setSearch} allResponsesCount={allResponsesCount} /> */}
         </TopSection>
+        <EditResponsesButton
+          isInEditMode={isInEditMode}
+          editedRowsCount={editedRows.size}
+          isUpdating={isUpdating}
+          onToggleEditMode={handleToggleEditMode}
+          onSaveChanges={handleSaveChanges}
+        />
         <ResponsesTable
           isInEditMode={isInEditMode}
           localRows={localRows}

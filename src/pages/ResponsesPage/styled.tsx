@@ -1,5 +1,4 @@
 import Box, { BoxProps } from "@mui/material/Box";
-import Paper, { PaperProps } from "@mui/material/Paper";
 import { styled } from "@mui/material/styles";
 import { DataGridPro } from "@mui/x-data-grid-pro";
 import { TableContainer as MuiTableContainer } from "@mui/material";
@@ -29,11 +28,6 @@ export const EditButtonWrapper = styled(Box)<BoxProps>(({ theme }) => ({
   alignItems: "flex-start"
 }));
 
-export const BoxWrapper = styled(Box)<BoxProps>(({ theme }) => ({
-  display: "flex",
-  alignItems: "flex-start"
-}));
-
 export const MainContentWrapper = styled(Box)<BoxProps>(({ theme }) => ({
   padding: "24px",
   maxWidth: "100%",
@@ -48,7 +42,7 @@ export const MainContentWrapper = styled(Box)<BoxProps>(({ theme }) => ({
 export const TopSection = styled(Box)<BoxProps>(({ theme }) => ({
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "flex-start",
+  alignItems: "center",
   marginBottom: "40px",
 }));
 
@@ -57,6 +51,12 @@ export const CenteredBox = styled(Box)<BoxProps>(({ theme }) => ({
   justifyContent: "center",
   alignItems: "center",
   height: "100%",
+}));
+
+export const TitleWrapper = styled(Box)<BoxProps>(({ theme }) => ({
+  display: "flex",
+  alignItems: "baseline",
+  gap: '12px'
 }));
 
 export const QuickEditTableContainer = styled(MuiTableContainer)<{ isQuickEditMode?: boolean }>(
@@ -81,7 +81,8 @@ export const QuickEditTableContainer = styled(MuiTableContainer)<{ isQuickEditMo
 
 export const ContentContainer = styled(Box)<BoxProps>(({ theme }) => ({
   display: "flex",
-  height: "calc(100vh - 200px)",
+  height: "calc(100vh - 400px)",
+  maxHeight: "calc(100vh - 400px)",
   gap: 0,
 }));
 
@@ -95,6 +96,7 @@ export const MainContent = styled(Box)<MainContentProps>(({ theme, $sidePanelOpe
   flexDirection: "column",
   transition: "margin-right 0.3s ease",
   minWidth: 0,
+  overflow: "hidden",
 }));
 
 export const TableContainer = styled(Box)<BoxProps>(({ theme }) => ({
@@ -124,11 +126,21 @@ export const LoadingBtnBox = styled(Box)<LoadingBtnBoxProps>(({ theme, $bgColor 
 
 export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   "&.MuiDataGrid-root": {
-    "--DataGrid-t-header-background-base": "#f0f4f6",
+    fontSize: "21px",
+  },
+  "& .MuiDataGrid-columnHeaders": {
+    backgroundColor: "#e3f2fd"
+  },
+  "& .MuiDataGrid-columnHeader": {
+    textAlign: "right",
+    backgroundColor: "#e3f2fd",
+    "&:hover": {
+      backgroundColor: "#bbdefb",
+    },
   },
   "& .MuiDataGrid-columnSeparator": {
-    right: "auto",
-    left: -12,
+    left: "auto",
+    opacity: 0,
   },
   "& .MuiDataGrid-columnHeader:hover .MuiDataGrid-columnSeparator": {
     opacity: 1,
@@ -136,12 +148,24 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   "& .MuiDataGrid-columnHeaderTitle": {
     textAlign: "right",
     width: "100%",
+    fontSize: "21px",
+    fontWeight: 600,
+  },
+  "& .MuiDataGrid-row--even": {
+    backgroundColor: "#fafafa",
+    "&:hover": {
+      backgroundColor: "#e3f2fd !important",
+    },
+  },
+  "& .MuiDataGrid-row--odd": {
+    backgroundColor: "#ffffff",
+    "&:hover": {
+      backgroundColor: "#e3f2fd !important",
+    },
   },
   "& .MuiDataGrid-cell": {
     textAlign: "right",
-  },
-  "& .MuiDataGrid-columnHeader": {
-    textAlign: "right",
+    fontSize: "21px",
   },
   "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
     outline: "none !important",

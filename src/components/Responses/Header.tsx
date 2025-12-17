@@ -5,7 +5,7 @@ import { Form } from "../../utils/interfaces";
 import { useFormStore } from "../../pages/ResponsesPage/stores/form.store";
 
 const Header = () => {
-  const { form, rows } = useFormStore();
+  const { form } = useFormStore();
   return (
     <Box>
       <Tooltip title="מזהה הטופס">
@@ -16,7 +16,6 @@ const Header = () => {
       <Typography variant="h4">{form.name}</Typography>
       <Typography variant="subtitle2">{form.description || "ללא תיאור"}</Typography>
       <Typography variant="subtitle1">{`נוצר על ידי ${getCreatorName(form)}`}</Typography>
-      <Typography variant="subtitle1">{`כמות תגובות לטופס - ${rows.length}`}</Typography>
     </Box>
   );
 };
