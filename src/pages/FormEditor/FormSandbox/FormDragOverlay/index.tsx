@@ -1,4 +1,4 @@
-import { DraggableElementType, DraggingElement } from "../../context/FormSandboxContext";
+import { DraggableElementType, DraggingElement } from "../context/FormSandboxContext";
 import { FunctionComponent } from "react";
 import CatalogItemDragOverlay from "./CatalogItemDragOverlay";
 import SectionDragOverlay from "./SectionDragOverlay";

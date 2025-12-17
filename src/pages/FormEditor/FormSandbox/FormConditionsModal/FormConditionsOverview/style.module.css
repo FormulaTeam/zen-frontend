@@ -9,11 +9,10 @@
 .listContainer {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    width: 100%;
+    gap: 8px;
     flex: 1;
     padding: 20px;
-    box-shadow: 0 4px 20px 0 rgba(175, 184, 191, 0.35) inset;
+    box-shadow: 2px 0 10px 4px #1976D21A inset;
     border-radius: 20px;
     overflow-y: scroll;
 }

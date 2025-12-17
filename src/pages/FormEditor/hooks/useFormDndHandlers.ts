@@ -1,6 +1,6 @@
 import { FormField, useFormStructureContext } from "../context/FormStructureContext";
 import { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
-import { DraggableElementData, DraggingElement } from "../context/FormSandboxContext";
+import { DraggableElementData, DraggingElement } from "../FormSandbox/context/FormSandboxContext";
 import { arrayMove } from "@dnd-kit/sortable";
 import { PLACEHOLDER_FIELD_ID } from "../context/constants";
 import { FormFieldTypeId } from "../../../utils/interfaces";

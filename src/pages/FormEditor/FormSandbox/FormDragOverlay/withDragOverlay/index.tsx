@@ -1,7 +1,7 @@
 import { FunctionComponent } from "react";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import { DragOverlay } from "@dnd-kit/core";
-import { DraggingElement } from "../../../context/FormSandboxContext";
+import { DraggingElement } from "../../context/FormSandboxContext";
 
 interface DragOverlayProps {
   draggingElement: DraggingElement;

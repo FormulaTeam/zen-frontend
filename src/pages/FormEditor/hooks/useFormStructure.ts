@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { FormField, FormMetadata, FormStructure, Section } from "../context/FormStructureContext";
-import { getEmptyForm } from "../context/constants";
+import { getEmptyForm } from "../context/utils";
 import { texts } from "../../../utils/texts";
 import { FormFieldTypeId } from "../../../utils/interfaces";
 import { generateFieldId, generateFieldName, generateSectionId } from "../utils";
@@ -8,7 +8,7 @@ import { FormFieldData, FormFieldSchema } from "../schemas/fields";
 import { z } from "zod";
 import { $ZodErrorTree } from "zod/v4/core";
 import { FormMetadataSchema } from "../schemas/metadata";
-import { FormConditions, FormConditionsSchema } from "../schemas/conditions";
+import { FormConditions, conditionsSchema } from "../schemas/conditions";
 
 function yieldFormStructure(form: object) {
   return form as FormStructure; // TODO change to actual logic that translates form json to form structure
@@ -80,7 +80,7 @@ const validateField = (prev: FormStructure, fieldId: string) => {
 };
 
 const validateConditions = (conditions: FormConditions) => {
-  const result = FormConditionsSchema.safeParse(conditions);
+  const result = conditionsSchema.safeParse(conditions);
 
   if (!result.success) {
     return z.treeifyError(result.error) ?? null;

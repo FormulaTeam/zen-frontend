@@ -3,7 +3,7 @@ import styles from "./style.module.css";
 import { texts } from "../../../../../utils/texts";
 import { Button, Tooltip } from "@mui/material";
 import { useFormStructureContext } from "../../../context/FormStructureContext";
-import { useFormSandboxContext } from "../../../context/FormSandboxContext";
+import { useFormSandboxContext } from "../../context/FormSandboxContext";
 
 function FormManagementActions() {
   const { appendSection } = useFormStructureContext();

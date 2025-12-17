@@ -1,13 +1,13 @@
-import { Step, StepLabel, Stepper } from "@mui/material";
-import { useMemo, useState } from "react";
+import { Button, Step, StepLabel, Stepper } from "@mui/material";
+import { FunctionComponent, useMemo, useState } from "react";
 import styles from "./style.module.css";
 import { useFormStructureContext } from "../../../context/FormStructureContext";
-
-enum ConditionEditorStep {
-  EDITOR = 0,
-  DEPENDENCY_PICKER,
-  SUMMARY,
-}
+import { FormConditionsBuilder } from "./steps/FormConditionBuilder";
+import { FormConditionsDependencyPicker } from "./steps/FormConditionDependencyPicker";
+import { FormConditionsSummary } from "./steps/FormConditionSummary";
+import { FormConditionEditorContext } from "./context/FormConditionEditorContext";
+import { ConditionEditorStepId } from "./constants";
+import { useFormConditionEditorData } from "./context/useFormConditionEditorData";
 
 type ModifiedConditionStatus = "new" | "existing";
 
@@ -28,56 +28,118 @@ interface ExistingCondition extends ModifiedConditionBase {
 
 type ModifiedCondition = NewCondition | ExistingCondition;
 
-interface Props {
-  modifiedCondition: ModifiedCondition;
+interface ConditionEditorStep {
+  id: ConditionEditorStepId;
+  label: string;
+  content: FunctionComponent;
 }
 
-function FormConditionEditor({ modifiedCondition }: Props) {
-  const { formStructure } = useFormStructureContext();
-  const { conditions } = formStructure;
-  const [activeStep, setActiveStep] = useState<ConditionEditorStep>(ConditionEditorStep.EDITOR);
+const ConditionEditorSteps: ConditionEditorStep[] = [
+  {
+    id: ConditionEditorStepId.CONDITION_BUILDER,
+    label: "הגדרת תנאים",
+    content: FormConditionsBuilder,
+  },
+  {
+    id: ConditionEditorStepId.DEPENDENCY_PICKER,
+    label: "בחירת אלמנטים מותנים",
+    content: FormConditionsDependencyPicker,
+  },
+  {
+    id: ConditionEditorStepId.SUMMARY,
+    label: "סיכום ותצוגה מקדימה",
+    content: FormConditionsSummary,
+  },
+];
 
-  const completedSteps = useMemo<Record<ConditionEditorStep, boolean>>(() => {
+interface Props {
+  modifiedCondition: ModifiedCondition;
+  onSubmit: () => void;
+  onReturn: () => void;
+}
+
+function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
+  const { formStructure: { conditions } } = useFormStructureContext();
+  const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
+  const [conditionData, setConditionData] = useFormConditionEditorData(modifiedCondition.index !== undefined ? conditions[modifiedCondition.index] : undefined);
+
+  const completedSteps = useMemo<Record<ConditionEditorStepId, boolean>>(() => {
     const newState = modifiedCondition.index !== undefined ? {
-      [ConditionEditorStep.EDITOR]: conditions[modifiedCondition.index].groups.some(({ conditions }) => (conditions.length)),
-      [ConditionEditorStep.DEPENDENCY_PICKER]: !!conditions[modifiedCondition.index].dependantComponents.length,
+      [ConditionEditorStepId.CONDITION_BUILDER]: conditions[modifiedCondition.index].groups.some(({ conditions }) => (conditions.length)),
+      [ConditionEditorStepId.DEPENDENCY_PICKER]: !!conditions[modifiedCondition.index].dependantComponents.length,
     } : {
-      [ConditionEditorStep.EDITOR]: false,
-      [ConditionEditorStep.DEPENDENCY_PICKER]: false,
+      [ConditionEditorStepId.CONDITION_BUILDER]: false,
+      [ConditionEditorStepId.DEPENDENCY_PICKER]: false,
     };
 
     return ({
       ...newState,
-      [ConditionEditorStep.SUMMARY]: newState[ConditionEditorStep.EDITOR] && newState[ConditionEditorStep.DEPENDENCY_PICKER],
+      [ConditionEditorStepId.SUMMARY]: newState[ConditionEditorStepId.CONDITION_BUILDER] && newState[ConditionEditorStepId.DEPENDENCY_PICKER],
     });
   }, [conditions]);
 
+  const isFirstStepActive = activeStepIndex === 0;
+  const isLastStepActive = activeStepIndex === ConditionEditorSteps.length - 1;
+
+  const handleNext = () => {
+    !isLastStepActive ?
+      setActiveStepIndex((prev) => (prev + 1)) :
+      onSubmit();
+  };
+
+  const handlePrev = () => {
+    !isFirstStepActive &&
+    setActiveStepIndex((prev) => prev - 1);
+  };
+
+  const StepContent = ConditionEditorSteps[activeStepIndex].content;
+
   return (
-    <div className={styles.content}>
-      <Stepper alternativeLabel
-               activeStep={activeStep}
-               sx={{
-                 fontSize: 27,
-                 "& .MuiStepLabel-label": {
-                   fontSize: 20,
-                 },
-               }}>
-        <Step completed={completedSteps[ConditionEditorStep.EDITOR]}>
-          <StepLabel>
-            הגדרת תנאים
-          </StepLabel>
-        </Step>
-        <Step completed={completedSteps[ConditionEditorStep.DEPENDENCY_PICKER]}>
-          <StepLabel>
-            בחירת אלמנטים מותנים
-          </StepLabel>
-        </Step>
-        <Step completed={completedSteps[ConditionEditorStep.SUMMARY]}>
-          <StepLabel>
-            סיכום ותצוגה מקדימה
-          </StepLabel>
-        </Step>
-      </Stepper>
+    <div className={styles.container}>
+      <div className={styles.stepperContainer}>
+        <Stepper alternativeLabel
+                 activeStep={activeStepIndex}
+                 sx={{
+                   fontSize: 27,
+                   "& .MuiStepLabel-label": {
+                     fontSize: 20,
+                   },
+                 }}>
+          {
+            ConditionEditorSteps.map(({ id, label }) => (
+              <Step key={id} completed={completedSteps[id]}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))
+          }
+        </Stepper>
+      </div>
+      <div className={styles.contentContainer}>
+        <FormConditionEditorContext.Provider
+          value={{
+            conditionData,
+            setConditionData,
+          }}>
+          <StepContent />
+        </FormConditionEditorContext.Provider>
+      </div>
+      <div className={styles.footer}>
+        <Button variant={isLastStepActive ? "contained" : "outlined"}
+                className={styles.button}
+                size={"large"}
+                onClick={handleNext}>
+          {isLastStepActive ? "שמור" : "הבא"}
+        </Button>
+        {
+          activeStepIndex !== 0 &&
+          <Button variant={"outlined"}
+                  className={styles.button}
+                  size={"large"}
+                  onClick={handlePrev}>
+            הקודם
+          </Button>
+        }
+      </div>
     </div>
   );
 }

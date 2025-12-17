@@ -1,6 +1,6 @@
 import { CollisionDetection, DndContext, PointerSensor, pointerWithin, useSensor, useSensors } from "@dnd-kit/core";
 import { FormStructureContainer } from "./FormStructure";
-import { DraggableElementType, FormSandboxContext } from "../context/FormSandboxContext";
+import { DraggableElementType, FormSandboxContext } from "./context/FormSandboxContext";
 import { useCallback, useState } from "react";
 import { FormSandboxSidebar } from "./FormSandboxSidebar";
 import { useFormDndHandlers } from "../hooks/useFormDndHandlers";

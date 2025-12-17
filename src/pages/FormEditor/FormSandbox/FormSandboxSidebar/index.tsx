@@ -2,7 +2,7 @@ import { FormManagementActions } from "./FormManagementActions";
 import { FormElementCatalog } from "./FormElementCatalog";
 import { Switch, Typography } from "@mui/material";
 import styles from "./style.module.css";
-import { useFormSandboxContext } from "../../context/FormSandboxContext";
+import { useFormSandboxContext } from "../context/FormSandboxContext";
 
 function FormSandboxSidebar() {
   const { isInternalNamesShown, toggleInternalNamesShown } = useFormSandboxContext();

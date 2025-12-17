@@ -13,7 +13,7 @@ import {
   KeyboardDoubleArrowRight,
 } from "@mui/icons-material";
 import { FormFieldElement } from "../FormFieldElement";
-import { DraggableElementData } from "../../../context/FormSandboxContext";
+import { DraggableElementData } from "../../context/FormSandboxContext";
 import { useDndContext } from "@dnd-kit/core";
 import { FormFieldData } from "../../../schemas/fields";
 import { Resizable } from "re-resizable";

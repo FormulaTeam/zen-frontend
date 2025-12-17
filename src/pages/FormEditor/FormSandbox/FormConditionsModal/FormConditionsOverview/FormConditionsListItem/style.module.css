@@ -4,9 +4,9 @@
     justify-content: space-between;
     width: 100%;
     padding: 12px 24px;
-    box-shadow: 0 4px 20px 0 #1976D21A;
-    border: 2px lightblue solid;
+    border: 2px #d8dfe3 solid;
     border-radius: 16px;
+    background: white;
 }
 
 .itemActions {

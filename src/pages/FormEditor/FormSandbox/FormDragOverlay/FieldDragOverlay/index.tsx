@@ -3,7 +3,7 @@ import { useFormStructureContext } from "../../../context/FormStructureContext";
 import { FORM_ELEMENT_ICONS } from "../../../../../components/FORM_ELEMENT_ICONS";
 import { FORM_ELEMENTS } from "../../../../../utils/interfaces";
 import { Typography } from "@mui/material";
-import { DraggingElement } from "../../../context/FormSandboxContext";
+import { DraggingElement } from "../../context/FormSandboxContext";
 import { withDragOverlay } from "../withDragOverlay";
 
 interface Props {

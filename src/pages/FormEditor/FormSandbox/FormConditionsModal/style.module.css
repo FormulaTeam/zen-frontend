@@ -13,27 +13,30 @@
     max-height: 90vh;
     background-color: white;
     border-radius: 16px;
-    padding: 32px;
+    padding: 32px 40px;
     overflow: hidden;
 }
 
 .header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
+    z-index: 100;
 }
 
-.closeButton.closeButton {
+.headerButton.headerButton {
     border-radius: 50%;
     min-width: 0;
     height: 45px;
     width: 45px;
+    display: flex !important;
+    align-items: center;
 }
 
 .editorContainer {
     width: 100%;
     flex: 1;
-    padding: 24px 0;
 }
 
 .overviewContainer {

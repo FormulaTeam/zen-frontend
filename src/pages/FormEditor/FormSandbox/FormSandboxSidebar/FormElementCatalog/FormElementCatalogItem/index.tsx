@@ -4,7 +4,7 @@ import { FORM_ELEMENT_ICONS } from "../../../../../../components/FORM_ELEMENT_IC
 import { FORM_ELEMENTS, FormFieldTypeId } from "../../../../../../utils/interfaces";
 import { Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import { DraggableElementData } from "../../../../context/FormSandboxContext";
+import { DraggableElementData } from "../../../context/FormSandboxContext";
 
 interface Props {
   id: FormFieldTypeId;

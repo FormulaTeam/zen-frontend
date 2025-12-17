@@ -1,6 +1,6 @@
 import styles from "./style.module.css";
 import { useFormStructureContext } from "../../../context/FormStructureContext";
-import { DraggingElement } from "../../../context/FormSandboxContext";
+import { DraggingElement } from "../../context/FormSandboxContext";
 import { withDragOverlay } from "../withDragOverlay";
 
 interface Props {

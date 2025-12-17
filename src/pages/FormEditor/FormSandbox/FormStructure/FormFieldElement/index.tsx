@@ -1,7 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { FormField } from "../../../context/FormStructureContext";
-import { DraggableElementData, useFormSandboxContext } from "../../../context/FormSandboxContext";
+import { DraggableElementData, useFormSandboxContext } from "../../context/FormSandboxContext";
 import { DeleteOutlined, DragIndicator } from "@mui/icons-material";
 import styles from "./style.module.css";
 import { PLACEHOLDER_FIELD_ID } from "../../../context/constants";

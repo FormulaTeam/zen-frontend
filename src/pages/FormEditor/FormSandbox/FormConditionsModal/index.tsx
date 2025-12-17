@@ -1,9 +1,9 @@
 import { Button, Modal, Typography } from "@mui/material";
-import { useFormSandboxContext } from "../../context/FormSandboxContext";
+import { useFormSandboxContext } from "../context/FormSandboxContext";
 import { useState } from "react";
 import styles from "./style.module.css";
 import { FormConditionsOverview } from "./FormConditionsOverview";
-import { Add, Close } from "@mui/icons-material";
+import { Add, ArrowForwardIos, Close } from "@mui/icons-material";
 import { FormConditionEditor, ModifiedCondition } from "./FormConditionEditor";
 
 function FormConditionsModal() {
@@ -15,21 +15,33 @@ function FormConditionsModal() {
     setModifiedCondition(null);
   };
 
+  const handleReturnToOverview = () => {
+    setModifiedCondition(null);
+  };
+
   return (
     <Modal className={styles.modal} open={isConditionsDialogOpen}>
       <div className={styles.content}>
         <div className={styles.header}>
-          <Button className={styles.closeButton}
+          <Button className={styles.headerButton}
+                  style={{display: modifiedCondition ? 'block' : 'none'}}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={handleReturnToOverview}>
+            <ArrowForwardIos sx={{ fontSize: 22 }} />
+          </Button>
+          {!modifiedCondition && <Typography variant={"h5"}>ניהול התניות</Typography>}
+          <Button className={styles.headerButton}
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={handleClose}>
             <Close sx={{ fontSize: 25 }} />
           </Button>
-          <Typography variant={"h5"}>ניהול התניות</Typography>
         </div>
         {
           modifiedCondition !== null ? (
             <div className={styles.editorContainer}>
-              <FormConditionEditor modifiedCondition={modifiedCondition} />
+              <FormConditionEditor modifiedCondition={modifiedCondition}
+                                   onSubmit={() => setModifiedCondition(null)}
+                                   onReturn={handleReturnToOverview} />
             </div>
           ) : (
             <div className={styles.overviewContainer}>

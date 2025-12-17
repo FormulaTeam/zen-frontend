@@ -11,25 +11,59 @@ enum FormComponentType {
   FIELD = 2,
 }
 
-const conditionsSchema = array(strictObject({
+const conditionGroupSchema = strictObject({
+  id: string(),
+  operator: zod_enum(FormConditionOperator).optional(),
+  conditions: array(strictObject({
+    id: string(),
+    operator: zod_enum(FormConditionOperator).optional(),
+    field: conditionFieldSchema,
+  })).min(1).refine((conditions) => (
+    conditions.some((condition, index) => index !== 0 && condition.operator != undefined)
+  ), {
+    message: "חובה לציין אופרטור בין תנאים",
+  }),
+});
+
+const conditionGroupsSchema = array(conditionGroupSchema)
+  .min(1)
+  .refine((groups) => (
+    groups.some((group, index) => index !== 0 && group.operator != undefined)
+  ), {
+    message: "חובה לציין אופרטור בין קבוצות תנאים",
+  });
+
+const conditionDependantComponentsSchema = array(strictObject({
+  id: string(),
+  type: zod_enum(FormComponentType),
+})).min(1);
+
+const conditionSchema = strictObject({
   id: string(),
   name: string().optional(),
-  groups: array(strictObject({
-    id: string(),
-    operator: zod_enum(FormConditionOperator),
-    conditions: array(strictObject({
-      id: string(),
-      operator: zod_enum(FormConditionOperator),
-      field: conditionFieldSchema,
-    })),
-  })).min(1),
-  dependantComponents: array(strictObject({
-    id: string(),
-    type: zod_enum(FormComponentType),
-  })).min(1),
-}));
+  groups: conditionGroupsSchema,
+  dependantComponents: conditionDependantComponentsSchema,
+});
 
+const conditionsSchema = array(conditionSchema);
+
+type FormConditionGroup = zod_infer<typeof conditionGroupSchema>;
+type FormConditionGroups = zod_infer<typeof conditionGroupsSchema>;
+type FormConditionDependantComponents = zod_infer<typeof conditionDependantComponentsSchema>;
+type FormCondition = zod_infer<typeof conditionSchema>;
 type FormConditions = zod_infer<typeof conditionsSchema>;
 
-export { conditionsSchema as FormConditionsSchema, FormConditionOperator, FormComponentType };
-export type { FormConditions };
+export {
+  conditionGroupsSchema,
+  conditionDependantComponentsSchema,
+  conditionsSchema,
+  FormConditionOperator,
+  FormComponentType,
+};
+export type {
+  FormConditionGroup,
+  FormConditionGroups,
+  FormConditionDependantComponents,
+  FormCondition,
+  FormConditions,
+};
