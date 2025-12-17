@@ -166,7 +166,7 @@ export const ResponsesTable = ({
     const baseFormColumns = Array.isArray(form?.columns)
       ? form?.columns.map((col: any) => ({
         flex: (col.field === "id" || col.field === "_id" || col.field === "responseId") ? 0 : 2,
-        minWidth: (col.field === "id" || col.field === "_id" || col.field === "responseId") ? 120 : 400,
+        minWidth: (col.field === "id" || col.field === "_id" || col.field === "responseId") ? 150 : 400,
         ...col,
         // Make id field non-editable, allow editing of other form columns
         editable: col.field !== "id" && col.field !== "_id" && col.field !== "responseId",
@@ -177,7 +177,7 @@ export const ResponsesTable = ({
       field: "sync",
       headerName: "",
       renderHeader: () => <CloudUploadIcon fontSize="large" />,
-      minWidth: 100,
+      minWidth: 150,
       editable: false,
       renderCell: (params: any) => (
         <SyncStatusIcon pushedToMetro={params.row?.pushed_to_metro} />
@@ -187,7 +187,7 @@ export const ResponsesTable = ({
     const expandColumn = {
       field: "expand",
       headerName: "",
-      minWidth: 100,
+      minWidth: 150,
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
@@ -260,7 +260,6 @@ export const ResponsesTable = ({
           rowHeight={65}
           loading={!rows}
           pagination
-          pageSizeOptions={[25, 50, 100]}
           checkboxSelection
           getRowClassName={(params) => params.indexRelativeToCurrentPage % 2 === 0 ? 'MuiDataGrid-row--even' : 'MuiDataGrid-row--odd'}
           getRowId={(row) => row.id ?? row._id ?? row.responseId ?? `${row.formId ?? ""}-${row.responseId ?? row._id ?? row.id}`}

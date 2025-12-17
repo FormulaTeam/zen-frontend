@@ -42,7 +42,7 @@ export const MainContentWrapper = styled(Box)<BoxProps>(({ theme }) => ({
 export const TopSection = styled(Box)<BoxProps>(({ theme }) => ({
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "center",
+  alignItems: "flex-start",
   marginBottom: "40px",
 }));
 
@@ -178,5 +178,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   "& .MuiDataGrid-cell.Mui-focusVisible, & .MuiDataGrid-columnHeader.Mui-focusVisible": {
     outline: "none !important",
     boxShadow: "none",
+  },
+  "& .MuiDataGrid-scrollbar--vertical": {
+    right: "auto",
+    left: "0",
   },
 }));
