@@ -1,5 +1,5 @@
-enum CheckboxConditionType {
-  EQUAL = 1,
-}
+const CheckboxConditionType = {
+  EQUAL: 1,
+};
 
 export { CheckboxConditionType };

@@ -3,7 +3,7 @@ import { FormStructure, Section } from "./FormStructureContext";
 import { texts } from "../../../utils/texts";
 import { FormComponentType, FormConditionOperator, FormConditions } from "../schemas/conditions";
 import { DateConditionType } from "../schemas/conditions/conditionField/conditionTypes/DateConditionType";
-import { ConditionFieldTypeId } from "../schemas/conditions/conditionField/baseConditionFieldSchema";
+import { ConditionFieldTypeIds } from "../schemas/conditions/conditionField/baseConditionFieldSchema";
 import { FieldTypeIds } from "../../../utils/interfaces";
 import { TextConditionType } from "../schemas/conditions/conditionField/conditionTypes/TextConditionType";
 import { NumberConditionType } from "../schemas/conditions/conditionField/conditionTypes/NumberConditionType";
@@ -39,6 +39,31 @@ const DUMMY_CONDITIONS: FormConditions = [
               typeId: FieldTypeIds.longText,
               conditionType: TextConditionType.NOT_EQUAL,
               targetValue: "bye",
+            },
+          },
+          {
+            id: generateConditionId(),
+            operator: FormConditionOperator.AND,
+            field: {
+              id: generateFieldId(),
+              typeId: FieldTypeIds.number,
+              conditionType: NumberConditionType.LARGER,
+              targetValue: 20,
+            },
+          },
+        ],
+      },
+      {
+        id: generateConditionId(),
+        operator: FormConditionOperator.AND,
+        conditions: [
+          {
+            id: generateConditionId(),
+            field: {
+              id: generateFieldId(),
+              typeId: FieldTypeIds.number,
+              conditionType: NumberConditionType.LARGER,
+              targetValue: 20,
             },
           },
         ],
@@ -80,7 +105,7 @@ const DUMMY_CONDITIONS: FormConditions = [
             id: generateConditionId(),
             field: {
               id: generateFieldId(),
-              typeId: ConditionFieldTypeId.date,
+              typeId: ConditionFieldTypeIds.date,
               conditionType: DateConditionType.AFTER_OR_EQUAL,
               targetValue: new Date(),
             },

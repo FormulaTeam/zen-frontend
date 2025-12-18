@@ -1,10 +1,11 @@
 .container {
+    display: flex;
+    flex-direction: column;
     background-color: white;
     border-radius: 16px;
     width: 100%;
+    min-height: 0;
     height: 100%;
-    display: flex;
-    flex-direction: column;
 }
 
 .stepperContainer {
@@ -14,10 +15,11 @@
 .contentContainer {
     flex: 1;
     margin: 24px 0;
-    padding: 12px;
+    padding: 24px;
     box-shadow: 2px 0 10px 4px #1976D21A inset;
     border-radius: 20px;
-    /*background: rgb(240, 244, 246);*/
+    min-height: 0;
+    height: 100%;
     overflow-y: scroll;
 }
 

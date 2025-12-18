@@ -1,15 +1,15 @@
-enum DateConditionType {
-  EQUAL = 1,
-  NOT_EQUAL = 2,
+const DateConditionType = {
+  EQUAL: 1,
+  NOT_EQUAL: 2,
 
-  BEFORE = 3,
-  AFTER = 4,
+  BEFORE: 3,
+  AFTER: 4,
 
-  BEFORE_OR_EQUAL = 5,
-  AFTER_OR_EQUAL = 6,
+  BEFORE_OR_EQUAL: 5,
+  AFTER_OR_EQUAL: 6,
 
-  EMPTY = 7,
-  NOT_EMPTY = 8,
-}
+  EMPTY: 7,
+  NOT_EMPTY: 8,
+} as const;
 
 export { DateConditionType };

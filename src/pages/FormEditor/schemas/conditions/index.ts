@@ -47,6 +47,7 @@ const conditionSchema = strictObject({
 
 const conditionsSchema = array(conditionSchema);
 
+type FormConditionField = zod_infer<typeof conditionFieldSchema>;
 type FormConditionGroup = zod_infer<typeof conditionGroupSchema>;
 type FormConditionGroups = zod_infer<typeof conditionGroupsSchema>;
 type FormConditionDependantComponents = zod_infer<typeof conditionDependantComponentsSchema>;
@@ -61,6 +62,7 @@ export {
   FormComponentType,
 };
 export type {
+  FormConditionField,
   FormConditionGroup,
   FormConditionGroups,
   FormConditionDependantComponents,

@@ -101,13 +101,24 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
                  activeStep={activeStepIndex}
                  sx={{
                    fontSize: 27,
-                   "& .MuiStepLabel-label": {
-                     fontSize: 20,
-                   },
                  }}>
           {
-            ConditionEditorSteps.map(({ id, label }) => (
-              <Step key={id} completed={completedSteps[id]}>
+            ConditionEditorSteps.map(({ id, label }, index) => (
+              <Step key={id} completed={completedSteps[id]} sx={{
+                "& .MuiStepLabel-label": {
+                  transition: "all 100ms ease-in-out",
+                  lineHeight: "21px",
+                  ...(
+                    index === activeStepIndex ? {
+                      color: "#1976D2",
+                      fontSize: 21,
+                      fontWeight: "bold",
+                    } : {
+                      fontWeight: 500,
+                      fontSize: 20,
+                    }),
+                },
+              }}>
                 <StepLabel>{label}</StepLabel>
               </Step>
             ))
