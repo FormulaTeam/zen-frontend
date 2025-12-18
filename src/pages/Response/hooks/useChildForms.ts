@@ -19,6 +19,7 @@ type ChildFormProps = {
 
 type ChildFormChildProps = FormField & {
   id?: number;
+  valid?: boolean;
 };
 
 type UseChildFormsParams = {
@@ -40,8 +41,8 @@ type UseChildFormsReturn = {
   setChildFormsValidate: React.Dispatch<React.SetStateAction<boolean>>;
   handleAddChildForm: (index: number) => void;
   handleChildSaved: (index: number, success: boolean) => void;
-  handleChildValid: (index: number, success: boolean) => void;
-  handleRemoveChildForm: (parentIndex: number, childIndex: number) => void;
+  handleChildValid: (uniqueId: string, success: boolean) => void;
+  handleRemoveChildForm: (uniqueId: string, childIndex: number) => void;
   handleShowChildForm: (index: number) => void;
 };
 
@@ -58,6 +59,69 @@ export const useChildForms = ({
   const [childFormsSaving, setChildFormsSaving] = useState(false);
   const [childFormsValidate, setChildFormsValidate] = useState(false);
   const navigate = useNavigate();
+
+
+  useEffect(() => {
+    if (childFormsValidate) {
+      const shownForms = childForms.filter((cf) => cf.shown);
+
+      const val = shownForms.flatMap((cf) =>
+        cf.children?.map((c) => c.valid),
+      );
+      const allValid = val.every((v) => v === true);
+      if (allValid) {
+        saveAll();
+      }
+      setChildFormsValidate(false);
+    }
+  }, [childFormsValidate, childForms]);
+
+  const checkPermissions = async (childrenIds: number[]) => {
+    if (childrenIds.length === 0) return;
+
+    const filter: Filter = {
+      query: { $or: childrenIds.map((id) => ({ id })) },
+    };
+
+    try {
+      const formsResponse = await getForms(filter);
+
+      for (const childId of childrenIds) {
+        const form = formsResponse.find((f) => f.id === childId);
+
+        if (!form) {
+          setChildForms((prev) => prev.filter((f) => f.formId !== childId));
+          continue; // Skip if form not found
+        }
+
+        const userRole = form.users?.find(
+          (userRole) =>
+            userRole.upn?.toLowerCase() === user.upn?.toLowerCase() ||
+            userRole.id?.toLowerCase() === user.upn?.toLowerCase(),
+        )?.role_id;
+
+        if (!userRole) {
+          setChildForms((prev) => prev.filter((f) => f.formId !== childId));
+          continue; // Skip if no user role
+        }
+        const canCreateResponse = checkUserAccessForResponse(
+          roles,
+          false,
+          null,
+          form,
+          user,
+          isSuperAdmin,
+        );
+
+        if (!canCreateResponse) {
+          setChildForms((prev) => prev.filter((f) => f.formId !== childId));
+          continue; // Skip if user cannot create response
+        }
+      }
+    } catch (error) {
+      console.error("Error checking permissions for child forms:", error);
+    }
+  };
   // Initialize child forms based on formFields and response id
   useEffect(() => {
     let childrenIds = [
@@ -66,55 +130,10 @@ export const useChildForms = ({
           .filter((child) => child.connectedFormId && child.typeId === FieldTypeIds.form)
           .map((child) => child.connectedFormId),
       ),
-    ]; // Check user permissions for child forms
-    const checkPermissions = async () => {
-      if (childrenIds.length === 0) return;
+    ];
 
-      const filter: Filter = {
-        query: { $or: childrenIds.map((id) => ({ id })) },
-      };
 
-      try {
-        const formsResponse = await getForms(filter);
-
-        for (const childId of childrenIds) {
-          const form = formsResponse.find((f) => f.id === childId);
-
-          if (!form) {
-            setChildForms((prev) => prev.filter((f) => f.formId !== childId));
-            continue; // Skip if form not found
-          }
-
-          const userRole = form.users?.find(
-            (userRole) =>
-              userRole.upn?.toLowerCase() === user.upn?.toLowerCase() ||
-              userRole.id?.toLowerCase() === user.upn?.toLowerCase(),
-          )?.role_id;
-
-          if (!userRole) {
-            setChildForms((prev) => prev.filter((f) => f.formId !== childId));
-            continue; // Skip if no user role
-          }
-          const canCreateResponse = checkUserAccessForResponse(
-            roles,
-            false,
-            null,
-            form,
-            user,
-            isSuperAdmin,
-          );
-
-          if (!canCreateResponse) {
-            setChildForms((prev) => prev.filter((f) => f.formId !== childId));
-            continue; // Skip if user cannot create response
-          }
-        }
-      } catch (error) {
-        console.error("Error checking permissions for child forms:", error);
-      }
-    };
-
-    if (!isSuperAdmin) checkPermissions(); //  no need to check permissions if super admin
+    if (!isSuperAdmin) checkPermissions(childrenIds); //  no need to check permissions if super admin
 
     if (id) {
       try {
@@ -157,13 +176,17 @@ export const useChildForms = ({
       } catch (error) {
         console.error("Error fetching child forms:", error);
       }
-    } else {
+    }
+    else {
       const children = formFields
         .filter((field) => field.typeId === FieldTypeIds.form && field.connectedFormId)
         .map((field) => ({ ...field, shouldSave: true }));
 
       const newChildForms = childrenIds.map((id) => {
         const childForm = children.filter((child) => child.connectedFormId === id);
+        childForm.forEach((c) => {
+          c.valid = false;
+        });
         return {
           formId: id,
           children: childForm || [],
@@ -185,15 +208,15 @@ export const useChildForms = ({
         }),
       );
     }
-  }, [formFields.length, id, isSuperAdmin, roles, user, formId]);
+  }, [formFields.length, id, roles, user, formId]);
 
-  // Handle child forms saving and validation
   useEffect(() => {
     if (childFormsSaving) {
       const shownForms = childForms.filter((cf) => cf.shown);
 
-      const allSaved = shownForms.every((cf) => cf.saved?.every((s) => s === true));
+      const allSaved = shownForms.every((cf) => cf.saved?.every((s) => s === true));///
       const allValidated = shownForms.every((cf) => cf.children?.length === cf.saved?.length);
+
 
       if (!allValidated) return;
 
@@ -204,65 +227,34 @@ export const useChildForms = ({
       } else {
         showErrorNotification(NotificationTexts.CreateResponseFailed);
       }
-    } else if (childFormsValidate) {
-      const shownForms = childForms.filter((cf) => cf.shown);
-
-      const isValid = shownForms.every((cf) => cf.valid?.every((v) => v === true));
-      const allValidated = shownForms.every((cf) => cf.children?.length === cf.valid?.length);
-
-      if (!allValidated) return;
-
-      setChildFormsValidate(false);
-
-      if (isValid) {
-        saveAll();
-      } else {
-        // Don't reset validation arrays immediately - let the parent component handle errors
-        // The parent component will show validation popup and reset when needed
-        console.log("Child form validation failed");
-      }
     }
-  }, [childForms, childFormsSaving, childFormsValidate, formId, navigate, saveAll]);
+  }, [childForms, childFormsSaving]);
 
-  const handleRemoveChildForm = (parentIndex: number, childIndex: number) => {
+  const handleRemoveChildForm = (uniqueId: string, childIndex: number) => {
+    let formIdToDelete: number | undefined = undefined;
+    let idToDelete: number | undefined = undefined;
+
     setChildForms((prevChildForms) => {
-      const currentChildForm = prevChildForms[parentIndex];
+      const currentChildFormIndex = prevChildForms.findIndex((cf) => cf.children.some((c) => c.uniqueId === uniqueId));
+      const currentChildForm = prevChildForms[currentChildFormIndex];
+      const childToRemove = currentChildForm.children[childIndex];
 
-      if (!currentChildForm || childIndex < 0 || childIndex >= currentChildForm.children.length) {
+      if (!childToRemove) {
         return prevChildForms;
+      }
+      if (childToRemove.id && currentChildForm.formId) {
+        formIdToDelete = currentChildForm.formId;
+        idToDelete = childToRemove.id;
       }
 
       const newChildForms = [...prevChildForms];
-      const childForm = { ...newChildForms[parentIndex] };
-      const childToRemove = childForm.children[childIndex];
-
-      // Handle API deletion for saved responses
-      if (childToRemove?.id) {
-        deleteResponse(childForm.formId!, childToRemove.id!)
-          .then(() => {
-            showSuccessNotification(NotificationTexts.DeletedSuccessfully);
-          })
-          .catch((error) => {
-            showErrorNotification(NotificationTexts.DeletedFailed);
-            console.error("Error deleting child form:", error);
-          });
+      if (newChildForms[currentChildFormIndex].children.length > 0) {
+        newChildForms[currentChildFormIndex].children.splice(childIndex, 1);
       }
 
-      // Create new arrays for immutability
-      childForm.children = [...childForm.children];
-      childForm.saved = childForm.saved ? [...childForm.saved] : [];
-      childForm.valid = childForm.valid ? [...childForm.valid] : [];
-
-      // Remove from arrays
-      childForm.children.splice(childIndex, 1);
-      if (childForm.saved.length > childIndex) {
-        childForm.saved.splice(childIndex, 1);
+      if (formIdToDelete && idToDelete) {
+        deleteResponse(formIdToDelete, idToDelete);
       }
-      if (childForm.valid.length > childIndex) {
-        childForm.valid.splice(childIndex, 1);
-      }
-
-      newChildForms[parentIndex] = childForm;
       return newChildForms;
     });
   };
@@ -278,12 +270,12 @@ export const useChildForms = ({
               field.typeId === FieldTypeIds.form && field.connectedFormId === childForm.formId,
           );
           if (fieldTemplate) {
-            // Create a unique copy with a new unique identifier for each instance
             const newChild = {
               ...fieldTemplate,
               uniqueId: `${fieldTemplate.uniqueId}-${Date.now()}-${Math.random()
                 .toString(36)
                 .substr(2, 9)}`,
+              valid: true,
             };
             childForm.children.push(newChild);
           }
@@ -300,6 +292,9 @@ export const useChildForms = ({
       const newChildForms = [...prev];
       if (newChildForms[index]) {
         newChildForms[index] = { ...newChildForms[index], shown: true };
+        newChildForms[index].children.forEach((c) => {
+          c.valid = false;
+        });
       }
       return newChildForms;
     });
@@ -313,10 +308,16 @@ export const useChildForms = ({
     });
   };
 
-  const handleChildValid = (index: number, success: boolean) => {
+  const handleChildValid = (uniqueId: string, success: boolean) => {
     setChildForms((prev) => {
       const newChildForms = [...prev];
-      newChildForms[index].valid?.push(success);
+      newChildForms.forEach((cf) => {
+        cf.children.forEach((c) => {
+          if (c.uniqueId === uniqueId) {
+            c.valid = success;
+          }
+        });
+      });
       return newChildForms;
     });
   };

@@ -73,7 +73,6 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             onChangeHandler(value, uniqueId, valid);
           }}
           value={formFieldValue}
-          validationRegex={formField.validationRegex}
           multiline={formField.typeId === FieldTypeIds.longText}
           isTabularEdit={isTabularEdit}
         />
@@ -82,16 +81,16 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 
     case FieldTypeIds.options: //אפשרויות
       input = renderOptionsField({
-      formField,
-      formFieldsByIdMap,
-      formFieldsValuesMap,
-      formFieldsValidMap,
-      onChangeHandler,
-      viewMode,
-      fieldOptions,
-      formFields,
-      index,
-      isTabularEdit,
+        formField,
+        formFieldsByIdMap,
+        formFieldsValuesMap,
+        formFieldsValidMap,
+        onChangeHandler,
+        viewMode,
+        fieldOptions,
+        formFields,
+        index,
+        isTabularEdit,
       });
       break;
 
@@ -195,7 +194,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any[],isValid: boolean) => {
+          onChangeHandler={(value: any[], isValid: boolean) => {
             onChangeHandler(value, uniqueId, isValid);
           }}
           value={formFieldValue}
@@ -232,7 +231,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any,isValid) => {
+          onChangeHandler={(value: any, isValid) => {
             onChangeHandler(value, uniqueId, isValid);
           }}
           value={formFieldValue}
@@ -257,22 +256,31 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   }
 };
 
-const shouldSkipRerenderHOF = (prevProps, nextProps) => {
-  const { formField: prevField, formFieldsValuesMap: prevValues, formFieldsValidMap: prevValid } = prevProps;
-  const { formField: nextField, formFieldsValuesMap: nextValues, formFieldsValidMap: nextValid } = nextProps;
+// const shouldSkipRerenderHOF = (prevProps, nextProps) => {
+//   const {
+//     formField: prevField,
+//     formFieldsValuesMap: prevValues,
+//     formFieldsValidMap: prevValid,
+//   } = prevProps;
+//   const {
+//     formField: nextField,
+//     formFieldsValuesMap: nextValues,
+//     formFieldsValidMap: nextValid,
+//   } = nextProps;
 
-  const uniqueId = prevField.uniqueId || prevField.uniqId;
+//   const uniqueId = prevField.uniqueId || prevField.uniqId;
 
-  // רק אם הערך או התוקף השתנה - נעשה רינדור
-  const prevVal = prevValues.get(uniqueId);
-  const nextVal = nextValues.get(uniqueId);
-  const prevValidVal = prevValid.get(uniqueId);
-  const nextValidVal = nextValid.get(uniqueId);
+//   // רק אם הערך או התוקף השתנה - נעשה רינדור
+//   const prevVal = prevValues.get(uniqueId);
+//   const nextVal = nextValues.get(uniqueId);
+//   const prevValidVal = prevValid.get(uniqueId);
+//   const nextValidVal = nextValid.get(uniqueId);
 
-  const valueChanged = JSON.stringify(prevVal) !== JSON.stringify(nextVal);
-  const validChanged = JSON.stringify(prevValidVal) !== JSON.stringify(nextValidVal);
+//   const valueChanged = JSON.stringify(prevVal) !== JSON.stringify(nextVal);
+//   const validChanged = JSON.stringify(prevValidVal) !== JSON.stringify(nextValidVal);
 
-  return !valueChanged && !validChanged;
-};
+//   return !valueChanged && !validChanged;
+// };
 
-export default React.memo(FormFieldRenderer, shouldSkipRerenderHOF);
+//export default React.memo(FormFieldRenderer, shouldSkipRerenderHOF);
+export default FormFieldRenderer;

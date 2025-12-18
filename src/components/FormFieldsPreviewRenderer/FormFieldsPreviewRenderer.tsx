@@ -25,14 +25,11 @@ function FormFieldsPreviewRenderer({ formField }) {
           isDisabled={viewMode}
           onChangeHandler={(value: any, valid: boolean | null) => {}}
           value={formFieldValue}
-          validationRegex={formField.validationRegex}
           multiline
         />
       );
 
     case FieldTypeIds.smallText: //שורה אחת
-      console.log(formField);
-
       return (
         <CustomTextField
           label={formField.displayName}
@@ -41,12 +38,10 @@ function FormFieldsPreviewRenderer({ formField }) {
           isDisabled={viewMode}
           onChangeHandler={(value: any, valid: boolean | null) => {}}
           value={formFieldValue}
-          validationRegex={formField.validationRegex}
         />
       );
 
     case FieldTypeIds.options: //אפשרויות
-      // Filter options for child fields based on parent selection
       let availableOptions: any = [];
 
       return (

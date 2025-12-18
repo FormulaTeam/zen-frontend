@@ -53,10 +53,8 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Add a state to control when to show input in tabular edit mode
   const [showInputInTabular, setShowInputInTabular] = useState(false);
 
-  // Handle dropdown actions (edit/delete)
   const handleDropdownEdit = (value: string, index: number) => {
     setSelectedItem({ index, value });
     setIsEditItemMode(true);
@@ -74,7 +72,6 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
     setDropdownOpen(false);
   };
 
-  // Enabling 'Enter' Click for do operations
   const handleKeyUp = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       if (isEditItemMode) {
@@ -85,12 +82,10 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
     }
   };
 
-  // Field input change function
   const onChangeValueHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);
   };
 
-  // Create New Item Function
   const onPlusClickHandler = () => {
     if (inputValue.trim() === "") {
       setErrorMessage(errorMessageNoInputText);
@@ -98,21 +93,17 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
     }
     setListValues((prev) => [...prev, inputValue]);
     setInputValue("");
-    //setHasError(false);
     setErrorMessage("");
 
-    // Show success icon only in tabular edit mode
     if (isTabularEdit) {
       setShowSuccessIcon(true);
       setShowInputInTabular(false);
-      // Reset to plus icon after 1 second
       setTimeout(() => {
         setShowSuccessIcon(false);
       }, 1000);
     }
   };
 
-  // Update Item Value Function
   const onSaveEditedListItemClickHandler = () => {
     if (selectedItem?.index === undefined) return;
     if (inputValue.trim() === "") {
@@ -127,14 +118,12 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
     setSelectedItem(undefined);
     setIsEditItemMode(false);
     setInputValue("");
-    // Reset to dropdown mode in tabular edit after saving
     if (isTabularEdit) {
       setShowInputInTabular(false);
     }
     setErrorMessage("");
   };
 
-  // Set Edit Mode for Editing List Item
   const onEditListItemClickHandler = (item: ListItem) => {
     setSelectedItem(item);
     setIsEditItemMode(true);
@@ -142,37 +131,26 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
     inputRef?.current?.focus();
   };
 
-  // Delete Item Function
   const onDeleteListItemClickHandler = (item: ListItem) => {
-    const newListValueArray = listValues.filter((listItem, index) => index !== item.index);    
-    if(newListValueArray.length<=0 && isRequired){
+    const newListValueArray = listValues.filter((listItem, index) => index !== item.index);
+    if (newListValueArray.length <= 0 && isRequired) {
       setErrorMessage("נדרש להזין לפחות ערך אחד");
     }
     setListValues(newListValueArray);
   };
 
-  // Update The Form Values State on the parent component
-  useEffect(() => {    
-    if(listValues.length<=0 && isRequired){
-    !isValid&& setErrorMessage("נדרש להזין לפחות ערך אחד");
+  useEffect(() => {
+    if (listValues.length <= 0 && isRequired) {
+      !isValid && setErrorMessage("נדרש להזין לפחות ערך אחד");
     }
-    listValues.length!==0 && onChangeHandler(listValues, errorMessage?false:true);
-  }, [listValues, errorMessage,isValid]);
+    onChangeHandler(listValues, errorMessage ? false : true);
+  }, [listValues, errorMessage, isValid]);
 
-  // Set List Values from parent Form component (Edit Mode)
   useEffect(() => {
     if (value && listValues.length === 0) {
       setListValues(value);
     }
   }, []);
-
-  // useEffect(()=>{
-  //   console.log("isValid",isValid);
-    
-  //   if(!isValid){
-  //     isRequired && setErrorMessage("נדרש להזין לפחות ערך אחד");
-  //   }
-  // },[isValid]);
 
   return (
     <div
@@ -200,7 +178,7 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
         required={isRequired}
         value={inputValue}
         onChange={onChangeValueHandler}
-        error={errorMessage?true:false}
+        error={errorMessage ? true : false}
         helperText={errorMessage}
         disabled={isDisabled}
         onKeyUp={handleKeyUp}
@@ -265,7 +243,6 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
                     )}
                   </IconButton>
                 )}
-                {/* Show chevron only if there are items in tabular edit mode */}
                 {isTabularEdit &&
                   listValues.length > 0 &&
                   !isEditItemMode &&
@@ -300,7 +277,6 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
               }
             : undefined
         }>
-        {/* Dropdown items - only show when in tabular edit mode and dropdown is open */}
         {isTabularEdit &&
           listValues.length > 0 &&
           dropdownOpen &&
@@ -339,7 +315,6 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
           ))}
       </BaseFieldInput>
 
-      {/* Show list only in non-tabular mode or when in edit mode */}
       {(!isTabularEdit || isEditItemMode) && (
         <ul
           className="multi-input-field-list-items"

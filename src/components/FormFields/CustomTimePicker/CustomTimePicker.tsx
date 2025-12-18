@@ -61,7 +61,13 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
     } else {
       onChangeHandler("", !isRequired);
     }
-  }, [timeValue, isRequired]);
+  }, [timeValue]);
+
+  const errorMessage = !isValid
+    ? isRequired && timeValue === null
+      ? "שדה זה הינו חובה"
+      : "יש להזין שעה בפורמט תקין"
+    : "";
 
   return (
     <Chrome90RTLFixContainer>
@@ -76,11 +82,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
           disabled={isDisabled}
           value={timeValue}
           onChange={(newValue) => {
-            if (newValue?.isValid()) {
-              setTimeValue(newValue);
-            } else {
-              setTimeValue(null);
-            }
+            setTimeValue(newValue);
           }}
           // Using the component directly prevents recreation each render and keeps a stable anchor element
           slots={{ textField: BaseFieldInput }}
@@ -90,7 +92,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
               isTabularEdit,
               required: isRequired,
               error: !isValid,
-              helperText: !isValid ? isRequired && "שדה זה הינו חובה" :"יש להזין שעה בפורמט תקין",
+              helperText: errorMessage,
               size: isTabularEdit ? "medium" : undefined,
             } as any,
             inputAdornment: {

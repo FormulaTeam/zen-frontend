@@ -30,12 +30,11 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   isTabularEdit = false,
 }) => {
   const [dateValue, setDateValue] = useState<Dayjs | null>(value ? dayjs(value) : null);
+
   useEffect(() => {
     if (value && dayjs(value).isValid()) {
       setDateValue(dayjs(value));
     } else if (defaultValue === "currentTime") {
-      // If the value is an empty string, it means the field has been edited before
-      // Can occur on edit the value like deleting it or when editing an empty value
       if (value === "") {
         setDateValue(null);
       } else {
@@ -47,30 +46,9 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
     } else {
       setDateValue(null);
     }
-  }, []);
+  }, [value, defaultValue]);
 
   useEffect(() => {
-    if (value && dayjs(value).isValid()) {
-      setDateValue(dayjs(value));
-    } else if (defaultValue === "currentTime") {
-      // If the value is an empty string, it means the field has been edited before
-      // Can occur on edit the value like deleting it or when editing an empty value
-      if (value === "") {
-        setDateValue(null);
-      } else {
-        let initDate = dayjs();
-        if (!dateAndTime) initDate = initDate.startOf("day");
-        setDateValue(initDate);
-        onChangeHandler(initDate.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
-      }
-    } else {
-      setDateValue(null);
-    }
-  }, [value, defaultValue]); // Watch for changes in `value` or `defaultValue`
-
-  useEffect(() => {
-    // Ensure both date and time are valid before merging
-
     if (dateAndTime) {
       if (dateValue?.isValid()) {
         onChangeHandler(dateValue.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
@@ -79,6 +57,13 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
       onChangeHandler(dateValue.startOf("day").format("YYYY-MM-DD[T]00:00:00.000"), true);
     }
   }, [dateValue]);
+
+  const getErrorMessage = () => {
+    if (isRequired && dateValue === null) {
+      return "שדה זה הינו חובה";
+    }
+    return !isValid && "יש להזין שעה בפורמט תקין";
+  };
 
   return (
     <Chrome90RTLFixContainer className={classes["custom-date-time-container"]}>
@@ -96,15 +81,11 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
                   .minute(newValue.minute())
                   .second(newValue.second());
                 setDateValue(newTime);
-
-                onChangeHandler(newValue.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
               } else {
                 setDateValue(newValue);
-                onChangeHandler(newValue.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
               }
             } else {
               setDateValue(null);
-              onChangeHandler("", !isRequired);
             }
           }}
           format="DD/MM/YYYY"
@@ -115,11 +96,8 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
             textField: {
               isTabularEdit,
               required: isRequired,
-              error: !isValid, // Show error style if there's an error
-              helperText:
-                !isValid && isRequired && dateValue !== null
-                  ? "שדה זה הינו חובה"
-                  : "יש להזין שעה בפורמט תקין", // Display error message
+              error: !isValid,
+              helperText: !isValid ? getErrorMessage() : "",
               size: isTabularEdit ? "medium" : undefined,
             } as any,
             inputAdornment: {
@@ -165,10 +143,8 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
             slotProps={{
               textField: {
                 required: isRequired,
-                error: !isValid, // Show error style if there's an error
-                helperText: !isValid
-                  ? isRequired && "שדה זה הינו חובה"
-                  : "יש להזין שעה בפורמט תקין",
+                error: !isValid,
+                helperText: !isValid ? getErrorMessage() : "",
                 size: isTabularEdit ? "medium" : undefined,
               },
               inputAdornment: {

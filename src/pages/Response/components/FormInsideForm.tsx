@@ -1,10 +1,5 @@
 import { FieldTypeIds, FormField, ResponseForm } from "../../../utils/interfaces";
-import {
-  Box,
-  Button,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Tooltip, Typography } from "@mui/material";
 import { useParams } from "react-router-dom";
 import { Add } from "@mui/icons-material";
 import ConnectedFormSection from "../../../components/FormSection/ConnectedFormSection";
@@ -12,14 +7,14 @@ import ConnectedFormSection from "../../../components/FormSection/ConnectedFormS
 interface FormInsideFormProps {
   formField: any;
   childForms: any;
-  handleRemoveChildForm: (childFormIndex: number, index: number) => void;
+  handleRemoveChildForm: (uniqueId: string, index: number) => void;
   childFormsSaving: boolean;
   user: any;
   viewMode: boolean;
   copyMode: boolean;
-  savedResponse:ResponseForm | null;
+  savedResponse: ResponseForm | null;
   handleChildSaved: (childFormIndex: number, success: boolean) => void;
-  handleChildValid: (childFormIndex: number, success: boolean) => void;
+  handleChildValid: (uniqueId: string, success: boolean) => void;
   childFormsValidate: boolean;
   isSaving: boolean;
   isLoading: boolean;
@@ -27,25 +22,23 @@ interface FormInsideFormProps {
   formFields: FormField[];
 }
 
-const FormInsideForm = (
-  { 
-    formField, 
-    childForms, 
-    childFormsSaving, 
-    handleRemoveChildForm,
-    user, 
-    viewMode, 
-    copyMode, 
-    savedResponse, 
-    handleChildSaved, 
-    handleChildValid,
-    childFormsValidate,
-    isSaving,
-    isLoading,
-    handleAddChildForm,
-    formFields
-  }: FormInsideFormProps) => {
-
+const FormInsideForm = ({
+  formField,
+  childForms,
+  childFormsSaving,
+  handleRemoveChildForm,
+  user,
+  viewMode,
+  copyMode,
+  savedResponse,
+  handleChildSaved,
+  handleChildValid,
+  childFormsValidate,
+  isSaving,
+  isLoading,
+  handleAddChildForm,
+  formFields,
+}: FormInsideFormProps) => {
   const { formId } = useParams();
   if (formField.typeId !== FieldTypeIds.form || !formField.connectedFormId) {
     return null;
@@ -70,7 +63,7 @@ const FormInsideForm = (
           <ConnectedFormSection
             key={child.id || child.uniqueId || `child-${formField.connectedFormId}-${i}`}
             handleRemoveChildForm={() => {
-              handleRemoveChildForm(childFormIndex, i);
+              handleRemoveChildForm(child.uniqueId, i);
             }}
             formsLength={childFormData.children.length}
             shouldSave={childFormsSaving}
@@ -83,7 +76,7 @@ const FormInsideForm = (
             index={i}
             childSaved={(success: boolean) => handleChildSaved(childFormIndex, success)}
             shouldValidate={childFormsValidate}
-            childValid={(success: boolean) => handleChildValid(childFormIndex, success)}
+            childValid={(success: boolean) => handleChildValid(child.uniqueId, success)}
             id={child.id}
             shouldLoad={isSaving}
           />

@@ -35,7 +35,6 @@ const processSaveQueue = async () => {
 
   isProcessingQueue = true;
 
-  // Sort queue by index to ensure correct order
   saveQueue.sort((a, b) => a.index - b.index);
 
   while (saveQueue.length > 0) {
@@ -46,7 +45,6 @@ const processSaveQueue = async () => {
       await item.saveFunction();
     } catch (error) {
       console.error(`[CHILD FORM SAVE] Error in queue processing for index ${item.index}:`, error);
-      // Error is already handled in saveFunction, just continue processing
     }
   }
 
@@ -67,10 +65,9 @@ export const saveChildForm = async (
       saveFunction(index, saveResponse, formFieldsByIdMap, formFieldsValuesMap, setSaved, setError),
   });
 
-  await processSaveQueue(); // Will throw error if saveFunction fails
+  await processSaveQueue();
 };
 
-// Function to clear the queue (useful for cleanup)
 const clearSaveQueue = () => {
   saveQueue = [];
   isProcessingQueue = false;
@@ -107,9 +104,6 @@ export function useFormInFormResponseSave({
 
   useEffect(() => {
     if (shouldSave && validateRequiredFields() && form) {
-      console.log(`[CHILD FORM SAVE] Adding child form index ${index} to save queue`);
-
-      // Use the new saveChildForm function
       saveChildForm(index, saveResponse, formFieldsByIdMap, formFieldsValuesMap, setSaved, setError)
         .then(() => {
           childSaved(true);
@@ -123,7 +117,7 @@ export function useFormInFormResponseSave({
   }, [shouldSave]);
 
   useEffect(() => {
-    if (shouldValidate && form) {
+    if (form) {
       if (validateRequiredFields()) {
         childValid(true);
         setValid(true);

@@ -6,8 +6,8 @@ import { FieldTypeIds, NotificationTexts, ResponseFieldValue } from "../utils/in
 import moment from "moment";
 
 export const useResponseSave = (form: any, response: any, user: any, parentResponse?: string) => {
-  const {mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending} = useCreateResponse();
-  const {mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending} = useUpdateResponse(form?.id, response?.id);
+  const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } = useCreateResponse();
+  const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } = useUpdateResponse(form?.id, response?.id);
 
   const saveResponse = async (
     formFieldsByIdMap: Map<string, any>,

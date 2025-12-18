@@ -11,7 +11,7 @@ interface CustomNumberFieldProps extends CustomInputFormFieldProps {
 }
 
 const CustomNumberField: React.FC<CustomNumberFieldProps> = ({
-  value="",
+  value = "",
   isDisabled,
   onChangeHandler,
   isValid,
@@ -33,7 +33,7 @@ const CustomNumberField: React.FC<CustomNumberFieldProps> = ({
       : `המספר חייב להיות גדול מ- ${minValue} וקטן מ- ${maxValue}`;
 
   const [inputValue, setInputValue] = useState(value);
-  const [errorMessage, setErrorMessage] = useState(isRequired ? initialErrorMessage : "");
+  const [errorMessage, setErrorMessage] = useState("");
   const [fieldIsValid, setFieldIsValid] = useState<boolean>(isValid);
 
   const integerRegex = /^-?\d+$/;
@@ -116,40 +116,40 @@ const CustomNumberField: React.FC<CustomNumberFieldProps> = ({
       dir="ltr"
       sx={{
         ...(isTabularEdit && {
-          '& .MuiInputBase-root': {
-            fontSize: '1rem',
-            minHeight: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            '&::before': {
-              border: 'none',
+          "& .MuiInputBase-root": {
+            fontSize: "1rem",
+            minHeight: "40px",
+            display: "flex",
+            alignItems: "center",
+            "&::before": {
+              border: "none",
             },
-            '&::after': {
-              border: 'none',
+            "&::after": {
+              border: "none",
             },
-            '&:hover:not(.Mui-disabled)::before': {
-              border: 'none',
+            "&:hover:not(.Mui-disabled)::before": {
+              border: "none",
             },
           },
-          '& .MuiInputBase-input': {
-            textAlign: 'center',
-            padding: '8px 12px',
+          "& .MuiInputBase-input": {
+            textAlign: "center",
+            padding: "8px 12px",
           },
-          '& .MuiFormLabel-root': {
-            display: 'none'
+          "& .MuiFormLabel-root": {
+            display: "none",
           },
-          '& .MuiFormHelperText-root': {
-            fontSize: '0.85rem',
-            margin: '4px 0 0 0',
-            lineHeight: '1.2',
-            minHeight: 'auto',
-            textAlign: 'center',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            maxWidth: '100%',
-          }
-        })
+          "& .MuiFormHelperText-root": {
+            fontSize: "0.85rem",
+            margin: "4px 0 0 0",
+            lineHeight: "1.2",
+            minHeight: "auto",
+            textAlign: "center",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: "100%",
+          },
+        }),
       }}
     />
   );

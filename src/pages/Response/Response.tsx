@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ResponseForm } from "../../utils/interfaces";
-import {
-  Container,
-} from "@mui/material";
+import { Container } from "@mui/material";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useResponseSave } from "../../hooks/useResponseSave";
 import { useResponseState } from "../../hooks/useResponseState";
@@ -14,8 +12,6 @@ import styled from "styled-components";
 import ResponseHeader from "./components/ResponseHeader";
 import ResponseSection from "./components/ResponseSection";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
-import AlertMsg from "../../components/AlertMsg/AlertMsg";
-import { useValidationErrors } from "../../hooks/useValidationErrors";
 import FormInsideForm from "./components/FormInsideForm";
 
 const PageContainer = styled(Container)`
@@ -27,9 +23,6 @@ const PageContainer = styled(Container)`
 export default function Response({ user, roles, viewMode = false, copyMode = false }) {
   const [permissionTypes, setPermissionTypes] = useState<number[]>([]);
   const [savedResponse, setSavedResponse] = useState<ResponseForm | null>(null);
-  const [showLoadingSaveBtn, setShowLoadingSaveBtn] = useState<boolean>(false);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [showValidationPopup, setShowValidationPopup] = useState<boolean>(false);
 
   const { formId, id } = useParams();
   const location = useLocation();
@@ -58,25 +51,20 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
       try {
         const result = await saveResponse(formFieldsByIdMap, formFieldsValuesMap);
         if (!Array.isArray(result)) setSavedResponse(result);
+
+        // if (result) {
+        //   navigate(`/responses/${formId}`);
+        // }
         setChildFormsSaving(true);
       } catch (error: any) {
+        console.error("error:", error);
         if (error?.response?.data?.error?.includes("Metro")) {
           navigate(`/responses/${form.id}`);
         } else {
           console.error("error:", error);
           showErrorNotification("משהו השתבש");
-          setShowLoadingSaveBtn(false);
         }
       }
-    } else {
-      console.error("some values are not valid!");
-      // Generate validation error messages and show popup
-      const errorMessages = generateValidationErrorMessages();
-      if (errorMessages.length > 0) {
-        setValidationErrors(errorMessages);
-        setShowValidationPopup(true);
-      }
-      setShowLoadingSaveBtn(false);
     }
   };
 
@@ -84,7 +72,6 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
 
   const {
     childForms,
-    setChildForms,
     childFormsSaving,
     setChildFormsSaving,
     childFormsValidate,
@@ -103,14 +90,6 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
     roles,
   });
 
-  const { generateValidationErrorMessages } = useValidationErrors({
-    form,
-    formFields,
-    formFieldsValidMap,
-    childForms,
-    childFormsValidate,
-  });
-
   const isLoading = useMemo(() => {
     return isSaving || childFormsSaving || loading || loadingConnections;
   }, [isSaving, childFormsSaving, loading, loadingConnections]);
@@ -118,34 +97,6 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
   useEffect(() => {
     resolveUserPermissions(form, user, roles, viewMode, setPermissionTypes);
   }, [roles, form]);
-
-  // Handle child form validation results
-  useEffect(() => {
-    if (!childFormsValidate) return;
-
-    const shownForms = childForms.filter((cf) => cf.shown);
-
-    // Check if all child forms have been validated
-    const allValidated = shownForms.every(
-      (childForm) => childForm.children?.length === childForm.valid?.length,
-    );
-
-    if (allValidated) {
-      const isValid = shownForms.every((childForm) =>
-        childForm.valid?.every((valid) => valid === true),
-      );
-
-      if (!isValid) {
-        // Child form validation failed, show validation errors
-        const errorMessages = generateValidationErrorMessages();
-        
-        if (errorMessages.length > 0) {
-          setValidationErrors(errorMessages);
-          setShowValidationPopup(true);
-        }
-      }
-    }
-  }, [childForms, childFormsValidate]);
 
   const onBack = () => {
     if (location.state?.parentFormId) {
@@ -158,43 +109,34 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
   const onEdit = () => navigate(`/response/edit/${formId}/${id}`);
 
   const onSaveAndClose = () => {
-    childForms.length > 0 ? setChildFormsValidate(true) : saveAll();
-  };
-
-  const closeValidationPopup = () => {
-    setShowValidationPopup(false);
-    setValidationErrors([]);
-
-    // Reset child form validation arrays so subsequent validations work
-    setChildForms((prev) => {
-      const newChildForms = [...prev];
-      newChildForms.forEach((childForm) => {
-        if (childForm.shown) {
-          childForm.valid = [];
-        }
-      });
-      return newChildForms;
-    });
+    const allShown = childForms.map((cf) => cf.shown);
+    if (allShown.every((v) => v === false)) {
+      saveAll();
+    } else {
+      setChildFormsValidate(true);
+    }
   };
 
   const getFormInFormProperty = (formField: any) => {
-    return <FormInsideForm 
-      formField={formField} 
-      childForms={childForms} 
-      handleRemoveChildForm={handleRemoveChildForm} 
-      childFormsSaving={childFormsSaving} 
-      user={user} 
-      viewMode={viewMode} 
-      copyMode={copyMode} 
-      savedResponse={savedResponse} 
-      handleChildSaved={handleChildSaved} 
-      handleChildValid={handleChildValid} 
-      childFormsValidate={childFormsValidate} 
-      isSaving={isSaving} 
-      isLoading={isLoading} 
-      handleAddChildForm={handleAddChildForm} 
-      formFields={formFields} 
-      />;
+    return (
+      <FormInsideForm
+        formField={formField}
+        childForms={childForms}
+        handleRemoveChildForm={handleRemoveChildForm}
+        childFormsSaving={childFormsSaving}
+        user={user}
+        viewMode={viewMode}
+        copyMode={copyMode}
+        savedResponse={savedResponse}
+        handleChildSaved={handleChildSaved}
+        handleChildValid={handleChildValid}
+        childFormsValidate={childFormsValidate}
+        isSaving={isSaving}
+        isLoading={isLoading}
+        handleAddChildForm={handleAddChildForm}
+        formFields={formFields}
+      />
+    );
   };
 
   // Sort sections by their order and ensure proper section hierarchy
@@ -252,9 +194,6 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
           ))}
         </FormSectionsContainer>
       </PageContainer>
-      {showValidationPopup && (
-        <AlertMsg msg={validationErrors} closePopup={closeValidationPopup} isSuccess={false} />
-      )}
     </div>
   );
 }
