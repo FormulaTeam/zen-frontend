@@ -43,7 +43,7 @@ export const EditResponsesButton = ({
                             onClick={onSaveChanges}
                             disabled={editedRowsCount === 0 || isUpdating}
                         >
-                            {isUpdating ? "שומר..." : `שמור ${editedRowsCount > 0 ? `(${editedRowsCount})` : ""}`}
+                            {isUpdating ? "שומר..." : "שמור"}
                         </Button>
                     </Tooltip>
                     <Tooltip title="בטל עריכה">

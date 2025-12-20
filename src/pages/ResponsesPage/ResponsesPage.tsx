@@ -4,6 +4,7 @@ import Loader from "../../components/Responses/Loader";
 import { Role, User } from "../../utils/interfaces";
 import { FormActionsToolbar } from "./components/FormActionsToolbar";
 import { EditResponsesButton } from "./components/EditResponsesButton";
+import { CancelEditDialog } from "./components/CancelEditDialog";
 import { useFormLoader } from "./hooks/useFormLoader";
 import { useResponsesEdit } from "./hooks/useResponsesEdit";
 import { MainContentWrapper, PageWrapper, TopSection } from "./styled";
@@ -32,9 +33,13 @@ export default function ResponsesPage({
     editedRows,
     localRows,
     isUpdating,
+    showCancelDialog,
     handleToggleEditMode,
+    handleCellEditStart,
     handleProcessRowUpdate,
     handleSaveChanges,
+    handleConfirmCancel,
+    handleCancelDialogClose,
   } = useResponsesEdit();
 
   if (isLoading) {
@@ -68,6 +73,12 @@ export default function ResponsesPage({
           isInEditMode={isInEditMode}
           localRows={localRows}
           handleProcessRowUpdate={handleProcessRowUpdate}
+          onCellEditStart={handleCellEditStart}
+        />
+        <CancelEditDialog
+          open={showCancelDialog}
+          onConfirm={handleConfirmCancel}
+          onCancel={handleCancelDialogClose}
         />
       </MainContentWrapper>
     </PageWrapper>

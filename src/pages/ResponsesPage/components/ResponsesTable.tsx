@@ -25,12 +25,14 @@ interface ResponsesTableProps {
   isInEditMode: boolean;
   localRows: any[];
   handleProcessRowUpdate: (newRow: GridRowModel, oldRow: GridRowModel) => GridRowModel;
+  onCellEditStart?: () => void;
 }
 
 export const ResponsesTable = ({
   isInEditMode,
   localRows,
   handleProcessRowUpdate,
+  onCellEditStart,
 }: ResponsesTableProps) => {
   // const responsesTable = useResponsesTable({});
   const { form, rows } = useFormStore();
@@ -256,11 +258,17 @@ export const ResponsesTable = ({
           onProcessRowUpdateError={(error) => {
             console.error("Error updating row:", error);
           }}
+          onRowEditStart={() => {
+            if (onCellEditStart) {
+              onCellEditStart();
+            }
+          }}
           density="comfortable"
           rowHeight={65}
           loading={!rows}
           pagination
           checkboxSelection
+          disableRowSelectionOnClick
           getRowClassName={(params) => params.indexRelativeToCurrentPage % 2 === 0 ? 'MuiDataGrid-row--even' : 'MuiDataGrid-row--odd'}
           getRowId={(row) => row.id ?? row._id ?? row.responseId ?? `${row.formId ?? ""}-${row.responseId ?? row._id ?? row.id}`}
           localeText={{

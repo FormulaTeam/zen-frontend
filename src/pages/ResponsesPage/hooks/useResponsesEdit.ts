@@ -12,6 +12,7 @@ export const useResponsesEdit = () => {
   const [isInEditMode, setIsInEditMode] = useState(false);
   const [editedRows, setEditedRows] = useState<Map<string, any>>(new Map());
   const [localRows, setLocalRows] = useState<any[]>([]);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const { form, rows, setRows, filter } = store;
 
@@ -33,9 +34,13 @@ export const useResponsesEdit = () => {
       localRows: [],
       setLocalRows: () => { },
       isUpdating: false,
+      showCancelDialog: false,
       handleToggleEditMode: () => { },
+      handleCellEditStart: () => { },
       handleProcessRowUpdate: (newRow: GridRowModel) => newRow,
       handleSaveChanges: async () => { },
+      handleConfirmCancel: () => { },
+      handleCancelDialogClose: () => { },
     };
   }
 
@@ -56,12 +61,36 @@ export const useResponsesEdit = () => {
 
   const handleToggleEditMode = (): void => {
     if (isInEditMode) {
+      if (editedRows.size > 0) {
+        setShowCancelDialog(true);
+        return; // Show dialog and wait for user response
+      }
+
+      // No changes, exit directly
       setEditedRows(new Map());
       setLocalRows(responsesRows);
     } else {
       setLocalRows([...responsesRows]);
     }
     setIsInEditMode(!isInEditMode);
+  };
+
+  const handleConfirmCancel = (): void => {
+    setEditedRows(new Map());
+    setLocalRows(responsesRows);
+    setIsInEditMode(false);
+    setShowCancelDialog(false);
+  };
+
+  const handleCancelDialogClose = (): void => {
+    setShowCancelDialog(false);
+  };
+
+  const handleCellEditStart = () => {
+    if (!isInEditMode) {
+      setIsInEditMode(true);
+      setLocalRows([...responsesRows]);
+    }
   };
 
   const handleProcessRowUpdate = (newRow: GridRowModel, oldRow: GridRowModel) => {
@@ -172,8 +201,12 @@ export const useResponsesEdit = () => {
     localRows,
     setLocalRows,
     isUpdating,
+    showCancelDialog,
     handleToggleEditMode,
+    handleCellEditStart,
     handleProcessRowUpdate,
     handleSaveChanges,
+    handleConfirmCancel,
+    handleCancelDialogClose,
   };
 };

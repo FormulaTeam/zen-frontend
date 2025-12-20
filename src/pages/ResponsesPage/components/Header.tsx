@@ -16,7 +16,7 @@ const Header = () => {
           </Typography>
         </Tooltip>
       </TitleWrapper>
-      <Typography variant="subtitle2">{form.description || "ללא תיאור"}</Typography>
+      <Typography variant="subtitle1">{form.description || "ללא תיאור"}</Typography>
       <Typography variant="subtitle1" color="text.primary">{`נוצר על ידי ${getCreatorName(form)}`}</Typography>
       <Typography variant="h6" color="text.secondary">{`כמות תגובות לטופס - ${rows.length}`}</Typography>
     </Box>
