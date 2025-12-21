@@ -2,7 +2,7 @@ import { useFormStructureContext } from "../../../context/FormStructureContext";
 import { useMemo } from "react";
 import styles from "./style.module.css";
 import { Typography } from "@mui/material";
-import { FormComponentType } from "../../../schemas/conditions";
+import { FormComponentType, FormConditionDependantComponents } from "../../../schemas/conditions";
 import { FormConditionsListItem } from "./FormConditionsListItem";
 
 interface Props {
@@ -18,14 +18,16 @@ function FormConditionsOverview({ onEditCondition }: Props) {
     formStructure.conditions?.length ? (
       formStructure.conditions.map(({ id, name, groups, dependantComponents }, index) => {
         const conditionCount = groups.reduce((sum, { conditions: currentConditions }) => sum + currentConditions.length, 0);
-        const dependantComponentNames = dependantComponents.map(({ type, id }) => {
-          switch (type) {
-            case FormComponentType.SECTION:
-              return `${formStructure.sections[id]?.title ?? COMPONENT_NOT_FOUND_NAME} (מקטע)`;
-            case FormComponentType.FIELD:
-              return formStructure.fields[id]?.data?.displayName ?? COMPONENT_NOT_FOUND_NAME;
-          }
-        }).join(", ");
+        const dependantComponentNames = Object.keys(dependantComponents).map((componentType) => (
+          dependantComponents[componentType as keyof FormConditionDependantComponents]?.map((componentId) => {
+            switch (componentType) {
+              case FormComponentType.SECTION:
+                return `${formStructure.sections[componentId]?.title ?? COMPONENT_NOT_FOUND_NAME} (מקטע)`;
+              case FormComponentType.FIELD:
+                return formStructure.fields[componentId]?.data?.displayName ?? COMPONENT_NOT_FOUND_NAME;
+            }
+          })
+        )).join(", ");
 
         return (
           <FormConditionsListItem key={id}
@@ -40,7 +42,7 @@ function FormConditionsOverview({ onEditCondition }: Props) {
         );
       })
     ) : null
-  ), [formStructure.conditions, formStructure.sections, formStructure.fields, onEditCondition]);
+  ), [formStructure.conditions, formStructure.sections, formStructure.fields, onEditCondition, deleteConditionAt]);
 
   return (
     <div className={styles.content}>

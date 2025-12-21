@@ -2,6 +2,7 @@ import { useFormConditionEditorContext } from "../../context/FormConditionEditor
 import { ConditionEditorStepId } from "../../constants";
 import {
   Autocomplete,
+  Box,
   Button,
   TextField,
   ToggleButton,
@@ -10,23 +11,18 @@ import {
 } from "@mui/material";
 import { useFormStructureContext } from "../../../../../context/FormStructureContext";
 import styles from "./style.module.scss";
-import { FormConditionGroups, FormConditionOperator } from "../../../../../schemas/conditions";
+import { FormConditionField, FormConditionGroups, FormConditionOperator } from "../../../../../schemas/conditions";
 import { DeleteOutlined } from "@mui/icons-material";
-import { SetStateAction } from "react";
-import { ArrayElement, DeepPartial } from "../../../../../../../types/utils";
-import { ConditionFieldTypeIds } from "../../../../../schemas/conditions/conditionField/baseConditionFieldSchema";
-import { FieldTypeIds, FormFieldTypeId } from "../../../../../../../utils/interfaces";
-import { TextConditionType } from "../../../../../schemas/conditions/conditionField/conditionTypes/TextConditionType";
+import { Fragment, SetStateAction } from "react";
+import { DeepPartial } from "../../../../../../../types/utils";
 import {
-  NumberConditionType,
-} from "../../../../../schemas/conditions/conditionField/conditionTypes/NumberConditionType";
-import {
-  CheckboxConditionType,
-} from "../../../../../schemas/conditions/conditionField/conditionTypes/CheckboxConditionType";
-import { DateConditionType } from "../../../../../schemas/conditions/conditionField/conditionTypes/DateConditionType";
-import {
-  OptionsConditionType,
-} from "../../../../../schemas/conditions/conditionField/conditionTypes/OptionsConditionType";
+  CONDITION_FIELD_TYPE_IDS,
+  ConditionFieldTypeId,
+  FormConditionType,
+} from "../../../../../schemas/conditions/conditionField/baseConditionFieldSchema";
+import { FORM_ELEMENTS, FormFieldTypeId } from "../../../../../../../utils/interfaces";
+import { ConditionTypeOptions } from "./utils";
+import { FORM_ELEMENT_ICONS } from "../../../../../../../components/FORM_ELEMENT_ICONS";
 
 function OperationToggle({ type, value, onChange }: {
   type: "group" | "condition",
@@ -61,9 +57,9 @@ function OperationToggle({ type, value, onChange }: {
                     sx={{
                       border: "2px light-gray solid",
                       "&.Mui-selected": {
-                        backgroundColor: "#8f73e6",
+                        backgroundColor: "#0d92d5",
                         color: "white",
-                        boxShadow: "0 3px 0px 0 #5a5095 inset",
+                        boxShadow: "0 3px 0px 0 #236faf inset",
                       },
                     }}>
         או
@@ -71,17 +67,6 @@ function OperationToggle({ type, value, onChange }: {
     </ToggleButtonGroup>
   );
 }
-
-const CONDITION_FIELD_TYPE_IDS = Object.values(ConditionFieldTypeIds);
-
-const ConditionTypeOptions: Record<ArrayElement<typeof CONDITION_FIELD_TYPE_IDS>, number[]> = {
-  [FieldTypeIds.shortText]: Object.values(TextConditionType),
-  [FieldTypeIds.longText]: Object.values(TextConditionType),
-  [FieldTypeIds.number]: Object.values(NumberConditionType),
-  [FieldTypeIds.date]: Object.values(DateConditionType),
-  [FieldTypeIds.options]: Object.values(OptionsConditionType),
-  [FieldTypeIds.checkbox]: Object.values(CheckboxConditionType),
-} as const;
 
 function FormConditionsBuilder() {
   const { formStructure: { fields } } = useFormStructureContext();
@@ -95,25 +80,26 @@ function FormConditionsBuilder() {
       {
         groups?.map((group, groupIndex) => (
           group &&
-          <>
+          <Fragment key={group.id}>
             {
               group.operator &&
               <div>
                 <div />
                 <OperationToggle value={group.operator}
                                  type={"group"}
-                                 onChange={(operator) => setData!(((prev) => {
-                                   const group = { ...prev[groupIndex] };
+                                 onChange={
+                                   (operator) => setData((prev) => {
+                                     const group = { ...prev[groupIndex] };
 
-                                   group.operator = operator;
+                                     group.operator = operator;
 
-                                   return [...prev].toSpliced(groupIndex, 1, group);
-                                 }) as SetStateAction<DeepPartial<FormConditionGroups>>)
+                                     return [...prev].toSpliced(groupIndex, 1, group);
+                                   })
                                  } />
                 <div />
               </div>
             }
-            <div className={styles.groupContainer} key={group.id}>
+            <div className={styles.groupContainer}>
               <div className={styles.groupTitle}>{`קבוצה ${groupIndex + 1}`}</div>
               <div className={styles.conditionsWrapper}>
                 {
@@ -130,15 +116,16 @@ function FormConditionsBuilder() {
                           } />
                           <OperationToggle value={condition.operator}
                                            type={"condition"}
-                                           onChange={(operator) => setData!(((prev) => {
-                                             const group = { ...prev[groupIndex] };
-                                             const modifiedCondition = { ...condition };
+                                           onChange={
+                                             (operator) => setData((prev) => {
+                                               const group = { ...prev[groupIndex] };
+                                               const modifiedCondition = { ...condition };
 
-                                             modifiedCondition.operator = operator;
-                                             group.conditions = group.conditions!.toSpliced(conditionIndex, 1, { ...modifiedCondition });
+                                               modifiedCondition.operator = operator;
+                                               group.conditions = group.conditions!.toSpliced(conditionIndex, 1, { ...modifiedCondition });
 
-                                             return [...prev].toSpliced(groupIndex, 1, group);
-                                           }) as SetStateAction<DeepPartial<FormConditionGroups>>)
+                                               return [...prev].toSpliced(groupIndex, 1, group);
+                                             })
                                            } />
                           <div className={
                             conditionIndex === group.conditions!.length - 1 ?
@@ -149,23 +136,46 @@ function FormConditionsBuilder() {
                       }
                       <div className={styles.conditionFieldsContainer}>
                         <Autocomplete options={availableFieldIds}
-                                      value={condition.field?.id}
-                                      getOptionLabel={(fieldId) => fields[fieldId]?.data?.displayName}
-                                      onChange={(_, id) => setData!(((prev) => {
-                                        const group = { ...prev[groupIndex] };
-                                        const modifiedCondition = { ...condition };
+                                      value={condition.field?.id ?? null}
+                                      getOptionLabel={(fieldId) => fields[fieldId]?.data?.displayName ?? "שגיאה - שדה אינו קיים"}
+                                      noOptionsText={"אין שדות מתאימים בטופס"}
+                                      onChange={
+                                        (_, fieldId) => setData((prev) => {
+                                          const group = { ...prev[groupIndex] };
+                                          const modifiedCondition = { ...condition };
 
-                                        modifiedCondition.field = {
-                                          ...modifiedCondition.field,
-                                          id: id ?? undefined,
-                                        };
-                                        group.conditions = group.conditions!.toSpliced(conditionIndex, 1, { ...modifiedCondition });
+                                          if (fieldId) {
+                                            const typeId = fields[fieldId]?.data?.typeId as ConditionFieldTypeId;
 
-                                        return [...prev].toSpliced(groupIndex, 1, group);
-                                      }) as SetStateAction<DeepPartial<FormConditionGroups>>)}
-                          // renderOption={
-                          //
-                          // }
+                                            modifiedCondition.field = {
+                                              ...modifiedCondition.field,
+                                              id: fieldId,
+                                              typeId,
+                                              conditionType: ConditionTypeOptions[typeId].values[0],
+                                            } as FormConditionField;
+                                          } else {
+                                            modifiedCondition.field = undefined;
+                                          }
+
+
+                                          group.conditions = group.conditions!.toSpliced(conditionIndex, 1, { ...modifiedCondition });
+
+                                          return [...prev].toSpliced(groupIndex, 1, group);
+                                        })
+                                      }
+                                      renderOption={({ key, ...restProps }, fieldId) => {
+                                        const typeId = fields[fieldId]?.data?.typeId as ConditionFieldTypeId;
+
+                                        return (
+                                          <Box key={key} component={"li"} {...restProps}>
+                                            <div className={styles.fieldOptionIcon}>
+                                              {FORM_ELEMENT_ICONS[FORM_ELEMENTS[typeId].icon]}
+                                            </div>
+                                            {fields[fieldId]?.data?.displayName}
+                                          </Box>
+                                        );
+                                      }
+                                      }
                                       renderInput={(params) => (
                                         <TextField {...params}
                                                    label={"שדה"}
@@ -173,28 +183,62 @@ function FormConditionsBuilder() {
                                                      htmlInput: {
                                                        ...params.inputProps,
                                                        autoComplete: "new-password",
+                                                       dir: "rtl",
                                                      },
                                                    }} />
                                       )}
                         />
-                        <Autocomplete options={availableFieldIds}
-                                      value={condition.field?.id}
-                                      getOptionLabel={(fieldId) => fields[fieldId]?.data?.displayName}
-                          // renderOption={
-                          //
-                          // }
-                                      renderInput={(params) => (
-                                        <TextField {...params}
-                                                   label={"סוג תנאי"}
-                                                   slotProps={{
-                                                     htmlInput: {
-                                                       ...params.inputProps,
-                                                       autoComplete: "new-password",
-                                                     },
-                                                   }} />
-                                      )}
+                        <Autocomplete
+                          disableClearable
+                          disabled={condition.field?.typeId === undefined}
+                          options={condition.field?.typeId ? ConditionTypeOptions[condition.field?.typeId].values : []}
+                          value={condition.field?.conditionType ?? (condition.field?.typeId ? ConditionTypeOptions[condition.field?.typeId].values[0] : -1)}
+                          getOptionLabel={(conditionType) => condition.field?.typeId ? ConditionTypeOptions[condition.field?.typeId].data[conditionType].label : ""}
+                          onChange={
+                            (_, conditionType) => setData((prev) => {
+                              const group = { ...prev[groupIndex] };
+                              const modifiedCondition = { ...condition };
+
+                              modifiedCondition.field = {
+                                ...modifiedCondition.field,
+                                conditionType: (conditionType ?? undefined) as FormConditionType,
+                              };
+                              group.conditions = group.conditions!.toSpliced(conditionIndex, 1, { ...modifiedCondition });
+
+                              return [...prev].toSpliced(groupIndex, 1, group);
+                            })
+                          }
+                          renderInput={(params) => (
+                            <TextField {...params}
+                                       label={"סוג תנאי"}
+                                       slotProps={{
+                                         htmlInput: {
+                                           ...params.inputProps,
+                                           autoComplete: "new-password",
+                                           dir: "rtl",
+                                         },
+                                       }} />
+                          )}
                         />
-                        <TextField variant={"standard"} label={"ערך"} />
+                        {
+                          (condition.field?.typeId && condition.field?.conditionType) &&
+                          ConditionTypeOptions[condition.field?.typeId].data[condition.field?.conditionType].requiresTargetValue &&
+                          <TextField variant={"standard"}
+                                     label={"ערך"}
+                                     value={condition.field?.targetValue ?? ""}
+                                     onChange={(e) => setData!(((prev) => {
+                                       const group = { ...prev[groupIndex] };
+                                       const modifiedCondition = { ...condition };
+
+                                       modifiedCondition.field = {
+                                         ...modifiedCondition.field,
+                                         targetValue: e.target.value as any,
+                                       };
+                                       group.conditions = group.conditions!.toSpliced(conditionIndex, 1, { ...modifiedCondition });
+
+                                       return [...prev].toSpliced(groupIndex, 1, group);
+                                     }) as SetStateAction<DeepPartial<FormConditionGroups>>)} />
+                        }
                       </div>
                       <div className={styles.deleteButtonContainer}>
                         {
@@ -219,7 +263,7 @@ function FormConditionsBuilder() {
                 }
               </div>
             </div>
-          </>
+          </Fragment>
         ))
       }
     </div>

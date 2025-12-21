@@ -1,4 +1,4 @@
-import { array, enum as zod_enum, infer as zod_infer, strictObject, string } from "zod";
+import { array, enum as zod_enum, infer as zod_infer, strictObject, string, partialRecord } from "zod";
 import { conditionFieldSchema } from "./conditionField";
 
 enum FormConditionOperator {
@@ -6,10 +6,10 @@ enum FormConditionOperator {
   OR = 2,
 }
 
-enum FormComponentType {
-  SECTION = 1,
-  FIELD = 2,
-}
+const FormComponentType = {
+  SECTION: "section",
+  FIELD: "field",
+} as const;
 
 const conditionGroupSchema = strictObject({
   id: string(),
@@ -33,10 +33,15 @@ const conditionGroupsSchema = array(conditionGroupSchema)
     message: "חובה לציין אופרטור בין קבוצות תנאים",
   });
 
-const conditionDependantComponentsSchema = array(strictObject({
-  id: string(),
-  type: zod_enum(FormComponentType),
-})).min(1);
+const conditionDependantComponentsSchema = partialRecord(zod_enum(FormComponentType), array(string())).refine((dependantFields) => {
+  for (const componentType of Object.keys(dependantFields)) {
+    if (!dependantFields[componentType].length) return false;
+  }
+
+  return true;
+}, {
+  message: "חובה לבחור לפחות אלמנט אחד",
+});
 
 const conditionSchema = strictObject({
   id: string(),

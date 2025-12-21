@@ -84,16 +84,9 @@ const DUMMY_CONDITIONS: FormConditions = [
         ],
       },
     ],
-    dependantComponents: [
-      {
-        id: generateFieldId(),
-        type: FormComponentType.FIELD,
-      },
-      {
-        id: generateFieldId(),
-        type: FormComponentType.FIELD,
-      },
-    ],
+    dependantComponents: {
+      [FormComponentType.FIELD]: [generateFieldId(), generateFieldId()],
+    },
   },
   {
     id: generateConditionId(),
@@ -113,12 +106,9 @@ const DUMMY_CONDITIONS: FormConditions = [
         ],
       },
     ],
-    dependantComponents: [
-      {
-        id: generateFieldId(),
-        type: FormComponentType.SECTION,
-      },
-    ],
+    dependantComponents: {
+      [FormComponentType.SECTION]: [generateSectionId()],
+    },
   },
 ];
 

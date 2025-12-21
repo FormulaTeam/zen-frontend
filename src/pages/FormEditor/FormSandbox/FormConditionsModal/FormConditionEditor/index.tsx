@@ -8,6 +8,7 @@ import { FormConditionsSummary } from "./steps/FormConditionSummary";
 import { FormConditionEditorContext } from "./context/FormConditionEditorContext";
 import { ConditionEditorStepId } from "./constants";
 import { useFormConditionEditorData } from "./context/useFormConditionEditorData";
+import { ValueOf } from "../../../../../types/utils";
 
 type ModifiedConditionStatus = "new" | "existing";
 
@@ -29,7 +30,7 @@ interface ExistingCondition extends ModifiedConditionBase {
 type ModifiedCondition = NewCondition | ExistingCondition;
 
 interface ConditionEditorStep {
-  id: ConditionEditorStepId;
+  id: ValueOf<typeof ConditionEditorStepId>;
   label: string;
   content: FunctionComponent;
 }
@@ -63,10 +64,10 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
   const [conditionData, setConditionData] = useFormConditionEditorData(modifiedCondition.index !== undefined ? conditions[modifiedCondition.index] : undefined);
 
-  const completedSteps = useMemo<Record<ConditionEditorStepId, boolean>>(() => {
+  const completedSteps = useMemo<Record<ValueOf<typeof ConditionEditorStepId>, boolean>>(() => {
     const newState = modifiedCondition.index !== undefined ? {
       [ConditionEditorStepId.CONDITION_BUILDER]: conditions[modifiedCondition.index].groups.some(({ conditions }) => (conditions.length)),
-      [ConditionEditorStepId.DEPENDENCY_PICKER]: !!conditions[modifiedCondition.index].dependantComponents.length,
+      [ConditionEditorStepId.DEPENDENCY_PICKER]: Object.keys(conditions[modifiedCondition.index].dependantComponents).some((dependantComponentType) => (conditions[modifiedCondition.index].dependantComponents[dependantComponentType].length)),
     } : {
       [ConditionEditorStepId.CONDITION_BUILDER]: false,
       [ConditionEditorStepId.DEPENDENCY_PICKER]: false,
@@ -76,7 +77,7 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
       ...newState,
       [ConditionEditorStepId.SUMMARY]: newState[ConditionEditorStepId.CONDITION_BUILDER] && newState[ConditionEditorStepId.DEPENDENCY_PICKER],
     });
-  }, [conditions]);
+  }, [conditions, modifiedCondition.index]);
 
   const isFirstStepActive = activeStepIndex === 0;
   const isLastStepActive = activeStepIndex === ConditionEditorSteps.length - 1;
@@ -110,9 +111,9 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
                   lineHeight: "21px",
                   ...(
                     index === activeStepIndex ? {
-                      color: "#1976D2",
+                      color: "#1976D2 !important",
                       fontSize: 21,
-                      fontWeight: "bold",
+                      fontWeight: "bold !important",
                     } : {
                       fontWeight: 500,
                       fontSize: 20,
