@@ -52,7 +52,7 @@ function FormConditionsDependencyPicker() {
     },
     [FormComponentType.SECTION]: {
       ids: Object.keys(sections),
-      getLabel: (id) => sections[id].title,
+      getLabel: (id) => sections[id]?.title,
     },
   }), [fields, groups, sections]);
 
