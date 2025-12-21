@@ -69,17 +69,17 @@ export const QuickEditTableContainer = styled(MuiTableContainer)<{ isQuickEditMo
   ({ theme, isQuickEditMode }) => ({
     ...(isQuickEditMode && {
       "& .MuiTableCell-root": {
-        padding: "4px !important",
+        padding: "4px",
       },
       "& .MuiTableRow-root:hover": {
-        backgroundColor: "#f5f5f5 !important",
+        backgroundColor: "#f5f5f5",
       },
       "& .cell-error": {
-        backgroundColor: "#ffebee !important",
-        borderColor: "#f44336 !important",
+        backgroundColor: "#ffebee",
+        borderColor: "#f44336",
       },
       "& .cell-edited": {
-        backgroundColor: "#e8f5e8 !important",
+        backgroundColor: "#e8f5e8",
       },
     }),
   }),
@@ -133,13 +133,76 @@ export const LoadingBtnBox = styled(Box)<LoadingBtnBoxProps>(({ $bgColor }) => (
 export const StyledDataGrid = styled(DataGridPro)(() => ({
   "&.MuiDataGrid-root": {
     fontSize: "21px",
+    transition: "all 0.3s ease",
+  },
+  "&.MuiDataGrid-root--edit-mode": {
+    border: "3px solid #9e9e9e",
+    boxShadow: "0 0 0 2px rgba(158, 158, 158, 0.35), 0 0 20px rgba(0, 0, 0, 0.12)",
+    overflow: "visible",
+    "& .MuiDataGrid-cell, & .MuiDataGrid-columnHeader": {
+      borderRight: "none",
+      backgroundImage:
+        "repeating-linear-gradient(to bottom, rgba(189,189,189,0.9) 0 2px, transparent 2px 10px)",
+      backgroundRepeat: "repeat-y",
+      backgroundSize: "1px 100%",
+      backgroundPosition: "left top",
+    },
+    "& .MuiDataGrid-row": {
+      borderBottom: "none",
+      backgroundImage:
+        "repeating-linear-gradient(to right, rgba(189,189,189,0.9) 0 2px, transparent 2px 10px)",
+      backgroundRepeat: "repeat-x",
+      backgroundSize: "100% 1px",
+      backgroundPosition: "left bottom",
+    },
+    "& .MuiDataGrid-cell": {
+      borderBottom: "none",
+      backgroundImage:
+        "repeating-linear-gradient(to bottom, rgba(189,189,189,0.9) 0 2px, transparent 2px 10px), repeating-linear-gradient(to right, rgba(189,189,189,0.9) 0 2px, transparent 2px 10px)",
+      backgroundRepeat: "repeat-y, repeat-x",
+      backgroundSize: "1px 100%, 100% 1px",
+      backgroundPosition: "left top, left bottom",
+    },
+    "& .MuiDataGrid-columnHeaders": {
+      borderBottom: "none",
+      backgroundImage:
+        "repeating-linear-gradient(to right, rgba(189,189,189,0.9) 0 2px, transparent 2px 10px)",
+      backgroundRepeat: "repeat-x",
+      backgroundSize: "100% 1px",
+      backgroundPosition: "left bottom",
+    },
+    "& .MuiDataGrid-columnHeaderRow": {
+      borderBottom: "none",
+      backgroundImage:
+        "repeating-linear-gradient(to right, rgba(189,189,189,0.9) 0 2px, transparent 2px 10px)",
+      backgroundRepeat: "repeat-x",
+      backgroundSize: "100% 1px",
+      backgroundPosition: "left bottom",
+    },
+    "& .MuiDataGrid-row--even:hover": {
+      backgroundColor: "#fafafa",
+    },
+    "& .MuiDataGrid-row--odd:hover": {
+      backgroundColor: "#ffffff",
+    },
   },
   "& .MuiDataGrid-columnHeaders": {
-    backgroundColor: "#e3f2fd"
+    backgroundColor: "#D5E6F6"
+  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-columnHeaders": {
+    backgroundColor: "#D5E6F6",
+    color: "#000000",
+    "& .MuiDataGrid-columnHeaderTitle": {
+      color: "#000000",
+      fontWeight: 700,
+    },
+    "& .MuiSvgIcon-root": {
+      color: "#000000",
+    },
   },
   "& .MuiDataGrid-columnHeader": {
     textAlign: "right",
-    backgroundColor: "#e3f2fd",
+    backgroundColor: "#D5E6F6",
     "&:hover": {
       backgroundColor: "#bbdefb",
     },
@@ -174,8 +237,8 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     fontSize: "21px",
   },
   "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
-    outline: "none !important",
-    boxShadow: "none !important",
+    outline: "none",
+    boxShadow: "none",
   },
   "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
     outline: "none",
@@ -186,38 +249,75 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     boxShadow: "none",
   },
   "& .MuiDataGrid-cell--editing": {
-    outline: "none !important",
-    boxShadow: "none !important",
+    outline: "none",
+    boxShadow: "0 0 0 2px #9e9e9e",
+    backgroundColor: "#ffffff",
   },
   "& .MuiDataGrid-cell--editing:focus, & .MuiDataGrid-cell--editing:focus-within": {
     outline: "none",
-    boxShadow: "none",
+    boxShadow: "0 0 0 2px #9e9e9e",
+  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus-within": {
+    backgroundImage: "none",
+    boxShadow: "inset 0 0 0 2px #9e9e9e",
+    borderRadius: "4px",
+    outline: "none",
+    borderColor: "transparent",
+  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--editing": {
+    backgroundImage: "none",
+    boxShadow: "inset 0 0 0 2px #9e9e9e",
+    borderRadius: "4px",
+    outline: "none",
+    borderColor: "transparent",
+  },
+
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus::after, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus-within::after": {
+    display: "none",
+  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--editable": {
+    backgroundColor: "#ffffff",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "text",
+    boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)",
+    transition: "all 0.2s ease",
+    "&:hover": {
+      backgroundColor: "#ffffff",
+      boxShadow: "inset 0 1px 3px rgba(0,0,0,0.15)",
+    },
+  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:not(.MuiDataGrid-cell--editable)": {
+    cursor: "not-allowed",
+    userSelect: "none",
+  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:not(.MuiDataGrid-cell--editable) *": {
+    pointerEvents: "none",
+    userSelect: "none",
+  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--non-editable-in-edit-mode": {
+    backgroundColor: "transparent",
+    color: "#d0d0d0",
+    cursor: "not-allowed",
+    opacity: 1,
+    userSelect: "none",
   },
   "& .MuiDataGrid-scrollbar--vertical": {
     right: "auto",
     left: "0",
   },
-  "&:has(.MuiDataGrid-row--editing) .MuiDataGrid-row:not(.MuiDataGrid-row--editing)": {
-    opacity: 0.6,
-    pointerEvents: "none",
-  },
   "& .MuiDataGrid-row.Mui-selected": {
-    backgroundColor: "#e0e0e0 !important",
+    backgroundColor: "#e0e0e0",
     "&:hover": {
-      backgroundColor: "#d5d5d5 !important",
+      backgroundColor: "#d5d5d5",
     },
   },
-  "& .MuiDataGrid-row--editing": {
-    outline: "2px solid #373737ff",
-    outlineOffset: "0px",
-    backgroundColor: "#ffffff !important",
-    opacity: 1,
-    "&:hover": {
-      backgroundColor: "#ffffff !important",
-    },
-    "& .MuiDataGrid-cell": {
-      backgroundColor: "transparent",
-    },
+
+  "& .MuiDataGrid-row.Mui-selected > .MuiDataGrid-cell": {
+    backgroundColor: "#e0e0e0",
+  },
+  "& .MuiDataGrid-row.Mui-selected:hover > .MuiDataGrid-cell": {
+    backgroundColor: "#d5d5d5",
   },
 }));
 

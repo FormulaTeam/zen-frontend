@@ -22,7 +22,7 @@ export const EditResponsesButton = ({
     return (
         <EditButtonWrapper>
             {!isInEditMode ? (
-                <Tooltip title="עריכת התגובות מתבצעת בלחיצה כפולה על התא הרלוונטי">
+                <Tooltip title="עריכה מהירה">
                     <Button
                         variant="outlined"
                         size="small"

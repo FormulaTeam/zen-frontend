@@ -1,9 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { MaterialReactTable } from "material-react-table";
 import Loader from "../../../components/Responses/Loader";
 import { ContentContainer, MainContent, StyledDataGrid } from "../styled";
 import { useResponsesTable } from "../../../hooks/useResponsesTable";
-import { useGridApiRef, GridPreferencePanelsValue, GridRowModel } from "@mui/x-data-grid-pro";
+import {
+  useGridApiRef,
+  GridPreferencePanelsValue,
+  GridRowModel,
+  GridCellParams,
+  GridCellModesModel,
+  GridCellModes,
+  GridApiPro,
+} from "@mui/x-data-grid-pro";
 import { useFormStore } from "../stores/form.store";
 import { Box, IconButton, Tooltip } from "@mui/material";
 import { styled } from "@mui/material/styles";
@@ -18,6 +26,7 @@ import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "../../../components/formInForm/ZoomCell";
 import { Row } from "../../../utils/interfaces";
+import { MutableRefObject } from "react";
 
 
 
@@ -34,10 +43,62 @@ export const ResponsesTable = ({
   handleProcessRowUpdate,
   onCellEditStart,
 }: ResponsesTableProps) => {
-  // const responsesTable = useResponsesTable({});
   const { form, rows } = useFormStore();
   const apiRef = useGridApiRef();
   const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
+  const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
+
+  const handleCellClick = useCallback((params: GridCellParams, event: any) => {
+    if (isInEditMode && !params.isEditable) {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      if (event) {
+        event.defaultMuiPrevented = true;
+      }
+      return;
+    }
+
+    if (!isInEditMode || !params.isEditable) {
+      return;
+    }
+
+    if (onCellEditStart) {
+      onCellEditStart();
+    }
+
+    setCellModesModel((prevModel) => {
+      return {
+        ...prevModel,
+        [params.id]: {
+          ...prevModel[params.id],
+          [params.field]: { mode: GridCellModes.Edit }
+        }
+      };
+    });
+  }, [isInEditMode, onCellEditStart]);
+
+  const handleCellModesModelChange = useCallback((newModel: GridCellModesModel) => {
+    setCellModesModel(newModel);
+  }, []);
+
+  const getCellClassName = useCallback(
+    (params: GridCellParams) => {
+      if (!isInEditMode) {
+        return "";
+      }
+
+      return params.isEditable
+        ? "MuiDataGrid-cell--editable"
+        : "MuiDataGrid-cell--non-editable-in-edit-mode";
+    },
+    [isInEditMode],
+  );
+
+  const handleCellDoubleClick = useCallback((params: GridCellParams, event: any) => {
+    if (!isInEditMode) {
+      event.defaultMuiPrevented = true;
+    }
+  }, [isInEditMode]);
 
   const handleOpenColumnsPanel = () => {
     if (apiRef.current) {
@@ -170,7 +231,6 @@ export const ResponsesTable = ({
         flex: (col.field === "id" || col.field === "_id" || col.field === "responseId") ? 0 : 2,
         minWidth: (col.field === "id" || col.field === "_id" || col.field === "responseId") ? 150 : 400,
         ...col,
-        // Make id field non-editable, allow editing of other form columns
         editable: col.field !== "id" && col.field !== "_id" && col.field !== "responseId",
       }))
       : [];
@@ -252,17 +312,21 @@ export const ResponsesTable = ({
         </Box>
         <StyledDataGrid
           apiRef={apiRef}
+          className={isInEditMode ? 'MuiDataGrid-root--edit-mode' : ''}
           isRowSelectable={({ row }) => true}
-          editMode="row"
+          disableColumnMenu={isInEditMode}
+          disableColumnSorting={isInEditMode}
+          disableColumnResize={isInEditMode}
+          editMode="cell"
+          cellModesModel={cellModesModel}
+          onCellModesModelChange={handleCellModesModelChange}
+          onCellClick={handleCellClick}
+          onCellDoubleClick={handleCellDoubleClick}
           processRowUpdate={handleProcessRowUpdate}
           onProcessRowUpdateError={(error) => {
             console.error("Error updating row:", error);
           }}
-          onRowEditStart={() => {
-            if (onCellEditStart) {
-              onCellEditStart();
-            }
-          }}
+          getCellClassName={getCellClassName}
           density="comfortable"
           rowHeight={65}
           loading={!rows}
