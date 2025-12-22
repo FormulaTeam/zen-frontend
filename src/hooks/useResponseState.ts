@@ -14,12 +14,12 @@ import { useConnectedFormOptions } from "./useConnectedFormOptions";
 import {
   checkUserAccessForResponse,
   timeRegex,
-  utmRegex,
-  wktLatitudeRegexY,
-  wktLongitudeRegexX,
 } from "../utils/utils";
 import { NOT_A_SECTION_ID } from "../utils/sections/consts";
-
+import { useNavigate } from "react-router-dom";
+import { IPath } from "../types/enums/global.enums";
+import { isDifferent } from "../utils/responses";
+import { validateLinkWithZod, validateLocationWithZod, validateNumberWithZod } from "./helpers/zodValidations";
 interface SectionsMap {
   [sectionId: string]: {
     name?: string;
@@ -29,10 +29,6 @@ interface SectionsMap {
     id?: string;
   };
 }
-import { useNavigate } from "react-router-dom";
-import { IPath } from "../types/enums/global.enums";
-import { isDifferent } from "../utils/responses";
-import { isEmptyValue } from "../utils/strings";
 
 export const useResponseState = (
   formId: string | undefined,
@@ -333,50 +329,15 @@ export const useResponseState = (
           }
         }
       }
-
       //היפר-קישור
       else if (field.typeId === FieldTypeIds.link) {
-        const urlRegex = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,6})([/\w .-]*)*\/?$/i;
-
-        let validObj = { link: true, linkTxt: true };
-        //if no value
-        if (!val?.link || !val.linkTxt) {
-          //if no value and not required - true in both
-          if (!field.required) {
-            newFormFieldsValidMap.set(uniqueId, validObj);
-          }
-          //if no value and is required - false in both
-          if (field.required) {
-            newFormFieldsValidMap.set(uniqueId, {
-              link: false,
-              linkTxt: false,
-            });
-            ans = false;
-            return;
-          }
-        }
-        //if has value
-        else {
-          //if has value in link or linkTxt
-          if (val && (val.link || val.linkTxt)) {
-            //no value in linkTxt
-            if (val.link && !val.linkTxt) {
-              validObj.linkTxt = false;
-              ans = false;
-            }
-            //no value in link
-            else if (!val.link && val.linkTxt) {
-              validObj.link = false;
-              ans = false;
-            } else if (!urlRegex.test(val.link)) {
-              validObj.link = false;
-              ans = false;
-            }
-            newFormFieldsValidMap.set(uniqueId, validObj);
-          }
+        const { isValid, flags } = validateLinkWithZod(val, field.required);
+        newFormFieldsValidMap.set(uniqueId, flags);
+        if (!isValid) {
+          ans = false;
+          return;
         }
       }
-
       //תאריך
       else if (field.typeId === FieldTypeIds.date) {
         //if no value and not required - is valid
@@ -424,50 +385,64 @@ export const useResponseState = (
       }
 
       //נקודת ציון - if not empty check 6 digits for x and y
-      else if (field.typeId === FieldTypeIds.location) {
-        // let val = formFieldsValuesMap.get(uniqueId);
-        let validObj = { x: true, y: true };
+      // else if (field.typeId === FieldTypeIds.location) {
+      //   // let val = formFieldsValuesMap.get(uniqueId);
+      //   let validObj = { x: true, y: true };
 
-        //if no value
-        if (!val || (!val.x && !val.y)) {
-          //if no value and not required - true in both
-          if (!field.required) {
-            newFormFieldsValidMap.set(uniqueId, validObj);
-          }
-          //if no value and is required - false in both
-          if (field.required) {
-            newFormFieldsValidMap.set(uniqueId, { x: false, y: false });
-            ans = false;
-            return;
-          }
-        }
-        //if has value
-        else {
-          //if has value in x or y
-          if (val && (val.x || val.y)) {
-            //no value in y
-            if (!field.coordinateType || field.coordinateType === "UTM") {
-              if (!utmRegex.test(val.x)) {
-                validObj.x = false;
-                ans = false;
-              }
-              if (!utmRegex.test(val.y)) {
-                validObj.y = false;
-                ans = false;
-              }
-            } else {
-              if (!wktLongitudeRegexX.test(val.x)) {
-                validObj.x = false;
-                ans = false;
-              }
-              if (!wktLatitudeRegexY.test(val.y)) {
-                validObj.y = false;
-                ans = false;
-              }
-            }
-            newFormFieldsValidMap.set(uniqueId, validObj);
-            return;
-          }
+      //   //if no value
+      //   if (!val || (!val.x && !val.y)) {
+      //     //if no value and not required - true in both
+      //     if (!field.required) {
+      //       newFormFieldsValidMap.set(uniqueId, validObj);
+      //     }
+      //     //if no value and is required - false in both
+      //     if (field.required) {
+      //       newFormFieldsValidMap.set(uniqueId, { x: false, y: false });
+      //       ans = false;
+      //       return;
+      //     }
+      //   }
+      //   //if has value
+      //   else {
+      //     //if has value in x or y
+      //     if (val && (val.x || val.y)) {
+      //       //no value in y
+      //       if (!field.coordinateType || field.coordinateType === "UTM") {
+      //         if (!latitudeRegexX.test(val.x)) {
+      //           validObj.x = false;
+      //           ans = false;
+      //         }
+      //         if (!latitudeRegexY.test(val.y)) {
+      //           validObj.y = false;
+      //           ans = false;
+      //         }
+      //       } else {
+      //         if (!wktLongitudeRegexX.test(val.x)) {
+      //           validObj.x = false;
+      //           ans = false;
+      //         }
+      //         if (!wktLatitudeRegexY.test(val.y)) {
+      //           validObj.y = false;
+      //           ans = false;
+      //         }
+      //       }
+      //       newFormFieldsValidMap.set(uniqueId, validObj);
+      //       return;
+      //     }
+      //   }
+      // }
+      else if (field.typeId === FieldTypeIds.location) {
+        const { isValid, flags } = validateLocationWithZod(
+          val,
+          field.required,
+          field.coordinateType
+        );
+
+        newFormFieldsValidMap.set(uniqueId, flags);
+
+        if (!isValid) {
+          ans = false;
+          return;
         }
       }
       //רשימה
@@ -487,46 +462,24 @@ export const useResponseState = (
       //מספר
       else if (field.typeId === FieldTypeIds.number) {
         const { minValue, maxValue, numberType, required } = field;
-        const isEmpty = isEmptyValue(val);
-        if (isEmpty) {
-          if (required) {
-            newFormFieldsValidMap.set(uniqueId, false);
-            ans = false;
-          } else {
-            newFormFieldsValidMap.set(uniqueId, true);
-          }
-          return;
-        }
 
-        const numericValue = Number(val);
+        const isValid = validateNumberWithZod(
+          val,
+          required,
+          minValue,
+          maxValue,
+          numberType
+        );
 
-        if (isNaN(numericValue)) {
-          newFormFieldsValidMap.set(uniqueId, false);
+        newFormFieldsValidMap.set(uniqueId, isValid);
+
+        if (!isValid) {
           ans = false;
           return;
         }
-
-        if (numberType === "integer" && !Number.isInteger(numericValue)) {
-          newFormFieldsValidMap.set(uniqueId, false);
-          ans = false;
-          return;
-        }
-
-        if ((minValue || minValue === 0) && numericValue < minValue) {
-          newFormFieldsValidMap.set(uniqueId, false);
-          ans = false;
-          return;
-        }
-        if ((maxValue || maxValue === 0) && numericValue > maxValue) {
-          newFormFieldsValidMap.set(uniqueId, false);
-          ans = false;
-          return;
-        }
-
-        newFormFieldsValidMap.set(uniqueId, true);
       }
       else if (field.typeId === FieldTypeIds.checkbox) {
-        return true;
+        newFormFieldsValidMap.set(uniqueId, true);
       }
       //all other fields
       // else if (isRequired === false) {

@@ -85,11 +85,12 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
         return !valid?.x && "יש להזין מספר בין 180- ל180 בפורמט עשרוני תקין";
       }
       return !valid?.y && "יש להזין מספר בין 90- ל90 בפורמט עשרוני תקין";
+    } else {
+      if (field === "x") {
+        return !valid?.x && "חייב להכיל מספר בן 6 ספרות בין 100000 ל־900000";
+      }
+      return !valid?.y && "חייב להכין מספר בין 0–10,000,000";
     }
-    if (field === "x") {
-      return !valid?.x && "חייב להכיל מספר בן 6 ספרות בין 100000 ל־900000";
-    }
-    return !valid?.y && "חייב להכין מספר בין 0–10,000,000";
   };
 
   return (

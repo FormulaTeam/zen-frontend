@@ -212,8 +212,8 @@ export const numberToHebrewLetterMap = new Map<number, string>([
   [21, "ש"],
   [22, "ת"],
 ]);
+export const urlRegex = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,6})([/\w .-]*)*\/?$/i;
 
-export const utmRegex = /^\d{6}$/;
 
 export const latitudeRegexX = /^(100000|[1-8]\d{5}|900000)$/;
 export const latitudeRegexY = /^([0-9]|[1-9]\d{1,6}|[1-9]\d{6}|10000000)$/;
@@ -932,7 +932,7 @@ export function getErrorMessage(
   return errorMessageParts.join(" ");
 }
 
-const validUrlRegex = new RegExp(/^https?:\/\/([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/);
+const validUrlRegex = new RegExp(urlRegex);
 
 /**
  * Extracts link information from an Excel hyperlink function or link address.

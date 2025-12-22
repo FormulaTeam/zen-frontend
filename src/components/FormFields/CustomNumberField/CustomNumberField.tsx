@@ -25,12 +25,7 @@ const CustomNumberField: React.FC<CustomNumberFieldProps> = ({
   const initialErrorMessage = "נדרש להזין מספר";
   const integerErrorMessage = "חובה להזין מספר שלם";
   const floatErrorMessage = "חובה להזין מספר עשרוני";
-  const numberMustBeBetweenNumber =
-    minValue && !maxValue
-      ? `המספר חייב להיות גדול מ- ${minValue}`
-      : !minValue && maxValue
-      ? `המספר חייב להיות קטן מ- ${maxValue}`
-      : `המספר חייב להיות גדול מ- ${minValue} וקטן מ- ${maxValue}`;
+  const numberMustBeBetweenNumber = `המספר חייב להיות גדול מ- ${minValue} וקטן מ- ${maxValue}`;
 
   const [inputValue, setInputValue] = useState(value);
   const [errorMessage, setErrorMessage] = useState("");
@@ -109,7 +104,7 @@ const CustomNumberField: React.FC<CustomNumberFieldProps> = ({
       disabled={isDisabled}
       value={inputValue}
       error={!fieldIsValid}
-      helperText={(!fieldIsValid && errorMessage) || " "}
+      helperText={!fieldIsValid ? (isRequired ? initialErrorMessage : errorMessage || " ") : " "}
       required={isRequired}
       onChange={onInputChangeHandler}
       size={isTabularEdit ? "medium" : undefined}
