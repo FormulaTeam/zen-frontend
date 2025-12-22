@@ -3,9 +3,10 @@ import { getResponses, getResponsesCount } from "../api";
 import { ResponseForm } from "../utils/interfaces";
 
 interface ResponsesQueryParams {
-  formId?: number;
   pageIndex: number;
   pageSize: number;
+  
+  formId?: number;
   searchFilters?: any[];
 }
 
