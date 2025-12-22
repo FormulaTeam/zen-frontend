@@ -287,20 +287,23 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
       boxShadow: "inset 0 1px 3px rgba(0,0,0,0.15)",
     },
   },
-  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:not(.MuiDataGrid-cell--editable)": {
-    cursor: "not-allowed",
-    userSelect: "none",
-  },
-  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:not(.MuiDataGrid-cell--editable) *": {
-    pointerEvents: "none",
-    userSelect: "none",
-  },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--non-editable-in-edit-mode": {
     backgroundColor: "transparent",
     color: "#d0d0d0",
     cursor: "not-allowed",
     opacity: 1,
     userSelect: "none",
+    pointerEvents: "none",
+    "& *": {
+      pointerEvents: "none",
+    },
+  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cellCheckbox.MuiDataGrid-cell--non-editable-in-edit-mode": {
+    pointerEvents: "auto",
+    cursor: "pointer",
+  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cellCheckbox.MuiDataGrid-cell--non-editable-in-edit-mode *": {
+    pointerEvents: "auto",
   },
   "& .MuiDataGrid-scrollbar--vertical": {
     right: "auto",

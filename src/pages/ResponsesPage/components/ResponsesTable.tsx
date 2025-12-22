@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from "react";
-import { MaterialReactTable } from "material-react-table";
 import Loader from "../../../components/Responses/Loader";
 import { ContentContainer, MainContent, StyledDataGrid } from "../styled";
 import { useResponsesTable } from "../../../hooks/useResponsesTable";
@@ -14,7 +13,6 @@ import {
 } from "@mui/x-data-grid-pro";
 import { useFormStore } from "../stores/form.store";
 import { Box, IconButton, Tooltip } from "@mui/material";
-import { styled } from "@mui/material/styles";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
@@ -26,8 +24,6 @@ import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "../../../components/formInForm/ZoomCell";
 import { Row } from "../../../utils/interfaces";
-import { MutableRefObject } from "react";
-
 
 
 interface ResponsesTableProps {
@@ -49,6 +45,10 @@ export const ResponsesTable = ({
   const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
 
   const handleCellClick = useCallback((params: GridCellParams, event: any) => {
+    if (params.field === "__check__") {
+      return;
+    }
+
     if (isInEditMode && !params.isEditable) {
       event?.preventDefault?.();
       event?.stopPropagation?.();
