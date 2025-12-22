@@ -8,6 +8,7 @@ interface UseCreateOptions<TData = unknown, TResponse = unknown> {
     "mutationFn" | "mutationKey"
   >;
   mutationKey: readonly unknown[];
+  
   axiosConfig?: Record<string, any>;
 }
 

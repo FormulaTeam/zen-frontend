@@ -37,11 +37,11 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
   const [currentViewConfig, setCurrentViewConfig] = useState<ViewColumn[] | undefined>();
 
   const {
-    loading,
-    setLoading,
-    loadingInsideTable,
-    loadingTable,
-    setLoadingTable,
+    isLoading,
+    setIsLoading,
+    isLoadingInsideTable,
+    isLoadingTable,
+    setIsLoadingTable,
     form,
     setForm,
     columns,
@@ -68,7 +68,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     currentFilter,
     setCurrentFilter,
     setRowSelection,
-    setLoadingInsideTable,
+    setIsLoadingInsideTable,
     rowSelection,
     changePageSizeAndRefreshTable,
     sorting,
@@ -127,13 +127,13 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     responsesWithChildren,
     childrenForms,
   } = useInitializeFormData();
-  const { fieldOptions, isLoading: loadingConnections } = useConnectedFormOptions({
+  const { fieldOptions, isLoading: isLoadingConnections } = useConnectedFormOptions({
     formFields: form?.fields,
   });
 
   const queryClient = useQueryClient();
 
-  const { data: responsesData, isLoading: responsesLoading } = useResponsesQuery({
+  const { data: responsesData, isLoading: isResponsesLoading } = useResponsesQuery({
     formId: form?.id,
     pageIndex: pagination.pageIndex,
     pageSize: pagination.pageSize,
@@ -144,8 +144,8 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
       setAllFilteredResponses(responsesData.responses);
       setAllResponsesCount(responsesData.count);
       setSearchCount(responsesData.count);
-      setLoadingTable(false);
-      setLoadingInsideTable(false);
+      setIsLoadingTable(false);
+      setIsLoadingInsideTable(false);
     }
   }, [responsesData]);
 
@@ -160,7 +160,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     fileOnClickHandler,
     isSynchedToMetro,
     sorting,
-    setLoadingInsideTable,
+    setIsLoadingInsideTable,
     responsesHaveParents,
     isQuickEditMode,
     handleCellValueChange,
@@ -200,7 +200,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
       setCurrentFilter,
       getResponsesForCurrentPage,
       setFirstRun,
-      setLoading,
+      setIsLoading,
     );
   }, [roles]);
 
@@ -354,7 +354,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     setPagination,
     columnFilters,
     setColumnFilters,
-    loadingInsideTable: loadingInsideTable || loadingConnections || responsesLoading,
+    loadingInsideTable: isLoadingInsideTable || isLoadingConnections || isResponsesLoading,
     rowSelection,
     setRowSelection: (newSelection) => {
       setRowSelection(newSelection);
@@ -369,7 +369,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     currentViewConfig,
   });
 
-  if (loading || responsesLoading) {
+  if (isLoading || isResponsesLoading) {
     return <Loader />;
   }
 
@@ -418,7 +418,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
         /> */}
         <ContentContainer>
           <MainContent $sidePanelOpen={isSidePanelOpen}>
-            {loadingTable ? <Loader /> : <MaterialReactTable table={responsesTable} />}
+            {isLoadingTable ? <Loader /> : <MaterialReactTable table={responsesTable} />}
           </MainContent>
         </ContentContainer>
 
