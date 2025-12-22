@@ -263,9 +263,9 @@ const OperationsContainer: React.FC<any> = ({
               title={
                 isQuickEditMode
                   ? "לא זמין במצב עריכה מהירה"
-                  : allResponsesCount > 0
-                  ? `ייצוא ${allResponsesCount} תגובות לאקסל`
-                  : "אין תגובות לייצוא"
+                  :  (allResponsesCount > 0 ? 
+                        `ייצוא ${allResponsesCount} תגובות לאקסל` :
+                        "אין תגובות לייצוא")
               }>
               {showLoadingExcelBtn ? (
                 <LoadingBtnBox bgcolor={theme.palette.primary.main}>
