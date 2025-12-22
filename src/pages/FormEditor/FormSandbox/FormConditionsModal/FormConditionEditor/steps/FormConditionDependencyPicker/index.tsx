@@ -40,21 +40,25 @@ function FormConditionsDependencyPicker() {
     setData,
   } = useFormConditionEditorContext(ConditionEditorStepId.DEPENDENCY_PICKER);
 
-  const availableComponents: Record<ValueOf<typeof FormComponentType>, AvailableComponentsData> = useMemo(() => ({
-    [FormComponentType.FIELD]: {
-      ids: Object.keys(fields).filter((fieldId) => (
-        fields[fieldId].data?.displayName &&
-        !groups?.flatMap((group) => group?.conditions)
-          .some((condition) => condition?.field?.id === fieldId)
-      )),
-      getLabel: (id) => fields[id]?.data?.displayName,
-      getIcon: (id) => FORM_ELEMENT_ICONS[FORM_ELEMENTS[fields[id]?.data?.typeId].icon],
-    },
-    [FormComponentType.SECTION]: {
-      ids: Object.keys(sections),
-      getLabel: (id) => sections[id]?.title,
-    },
-  }), [fields, groups, sections]);
+  const availableComponents: Record<ValueOf<typeof FormComponentType>, AvailableComponentsData> = useMemo(() => {
+    const conditionedFieldIds = groups?.flatMap((group) => group?.conditions).map((condition) => condition?.field?.id);
+    const conditionedFieldsParentIds = conditionedFieldIds?.map((fieldId) => fields[fieldId ?? ""]?.parentSectionId);
+
+    return {
+      [FormComponentType.FIELD]: {
+        ids: Object.keys(fields).filter((fieldId) => (
+          fields[fieldId].data?.displayName &&
+          !conditionedFieldIds?.includes(fieldId)
+        )),
+        getLabel: (id) => fields[id]?.data?.displayName,
+        getIcon: (id) => FORM_ELEMENT_ICONS[FORM_ELEMENTS[fields[id]?.data?.typeId].icon],
+      },
+      [FormComponentType.SECTION]: {
+        ids: Object.keys(sections).filter((sectionId) => (!conditionedFieldsParentIds?.includes(sectionId))),
+        getLabel: (id) => sections[id]?.title,
+      },
+    };
+  }, [fields, groups, sections]);
 
   useEffect(() => {
     setData((prev) => {
@@ -83,7 +87,7 @@ function FormConditionsDependencyPicker() {
                             options={availableComponents[componentType].ids ?? []}
                             value={dependantComponents[componentType] ?? []}
                             getOptionLabel={(componentId) => componentId ? availableComponents[componentType].getLabel(componentId) : "שגיאה - שדה אינו קיים"}
-                            noOptionsText={"אין שדות מתאימים בטופס"}
+                            noOptionsText={`אין ${ComponentTypeLabels[componentType]} מתאימים בטופס`}
                             onChange={
                               (_, ids) => setData((prev) => {
                                 return {
@@ -121,7 +125,7 @@ function FormConditionsDependencyPicker() {
                                              dir: "rtl",
                                              style: {
                                                ...params.inputProps.style,
-                                               height:60,
+                                               height: 60,
                                              },
                                            },
                                          }} />

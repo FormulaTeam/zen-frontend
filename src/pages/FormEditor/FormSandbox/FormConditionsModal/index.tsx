@@ -24,7 +24,7 @@ function FormConditionsModal() {
       <div className={styles.content}>
         <div className={styles.header}>
           <Button className={styles.headerButton}
-                  style={{display: modifiedCondition ? 'block' : 'none'}}
+                  style={{ display: modifiedCondition ? "block" : "none" }}
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={handleReturnToOverview}>
             <ArrowForwardIos sx={{ fontSize: 22 }} />

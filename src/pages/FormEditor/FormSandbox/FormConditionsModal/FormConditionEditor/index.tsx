@@ -65,9 +65,9 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
   const [conditionData, setConditionData] = useFormConditionEditorData(modifiedCondition.index !== undefined ? conditions[modifiedCondition.index] : undefined);
 
   const completedSteps = useMemo<Record<ValueOf<typeof ConditionEditorStepId>, boolean>>(() => {
-    const newState = modifiedCondition.index !== undefined ? {
-      [ConditionEditorStepId.CONDITION_BUILDER]: conditions[modifiedCondition.index].groups.some(({ conditions }) => (conditions.length)),
-      [ConditionEditorStepId.DEPENDENCY_PICKER]: Object.keys(conditions[modifiedCondition.index].dependantComponents).some((dependantComponentType) => (conditions[modifiedCondition.index].dependantComponents[dependantComponentType].length)),
+    const newState = !!conditionData ? {
+      [ConditionEditorStepId.CONDITION_BUILDER]: !!conditionData.groups?.some((group) => (group?.conditions?.some((condition) => !!condition?.field))),
+      [ConditionEditorStepId.DEPENDENCY_PICKER]: Object.keys(conditionData.dependantComponents).some((dependantComponentType) => (conditionData.dependantComponents[dependantComponentType]?.length)),
     } : {
       [ConditionEditorStepId.CONDITION_BUILDER]: false,
       [ConditionEditorStepId.DEPENDENCY_PICKER]: false,
@@ -77,13 +77,14 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
       ...newState,
       [ConditionEditorStepId.SUMMARY]: newState[ConditionEditorStepId.CONDITION_BUILDER] && newState[ConditionEditorStepId.DEPENDENCY_PICKER],
     });
-  }, [conditions, modifiedCondition.index]);
+  }, [conditionData]);
 
   const isFirstStepActive = activeStepIndex === 0;
   const isLastStepActive = activeStepIndex === ConditionEditorSteps.length - 1;
 
   const handleNext = () => {
     !isLastStepActive ?
+      completedSteps[activeStepIndex] &&
       setActiveStepIndex((prev) => (prev + 1)) :
       onSubmit();
   };
@@ -138,6 +139,7 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
       <div className={styles.footer}>
         <Button variant={isLastStepActive ? "contained" : "outlined"}
                 className={styles.button}
+                disabled={!completedSteps[activeStepIndex]}
                 size={"large"}
                 onClick={handleNext}>
           {isLastStepActive ? "שמור" : "הבא"}
