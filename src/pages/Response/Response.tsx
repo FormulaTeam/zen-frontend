@@ -1,20 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { FieldTypeIds, ResponseForm } from "../../utils/interfaces";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Container,
-  Tooltip,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Box, Button, Container, Tooltip, Typography } from "@mui/material";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useResponseSave } from "../../hooks/useResponseSave";
 import { useResponseState } from "../../hooks/useResponseState";
 import { showErrorNotification } from "../../utils/utils";
 import { Add } from "@mui/icons-material";
-import { FieldsWrapper, FormSectionsContainer, LoadingContainer, SectionContainer } from "./styled";
+import { FormSectionsContainer } from "./styled";
 import ConnectedFormSection from "../../components/FormSection/ConnectedFormSection";
 import { useChildForms } from "../../hooks/useChildForms";
 import { resolveUserPermissions } from "../../utils/formFieldsResponses";
@@ -64,25 +56,28 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
     if (validateRequiredFields() && form) {
       try {
         const result = await saveResponse(formFieldsByIdMap, formFieldsValuesMap);
-        if (!Array.isArray(result)) setSavedResponse(result);
+
+        if (!Array.isArray(result)) {
+          setSavedResponse(result);
+        }
+
         setChildFormsSaving(true);
       } catch (error: any) {
         if (error?.response?.data?.error?.includes("Metro")) {
           navigate(`/responses/${form.id}`);
         } else {
-          console.error("error:", error);
           showErrorNotification("משהו השתבש");
           setShowLoadingSaveBtn(false);
         }
       }
     } else {
-      console.error("some values are not valid!");
-      // Generate validation error messages and show popup
       const errorMessages = generateValidationErrorMessages();
-      if (errorMessages.length > 0) {
+
+      if (errorMessages) {
         setValidationErrors(errorMessages);
         setShowValidationPopup(true);
       }
+
       setShowLoadingSaveBtn(false);
     }
   };
@@ -128,43 +123,39 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
 
   // Handle child form validation results
   useEffect(() => {
-    if (!childFormsValidate) return;
+    if (childFormsValidate) {
+      const shownForms = childForms.filter((childForm) => childForm.shown);
 
-    const shownForms = childForms.filter((cf) => cf.shown);
-
-    // Check if all child forms have been validated
-    const allValidated = shownForms.every(
-      (childForm) => childForm.children?.length === childForm.valid?.length,
-    );
-
-    if (allValidated) {
-      const isValid = shownForms.every((childForm) =>
-        childForm.valid?.every((valid) => valid === true),
+      // Check if all child forms have been validated
+      const allValidated = shownForms.every(
+        (childForm) => childForm.children?.length === childForm.valid?.length,
       );
 
-      if (!isValid) {
-        // Child form validation failed, show validation errors
-        const errorMessages = generateValidationErrorMessages();
-        if (errorMessages.length > 0) {
-          setValidationErrors(errorMessages);
-          setShowValidationPopup(true);
+      if (allValidated) {
+        const isValid = shownForms.every((shownForm) => shownForm.valid?.every(Boolean));
+
+        if (!isValid) {
+          const errorMessages = generateValidationErrorMessages();
+
+          if (errorMessages) {
+            setValidationErrors(errorMessages);
+            setShowValidationPopup(true);
+          }
         }
       }
     }
   }, [childForms, childFormsValidate]);
 
   const onBack = () => {
-    if (location.state?.parentFormId) {
-      navigate(`/responses/${location.state.parentFormId}`, {});
-    } else {
-      form && navigate(`/responses/${form.id}`);
-    }
+    location.state?.parentFormId
+      ? navigate(`/responses/${location.state.parentFormId}`, {})
+      : form && navigate(`/responses/${form.id}`);
   };
 
   const onEdit = () => navigate(`/response/edit/${formId}/${id}`);
 
   const onSaveAndClose = () => {
-    childForms.length > 0 ? setChildFormsValidate(true) : saveAll();
+    childForms ? setChildFormsValidate(true) : saveAll();
   };
 
   const closeValidationPopup = () => {
@@ -174,17 +165,21 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
     // Reset child form validation arrays so subsequent validations work
     setChildForms((prev) => {
       const newChildForms = [...prev];
+
       newChildForms.forEach((childForm) => {
         if (childForm.shown) {
           childForm.valid = [];
         }
       });
+
       return newChildForms;
     });
   };
 
   const getChildFormTitle = (childFormId: number) => {
-    return formFields.find((f) => f.connectedFormId === childFormId)?.displayName || "";
+    return (
+      formFields.find((field: any) => field.connectedFormId === childFormId)?.displayName || ""
+    );
   };
 
   const getFormInFormProperty = (formField: any) => {
@@ -192,39 +187,45 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
       return null;
     }
 
-    // Find the corresponding child form data and its index
-    const childFormIndex = childForms.findIndex((cf) => cf.formId === formField.connectedFormId);
+    const childFormIndex = childForms.findIndex(
+      (childForm) => childForm.formId === formField.connectedFormId,
+    );
+
     const childFormData = childForms[childFormIndex];
 
     if (!childFormData || childFormIndex === -1) {
       return null;
     }
 
+    const CHILD_FORM_TITLE = getChildFormTitle(childFormData.formId);
+    const ADD_RESPONSE_TITLE = `הוספת תגובה${CHILD_FORM_TITLE ? ` - ${CHILD_FORM_TITLE}` : ""}`;
+
     return (
       <Box key={`child-form-${formField.connectedFormId}`}>
-        {childFormData.children.map((child, i) =>
-          childFormData.shown ? (
-            <ConnectedFormSection
-              key={child.id || child.uniqueId || `child-${formField.connectedFormId}-${i}`}
-              handleRemoveChildForm={() => {
-                handleRemoveChildForm(childFormIndex, i);
-              }}
-              formsLength={childFormData.children.length}
-              shouldSave={childFormsSaving}
-              user={user}
-              viewMode={viewMode}
-              copyMode={copyMode}
-              formId={formId!}
-              field={child}
-              parentResponse={savedResponse?.id}
-              index={i}
-              childSaved={(success: boolean) => handleChildSaved(childFormIndex, success)}
-              shouldValidate={childFormsValidate}
-              childValid={(success: boolean) => handleChildValid(childFormIndex, success)}
-              id={child.id}
-              shouldLoad={isSaving}
-            />
-          ) : null,
+        {childFormData.children.map(
+          (child, index) =>
+            childFormData.shown && (
+              <ConnectedFormSection
+                key={child.id || child.uniqueId || `child-${formField.connectedFormId}-${index}`}
+                handleRemoveChildForm={() => {
+                  handleRemoveChildForm(childFormIndex, index);
+                }}
+                formsLength={childFormData.children.length}
+                shouldSave={childFormsSaving}
+                user={user}
+                viewMode={viewMode}
+                copyMode={copyMode}
+                formId={formId!}
+                field={child}
+                parentResponse={savedResponse?.id}
+                index={index}
+                childSaved={(success: boolean) => handleChildSaved(childFormIndex, success)}
+                shouldValidate={childFormsValidate}
+                childValid={(success: boolean) => handleChildValid(childFormIndex, success)}
+                id={child.id}
+                shouldLoad={isSaving}
+              />
+            ),
         )}
         {!isLoading && !viewMode && (
           <Button
@@ -233,11 +234,9 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
             startIcon={<Add />}
             sx={{ minWidth: "auto", padding: "8px" }}
             onClick={() => handleAddChildForm(childFormIndex)}>
-            <Tooltip title={"הוספת תגובה - " + getChildFormTitle(childFormData.formId)}>
+            <Tooltip title={ADD_RESPONSE_TITLE}>
               <Typography variant="subtitle2" fontWeight={600}>
-                {getChildFormTitle(childFormData.formId)
-                  ? "הוספת תגובה - " + getChildFormTitle(childFormData.formId)
-                  : "הוספת תגובה"}
+                {ADD_RESPONSE_TITLE}
               </Typography>
             </Tooltip>
           </Button>
@@ -246,26 +245,16 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
     );
   };
 
-  // Sort sections by their order and ensure proper section hierarchy
-  const sortedSections = useMemo(() => {
-    return Object.entries(responsSections).sort((a, b) => {
-      // Extract section order from the first field in each section
-      // Default to 0 if no sectionOrder is defined
-      const aOrder = a[1].fields[0]?.sectionOrder ?? 0;
-      const bOrder = b[1].fields[0]?.sectionOrder ?? 0;
+  const sortedSections = useMemo(
+    () =>
+      Object.entries(responsSections).sort(([idA, a], [idB, b]) => {
+        const orderA = a.fields[0]?.sectionOrder ?? 0;
+        const orderB = b.fields[0]?.sectionOrder ?? 0;
 
-      // If both sections have the same order value, sort by section ID
-      // This ensures section_0 comes before other sections with the same order
-      // Using localeCompare for proper string comparison
-      if (aOrder === bOrder) {
-        return a[0].localeCompare(b[0]);
-      }
-
-      // Primary sorting: by section order (ascending - lower numbers first)
-      // This ensures sections appear in their intended sequence
-      return aOrder - bOrder;
-    });
-  }, [responsSections]);
+        return orderA === orderB ? idA.localeCompare(idB) : orderA - orderB;
+      }),
+    [responsSections],
+  );
 
   return (
     <div className="response-page">
