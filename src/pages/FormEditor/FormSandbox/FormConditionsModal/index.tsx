@@ -3,7 +3,7 @@ import { useFormSandboxContext } from "../context/FormSandboxContext";
 import { useState } from "react";
 import styles from "./style.module.css";
 import { FormConditionsOverview } from "./FormConditionsOverview";
-import { Add, ArrowForwardIos, Close } from "@mui/icons-material";
+import { Add, Close, List } from "@mui/icons-material";
 import { FormConditionEditor, ModifiedCondition } from "./FormConditionEditor";
 
 function FormConditionsModal() {
@@ -24,13 +24,15 @@ function FormConditionsModal() {
       <div className={styles.content}>
         <div className={styles.header}>
           <Button className={styles.headerButton}
+                  variant={"outlined"}
                   style={{ display: modifiedCondition ? "block" : "none" }}
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={handleReturnToOverview}>
-            <ArrowForwardIos sx={{ fontSize: 22 }} />
+            <List sx={{ fontSize: 26, transform:'scaleX(-1)' }} />
           </Button>
           {!modifiedCondition && <Typography variant={"h5"}>ניהול התניות</Typography>}
           <Button className={styles.headerButton}
+                  variant={"outlined"}
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={handleClose}>
             <Close sx={{ fontSize: 25 }} />
