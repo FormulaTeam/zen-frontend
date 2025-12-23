@@ -4,13 +4,17 @@
     align-items: center;
     height: 100%;
     gap: 48px;
-    padding: 48px;
+    padding: 16px;
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px 0 rgba(153, 177, 202, 0.5);
 }
 
 .contentDescription {
     display: flex;
     align-items: center;
     gap: 6px;
+    margin-top: 24px;
 }
 
 .inputsContainer {
@@ -20,6 +24,9 @@
     align-items: center;
     flex: 1;
     gap: 32px;
+    padding: 32px;
+    background-color: rgb(240, 244, 246);;
+    border-radius: 12px;
 }
 
 .fieldOptionIcon {

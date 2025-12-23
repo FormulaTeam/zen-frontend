@@ -228,7 +228,7 @@ theme.components = {
         "& .MuiSwitch-track": {
           borderRadius: 22 / 2,
           "&::before, &::after": {
-            content: '""',
+            content: "\"\"",
             position: "absolute",
             top: "50%",
             transform: "translateY(-50%)",
@@ -285,7 +285,6 @@ theme.components = {
   MuiAutocomplete: {
     styleOverrides: {
       root: {
-        direction: "rtl",
         zIndex: 1000,
         "&.MuiInputBase-input": { direction: "rtl", marginTop: "5px" },
         "&.MuiAutocomplete-root .MuiOutlinedInput-root": {

@@ -1,0 +1,93 @@
+.conditionContainer {
+  --condition-gap: 19px;
+  --condition-height: 76px;
+  --operator-button-height: 35px;
+  display: flex;
+}
+
+.conditionFieldsContainer {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--condition-gap);
+  height: var(--condition-height);
+  background: white;
+  padding: 16px;
+  border-radius: 16px;
+  border: 3px #d0d6da solid;
+}
+
+.conditionOperatorButtonGroupWrapper {
+  position: absolute;
+  width: 60px;
+  transform: translate(calc(60px + var(--condition-gap)), calc(-8px - var(--operator-button-height)));
+}
+
+.operationToggleConnector {
+  height: calc((var(--condition-height) + var(--condition-gap) - (var(--operator-button-height) * 2)) / 2);
+  width: calc(50% + 18px);
+  border-top: 3px solid #d0d6da;
+  border-right: 3px solid #d0d6da;
+  border-top-right-radius: 10px;
+  position: absolute;
+  right: 50%;
+}
+
+.firstOperationToggleTopConnector {
+  @extend .operationToggleConnector;
+  top: -16%;
+}
+
+.operationToggleTopConnector {
+  @extend .operationToggleConnector;
+  top: -16%;
+  border-top: unset;
+  border-top-right-radius: 0;
+}
+
+.operationToggleBottomConnector {
+  @extend .operationToggleConnector;
+  transform: scaleY(-1);
+  border-top-right-radius: 0;
+}
+
+.lastOperationToggleBottomConnector {
+  @extend .operationToggleConnector;
+  transform: scaleY(-1);
+}
+
+.deleteConditionButtonContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-inline-start: 16px;
+  width: 84px;
+}
+
+.deleteConditionButton.deleteConditionButton {
+  color: white;
+  background-color: #bc535f;
+  font-size: 24px;
+  border-radius: 50%;
+  min-width: 0;
+  border: 6px solid white;
+  height: 42px;
+  width: 42px;
+  box-shadow: 0 4px 10px 0 #1976D21A;
+}
+
+.deleteConditionButton.deleteConditionButton:hover {
+  background-color: #d55262;
+}
+
+.fieldOptionIcon {
+  box-shadow: 0 1px 3px 0 rgba(67, 115, 168, 0.53);
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  margin-left: 10px;
+}

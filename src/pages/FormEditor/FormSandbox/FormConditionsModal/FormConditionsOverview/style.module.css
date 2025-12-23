@@ -12,9 +12,10 @@
     gap: 8px;
     flex: 1;
     padding: 20px;
-    box-shadow: 2px 0 10px 4px #1976D21A inset;
+    box-shadow: 2px 0 10px 4px rgba(107, 157, 207, 0.1) inset;
     border-radius: 20px;
     overflow-y: scroll;
+    background-color: rgb(240, 244, 246);
 }
 
 .noConditionsTextContainer {

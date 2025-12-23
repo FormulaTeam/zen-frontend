@@ -1,7 +1,8 @@
-import { createContext, SetStateAction, useContext } from "react";
+import { createContext, SetStateAction, useCallback, useContext, useState } from "react";
 import { FormCondition, FormConditionDependantComponents, FormConditionGroups } from "../../../../schemas/conditions";
 import { DeepPartial, ValueOf } from "../../../../../../types/utils";
 import { ConditionEditorStepId } from "../constants";
+import { useEffectAfterMount } from "../../../../../../hooks/utilsHooks/useEffectAfterMount";
 
 interface FormConditionEditorContext {
   conditionData: DeepPartial<FormCondition> & {
@@ -18,7 +19,7 @@ type SetFunction<T extends ValueOf<typeof ConditionEditorStepId>> =
     (groups: SetStateAction<DeepPartial<FormConditionGroups>>) => void : (
       T extends typeof ConditionEditorStepId.DEPENDENCY_PICKER ?
         (dependantComponents: SetStateAction<FormConditionDependantComponents>) => void :
-        undefined
+        (name: string) => void
       );
 
 const FormConditionEditorContext = createContext<FormConditionEditorContext>({
@@ -28,17 +29,22 @@ const FormConditionEditorContext = createContext<FormConditionEditorContext>({
 
 function useFormConditionEditorContext<T extends ValueOf<typeof ConditionEditorStepId>>(stepId: T) {
   const { setConditionData, ...restContext } = useContext(FormConditionEditorContext);
+  const [isDataChanged, setIsDataChanged] = useState(false);
 
-  function setConditionGroups(groups: SetStateAction<DeepPartial<FormConditionGroups>>) {
+  useEffectAfterMount(() => {
+    setIsDataChanged(true);
+  }, [isDataChanged]);
+
+  const setConditionGroups: SetFunction<typeof ConditionEditorStepId.CONDITION_BUILDER> = useCallback((groups) => {
     setConditionData((prev) => {
       return {
         ...prev,
         groups: typeof groups === "function" ? groups(prev.groups ?? []) : groups,
       };
     });
-  }
+  }, []);
 
-  function setConditionDependantComponents(dependantComponents: SetStateAction<FormConditionDependantComponents>) {
+  const setConditionDependantComponents: SetFunction<typeof ConditionEditorStepId.DEPENDENCY_PICKER> = useCallback((dependantComponents) => {
     setConditionData((prev) => {
       return {
         ...prev,
@@ -47,17 +53,29 @@ function useFormConditionEditorContext<T extends ValueOf<typeof ConditionEditorS
           dependantComponents,
       };
     });
-  }
+  }, []);
+
+  const setConditionName: SetFunction<typeof ConditionEditorStepId.SUMMARY> = useCallback((name) => {
+    setConditionData((prev) => {
+      return {
+        ...prev,
+        name,
+      };
+    });
+  }, []);
 
   const stepIdToSetter = {
     [ConditionEditorStepId.CONDITION_BUILDER]: setConditionGroups,
     [ConditionEditorStepId.DEPENDENCY_PICKER]: setConditionDependantComponents,
+    [ConditionEditorStepId.SUMMARY]: setConditionName,
   } as const;
 
   return {
     ...restContext,
     setData: stepIdToSetter[stepId as keyof typeof stepIdToSetter] as SetFunction<T>,
+    isDataChanged,
   };
 }
 
 export { FormConditionEditorContext, useFormConditionEditorContext };
+export type { SetFunction as ConditionEditorSetDataFunction };
