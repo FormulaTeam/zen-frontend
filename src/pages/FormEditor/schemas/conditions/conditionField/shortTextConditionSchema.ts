@@ -5,8 +5,8 @@ import { TextConditionType } from "./conditionTypes/TextConditionType";
 
 const shortTextConditionSchema = baseConditionFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.shortText),
-  targetValue: string(),
   conditionType: zod_enum(TextConditionType),
+  targetValue: string().optional(),
 });
 
 export default shortTextConditionSchema;

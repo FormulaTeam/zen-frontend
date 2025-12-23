@@ -1,4 +1,4 @@
-import { any, literal, strictObject, string, union } from "zod";
+import { literal, number, strictObject, string, union, unknown } from "zod";
 import { FieldTypeIds, FormFieldTypeId } from "../../../../../utils/interfaces";
 import { TextConditionType } from "./conditionTypes/TextConditionType";
 import { NumberConditionType } from "./conditionTypes/NumberConditionType";
@@ -20,9 +20,11 @@ const CONDITION_FIELD_TYPE_IDS = Object.values(ConditionFieldTypeIds);
 
 type ConditionFieldTypeId = ArrayElement<typeof CONDITION_FIELD_TYPE_IDS>;
 
+const fieldNotDefinedErrorMessage = "חובה לבחור שדה לכל תנאי, באפשרותכם למחוק את התנאי במידה ואינו נחוץ";
+
 const literalConditionFieldTypeId = union(
   CONDITION_FIELD_TYPE_IDS.map((v: FormFieldTypeId) => literal(v)),
-);
+  fieldNotDefinedErrorMessage);
 
 const FieldTypeIdToConditionType = {
   [FieldTypeIds.shortText]: TextConditionType,
@@ -36,10 +38,10 @@ const FieldTypeIdToConditionType = {
 type FormConditionType = ValueOf<ValueOf<typeof FieldTypeIdToConditionType>>;
 
 const baseConditionFieldSchema = strictObject({
-  id: string(),
+  id: string(fieldNotDefinedErrorMessage).min(1, fieldNotDefinedErrorMessage),
   typeId: literalConditionFieldTypeId,
-  conditionType: any(),
-  targetValue: any(),
+  conditionType: number(),
+  targetValue: unknown().optional(),
 });
 
 export { ConditionFieldTypeIds, FieldTypeIdToConditionType, CONDITION_FIELD_TYPE_IDS };

@@ -5,8 +5,8 @@ import { NumberConditionType } from "./conditionTypes/NumberConditionType";
 
 const numberConditionSchema = baseConditionFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.number),
-  targetValue: number(),
   conditionType: zod_enum(NumberConditionType),
+  targetValue: number().optional(),
 });
 
 export default numberConditionSchema;

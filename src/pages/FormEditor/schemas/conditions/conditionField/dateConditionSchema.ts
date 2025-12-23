@@ -5,8 +5,8 @@ import { DateConditionType } from "./conditionTypes/DateConditionType";
 
 const dateConditionSchema = baseConditionFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.date),
-  targetValue: date(),
   conditionType: zod_enum(DateConditionType),
+  targetValue: date().optional(),
 });
 
 export default dateConditionSchema;

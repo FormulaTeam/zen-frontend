@@ -5,8 +5,8 @@ import { OptionsConditionType } from "./conditionTypes/OptionsConditionType";
 
 const optionsConditionSchema = baseConditionFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.options),
-  targetValue: string(),
   conditionType: zod_enum(OptionsConditionType),
+  targetValue: string().optional(),
 });
 
 export default optionsConditionSchema;

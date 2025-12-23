@@ -2,8 +2,9 @@ import { useFormConditionEditorContext } from "../../context/FormConditionEditor
 import { ConditionEditorStepId, ConditionOperatorLabel } from "../../constants";
 import { useFormStructureContext } from "../../../../../context/FormStructureContext";
 import { ConditionTypeOptionsData } from "../FormConditionBuilder/utils";
-import { Typography } from "@mui/material";
+import { TextField, Typography } from "@mui/material";
 import { FormComponentType } from "../../../../../schemas/conditions";
+import styles from "../../../../../FormEditorHeader/style.module.css";
 
 function FormConditionsSummary() {
   const {
@@ -41,25 +42,41 @@ function FormConditionsSummary() {
   return (
     <div>
       <div>
-        התנאים שהוגדרו:
-        <Typography sx={{ whiteSpace: "pre-line" }}>
-          {conditionsString}
-        </Typography>
+        <TextField value={name}
+                   slotProps={{
+                     htmlInput: {
+                       className: styles.titleInput,
+                     },
+                   }}
+                   size={"medium"}
+                   placeholder={"שם ההתנייה"}
+          // error={!!validationErrors?.title}
+          // helperText={validationErrors?.title?.[0]}
+                   variant={"standard"}
+                   onChange={(e) => setData(!!e.target.value ? e.target.value : undefined)} />
       </div>
-      <br />
-      <br />
       <div>
-        במידה ויתקיימו יוצגו:
         <div>
-          מקטעים:
-          <div>
-            {dependantComponents[FormComponentType.SECTION]?.map((componentId) => sections[componentId ?? ""]?.title).join(", ")}
-          </div>
+          התנאים שהוגדרו:
+          <Typography sx={{ whiteSpace: "pre-line" }}>
+            {conditionsString}
+          </Typography>
         </div>
+        <br />
+        <br />
         <div>
-          שדות:
+          במידה ויתקיימו יוצגו:
           <div>
-            {dependantComponents[FormComponentType.FIELD]?.map((componentId) => fields[componentId ?? ""]?.data?.displayName).join(", ")}
+            מקטעים:
+            <div>
+              {dependantComponents[FormComponentType.SECTION]?.map((componentId) => sections[componentId ?? ""]?.title).join(", ")}
+            </div>
+          </div>
+          <div>
+            שדות:
+            <div>
+              {dependantComponents[FormComponentType.FIELD]?.map((componentId) => fields[componentId ?? ""]?.data?.displayName).join(", ")}
+            </div>
           </div>
         </div>
       </div>

@@ -1,9 +1,15 @@
 .content {
     display: flex;
     flex-direction: column;
+    align-items: center;
     width: 100%;
     flex: 1;
     min-height: 0;
+}
+
+.header.header {
+    height: 64px;
+    margin: 12px 0;
 }
 
 .listContainer {
@@ -16,6 +22,7 @@
     border-radius: 20px;
     overflow-y: scroll;
     background-color: rgb(240, 244, 246);
+    width: 100%;
 }
 
 .noConditionsTextContainer {

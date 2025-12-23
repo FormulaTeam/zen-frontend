@@ -41,6 +41,10 @@ function FormConditionGroupItem({
                                 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const getIsTargetValueNotRequired = (conditionType: ArrayElement<FormConditionGroup["conditions"]>["field"]["conditionType"] | undefined) => (
+    !(condition.field?.typeId && conditionType && ConditionTypeOptions[condition.field?.typeId].data[conditionType].requiresTargetValue)
+  );
+
   useEffect(() => {
     shouldScrollIntoView &&
     containerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -88,12 +92,14 @@ function FormConditionGroupItem({
 
                           if (fieldId) {
                             const typeId = fields[fieldId]?.data?.typeId as ConditionFieldTypeId;
+                            const newConditionType = ConditionTypeOptions[typeId].values[0];
 
                             modifiedCondition.field = {
                               ...modifiedCondition.field,
                               id: fieldId,
                               typeId,
-                              conditionType: ConditionTypeOptions[typeId].values[0],
+                              conditionType: newConditionType,
+                              ...(getIsTargetValueNotRequired(newConditionType) && { targetValue: undefined }),
                             } as FormConditionField;
                           } else {
                             modifiedCondition.field = undefined;
@@ -140,10 +146,12 @@ function FormConditionGroupItem({
             (_, conditionType) => setData((prev) => {
               const group = { ...prev[parentGroupIndex] };
               const modifiedCondition = { ...condition };
+              const newConditionType = (conditionType ?? undefined) as FormConditionType;
 
               modifiedCondition.field = {
                 ...modifiedCondition.field,
-                conditionType: (conditionType ?? undefined) as FormConditionType,
+                conditionType: newConditionType,
+                ...(getIsTargetValueNotRequired(newConditionType) && { targetValue: undefined }),
               };
               group.conditions = group.conditions!.toSpliced(index, 1, { ...modifiedCondition });
 
@@ -163,10 +171,9 @@ function FormConditionGroupItem({
           )}
         />
         {
-          (condition.field?.typeId && condition.field?.conditionType) &&
-          ConditionTypeOptions[condition.field?.typeId].data[condition.field?.conditionType].requiresTargetValue &&
           <TextField variant={"standard"}
                      label={"ערך"}
+                     disabled={!condition.field?.typeId || getIsTargetValueNotRequired(condition.field.conditionType)}
                      value={condition.field?.targetValue ?? ""}
                      onChange={(e) => setData((prev) => {
                        const group = { ...prev[parentGroupIndex] };

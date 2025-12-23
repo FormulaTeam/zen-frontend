@@ -21,7 +21,7 @@ const conditionGroupSchema = strictObject({
   })).min(1).refine((conditions) => (
     conditions.some((condition, index) => index !== 0 && condition.operator != undefined)
   ), {
-    message: "חובה לציין אופרטור בין תנאים",
+    error: "חובה לציין אופרטור בין תנאים",
   }),
 });
 
@@ -30,7 +30,7 @@ const conditionGroupsSchema = array(conditionGroupSchema)
   .refine((groups) => (
     groups.some((group, index) => index !== 0 && group.operator != undefined)
   ), {
-    message: "חובה לציין אופרטור בין קבוצות תנאים",
+    error: "חובה לציין אופרטור בין קבוצות תנאים",
   });
 
 const conditionDependantComponentsSchema = partialRecord(zod_enum(FormComponentType), array(string())).refine((dependantFields) => {
@@ -40,7 +40,7 @@ const conditionDependantComponentsSchema = partialRecord(zod_enum(FormComponentT
 
   return true;
 }, {
-  message: "חובה לבחור לפחות אלמנט אחד",
+  error: "חובה לבחור לפחות אלמנט אחד",
 });
 
 const conditionSchema = strictObject({

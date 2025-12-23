@@ -46,6 +46,7 @@ function FormConditionsOverview({ onEditCondition }: Props) {
 
   return (
     <div className={styles.content}>
+      <Typography className={styles.header} variant={"h5"}>ניהול התניות</Typography>
       <div className={styles.listContainer}>
         {
           renderConditionsListItems ??

@@ -19,7 +19,7 @@ type SetFunction<T extends ValueOf<typeof ConditionEditorStepId>> =
     (groups: SetStateAction<DeepPartial<FormConditionGroups>>) => void : (
       T extends typeof ConditionEditorStepId.DEPENDENCY_PICKER ?
         (dependantComponents: SetStateAction<FormConditionDependantComponents>) => void :
-        (name: string) => void
+        (name: string | undefined) => void
       );
 
 const FormConditionEditorContext = createContext<FormConditionEditorContext>({

@@ -5,8 +5,8 @@ import { CheckboxConditionType } from "./conditionTypes/CheckboxConditionType";
 
 const checkboxConditionSchema = baseConditionFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.checkbox),
-  targetValue: boolean(),
   conditionType: zod_enum(CheckboxConditionType),
+  targetValue: boolean().optional(),
 });
 
 export default checkboxConditionSchema;

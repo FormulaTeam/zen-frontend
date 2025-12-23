@@ -1,4 +1,4 @@
-import { Button, Modal, Typography } from "@mui/material";
+import { Button, Modal } from "@mui/material";
 import { useFormSandboxContext } from "../context/FormSandboxContext";
 import { useState } from "react";
 import styles from "./style.module.css";
@@ -23,20 +23,20 @@ function FormConditionsModal() {
     <Modal className={styles.modal} open={isConditionsDialogOpen}>
       <div className={styles.content}>
         <div className={styles.header}>
-          <Button className={styles.headerButton}
-                  variant={"outlined"}
-                  style={{ display: modifiedCondition ? "block" : "none" }}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={handleReturnToOverview}>
-            <List sx={{ fontSize: 26, transform:'scaleX(-1)' }} />
-          </Button>
-          {!modifiedCondition && <Typography variant={"h5"}>ניהול התניות</Typography>}
-          <Button className={styles.headerButton}
-                  variant={"outlined"}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={handleClose}>
-            <Close sx={{ fontSize: 25 }} />
-          </Button>
+          <div className={styles.conditionsListButtonContainer} style={{ display: modifiedCondition ? "block" : "none" }}>
+            <Button className={styles.headerButton}
+                    variant={"outlined"}
+                    onClick={handleReturnToOverview}>
+              <List sx={{ fontSize: 26, transform: "scaleX(-1)" }} />
+            </Button>
+          </div>
+          <div className={styles.closeButtonContainer}>
+            <Button className={styles.headerButton}
+                    variant={"outlined"}
+                    onClick={handleClose}>
+              <Close sx={{ fontSize: 25 }} />
+            </Button>
+          </div>
         </div>
         {
           modifiedCondition !== null ? (
