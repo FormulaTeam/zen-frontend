@@ -56,8 +56,6 @@ function FormConditionGroupItem({
         const group = { ...prev[parentGroupIndex] };
         const modifiedCondition = { ...condition };
 
-        console.log(e.target.value);
-
         modifiedCondition.field = {
           ...modifiedCondition.field,
           targetValue: ConditionTypeOptions[condition.field!.typeId!].valueProperties.valueTransformer(e.target.value) as any,
