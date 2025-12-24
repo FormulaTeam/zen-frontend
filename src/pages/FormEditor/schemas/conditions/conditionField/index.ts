@@ -17,7 +17,7 @@ const conditionFieldSchema = discriminatedUnion("typeId", [
   checkboxConditionSchema,
   numberConditionSchema,
 ]).refine(({ typeId, targetValue, conditionType }) => (
-    !ConditionTypeOptions[typeId ?? -1]?.data[conditionType ?? -1]?.requiresTargetValue || targetValue != undefined
+    !ConditionTypeOptions[typeId ?? -1]?.optionsProperties[conditionType ?? -1]?.requiresTargetValue || targetValue != undefined
   ),
   {
     error: "חייב להגדיר ערך עבור סוג התנאי שנבחר",

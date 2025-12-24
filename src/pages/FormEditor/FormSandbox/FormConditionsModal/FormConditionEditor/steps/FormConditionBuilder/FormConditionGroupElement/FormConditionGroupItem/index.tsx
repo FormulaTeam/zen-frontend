@@ -1,14 +1,14 @@
 import { Autocomplete, Box, Button, TextField } from "@mui/material";
 import { DeleteOutlined } from "@mui/icons-material";
 import {
-  ConditionFieldTypeId,
+  ConditionFieldTypeId, ConditionFieldTypeIds,
   FormConditionType,
 } from "../../../../../../../schemas/conditions/conditionField/baseConditionFieldSchema";
 import { ConditionTypeOptions } from "../../utils";
 import { FormConditionField, FormConditionGroup } from "../../../../../../../schemas/conditions";
 import { FORM_ELEMENT_ICONS } from "../../../../../../../../../components/FORM_ELEMENT_ICONS";
 import { FORM_ELEMENTS } from "../../../../../../../../../utils/interfaces";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { ConditionOperationToggle } from "../../ConditionOperationToggle";
 import { ConditionEditorSetDataFunction } from "../../../../context/FormConditionEditorContext";
 import { ConditionEditorStepId } from "../../../../constants";
@@ -42,8 +42,32 @@ function FormConditionGroupItem({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const getIsTargetValueNotRequired = (conditionType: ArrayElement<FormConditionGroup["conditions"]>["field"]["conditionType"] | undefined) => (
-    !(condition.field?.typeId && conditionType && ConditionTypeOptions[condition.field?.typeId].data[conditionType].requiresTargetValue)
+    !(condition.field?.typeId && conditionType && ConditionTypeOptions[condition.field?.typeId].optionsProperties[conditionType].requiresTargetValue)
   );
+
+  const renderTargetValueField = useMemo(() => (
+    ConditionTypeOptions[condition.field?.typeId ?? ConditionFieldTypeIds.shortText].valueProperties.inputComponent({
+      disabled: !condition.field?.typeId || getIsTargetValueNotRequired(condition.field.conditionType),
+      value: condition.field?.targetValue ?? "",
+      helperText: "",
+      error: false,
+      label: "ערך",
+      onChange: (e) => setData((prev) => {
+        const group = { ...prev[parentGroupIndex] };
+        const modifiedCondition = { ...condition };
+
+        console.log(e.target.value);
+
+        modifiedCondition.field = {
+          ...modifiedCondition.field,
+          targetValue: ConditionTypeOptions[condition.field!.typeId!].valueProperties.valueTransformer(e.target.value) as any,
+        };
+        group.conditions = group.conditions!.toSpliced(index, 1, { ...modifiedCondition });
+
+        return prev.toSpliced(parentGroupIndex, 1, group);
+      }),
+    })
+  ), [condition.field?.conditionType, condition.field?.targetValue, setData, parentGroupIndex, condition]);
 
   useEffect(() => {
     shouldScrollIntoView &&
@@ -141,7 +165,7 @@ function FormConditionGroupItem({
           disabled={condition.field?.typeId === undefined}
           options={condition.field?.typeId ? ConditionTypeOptions[condition.field?.typeId].values : []}
           value={condition.field?.conditionType ?? (condition.field?.typeId ? ConditionTypeOptions[condition.field?.typeId].values[0] : -1)}
-          getOptionLabel={(conditionType) => condition.field?.typeId ? ConditionTypeOptions[condition.field?.typeId].data[conditionType].label : ""}
+          getOptionLabel={(conditionType) => condition.field?.typeId ? ConditionTypeOptions[condition.field?.typeId].optionsProperties[conditionType].label : ""}
           onChange={
             (_, conditionType) => setData((prev) => {
               const group = { ...prev[parentGroupIndex] };
@@ -170,24 +194,7 @@ function FormConditionGroupItem({
                        }} />
           )}
         />
-        {
-          <TextField variant={"standard"}
-                     label={"ערך"}
-                     disabled={!condition.field?.typeId || getIsTargetValueNotRequired(condition.field.conditionType)}
-                     value={condition.field?.targetValue ?? ""}
-                     onChange={(e) => setData((prev) => {
-                       const group = { ...prev[parentGroupIndex] };
-                       const modifiedCondition = { ...condition };
-
-                       modifiedCondition.field = {
-                         ...modifiedCondition.field,
-                         targetValue: e.target.value as any,
-                       };
-                       group.conditions = group.conditions!.toSpliced(index, 1, { ...modifiedCondition });
-
-                       return prev.toSpliced(parentGroupIndex, 1, group);
-                     })} />
-        }
+        {renderTargetValueField}
       </div>
       <div className={styles.deleteConditionButtonContainer}>
         {

@@ -100,7 +100,7 @@ const DUMMY_CONDITIONS: FormConditions = [
               id: generateFieldId(),
               typeId: ConditionFieldTypeIds.date,
               conditionType: DateConditionType.AFTER_OR_EQUAL,
-              targetValue: new Date(),
+              targetValue: new Date().toISOString() as unknown as Date,
             },
           },
         ],

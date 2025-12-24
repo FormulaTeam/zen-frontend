@@ -1,7 +1,7 @@
 import { useFormConditionEditorContext } from "../../context/FormConditionEditorContext";
 import { ConditionEditorStepId, ConditionOperatorLabel } from "../../constants";
 import { useFormStructureContext } from "../../../../../context/FormStructureContext";
-import { ConditionTypeOptionsData } from "../FormConditionBuilder/utils";
+import { ConditionTypeOptionsProperties } from "../FormConditionBuilder/utils";
 import { TextField, Typography } from "@mui/material";
 import { FormComponentType } from "../../../../../schemas/conditions";
 import styles from "../../../../../FormEditorHeader/style.module.css";
@@ -29,7 +29,7 @@ function FormConditionsSummary() {
             }\n${
               fields[field?.id ?? ""]?.data?.displayName ?? "שגיאה - שדה אינו קיים"
             } ${
-              ConditionTypeOptionsData[field?.typeId ?? -1]?.[field?.conditionType].label ?? ""
+              ConditionTypeOptionsProperties[field?.typeId ?? -1]?.[field?.conditionType].label ?? ""
             } ${
               field?.targetValue ?? ""
             }`
