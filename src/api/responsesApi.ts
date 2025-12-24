@@ -18,6 +18,12 @@ import { useCreate } from "../utils/useCreate";
 import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { useMutation } from "@tanstack/react-query";
+import { FormField as TableViewFormField } from "../types/interfaces/tableViews.types";
+
+export type FormFieldsMapResponse = {
+  formId: number;
+  fields: Array<Pick<TableViewFormField, "uniqueId" | "displayName"> & { typeId: number }>;
+};
 
 /**
  * Fetch all responses with optional query parameters.
@@ -315,6 +321,14 @@ export const useGetResponsesRows = ({ filter }: { filter?: Filter }) => {
     queryKey: () => ["rows", filter],
     params: filter,
     // queryOptions: { enabled: !!formId },
+  });
+};
+
+export const useGetFormFieldsMap = ({ filter }: { filter?: Filter }) => {
+  return useFetch<Filter, FormFieldsMapResponse>({
+    endpoint: `/responses/form-fields-map`,
+    queryKey: () => ["form-fields-map", filter],
+    params: filter,
   });
 };
 

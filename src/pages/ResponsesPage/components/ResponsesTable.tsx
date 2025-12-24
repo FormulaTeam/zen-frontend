@@ -1,7 +1,5 @@
-import React, { useState, useCallback } from "react";
-import Loader from "../../../components/Responses/Loader";
+import React, { useState, useCallback, useMemo } from "react";
 import { ContentContainer, MainContent, StyledDataGrid } from "../styled";
-import { useResponsesTable } from "../../../hooks/useResponsesTable";
 import {
   useGridApiRef,
   GridPreferencePanelsValue,
@@ -9,10 +7,10 @@ import {
   GridCellParams,
   GridCellModesModel,
   GridCellModes,
-  GridApiPro,
+  GridRenderEditCellParams,
 } from "@mui/x-data-grid-pro";
 import { useFormStore } from "../stores/form.store";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import { Box, Checkbox, IconButton, TextField, Tooltip } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
@@ -23,7 +21,10 @@ import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrow
 import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp";
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "../../../components/formInForm/ZoomCell";
-import { Row } from "../../../utils/interfaces";
+import { FieldTypeIds, Row } from "../../../utils/interfaces";
+import { FormFieldsMapResponse } from "../../../api/responsesApi";
+
+import FormFieldRenderer from "../../../components/Responses/FormFieldRenderer";
 
 
 interface ResponsesTableProps {
@@ -39,10 +40,187 @@ export const ResponsesTable = ({
   handleProcessRowUpdate,
   onCellEditStart,
 }: ResponsesTableProps) => {
-  const { form, rows } = useFormStore();
+  const { form, rows, formFieldsMap } = useFormStore();
   const apiRef = useGridApiRef();
   const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
   const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
+
+  type ColumnFieldMeta = {
+    uniqueId: string;
+    displayName?: string;
+    name?: string;
+    typeId: number;
+  };
+
+  type EditableFieldTypeId = number;
+
+  type FormFieldLike = {
+    uniqueId: string;
+    displayName: string;
+    typeId: number;
+    required?: boolean;
+    options?: string[];
+    multiSelect?: boolean;
+    validationRegex?: string;
+    coordinateType?: string;
+    numberType?: string;
+    minValue?: number;
+    maxValue?: number;
+    defaultValue?: string;
+    dateAndTime?: boolean;
+  };
+
+  const fieldMetaByColumnKey = useMemo(() => {
+    const index = new Map<string, ColumnFieldMeta>();
+
+    const typedMap = formFieldsMap as FormFieldsMapResponse | null;
+    const fields = typedMap?.fields ?? [];
+
+    fields.forEach((field) => {
+      const meta: ColumnFieldMeta = {
+        uniqueId: field.uniqueId,
+        displayName: field.displayName,
+        // `name` isn't included in the current API type. If you add it later in the backend,
+        // extend `FormFieldsMapResponse` and it'll flow through here.
+        name: undefined,
+        typeId: field.typeId,
+      };
+
+      // DataGrid columns currently use the display name as `field`.
+      if (meta.displayName) {
+        index.set(meta.displayName, meta);
+      }
+    });
+
+    return index;
+  }, [formFieldsMap]);
+
+  const formFieldByColumnKey = useMemo(() => {
+    const index = new Map<string, FormFieldLike>();
+
+    // Prefer using the full `form.fields` when available, because it contains important
+    // configuration like options/multiSelect/required/etc.
+    const formFields = (form?.fields ?? []) as unknown as Array<Partial<FormFieldLike> & { uniqueId: string }>;
+
+    formFields.forEach((field) => {
+      if (!field.displayName) {
+        return;
+      }
+
+      index.set(field.displayName, {
+        uniqueId: field.uniqueId,
+        displayName: field.displayName,
+        typeId: field.typeId ?? 0,
+        required: field.required,
+        options: field.options as string[] | undefined,
+        multiSelect: field.multiSelect,
+        validationRegex: field.validationRegex,
+        coordinateType: field.coordinateType,
+        numberType: field.numberType,
+        minValue: field.minValue,
+        maxValue: field.maxValue,
+        defaultValue: field.defaultValue,
+        dateAndTime: field.dateAndTime,
+      });
+    });
+
+    // Fill any missing fields with the light-weight API map (typeId + ids)
+    const typedMap = formFieldsMap as FormFieldsMapResponse | null;
+    const mapFields = typedMap?.fields ?? [];
+    mapFields.forEach((field) => {
+      if (!field.displayName) {
+        return;
+      }
+      if (index.has(field.displayName)) {
+        return;
+      }
+      index.set(field.displayName, {
+        uniqueId: field.uniqueId,
+        displayName: field.displayName,
+        typeId: field.typeId,
+      });
+    });
+
+    return index;
+  }, [form?.fields, formFieldsMap]);
+
+  const setEditCellValue = useCallback(
+    (params: GridRenderEditCellParams, newValue: unknown) => {
+      apiRef.current?.setEditCellValue({
+        id: params.id,
+        field: params.field,
+        value: newValue,
+      });
+    },
+    [apiRef],
+  );
+
+  const renderEditCellWithFormFieldRenderer = useCallback(
+    (params: GridRenderEditCellParams) => {
+      const formField = formFieldByColumnKey.get(params.field);
+      if (!formField) {
+        return (
+          <TextField
+            variant="standard"
+            fullWidth
+            value={(params.value as string | null | undefined) ?? ""}
+            onChange={(e) => setEditCellValue(params, e.target.value)}
+            InputProps={{ disableUnderline: true }}
+            sx={{ px: 1 }}
+          />
+        );
+      }
+
+      // Minimal maps expected by FormFieldRenderer
+      const formFieldsByIdMap = new Map<string, any>([[formField.uniqueId, { ...formField }]]);
+      const formFieldsValuesMap = new Map<string, any>([[formField.uniqueId, params.value]]);
+
+      let initialValid: any = true;
+      if (formField.typeId === FieldTypeIds.link) {
+        initialValid = { link: true, linkTxt: true };
+      } else if (formField.typeId === FieldTypeIds.location) {
+        initialValid = { x: true, y: true };
+      }
+      const formFieldsValidMap = new Map<string, any>([[formField.uniqueId, initialValid]]);
+
+      const cellFieldOptions = formField.typeId === FieldTypeIds.options ? { [formField.uniqueId]: [] } : {};
+
+      return (
+        <Box sx={{ zoom: 0.9, display: "flex", alignItems: "center", minHeight: "60px", width: "100%" }}>
+          <FormFieldRenderer
+            formField={formField as any}
+            formFieldsByIdMap={formFieldsByIdMap}
+            formFieldsValuesMap={formFieldsValuesMap}
+            formFieldsValidMap={formFieldsValidMap}
+            onChangeHandler={(newValue: any, _uniqueId: string, _valid: any) => {
+              setEditCellValue(params, newValue);
+            }}
+            viewMode={false}
+            fieldOptions={cellFieldOptions as any}
+            formFields={[formField as any]}
+            index={0}
+            isTabularEdit={true}
+          />
+        </Box>
+      );
+    },
+    [formFieldByColumnKey, setEditCellValue],
+  );
+
+  const renderEditCellByType = useCallback(
+    (params: GridRenderEditCellParams, fieldTypeId?: EditableFieldTypeId) => {
+      const typeId = fieldTypeId;
+      // Delegate to the existing renderer to avoid duplicating editor logic.
+      // It already supports list/file and uses the same custom components as the non-table UI.
+      // For any field we still can’t fully support (e.g. connected-form options), it will fall back safely.
+      if (typeId != null) {
+        return renderEditCellWithFormFieldRenderer(params);
+      }
+
+      return renderEditCellWithFormFieldRenderer(params);
+    },
+    [renderEditCellWithFormFieldRenderer],
+  );
 
   const handleCellClick = useCallback((params: GridCellParams, event: any) => {
     if (params.field === "__check__") {
@@ -232,6 +410,9 @@ export const ResponsesTable = ({
         minWidth: (col.field === "id" || col.field === "_id" || col.field === "responseId") ? 150 : 400,
         ...col,
         editable: col.field !== "id" && col.field !== "_id" && col.field !== "responseId",
+        fieldTypeId: fieldMetaByColumnKey.get(col.field)?.typeId,
+        renderEditCell: (params: GridRenderEditCellParams) =>
+          renderEditCellByType(params, fieldMetaByColumnKey.get(col.field)?.typeId),
       }))
       : [];
 
