@@ -1,8 +1,7 @@
 .conditionContainer {
   --condition-gap: 19px;
-  --condition-height: 76px;
-  --operator-button-height: 35px;
   display: flex;
+  position: relative;
 }
 
 .conditionFieldsContainer {
@@ -10,49 +9,66 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--condition-gap);
-  height: var(--condition-height);
+  min-height: 98px;
   background: white;
-  padding: 16px;
+  padding: 24px 24px 12px 24px;
+  box-sizing: border-box;
   border-radius: 16px;
   border: 3px #d0d6da solid;
 }
 
-.conditionOperatorButtonGroupWrapper {
+.conditionOperationToggleContainer {
+  --button-group-width: 60px;
+  --condition-area-width: 100px;
+  --operator-button-height: 35px;
+}
+
+.conditionOperationToggleWrapper {
+  width: var(--button-group-width);
   position: absolute;
-  width: 60px;
-  transform: translate(calc(60px + var(--condition-gap)), calc(-8px - var(--operator-button-height)));
+  right: calc(-1 * (var(--condition-area-width) + var(--button-group-width)) / 2);
+  top: calc(0px - var(--operator-button-height) - var(--condition-gap) / 2);
 }
 
 .operationToggleConnector {
-  height: calc((var(--condition-height) + var(--condition-gap) - (var(--operator-button-height) * 2)) / 2);
-  width: calc(50% + 18px);
-  border-top: 3px solid #d0d6da;
-  border-right: 3px solid #d0d6da;
-  border-top-right-radius: 10px;
+  --connector-thickness: 3px;
+  --connector-height: calc(50% - (var(--condition-gap) + var(--operator-button-height)) / 2);
+  --edge-connector-height: calc(50% - var(--condition-gap) - var(--connector-thickness) * 2);
+
   position: absolute;
-  right: 50%;
+  width: calc(var(--condition-area-width) / 2);
+  border-top: var(--connector-thickness) solid #d0d6da;
+  border-right: var(--connector-thickness) solid #d0d6da;
+  border-top-right-radius: 10px;
+  right: calc((var(--condition-area-width) + var(--connector-thickness)) / -2);
 }
 
 .firstOperationToggleTopConnector {
   @extend .operationToggleConnector;
-  top: -16%;
+  top: 50%;
+  height: var(--edge-connector-height);
 }
 
 .operationToggleTopConnector {
   @extend .operationToggleConnector;
-  top: -16%;
+  top: 50%;
+  height: var(--connector-height);
   border-top: unset;
   border-top-right-radius: 0;
 }
 
 .operationToggleBottomConnector {
   @extend .operationToggleConnector;
-  transform: scaleY(-1);
+  top: calc(50% - var(--connector-height));
+  height: var(--connector-height);
   border-top-right-radius: 0;
+  transform: scaleY(-1);
 }
 
 .lastOperationToggleBottomConnector {
   @extend .operationToggleConnector;
+  top: calc(50% - var(--edge-connector-height));
+  height: var(--edge-connector-height);
   transform: scaleY(-1);
 }
 

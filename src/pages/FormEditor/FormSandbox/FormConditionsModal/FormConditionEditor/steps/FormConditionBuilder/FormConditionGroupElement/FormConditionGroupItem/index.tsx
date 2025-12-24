@@ -1,7 +1,8 @@
 import { Autocomplete, Box, Button, TextField } from "@mui/material";
 import { DeleteOutlined } from "@mui/icons-material";
 import {
-  ConditionFieldTypeId, ConditionFieldTypeIds,
+  ConditionFieldTypeId,
+  ConditionFieldTypeIds,
   FormConditionType,
 } from "../../../../../../../schemas/conditions/conditionField/baseConditionFieldSchema";
 import { ConditionTypeOptions } from "../../utils";
@@ -49,8 +50,8 @@ function FormConditionGroupItem({
     ConditionTypeOptions[condition.field?.typeId ?? ConditionFieldTypeIds.shortText].valueProperties.inputComponent({
       disabled: !condition.field?.typeId || getIsTargetValueNotRequired(condition.field.conditionType),
       value: condition.field?.targetValue ?? "",
-      helperText: "",
-      error: false,
+      helperText: index % 2 === 0 ? "דגכדגכ דג דגכ בדיקה הודעת שגיאה" : "",
+      error: true,
       label: "ערך",
       onChange: (e) => setData((prev) => {
         const group = { ...prev[parentGroupIndex] };
@@ -75,32 +76,39 @@ function FormConditionGroupItem({
   return (
     <div ref={containerRef} className={styles.conditionContainer}>
       {
-        condition.operator &&
-        <div className={styles.conditionOperatorButtonGroupWrapper}>
-          <div className={
-            index === 1 ?
-              styles.firstOperationToggleTopConnector :
-              styles.operationToggleTopConnector
-          } />
-          <ConditionOperationToggle value={condition.operator}
-                                    type={"condition"}
-                                    onChange={
-                                      (operator) => setData((prev) => {
-                                        const group = { ...prev[parentGroupIndex] };
-                                        const modifiedCondition = { ...condition };
+        index === 0 && hasSiblings ? (
+          <div className={styles.conditionOperationToggleContainer}>
+            <div className={styles.firstOperationToggleTopConnector} />
+          </div>
+        ) : (
+          condition.operator &&
+          <div className={styles.conditionOperationToggleContainer}>
+            <div className={styles.conditionOperationToggleWrapper}>
+              <ConditionOperationToggle value={condition.operator}
+                                        type={"condition"}
+                                        onChange={
+                                          (operator) => setData((prev) => {
+                                            const group = { ...prev[parentGroupIndex] };
+                                            const modifiedCondition = { ...condition };
 
-                                        modifiedCondition.operator = operator;
-                                        group.conditions = group.conditions!.toSpliced(index, 1, { ...modifiedCondition });
+                                            modifiedCondition.operator = operator;
+                                            group.conditions = group.conditions!.toSpliced(index, 1, { ...modifiedCondition });
 
-                                        return prev.toSpliced(parentGroupIndex, 1, group);
-                                      })
-                                    } />
-          <div className={
-            isLastCondition ?
-              styles.lastOperationToggleBottomConnector :
-              styles.operationToggleBottomConnector
-          } />
-        </div>
+                                            return prev.toSpliced(parentGroupIndex, 1, group);
+                                          })
+                                        } />
+            </div>
+            <div className={
+              isLastCondition ?
+                styles.lastOperationToggleBottomConnector :
+                styles.operationToggleBottomConnector
+            } />
+            {
+              !isLastCondition &&
+              <div className={styles.operationToggleTopConnector} />
+            }
+          </div>
+        )
       }
       <div className={styles.conditionFieldsContainer}>
         <Autocomplete options={availableFieldIds}
@@ -192,7 +200,9 @@ function FormConditionGroupItem({
                        }} />
           )}
         />
-        {renderTargetValueField}
+        <div style={{ marginTop: -8 }}>
+          {renderTargetValueField}
+        </div>
       </div>
       <div className={styles.deleteConditionButtonContainer}>
         {

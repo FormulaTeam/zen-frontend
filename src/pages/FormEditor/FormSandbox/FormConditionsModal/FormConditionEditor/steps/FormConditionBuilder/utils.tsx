@@ -104,30 +104,45 @@ const ConditionTypeValueProperties = {
   [FieldTypeIds.longText]: {
     valueTransformer: String,
     inputComponent: ({ ...restProps }: ConditionTypeValueComponentProps) => (
-      <TextField multiline variant={"standard"} type={"text"} {...restProps} />
+      <TextField fullWidth multiline variant={"standard"} type={"text"} {...restProps} />
     ),
   },
   [FieldTypeIds.shortText]: {
     valueTransformer: String,
     inputComponent: ({ ...restProps }: ConditionTypeValueComponentProps) => (
-      <TextField variant={"standard"} type={"text"} {...restProps} />
+      <TextField fullWidth variant={"standard"} type={"text"} {...restProps} />
     ),
   },
   [FieldTypeIds.number]: {
     valueTransformer: Number,
     inputComponent: ({ ...restProps }: ConditionTypeValueComponentProps) => (
-      <TextField variant={"standard"} type={"number"} {...restProps} />
+      <TextField fullWidth variant={"standard"} type={"number"} {...restProps} />
     ),
   },
   [FieldTypeIds.date]: {
     valueTransformer: (value) => !!value ? (value as Moment).toISOString() : undefined,
-    inputComponent: ({ label, value, onChange, ...restProps }: ConditionTypeValueComponentProps) => (
-      <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale="he">
-        <DatePicker value={!!value ? moment(String(value)) : null}
-                    sx={{ "& .MuiInputBase-root": { borderRadius: 2 } }}
-                    onChange={(date) => onChange({ target: { value: date } })}
-                    {...restProps} />
-      </LocalizationProvider>
+    inputComponent: ({
+                       label: _,
+                       value,
+                       onChange,
+                       disabled,
+                       error,
+                       helperText,
+                       ...restProps
+                     }: ConditionTypeValueComponentProps) => (
+      <FormControl disabled={disabled}
+                   error={error}
+                   sx={{ width: "100%", marginTop: 1}}>
+        <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale="he">
+          <DatePicker value={!!value ? moment(String(value)) : null}
+                      sx={{ "& .MuiInputBase-root": { borderRadius: 2 } }}
+                      onChange={(date) => onChange({ target: { value: date } })}
+                      {...restProps} />
+        </LocalizationProvider>
+        <FormHelperText id="options-value-helper-text">
+          {helperText}
+        </FormHelperText>
+      </FormControl>
     ),
   },
   [FieldTypeIds.options]: {
@@ -146,6 +161,7 @@ const ConditionTypeValueProperties = {
                    error={error}>
         <InputLabel id="options-value-label">{label}</InputLabel>
         <Select labelId="options-value-label"
+                fullWidth
                 aria-describedby={"options-value-helper-text"}
                 label={label}
                 {...restProps}>
@@ -167,6 +183,7 @@ const ConditionTypeValueProperties = {
       <FormControl disabled={disabled} error={error}>
         <InputLabel id="checkbox-value-label">ערך ברירת מחדל</InputLabel>
         <Select labelId="checkbox-value-label"
+                fullWidth
                 variant={"standard"}
                 value={+(value as boolean)}
                 {...restProps}>
