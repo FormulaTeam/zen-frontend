@@ -57,6 +57,7 @@ export const LoadingBtnBox = styled(Box)<LoadingBtnBoxProps>`
 // View Management Styled Components
 export const ViewControlsContainer = styled(Box)`
   display: flex;
+  justify-content: end;
   align-items: center;
   gap: 16px;
 `;

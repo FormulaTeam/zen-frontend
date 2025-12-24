@@ -105,9 +105,11 @@ const SavedViewsList: React.FC<SavedViewsListProps> = ({
       {/* Create New View Button */}
       {onCreateNew && (
         <CreateNewViewContainer>
-          <CreateNewViewButton variant="contained" onClick={onCreateNew}>
-            יצירת תצוגה חדשה
-          </CreateNewViewButton>
+          {savedViews && savedViews.length > 0 ? (
+            <CreateNewViewButton variant="contained" onClick={onCreateNew}>
+              יצירת תצוגה חדשה
+            </CreateNewViewButton>
+          ) : null}
         </CreateNewViewContainer>
       )}
     </Box>

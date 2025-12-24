@@ -12,14 +12,12 @@ interface ViewModeHeaderProps {
 const ViewModeHeader: React.FC<ViewModeHeaderProps> = ({ mode, onBack }) => {
   const getTitle = () => {
     switch (mode) {
-      case "list":
-        return "ניהול תצוגות";
       case "create":
         return "יצירת תצוגה חדשה";
       case "edit":
         return "עריכת תצוגה";
       default:
-        return "ניהול תצוגות";
+        return "";
     }
   };
 
