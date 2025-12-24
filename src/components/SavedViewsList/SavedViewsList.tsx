@@ -1,7 +1,7 @@
 import React from "react";
 import { Typography, IconButton, Chip, Tooltip, Button, Box } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Edit } from "@mui/icons-material";
+import { Add, AutoAwesome, Edit } from "@mui/icons-material";
 import { TableView } from "../../types/interfaces/tableViews.types";
 import { useViewPermissions } from "../../hooks/useViewPermissions";
 import {
@@ -17,6 +17,12 @@ import {
   CreateNewViewContainer,
   CreateNewViewButton,
 } from "../ViewManager/styled";
+import {
+  CreateFirstViewButton,
+  EmptyViewsState,
+  EmptyViewsSubtitle,
+  EmptyViewsTitle,
+} from "../Responses/styled";
 
 interface User {
   upn?: string;
@@ -106,10 +112,22 @@ const SavedViewsList: React.FC<SavedViewsListProps> = ({
       {onCreateNew && (
         <CreateNewViewContainer>
           {savedViews && savedViews.length > 0 ? (
-            <CreateNewViewButton variant="contained" onClick={onCreateNew}>
+            <CreateNewViewButton variant="contained" onClick={onCreateNew} startIcon={<Add />}>
               יצירת תצוגה חדשה
             </CreateNewViewButton>
-          ) : null}
+          ) : (
+            <EmptyViewsState>
+              <EmptyViewsTitle>אין עדיין תצוגות</EmptyViewsTitle>
+              <EmptyViewsSubtitle>תצוגות הן פשוטות לבנייה ועושות המון סדר</EmptyViewsSubtitle>
+
+              <CreateFirstViewButton
+                variant="contained"
+                endIcon={<AutoAwesome />}
+                onClick={onCreateNew}>
+                ליצירת תצוגה ראשונה
+              </CreateFirstViewButton>
+            </EmptyViewsState>
+          )}
         </CreateNewViewContainer>
       )}
     </Box>
