@@ -6,8 +6,8 @@ import { FormConditionOperator } from "../../../../../schemas/conditions";
 import { Add } from "@mui/icons-material";
 import { generateEmptyConditionGroup } from "../../context/utils";
 import { FormConditionGroupElement } from "./FormConditionGroupElement";
-import { useMemo, useState } from "react";
-import { useEffectAfterMount } from "../../../../../../../hooks/utilsHooks/useEffectAfterMount";
+import { useEffect, useMemo, useState } from "react";
+import { usePrevious } from "@dnd-kit/utilities";
 
 function FormConditionsBuilder() {
   const { conditionData: { groups }, setData } = useFormConditionEditorContext(ConditionEditorStepId.CONDITION_BUILDER);
@@ -17,9 +17,16 @@ function FormConditionsBuilder() {
     groups?.flatMap((group) => group?.conditions).length
   ), [groups]);
 
+  const previousTotalConditionCount = usePrevious(totalConditionsCount);
+  const previousGroupCount = usePrevious(groups?.length);
+
   const hasMultipleGroups = (groups?.length ?? 0) > 1;
 
-  useEffectAfterMount(() => {
+  useEffect(() => {
+    (
+      (previousGroupCount !== undefined && (previousGroupCount < (groups?.length ?? 0))) ||
+      (previousTotalConditionCount !== undefined && (previousTotalConditionCount < (totalConditionsCount ?? 0)))
+    ) &&
     setScrollNewGroupIntoView(true);
   }, [groups?.length, totalConditionsCount]);
 
