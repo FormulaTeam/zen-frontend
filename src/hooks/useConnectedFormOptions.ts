@@ -56,7 +56,7 @@ export const useConnectedFormOptions = ({
   const formatFieldOptions = (options: any[]): ResponseFieldValue[] => {
     return options.map((option) => ({
       value: option?.value,
-      uniqueId: option?.uniqueId || `generated-${uuidv4()}`,
+      field_id: option?.uniqueId || `generated-${uuidv4()}`,
     }));
   };
 

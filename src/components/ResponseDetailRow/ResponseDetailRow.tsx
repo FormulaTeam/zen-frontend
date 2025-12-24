@@ -34,7 +34,7 @@ function ResponseDetailRow({ response, form, parentFormId }: ResponseDetailsRowP
       </ResponseCell>
       {form?.fields?.map((field, fieldIndex) => {
         const fieldValue =
-          response?.data?.find((item) => item.uniqueId === field.uniqueId)?.value || "";
+          response?.data?.find((item) => item.field_id === field.uniqueId)?.value || "";
         return (
           <ResponseCell key={fieldIndex}>
             {getResponseFieldStringValue(field, fieldValue)}
