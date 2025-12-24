@@ -113,7 +113,7 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
             נוצר על ידי {response.created_by_name || response.created_by}
           </Typography>{" "}
           <Typography variant="subtitle2">
-            נמחק על ידי {response.deleted_by_name || response.edited_by_name}
+            נמחק על ידי {response.deleted_by_name || response.updated_by_name}
           </Typography>
           <Typography variant="subtitle2">
             נמחק בתאריך {deletedDate} {deletedTime ? "בשעה " + deletedTime : ""}

@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { deleteResponse, deleteAllResponses, searchResponses, deleteForm } from "../api";
+import {
+  deleteResponse,
+  deleteAllResponses,
+  searchResponses,
+  deleteForm,
+  deleteMultipleResponses,
+} from "../api";
 import {
   BASE_COLUMNS_NAMES_ARRAY,
   getUserName,
@@ -257,46 +263,49 @@ export const useResponsesList = ({
   const fileOnClickHandler = (file: any) => downloadFileFromResponse(file, id);
 
   const deleteSelectedResponses = async () => {
-    let promises: any[] = [];
+    const selectedIds = Object.keys(rowSelection)
+      .map((k) => Number.parseInt(k, 10))
+      .filter((n) => Number.isFinite(n));
 
-    for (const key of Object.keys(rowSelection)) {
-      let rowId = parseInt(key);
-      promises.push(deleteResponse(form.id, rowId));
-    }
+    if (selectedIds.length === 0) return;
 
     setLoadingTable(true);
-    Promise.all(
-      // TODO - instead of Promise.all().then, maybe change to await
-      promises.map((p) =>
-        p.catch((error) => {
-          showErrorNotification("מחיקת התגובה נכשלה"); //Failed to delete response:" + error);
-        }),
-      ),
-    )
-      .then(() => {
-        setRowSelection({});
-        setShouldRefreshPage(true);
-      })
-      .finally(() => {
-        setLoadingTable(false);
+
+    try {
+      await deleteMultipleResponses({
+        form_id: form.id,
+        response_ids: selectedIds,
       });
+
+      setRowSelection({});
+      setShouldRefreshPage(true);
+    } catch (error) {
+      showErrorNotification("מחיקת התגובות נכשלה");
+    } finally {
+      setLoadingTable(false);
+    }
   };
 
-  /** delete All Selected Responses - TODO - use api function deleteMultipleResponses */
+  /** delete All Selected Responses */
   const deleteAllSelectedResponses = async () => {
-    if (Object.keys(rowSelection) && Object.keys(rowSelection).length === 1) {
-      let rowId = parseInt(Object.keys(rowSelection)[0]);
-      let response = allFilteredResponses.find((re) => re.id === rowId);
+    const keys = Object.keys(rowSelection);
+
+    if (keys.length === 0) return;
+
+    if (keys.length === 1) {
+      const rowId = Number.parseInt(keys[0], 10);
+      const response = allFilteredResponses.find((re) => re.id === rowId);
       if (response) {
         deleteResponseFromTable(response);
       }
-    } else if (Object.keys(rowSelection) && Object.keys(rowSelection).length > 1) {
-      setConfirmMsg("האם את/ה בטוח/ה שברצונך למחוק את התגובות?");
-      setConfirmOkFunc(() => () => {
-        deleteSelectedResponses();
-      });
-      setShowConfirmMsg(true);
+      return;
     }
+
+    setConfirmMsg("האם את/ה בטוח/ה שברצונך למחוק את התגובות?");
+    setConfirmOkFunc(() => () => {
+      void deleteSelectedResponses();
+    });
+    setShowConfirmMsg(true);
   };
 
   const editResponse = () => {

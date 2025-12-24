@@ -9,8 +9,8 @@ const PRE_SYSTEM_VIEW_COLUMNS: { columnId: string; defaultVisible: boolean }[] =
   { columnId: "pushed_to_metro", defaultVisible: true },
 ];
 const POST_SYSTEM_VIEW_COLUMNS: { columnId: string; defaultVisible: boolean }[] = [
-  { columnId: "edited_by_name", defaultVisible: true },
-  { columnId: "edited", defaultVisible: true },
+  { columnId: "updated_by_name", defaultVisible: true },
+  { columnId: "updated", defaultVisible: true },
 ];
 
 interface UseViewColumnConfigurationProps {

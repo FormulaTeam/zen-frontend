@@ -65,8 +65,8 @@ export const LIST_NAMES = {
 export const BASE_COLUMNS_NAMES_ARRAY = [
   "isSynchronized",
   "pushed_to_metro",
-  "edited",
-  "edited_by_name",
+  "updated",
+  "updated_by_name",
   "id",
 ];
 
@@ -354,8 +354,8 @@ export const cellLinkStyle = {
 
 export const HEBREW_TITLES = {
   isSynchronized: "סונכרן",
-  edited: "השתנה",
-  edited_by: 'השתנה ע"י',
+  updated: "השתנה",
+  updated_by: 'השתנה ע"י',
 };
 
 function preferredOrder(obj, order) {
@@ -483,13 +483,13 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
   const data: any[] = [];
 
   sortedResponses?.forEach((element, i) => {
-    //add columns isSynchronized, edited_by, edited
+    //add columns isSynchronized, updated_by, updated
     data[i] = {
       [HEBREW_TITLES.isSynchronized]: element.pushed_to_metro
         ? moment(element.pushed_to_metro).format("DD.MM.YY")
         : "לא סונכרן",
-      [HEBREW_TITLES.edited_by]: element.edited_by_name,
-      [HEBREW_TITLES.edited]: moment(element.edited).format("DD.MM.YY"),
+      [HEBREW_TITLES.updated_by]: element.updated_by_name,
+      [HEBREW_TITLES.updated]: moment(element.updated).format("DD.MM.YY"),
     };
 
     //add column for each field and save fields order with arr of names
@@ -506,12 +506,12 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
       names.push(field.displayName);
     });
 
-    //get column with order (first isSynchronized, then fields. then edited_by, then edited)
+    //get column with order (first isSynchronized, then fields. then updated_by, then updated)
     data[i] = preferredOrder(
       data[i],
       [HEBREW_TITLES.isSynchronized]
         .concat(names)
-        .concat([HEBREW_TITLES.edited_by, HEBREW_TITLES.edited]),
+        .concat([HEBREW_TITLES.updated_by, HEBREW_TITLES.updated]),
     );
   });
 
@@ -538,19 +538,19 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
         })[]
       >((acc, field) => {
         const currentFieldMetaData = formFields.find(
-          (fieldData) => fieldData.uniqueId === field.uniqueId,
+          (fieldData) => fieldData.uniqueId === field.field_id,
         );
         if (currentFieldMetaData) {
           const { displayName, typeId, dateAndTime } = currentFieldMetaData;
           const validTypeId = typeId as FormFieldTypeId;
-          const { value, uniqueId } = field;
-          acc.push({ displayName, value, uniqueId, dateAndTime, typeId: validTypeId });
+          const { value, field_id } = field;
+          acc.push({ displayName, value, field_id, dateAndTime, typeId: validTypeId });
         }
         return acc;
       }, []);
 
-      for (const { displayName, typeId, value, uniqueId, dateAndTime } of fieldValuesWithMetaData) {
-        if (formFieldsIds.includes(uniqueId)) {
+      for (const { displayName, typeId, value, field_id, dateAndTime } of fieldValuesWithMetaData) {
+        if (formFieldsIds.includes(field_id)) {
           let formattedValue: string | { f: string } = "";
           if (typeId === FieldTypeIds.form) {
             // If the field is of type 'form', we skip it as it doesn't have a value in the response
@@ -1155,8 +1155,8 @@ export const getInitialNewForm = (
     owner_upn: currentUserLowerCaseUpn,
     created_by: currentUserLowerCaseUpn,
     created_by_name: userName,
-    edited_by: currentUserLowerCaseUpn,
-    edited_by_name: userName,
+    updated_by: currentUserLowerCaseUpn,
+    updated_by_name: userName,
     users: [
       {
         id: currentUser.id,

@@ -166,7 +166,7 @@ export const useDeletedResponses = (
         if (identifiers.length) {
           accessConditions.push(
             { created_by: { $in: identifiers } },
-            { edited_by: { $in: identifiers } },
+            { updated_by: { $in: identifiers } },
           );
         }
 

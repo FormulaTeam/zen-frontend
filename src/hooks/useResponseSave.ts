@@ -26,7 +26,7 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
           };
 
           const fieldToSave: ResponseFieldValue = {
-            uniqueId: field.uniqueId,
+            field_id: field.uniqueId,
             value: responsesToCombinedSave,
           };
           if (response) {
@@ -34,7 +34,7 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
             const currentDeletedFiles = response[field.name]?.deletedFiles || [];
             const newDeletedFiles = value?.deletedFiles || [];
             const deletedFilesToSave: ResponseFieldValue = {
-              uniqueId: field.uniqueId,
+              field_id: field.uniqueId,
               value: currentDeletedFiles.concat(newDeletedFiles),
             };
             deletedFiles.push(deletedFilesToSave);
@@ -60,7 +60,7 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
         // If it's already a string, it's already in the correct format
       }
       const fieldToSave: ResponseFieldValue = {
-        uniqueId: field.uniqueId,
+        field_id: field.uniqueId,
         value,
       };
       dataArr.push(fieldToSave);
@@ -72,26 +72,23 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
     try {
       if (response && response.id) {
         // Update existing response
-        const editedResponse = {
-          id: response.id,
-          uniqueId: response.id,
-          form_id: response.form_id,
-          edited_by: user.upn?.toLowerCase(),
-          edited_by_name: userName,
+        const updatedResponse = {
+          updated_by: user.upn?.toLowerCase(),
+          updated_by_name: userName,
           data: dataArr,
           parentResponse: parentResponse,
           ...fieldsNameValueObj,
         };
 
-        return await mutateUpdateResponseAsync(editedResponse);
+        return await mutateUpdateResponseAsync(updatedResponse);
       } else {
         // Create new response
         const newResponse = {
           form_id: form.id,
           created_by_name: userName,
           created_by: user.upn?.toLowerCase(),
-          edited_by: user.upn?.toLowerCase(),
-          edited_by_name: userName,
+          updated_by: user.upn?.toLowerCase(),
+          updated_by_name: userName,
           data: dataArr,
           parentResponse: parentResponse,
           ...fieldsNameValueObj,

@@ -96,7 +96,7 @@ export const getResponseWithFlatFields = (
   deletedFiles?: ResponseFieldValue[],
 ): Record<string, FieldValue> => {
   const fieldsNameValueObj = responseData.reduce((acc, field) => {
-    const fieldMetaData = fieldsMetaData.find((metaData) => metaData.uniqueId === field.uniqueId);
+    const fieldMetaData = fieldsMetaData.find((metaData) => metaData.uniqueId === field.field_id);
     if (fieldMetaData && fieldMetaData.name) {
       const fieldName = fieldMetaData.name;
 
@@ -122,7 +122,7 @@ export const getResponseWithFlatFields = (
           break;
         case FieldTypeIds.file:
           const deletedFilesForField = deletedFiles?.filter(
-            (deletedFile) => deletedFile.uniqueId === field.uniqueId,
+            (deletedFile) => deletedFile.field_id === field.field_id,
           );
           if (deletedFilesForField && deletedFilesForField.length > 0) {
             acc[fieldName] = { ...field.value, deletedFiles: deletedFilesForField[0].value };

@@ -340,8 +340,8 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
       name: title,
       description,
       icon: formIcon,
-      edited_by: currentUserLowerCaseUpn,
-      edited_by_name: userName,
+      updated_by: currentUserLowerCaseUpn,
+      updated_by_name: userName,
     };
 
     try {

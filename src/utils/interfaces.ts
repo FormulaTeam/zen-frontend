@@ -175,7 +175,7 @@ export interface FormFieldEditableMetaData {
 /**
  * Represents the data required to create a new form.
  */
-export type NewForm = Omit<Form, "id" | "created" | "edited" | "permissions">;
+export type NewForm = Omit<Form, "id" | "created" | "updated" | "permissions">;
 
 export interface UpdateFormPayload {
   id: number;
@@ -198,14 +198,14 @@ export interface Form {
   fields: FormField[];
   description: string;
   created: string;
-  edited: string;
+  updated: string;
   created_by: string;
   created_by_name: string;
-  edited_by: string;
-  edited_by_name: string;
+  updated_by: string;
+  updated_by_name: string;
   deleted?: string;
   numberOfResponses: number;
-  lastEditedResponse?: string;
+  lastUpdatedResponse?: string;
   permissions: number[];
 
   isPublic?: boolean;
@@ -239,11 +239,11 @@ export interface SuperAdmin {
 export interface ResponseForm {
   id: number;
   created_by: string;
-  edited_by: string;
-  edited_by_name: string;
+  updated_by: string;
+  updated_by_name: string;
   form_id: number;
   created: string;
-  edited: string;
+  updated: string;
   data: ResponseFieldValue[];
   created_by_name?: string;
   deleted?: string;
@@ -256,7 +256,7 @@ export interface ResponseForm {
 /**
  * Represents the data required to create a new response.
  */
-export type NewResponse = Omit<ResponseForm, "id" | "created" | "edited">;
+export type NewResponse = Omit<ResponseForm, "id" | "created" | "updated">;
 
 /**
  * Represents a filter of a form or a response (the response filter has the form_id in the query).
@@ -383,7 +383,7 @@ export type FieldValue =
 
 export interface ResponseFieldValue {
   value: FieldValue;
-  uniqueId: string;
+  field_id: string;
 }
 
 export type CustomFormField = Pick<

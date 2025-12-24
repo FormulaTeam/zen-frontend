@@ -103,7 +103,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
   // Quick Edit hook
   const {
     isQuickEditMode,
-    editedData,
+    updatedData,
     validationErrors,
     hasUnsavedChanges,
     forceRenderCounter,
@@ -150,7 +150,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     handleCellValueChange,
     validationErrors,
     rowSelection,
-    editedData,
+    updatedData,
     isRowInEditMode,
     forceRenderCounter,
     fieldOptions,

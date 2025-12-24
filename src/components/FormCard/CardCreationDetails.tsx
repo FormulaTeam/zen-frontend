@@ -33,12 +33,12 @@ const CardCreationDetails: React.FC<CardCreationDetailsProps> = ({ form }) => {
         </TextTitleValueDiv>
 
         <TextTitleValueDiv>
-          {form.lastEditedResponse && form.numberOfResponses > 0 && (
+          {form.lastUpdatedResponse && form.numberOfResponses > 0 && (
             <TextTitle style={{ color: theme.palette.text.secondary }}>תגובה אחרונה</TextTitle>
           )}
-          {form.lastEditedResponse && form.numberOfResponses > 0 ? (
+          {form.lastUpdatedResponse && form.numberOfResponses > 0 ? (
             <TextValue className="text-value" style={{ color: theme.palette.text.secondary }}>
-              {moment(form.lastEditedResponse).format(DEFAULT_DATE_FORMAT)}
+              {moment(form.lastUpdatedResponse).format(DEFAULT_DATE_FORMAT)}
             </TextValue>
           ) : (
             <TextValue style={{ color: theme.palette.text.secondary }}></TextValue>
