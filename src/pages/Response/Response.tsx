@@ -155,7 +155,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
   const onEdit = () => navigate(`/response/edit/${formId}/${id}`);
 
   const onSaveAndClose = () => {
-    childForms ? setChildFormsValidate(true) : saveAll();
+    childForms.length > 0 ? setChildFormsValidate(true) : saveAll();
   };
 
   const closeValidationPopup = () => {
