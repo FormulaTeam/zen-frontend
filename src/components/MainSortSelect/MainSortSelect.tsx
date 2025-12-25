@@ -13,10 +13,11 @@ interface MainSortSelectProps {
   setPage: React.Dispatch<React.SetStateAction<number>>;
   getSortFilter: (newValueInt: number, filter: Filter) => Filter;
   setCurrentFilter: React.Dispatch<React.SetStateAction<Filter | null>>;
+  dataTestId?: string;
 }
 
-const MainSortSelect: React.FC<MainSortSelectProps> = ({ setFormsData, setPage, getSortFilter, setCurrentFilter }) => {
-  useEffect(() => {}, []);
+const MainSortSelect: React.FC<MainSortSelectProps> = ({ setFormsData, setPage, getSortFilter, setCurrentFilter, dataTestId }) => {
+  useEffect(() => { }, []);
   const cacheRtl = createCache({
     key: "muirtl",
     stylisPlugins: [prefixer, rtlPlugin],
@@ -27,7 +28,7 @@ const MainSortSelect: React.FC<MainSortSelectProps> = ({ setFormsData, setPage, 
   const [sortInputWidth, setSortInputWidth] = useState(DEFAULT_INPUT_WIDTH);
 
   /** set CurrentFilter when pick in sortBy select */
-  const handleSortByChange = (event: React.SyntheticEvent, newValue:  SortOption | null) => {
+  const handleSortByChange = (event: React.SyntheticEvent, newValue: SortOption | null) => {
     setFormsData([]);
     setPage(1);
     setSortByOption(newValue);
@@ -72,6 +73,7 @@ const MainSortSelect: React.FC<MainSortSelectProps> = ({ setFormsData, setPage, 
             size="small"
             name="placeholder"
             value={sortByOption || ""}
+            data-testid={dataTestId}
           />
         )}
       />
