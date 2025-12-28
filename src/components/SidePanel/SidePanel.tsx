@@ -4,27 +4,15 @@ import CloseIcon from "@mui/icons-material/Close";
 import { SidePanelContainer, SidePanelHeader, SidePanelContent } from "./styled";
 import ViewManager from "../ViewManager/ViewManager";
 import { TableView, ViewColumn } from "../../types/interfaces/tableViews.types";
-
-interface Form {
-  id: string;
-  fields: any[];
-  [key: string]: any;
-}
-
-interface User {
-  upn?: string;
-  email?: string;
-  isSuperAdmin?: boolean;
-  [key: string]: any;
-}
+import { ViewFormBase, ViewUserBase } from "../../types/interfaces/view.types";
 
 interface SidePanelProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
   children?: React.ReactNode;
-  form?: Form;
-  user?: User;
+  form?: ViewFormBase;
+  user?: ViewUserBase;
   onSaveView?: (view: TableView) => void;
   onLoadView?: (view: TableView) => void;
   onDeleteView?: (view: TableView) => void;

@@ -180,7 +180,7 @@ export type NewForm = Omit<Form, "id" | "created" | "edited" | "permissions">;
 export interface UpdateFormPayload {
   id: number;
   formData: Partial<Form>;
-  
+
   isUpdateMetro?: boolean;
 }
 

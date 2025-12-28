@@ -68,6 +68,7 @@ export const extractViewConfigFromColumns = (
       columnId: field.uniqueId,
       visible: column?.getIsVisible?.() ?? true,
       order: column?.getIndex?.() ?? index,
+      displayName: field.displayName,
       sortDirection:
         column?.getIsSorted?.() === "asc"
           ? "asc"

@@ -23,13 +23,7 @@ import {
   EmptyViewsSubtitle,
   EmptyViewsTitle,
 } from "../Responses/styled";
-
-interface User {
-  upn?: string;
-  email?: string;
-  isSuperAdmin?: boolean;
-  [key: string]: any;
-}
+import { User } from "../../utils/interfaces";
 
 interface SavedViewsListProps {
   savedViews?: TableView[];

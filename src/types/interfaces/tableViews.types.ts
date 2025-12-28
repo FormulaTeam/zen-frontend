@@ -1,5 +1,6 @@
 export interface ViewColumn {
   columnId: string;
+  displayName: string;
   visible: boolean;
   order: number;
   sortDirection?: "asc" | "desc";

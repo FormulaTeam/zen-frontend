@@ -1,6 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  getDefaultFormView,
   createFormView,
   updateFormView,
   deleteFormView,
@@ -9,13 +8,14 @@ import {
 import { TableView, ViewColumn } from "../types/interfaces/tableViews.types";
 import { showErrorNotification, showSuccessNotification, getUserName } from "../utils/utils";
 import { applyViewSorting } from "../utils/viewSortingUtils";
+import { ViewFormBase, ViewUserBase } from "../types/interfaces/view.types";
 
 interface UseViewManagerProps {
-  form?: any;
-  user?: any;
-  onViewConfigChange?: (viewConfig: ViewColumn[] | undefined) => void;
-  setSorting?: (sorting: any[]) => void; // Material React Table sorting
-  tableColumns?: any[]; // Material React Table columns for ID mapping
+  form?: ViewFormBase;
+  user?: ViewUserBase;
+  onViewConfigChange?: (viewConfig?: ViewColumn[]) => void;
+  setSorting?: (sorting: any[]) => void;
+  tableColumns?: any[];
 }
 
 export const useViewManager = ({
@@ -25,186 +25,169 @@ export const useViewManager = ({
   setSorting,
   tableColumns,
 }: UseViewManagerProps) => {
-  const [currentView, setCurrentView] = useState<TableView | undefined>(undefined);
-  const [savedViews, setSavedViews] = useState<TableView[]>([]);
-  const [currentViewConfig, setCurrentViewConfig] = useState<ViewColumn[] | undefined>(undefined);
-  const [selectedViewId, setSelectedViewId] = useState<number | string>("");
+  const [currentView, setCurrentView] = useState<TableView>();
+  const [currentViewConfig, setCurrentViewConfig] = useState<ViewColumn[]>();
+  const [selectedViewId, setSelectedViewId] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Yahel's changes
-  const {
-    data: formViews,
-    error: formViewsError,
-    refetch: refetchFormViews,
-  } = useGetFormViews(form?.id);
+  const { data: formViews = [], error, refetch } = useGetFormViews(form?.id ?? "");
 
+  /** --------------------------------
+   * Error handling
+   * -------------------------------- */
   useEffect(() => {
-    if (formViewsError) {
-      console.error("Error fetching form views:", formViewsError);
+    if (error) {
+      console.error(error);
       showErrorNotification("נכשל בטעינת התצוגות");
     }
-  }, [formViewsError]);
+  }, [error]);
 
-  const filteredFormViews = useMemo(() => {
-    if (!formViews || !user) return [];
-    const userUpn = user?.upn;
+  /** --------------------------------
+   * Filter views (future-proof)
+   * -------------------------------- */
+  const availableViews = useMemo(() => {
     return formViews;
-  }, [formViews, user]);
+  }, [formViews]);
 
-  // Notify parent component when view config changes
+  /** --------------------------------
+   * Notify parent of config changes
+   * -------------------------------- */
   useEffect(() => {
-    if (onViewConfigChange) {
-      onViewConfigChange(currentViewConfig);
-    }
+    onViewConfigChange?.(currentViewConfig);
   }, [currentViewConfig, onViewConfigChange]);
 
-  // Re-apply sorting when both currentViewConfig and tableColumns are available
+  /** --------------------------------
+   * Apply sorting when config changes
+   * -------------------------------- */
   useEffect(() => {
-    if (setSorting && tableColumns && tableColumns.length > 0 && currentViewConfig) {
-      console.log("Re-applying sorting after columns are available:", {
-        tableColumnsCount: tableColumns.length,
-        currentViewConfig: currentViewConfig.length,
-      });
+    if (!setSorting) return;
+
+    if (currentViewConfig && tableColumns?.length) {
       applyViewSorting(setSorting, currentViewConfig, tableColumns);
-    } else if (setSorting && (!tableColumns || tableColumns.length === 0 || !currentViewConfig)) {
-      // Clear sorting if columns or view config are not available
-      console.log("Clearing sorting - columns or view config not available");
+    } else {
       setSorting([]);
     }
-  }, [setSorting, tableColumns, currentViewConfig]);
+  }, [currentViewConfig, tableColumns, setSorting]);
 
-  const handleSaveView = async (view: TableView) => {
-    setIsSaving(true);
-    try {
-      console.log("Saving view:", view);
+  /** --------------------------------
+   * Save / Update
+   * -------------------------------- */
+  const handleSaveView = useCallback(
+    async (view: TableView) => {
+      if (!form) return;
 
-      let savedView: TableView;
-
-      // Check if view has an ID (update) or is new (create)
-      if (view.id) {
-        // Update existing view using the provided ID
-        // Pass entire view object as requested
-        savedView = await updateFormView(view.id, view);
-        showSuccessNotification("תצוגה עודכנה בהצלחה");
-      } else {
-        // Create new view
-        const newView = {
+      setIsSaving(true);
+      try {
+        const payload: TableView = {
           ...view,
-          createdBy: user?.upn || user?.email || "unknown",
-          createdByName: getUserName(user?.firstName, user?.lastName),
+          formId: form.id,
+          createdBy: user?.upn ?? "unknown",
+          createdByName: getUserName(user?.firstName ?? "", user?.lastName ?? ""),
         };
-        savedView = await createFormView(newView);
-        showSuccessNotification("תצוגה נשמרה בהצלחה");
+
+        const saved = payload.id
+          ? await updateFormView(payload.id, payload)
+          : await createFormView(payload);
+
+        showSuccessNotification(payload.id ? "תצוגה עודכנה" : "תצוגה נשמרה");
+
+        setCurrentView(saved);
+        setSelectedViewId(saved.id?.toString() ?? "");
+        setCurrentViewConfig(saved.config.columns);
+
+        if (saved.isDefault) await refetch();
+      } catch (err) {
+        console.error(err);
+        showErrorNotification("נכשל בשמירת התצוגה");
+      } finally {
+        setIsSaving(false);
       }
+    },
+    [form, user, refetch],
+  );
 
-      // Update local state
-      setSavedViews((prev) => {
-        const existingIndex = prev.findIndex((v) => v.id === savedView.id);
-        if (existingIndex >= 0) {
-          const updated = [...prev];
-          updated[existingIndex] = savedView;
-          return updated;
-        } else {
-          return [...prev, savedView];
-        }
-      });
+  /** --------------------------------
+   * Load
+   * -------------------------------- */
+  const handleLoadView = useCallback(
+    (view: TableView) => {
+      setCurrentView(view);
+      setCurrentViewConfig(view.config.columns);
+      setSelectedViewId(view.id?.toString() ?? "");
 
-      setCurrentView(savedView);
-      setSelectedViewId(savedView.id || "");
-
-      // If this view is set as default, reload the views to update other views' default status
-      if (view.isDefault) {
-        await refetchFormViews();
+      if (setSorting && tableColumns?.length) {
+        applyViewSorting(setSorting, view.config.columns, tableColumns);
       }
-      handleApplyView(savedView.config.columns);
-    } catch (error) {
-      console.error("Failed to save view:", error);
-      showErrorNotification("נכשל בשמירת התצוגה");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+    },
+    [setSorting, tableColumns],
+  );
 
-  const handleLoadView = (view: TableView) => {
-    console.log("Loading view:", view);
-    setCurrentView(view);
-    setCurrentViewConfig(view.config.columns);
-    setSelectedViewId(view.id || "");
+  /** --------------------------------
+   * Dropdown change
+   * -------------------------------- */
+  const handleViewDropdownChange = useCallback(
+    (viewId: string) => {
+      setSelectedViewId(viewId);
 
-    // Apply sorting from view configuration (triggers searchBySorting via useEffect)
-    if (setSorting && tableColumns && view.config.columns) {
-      applyViewSorting(setSorting, view.config.columns, tableColumns);
-    }
-  };
-
-  const handleViewDropdownChange = (event: any) => {
-    const viewId = event.target.value;
-    setSelectedViewId(viewId);
-
-    if (viewId === "") {
-      // Clear current view (show default)
-      setCurrentView(undefined);
-      setCurrentViewConfig(undefined);
-
-      // Clear sorting when no view is selected
-      if (setSorting) {
-        setSorting([]);
-      }
-    } else {
-      // Load selected view
-      const selectedView = filteredFormViews.find((v) => v.id?.toString() === viewId.toString());
-      if (selectedView) {
-        console.log("Selected view found:", selectedView);
-
-        handleLoadView(selectedView);
-      }
-    }
-  };
-
-  const handleApplyView = (viewConfig: ViewColumn[]) => {
-    console.log("Applying view configuration:", viewConfig);
-    setCurrentViewConfig(viewConfig);
-
-    // Apply sorting from view configuration (triggers searchBySorting via useEffect)
-    if (setSorting && tableColumns) {
-      applyViewSorting(setSorting, viewConfig, tableColumns);
-    }
-  };
-
-  const handleDeleteView = async (view: TableView) => {
-    try {
-      if (!view.id) {
-        showErrorNotification("נכשל במחיקת התצוגה");
+      if (!viewId) {
+        setCurrentView(undefined);
+        setCurrentViewConfig(undefined);
+        setSorting?.([]);
         return;
       }
 
-      await deleteFormView(view.id);
+      const view = availableViews.find((v) => v.id?.toString() === viewId);
+      if (view) handleLoadView(view);
+    },
+    [availableViews, handleLoadView, setSorting],
+  );
 
-      // Update local state
-      setSavedViews((prev) => prev.filter((v) => v.id !== view.id));
+  /** --------------------------------
+   * Apply config
+   * -------------------------------- */
+  const handleApplyView = useCallback(
+    (config: ViewColumn[]) => {
+      setCurrentViewConfig(config);
 
-      // If deleted view was current, clear current view
-      if (currentView && currentView.id === view.id) {
-        setCurrentView(undefined);
-        setCurrentViewConfig(undefined);
-        setSelectedViewId("");
+      if (setSorting && tableColumns?.length) {
+        applyViewSorting(setSorting, config, tableColumns);
       }
+    },
+    [setSorting, tableColumns],
+  );
 
-      showSuccessNotification("התצוגה נמחקה בהצלחה");
-    } catch (error) {
-      console.error("Failed to delete view:", error);
-      showErrorNotification("נכשל במחיקת התצוגה");
-    }
-  };
+  /** --------------------------------
+   * Delete
+   * -------------------------------- */
+  const handleDeleteView = useCallback(
+    async (view: TableView) => {
+      if (!view.id) return;
+
+      try {
+        await deleteFormView(view.id);
+
+        if (currentView?.id === view.id) {
+          setCurrentView(undefined);
+          setCurrentViewConfig(undefined);
+          setSelectedViewId("");
+        }
+
+        showSuccessNotification("התצוגה נמחקה");
+        await refetch();
+      } catch (err) {
+        console.error(err);
+        showErrorNotification("נכשל במחיקת התצוגה");
+      }
+    },
+    [currentView, refetch],
+  );
 
   return {
-    // State
     currentView,
-    savedViews: filteredFormViews,
+    savedViews: availableViews,
     currentViewConfig,
     selectedViewId,
     isSaving,
-    // Actions
     handleSaveView,
     handleLoadView,
     handleViewDropdownChange,
