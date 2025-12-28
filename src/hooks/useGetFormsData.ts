@@ -1,150 +1,91 @@
-import { useState } from "react";
-import { getForms } from "../api";
-import { getResponsesCount } from "../api/responsesApi";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Form, Filter } from "../utils/interfaces";
-import { showErrorNotification } from "../utils/utils";
+import { useGetFormsQuery } from "./useFormsQuery";
 import { IOrderBy } from "../types/enums/filtersAndSorts.enum";
-import { useAuth } from "../contexts/AuthContext";
+import { showErrorNotification } from "../utils/utils";
+import { sortForms } from "./helpers/sortForms";
+import { filterForms } from "./helpers/filterFroms";
+import { paginateForms } from "./helpers/paginateForms";
 
-/**
- * Custom hook to manage forms data and loading state.
- * @param {Form[]} initialForms - Initial forms data.
- * @param {number} maxInPage - Maximum number of forms to fetch per page.
- * @returns Forms data and utilities to manage them.
- */
 export type IGetFormsData = (
   nextPage: number,
-  from: string,
   currentFilter: Filter,
   additionalFilter?: Filter,
   deleted?: boolean,
-) => Promise<Form[] | undefined>;
+) => Form[] | undefined;
 
 export function useGetFormsData(initialForms: Form[] = [], maxInPage = 24) {
   const [formsData, setFormsData] = useState<Form[]>(initialForms);
-  const [loading, setLoading] = useState(true);
   const [loadingBottom, setLoadingBottom] = useState(false);
-  const { user } = useAuth();
 
-  /**
-   * Fetch response counts for all forms and update their numberOfResponses property
-   */
-  const updateFormsWithResponseCounts = async (forms: Form[]): Promise<Form[]> => {
-    if (!forms || forms.length === 0) return forms;
+  const { data: cachedForms, isLoading } = useGetFormsQuery();
+  const isFetching = useRef(false);
+  const pendingFilter = useRef<Filter | null>(null);
+  const hasInitialized = useRef(false);
+  const lastAppliedFilter = useRef<Filter | null>(null);
 
-    try {
-      // Fetch response counts for all forms in parallel
-      const responseCountPromises = forms.map(async (form) => {
-        try {
-          const userInForm = form.users?.find(
-            (u: any) => u.upn?.toLowerCase() === user?.upn?.toLowerCase(),
-          );
-          if (!userInForm) return form;
-          const responseCount = await getResponsesCount(form.id);
-          return { ...form, numberOfResponses: responseCount.count };
-        } catch (error) {
-          console.error(`Failed to fetch response count for form ${form.id}:`, error);
-          // Keep the original numberOfResponses if API call fails
-          return form;
-        }
-      });
+  useEffect(() => {
+    if (!cachedForms || !lastAppliedFilter.current) return;
+    const filter = lastAppliedFilter.current;
+    const filtered = filterForms(cachedForms, filter.query);
+    const sorted = sortForms(filtered, filter.sortBy, filter.orderBy);
+    const processed = paginateForms(sorted, filter.pageNumber, filter.pageSize);
+    setFormsData(processed);
+  }, [cachedForms]);
 
-      const updatedForms = await Promise.all(responseCountPromises);
-      return updatedForms;
-    } catch (error) {
-      console.error("Failed to update forms with response counts:", error);
-      return forms;
-    }
-  };
+  const getData: IGetFormsData = useCallback(
+    (nextPage, currentFilter = {}, additionalFilter = {}, deleted = false) => {
+      if (isFetching.current) return;
+      isFetching.current = true;
+      hasInitialized.current = true;
 
-  const getData: IGetFormsData = async (
-    nextPage: number,
-    from: string,
-    currentFilter: Filter = {},
-    additionalFilter: Filter = {},
-    deleted = false,
-  ) => {
-    const sortBy = additionalFilter.sortBy || currentFilter?.sortBy || "name";
-    const orderBy = additionalFilter.orderBy || currentFilter?.orderBy || "ASC";
-    let query = { ...currentFilter?.query, ...additionalFilter?.query };
+      const isFirstPage = nextPage === 1;
+      if (!isFirstPage) setLoadingBottom(true);
 
-    if (Object.keys(query).length === 0) {
-      query = {};
-    }
-
-    const filter: Filter = {
-      query,
-      pageSize: maxInPage,
-      pageNumber: nextPage,
-      sortBy,
-      orderBy: orderBy as IOrderBy.ASC | IOrderBy.DESC,
-      signal: additionalFilter?.signal,
-      deleted,
-    };
-
-    if (nextPage === 1) setLoading(true);
-    else setLoadingBottom(true);
-
-    try {
-      const forms = (await getForms(filter)) || [];
-      if (!forms || forms.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      // Update forms with response counts
-      const formsWithCounts = await updateFormsWithResponseCounts(forms);
-      const updatedFormsData =
-        nextPage === 1 ? formsWithCounts : [...formsData, ...formsWithCounts];
-      setFormsData(updatedFormsData);
-      return updatedFormsData;
-    } catch (error: any) {
-      if (error?.message === "canceled") return;
-      showErrorNotification("שליפת הטפסים נכשלה");
-    } finally {
-      setLoading(false);
-      setLoadingBottom(false);
-    }
-  };
-
-  const getFormsByIds = async (ids: number[]) => {
-    if (ids.length === 0) return [];
-    try {
       const filter: Filter = {
-        query: { id: { $in: ids } },
-        pageSize: ids.length,
-        pageNumber: 1,
-        sortBy: "id",
-        orderBy: IOrderBy.ASC,
+        query: { ...currentFilter.query, ...additionalFilter.query },
+        pageSize: maxInPage,
+        pageNumber: nextPage,
+        sortBy: additionalFilter.sortBy ?? currentFilter.sortBy ?? "name",
+        orderBy: (additionalFilter.orderBy ?? currentFilter.orderBy ?? "ASC") as
+          | IOrderBy.ASC
+          | IOrderBy.DESC,
+        signal: additionalFilter.signal,
+        deleted,
       };
-      const newForms = (await getForms(filter)) || [];
 
-      // Update new forms with response counts
-      const newFormsWithCounts = await updateFormsWithResponseCounts(newForms);
+      pendingFilter.current = filter;
+      lastAppliedFilter.current = filter;
 
-      setFormsData((prev) => {
-        const newMap = new Map(prev.map((f) => [f.id, f]));
-        newFormsWithCounts.forEach((form) => {
-          newMap.set(form.id, form); // תמיד נעדכן/נחליף
-        });
-        return Array.from(newMap.values());
-      });
+      try {
+        const baseForms = cachedForms ?? [];
+        if (!baseForms.length) return [];
 
-      return newFormsWithCounts;
-    } catch (error) {
-      showErrorNotification("טעינת טפסים לפי מזהים נכשלה");
-      return [];
-    }
-  };
+        const filtered = filterForms(baseForms, filter.query);
+        const sorted = sortForms(filtered, filter.sortBy, filter.orderBy);
+        const processed = paginateForms(sorted, filter.pageNumber, filter.pageSize);
+
+        setFormsData((prev) => (isFirstPage ? processed : [...prev, ...processed]));
+        return processed;
+      } catch (err: any) {
+        if (err?.message !== "canceled") {
+          console.error("useGetFormsData error:", err);
+          showErrorNotification("שליפת הטפסים נכשלה");
+        }
+        return [];
+      } finally {
+        isFetching.current = false;
+        if (!isFirstPage) setLoadingBottom(false);
+      }
+    },
+    [cachedForms, maxInPage],
+  );
 
   return {
     formsData,
     setFormsData,
-    loading,
-    setLoading,
     loadingBottom,
-    setLoadingBottom,
     getData,
-    getFormsByIds,
+    isLoading,
   };
 }

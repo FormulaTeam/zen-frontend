@@ -70,7 +70,7 @@ export default function DeletedResponsesTabContent({
     }
 
     if (!mounted) return;
-    getData(1, "load-deleted-meta", { query: {} });
+    getData(1, { query: {} });
   }, [responses, searchValue]);
 
   useEffect(() => {

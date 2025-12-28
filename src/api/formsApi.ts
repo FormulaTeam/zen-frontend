@@ -1,9 +1,17 @@
 import apiClient from "./config";
-import { NewForm, Form, Filter, MetroReturnedData, User } from "../utils/interfaces";
+import {
+  NewForm,
+  Form,
+  Filter,
+  MetroReturnedData,
+  User,
+  UpdateFormPayload,
+} from "../utils/interfaces";
 import { UserData } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
 import { useDelete } from "../utils/useDelete";
+import { useCreate } from "../utils/useCreate";
 import queryClient from "./queryClient";
 import { useUpdate } from "../utils/useUpdate";
 
@@ -15,21 +23,28 @@ import { useUpdate } from "../utils/useUpdate";
  */
 export const getForms = async (filter?: Filter): Promise<Form[]> => {
   const params = {
-    query: filter?.query ? filter.query : undefined,
+    query:
+      filter?.query && typeof filter.query !== "string"
+        ? JSON.stringify(filter.query)
+        : filter?.query,
     sortBy: filter?.sortBy,
     orderBy: filter?.orderBy,
     pageSize: filter?.pageSize,
     pageNumber: filter?.pageNumber,
   };
+
   try {
-    const response = await apiClient.post<Form>("/forms/get-forms", params, {
-      signal: filter?.signal, // pass a signal if attached to the filter
+    const response = await apiClient.get<Form[]>("/forms/get-forms", {
+      params,
+      signal: filter?.signal,
     });
+
     if (!Array.isArray(response?.data)) {
       console.log("response:", response, "type: ", typeof response);
       console.log("response?.data:", response?.data, "type: ", typeof response?.data);
       return [];
     }
+
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch forms:", error);
@@ -45,45 +60,6 @@ export const getFormById = async (formId?: number): Promise<Form | null> => {
   };
   let forms = await getForms(filter);
   return forms && forms[0] ? forms[0] : null;
-};
-/**
- * Create a new form.
- *
- * @param form - The new form data.
- * @returns A promise that resolves to the created form.
- */
-export const createForm = async (form: NewForm): Promise<Form> => {
-  try {
-    const response = await apiClient.post<Form>("/forms/create", form);
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to create form:", error);
-    throw error;
-  }
-};
-
-/**
- * Update an existing form.
- *
- * @param id - The ID of the form to update.
- * @param form - The updated form data.
- * @returns A promise that resolves to the updated form.
- */
-export const updateForm = async (
-  id: number,
-  form: Partial<Form>,
-  isUpdateMetro?: boolean,
-): Promise<Form> => {
-  try {
-    const response = await apiClient.put<Form>(`/forms/edit/${id}`, {
-      formData: form,
-      isUpdateMetro: isUpdateMetro,
-    });
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to update form:", error);
-    throw error;
-  }
 };
 
 /**
@@ -204,7 +180,41 @@ export const editSourceToMetro = async (id: number): Promise<any> => {
   }
 };
 
-// Yahel's edits - above is the original file - below are the changes
+// Gali's edits
+// ============================================================
+
+export const useCreateForm = () => {
+  return useCreate<NewForm, Form>({
+    endpoint: "/forms/create",
+    mutationKey: ["create-form"],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["forms"] });
+      },
+      onError: (error) => {
+        console.error("Failed to create form:", error);
+      },
+    },
+  });
+};
+
+export const useUpdateForm = (id: number) => {
+  return useUpdate<UpdateFormPayload, Form>({
+    endpoint: `/forms/edit/${id}`,
+    mutationKey: ["update-form"],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [id] });
+        queryClient.invalidateQueries({ queryKey: ["forms"] });
+      },
+      onError: (error) => {
+        console.error("Failed to update form:", error);
+      },
+    },
+  });
+};
+
+// Yahel's edits
 // ============================================================
 
 export const useGetForm = ({
@@ -239,15 +249,3 @@ export const useDeleteForm = ({ id }: { id: string }) => {
   });
 };
 
-export const useUpdateForm = ({ formId }: { formId: string }) => {
-  return useUpdate<Partial<Form>, Form>({
-    endpoint: `/forms/edit/${formId}`,
-    mutationKey: ["updateForm", formId],
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [formId] });
-        queryClient.invalidateQueries({ queryKey: ["forms"] });
-      },
-    },
-  });
-};

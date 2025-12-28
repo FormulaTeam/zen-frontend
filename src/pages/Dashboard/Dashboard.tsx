@@ -1,12 +1,12 @@
 import React, { useEffect } from "react";
 import ValueCard from "../../components/Dashboard/ValueCard";
 import { CardsRow, Container } from "./styled";
-import { useDashboardStatistics } from "../../hooks/useDashboardStatistics";
 import ChartsContainer from "../../components/Dashboard/ChartsContainer";
 import { Tooltip, Button, Typography, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { CustomIcon } from "../../theme/icons";
 import styled from "styled-components";
+import { useDashboardStatisticsContext } from "../../contexts/DashboardStatisticsContext";
 
 export const Header = styled(Box)`
   display: flex;
@@ -15,12 +15,8 @@ export const Header = styled(Box)`
 `;
 
 const Dashboard: React.FC = () => {
-  const { summaryCards, refreshStats } = useDashboardStatistics();
+  const { summaryCards } = useDashboardStatisticsContext();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    refreshStats();
-  }, []);
 
   return (
     <Container>

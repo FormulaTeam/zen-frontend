@@ -5,7 +5,7 @@ import Grid from "@mui/material/Grid";
 import { Box, IconButton, Tab, Tabs, Tooltip, Typography, useTheme } from "@mui/material";
 import { useGetFormsData } from "../../hooks/useGetFormsData";
 import { useActiveTabFilter } from "../../hooks/useActiveTabFilter";
-import { Filter, FormsTab } from "../../utils/interfaces";
+import { Filter, FormsTab, Form } from "../../utils/interfaces";
 import CreateNew from "../../components/MainPage/CreateNew";
 import mGif from "../../images/m.gif";
 import syncGif from "../../images/sync.gif";
@@ -34,106 +34,62 @@ function MainPage({
   const [tabValue, setTabValue] = useState<FormsTab | null>(formsTabs.currentUserCreated);
   const [page, setPage] = useState(1);
   const [searchVal, setSearchVal] = useState("");
-  const [currentFilter, setCurrentFilter] = useState<any>(null);
+  const [currentFilter, setCurrentFilter] = useState<Filter | null>(null);
   const [showMetroPopup, setShowMetroPopup] = useState(false);
-  const [formToEdit, setFormToEdit] = useState<any>(null);
+  const [formToEdit, setFormToEdit] = useState<Form | null>(null);
   const [showSharePopup, setShowSharePopup] = useState(false);
+
   const { isSuperAdmin } = useSuperAdmin();
   const navigate = useNavigate();
   const theme = useTheme();
+
   const { getFilter } = useActiveTabFilter({ isSuperAdmin: !!isSuperAdmin, tabValue, user });
-  const { formsData, setFormsData, loading, setLoading, loadingBottom, setLoadingBottom, getData } =
-    useGetFormsData([]);
+  const { formsData, setFormsData, loadingBottom, getData, isLoading } = useGetFormsData([]);
 
-  /** when page first loads - get tab from storage */
   useEffect(() => {
-    if (tabValue === null) {
-      let tabValueFromStorage = localStorage.getItem("tabValue");
-
-      if (tabValueFromStorage) {
-        let tabValueInt = parseInt(tabValueFromStorage) as FormsTab;
-        if (tabValueInt !== null && tabValueInt !== undefined) {
-          setTabValue(tabValueInt);
-        }
-      } else {
-        setTabValue(formsTabs.currentUserCreated);
-      }
-    }
+    const tabFromStorage = localStorage.getItem("tabValue");
+    if (tabFromStorage) setTabValue(parseInt(tabFromStorage) as FormsTab);
   }, []);
 
-  /** when tabValue changes - reset data and page and change CurrentFilter */
   useEffect(() => {
-    if (isSuperAdmin === null) return;
-    if (tabValue !== null) {
-      localStorage.setItem("tabValue", tabValue + "");
-      //reset forms data
-      setFormsData([]);
-      setPage(1);
-      // At first load, fetch the forms created by the user
-      let filter = getFilter({ query: {} });
-      //add sort if had any
-      if (currentFilter?.sortBy) {
-        filter = {
-          ...filter,
-          orderBy: currentFilter.orderBy,
-          sortBy: currentFilter.sortBy,
-        };
-      }
-      //add search if had any
-      if (searchValue !== "") {
-        filter.query = {
-          ...filter.query,
-          $or: [
-            { name: { $regex: searchValue } },
-            { description: { $regex: searchValue } },
-            { id: Number.isNaN(Number(searchValue)) ? null : Number(searchValue) },
-          ],
-        };
-      }
-      setCurrentFilter({ ...filter });
+    if (tabValue === null || isSuperAdmin === null) return;
+
+    localStorage.setItem("tabValue", tabValue.toString());
+    setFormsData([]);
+    setPage(1);
+
+    let filter = getFilter({ query: {} });
+    if (currentFilter?.sortBy) {
+      filter = { ...filter, sortBy: currentFilter.sortBy, orderBy: currentFilter.orderBy };
     }
-  }, [tabValue, isSuperAdmin]);
+
+    if (searchValue) {
+      filter.query = {
+        ...filter.query,
+        $or: [
+          { name: { $regex: searchValue } },
+          { description: { $regex: searchValue } },
+          { id: Number.isNaN(Number(searchValue)) ? null : Number(searchValue) },
+        ],
+      };
+    }
+
+    setCurrentFilter(filter);
+  }, [tabValue, isSuperAdmin, getFilter, user.upn]);
 
   useEffect(() => {
     const abortController = new AbortController();
-
-    const handleChangeFilter = () => {
+    const handler = setTimeout(() => {
       if (searchValue !== searchVal) {
-        setLoading(true);
         setSearchVal(searchValue);
         setPage(1);
 
         const filter = {
-          ...getFilter({ ...currentFilter }),
+          ...(currentFilter ?? {}),
           signal: abortController.signal,
         };
 
-        if (searchValue === "") {
-          if (filter?.query) {
-            delete filter.query.$or;
-            delete currentFilter?.query?.$or;
-
-            const users = filter.query.users;
-            let createdBy = filter.query.created_by;
-            if (createdBy?.$ne) {
-              createdBy = filter.query.created_by.$ne?.toLowerCase();
-            } else {
-              createdBy = filter.query.created_by?.toLowerCase();
-            }
-
-            if (users) {
-              filter.query = { users: { $in: [user.upn?.toLowerCase()] } };
-              currentFilter.query = { users: { $in: [user.upn?.toLowerCase()] } };
-            }
-
-            if (isSuperAdmin) {
-              delete filter.query.created_by;
-            } else if (createdBy) {
-              filter.query = { created_by: { $regex: createdBy, $options: "i" } };
-              currentFilter.query = { created_by: { $regex: createdBy, $options: "i" } };
-            }
-          }
-        } else {
+        if (searchValue) {
           filter.query = {
             ...filter.query,
             $or: [
@@ -144,11 +100,9 @@ function MainPage({
           };
         }
 
-        setCurrentFilter(filter);
+        setCurrentFilter(filter as Filter);
       }
-    };
-
-    const handler = setTimeout(() => handleChangeFilter(), 200);
+    }, 200);
 
     return () => {
       clearTimeout(handler);
@@ -156,59 +110,40 @@ function MainPage({
     };
   }, [searchValue]);
 
-  /** if shouldRefreshPage true - change CurrentFilter by tab */
   useEffect(() => {
-    if (shouldRefreshPage) {
+    if (shouldRefreshPage && currentFilter) {
       setShouldRefreshPage(false);
-      getData(1, "useEffect4 - currentFilter", currentFilter);
+      getData(1, currentFilter);
     }
-  }, [shouldRefreshPage]);
+  }, [shouldRefreshPage, currentFilter]);
 
-  /** when currentFilter changes - filter forms by calling getData */
   useEffect(() => {
-    if (currentFilter && Object.keys(currentFilter).length > 0) {
-      getData(1, "useEffect5 - currentFilter", currentFilter);
+    if (currentFilter && !isLoading) {
+      getData(1, currentFilter);
     }
-  }, [currentFilter]);
+  }, [currentFilter, isLoading]);
 
-  /**  Determine the filter by tab and sort */
-  const getSortFilter = (newValueInt: any, filter: Filter) => {
-    const newFilter = getFilter(filter);
-    setCurrentFilter(newFilter);
-    return getSortedFilter(newValueInt, newFilter);
-  };
-
-  /** when tabValue changes - show loading and set tabValue - than useEffect will be called */
   const handleTabValueChange = (event: React.SyntheticEvent, newValue: FormsTab) => {
     setTabValue(newValue);
-    setLoading(true);
   };
 
-  /** when scroll forms grid and reach the bottom - fetch more forms */
   const handleScroll = async (e: React.UIEvent<HTMLElement>) => {
     const { offsetHeight, scrollTop, scrollHeight } = e.currentTarget;
-
     if (!loadingBottom) {
       const atBottom = offsetHeight + scrollTop + 10 >= scrollHeight;
       if (atBottom) {
         const nextPage = page + 1;
         setPage(nextPage);
-        let filter: Filter | null = null;
-        if (searchVal) {
-          filter = {
-            ...currentFilter,
-            query: {
-              ...currentFilter?.query,
-              name: { $regex: searchVal },
-            },
-          };
-        } else {
-          filter = currentFilter;
-        }
-        setLoadingBottom(true);
-        await getData(nextPage, "useEffect2 - handleScroll", filter ?? {});
+        const filter: Filter = (currentFilter ?? {}) as Filter;
+        await getData(nextPage, filter);
       }
     }
+  };
+
+  const getSortFilter = (newValueInt: number, filter: Filter) => {
+    const newFilter = getFilter(filter);
+    setCurrentFilter(newFilter);
+    return getSortedFilter(newValueInt, newFilter);
   };
 
   return (
@@ -219,16 +154,13 @@ function MainPage({
           <img src={wavingHand} />
         </RowBox>
 
-        <Box sx={{ borderBottom: "1px solid" + theme.palette.white }}>
+        <Box sx={{ borderBottom: `1px solid ${theme.palette.white}` }}>
           <Tabs
             className="form-tabs"
             value={tabValue}
             onChange={handleTabValueChange}
             aria-label="tabs for forms"
-            sx={{
-              borderBottom: "1px solid" + theme.palette.white,
-              direction: "rtl",
-            }}>
+            sx={{ borderBottom: `1px solid ${theme.palette.white}`, direction: "rtl" }}>
             <Tab label="הטפסים שאני יצרתי" sx={{ fontSize: "20px" }} />
             <Tab label="הטפסים ששותפו איתי" sx={{ fontSize: "20px" }} />
             {isSuperAdmin && <Tab label="כל הטפסים" sx={{ fontSize: "20px" }} />}
@@ -240,26 +172,23 @@ function MainPage({
             setFormsData={setFormsData}
             setPage={setPage}
             getSortFilter={getSortFilter}
-            setLoading={setLoading}
             setCurrentFilter={setCurrentFilter}
           />
           <Tooltip title="סל המיחזור">
-            <div>
-              <IconButton
-                sx={{ color: theme.palette.primary.main }}
-                onClick={() => navigate("/deleted-forms")}>
-                <AutoDelete />
-              </IconButton>
-            </div>
+            <IconButton
+              sx={{ color: theme.palette.primary.main }}
+              onClick={() => navigate("/deleted-forms")}>
+              <AutoDelete />
+            </IconButton>
           </Tooltip>
         </Box>
       </Box>
 
-      {loading ? (
+      {isLoading ? (
         <Box className="main-page-loading" style={{ backgroundColor: theme.palette.white }}>
-          <ReactLoading type={"spinningBubbles"} color={theme.palette.primary.main} />
+          <ReactLoading type="spinningBubbles" color={theme.palette.primary.main} />
         </Box>
-      ) : formsData?.length > 0 ? (
+      ) : formsData.length > 0 ? (
         <Grid
           container
           columns={{ xs: 4, sm: 8, md: 12 }}
@@ -304,21 +233,18 @@ function MainPage({
               <img src={mGif} className="m-gif" />
               <img src={syncGif} className="sync-gif" />
             </Box>
-          }></BasePopup>
+          }
+        />
       )}
 
-      {showSharePopup && (
+      {showSharePopup && formToEdit && (
         <UserPicker
           form={formToEdit}
           closeSharePopupAndRefreshForm={(users, updatedForm) => {
-            const formToUpdate = updatedForm || {
-              ...formToEdit,
-              users: users,
-            };
-
+            const formToUpdate = updatedForm ?? { ...formToEdit, users };
             setFormToEdit(formToUpdate);
             setFormsData((prevForms) =>
-              prevForms.map((form) => (form.id === formToEdit.id ? formToUpdate : form)),
+              prevForms.map((f) => (f.id === formToEdit.id ? formToUpdate : f)),
             );
             setShowSharePopup(false);
           }}
@@ -326,16 +252,12 @@ function MainPage({
       )}
 
       {loadingBottom && (
-        <Box
-          className="bottom-grid-loading"
-          style={{
-            backgroundColor: theme.palette.white,
-          }}>
-          <ReactLoading type={"spinningBubbles"} color={theme.palette.primary.main} />
+        <Box className="bottom-grid-loading" style={{ backgroundColor: theme.palette.white }}>
+          <ReactLoading type="spinningBubbles" color={theme.palette.primary.main} />
         </Box>
       )}
     </Box>
   );
-}
+};
 
 export default MainPage;
