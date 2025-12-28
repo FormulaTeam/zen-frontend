@@ -1,4 +1,4 @@
-import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, Button, CircularProgress, IconButton, Typography, useTheme } from "@mui/material";
 import React from "react";
 import styled from "styled-components";
 import { PERMISSION_TYPES } from "../../utils/utils";
@@ -20,6 +20,7 @@ interface ResponseHeaderProps {
   formTitle: string;
   viewMode: boolean;
   permissionTypes: number[];
+  saveDisabled: boolean;
   onEdit: () => void;
   onBack: () => void;
   onSaveAndClose: () => void;
@@ -29,6 +30,7 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
   formTitle,
   viewMode,
   permissionTypes,
+  saveDisabled,
 
   onEdit,
   onBack,
@@ -51,8 +53,8 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
           חזור
         </Button>
         {!viewMode && (
-          <Button onClick={onSaveAndClose} variant="contained">
-            שמור וסגור
+          <Button onClick={onSaveAndClose} variant="contained" disabled={saveDisabled}>
+            {saveDisabled ? <CircularProgress size={20} /> : "שמור וסגור"}
           </Button>
         )}
       </Box>

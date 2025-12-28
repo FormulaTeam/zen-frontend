@@ -1,153 +1,94 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
-import {
-  fetchFormsStats,
-  fetchFormsActivityStats,
-  fetchLoginAndMirageStats,
-  fetchMonthlyFormsStats,
-  fetchUnitsByRange,
-} from "../api";
+import { useMemo } from "react";
 import { IRetrieveDataType, IDashboardStatic } from "../types/enums/dashboard";
 import { MonthName } from "../consts/charts";
-import { showErrorNotification } from "../utils/utils";
+import { ChartData } from "../types/interfaces/dashboard.types";
+import { staticStats, monthlyFormsStats, unitsByRange } from "../api/dashboardApi";
 
-export const useDashboardStatistics = () => {
-  const [stats, setStats] = useState<Map<IDashboardStatic, number | undefined>>(
-    () =>
-      new Map([
-        [IDashboardStatic.TOTAL_FORMS, undefined],
-        [IDashboardStatic.ACTIVE_FORMS, undefined],
-        [IDashboardStatic.ZERO_COMMENTS, undefined],
-        [IDashboardStatic.DAILY_USERS, undefined],
-        [IDashboardStatic.MONTHLY_USERS, undefined],
-        [IDashboardStatic.INACTIVE_FORMS, undefined],
-      ]),
-  );
+export const useDashboardStatistics = (year = new Date().getUTCFullYear()) => {
+  const staticStatsQuery = staticStats();
+  const createdFormsQuery = monthlyFormsStats(year, IRetrieveDataType.CREATED);
+  const deletedFormsQuery = monthlyFormsStats(year, IRetrieveDataType.DELETED);
+  const unitsRangeQuery = unitsByRange({ from: null, to: null });
 
-  const [formsByMonth, setFormsByMonth] = useState<any[]>([]);
-  const [deletedFormsByMonth, setDeletedFormsByMonth] = useState<any[]>([]);
-  const [mirageUsers, setMirageUsers] = useState<any[]>([]);
+  // ---------- Summary cards ----------
+  const summaryCards = useMemo(() => {
+    const stats = staticStatsQuery.data;
+    if (!stats) return [];
 
-  const refreshStats = useCallback(async (year: number = new Date().getUTCFullYear()) => {
-    try {
-      const formsStats = await fetchFormsStats(year);
-      if (!formsStats) throw new Error("Failed to fetch forms statistics");
-      setStats((prev) => {
-        const next = new Map(prev);
-        next.set(IDashboardStatic.TOTAL_FORMS, formsStats?.totalCount);
-        next.set(IDashboardStatic.ZERO_COMMENTS, formsStats?.zeroCommentsCount);
-        return next;
+    return [
+      {
+        title: "כמות טפסים במערכת",
+        value: stats.totalForms ?? 0,
+        tooltip: "סך כל הטפסים שקיימים במערכת",
+      },
+      {
+        title: "כמות טפסים פעילים",
+        value: stats.activeForms ?? 0,
+        tooltip: "טפסים עם יותר מ־5 תגובות...",
+      },
+      {
+        title: "כמות טפסים ללא תגובות",
+        value: stats.zeroResponsesCount ?? 0,
+        tooltip: "סך כל הטפסים במערכת שאין להם תגובות = 0 תגובות",
+      },
+      {
+        title: "כמות טפסים לא פעילים",
+        value: stats.inactiveForms ?? 0,
+        tooltip: "טפסים שלא נערכה בהם תגובה ב־30 הימים האחרונים",
+      },
+      {
+        title: "משתמשים יומיים",
+        value: stats.dailyUsers ?? 0,
+        tooltip: "כמות המשתמשים הייחודיים שנכנסו היום למערכת",
+      },
+      {
+        title: "משתמשים חודשיים",
+        value: stats.monthlyUsers ?? 0,
+        tooltip: "כמות המשתמשים הייחודיים שנכנסו החודש למערכת",
+      },
+    ];
+  }, [staticStatsQuery.data]);
+
+  // ---------- Column chart data ----------
+  const formsByMonth = useMemo<ChartData[]>(() => {
+    if (!createdFormsQuery.data) return [];
+    return createdFormsQuery.data.map(({ month, count }) => ({
+      name: MonthName[month],
+      value: count,
+      date: new Date(year, month, 1),
+    }));
+  }, [createdFormsQuery.data, year]);
+
+  const deletedFormsByMonth = useMemo<ChartData[]>(() => {
+    if (!deletedFormsQuery.data) return [];
+    return deletedFormsQuery.data.map(({ month, count }) => ({
+      name: MonthName[month],
+      value: count,
+      date: new Date(year, month, 1),
+    }));
+  }, [deletedFormsQuery.data, year]);
+
+  // ---------- Pie chart data ----------
+  const serializeMirageUsers = useMemo<ChartData[]>(() => {
+    if (!unitsRangeQuery.data) return [];
+    const map = new Map<string, { value: number; lastLogin: Date }>();
+    unitsRangeQuery.data.forEach(({ yechidaHatzava, loginAt }) => {
+      const unit = yechidaHatzava ?? "לא ידוע";
+      const loginDate = new Date(loginAt || "");
+      const existing = map.get(unit);
+      map.set(unit, {
+        value: (existing?.value ?? 0) + 1,
+        lastLogin: !existing || loginDate > existing.lastLogin ? loginDate : existing.lastLogin,
       });
-    } catch (err) {
-      console.error("Failed to fetch formsStats", err);
-      showErrorNotification("שגיאה בטעינת כמות הטפסים");
-    }
-
-    try {
-      const activityStats = await fetchFormsActivityStats();
-      if (!activityStats) throw new Error("Failed to fetch forms activity statistics");
-      setStats((prev) => {
-        const next = new Map(prev);
-        next.set(IDashboardStatic.ACTIVE_FORMS, activityStats?.activeCount);
-        next.set(IDashboardStatic.INACTIVE_FORMS, activityStats?.inactiveCount);
-        return next;
-      });
-    } catch (err) {
-      console.error("Failed to fetch formsActivityStats", err);
-      showErrorNotification("שגיאה בטעינת סטטיסטיקות פעילות הטפסים");
-    }
-
-    try {
-      const loginStats = await fetchLoginAndMirageStats();
-      if (!loginStats) throw new Error("Failed to fetch login and mirage statistics");
-      setStats((prev) => {
-        const next = new Map(prev);
-        next.set(IDashboardStatic.DAILY_USERS, loginStats?.loginLogs?.dailyUsers);
-        next.set(IDashboardStatic.MONTHLY_USERS, loginStats?.loginLogs?.monthlyUsers);
-        return next;
-      });
-      setMirageUsers(loginStats?.mirageUsers ?? []);
-    } catch (err) {
-      console.error("Failed to fetch loginStats", err);
-      showErrorNotification("שגיאה בטעינת סטטיסטיקות כניסות משתמשים");
-    }
-
-    try {
-      const created = await fetchMonthlyFormsStats(year, IRetrieveDataType.CREATED);
-      if (!created) throw new Error("Failed to fetch created forms statistics");
-      setFormsByMonth(
-        created?.formsByMonth?.map(({ count, month }) => ({
-          count,
-          month: MonthName[month],
-        })) ?? [],
-      );
-    } catch (err) {
-      console.error("Failed to fetch created forms stats", err);
-      showErrorNotification("שגיאה בטעינת כמות הטפסים שנוצרו");
-    }
-
-    try {
-      const deleted = await fetchMonthlyFormsStats(year, IRetrieveDataType.DELETED);
-      if (!deleted) throw new Error("Failed to fetch deleted forms statistics");
-      setDeletedFormsByMonth(
-        deleted?.deletedFormsByMonth?.map(({ count, month }) => ({
-          count,
-          month: MonthName[month],
-        })) ?? [],
-      );
-    } catch (err) {
-      console.error("Failed to fetch deleted forms stats", err);
-      showErrorNotification("שגיאה בטעינת כמות הטפסים שנמחקו");
-    }
-  }, []);
-
-  const getMonthlyFormsStats = useCallback(
-    async (year: number = new Date().getUTCFullYear(), operation: IRetrieveDataType) => {
-      try {
-        const res = await fetchMonthlyFormsStats(year, operation);
-
-        if (res?.formsByMonth) {
-          setFormsByMonth(
-            res.formsByMonth.map(({ count, month }) => ({
-              count,
-              month: MonthName[month],
-            })),
-          );
-        }
-
-        if (res?.deletedFormsByMonth) {
-          setDeletedFormsByMonth(
-            res.deletedFormsByMonth.map(({ count, month }) => ({
-              count,
-              month: MonthName[month],
-            })),
-          );
-        }
-      } catch (err) {
-        console.error("Failed to fetch monthly forms stats", err);
-        showErrorNotification("שגיאה בטעינת נתוני טפסים לפי חודשים");
-      }
-    },
-    [],
-  );
-
-  const getUnitsByRange = useCallback(async (range: { from: string | null; to: string | null }) => {
-    try {
-      const res = await fetchUnitsByRange(range);
-      setMirageUsers(res?.mirageUsers ?? []);
-    } catch (err) {
-      console.error("Failed to fetch units by range", err);
-      showErrorNotification("שגיאה בטעינת נתוני יחידות");
-    }
-  }, []);
-
-  const serializeMirageUsers = useMemo(() => {
-    const map = new Map<string, number>();
-    mirageUsers.forEach(({ yechidaHatzava = "לא ידוע" }) => {
-      map.set(yechidaHatzava, (map.get(yechidaHatzava) ?? 0) + 1);
     });
-    return Array.from(map, ([name, value]) => ({ name, value }));
-  }, [mirageUsers]);
+    return Array.from(map, ([name, { value, lastLogin }]) => ({
+      name,
+      value,
+      date: lastLogin,
+    }));
+  }, [unitsRangeQuery.data]);
 
+  // ---------- Chart config getter ----------
   const getFormsChartConfig = (type: IRetrieveDataType) => {
     switch (type) {
       case IRetrieveDataType.DELETED:
@@ -172,50 +113,15 @@ export const useDashboardStatistics = () => {
     }
   };
 
-
-  const summaryCards = [
-    {
-      title: "כמות טפסים במערכת",
-      value: stats.get(IDashboardStatic.TOTAL_FORMS),
-      tooltip: "סך כל הטפסים שקיימים במערכת",
-    },
-    {
-      title: "כמות טפסים פעילים",
-      value: stats.get(IDashboardStatic.ACTIVE_FORMS),
-      tooltip: "טפסים עם יותר מ־5 תגובות, כשלפחות תגובה אחת נוצרה ב־7 הימים האחרונים",
-    },
-    {
-      title: "כמות טפסים ללא תגובות",
-      value: stats.get(IDashboardStatic.ZERO_COMMENTS),
-      tooltip: "סך כל הטפסים במערכת שאין להם תגובות = 0 תגובות",
-    },
-    {
-      title: "כמות טפסים לא פעילים",
-      value: stats.get(IDashboardStatic.INACTIVE_FORMS),
-      tooltip: "טפסים שלא נערכה בהם תגובה ב־30 הימים האחרונים",
-    },
-    {
-      title: "משתמשים יומיים",
-      value: stats.get(IDashboardStatic.DAILY_USERS),
-      tooltip: "כמות המשתמשים הייחודיים שנכנסו היום למערכת",
-    },
-    {
-      title: "משתמשים חודשיים",
-      value: stats.get(IDashboardStatic.MONTHLY_USERS),
-      tooltip: "כמות המשתמשים הייחודיים שנכנסו החודש למערכת",
-    },
-  ];
-
   return {
-    stats,
+    staticStatsQuery,
+    createdFormsQuery,
+    deletedFormsQuery,
+    unitsRangeQuery,
     summaryCards,
-    refreshStats,
-    getMonthlyFormsStats,
     formsByMonth,
     deletedFormsByMonth,
     serializeMirageUsers,
-    mirageUsers,
     getFormsChartConfig,
-    getUnitsByRange,
   };
 };

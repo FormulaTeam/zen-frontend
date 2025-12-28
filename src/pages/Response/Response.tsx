@@ -87,7 +87,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
     }
   };
 
-  const { saveLoading, saveResponse } = useResponseSave(form, response, user);
+  const { saveResponse, isSaving } = useResponseSave(form, response, user);
 
   const {
     childForms,
@@ -119,8 +119,8 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
   });
 
   const isLoading = useMemo(() => {
-    return saveLoading || childFormsSaving || loading || loadingConnections;
-  }, [saveLoading, childFormsSaving, loading, loadingConnections]);
+    return isSaving || childFormsSaving || loading || loadingConnections;
+  }, [isSaving, childFormsSaving, loading, loadingConnections]);
 
   useEffect(() => {
     resolveUserPermissions(form, user, roles, viewMode, setPermissionTypes);
@@ -222,7 +222,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
               shouldValidate={childFormsValidate}
               childValid={(success: boolean) => handleChildValid(childFormIndex, success)}
               id={child.id}
-              shouldLoad={saveLoading}
+              shouldLoad={isSaving}
             />
           ) : null,
         )}
@@ -277,6 +277,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
           onEdit={onEdit}
           onBack={onBack}
           onSaveAndClose={onSaveAndClose}
+          saveDisabled={isSaving || childFormsSaving}
         />
         <FormSectionsContainer>
           {sortedSections.map(([sectionId, section], sectionIdx) => (

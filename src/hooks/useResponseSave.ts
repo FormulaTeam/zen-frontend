@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { createResponse, updateResponse, getResponseWithFlatFields } from "../api";
+import { getResponseWithFlatFields, useCreateResponse, useUpdateResponse } from "../api";
 import { getUserName, showErrorNotification } from "../utils/utils";
 import { uploadFilesToS3 } from "../api/filesApi";
 import { FieldTypeIds, NotificationTexts, ResponseFieldValue } from "../utils/interfaces";
 import moment from "moment";
 
 export const useResponseSave = (form: any, response: any, user: any, parentResponse?: string) => {
-  const [saveLoading, setSaveLoading] = useState(false);
+  const {mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending} = useCreateResponse();
+  const {mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending} = useUpdateResponse(form?.id, response?.id);
 
   const saveResponse = async (
     formFieldsByIdMap: Map<string, any>,
@@ -69,7 +70,6 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
     const fieldsNameValueObj = getResponseWithFlatFields(dataArr, form.fields, deletedFiles);
 
     try {
-      setSaveLoading(true);
       if (response && response.id) {
         // Update existing response
         const editedResponse = {
@@ -82,11 +82,8 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
           parentResponse: parentResponse,
           ...fieldsNameValueObj,
         };
-        return await updateResponse(
-          editedResponse.form_id,
-          editedResponse.uniqueId,
-          editedResponse,
-        );
+
+        return await mutateUpdateResponseAsync(editedResponse);
       } else {
         // Create new response
         const newResponse = {
@@ -99,7 +96,8 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
           parentResponse: parentResponse,
           ...fieldsNameValueObj,
         };
-        return await createResponse(newResponse);
+
+        return await mutateCreateResponseAsync(newResponse);
       }
     } catch (error: any) {
       if (error?.response?.data?.error?.includes("Metro")) {
@@ -114,13 +112,11 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
         );
       }
       throw error;
-    } finally {
-      setSaveLoading(false);
     }
   };
 
   return {
-    saveLoading,
     saveResponse,
+    isSaving: isCreateResponsePending || isUpdateResponsePending,
   };
 };

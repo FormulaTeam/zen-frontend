@@ -19,6 +19,7 @@ import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { useMutation } from "@tanstack/react-query";
 import { FormField as TableViewFormField } from "../types/interfaces/tableViews.types";
+import { useUpdate } from "../utils/useUpdate";
 
 export type FormFieldsMapResponse = {
   formId: number;
@@ -99,24 +100,6 @@ export const getResponsesCount = async (form_id: number): Promise<ResponseCount>
   }
 };
 
-/**
- * Create a new response.
- *
- * @param responseData - The new response data.
- * @returns A promise that resolves to the created response.
- */
-export const createResponse = async (
-  responseData: NewResponse | NewResponse[],
-): Promise<ResponseForm | ResponseForm[]> => {
-  try {
-    const response = await apiClient.post<ResponseForm>("/responses/create", responseData);
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to create response:", error);
-    throw error;
-  }
-};
-
 export const getResponseWithFlatFields = (
   responseData: ResponseFieldValue[],
   fieldsMetaData: FormField[],
@@ -164,30 +147,6 @@ export const getResponseWithFlatFields = (
     return acc;
   }, {});
   return fieldsNameValueObj;
-};
-/**
- * Update an existing response.
- *
- * @param formId - The ID of the form associated with the response.
- * @param id - The ID of the response to update.
- * @param responseData - The updated response data.
- * @returns A promise that resolves to the updated response.
- */
-export const updateResponse = async (
-  formId: number,
-  id: number,
-  responseData: Partial<ResponseForm>,
-): Promise<ResponseForm> => {
-  try {
-    const response = await apiClient.put<ResponseForm>(
-      `/responses/edit/${formId}/${id}`,
-      responseData,
-    );
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to update response:", error);
-    throw error;
-  }
 };
 
 /**
@@ -374,6 +333,39 @@ export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["responses"] });
       queryClient.invalidateQueries({ queryKey: ["rows"] });
+    },
+  });
+};
+
+// Gali's changes
+// ========================
+
+export const useCreateResponse = () => {
+  return useCreate<NewResponse | NewResponse[], ResponseForm | ResponseForm[]>({
+    endpoint: "/responses/create",
+    mutationKey: ["create-response"],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+      onError: (error) => {
+        console.error("Failed to create response:", error);
+      },
+    },
+  });
+};
+
+export const useUpdateResponse = (formId: number, id: number) => {
+  return useUpdate<Partial<ResponseForm>, ResponseForm>({
+    endpoint: `/responses/edit/${formId}/${id}`,
+    mutationKey: ["update-response", formId, id],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+      onError: (error) => {
+        console.error("Failed to update response:", error);
+      },
     },
   });
 };

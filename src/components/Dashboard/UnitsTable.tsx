@@ -13,51 +13,49 @@ import {
 import dayjs from "dayjs";
 import ChartFromToPicker from "../Charts/ChartFromToPicker";
 import { useStatisticsDateFilter } from "../../hooks/useStatisticsDateFilter";
-import { useDashboardStatistics } from "../../hooks/useDashboardStatistics";
 import { IRetrieveDataType } from "../../types/enums/dashboard";
+import { useDashboardStatisticsContext } from "../../contexts/DashboardStatisticsContext";
+import { IMirageUser } from "../../types/interfaces/dashboard.types";
+import ReactLoading from "react-loading";
 
-interface Row {
-  id: string;
-  upn: string;
-  chail: string;
-  yechidaHatzava: string;
-  loginAt: Date;
-}
+const getComparator =
+  (field: keyof IMirageUser, asc: boolean) =>
+  (a: IMirageUser, b: IMirageUser): number => {
+    const v1 = a[field] ?? "";
+    const v2 = b[field] ?? "";
+    if (v1 === v2) return 0;
+    return asc ? (v1 > v2 ? 1 : -1) : v1 > v2 ? -1 : 1;
+  };
 
-/* sort helper */
-const getComparator = (field: keyof Row, asc: boolean) => (a: Row, b: Row) => {
-  const v1 = a[field];
-  const v2 = b[field];
-  if (v1 === v2) return 0;
-  return asc ? (v1 > v2 ? 1 : -1) : v1 > v2 ? -1 : 1;
-};
-
-const LoginLogsTable: React.FC = () => {
-  const [sortField, setSortField] = useState<keyof Row>("loginAt");
+const UnitsTable: React.FC = () => {
+  const [sortField, setSortField] = useState<keyof IMirageUser>("loginAt");
   const [asc, setAsc] = useState(false);
 
-  const { getUnitsByRange, mirageUsers } = useDashboardStatistics();
+  const { unitsRangeQuery } = useDashboardStatisticsContext();
 
-  const { handleDateChange, handleClearRange, range } = useStatisticsDateFilter(
-    getUnitsByRange,
-    async (year: number, type: any) => {},
+  const { range, handleDateChange, handleClearRange } = useStatisticsDateFilter(
+    async () => Promise.resolve(),
+    async () => Promise.resolve(),
     IRetrieveDataType.UNITS,
   );
 
-  /* sorted mirageUsers */
-  const sortedmirageUsers = useMemo(
-    () => [...mirageUsers].sort(getComparator(sortField, asc)),
-    [mirageUsers, sortField, asc],
-  );
+  const mirageUsers = unitsRangeQuery.data ?? [];
+  const isLoading = unitsRangeQuery.isLoading;
 
-  /* totals per unit */
+  const sortedMirageUsers = useMemo(() => {
+    return [...mirageUsers].sort(getComparator(sortField, asc));
+  }, [mirageUsers, sortField, asc]);
+
   const totals = useMemo(() => {
     const map = new Map<string, number>();
-    mirageUsers.forEach((r) => map.set(r?.yechidaHatzava, (map.get(r?.yechidaHatzava) ?? 0) + 1));
+    mirageUsers.forEach((r) => {
+      const unit = r.yechidaHatzava ?? "לא ידוע";
+      map.set(unit, (map.get(unit) ?? 0) + 1);
+    });
     return Array.from(map.entries());
   }, [mirageUsers]);
 
-  const onHeaderClick = (field: keyof Row) => {
+  const onHeaderClick = (field: keyof IMirageUser) => {
     if (field === sortField) setAsc(!asc);
     else {
       setSortField(field);
@@ -65,7 +63,7 @@ const LoginLogsTable: React.FC = () => {
     }
   };
 
-  const header = (label: string, field: keyof Row) => (
+  const header = (label: string, field: keyof IMirageUser) => (
     <TableCell
       align="right"
       sx={{ fontWeight: 700, cursor: "pointer" }}
@@ -82,32 +80,51 @@ const LoginLogsTable: React.FC = () => {
         handleDateChange={handleDateChange}
         handleClearRange={handleClearRange}
       />
-      <TableContainer component={Paper} sx={{ flex: 1, maxHeight: 500 }}>
+
+      <TableContainer component={Paper} sx={{ flex: 1, maxHeight: 500, position: "relative" }}>
+        {isLoading && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(255,255,255,0.6)",
+              zIndex: 1,
+            }}>
+            <ReactLoading type="spinningBubbles" color="#1976d2" />
+          </Box>
+        )}
+
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
               {header("תאריך ושעה", "loginAt")}
               {header("יוזר", "id")}
-              {header("חיל", "chail")}
               {header("יחידה", "yechidaHatzava")}
             </TableRow>
           </TableHead>
 
           <TableBody>
-            {sortedmirageUsers.map((row) => (
+            {sortedMirageUsers.map((row) => (
               <TableRow
-                key={`${row.id}-${dayjs(row.loginAt).format("DD/MM/YYYY HH:mm")}`}
+                key={`${row.id}-${row.loginAt ?? "unknown"}`}
                 sx={{ "& td": { textAlign: "right" } }}>
-                <TableCell>{dayjs(row.loginAt).format("DD/MM/YYYY HH:mm")}</TableCell>
+                <TableCell>
+                  {row.loginAt ? dayjs(row.loginAt).format("DD/MM/YYYY HH:mm") : "לא ידוע"}
+                </TableCell>
                 <TableCell>{row.id}</TableCell>
-                <TableCell>{row?.chail || "לא ידוע"
-                  }</TableCell>
-                <TableCell>{row?.yechidaHatzava || "לא ידוע"}</TableCell>
+                <TableCell>{row.yechidaHatzava ?? "לא ידוע"}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+
       <Box mt={2}>
         <Typography variant="subtitle1" fontWeight={600}>
           סה״כ לכל יחידה
@@ -120,4 +137,4 @@ const LoginLogsTable: React.FC = () => {
   );
 };
 
-export default LoginLogsTable;
+export default UnitsTable;

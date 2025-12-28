@@ -66,7 +66,7 @@ function ConnectedFormSection({
     loadingConnections,
   } = useResponseState(field.connectedFormId?.toString()!, id?.toString(), viewMode, copyMode);
 
-  const { saveLoading, saveResponse } = useResponseSave(
+  const { isSaving, saveResponse } = useResponseSave(
     form,
     response,
     user,
@@ -89,8 +89,8 @@ function ConnectedFormSection({
 
   const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
-    setIsLoading(saveLoading || shouldSave || shouldValidate);
-  }, [saveLoading, shouldSave, shouldValidate, shouldLoad]);
+    setIsLoading(isSaving || shouldSave || shouldValidate);
+  }, [isSaving, shouldSave, shouldValidate, shouldLoad]);
   if (isLoading || shouldLoad) return null; // prevent rendering while saving
   return (
     <ConnectedFormWrapper>
