@@ -204,6 +204,7 @@ export const useUpdateForm = (id: number) => {
     mutationKey: ["update-form"],
     mutationOptions: {
       onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [id] });
         queryClient.invalidateQueries({ queryKey: ["forms"] });
       },
       onError: (error) => {
@@ -248,15 +249,3 @@ export const useDeleteForm = ({ id }: { id: string }) => {
   });
 };
 
-// export const useUpdateForm = ({ formId }: { formId: string }) => {
-//   return useUpdate<Partial<Form>, Form>({
-//     endpoint: `/forms/edit/${formId}`,
-//     mutationKey: ["updateForm", formId],
-//     mutationOptions: {
-//       onSuccess: () => {
-//         queryClient.invalidateQueries({ queryKey: [formId] });
-//         queryClient.invalidateQueries({ queryKey: ["forms"] });
-//       },
-//     },
-//   });
-// };

@@ -306,7 +306,7 @@ export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
 
 export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
   return useCreate<FormData, ExcelImportResult>({
-    endpoint: `/responses/create-form-file?form_id=${formId}`,
+    endpoint: `/responses/create-from-file?form_id=${formId}`,
     mutationKey: ["import-responses-from-file", formId],
     headers: {
       "Content-Type": "multipart/form-data",
