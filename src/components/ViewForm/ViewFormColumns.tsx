@@ -27,41 +27,47 @@ const ViewFormColumns: React.FC<Props> = ({
   onToggleVisibility,
   onDragEnd,
 }) => {
+  const VISIBLE_COLUMNS_TEXT = `בתצוגה זו יוצגו ${visibleCount} מתוך ${columns.length} השדות`;
+
+  const tableHeaders = [
+    { key: "SHOW_COLUMN", label: "הצג" },
+    { key: "COLUMN_TITLE", label: "שדה" },
+    { key: "ORDER_COLUMN", label: "סדר" },
+  ];
+
   return (
     <Box>
       <Typography variant="subtitle2" mb={1}>
-        שדות ({visibleCount} יוצגו)
+        {VISIBLE_COLUMNS_TEXT}
       </Typography>
 
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="columns">
-          {(provided) => (
-            <ColumnsContainer ref={provided.innerRef} {...provided.droppableProps}>
-              <ColumnsHeader>
-                <ColumnHeaderItem width="60px">הצג</ColumnHeaderItem>
-                <ColumnHeaderItem flex={1}>שדה</ColumnHeaderItem>
-                <ColumnHeaderItem width="60px">סדר</ColumnHeaderItem>
-                <ColumnHeaderItem width="30px" />
+          {({ innerRef, placeholder, droppableProps }) => (
+            <ColumnsContainer ref={innerRef} {...droppableProps}>
+              <ColumnsHeader sx={{ justifyContent: "space-between" }}>
+                {tableHeaders.map(({ key, label }) => (
+                  <ColumnHeaderItem key={key}>{label}</ColumnHeaderItem>
+                ))}
               </ColumnsHeader>
-
               <List dense>
-                {columns.map((col, index) => (
-                  <Draggable key={col.columnId} draggableId={col.columnId} index={index}>
-                    {(p, s) => (
-                      <ColumnListItem ref={p.innerRef} {...p.draggableProps}>
-                        <ColumnItem $isDragging={s.isDragging}>
+                {columns.map(({ displayName, columnId, visible }, index) => (
+                  <Draggable key={columnId} draggableId={columnId} index={index}>
+                    {({ draggableProps, innerRef, dragHandleProps }, { isDragging }) => (
+                      <ColumnListItem ref={innerRef} {...draggableProps}>
+                        <ColumnItem $isDragging={isDragging}>
                           <Checkbox
-                            checked={col.visible}
-                            onChange={() => onToggleVisibility(col.columnId)}
+                            checked={visible}
+                            onChange={() => onToggleVisibility(columnId)}
                             size="small"
                           />
 
                           <ColumnInfo>
-                            <Typography variant="body2">{col.displayName}</Typography>
+                            <Typography variant="body2">{displayName}</Typography>
                           </ColumnInfo>
 
                           <OrderBadge>{index + 1}</OrderBadge>
-                          <DragHandle {...p.dragHandleProps}>
+                          <DragHandle {...dragHandleProps}>
                             <DragIndicatorIcon fontSize="small" />
                           </DragHandle>
                         </ColumnItem>
@@ -69,7 +75,7 @@ const ViewFormColumns: React.FC<Props> = ({
                     )}
                   </Draggable>
                 ))}
-                {provided.placeholder}
+                {placeholder}
               </List>
             </ColumnsContainer>
           )}

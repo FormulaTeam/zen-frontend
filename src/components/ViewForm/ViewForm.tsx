@@ -22,6 +22,8 @@ interface ViewFormProps {
   onCancel: () => void;
 }
 
+const ACTIONS_HEIGHT = 80;
+
 const ViewForm: React.FC<ViewFormProps> = ({
   form,
   user,
@@ -57,7 +59,10 @@ const ViewForm: React.FC<ViewFormProps> = ({
 
   const { hasFullAccess } = useViewPermissions({ user, permissionTypes });
 
-  const visibleColumnsCount = useMemo(() => columns.filter((c) => c.visible).length, [columns]);
+  const visibleColumnsCount = useMemo(
+    () => columns.filter((column) => column.visible).length,
+    [columns],
+  );
 
   const handleCancel = useCallback(() => {
     formLogic.handleCancel();
@@ -65,42 +70,44 @@ const ViewForm: React.FC<ViewFormProps> = ({
   }, [formLogic, onCancel]);
 
   return (
-    <Box display="flex" flexDirection="column" gap={2}>
-      <ViewFormSettings
-        formId={+(form?.id ?? 0)}
-        columns={columns}
-        hasFullAccess={hasFullAccess}
-        viewName={formLogic.viewName}
-        setViewName={formLogic.setViewName}
-        isPublic={formLogic.isPublic}
-        isDefault={formLogic.isDefault}
-        setIsDefault={formLogic.setIsDefault}
-        handleSwitchPublic={formLogic.handleSwitchPublic}
-        getSortedColumns={getSortedColumns}
-        setSortColumn={setSortColumn}
-        clearSort={clearSort}
-      />
+    <>
+      <Box flex={1} overflow="auto" pb={`${ACTIONS_HEIGHT}px`}>
+        <ViewFormSettings
+          formId={+(form?.id ?? 0)}
+          formName={form?.name ?? ""}
+          columns={columns}
+          hasFullAccess={hasFullAccess}
+          viewName={formLogic.viewName}
+          setViewName={formLogic.setViewName}
+          isPublic={formLogic.isPublic}
+          isDefault={formLogic.isDefault}
+          setIsDefault={formLogic.setIsDefault}
+          handleSwitchPublic={formLogic.handleSwitchPublic}
+          getSortedColumns={getSortedColumns}
+          setSortColumn={setSortColumn}
+          clearSort={clearSort}
+        />
 
-      <Divider />
+        <Divider sx={{ my: 2 }} />
 
-      <ViewFormColumns
-        columns={columns}
-        visibleCount={visibleColumnsCount}
-        onToggleVisibility={toggleColumnVisibility}
-        onDragEnd={handleDragEnd}
-      />
-
-      <Divider />
-
-      <ViewFormActions
-        isSaving={isSaving}
-        isCreatingNew={formLogic.isCreatingNew}
-        canSave={formLogic.hasChanges}
-        onCancel={handleCancel}
-        onApply={formLogic.handleApply}
-        onSave={formLogic.handleSaveView}
-      />
-    </Box>
+        <ViewFormColumns
+          columns={columns}
+          visibleCount={visibleColumnsCount}
+          onToggleVisibility={toggleColumnVisibility}
+          onDragEnd={handleDragEnd}
+        />
+      </Box>
+      <Box position="sticky" bottom={0} zIndex={1} bgcolor="background.paper">
+        <ViewFormActions
+          isSaving={isSaving}
+          isCreatingNew={formLogic.isCreatingNew}
+          canSave={formLogic.canSave}
+          onCancel={handleCancel}
+          onApply={formLogic.handleApply}
+          onSave={formLogic.handleSaveView}
+        />
+      </Box>
+    </>
   );
 };
 

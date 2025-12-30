@@ -9,29 +9,49 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   IconButton,
+  Tooltip,
+  Stack,
 } from "@mui/material";
-import { ArrowUpward, ArrowDownward, Clear } from "@mui/icons-material";
+import { ArrowUpward, ArrowDownward, Clear, InfoOutline, Padding } from "@mui/icons-material";
 import BaseFieldInput from "../FormFields/BaseFieldInput/BaseFieldInput";
 import CustomSwitch from "../FormFields/CustomSwitch/CustomSwitch";
 import { ViewColumn } from "../../types/interfaces/tableViews.types";
 
 interface Props {
   formId?: number;
+  formName?: string;
   columns: ViewColumn[];
   viewName: string;
-  setViewName: (v: string) => void;
+  setViewName: (viewName: string) => void;
   isPublic: boolean;
   isDefault: boolean;
-  setIsDefault: (v: boolean) => void;
+  setIsDefault: (isDefault: boolean) => void;
   hasFullAccess: boolean;
   handleSwitchPublic: (next: boolean) => void;
   getSortedColumns: () => { columnId: string; direction: "asc" | "desc" }[];
-  setSortColumn: (id: string, dir: "asc" | "desc") => void;
+  setSortColumn: (id: string, direction: "asc" | "desc") => void;
   clearSort: () => void;
+}
+
+enum HebrewTitles {
+  VIEW_NAME = "שם התצוגה:",
+  PUBLIC_VIEW = "תצוגה ציבורית",
+  DEFAULT_VIEW = "תצוגת ברירת מחדל",
+  SORT_BY = "מיון לפי:",
+  CLEAR_SORT = "בטל מיון",
+  CHOOSE_COLUMN = "בחר שדה",
+  NO_SORTING = "ללא מיון",
+  INCREASING_ORDER = "מיון בסדר עולה",
+  DECREASING_ORDER = "מיון בסדר יורד",
+  DECREASING_ORDER_TOOLTIP = "מיון הנתונים בסדר יורד (ת'-א')",
+  INCREASING_ORDER_TOOLTIP = "מיון הנתונים בסדר עולה (א'-ת')",
+  PUBLIC_VIEW_TOOLTIP = "נראית לכל המשתמשים",
+  DEFAULT_VIEW_TOOLTIP = "מוחלת אוטומטית לטופס זה",
 }
 
 const ViewFormSettings: React.FC<Props> = ({
   formId,
+  formName,
   columns,
   viewName,
   setViewName,
@@ -44,78 +64,154 @@ const ViewFormSettings: React.FC<Props> = ({
   setSortColumn,
   clearSort,
 }) => {
+  const VIEW_NAME_PLACEHOLDER = `תצוגה חדשה ב${formName}`;
   const sortedColumn = getSortedColumns()[0];
   const canEdit = Boolean(formId && hasFullAccess);
 
-  const visibleColumns = useMemo(() => columns.filter((c) => c.visible), [columns]);
+  const visibleColumns = useMemo(
+    () => columns.filter((column: ViewColumn) => column.visible),
+    [columns],
+  );
 
   return (
-    <Box>
+    <Box display="flex" flexDirection="column" gap={-0.5}>
+      <Typography variant="subtitle2">{HebrewTitles.VIEW_NAME}</Typography>
+
       <BaseFieldInput
-        label="שם התצוגה"
         value={viewName}
-        onChange={(e) => setViewName(e.target.value)}
+        onChange={(event) => setViewName(event.target.value)}
         fullWidth
-        size="small"
+        placeholder={VIEW_NAME_PLACEHOLDER}
       />
 
-      <CustomSwitch
-        value={isPublic}
-        onChangeHandler={handleSwitchPublic}
-        isDisabled={!canEdit}
-        label="תצוגה ציבורית"
-      />
+      {canEdit && (
+        <Stack spacing={-4}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography variant="subtitle1" noWrap color="text.primary">
+                {HebrewTitles.PUBLIC_VIEW}
+              </Typography>
 
-      <CustomSwitch
-        value={isDefault}
-        onChangeHandler={setIsDefault}
-        isDisabled={!canEdit || !isPublic}
-        label="תצוגת ברירת מחדל"
-      />
+              <Tooltip title={HebrewTitles.PUBLIC_VIEW_TOOLTIP}>
+                <IconButton size="small">
+                  <InfoOutline fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
 
-      <Typography variant="subtitle2" mt={2}>
-        מיון לפי:
-      </Typography>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <CustomSwitch
+                label=""
+                isDisabled={!hasFullAccess}
+                value={isPublic}
+                onChangeHandler={handleSwitchPublic}
+              />
+            </Stack>
+          </Stack>
 
-      <Box display="flex" gap={1} mt={1}>
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>בחר עמודה</InputLabel>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography variant="subtitle1" noWrap color="text.primary">
+                {HebrewTitles.DEFAULT_VIEW}
+              </Typography>
+
+              <Tooltip title={HebrewTitles.DEFAULT_VIEW_TOOLTIP}>
+                <IconButton size="small" disabled={!isPublic}>
+                  <InfoOutline fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <CustomSwitch
+                label=""
+                value={isDefault}
+                onChangeHandler={setIsDefault}
+                isDisabled={!isPublic}
+              />
+            </Stack>
+          </Stack>
+        </Stack>
+      )}
+
+      <Typography variant="subtitle2">{HebrewTitles.SORT_BY}</Typography>
+
+      <Box display="flex" flexDirection="column" gap={1}>
+        <FormControl size="small" sx={{ minWidth: 240, flexGrow: 1, direction: "rtl" }}>
+          <InputLabel sx={{ direction: "rtl" }}>{HebrewTitles.CHOOSE_COLUMN}</InputLabel>
           <Select
             value={sortedColumn?.columnId ?? ""}
-            label="בחר עמודה"
-            onChange={(e) =>
-              e.target.value ? setSortColumn(e.target.value as string, "asc") : clearSort()
-            }>
+            label={HebrewTitles.CHOOSE_COLUMN}
+            onChange={(event) =>
+              event.target.value ? setSortColumn(event.target.value as string, "asc") : clearSort()
+            }
+            sx={{ direction: "rtl" }}>
             <MenuItem value="">
-              <em>ללא מיון</em>
+              <em>{HebrewTitles.NO_SORTING}</em>
             </MenuItem>
-            {visibleColumns.map((c) => (
-              <MenuItem key={c.columnId} value={c.columnId}>
-                {c.columnId}
+            {visibleColumns.map((column: ViewColumn) => (
+              <MenuItem key={column.columnId} value={column.columnId}>
+                {column.displayName}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
-
         {sortedColumn && (
-          <>
+          <Box display="flex" gap={2} alignItems="center">
             <ToggleButtonGroup
               exclusive
-              size="small"
               value={sortedColumn.direction}
-              onChange={(_, v) => v && setSortColumn(sortedColumn.columnId, v)}>
-              <ToggleButton value="asc">
-                <ArrowUpward fontSize="small" />
-              </ToggleButton>
-              <ToggleButton value="desc">
-                <ArrowDownward fontSize="small" />
-              </ToggleButton>
+              onChange={(_, value) => value && setSortColumn(sortedColumn.columnId, value)}
+              size="small"
+              sx={{
+                border: "none",
+                "& .MuiToggleButton-root": {
+                  border: "none",
+                  textTransform: "none",
+                  px: 1.5,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  borderRadius: 0,
+                  backgroundColor: "transparent",
+                },
+                "& .MuiToggleButton-root.Mui-selected": {
+                  backgroundColor: "rgba(0,0,0,0.2)",
+                },
+                "& .MuiToggleButton-root:hover": {
+                  backgroundColor: "rgba(0,0,0,0.1)",
+                },
+              }}>
+              <Tooltip title={HebrewTitles.INCREASING_ORDER_TOOLTIP} arrow>
+                <ToggleButton value="asc">
+                  <ArrowUpward fontSize="inherit" />
+                  {HebrewTitles.INCREASING_ORDER}
+                </ToggleButton>
+              </Tooltip>
+
+              <Tooltip title={HebrewTitles.DECREASING_ORDER_TOOLTIP} arrow>
+                <ToggleButton value="desc">
+                  <ArrowDownward fontSize="inherit" />
+                  {HebrewTitles.DECREASING_ORDER}
+                </ToggleButton>
+              </Tooltip>
             </ToggleButtonGroup>
 
-            <IconButton size="small" onClick={clearSort} color="error">
-              <Clear fontSize="small" />
-            </IconButton>
-          </>
+            <Tooltip title={HebrewTitles.CLEAR_SORT} arrow>
+              <IconButton
+                size="small"
+                onClick={clearSort}
+                sx={{
+                  borderRadius: 0,
+                  padding: 1,
+                  "&:hover": {
+                    backgroundColor: "rgba(0,0,0,0.08)",
+                  },
+                }}>
+                ✕
+              </IconButton>
+            </Tooltip>
+          </Box>
         )}
       </Box>
     </Box>

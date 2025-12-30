@@ -11,6 +11,15 @@ interface Props {
   onSave: () => void;
 }
 
+enum HebrewTitles {
+  CANCEL = "ביטול",
+  APPLY = "החלה",
+  SAVE = "שמירה",
+  SAVING = "שומר...",
+  CREATE_VIEW = "יצירת תצוגה",
+  UPDATE_VIEW = "עדכון תצוגה",
+}
+
 const ViewFormActions: React.FC<Props> = ({
   isSaving,
   isCreatingNew,
@@ -22,19 +31,23 @@ const ViewFormActions: React.FC<Props> = ({
   return (
     <ViewActionsContainer>
       <Button variant="outlined" onClick={onCancel} disabled={isSaving}>
-        ביטול
+        {HebrewTitles.CANCEL}
       </Button>
 
       <Button variant="outlined" onClick={onApply} disabled={isSaving}>
-        החל
+        {HebrewTitles.APPLY}
       </Button>
 
       <Button
+        disabled={!canSave}
         variant="contained"
         onClick={onSave}
-        disabled={!canSave}
         startIcon={isSaving ? <CircularProgress size={18} /> : null}>
-        {isSaving ? "שומר..." : isCreatingNew ? "צור תצוגה" : "עדכן תצוגה"}
+        {isSaving
+          ? HebrewTitles.SAVING
+          : isCreatingNew
+          ? HebrewTitles.CREATE_VIEW
+          : HebrewTitles.UPDATE_VIEW}
       </Button>
     </ViewActionsContainer>
   );

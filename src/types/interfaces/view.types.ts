@@ -2,6 +2,7 @@ import { FormField } from "./tableViews.types";
 
 export interface ViewFormBase {
   id: string;
+  name: string;
   fields: FormField[];
 }
 

@@ -3,6 +3,29 @@ import { TableView, ViewColumn } from "../types/interfaces/tableViews.types";
 import { ViewFormBase, ViewUserBase } from "../types/interfaces/view.types";
 import { getUserName } from "../utils/utils";
 
+/* ------------------------ Utils ------------------------ */
+
+const cloneColumns = (columns: ViewColumn[]): ViewColumn[] =>
+  columns.map((column) => ({ ...column }));
+
+const areColumnsEqual = (firstColumn: ViewColumn[], secondColumn: ViewColumn[]): boolean => {
+  if (firstColumn.length !== secondColumn.length) return false;
+
+  return firstColumn.every((first, index) => {
+    const second = secondColumn[index];
+    return (
+      first.columnId === second.columnId &&
+      first.displayName === second.displayName &&
+      first.visible === second.visible &&
+      first.order === second.order &&
+      first.sortDirection === second.sortDirection &&
+      first.sortOrder === second.sortOrder
+    );
+  });
+};
+
+/* ------------------------ Types ------------------------ */
+
 interface UseViewFormLogicProps {
   currentView?: TableView;
   user?: ViewUserBase;
@@ -21,6 +44,8 @@ interface OriginalState {
   isDefault: boolean;
   columns: ViewColumn[];
 }
+
+/* ------------------------ Hook ------------------------ */
 
 export const useViewFormLogic = ({
   currentView,
@@ -41,10 +66,10 @@ export const useViewFormLogic = ({
     viewName: "",
     isPublic: false,
     isDefault: false,
-    columns: [],
+    columns: cloneColumns(columns),
   });
 
-  /* ---------------------------- Sync ---------------------------- */
+  /* ------------------------ Sync ------------------------ */
 
   useEffect(() => {
     if (!currentView) return;
@@ -53,48 +78,39 @@ export const useViewFormLogic = ({
     setViewName(currentView.name);
     setIsPublic(currentView.isPublic);
     setIsDefault(currentView.isDefault);
+
     setOriginalState({
       viewName: currentView.name,
       isPublic: currentView.isPublic,
       isDefault: currentView.isDefault,
-      columns: currentView.config.columns,
+      columns: cloneColumns(currentView.config.columns),
     });
   }, [currentView]);
 
-  /* -------------------------- Derived --------------------------- */
+  /* ------------------------ Derived ------------------------ */
 
   const hasChanges = useMemo(() => {
-    if (!currentView) return true;
+    const columnsChanged = !areColumnsEqual(columns, originalState.columns);
+    return (
+      isPublic !== originalState.isPublic || isDefault !== originalState.isDefault || columnsChanged
+    );
+  }, [isPublic, isDefault, columns, originalState]);
 
-    if (
-      viewName !== originalState.viewName ||
-      isPublic !== originalState.isPublic ||
-      isDefault !== originalState.isDefault
-    ) {
-      return true;
-    }
+  const canSave = useMemo(
+    () => !!viewName.trim() && hasChanges && !isSaving,
+    [viewName, hasChanges, isSaving],
+  );
 
-    const normalize = (cols: ViewColumn[]) =>
-      [...cols]
-        .sort((a, b) => a.columnId.localeCompare(b.columnId))
-        .map((c) => ({
-          id: c.columnId,
-          v: c.visible,
-          sd: c.sortDirection ?? null,
-          so: c.sortOrder ?? null,
-        }));
-
-    return JSON.stringify(normalize(columns)) !== JSON.stringify(normalize(originalState.columns));
-  }, [viewName, isPublic, isDefault, columns, originalState, currentView]);
-
-  /* --------------------------- Actions --------------------------- */
+  /* ------------------------ Actions ------------------------ */
 
   const handleCancel = useCallback(() => {
     setViewName(originalState.viewName);
     setIsPublic(originalState.isPublic);
     setIsDefault(originalState.isDefault);
-    resetToOriginalColumns(originalState.columns);
-    onApplyView?.(originalState.columns);
+
+    const restoredColumns = cloneColumns(originalState.columns);
+    resetToOriginalColumns(restoredColumns);
+    onApplyView?.(restoredColumns);
   }, [originalState, resetToOriginalColumns, onApplyView]);
 
   const handleApply = useCallback(() => {
@@ -120,7 +136,7 @@ export const useViewFormLogic = ({
       createdByName: getUserName(user?.firstName ?? "", user?.lastName ?? ""),
       isPublic,
       isDefault,
-      config: { columns },
+      config: { columns: cloneColumns(columns) },
       createdAt: currentView?.createdAt ?? new Date(),
       updatedAt: new Date(),
     };
@@ -129,12 +145,14 @@ export const useViewFormLogic = ({
       viewName: view.name,
       isPublic: view.isPublic,
       isDefault: view.isDefault,
-      columns: view.config.columns,
+      columns: cloneColumns(view.config.columns),
     });
 
     onSaveView(view);
     setIsCreatingNew(false);
   }, [form, viewName, user, isPublic, isDefault, columns, currentView, isCreatingNew, onSaveView]);
+
+  /* ------------------------ API ------------------------ */
 
   return {
     viewName,
@@ -144,7 +162,7 @@ export const useViewFormLogic = ({
     setIsDefault,
     isCreatingNew,
     isSaving,
-    hasChanges,
+    canSave,
     handleCancel,
     handleApply,
     handleSaveView,
