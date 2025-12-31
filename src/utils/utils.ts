@@ -356,6 +356,7 @@ export const HEBREW_TITLES = {
   isSynchronized: "סונכרן",
   edited: "תאריך שינוי",
   edited_by: 'השתנה ע"י',
+  id: "מזהה",
 };
 
 function preferredOrder(obj, order) {
