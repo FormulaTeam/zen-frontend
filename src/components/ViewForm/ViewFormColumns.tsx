@@ -14,14 +14,14 @@ import {
   ColumnListItem,
 } from "../ViewManager/styled";
 
-interface Props {
+interface ViewFormColumnsProps {
   columns: ViewColumn[];
   visibleCount: number;
   onToggleVisibility: (id: string) => void;
   onDragEnd: (result: any) => void;
 }
 
-const ViewFormColumns: React.FC<Props> = ({
+const ViewFormColumns: React.FC<ViewFormColumnsProps> = ({
   columns,
   visibleCount,
   onToggleVisibility,
@@ -30,7 +30,7 @@ const ViewFormColumns: React.FC<Props> = ({
   const VISIBLE_COLUMNS_TEXT = `בתצוגה זו יוצגו ${visibleCount} מתוך ${columns.length} השדות`;
 
   const tableHeaders = [
-    { key: "SHOW_COLUMN", label: "הצג" },
+    { key: "SHOW_COLUMN", label: "הצגה" },
     { key: "COLUMN_TITLE", label: "שדה" },
     { key: "ORDER_COLUMN", label: "סדר" },
   ];
@@ -59,14 +59,13 @@ const ViewFormColumns: React.FC<Props> = ({
                           <Checkbox
                             checked={visible}
                             onChange={() => onToggleVisibility(columnId)}
-                            size="small"
                           />
 
                           <ColumnInfo>
                             <Typography variant="body2">{displayName}</Typography>
                           </ColumnInfo>
 
-                          <OrderBadge>{index + 1}</OrderBadge>
+                          <OrderBadge >{index + 1}</OrderBadge>
                           <DragHandle {...dragHandleProps}>
                             <DragIndicatorIcon fontSize="small" />
                           </DragHandle>

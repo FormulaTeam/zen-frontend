@@ -2,7 +2,7 @@ import React from "react";
 import { Button, CircularProgress } from "@mui/material";
 import { ViewActionsContainer } from "../ViewManager/styled";
 
-interface Props {
+interface ViewFormActionsProps {
   isSaving: boolean;
   isCreatingNew: boolean;
   canSave: boolean;
@@ -20,7 +20,7 @@ enum HebrewTitles {
   UPDATE_VIEW = "עדכון תצוגה",
 }
 
-const ViewFormActions: React.FC<Props> = ({
+const ViewFormActions: React.FC<ViewFormActionsProps> = ({
   isSaving,
   isCreatingNew,
   canSave,

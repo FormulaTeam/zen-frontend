@@ -22,7 +22,7 @@ interface ViewFormProps {
   onCancel: () => void;
 }
 
-const ACTIONS_HEIGHT = 80;
+const ACTIONS_HEIGHT = 10;
 
 const ViewForm: React.FC<ViewFormProps> = ({
   form,
@@ -71,7 +71,7 @@ const ViewForm: React.FC<ViewFormProps> = ({
 
   return (
     <>
-      <Box flex={1} overflow="auto" pb={`${ACTIONS_HEIGHT}px`}>
+      <Box overflow="auto" pb={`${ACTIONS_HEIGHT}px`}>
         <ViewFormSettings
           formId={+(form?.id ?? 0)}
           formName={form?.name ?? ""}

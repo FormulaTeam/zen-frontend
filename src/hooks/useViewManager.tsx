@@ -77,6 +77,7 @@ export const useViewManager = ({
       if (!form) return;
 
       setIsSaving(true);
+      
       try {
         const payload: TableView = {
           ...view,

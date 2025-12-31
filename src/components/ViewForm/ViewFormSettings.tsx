@@ -17,7 +17,7 @@ import BaseFieldInput from "../FormFields/BaseFieldInput/BaseFieldInput";
 import CustomSwitch from "../FormFields/CustomSwitch/CustomSwitch";
 import { ViewColumn } from "../../types/interfaces/tableViews.types";
 
-interface Props {
+interface ViewFormSettingsProps {
   formId?: number;
   formName?: string;
   columns: ViewColumn[];
@@ -49,7 +49,7 @@ enum HebrewTitles {
   DEFAULT_VIEW_TOOLTIP = "מוחלת אוטומטית לטופס זה",
 }
 
-const ViewFormSettings: React.FC<Props> = ({
+const ViewFormSettings: React.FC<ViewFormSettingsProps> = ({
   formId,
   formName,
   columns,
@@ -75,7 +75,10 @@ const ViewFormSettings: React.FC<Props> = ({
 
   return (
     <Box display="flex" flexDirection="column" gap={-0.5}>
-      <Typography variant="subtitle2">{HebrewTitles.VIEW_NAME}</Typography>
+      <Typography variant="subtitle2">
+        {!viewName && <span style={{ color: "rgba(200, 0, 0, 0.9)" }}>✱ </span>}
+        {HebrewTitles.VIEW_NAME}
+      </Typography>
 
       <BaseFieldInput
         value={viewName}
@@ -137,18 +140,19 @@ const ViewFormSettings: React.FC<Props> = ({
       <Typography variant="subtitle2">{HebrewTitles.SORT_BY}</Typography>
 
       <Box display="flex" flexDirection="column" gap={1}>
-        <FormControl size="small" sx={{ minWidth: 240, flexGrow: 1, direction: "rtl" }}>
-          <InputLabel sx={{ direction: "rtl" }}>{HebrewTitles.CHOOSE_COLUMN}</InputLabel>
+        <FormControl size="small" sx={{ minWidth: 240, flexGrow: 1 }}>
+          <InputLabel>{HebrewTitles.CHOOSE_COLUMN}</InputLabel>
+
           <Select
             value={sortedColumn?.columnId ?? ""}
             label={HebrewTitles.CHOOSE_COLUMN}
             onChange={(event) =>
               event.target.value ? setSortColumn(event.target.value as string, "asc") : clearSort()
-            }
-            sx={{ direction: "rtl" }}>
+            }>
             <MenuItem value="">
               <em>{HebrewTitles.NO_SORTING}</em>
             </MenuItem>
+
             {visibleColumns.map((column: ViewColumn) => (
               <MenuItem key={column.columnId} value={column.columnId}>
                 {column.displayName}
@@ -156,6 +160,7 @@ const ViewFormSettings: React.FC<Props> = ({
             ))}
           </Select>
         </FormControl>
+
         {sortedColumn && (
           <Box display="flex" gap={2} alignItems="center">
             <ToggleButtonGroup
