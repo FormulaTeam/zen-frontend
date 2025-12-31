@@ -202,7 +202,8 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
 
     return (
       <Box key={`child-form-${formField.connectedFormId}`}>
-        {childFormData.children.map(
+        {
+           childFormData.children.map(
           (child, index) =>
             childFormData.shown && (
               <ConnectedFormSection
@@ -226,7 +227,8 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
                 shouldLoad={isSaving}
               />
             ),
-        )}
+            )
+            }
         {!isLoading && !viewMode && (
           <Button
             variant="text"
