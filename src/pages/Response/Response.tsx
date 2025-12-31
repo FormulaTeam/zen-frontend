@@ -247,8 +247,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
     );
   };
 
-  const sortedSections = useMemo(
-    () =>
+  const sortedSections = useMemo(() =>
       Object.entries(responsSections).sort(([idA, a], [idB, b]) => {
         const orderA = a.fields[0]?.sectionOrder ?? 0;
         const orderB = b.fields[0]?.sectionOrder ?? 0;
