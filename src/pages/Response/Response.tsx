@@ -253,9 +253,8 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
         const orderB = b.fields[0]?.sectionOrder ?? 0;
 
         return orderA === orderB ? idA.localeCompare(idB) : orderA - orderB;
-      }),
-    [responsSections],
-  );
+      }
+      ),[responsSections]);
 
   return (
     <div className="response-page">
