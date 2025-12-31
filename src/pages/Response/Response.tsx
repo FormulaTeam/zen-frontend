@@ -147,9 +147,9 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
   }, [childForms, childFormsValidate]);
 
   const onBack = () => {
-    location.state?.parentFormId
-      ? navigate(`/responses/${location.state.parentFormId}`, {})
-      : form && navigate(`/responses/${form.id}`);
+    location.state?.parentFormId ?
+       navigate(`/responses/${location.state.parentFormId}`, {}) :
+       (form && navigate(`/responses/${form.id}`));
   };
 
   const onEdit = () => navigate(`/response/edit/${formId}/${id}`);
