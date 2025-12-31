@@ -73,7 +73,10 @@ const MainSortSelect: React.FC<MainSortSelectProps> = ({ setFormsData, setPage, 
             size="small"
             name="placeholder"
             value={sortByOption || ""}
-            data-testid={dataTestId}
+            inputProps={{
+              ...params.inputProps,
+              'data-testid': dataTestId,
+            }}
           />
         )}
       />
