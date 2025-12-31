@@ -54,7 +54,7 @@ const Navbar = ({ handleSearch, searchValue }) => {
               bgColor={theme.palette.background.paper}
               hoverColor={theme.palette.background.paper}
               icon={<AddIcon />}
-              title="יצירת טופס חדש"
+              title="טופס חדש"
             />
           )}
 

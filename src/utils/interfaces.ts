@@ -180,7 +180,7 @@ export type NewForm = Omit<Form, "id" | "created" | "edited" | "permissions">;
 export interface UpdateFormPayload {
   id: number;
   formData: Partial<Form>;
-  
+
   isUpdateMetro?: boolean;
 }
 
@@ -843,5 +843,10 @@ export const ALLOWED_FIELD_TYPES_FOR_CONDITION: number[] = [
   FieldTypeIds.checkbox,
 ];
 
-export type Row = { [key: string]: string } | null;
-
+export interface Row {
+  id: number;
+  edited?: string;
+  editedByName?: string;
+  parentResponse?: string;
+  [key: string]: unknown;
+}

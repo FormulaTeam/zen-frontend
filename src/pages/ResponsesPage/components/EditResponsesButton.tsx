@@ -19,46 +19,50 @@ export const EditResponsesButton = ({
     onToggleEditMode,
     onSaveChanges,
 }: EditResponsesButtonProps) => {
+    const enterEditModeButton: JSX.Element = (
+        <Tooltip title="עריכה מהירה">
+            <Button
+                variant="outlined"
+                size="small"
+                startIcon={<EditIcon />}
+                onClick={onToggleEditMode}
+            >
+                עריכת תגובות
+            </Button>
+        </Tooltip>
+    );
+
+    const editModeActions: JSX.Element = (
+        <>
+            <Tooltip title="שמור שינויים">
+                <Button
+                    variant="contained"
+                    size="small"
+                    color="primary"
+                    startIcon={<SaveIcon />}
+                    onClick={onSaveChanges}
+                    disabled={editedRowsCount === 0 || isUpdating}
+                >
+                    {isUpdating ? "שומר..." : "שמור"}
+                </Button>
+            </Tooltip>
+            <Tooltip title="בטל עריכה">
+                <Button
+                    variant="outlined"
+                    size="small"
+                    color="error"
+                    startIcon={<CancelIcon />}
+                    onClick={onToggleEditMode}
+                >
+                    בטל
+                </Button>
+            </Tooltip>
+        </>
+    );
+
     return (
         <EditButtonWrapper>
-            {!isInEditMode ? (
-                <Tooltip title="עריכה מהירה">
-                    <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<EditIcon />}
-                        onClick={onToggleEditMode}
-                    >
-                        עריכת תגובות
-                    </Button>
-                </Tooltip>
-            ) : (
-                <>
-                    <Tooltip title="שמור שינויים">
-                        <Button
-                            variant="contained"
-                            size="small"
-                            color="primary"
-                            startIcon={<SaveIcon />}
-                            onClick={onSaveChanges}
-                            disabled={editedRowsCount === 0 || isUpdating}
-                        >
-                            {isUpdating ? "שומר..." : "שמור"}
-                        </Button>
-                    </Tooltip>
-                    <Tooltip title="בטל עריכה">
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            color="error"
-                            startIcon={<CancelIcon />}
-                            onClick={onToggleEditMode}
-                        >
-                            בטל
-                        </Button>
-                    </Tooltip>
-                </>
-            )}
+            {isInEditMode ? editModeActions : enterEditModeButton}
         </EditButtonWrapper>
     );
 };

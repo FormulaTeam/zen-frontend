@@ -1,6 +1,4 @@
 import { createTheme, responsiveFontSizes } from "@mui/material";
-import { heIL } from "@mui/x-data-grid-pro/locales";
-import { heIL as coreHeIL } from "@mui/material/locale";
 
 const fontRegular = {
   fontFamily: "assistant",
@@ -57,31 +55,27 @@ const palette = {
   tableHeader: "#d5e6f6",
 };
 
-export let theme = createTheme(
-  {
-    direction: "rtl",
-    typography: {
-      fontFamily: "assistant, sans-serif",
-      fontSize: 19,
-    },
-    palette,
-    components: {},
-    borders: {
-      base: "0px",
-      lg: "8px",
-      color: "#dcdcdc",
-    },
-    scrollBar: {
-      width: "3px",
-      height: "5px",
-      color: "#c3c0c0",
-      borderRadius: "9999px",
-    },
-    darkPaper: "#f1f1f14d",
+export let theme = createTheme({
+  direction: "rtl",
+  typography: {
+    fontFamily: "assistant, sans-serif",
+    fontSize: 19,
   },
-  coreHeIL,
-  heIL,
-);
+  palette,
+  components: {},
+  borders: {
+    base: "0px",
+    lg: "8px",
+    color: "#dcdcdc",
+  },
+  scrollBar: {
+    width: "3px",
+    height: "5px",
+    color: "#c3c0c0",
+    borderRadius: "9999px",
+  },
+  darkPaper: "#f1f1f14d",
+});
 
 // moved components overrides so we can use palette default colors in overrides styles
 theme.components = {
@@ -234,7 +228,7 @@ theme.components = {
         "& .MuiSwitch-track": {
           borderRadius: 22 / 2,
           "&::before, &::after": {
-            content: '""',
+            content: "\"\"",
             position: "absolute",
             top: "50%",
             transform: "translateY(-50%)",
@@ -291,7 +285,6 @@ theme.components = {
   MuiAutocomplete: {
     styleOverrides: {
       root: {
-        direction: "rtl",
         zIndex: 1000,
         "&.MuiInputBase-input": { direction: "rtl", marginTop: "5px" },
         "&.MuiAutocomplete-root .MuiOutlinedInput-root": {
@@ -310,6 +303,13 @@ theme.components = {
     styleOverrides: {
       root: {
         color: theme.palette.text.primary,
+      },
+    },
+  },
+  MuiSelect: {
+    defaultProps: {
+      MenuProps: {
+        disableScrollLock: true,
       },
     },
   },

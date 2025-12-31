@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { Filter, Form, ResponseForm, Row } from "../../../utils/interfaces";
 import { LegacyPermission } from "../../../utils/utils";
-import { FormFieldsMapResponse } from "../../../api/responsesApi";
 
 interface FormsState {
   form: Form | null;
@@ -14,8 +13,6 @@ interface FormsState {
   setFilter: (filter: Filter | null) => void;
   rows: Row[];
   setRows: (rows: Row[]) => void;
-  formFieldsMap: FormFieldsMapResponse | null;
-  setFormFieldsMap: (formFieldsMap: FormFieldsMapResponse | null) => void;
   isRowsLoading?: boolean;
 }
 
@@ -30,8 +27,6 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
   setFilter: (filter: Filter | null) => set({ filter }),
   rows: [],
   setRows: (rows: Row[]) => set({ rows }),
-  formFieldsMap: null,
-  setFormFieldsMap: (formFieldsMap: FormFieldsMapResponse | null) => set({ formFieldsMap }),
 }));
 
 export function useFormStore() {
@@ -52,8 +47,6 @@ export function useFormStore() {
     setFilter: store.setFilter,
     rows: store.rows,
     setRows: store.setRows,
-    formFieldsMap: store.formFieldsMap,
-    setFormFieldsMap: store.setFormFieldsMap,
     isRowsLoading: store.isRowsLoading,
   };
 }

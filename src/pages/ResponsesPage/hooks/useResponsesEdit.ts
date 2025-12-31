@@ -2,19 +2,28 @@ import { useState } from "react";
 import { GridRowModel } from "@mui/x-data-grid-pro";
 import { showSuccessNotification, showErrorNotification } from "../../../utils/utils";
 import { useBatchUpdateResponses, useGetResponses } from "../../../api/responsesApi";
-import { useInitiateFormStore } from "../stores/form.store";
+import { useFormStore } from "../stores/form.store";
 import { useAuth } from "../../../contexts/AuthContext";
+import { ResponseFieldValue, Row } from "../../../utils/interfaces";
+import {
+  CustomError,
+  NoUnsavedChangesError,
+  NoResponsesFoundError,
+  FormNotLoadedError,
+  NoValidChangesError,
+  SaveFailedError,
+} from "../../../errors";
 
 export const useResponsesEdit = () => {
-  const store = useInitiateFormStore();
+  const { form, rows, setRows, filter } = useFormStore();
   const { user } = useAuth();
 
   const [isInEditMode, setIsInEditMode] = useState(false);
-  const [editedRows, setEditedRows] = useState<Map<string, any>>(new Map());
-  const [localRows, setLocalRows] = useState<any[]>([]);
+
+  const [editedRows, setEditedRows] = useState<Map<number, Row>>(new Map());
+  const [localRows, setLocalRows] = useState<Row[]>([]);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  const { form, rows, setRows, filter } = store;
 
   const { data: fullResponses } = useGetResponses({
     filter: { ...filter, form_id: form?.id },
@@ -24,189 +33,148 @@ export const useResponsesEdit = () => {
     formId: form?.id || 0,
   });
 
-  // If form hasn't loaded yet, return default no-op handlers
-  if (!store.form) {
-    return {
-      isInEditMode: false,
-      setIsInEditMode: () => { },
-      editedRows: new Map(),
-      setEditedRows: () => { },
-      localRows: [],
-      setLocalRows: () => { },
-      isUpdating: false,
-      showCancelDialog: false,
-      handleToggleEditMode: () => { },
-      handleCellEditStart: () => { },
-      handleProcessRowUpdate: (newRow: GridRowModel) => newRow,
-      handleSaveChanges: async () => { },
-      handleConfirmCancel: () => { },
-      handleCancelDialogClose: () => { },
-    };
-  }
+  const responseRows: Row[] = rows?.filter((row) => row != null) || [];
+  const hasUnsavedChanges: boolean = editedRows.size > 0;
 
-  const responsesRows = Array.isArray(rows)
-    ? rows.reduce((rows, currRow: any) => {
-      const id =
-        currRow?.id ??
-        currRow?._id ??
-        currRow?.responseId ??
-        `${currRow?.formId ?? ""}-${currRow?.responseId ?? currRow?._id ?? currRow?.id}`;
-      if (!rows._seen.has(id)) {
-        rows._seen.add(id);
-        rows.list.push(currRow);
-      }
-      return rows;
-    }, { _seen: new Set<string>(), list: [] as any[] }).list
-    : [];
+  const toggleEditMode = (): void => {
+    if (isInEditMode && hasUnsavedChanges) {
+      setShowCancelDialog(true);
 
-  const handleToggleEditMode = (): void => {
-    if (isInEditMode) {
-      if (editedRows.size > 0) {
-        setShowCancelDialog(true);
-        return; // Show dialog and wait for user response
-      }
-
-      // No changes, exit directly
-      setEditedRows(new Map());
-      setLocalRows(responsesRows);
     } else {
-      setLocalRows([...responsesRows]);
+      const nextEditMode: boolean = !isInEditMode;
+
+      setIsInEditMode(nextEditMode);
+      setEditedRows(new Map());
+      setLocalRows(nextEditMode ? [...responseRows] : responseRows);
     }
-    setIsInEditMode(!isInEditMode);
   };
 
-  const handleConfirmCancel = (): void => {
+  const confirmCancel = (): void => {
     setEditedRows(new Map());
-    setLocalRows(responsesRows);
+    setLocalRows(responseRows);
     setIsInEditMode(false);
     setShowCancelDialog(false);
   };
 
-  const handleCancelDialogClose = (): void => {
+  const closeCancelDialog = (): void => {
     setShowCancelDialog(false);
   };
 
-  const handleCellEditStart = () => {
+  const startCellEdit = (): void => {
     if (!isInEditMode) {
       setIsInEditMode(true);
-      setLocalRows([...responsesRows]);
+      setLocalRows([...responseRows]);
     }
   };
 
-  const handleProcessRowUpdate = (newRow: GridRowModel, oldRow: GridRowModel) => {
-    setLocalRows((prevRows) =>
-      prevRows.map((row) => {
-        const rowId = row.id ?? row._id ?? row.responseId;
-        const newRowId = newRow.id ?? newRow._id ?? newRow.responseId;
-        return String(rowId) === String(newRowId) ? { ...row, ...newRow } : row;
-      })
+  const processRowUpdate = (newRow: GridRowModel, oldRow: GridRowModel): GridRowModel => {
+    const newRowId: number = newRow.id
+
+    if (Number.isNaN(newRowId)) {
+      return newRow;
+    }
+
+    setLocalRows((prevRows: Row[]) =>
+      prevRows.map((row: Row) => row?.id === newRowId ? ({ ...row, ...newRow }) : row)
     );
 
-    const rowId = newRow.id ?? newRow._id ?? newRow.responseId;
-    setEditedRows((prev) => {
-      const updated = new Map(prev);
-      updated.set(String(rowId), newRow);
-      return updated;
-    });
+    setEditedRows((prevEditedRows: Map<number, Row>) => new Map(prevEditedRows).set(newRowId, newRow as Row));
 
     return newRow;
   };
 
-  const handleSaveChanges = async () => {
-    if (editedRows.size === 0) {
-      showSuccessNotification("אין שינויים לשמירה");
-      return;
+
+  const buildResponseUpdatePayload = (rowId: number, editedRow: Partial<Row>) => {
+    const original = fullResponses?.find((r) => Number(r?.id) === rowId);
+    if (!original) {
+      return null;
     }
 
-    if (!fullResponses || fullResponses.length === 0) {
-      showErrorNotification("לא נמצאו תגובות לעדכון");
-      return;
-    }
+    const columnToUniqueId = new Map<string, string>();
+    form?.columns?.forEach((col: any) => {
+      const matchingField = form.fields?.find(
+        (field) => field.displayName === col.field || field.name === col.field
+      );
+      if (matchingField?.uniqueId) {
+        columnToUniqueId.set(col.field, matchingField.uniqueId);
+      }
+    });
 
-    if (!form) {
-      showErrorNotification("טופס לא נטען");
-      return;
-    }
+    const updatedData: ResponseFieldValue[] = original.data.map((field) => {
+      const columnField = Array.from(columnToUniqueId.entries())?.find(
+        ([_, uid]) => uid === field.uniqueId
+      )?.[0];
 
+      if (columnField && editedRow.hasOwnProperty(columnField)) {
+        return { ...field, value: editedRow[columnField] };
+      }
+      return field;
+    });
+
+    return {
+      id: rowId,
+      responseData: {
+        ...original,
+        data: updatedData,
+        edited_by: user?.upn?.toLowerCase() || original.edited_by,
+        edited_by_name: user?.displayName || original.edited_by_name,
+      },
+    };
+  };
+
+
+  const saveChanges = async (): Promise<void> => {
     try {
-      const updatesToSend = Array.from(editedRows.entries()).map(([rowId, editedRowData]) => {
-        const originalResponse = fullResponses?.find((r) => String(r.id) === String(rowId));
-
-        if (!originalResponse || !form) {
-          return null;
-        }
-
-        const uniqueIdToColumnField = new Map();
-        form.columns?.forEach((col: any) => {
-          const field = form.fields?.find(f =>
-            f.displayName === col.field || f.name === col.field
-          );
-          if (field && field.uniqueId) {
-            uniqueIdToColumnField.set(field.uniqueId, col.field);
-          }
-        });
-
-        const updatedData: any = {
-          ...originalResponse,
-          edited_by: user?.upn?.toLowerCase() || originalResponse.edited_by,
-          edited_by_name: user?.displayName || originalResponse.edited_by_name,
-          data: originalResponse.data.map((field) => {
-            const columnFieldName = uniqueIdToColumnField.get(field.uniqueId);
-            if (columnFieldName && editedRowData.hasOwnProperty(columnFieldName)) {
-              return {
-                ...field,
-                value: editedRowData[columnFieldName],
-              };
-            }
-            return field;
-          }),
-        };
-
-        Object.entries(editedRowData).forEach(([fieldName, newValue]) => {
-          if (fieldName !== 'id' && fieldName !== '_id' && fieldName !== 'responseId' &&
-            fieldName !== 'editedByName' && fieldName !== 'edited' &&
-            fieldName !== 'sync' && fieldName !== 'expand' && fieldName !== 'parentResponse') {
-            updatedData[fieldName] = typeof newValue === "object" ? JSON.stringify(newValue) : newValue;
-          }
-        });
-
-        return {
-          id: Number(originalResponse.id),
-          responseData: updatedData,
-        };
-      }).filter((item): item is { id: number; responseData: any } => item !== null && !isNaN(item.id));
-
-      if (updatesToSend.length === 0) {
-        showErrorNotification("לא נמצאו שינויים תקינים לשמירה");
-        return;
+      if (!hasUnsavedChanges) {
+        throw new NoUnsavedChangesError();
+      }
+      if (!fullResponses?.length) {
+        throw new NoResponsesFoundError();
+      }
+      if (!form) {
+        throw new FormNotLoadedError();
       }
 
-      await batchUpdateResponses(updatesToSend);
+      const updatesToSend = Array.from(editedRows.entries())
+        .map(([rowId, editedRow]) => buildResponseUpdatePayload(rowId, editedRow))
+        .filter((updatedRow) => updatedRow !== null);
+
+      if (updatesToSend.length === 0) {
+        throw new NoValidChangesError();
+      }
+
+      await batchUpdateResponses(updatesToSend as any);
+
       setRows(localRows);
       setEditedRows(new Map());
       setIsInEditMode(false);
 
       showSuccessNotification(`נשמרו ${editedRows.size} שינויים בהצלחה!`);
     } catch (error) {
-      console.error("Error saving changes:", error);
-      showErrorNotification("שגיאה בשמירת השינויים");
+      if (error instanceof CustomError) {
+        if (error instanceof NoUnsavedChangesError) {
+          showSuccessNotification(error.message);
+        } else {
+          showErrorNotification(error.message);
+        }
+      } else {
+        console.error("Error saving changes:", error);
+        showErrorNotification(new SaveFailedError().message);
+      }
     }
   };
 
   return {
     isInEditMode,
-    setIsInEditMode,
-    editedRows,
-    setEditedRows,
+    editedRowsCount: editedRows.size,
     localRows,
-    setLocalRows,
     isUpdating,
     showCancelDialog,
-    handleToggleEditMode,
-    handleCellEditStart,
-    handleProcessRowUpdate,
-    handleSaveChanges,
-    handleConfirmCancel,
-    handleCancelDialogClose,
+    handleToggleEditMode: toggleEditMode,
+    handleCellEditStart: startCellEdit,
+    handleProcessRowUpdate: processRowUpdate,
+    handleSaveChanges: saveChanges,
+    handleConfirmCancel: confirmCancel,
+    handleCancelDialogClose: closeCancelDialog,
   };
 };

@@ -26,21 +26,7 @@ export default function ResponsesPage({
   roles,
 }: ResponsesPageProps) {
   const { id: formId } = useParams<string>();
-  const { isLoading, isError } = useFormLoader(formId || ""); // try to fix later
-
-  const {
-    isInEditMode,
-    editedRows,
-    localRows,
-    isUpdating,
-    showCancelDialog,
-    handleToggleEditMode,
-    handleCellEditStart,
-    handleProcessRowUpdate,
-    handleSaveChanges,
-    handleConfirmCancel,
-    handleCancelDialogClose,
-  } = useResponsesEdit();
+  const { isLoading, isError } = useFormLoader(formId || "");
 
   if (isLoading) {
     return (
@@ -54,6 +40,24 @@ export default function ResponsesPage({
     return <div>Error loading form data.</div>;
   }
 
+  return <ResponsesPageContent />;
+}
+
+const ResponsesPageContent = (): JSX.Element => {
+  const {
+    isInEditMode,
+    editedRowsCount,
+    localRows,
+    isUpdating,
+    showCancelDialog,
+    handleToggleEditMode,
+    handleCellEditStart,
+    handleProcessRowUpdate,
+    handleSaveChanges,
+    handleConfirmCancel,
+    handleCancelDialogClose,
+  } = useResponsesEdit();
+
   return (
     <PageWrapper>
       <MainContentWrapper>
@@ -64,7 +68,7 @@ export default function ResponsesPage({
         </TopSection>
         <EditResponsesButton
           isInEditMode={isInEditMode}
-          editedRowsCount={editedRows.size}
+          editedRowsCount={editedRowsCount}
           isUpdating={isUpdating}
           onToggleEditMode={handleToggleEditMode}
           onSaveChanges={handleSaveChanges}

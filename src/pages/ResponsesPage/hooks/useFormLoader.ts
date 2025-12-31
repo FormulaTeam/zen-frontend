@@ -1,10 +1,10 @@
 import { useEffect } from "react";
-import { useGetForm, useGetResponses, useGetResponsesRows, useGetFormFieldsMap } from "../../../api";
+import { useGetForm, useGetResponses, useGetResponsesRows } from "../../../api";
 import { useInitiateFormStore } from "../stores/form.store";
 import { FieldTypeIds } from "../../../utils/interfaces";
 
 export function useFormLoader(formId: string) {
-  const { form, setForm, setPermissions, setRows, setFormFieldsMap, filter } = useInitiateFormStore();
+  const { form, setForm, setPermissions, setRows, filter } = useInitiateFormStore();
 
   const {
     data: formData,
@@ -20,23 +20,12 @@ export function useFormLoader(formId: string) {
     filter: { ...filter, form_id: parseInt(formId) },
   });
 
-  const { data: formFieldsMapData } = useGetFormFieldsMap({
-    filter: { ...filter, form_id: parseInt(formId) },
-  });
-
   useEffect(() => {
     if (responsesRowsData && isSuccess) {
       setRows(responsesRowsData);
       console.log("Responses loaded:", responsesRowsData);
     }
   }, [responsesRowsData, setRows, isSuccess]);
-
-  useEffect(() => {
-    if (formFieldsMapData && isSuccess) {
-      setFormFieldsMap(formFieldsMapData);
-      console.log("Form fields map loaded:", formFieldsMapData);
-    }
-  }, [formFieldsMapData, isSuccess, setFormFieldsMap]);
 
   useEffect(() => {
     if (formData && isSuccess) {

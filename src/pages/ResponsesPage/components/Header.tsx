@@ -6,6 +6,7 @@ import { TitleWrapper } from "../styled";
 
 const Header = () => {
   const { form, rows } = useFormStore();
+
   return (
     <Box>
       <TitleWrapper>

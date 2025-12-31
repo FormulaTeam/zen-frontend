@@ -1,5 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
-import { ContentContainer, MainContent, StyledDataGrid } from "../styled";
+import React, { useState, useCallback } from "react";
 import {
   useGridApiRef,
   GridPreferencePanelsValue,
@@ -7,10 +6,9 @@ import {
   GridCellParams,
   GridCellModesModel,
   GridCellModes,
-  GridRenderEditCellParams,
 } from "@mui/x-data-grid-pro";
 import { useFormStore } from "../stores/form.store";
-import { Box, Checkbox, IconButton, TextField, Tooltip } from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
@@ -21,17 +19,14 @@ import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrow
 import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp";
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "../../../components/formInForm/ZoomCell";
-import { FieldTypeIds, Row } from "../../../utils/interfaces";
-import { FormFieldsMapResponse } from "../../../api/responsesApi";
-
-import FormFieldRenderer from "../../../components/Responses/FormFieldRenderer";
-
+import { Row } from "../../../utils/interfaces";
+import { ContentContainer, MainContent, StyledDataGrid } from "../styled";
 
 interface ResponsesTableProps {
   isInEditMode: boolean;
-  localRows: any[];
+  localRows: Row[];
   handleProcessRowUpdate: (newRow: GridRowModel, oldRow: GridRowModel) => GridRowModel;
-  onCellEditStart?: () => void;
+  onCellEditStart: () => void;
 }
 
 export const ResponsesTable = ({
@@ -40,190 +35,14 @@ export const ResponsesTable = ({
   handleProcessRowUpdate,
   onCellEditStart,
 }: ResponsesTableProps) => {
-  const { form, rows, formFieldsMap } = useFormStore();
+  const { form, rows } = useFormStore();
   const apiRef = useGridApiRef();
   const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
   const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
 
-  type ColumnFieldMeta = {
-    uniqueId: string;
-    displayName?: string;
-    name?: string;
-    typeId: number;
-  };
-
-  type EditableFieldTypeId = number;
-
-  type FormFieldLike = {
-    uniqueId: string;
-    displayName: string;
-    typeId: number;
-    required?: boolean;
-    options?: string[];
-    multiSelect?: boolean;
-    validationRegex?: string;
-    coordinateType?: string;
-    numberType?: string;
-    minValue?: number;
-    maxValue?: number;
-    defaultValue?: string;
-    dateAndTime?: boolean;
-  };
-
-  const fieldMetaByColumnKey = useMemo(() => {
-    const index = new Map<string, ColumnFieldMeta>();
-
-    const typedMap = formFieldsMap as FormFieldsMapResponse | null;
-    const fields = typedMap?.fields ?? [];
-
-    fields.forEach((field) => {
-      const meta: ColumnFieldMeta = {
-        uniqueId: field.uniqueId,
-        displayName: field.displayName,
-        // `name` isn't included in the current API type. If you add it later in the backend,
-        // extend `FormFieldsMapResponse` and it'll flow through here.
-        name: undefined,
-        typeId: field.typeId,
-      };
-
-      // DataGrid columns currently use the display name as `field`.
-      if (meta.displayName) {
-        index.set(meta.displayName, meta);
-      }
-    });
-
-    return index;
-  }, [formFieldsMap]);
-
-  const formFieldByColumnKey = useMemo(() => {
-    const index = new Map<string, FormFieldLike>();
-
-    // Prefer using the full `form.fields` when available, because it contains important
-    // configuration like options/multiSelect/required/etc.
-    const formFields = (form?.fields ?? []) as unknown as Array<Partial<FormFieldLike> & { uniqueId: string }>;
-
-    formFields.forEach((field) => {
-      if (!field.displayName) {
-        return;
-      }
-
-      index.set(field.displayName, {
-        uniqueId: field.uniqueId,
-        displayName: field.displayName,
-        typeId: field.typeId ?? 0,
-        required: field.required,
-        options: field.options as string[] | undefined,
-        multiSelect: field.multiSelect,
-        validationRegex: field.validationRegex,
-        coordinateType: field.coordinateType,
-        numberType: field.numberType,
-        minValue: field.minValue,
-        maxValue: field.maxValue,
-        defaultValue: field.defaultValue,
-        dateAndTime: field.dateAndTime,
-      });
-    });
-
-    // Fill any missing fields with the light-weight API map (typeId + ids)
-    const typedMap = formFieldsMap as FormFieldsMapResponse | null;
-    const mapFields = typedMap?.fields ?? [];
-    mapFields.forEach((field) => {
-      if (!field.displayName) {
-        return;
-      }
-      if (index.has(field.displayName)) {
-        return;
-      }
-      index.set(field.displayName, {
-        uniqueId: field.uniqueId,
-        displayName: field.displayName,
-        typeId: field.typeId,
-      });
-    });
-
-    return index;
-  }, [form?.fields, formFieldsMap]);
-
-  const setEditCellValue = useCallback(
-    (params: GridRenderEditCellParams, newValue: unknown) => {
-      apiRef.current?.setEditCellValue({
-        id: params.id,
-        field: params.field,
-        value: newValue,
-      });
-    },
-    [apiRef],
-  );
-
-  const renderEditCellWithFormFieldRenderer = useCallback(
-    (params: GridRenderEditCellParams) => {
-      const formField = formFieldByColumnKey.get(params.field);
-      if (!formField) {
-        return (
-          <TextField
-            variant="standard"
-            fullWidth
-            value={(params.value as string | null | undefined) ?? ""}
-            onChange={(e) => setEditCellValue(params, e.target.value)}
-            InputProps={{ disableUnderline: true }}
-            sx={{ px: 1 }}
-          />
-        );
-      }
-
-      // Minimal maps expected by FormFieldRenderer
-      const formFieldsByIdMap = new Map<string, any>([[formField.uniqueId, { ...formField }]]);
-      const formFieldsValuesMap = new Map<string, any>([[formField.uniqueId, params.value]]);
-
-      let initialValid: any = true;
-      if (formField.typeId === FieldTypeIds.link) {
-        initialValid = { link: true, linkTxt: true };
-      } else if (formField.typeId === FieldTypeIds.location) {
-        initialValid = { x: true, y: true };
-      }
-      const formFieldsValidMap = new Map<string, any>([[formField.uniqueId, initialValid]]);
-
-      const cellFieldOptions = formField.typeId === FieldTypeIds.options ? { [formField.uniqueId]: [] } : {};
-
-      return (
-        <Box sx={{ zoom: 0.9, display: "flex", alignItems: "center", minHeight: "60px", width: "100%" }}>
-          <FormFieldRenderer
-            formField={formField as any}
-            formFieldsByIdMap={formFieldsByIdMap}
-            formFieldsValuesMap={formFieldsValuesMap}
-            formFieldsValidMap={formFieldsValidMap}
-            onChangeHandler={(newValue: any, _uniqueId: string, _valid: any) => {
-              setEditCellValue(params, newValue);
-            }}
-            viewMode={false}
-            fieldOptions={cellFieldOptions as any}
-            formFields={[formField as any]}
-            index={0}
-            isTabularEdit={true}
-          />
-        </Box>
-      );
-    },
-    [formFieldByColumnKey, setEditCellValue],
-  );
-
-  const renderEditCellByType = useCallback(
-    (params: GridRenderEditCellParams, fieldTypeId?: EditableFieldTypeId) => {
-      const typeId = fieldTypeId;
-      // Delegate to the existing renderer to avoid duplicating editor logic.
-      // It already supports list/file and uses the same custom components as the non-table UI.
-      // For any field we still can’t fully support (e.g. connected-form options), it will fall back safely.
-      if (typeId != null) {
-        return renderEditCellWithFormFieldRenderer(params);
-      }
-
-      return renderEditCellWithFormFieldRenderer(params);
-    },
-    [renderEditCellWithFormFieldRenderer],
-  );
-
   const handleCellClick = useCallback((params: GridCellParams, event: any) => {
-    if (params.field === "__check__") {
+    // Makes clicking on the checkbox possible even in edit mode
+    if (params.field === "__check__" || !isInEditMode || !params.isEditable) {
       return;
     }
 
@@ -236,15 +55,11 @@ export const ResponsesTable = ({
       return;
     }
 
-    if (!isInEditMode || !params.isEditable) {
-      return;
-    }
 
-    if (onCellEditStart) {
-      onCellEditStart();
-    }
+    // changes to in edit mode, set the local rows to the response rows
+    onCellEditStart();
 
-    setCellModesModel((prevModel) => {
+    setCellModesModel((prevModel: GridCellModesModel) => {
       return {
         ...prevModel,
         [params.id]: {
@@ -255,12 +70,12 @@ export const ResponsesTable = ({
     });
   }, [isInEditMode, onCellEditStart]);
 
-  const handleCellModesModelChange = useCallback((newModel: GridCellModesModel) => {
+  const handleCellModesModelChange = useCallback((newModel: GridCellModesModel): void => {
     setCellModesModel(newModel);
   }, []);
 
   const getCellClassName = useCallback(
-    (params: GridCellParams) => {
+    (params: GridCellParams): string => {
       if (!isInEditMode) {
         return "";
       }
@@ -272,6 +87,7 @@ export const ResponsesTable = ({
     [isInEditMode],
   );
 
+  // disable double click to edit when not in edit mode
   const handleCellDoubleClick = useCallback((params: GridCellParams, event: any) => {
     if (!isInEditMode) {
       event.defaultMuiPrevented = true;
@@ -284,24 +100,8 @@ export const ResponsesTable = ({
     }
   };
 
-  if (!form.columns) return null;
 
-  const responsesRows = Array.isArray(rows)
-    ? rows.reduce((rows, currRow: Row) => {
-      const id =
-        currRow?.id ??
-        currRow?._id ??
-        currRow?.responseId ??
-        `${currRow?.formId ?? ""}-${currRow?.responseId ?? currRow?._id ?? currRow?.id}`;
-      if (!rows._seen.has(id)) {
-        rows._seen.add(id);
-        rows.list.push(currRow);
-      }
-      return rows;
-    }, { _seen: new Set<string>(), list: [] as any[] }).list
-    : [];
-
-  const hasParentResponses = responsesRows.some(
+  const hasParentResponses = rows.some(
     (row: any) => !!(row?.parentResponse)
   );
 
@@ -320,29 +120,15 @@ export const ResponsesTable = ({
 
   const toggleAllExpanded = () => {
     setExpandedRowIds((prev) => {
-      if (prev.size === responsesRows.length) {
+      if (prev.size === rows.length) {
         return new Set();
       }
-      const all = new Set<string>();
-      responsesRows.forEach((r: Row) => {
-        const id =
-          r?.id ??
-          r?._id ??
-          r?.responseId ??
-          `${r?.formId ?? ""}-${r?.responseId ?? r?._id ?? r?.id}`;
-        all.add(String(id));
-      });
-      return all;
+      return new Set(rows.map((row) => String(row.id)));
     });
   };
 
   const isRowExpanded = (row: Row) => {
-    const id =
-      row?.id ??
-      row?._id ??
-      row?.responseId ??
-      `${row?.formId ?? ""}-${row?.responseId ?? row?._id ?? row?.id}`;
-    return expandedRowIds.has(String(id));
+    return expandedRowIds.has(String(row.id));
   };
 
 
@@ -362,12 +148,7 @@ export const ResponsesTable = ({
             size="small"
             onClick={(e) => {
               e.stopPropagation();
-              const id =
-                row?.id ??
-                row?._id ??
-                row?.responseId ??
-                `${row?.formId ?? ""}-${row?.responseId ?? row?._id ?? row?.id}`;
-              toggleRowExpanded(String(id));
+              toggleRowExpanded(String(row.id));
             }}
           >
             {expanded ? (
@@ -382,7 +163,7 @@ export const ResponsesTable = ({
   };
 
   const renderExpandAllHeader = () => {
-    const allExpanded = expandedRowIds.size === responsesRows.length && responsesRows.length > 0;
+    const allExpanded = expandedRowIds.size === rows.length && rows.length > 0;
     return (
       <Tooltip title={allExpanded ? "כיווץ הכל" : "הרחב הכל"}>
         <IconButton
@@ -410,9 +191,6 @@ export const ResponsesTable = ({
         minWidth: (col.field === "id" || col.field === "_id" || col.field === "responseId") ? 150 : 400,
         ...col,
         editable: col.field !== "id" && col.field !== "_id" && col.field !== "responseId",
-        fieldTypeId: fieldMetaByColumnKey.get(col.field)?.typeId,
-        renderEditCell: (params: GridRenderEditCellParams) =>
-          renderEditCellByType(params, fieldMetaByColumnKey.get(col.field)?.typeId),
       }))
       : [];
 
@@ -482,7 +260,7 @@ export const ResponsesTable = ({
 
   return (
     <ContentContainer>
-      <MainContent $sidePanelOpen={false}>
+      <MainContent>
         {/* {loadingTable ? <Loader /> :  */}
         <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mb: 1 }}>
           <Tooltip title="ניהול תצוגות">
@@ -515,13 +293,13 @@ export const ResponsesTable = ({
           checkboxSelection
           disableRowSelectionOnClick
           getRowClassName={(params) => params.indexRelativeToCurrentPage % 2 === 0 ? 'MuiDataGrid-row--even' : 'MuiDataGrid-row--odd'}
-          getRowId={(row) => row.id ?? row._id ?? row.responseId ?? `${row.formId ?? ""}-${row.responseId ?? row._id ?? row.id}`}
+          getRowId={(row) => row?.id}
           localeText={{
             ...heIL.components.MuiDataGrid.defaultProps.localeText,
             columnMenuLabel: "פעולות",
           }}
           columns={getFormColumns()}
-          rows={isInEditMode && localRows.length > 0 ? localRows : responsesRows}
+          rows={isInEditMode && localRows.length > 0 ? localRows : rows}
         />
       </MainContent>
     </ContentContainer>

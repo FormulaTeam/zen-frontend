@@ -201,7 +201,7 @@ export const useCreateForm = () => {
 export const useUpdateForm = (id: number) => {
   return useUpdate<UpdateFormPayload, Form>({
     endpoint: `/forms/edit/${id}`,
-    mutationKey: ["update-form"],
+    mutationKey: ["update-form", id],
     mutationOptions: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [id] });

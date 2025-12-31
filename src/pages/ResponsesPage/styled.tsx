@@ -201,7 +201,6 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     },
   },
   "& .MuiDataGrid-columnHeader": {
-    textAlign: "right",
     backgroundColor: "#D5E6F6",
     "&:hover": {
       backgroundColor: "#bbdefb",
@@ -215,10 +214,15 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     opacity: 1,
   },
   "& .MuiDataGrid-columnHeaderTitle": {
-    textAlign: "right",
     width: "100%",
     fontSize: "21px",
     fontWeight: 600,
+  },
+  "& .MuiDataGrid-columnHeaderTitleContainer": {
+    justifyContent: "flex-start",
+  },
+  "& .MuiDataGrid-columnHeaderDraggableContainer": {
+    justifyContent: "flex-start",
   },
   "& .MuiDataGrid-row--even": {
     backgroundColor: "#fafafa",
@@ -233,8 +237,13 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     },
   },
   "& .MuiDataGrid-cell": {
-    textAlign: "right",
     fontSize: "21px",
+    display: "flex",
+    alignItems: "center",
+  },
+  "& .MuiDataGrid-cellContent": {
+    width: "100%",
+    textAlign: "start",
   },
   "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
     outline: "none",
