@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback } from "react";
 import { Box, Divider } from "@mui/material";
 
-import { TableView, ViewColumn } from "../../types/interfaces/tableViews.types";
+import { ResponsesView, ViewColumn } from "../../types/interfaces/tableViews.types";
 import { useViewColumnConfiguration } from "../../hooks/useViewColumnConfiguration";
 import { useViewFormLogic } from "../../hooks/useViewFormLogic";
 import { useViewPermissions } from "../../hooks/useViewPermissions";
@@ -14,10 +14,10 @@ import { ViewFormBase, ViewUserBase } from "../../types/interfaces/view.types";
 interface ViewFormProps {
   form?: ViewFormBase;
   user?: ViewUserBase;
-  currentView?: TableView;
+  currentView?: ResponsesView;
   permissionTypes?: number[];
   isSaving?: boolean;
-  onSaveView: (view: TableView) => void;
+  onSaveView: (view: ResponsesView) => void;
   onApplyView?: (viewConfig: ViewColumn[]) => void;
   onCancel: () => void;
 }

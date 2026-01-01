@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  createFormView,
-  updateFormView,
-  deleteFormView,
-  useGetFormViews,
-} from "../api/formViewsApi";
-import { TableView, ViewColumn } from "../types/interfaces/tableViews.types";
+  createResponsesView ,
+  updateResponsesView ,
+  deleteResponsesView ,
+  useGetResponsesViews ,
+} from "../api/responsesViewsApi";
+import { ResponsesView, ViewColumn } from "../types/interfaces/tableViews.types";
 import { showErrorNotification, showSuccessNotification, getUserName } from "../utils/utils";
 import { applyViewSorting } from "../utils/viewSortingUtils";
 import { ViewFormBase, ViewUserBase } from "../types/interfaces/view.types";
@@ -25,12 +25,12 @@ export const useViewManager = ({
   setSorting,
   tableColumns,
 }: UseViewManagerProps) => {
-  const [currentView, setCurrentView] = useState<TableView>();
+  const [currentView, setCurrentView] = useState<ResponsesView>();
   const [currentViewConfig, setCurrentViewConfig] = useState<ViewColumn[]>();
   const [selectedViewId, setSelectedViewId] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
 
-  const { data: formViews = [], error, refetch } = useGetFormViews(form?.id ?? "");
+  const { data: formViews = [], error, refetch } = useGetResponsesViews (form?.id ?? "");
 
   /** --------------------------------
    * Error handling
@@ -73,13 +73,13 @@ export const useViewManager = ({
    * Save / Update
    * -------------------------------- */
   const handleSaveView = useCallback(
-    async (view: TableView) => {
+    async (view: ResponsesView) => {
       if (!form) return;
 
       setIsSaving(true);
       
       try {
-        const payload: TableView = {
+        const payload: ResponsesView = {
           ...view,
           formId: form.id,
           createdBy: user?.upn ?? "unknown",
@@ -87,8 +87,8 @@ export const useViewManager = ({
         };
 
         const saved = payload.id
-          ? await updateFormView(payload.id, payload)
-          : await createFormView(payload);
+          ? await updateResponsesView (payload.id, payload)
+          : await createResponsesView (payload);
 
         showSuccessNotification(payload.id ? "תצוגה עודכנה" : "תצוגה נשמרה");
 
@@ -111,7 +111,7 @@ export const useViewManager = ({
    * Load
    * -------------------------------- */
   const handleLoadView = useCallback(
-    (view: TableView) => {
+    (view: ResponsesView) => {
       setCurrentView(view);
       setCurrentViewConfig(view.config.columns);
       setSelectedViewId(view.id?.toString() ?? "");
@@ -161,11 +161,11 @@ export const useViewManager = ({
    * Delete
    * -------------------------------- */
   const handleDeleteView = useCallback(
-    async (view: TableView) => {
+    async (view: ResponsesView) => {
       if (!view.id) return;
 
       try {
-        await deleteFormView(view.id);
+        await deleteResponsesView (view.id);
 
         if (currentView?.id === view.id) {
           setCurrentView(undefined);

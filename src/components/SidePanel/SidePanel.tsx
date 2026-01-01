@@ -3,7 +3,7 @@ import { IconButton, Typography, Box } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { SidePanelContainer, SidePanelHeader, SidePanelContent } from "./styled";
 import ViewManager from "../ViewManager/ViewManager";
-import { TableView, ViewColumn } from "../../types/interfaces/tableViews.types";
+import { ResponsesView, ViewColumn } from "../../types/interfaces/tableViews.types";
 import { ViewFormBase, ViewUserBase } from "../../types/interfaces/view.types";
 
 interface SidePanelProps {
@@ -13,12 +13,12 @@ interface SidePanelProps {
   children?: React.ReactNode;
   form?: ViewFormBase;
   user?: ViewUserBase;
-  onSaveView?: (view: TableView) => void;
-  onLoadView?: (view: TableView) => void;
-  onDeleteView?: (view: TableView) => void;
+  onSaveView?: (view: ResponsesView) => void;
+  onLoadView?: (view: ResponsesView) => void;
+  onDeleteView?: (view: ResponsesView) => void;
   onApplyView?: (viewConfig: ViewColumn[]) => void;
-  currentView?: TableView;
-  savedViews?: TableView[];
+  currentView?: ResponsesView;
+  savedViews?: ResponsesView[];
   permissionTypes?: number[];
   isSaving?: boolean;
 }

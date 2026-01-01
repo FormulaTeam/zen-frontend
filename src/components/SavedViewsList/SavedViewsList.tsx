@@ -2,7 +2,7 @@ import React from "react";
 import { Typography, IconButton, Chip, Tooltip, Button, Box } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Add, AutoAwesome, Edit } from "@mui/icons-material";
-import { TableView } from "../../types/interfaces/tableViews.types";
+import { ResponsesView } from "../../types/interfaces/tableViews.types";
 import { useViewPermissions } from "../../hooks/useViewPermissions";
 import {
   SavedViewsTitle,
@@ -26,12 +26,12 @@ import {
 import { User } from "../../utils/interfaces";
 
 interface SavedViewsListProps {
-  savedViews?: TableView[];
+  savedViews?: ResponsesView[];
   user?: User;
   permissionTypes?: number[];
-  onLoadView: (view: TableView) => void;
-  onEditView?: (view: TableView) => void;
-  onDeleteView?: (view: TableView) => void;
+  onLoadView: (view: ResponsesView) => void;
+  onEditView?: (view: ResponsesView) => void;
+  onDeleteView?: (view: ResponsesView) => void;
   onCreateNew?: () => void;
 }
 

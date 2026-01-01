@@ -1,5 +1,5 @@
 import React from "react";
-import { TableView, ViewColumn, FormField } from "../../types/interfaces/tableViews.types";
+import { ResponsesView, ViewColumn, FormField } from "../../types/interfaces/tableViews.types";
 import { useViewMode } from "../../hooks/useViewMode";
 import ViewModeHeader from "../ViewModeHeader/ViewModeHeader";
 import SavedViewsList from "../SavedViewsList/SavedViewsList";
@@ -10,12 +10,12 @@ import { ViewFormBase, ViewUserBase } from "../../types/interfaces/view.types";
 interface ViewManagerProps {
   form?: ViewFormBase;
   user?: ViewUserBase;
-  onSaveView: (view: TableView) => void;
-  onLoadView: (view: TableView) => void;
-  onDeleteView?: (view: TableView) => void;
+  onSaveView: (view: ResponsesView) => void;
+  onLoadView: (view: ResponsesView) => void;
+  onDeleteView?: (view: ResponsesView) => void;
   onApplyView?: (viewConfig: ViewColumn[]) => void;
-  currentView?: TableView;
-  savedViews?: TableView[];
+  currentView?: ResponsesView;
+  savedViews?: ResponsesView[];
   permissionTypes?: number[];
   isSaving?: boolean;
 }
@@ -36,7 +36,7 @@ const ViewManager: React.FC<ViewManagerProps> = ({
   const isListMode = mode === "list";
   const isFormMode = mode === "create" || mode === "edit";
 
-  const handleSave = (view: TableView) => {
+  const handleSave = (view: ResponsesView) => {
     onSaveView(view);
     switchToList();
   };

@@ -11,7 +11,7 @@ export interface ViewConfig {
   columns: ViewColumn[];
 }
 
-export interface TableView {
+export interface ResponsesView {
   id?: number; // Numeric sequence ID from backend
   formId: string; // Form this view belongs to
   name: string; // Not globally unique, but must be unique per formId

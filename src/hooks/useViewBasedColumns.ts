@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { TableView, ViewColumn } from "../types/interfaces/tableViews.types";
+import { ResponsesView, ViewColumn } from "../types/interfaces/tableViews.types";
 
 /**
  * Custom hook to manage table column configuration based on views
  */
-export const useViewBasedColumns = (originalColumns: any[], currentView?: TableView) => {
+export const useViewBasedColumns = (originalColumns: any[], currentView?: ResponsesView) => {
   const [configuredColumns, setConfiguredColumns] = useState(originalColumns);
 
   useEffect(() => {

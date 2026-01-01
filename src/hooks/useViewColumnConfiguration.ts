@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { DropResult } from "@hello-pangea/dnd";
-import { ViewColumn, FormField, TableView } from "../types/interfaces/tableViews.types";
+import { ViewColumn, FormField, ResponsesView } from "../types/interfaces/tableViews.types";
 
 /* ------------------------------------------------------------------ */
 /* System Columns                                                      */
@@ -28,7 +28,7 @@ const POST_SYSTEM_COLUMNS: SystemViewColumn[] = [
 
 interface UseViewColumnConfigurationProps {
   form?: { fields: FormField[] };
-  currentView?: TableView;
+  currentView?: ResponsesView;
 }
 
 interface SortDescriptor {

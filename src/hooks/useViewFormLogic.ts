@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { TableView, ViewColumn } from "../types/interfaces/tableViews.types";
+import { ResponsesView, ViewColumn } from "../types/interfaces/tableViews.types";
 import { ViewFormBase, ViewUserBase } from "../types/interfaces/view.types";
 import { getUserName } from "../utils/utils";
 
@@ -27,13 +27,13 @@ const areColumnsEqual = (firstColumn: ViewColumn[], secondColumn: ViewColumn[]):
 /* ------------------------ Types ------------------------ */
 
 interface UseViewFormLogicProps {
-  currentView?: TableView;
+  currentView?: ResponsesView;
   user?: ViewUserBase;
   form?: ViewFormBase;
   columns: ViewColumn[];
   createDefaultColumns: () => ViewColumn[];
   resetToOriginalColumns: (columns: ViewColumn[]) => void;
-  onSaveView: (view: TableView) => void;
+  onSaveView: (view: ResponsesView) => void;
   onApplyView?: (columns: ViewColumn[]) => void;
   isSaving?: boolean;
 }
@@ -128,7 +128,7 @@ export const useViewFormLogic = ({
   const handleSaveView = useCallback(() => {
     if (!form || !viewName.trim()) return;
 
-    const view: TableView = {
+    const view: ResponsesView = {
       ...(currentView?.id && !isCreatingNew ? { id: currentView.id } : {}),
       formId: form.id,
       name: viewName.trim(),

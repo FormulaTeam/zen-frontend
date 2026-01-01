@@ -35,7 +35,7 @@ import { useResponsesList } from "../../hooks/useResponsesList";
 import { ResponseCount } from "../../types/interfaces/responses.types";
 import ResponseDetailsPanel from "../../components/ResponseDetailsPanel/ResponseDetailsPanel";
 import SidePanel from "../../components/SidePanel/SidePanel";
-import { TableView, ViewColumn } from "../../types/interfaces/tableViews.types";
+import { ResponsesView, ViewColumn } from "../../types/interfaces/tableViews.types";
 import { useQuickEdit } from "../../hooks/useQuickEdit";
 import { useConnectedFormOptions } from "../../hooks/useConnectedFormOptions";
 
