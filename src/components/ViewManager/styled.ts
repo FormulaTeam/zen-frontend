@@ -112,23 +112,19 @@ export const ColumnHeaderItem = styled(Box)<{ width?: string; flex?: number; tex
 
 export const ColumnListItem = styled(Box)`
   padding: 0;
-  margin-bottom: 8px;
 `;
 
 export const ColumnItem = styled(Paper)<{ $isDragging?: boolean }>`
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  margin-bottom: 4px;
   background-color: ${(props) => (props.$isDragging ? "#f5f5f5" : "white")};
   border: 1px solid ${(props) => (props.$isDragging ? "#2196f3" : "#e0e0e0")};
   border-radius: 8px;
   transition: all 0.2s ease;
-  cursor: pointer;
   width: 100%;
   &:hover {
-    border-color: #2196f3;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #f5f5f5;
   }
 `;
 
@@ -172,4 +168,9 @@ export const ViewActionsContainer = styled(Box)`
   margin-top: 24px;
   display: flex;
   gap: 8px;
+`;
+
+export const SubtitlesTypography = styled(Typography)`
+  variant="subtitle2"
+  font-size: 25px;
 `;

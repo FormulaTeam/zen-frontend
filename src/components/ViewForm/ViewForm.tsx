@@ -72,30 +72,32 @@ const ViewForm: React.FC<ViewFormProps> = ({
   return (
     <>
       <Box overflow="auto" pb={`${ACTIONS_HEIGHT}px`}>
-        <ViewFormSettings
-          formId={+(form?.id ?? 0)}
-          formName={form?.name ?? ""}
-          columns={columns}
-          hasFullAccess={hasFullAccess}
-          viewName={formLogic.viewName}
-          setViewName={formLogic.setViewName}
-          isPublic={formLogic.isPublic}
-          isDefault={formLogic.isDefault}
-          setIsDefault={formLogic.setIsDefault}
-          handleSwitchPublic={formLogic.handleSwitchPublic}
-          getSortedColumns={getSortedColumns}
-          setSortColumn={setSortColumn}
-          clearSort={clearSort}
-        />
+        <Box width="97%">
+          <ViewFormSettings
+            formId={+(form?.id ?? 0)}
+            formName={form?.name ?? ""}
+            columns={columns}
+            hasFullAccess={hasFullAccess}
+            viewName={formLogic.viewName}
+            setViewName={formLogic.setViewName}
+            isPublic={formLogic.isPublic}
+            isDefault={formLogic.isDefault}
+            setIsDefault={formLogic.setIsDefault}
+            handleSwitchPublic={formLogic.handleSwitchPublic}
+            getSortedColumns={getSortedColumns}
+            setSortColumn={setSortColumn}
+            clearSort={clearSort}
+          />
 
-        <Divider sx={{ my: 2 }} />
+          <Divider sx={{ my: 2 }} />
 
-        <ViewFormColumns
-          columns={columns}
-          visibleCount={visibleColumnsCount}
-          onToggleVisibility={toggleColumnVisibility}
-          onDragEnd={handleDragEnd}
-        />
+          <ViewFormColumns
+            columns={columns}
+            visibleCount={visibleColumnsCount}
+            onToggleVisibility={toggleColumnVisibility}
+            onDragEnd={handleDragEnd}
+          />
+        </Box>
       </Box>
       <Box position="sticky" bottom={0} zIndex={1} bgcolor="background.paper">
         <ViewFormActions

@@ -13,7 +13,7 @@ interface ViewFormActionsProps {
 
 enum HebrewTitles {
   CANCEL = "ביטול",
-  APPLY = "החלה",
+  APPLY = "החל",
   SAVE = "שמירה",
   SAVING = "שומר...",
   CREATE_VIEW = "יצירת תצוגה",

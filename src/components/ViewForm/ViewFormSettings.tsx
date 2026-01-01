@@ -12,10 +12,11 @@ import {
   Tooltip,
   Stack,
 } from "@mui/material";
-import { ArrowUpward, ArrowDownward, Clear, InfoOutline, Padding } from "@mui/icons-material";
+import { ArrowUpward, ArrowDownward, InfoOutline } from "@mui/icons-material";
 import BaseFieldInput from "../FormFields/BaseFieldInput/BaseFieldInput";
 import CustomSwitch from "../FormFields/CustomSwitch/CustomSwitch";
 import { ViewColumn } from "../../types/interfaces/tableViews.types";
+import { SubtitlesTypography } from "../ViewManager/styled";
 
 interface ViewFormSettingsProps {
   formId?: number;
@@ -75,10 +76,10 @@ const ViewFormSettings: React.FC<ViewFormSettingsProps> = ({
 
   return (
     <Box display="flex" flexDirection="column" gap={-0.5}>
-      <Typography variant="subtitle2">
-        {!viewName && <span style={{ color: "rgba(200, 0, 0, 0.9)" }}>✱ </span>}
+      <SubtitlesTypography>
+        {<span style={{ color: "rgba(222, 86, 75)" }}>✱ </span>}
         {HebrewTitles.VIEW_NAME}
-      </Typography>
+      </SubtitlesTypography>
 
       <BaseFieldInput
         value={viewName}
@@ -137,7 +138,7 @@ const ViewFormSettings: React.FC<ViewFormSettingsProps> = ({
         </Stack>
       )}
 
-      <Typography variant="subtitle2">{HebrewTitles.SORT_BY}</Typography>
+      <SubtitlesTypography mb={0.8}>{HebrewTitles.SORT_BY}</SubtitlesTypography>
 
       <Box display="flex" flexDirection="column" gap={1}>
         <FormControl size="small" sx={{ minWidth: 240, flexGrow: 1 }}>
