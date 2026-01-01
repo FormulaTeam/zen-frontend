@@ -67,7 +67,7 @@ export const updateResponsesView = async (
   responsesViewId: number,
   updates: Partial<Pick<ResponsesView, "name" | "isPublic" | "isDefault" | "config">>,
 ): Promise<ResponsesView> => {
-  const { data } = await apiClient.put<ResponsesView>(
+  const { data } = await apiClient.patch<ResponsesView>(
     `${responsesViewsBaseUrl}/${responsesViewId}`,
     updates,
   );
