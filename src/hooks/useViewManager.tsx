@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  createResponsesView ,
-  updateResponsesView ,
-  deleteResponsesView ,
-  useGetResponsesViews ,
+  createResponsesView,
+  updateResponsesView,
+  deleteResponsesView,
+  useGetResponsesViews,
 } from "../api/responsesViewsApi";
 import { ResponsesView, ViewColumn } from "../types/interfaces/tableViews.types";
 import { showErrorNotification, showSuccessNotification, getUserName } from "../utils/utils";
@@ -18,6 +18,15 @@ interface UseViewManagerProps {
   tableColumns?: any[];
 }
 
+enum HebrewMessages {
+  LoadViewsError = "נכשל בטעינת התצוגות",
+  SaveViewSuccess = "תצוגה נשמרה",
+  UpdateViewSuccess = "תצוגה עודכנה",
+  SaveViewError = "נכשל בשמירת התצוגה",
+  DeleteViewSuccess = "התצוגה נמחקה",
+  DeleteViewError = "נכשל במחיקת התצוגה",
+}
+
 export const useViewManager = ({
   form,
   user,
@@ -30,7 +39,7 @@ export const useViewManager = ({
   const [selectedViewId, setSelectedViewId] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
 
-  const { data: formViews = [], error, refetch } = useGetResponsesViews (form?.id ?? "");
+  const { data: formViews = [], error, refetch } = useGetResponsesViews(form?.id ?? "");
 
   /** --------------------------------
    * Error handling
@@ -38,7 +47,7 @@ export const useViewManager = ({
   useEffect(() => {
     if (error) {
       console.error(error);
-      showErrorNotification("נכשל בטעינת התצוגות");
+      showErrorNotification(HebrewMessages.LoadViewsError);
     }
   }, [error]);
 
@@ -77,7 +86,7 @@ export const useViewManager = ({
       if (!form) return;
 
       setIsSaving(true);
-      
+
       try {
         const payload: ResponsesView = {
           ...view,
@@ -87,10 +96,12 @@ export const useViewManager = ({
         };
 
         const saved = payload.id
-          ? await updateResponsesView (payload.id, payload)
-          : await createResponsesView (payload);
+          ? await updateResponsesView(payload.id, payload)
+          : await createResponsesView(payload);
 
-        showSuccessNotification(payload.id ? "תצוגה עודכנה" : "תצוגה נשמרה");
+        showSuccessNotification(
+          payload.id ? HebrewMessages.UpdateViewSuccess : HebrewMessages.SaveViewSuccess,
+        );
 
         setCurrentView(saved);
         setSelectedViewId(saved.id?.toString() ?? "");
@@ -99,7 +110,7 @@ export const useViewManager = ({
         if (saved.isDefault) await refetch();
       } catch (err) {
         console.error(err);
-        showErrorNotification("נכשל בשמירת התצוגה");
+        showErrorNotification(HebrewMessages.SaveViewError);
       } finally {
         setIsSaving(false);
       }
@@ -165,7 +176,7 @@ export const useViewManager = ({
       if (!view.id) return;
 
       try {
-        await deleteResponsesView (view.id);
+        await deleteResponsesView(view.id);
 
         if (currentView?.id === view.id) {
           setCurrentView(undefined);
@@ -173,11 +184,11 @@ export const useViewManager = ({
           setSelectedViewId("");
         }
 
-        showSuccessNotification("התצוגה נמחקה");
+        showSuccessNotification(HebrewMessages.DeleteViewSuccess);
         await refetch();
       } catch (err) {
         console.error(err);
-        showErrorNotification("נכשל במחיקת התצוגה");
+        showErrorNotification(HebrewMessages.DeleteViewError);
       }
     },
     [currentView, refetch],
