@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Typography, Checkbox, List, Stack } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
@@ -15,19 +14,19 @@ import {
   SubtitlesTypography,
 } from "../ViewManager/styled";
 
-interface ViewFormColumnsProps {
+interface ResponsesViewColumnsProps {
   columns: ViewColumn[];
   visibleCount: number;
   onToggleVisibility: (id: string) => void;
   onDragEnd: (result: any) => void;
 }
 
-const ViewFormColumns: React.FC<ViewFormColumnsProps> = ({
+export function ResponsesViewColumns({
   columns,
   visibleCount,
   onToggleVisibility,
   onDragEnd,
-}) => {
+}: ResponsesViewColumnsProps) {
   const HebrewTitles = {
     SHOW_COLUMN: "הצג",
     COLUMN_TITLE: "שדה",
@@ -48,8 +47,10 @@ const ViewFormColumns: React.FC<ViewFormColumnsProps> = ({
                   <ColumnHeaderItem>{HebrewTitles.SHOW_COLUMN}</ColumnHeaderItem>
                   <ColumnHeaderItem>{HebrewTitles.COLUMN_TITLE}</ColumnHeaderItem>
                 </Stack>
+
                 <ColumnHeaderItem mr={1.5}>{HebrewTitles.ORDER_COLUMN}</ColumnHeaderItem>
               </ColumnsHeader>
+
               <List dense>
                 {columns.map(({ displayName, columnId, visible }, index) => (
                   <Draggable key={columnId} draggableId={columnId} index={index}>
@@ -66,6 +67,7 @@ const ViewFormColumns: React.FC<ViewFormColumnsProps> = ({
                           </ColumnInfo>
 
                           <OrderBadge>{index + 1}</OrderBadge>
+
                           <DragHandle {...dragHandleProps}>
                             <DragIndicatorIcon fontSize="small" />
                           </DragHandle>
@@ -74,6 +76,7 @@ const ViewFormColumns: React.FC<ViewFormColumnsProps> = ({
                     )}
                   </Draggable>
                 ))}
+
                 {placeholder}
               </List>
             </ColumnsContainer>
@@ -82,6 +85,4 @@ const ViewFormColumns: React.FC<ViewFormColumnsProps> = ({
       </DragDropContext>
     </Box>
   );
-};
-
-export default ViewFormColumns;
+}

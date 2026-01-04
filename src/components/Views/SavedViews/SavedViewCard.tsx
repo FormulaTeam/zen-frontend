@@ -1,4 +1,3 @@
-import React from "react";
 import { Typography, IconButton, Chip, Tooltip } from "@mui/material";
 import { Edit } from "@mui/icons-material";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -29,22 +28,17 @@ interface SavedViewCardProps {
   onDeleteView?: (view: ResponsesView) => void;
 }
 
-const SavedViewCard: React.FC<SavedViewCardProps> = ({
+export function SavedViewCard({
   view,
   canEditOrDeleteView,
   onLoadView,
   onEditView,
   onDeleteView,
-}) => {
+}: SavedViewCardProps) {
   const canEdit = canEditOrDeleteView(view);
 
-  const handleLoad = () => {
-    onLoadView(view);
-  };
-
-  const stop = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
+  const handleLoad = () => onLoadView(view);
+  const stopPropagation = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
     <ViewCard
@@ -76,7 +70,7 @@ const SavedViewCard: React.FC<SavedViewCardProps> = ({
                   <IconButton
                     size="small"
                     onClick={(e) => {
-                      stop(e);
+                      stopPropagation(e);
                       onEditView(view);
                     }}>
                     <Edit />
@@ -90,7 +84,7 @@ const SavedViewCard: React.FC<SavedViewCardProps> = ({
                     size="small"
                     color="error"
                     onClick={(e) => {
-                      stop(e);
+                      stopPropagation(e);
                       onDeleteView(view);
                     }}>
                     <DeleteIcon />
@@ -103,6 +97,4 @@ const SavedViewCard: React.FC<SavedViewCardProps> = ({
       </ViewCardContent>
     </ViewCard>
   );
-};
-
-export default SavedViewCard;
+}

@@ -1,1 +1,1 @@
-export { default } from "./ViewModeHeader";
+export * from "./ViewModeHeader";

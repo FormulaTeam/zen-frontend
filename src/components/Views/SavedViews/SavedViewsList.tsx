@@ -1,4 +1,3 @@
-import React from "react";
 import { Box } from "@mui/material";
 import { Add, AutoAwesome } from "@mui/icons-material";
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
@@ -15,7 +14,7 @@ import {
   EmptyViewsSubtitle,
   EmptyViewsTitle,
 } from "../../Responses/styled";
-import SavedViewCard from "./SavedViewCard";
+import { SavedViewCard } from "./index";
 import { User } from "../../../utils/interfaces";
 
 interface SavedViewsListProps {
@@ -36,7 +35,7 @@ enum HebrewTitles {
   CreateNewView = "יצירת תצוגה חדשה",
 }
 
-const SavedViewsList: React.FC<SavedViewsListProps> = ({
+export function SavedViewsList({
   savedViews = [],
   user,
   permissionTypes = [],
@@ -44,64 +43,66 @@ const SavedViewsList: React.FC<SavedViewsListProps> = ({
   onEditView,
   onDeleteView,
   onCreateNew,
-}) => {
+}: SavedViewsListProps) {
   const { canEditOrDeleteView } = useViewPermissions({
     user,
     permissionTypes,
   });
 
-  savedViews = [
-    {
-      id: 1,
-      name: "דף הבית",
-      isDefault: true,
-      isPublic: true,
-      createdBy: "user1",
-      createdByName: "שירה רייכר",
-      formId: "form1",
-      config: {
-        columns: [{ columnId: "id", displayName: "מספר", order: 0, visible: true }],
+  // Example / fake views — can be removed when real data is provided
+  if (savedViews.length === 0) {
+    savedViews = [
+      {
+        id: 1,
+        name: "דף הבית",
+        isDefault: true,
+        isPublic: true,
+        createdBy: "user1",
+        createdByName: "שירה רייכר",
+        formId: "form1",
+        config: { columns: [{ columnId: "id", displayName: "מספר", order: 0, visible: true }] },
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 2,
-      name: "תצוגה אישית",
-      isDefault: false,
-      isPublic: false,
-      createdBy: "user2",
-      createdByName: "ארז טור",
-      formId: "form1",
-      config: { columns: [] },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 3,
-      name: "תצוגה ציבורית",
-      isDefault: false,
-      isPublic: true,
-      createdBy: "user3",
-      createdByName: "גלי צבי",
-      formId: "form1",
-      config: { columns: [] },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 4,
-      name: "תצוגה של רויטל",
-      isDefault: false,
-      isPublic: false,
-      createdBy: "user4",
-      createdByName: "רויטל פריד",
-      formId: "form1",
-      config: { columns: [] },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
+      {
+        id: 2,
+        name: "תצוגה אישית",
+        isDefault: false,
+        isPublic: false,
+        createdBy: "user2",
+        createdByName: "ארז טור",
+        formId: "form1",
+        config: { columns: [] },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 3,
+        name: "תצוגה ציבורית",
+        isDefault: false,
+        isPublic: true,
+        createdBy: "user3",
+        createdByName: "גלי צבי",
+        formId: "form1",
+        config: { columns: [] },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 4,
+        name: "תצוגה של רויטל",
+        isDefault: false,
+        isPublic: false,
+        createdBy: "user4",
+        createdByName: "רויטל פריד",
+        formId: "form1",
+        config: { columns: [] },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+  }
+
   const hasViews = savedViews.length > 0;
 
   return (
@@ -150,6 +151,4 @@ const SavedViewsList: React.FC<SavedViewsListProps> = ({
       )}
     </Box>
   );
-};
-
-export default SavedViewsList;
+}

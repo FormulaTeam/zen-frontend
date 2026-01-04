@@ -1,8 +1,7 @@
-import React from "react";
 import { Button, CircularProgress } from "@mui/material";
 import { ViewActionsContainer } from "../ViewManager/styled";
 
-interface ViewFormActionsProps {
+interface ResponsesViewActionsProps {
   isSaving: boolean;
   isCreatingNew: boolean;
   canSave: boolean;
@@ -20,14 +19,14 @@ enum HebrewTitles {
   UPDATE_VIEW = "עדכון תצוגה",
 }
 
-const ViewFormActions: React.FC<ViewFormActionsProps> = ({
+export function ResponsesViewFormActions({
   isSaving,
   isCreatingNew,
   canSave,
   onCancel,
   onApply,
   onSave,
-}) => {
+}: ResponsesViewActionsProps) {
   return (
     <ViewActionsContainer>
       <Button variant="outlined" onClick={onCancel} disabled={isSaving}>
@@ -39,9 +38,9 @@ const ViewFormActions: React.FC<ViewFormActionsProps> = ({
       </Button>
 
       <Button
-        disabled={!canSave}
         variant="contained"
         onClick={onSave}
+        disabled={!canSave || isSaving}
         startIcon={isSaving ? <CircularProgress size={18} /> : null}>
         {isSaving
           ? HebrewTitles.SAVING
@@ -51,6 +50,4 @@ const ViewFormActions: React.FC<ViewFormActionsProps> = ({
       </Button>
     </ViewActionsContainer>
   );
-};
-
-export default ViewFormActions;
+}

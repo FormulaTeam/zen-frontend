@@ -1,20 +1,19 @@
-import React from "react";
 import { Typography, IconButton, Box } from "@mui/material";
-import { ViewDisplayMode } from "../../../hooks/useViewMode";
 import { ArrowForwardIos } from "@mui/icons-material";
+import { ViewDisplayMode } from "../../../hooks/useViewMode";
 
 interface ViewModeHeaderProps {
   mode: ViewDisplayMode;
   onBack: () => void;
 }
 
-const TITLE_BY_MODE: Record<ViewModeHeaderProps["mode"], string> = {
+const TITLE_BY_MODE: Record<ViewDisplayMode, string> = {
   create: "יצירת תצוגה חדשה",
   edit: "עריכת תצוגה",
   list: "",
 };
 
-const ViewModeHeader: React.FC<ViewModeHeaderProps> = ({ mode, onBack }) => {
+export function ViewModeHeader({ mode, onBack }: ViewModeHeaderProps) {
   const title = TITLE_BY_MODE[mode];
   const showBackButton = mode !== "list";
 
@@ -31,6 +30,4 @@ const ViewModeHeader: React.FC<ViewModeHeaderProps> = ({ mode, onBack }) => {
       </Typography>
     </Box>
   );
-};
-
-export default ViewModeHeader;
+}

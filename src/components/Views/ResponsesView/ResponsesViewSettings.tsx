@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import {
   Box,
   Typography,
@@ -18,7 +18,7 @@ import CustomSwitch from "../../FormFields/CustomSwitch/CustomSwitch";
 import { ViewColumn } from "../../../types/interfaces/tableViews.types";
 import { SubtitlesTypography } from "../ViewManager/styled";
 
-interface ViewFormSettingsProps {
+interface ResponsesViewSettingsProps {
   formId?: number;
   formName?: string;
   columns: ViewColumn[];
@@ -50,7 +50,7 @@ enum HebrewTitles {
   DEFAULT_VIEW_TOOLTIP = "מוחלת אוטומטית לטופס זה",
 }
 
-const ViewFormSettings: React.FC<ViewFormSettingsProps> = ({
+export function ResponsesViewSettings({
   formId,
   formName,
   columns,
@@ -64,20 +64,17 @@ const ViewFormSettings: React.FC<ViewFormSettingsProps> = ({
   getSortedColumns,
   setSortColumn,
   clearSort,
-}) => {
-  const VIEW_NAME_PLACEHOLDER = `תצוגה חדשה ב${formName}`;
+}: ResponsesViewSettingsProps) {
+  const viewNamePlaceholder = `תצוגה חדשה ב${formName}`;
   const sortedColumn = getSortedColumns()[0];
   const canEdit = Boolean(formId && hasFullAccess);
 
-  const visibleColumns = useMemo(
-    () => columns.filter((column: ViewColumn) => column.visible),
-    [columns],
-  );
+  const visibleColumns = useMemo(() => columns.filter((column) => column.visible), [columns]);
 
   return (
     <Box display="flex" flexDirection="column" gap={-0.5}>
       <SubtitlesTypography>
-        {<span style={{ color: "rgba(222, 86, 75)" }}>✱ </span>}
+        <span style={{ color: "rgba(222, 86, 75)" }}>✱ </span>
         {HebrewTitles.VIEW_NAME}
       </SubtitlesTypography>
 
@@ -85,7 +82,7 @@ const ViewFormSettings: React.FC<ViewFormSettingsProps> = ({
         value={viewName}
         onChange={(event) => setViewName(event.target.value)}
         fullWidth
-        placeholder={VIEW_NAME_PLACEHOLDER}
+        placeholder={viewNamePlaceholder}
       />
 
       {canEdit && (
@@ -103,14 +100,12 @@ const ViewFormSettings: React.FC<ViewFormSettingsProps> = ({
               </Tooltip>
             </Stack>
 
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <CustomSwitch
-                label=""
-                isDisabled={!hasFullAccess}
-                value={isPublic}
-                onChangeHandler={handleSwitchPublic}
-              />
-            </Stack>
+            <CustomSwitch
+              label=""
+              isDisabled={!hasFullAccess}
+              value={isPublic}
+              onChangeHandler={handleSwitchPublic}
+            />
           </Stack>
 
           <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -126,14 +121,12 @@ const ViewFormSettings: React.FC<ViewFormSettingsProps> = ({
               </Tooltip>
             </Stack>
 
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <CustomSwitch
-                label=""
-                value={isDefault}
-                onChangeHandler={setIsDefault}
-                isDisabled={!isPublic}
-              />
-            </Stack>
+            <CustomSwitch
+              label=""
+              value={isDefault}
+              onChangeHandler={setIsDefault}
+              isDisabled={!isPublic}
+            />
           </Stack>
         </Stack>
       )}
@@ -154,7 +147,7 @@ const ViewFormSettings: React.FC<ViewFormSettingsProps> = ({
               <em>{HebrewTitles.NO_SORTING}</em>
             </MenuItem>
 
-            {visibleColumns.map((column: ViewColumn) => (
+            {visibleColumns.map((column) => (
               <MenuItem key={column.columnId} value={column.columnId}>
                 {column.displayName}
               </MenuItem>
@@ -222,6 +215,4 @@ const ViewFormSettings: React.FC<ViewFormSettingsProps> = ({
       </Box>
     </Box>
   );
-};
-
-export default ViewFormSettings;
+}

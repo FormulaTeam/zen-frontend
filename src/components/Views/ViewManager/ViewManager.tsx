@@ -1,21 +1,23 @@
-import React from "react";
-import { ResponsesView, ViewColumn, FormField } from "../../../types/interfaces/tableViews.types";
-import { useViewMode } from "../../../hooks/useViewMode";
-import ViewModeHeader from "../ViewModeHeader/ViewModeHeader";
-import SavedViewsList from "../SavedViews/SavedViewsList";
-import ViewForm from "../ViewForm/ViewForm";
-import { ViewManagerContainer } from "./styled";
+import {
+  ResponsesView as IResponsesView,
+  ViewColumn,
+} from "../../../types/interfaces/tableViews.types";
 import { ViewFormBase, ViewUserBase } from "../../../types/interfaces/view.types";
+import { ViewManagerContainer } from "./styled";
+import { SavedViewsList } from "../SavedViews/SavedViewsList";
+import { ResponsesViewPage } from "../ResponsesView/ResponsesViewPage";
+import { ViewModeHeader } from "../ViewModeHeader/ViewModeHeader";
+import { useViewMode } from "../../../hooks/useViewMode";
 
 interface ViewManagerProps {
   form?: ViewFormBase;
   user?: ViewUserBase;
-  onSaveView: (view: ResponsesView) => void;
-  onLoadView: (view: ResponsesView) => void;
-  onDeleteView?: (view: ResponsesView) => void;
+  onSaveView: (view: IResponsesView) => void;
+  onLoadView: (view: IResponsesView) => void;
+  onDeleteView?: (view: IResponsesView) => void;
   onApplyView?: (viewConfig: ViewColumn[]) => void;
-  currentView?: ResponsesView;
-  savedViews?: ResponsesView[];
+  currentView?: IResponsesView;
+  savedViews?: IResponsesView[];
   permissionTypes?: number[];
   isSaving?: boolean;
 }
@@ -26,7 +28,7 @@ enum Modes {
   EDIT = "edit",
 }
 
-const ViewManager: React.FC<ViewManagerProps> = ({
+export function ViewManager({
   form,
   user,
   onSaveView,
@@ -36,13 +38,13 @@ const ViewManager: React.FC<ViewManagerProps> = ({
   savedViews,
   permissionTypes = [],
   isSaving = false,
-}) => {
+}: ViewManagerProps) {
   const { mode, editingView, switchToList, switchToCreate, switchToEdit } = useViewMode();
 
   const isListMode = mode === Modes.LIST;
   const isFormMode = mode === Modes.CREATE || mode === Modes.EDIT;
 
-  const handleSave = (view: ResponsesView) => {
+  const handleSave = (view: IResponsesView) => {
     onSaveView(view);
     switchToList();
   };
@@ -64,7 +66,7 @@ const ViewManager: React.FC<ViewManagerProps> = ({
       )}
 
       {isFormMode && (
-        <ViewForm
+        <ResponsesViewPage
           form={form}
           user={user}
           currentView={editingView || undefined}
@@ -77,6 +79,4 @@ const ViewManager: React.FC<ViewManagerProps> = ({
       )}
     </ViewManagerContainer>
   );
-};
-
-export default ViewManager;
+}

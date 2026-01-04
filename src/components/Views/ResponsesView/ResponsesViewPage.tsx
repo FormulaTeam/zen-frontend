@@ -1,17 +1,16 @@
-import React, { useMemo, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { Box, Divider } from "@mui/material";
 
 import { ResponsesView, ViewColumn } from "../../../types/interfaces/tableViews.types";
 import { useViewColumnConfiguration } from "../../../hooks/useViewColumnConfiguration";
 import { useViewFormLogic } from "../../../hooks/useViewFormLogic";
 import { useViewPermissions } from "../../../hooks/useViewPermissions";
-
-import ViewFormSettings from "./ViewFormSettings";
-import ViewFormColumns from "./ViewFormColumns";
-import ViewFormActions from "./ViewFormActions";
 import { ViewFormBase, ViewUserBase } from "../../../types/interfaces/view.types";
+import { ResponsesViewSettings } from "./ResponsesViewSettings";
+import { ResponsesViewColumns } from "./ResponsesViewColumns";
+import { ResponsesViewFormActions } from "./ResponsesViewActions";
 
-interface ViewFormProps {
+interface ResponsesViewPageProps {
   form?: ViewFormBase;
   user?: ViewUserBase;
   currentView?: ResponsesView;
@@ -22,9 +21,9 @@ interface ViewFormProps {
   onCancel: () => void;
 }
 
-const ACTIONS_HEIGHT = 10;
+const ACTIONS_HEIGHT: Number = 10;
 
-const ViewForm: React.FC<ViewFormProps> = ({
+export function ResponsesViewPage({
   form,
   user,
   currentView,
@@ -33,7 +32,7 @@ const ViewForm: React.FC<ViewFormProps> = ({
   onSaveView,
   onApplyView,
   onCancel,
-}) => {
+}: ResponsesViewPageProps) {
   const {
     columns,
     toggleColumnVisibility,
@@ -73,7 +72,7 @@ const ViewForm: React.FC<ViewFormProps> = ({
     <>
       <Box overflow="auto" pb={`${ACTIONS_HEIGHT}px`}>
         <Box width="97%">
-          <ViewFormSettings
+          <ResponsesViewSettings
             formId={+(form?.id ?? 0)}
             formName={form?.name ?? ""}
             columns={columns}
@@ -91,7 +90,7 @@ const ViewForm: React.FC<ViewFormProps> = ({
 
           <Divider sx={{ my: 2 }} />
 
-          <ViewFormColumns
+          <ResponsesViewColumns
             columns={columns}
             visibleCount={visibleColumnsCount}
             onToggleVisibility={toggleColumnVisibility}
@@ -100,7 +99,7 @@ const ViewForm: React.FC<ViewFormProps> = ({
         </Box>
       </Box>
       <Box position="sticky" bottom={0} zIndex={1} bgcolor="background.paper">
-        <ViewFormActions
+        <ResponsesViewFormActions
           isSaving={isSaving}
           isCreatingNew={formLogic.isCreatingNew}
           canSave={formLogic.canSave}
@@ -111,6 +110,4 @@ const ViewForm: React.FC<ViewFormProps> = ({
       </Box>
     </>
   );
-};
-
-export default ViewForm;
+}
