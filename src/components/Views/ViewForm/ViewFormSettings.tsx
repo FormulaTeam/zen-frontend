@@ -13,9 +13,9 @@ import {
   Stack,
 } from "@mui/material";
 import { ArrowUpward, ArrowDownward, InfoOutline } from "@mui/icons-material";
-import BaseFieldInput from "../FormFields/BaseFieldInput/BaseFieldInput";
-import CustomSwitch from "../FormFields/CustomSwitch/CustomSwitch";
-import { ViewColumn } from "../../types/interfaces/tableViews.types";
+import BaseFieldInput from "../../FormFields/BaseFieldInput/BaseFieldInput";
+import CustomSwitch from "../../FormFields/CustomSwitch/CustomSwitch";
+import { ViewColumn } from "../../../types/interfaces/tableViews.types";
 import { SubtitlesTypography } from "../ViewManager/styled";
 
 interface ViewFormSettingsProps {

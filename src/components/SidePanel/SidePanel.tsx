@@ -2,7 +2,7 @@ import React from "react";
 import { IconButton, Typography, Box } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { SidePanelContainer, SidePanelHeader, SidePanelContent } from "./styled";
-import ViewManager from "../ViewManager/ViewManager";
+import ViewManager from "../Views/ViewManager/ViewManager";
 import { ResponsesView, ViewColumn } from "../../types/interfaces/tableViews.types";
 import { ViewFormBase, ViewUserBase } from "../../types/interfaces/view.types";
 

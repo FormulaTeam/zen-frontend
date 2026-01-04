@@ -1,11 +1,11 @@
 import React from "react";
-import { ResponsesView, ViewColumn, FormField } from "../../types/interfaces/tableViews.types";
-import { useViewMode } from "../../hooks/useViewMode";
+import { ResponsesView, ViewColumn, FormField } from "../../../types/interfaces/tableViews.types";
+import { useViewMode } from "../../../hooks/useViewMode";
 import ViewModeHeader from "../ViewModeHeader/ViewModeHeader";
-import SavedViewsList from "../SavedViewsList/SavedViewsList";
+import SavedViewsList from "../SavedViews/SavedViewsList";
 import ViewForm from "../ViewForm/ViewForm";
 import { ViewManagerContainer } from "./styled";
-import { ViewFormBase, ViewUserBase } from "../../types/interfaces/view.types";
+import { ViewFormBase, ViewUserBase } from "../../../types/interfaces/view.types";
 
 interface ViewManagerProps {
   form?: ViewFormBase;
@@ -18,6 +18,12 @@ interface ViewManagerProps {
   savedViews?: ResponsesView[];
   permissionTypes?: number[];
   isSaving?: boolean;
+}
+
+enum Modes {
+  LIST = "list",
+  CREATE = "create",
+  EDIT = "edit",
 }
 
 const ViewManager: React.FC<ViewManagerProps> = ({
@@ -33,8 +39,8 @@ const ViewManager: React.FC<ViewManagerProps> = ({
 }) => {
   const { mode, editingView, switchToList, switchToCreate, switchToEdit } = useViewMode();
 
-  const isListMode = mode === "list";
-  const isFormMode = mode === "create" || mode === "edit";
+  const isListMode = mode === Modes.LIST;
+  const isFormMode = mode === Modes.CREATE || mode === Modes.EDIT;
 
   const handleSave = (view: ResponsesView) => {
     onSaveView(view);

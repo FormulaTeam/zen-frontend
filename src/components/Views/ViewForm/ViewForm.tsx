@@ -1,15 +1,15 @@
 import React, { useMemo, useCallback } from "react";
 import { Box, Divider } from "@mui/material";
 
-import { ResponsesView, ViewColumn } from "../../types/interfaces/tableViews.types";
-import { useViewColumnConfiguration } from "../../hooks/useViewColumnConfiguration";
-import { useViewFormLogic } from "../../hooks/useViewFormLogic";
-import { useViewPermissions } from "../../hooks/useViewPermissions";
+import { ResponsesView, ViewColumn } from "../../../types/interfaces/tableViews.types";
+import { useViewColumnConfiguration } from "../../../hooks/useViewColumnConfiguration";
+import { useViewFormLogic } from "../../../hooks/useViewFormLogic";
+import { useViewPermissions } from "../../../hooks/useViewPermissions";
 
 import ViewFormSettings from "./ViewFormSettings";
 import ViewFormColumns from "./ViewFormColumns";
 import ViewFormActions from "./ViewFormActions";
-import { ViewFormBase, ViewUserBase } from "../../types/interfaces/view.types";
+import { ViewFormBase, ViewUserBase } from "../../../types/interfaces/view.types";
 
 interface ViewFormProps {
   form?: ViewFormBase;

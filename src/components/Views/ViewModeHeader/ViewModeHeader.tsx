@@ -1,6 +1,6 @@
 import React from "react";
 import { Typography, IconButton, Box } from "@mui/material";
-import { ViewDisplayMode } from "../../hooks/useViewMode";
+import { ViewDisplayMode } from "../../../hooks/useViewMode";
 import { ArrowForwardIos } from "@mui/icons-material";
 
 interface ViewModeHeaderProps {

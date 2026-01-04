@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography, Checkbox, List, Stack } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { ViewColumn } from "../../types/interfaces/tableViews.types";
+import { ViewColumn } from "../../../types/interfaces/tableViews.types";
 import {
   ColumnInfo,
   OrderBadge,
