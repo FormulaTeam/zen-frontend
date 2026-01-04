@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   Box,
   Typography,
@@ -65,16 +65,19 @@ export function ResponsesViewSettings({
   setSortColumn,
   clearSort,
 }: ResponsesViewSettingsProps) {
-  const viewNamePlaceholder = `תצוגה חדשה ב${formName}`;
+  const VIEW_NAME_PLACEHOLDER = `תצוגה חדשה ב${formName}`;
   const sortedColumn = getSortedColumns()[0];
   const canEdit = Boolean(formId && hasFullAccess);
 
-  const visibleColumns = useMemo(() => columns.filter((column) => column.visible), [columns]);
+  const visibleColumns = useMemo(
+    () => columns.filter((column: ViewColumn) => column.visible),
+    [columns],
+  );
 
   return (
     <Box display="flex" flexDirection="column" gap={-0.5}>
       <SubtitlesTypography>
-        <span style={{ color: "rgba(222, 86, 75)" }}>✱ </span>
+        {<span style={{ color: "rgba(222, 86, 75)" }}>✱ </span>}
         {HebrewTitles.VIEW_NAME}
       </SubtitlesTypography>
 
@@ -82,7 +85,7 @@ export function ResponsesViewSettings({
         value={viewName}
         onChange={(event) => setViewName(event.target.value)}
         fullWidth
-        placeholder={viewNamePlaceholder}
+        placeholder={VIEW_NAME_PLACEHOLDER}
       />
 
       {canEdit && (
@@ -100,12 +103,14 @@ export function ResponsesViewSettings({
               </Tooltip>
             </Stack>
 
-            <CustomSwitch
-              label=""
-              isDisabled={!hasFullAccess}
-              value={isPublic}
-              onChangeHandler={handleSwitchPublic}
-            />
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <CustomSwitch
+                label=""
+                isDisabled={!hasFullAccess}
+                value={isPublic}
+                onChangeHandler={handleSwitchPublic}
+              />
+            </Stack>
           </Stack>
 
           <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -121,12 +126,14 @@ export function ResponsesViewSettings({
               </Tooltip>
             </Stack>
 
-            <CustomSwitch
-              label=""
-              value={isDefault}
-              onChangeHandler={setIsDefault}
-              isDisabled={!isPublic}
-            />
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <CustomSwitch
+                label=""
+                value={isDefault}
+                onChangeHandler={setIsDefault}
+                isDisabled={!isPublic}
+              />
+            </Stack>
           </Stack>
         </Stack>
       )}
@@ -147,7 +154,7 @@ export function ResponsesViewSettings({
               <em>{HebrewTitles.NO_SORTING}</em>
             </MenuItem>
 
-            {visibleColumns.map((column) => (
+            {visibleColumns.map((column: ViewColumn) => (
               <MenuItem key={column.columnId} value={column.columnId}>
                 {column.displayName}
               </MenuItem>

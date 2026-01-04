@@ -1,6 +1,8 @@
-import { Typography, IconButton, Chip, Tooltip } from "@mui/material";
+import { Typography, IconButton, Stack, Tooltip, Chip } from "@mui/material";
 import { Edit } from "@mui/icons-material";
+import PublicIcon from "@mui/icons-material/Public";
 import DeleteIcon from "@mui/icons-material/Delete";
+import PushPinIcon from "@mui/icons-material/PushPin";
 import {
   ViewCard,
   ViewCardContent,
@@ -13,11 +15,9 @@ import {
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 
 enum HebrewTitles {
-  Default = "ברירת מחדל",
-  Public = "ציבורי",
   EditView = "עריכת תצוגה",
   DeleteView = "מחיקת תצוגה",
-  CreatedBy = "נוצר על ידי:",
+  CreatedBy = "נוצרה על ידי",
 }
 
 interface SavedViewCardProps {
@@ -38,7 +38,7 @@ export function SavedViewCard({
   const canEdit = canEditOrDeleteView(view);
 
   const handleLoad = () => onLoadView(view);
-  const stopPropagation = (e: React.MouseEvent) => e.stopPropagation();
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
     <ViewCard
@@ -49,14 +49,15 @@ export function SavedViewCard({
       <ViewCardContent>
         <ViewCardActions>
           <ViewCardInfo>
-            <ViewNameTypography variant="body1" $isDefault={view.isDefault}>
-              {view.name}
-            </ViewNameTypography>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <ViewNameTypography variant="body1" $isDefault={view.isDefault}>
+                {view.name}
+              </ViewNameTypography>
+              {view.isPublic && <PublicIcon fontSize="small" />}
+              {view.isDefault && <Chip label="ברירת מחדל" size="small"></Chip>}
+            </Stack>
 
-            <ViewChipsContainer>
-              {view.isDefault && <Chip label={HebrewTitles.Default} size="small" />}
-              {view.isPublic && <Chip label={HebrewTitles.Public} size="small" color="primary" />}
-            </ViewChipsContainer>
+            <ViewChipsContainer></ViewChipsContainer>
 
             <Typography variant="caption" color="text.secondary">
               {HebrewTitles.CreatedBy} {view.createdByName}
@@ -70,7 +71,7 @@ export function SavedViewCard({
                   <IconButton
                     size="small"
                     onClick={(e) => {
-                      stopPropagation(e);
+                      stop(e);
                       onEditView(view);
                     }}>
                     <Edit />
@@ -84,7 +85,7 @@ export function SavedViewCard({
                     size="small"
                     color="error"
                     onClick={(e) => {
-                      stopPropagation(e);
+                      stop(e);
                       onDeleteView(view);
                     }}>
                     <DeleteIcon />

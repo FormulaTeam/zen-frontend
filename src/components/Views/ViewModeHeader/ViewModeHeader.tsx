@@ -4,13 +4,13 @@ import { ViewDisplayMode } from "../../../hooks/useViewMode";
 
 interface ViewModeHeaderProps {
   mode: ViewDisplayMode;
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 const TITLE_BY_MODE: Record<ViewDisplayMode, string> = {
   create: "יצירת תצוגה חדשה",
   edit: "עריכת תצוגה",
-  list: "",
+  list: "תצוגות שמורות",
 };
 
 export function ViewModeHeader({ mode, onBack }: ViewModeHeaderProps) {

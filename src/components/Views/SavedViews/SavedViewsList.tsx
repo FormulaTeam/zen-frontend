@@ -3,7 +3,6 @@ import { Add, AutoAwesome } from "@mui/icons-material";
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { useViewPermissions } from "../../../hooks/useViewPermissions";
 import {
-  SavedViewsTitle,
   SavedViewsContainer,
   CreateNewViewContainer,
   CreateNewViewButton,
@@ -28,7 +27,6 @@ interface SavedViewsListProps {
 }
 
 enum HebrewTitles {
-  SavedViews = "תצוגות שמורות",
   NoViews = "אין עדיין תצוגות",
   NoViewsSubtitle = "תצוגות הן פשוטות לבנייה ועושות המון סדר",
   CreateFirstView = "ליצירת תצוגה ראשונה",
@@ -108,24 +106,18 @@ export function SavedViewsList({
   return (
     <Box>
       {hasViews && (
-        <>
-          <SavedViewsTitle variant="subtitle1" gutterBottom>
-            {HebrewTitles.SavedViews}
-          </SavedViewsTitle>
-
-          <SavedViewsContainer>
-            {savedViews.map((view) => (
-              <SavedViewCard
-                key={view.id}
-                view={view}
-                canEditOrDeleteView={canEditOrDeleteView}
-                onLoadView={onLoadView}
-                onEditView={onEditView}
-                onDeleteView={onDeleteView}
-              />
-            ))}
-          </SavedViewsContainer>
-        </>
+        <SavedViewsContainer>
+          {savedViews.map((view) => (
+            <SavedViewCard
+              key={view.id}
+              view={view}
+              canEditOrDeleteView={canEditOrDeleteView}
+              onLoadView={onLoadView}
+              onEditView={onEditView}
+              onDeleteView={onDeleteView}
+            />
+          ))}
+        </SavedViewsContainer>
       )}
 
       {onCreateNew && (
