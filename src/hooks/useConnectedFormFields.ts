@@ -87,7 +87,7 @@ export const useConnectedFormFields = ({
         loadedFieldsRef.current.add(field.uniqueId);
 
         const options = response
-          .map((res: ResponseForm) => res.data?.find((res: ResponseFieldValue) => res.field_id === field.connectedFieldId))
+          .map((res: ResponseForm) => res.fieldValues?.find((res: ResponseFieldValue) => res.field_id === field.connectedFieldId))
           .filter(Boolean);
 
         if (options && options.length > 0) {

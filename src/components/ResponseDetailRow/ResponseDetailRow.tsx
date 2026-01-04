@@ -12,7 +12,7 @@ interface ResponseDetailsRowProps {
 }
 function ResponseDetailRow({ response, form, parentFormId }: ResponseDetailsRowProps) {
   const navigate = useNavigate();
-  const formatCreatedDate = new Date(response.created).toLocaleDateString("he-IL", {
+  const formatCreatedDate = new Date(response.created_at).toLocaleDateString("he-IL", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -34,7 +34,7 @@ function ResponseDetailRow({ response, form, parentFormId }: ResponseDetailsRowP
       </ResponseCell>
       {form?.fields?.map((field, fieldIndex) => {
         const fieldValue =
-          response?.data?.find((item) => item.field_id === field.uniqueId)?.value || "";
+          response?.fieldValues?.find((item) => item.field_id === field.uniqueId)?.value || "";
         return (
           <ResponseCell key={fieldIndex}>
             {getResponseFieldStringValue(field, fieldValue)}
@@ -42,7 +42,7 @@ function ResponseDetailRow({ response, form, parentFormId }: ResponseDetailsRowP
         );
       })}
       <ResponseCell>{formatCreatedDate}</ResponseCell>
-      <ResponseCell>{response.created_by_name}</ResponseCell>
+      <ResponseCell>{response.created_by?.name}</ResponseCell>
     </TableRow>
   );
 }

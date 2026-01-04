@@ -238,12 +238,14 @@ export const restoreResponse = async (formId: number, id: number): Promise<Respo
  */
 export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseForm[]> => {
   try {
-    const response = await apiClient.post<ResponseForm[]>("/responses/get-deleted-responses", {
+    const body = {
       pageSize: filter?.pageSize,
       pageNumber: filter?.pageNumber,
       query: filter?.query || {},
-      isDeletedForm: filter?.query?.isDeletedForm || false,
-    });
+      isDeletedForm: Boolean(filter?.query?.isDeletedForm || filter?.isDeletedForm),
+    };
+
+    const response = await apiClient.post<ResponseForm[]>("/responses/get-deleted-responses", body);
 
     return response?.data || [];
   } catch (error) {

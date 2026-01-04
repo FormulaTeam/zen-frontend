@@ -179,7 +179,7 @@ export default function OptionsField({
                 responses
                   .map(
                     (response) =>
-                      response.data?.find(
+                      response.fieldValues?.find(
                         (res) => res.field_id === matchedField.connectedFieldId && res.value,
                       )?.value,
                   )
@@ -384,7 +384,7 @@ export default function OptionsField({
       const responseValues = responses
         .map(
           (response) =>
-            response?.data?.find((item) => item.field_id === selectedField.uniqueId)?.value,
+            response?.fieldValues?.find((item) => item.field_id === selectedField.uniqueId)?.value,
         )
         .filter(Boolean);
 

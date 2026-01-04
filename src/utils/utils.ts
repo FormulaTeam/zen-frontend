@@ -476,7 +476,7 @@ export function getFieldType(field: FormField) {
 }
 export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
   // Sort responses by id in ascending order to maintain consistent order
-  const sortedResponses = [...responsesArr].sort((a, b) => (a.id || 0) - (b.id || 0));
+  const sortedResponses = [...responsesArr].sort((a, b) => (a.index || 0) - (b.index || 0));
 
   const formFields = form.fields;
   const formFieldsIds: string[] = [];
@@ -485,11 +485,8 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
   sortedResponses?.forEach((element, i) => {
     //add columns isSynchronized, updated_by, updated
     data[i] = {
-      [HEBREW_TITLES.isSynchronized]: element.pushed_to_metro
-        ? moment(element.pushed_to_metro).format("DD.MM.YY")
-        : "לא סונכרן",
-      [HEBREW_TITLES.updated_by]: element.updated_by_name,
-      [HEBREW_TITLES.updated]: moment(element.updated).format("DD.MM.YY"),
+      [HEBREW_TITLES.updated_by]: element.updated_by,
+      [HEBREW_TITLES.updated]: moment(element.updated_at).format("DD.MM.YY"),
     };
 
     //add column for each field and save fields order with arr of names
@@ -530,7 +527,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
 
   sortedResponses.forEach((element, i) => {
     if (element) {
-      const fieldValuesWithMetaData = element.data.reduce<
+      const fieldValuesWithMetaData = element.fieldValues.reduce<
         (ResponseFieldValue & {
           displayName: string;
           typeId: (typeof FieldTypeIds)[keyof typeof FieldTypeIds];
