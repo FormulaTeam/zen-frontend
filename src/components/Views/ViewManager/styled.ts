@@ -19,8 +19,10 @@ export const SavedViewsContainer = styled(Box)`
   margin-bottom: 24px;
 `;
 
-export const ViewCard = styled(Card)`
+export const ViewCard = styled(Card)<{ $isSelected?: boolean }>`
   margin-bottom: 8px;
+  cursor: pointer;
+  border: ${(props) => (props.$isSelected ? "2px solid #1976d2" : "2px solid #e0e0e0")};
 `;
 
 export const ViewCardContent = styled(CardContent)`

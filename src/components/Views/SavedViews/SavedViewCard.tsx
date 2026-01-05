@@ -26,6 +26,8 @@ interface SavedViewCardProps {
   onLoadView: (view: ResponsesView) => void;
   onEditView?: (view: ResponsesView) => void;
   onDeleteView?: (view: ResponsesView) => void;
+  currentViewId?: number | null;
+  setCurrentViewId?: (id: number | null) => void;
 }
 
 export function SavedViewCard({
@@ -34,6 +36,8 @@ export function SavedViewCard({
   onLoadView,
   onEditView,
   onDeleteView,
+  currentViewId,
+  setCurrentViewId,
 }: SavedViewCardProps) {
   const canEdit = canEditOrDeleteView(view);
 
@@ -44,8 +48,11 @@ export function SavedViewCard({
     <ViewCard
       role="button"
       tabIndex={0}
-      onClick={handleLoad}
-      onKeyDown={(e) => e.key === "Enter" && handleLoad()}>
+      onClick={() => {
+        handleLoad();
+        setCurrentViewId && setCurrentViewId(view.id ?? null);
+      }}
+      $isSelected={currentViewId === view.id}>
       <ViewCardContent>
         <ViewCardActions>
           <ViewCardInfo>

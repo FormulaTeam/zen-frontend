@@ -15,6 +15,7 @@ import {
 } from "../../Responses/styled";
 import { SavedViewCard } from "./index";
 import { User } from "../../../utils/interfaces";
+import { useState } from "react";
 
 interface SavedViewsListProps {
   savedViews?: ResponsesView[];
@@ -46,6 +47,8 @@ export function SavedViewsList({
     user,
     permissionTypes,
   });
+
+  const [currentViewId, setCurrentViewId] = useState<number | null>(null);
 
   // Example / fake views — can be removed when real data is provided
   if (savedViews.length === 0) {
@@ -115,6 +118,8 @@ export function SavedViewsList({
               onLoadView={onLoadView}
               onEditView={onEditView}
               onDeleteView={onDeleteView}
+              currentViewId={currentViewId}
+              setCurrentViewId={setCurrentViewId}
             />
           ))}
         </SavedViewsContainer>

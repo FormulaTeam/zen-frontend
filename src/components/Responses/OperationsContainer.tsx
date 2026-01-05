@@ -1,16 +1,8 @@
 import React, { useState } from "react";
-import { IconButton, Tooltip, Select, MenuItem, InputLabel } from "@mui/material";
-import { CalendarViewWeek } from "@mui/icons-material";
-
+import { Tooltip, Select, MenuItem, InputLabel } from "@mui/material";
+import TableViewIcon from "@mui/icons-material/TableView";
 import { useViewControls } from "../../hooks/useViewControls";
-import {
-  Container,
-  RightActions,
-  ViewControlsContainer,
-  StyledViewFormControl,
-  ViewManageButton,
-} from "./styled";
-
+import { ViewControlsContainer, StyledViewFormControl, ViewManageButton } from "./styled";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 
 interface OperationsContainerProps {
@@ -45,6 +37,12 @@ interface OperationsContainerProps {
   // Edit button state
   isEditButtonDisabled: boolean;
   editButtonDisabledReason?: string;
+}
+
+enum HebrewTitles {
+  TABLE_VIEW = "תצוגת טבלה",
+  MANAGE_VIEWS = "ניהול תצוגות",
+  ALL_FIELDS = "כל השדות",
 }
 
 const OperationsContainer: React.FC<OperationsContainerProps> = ({
@@ -105,7 +103,7 @@ const OperationsContainer: React.FC<OperationsContainerProps> = ({
 
       <ViewControlsContainer>
         <StyledViewFormControl variant="standard">
-          <InputLabel id="view-select-label">תצוגת טבלה</InputLabel>
+          <InputLabel id="view-select-label">{HebrewTitles.TABLE_VIEW}</InputLabel>
 
           <Select
             labelId="view-select-label"
@@ -114,26 +112,24 @@ const OperationsContainer: React.FC<OperationsContainerProps> = ({
             size="small"
             sx={{ minWidth: 200 }}>
             <MenuItem value="">
-              <em>כל השדות</em>
+              <em>{HebrewTitles.ALL_FIELDS}</em>
             </MenuItem>
 
-            {/* {allViews?.map((view) => (
-                  <MenuItem key={view.id} value={view.id}>
-                    {getViewDisplayName(view)}
-                  </MenuItem>
-                ))} */}
+            {allViews?.map((view) => (
+              <MenuItem key={view.id} value={view.id}>
+                {getViewDisplayName(view)}
+              </MenuItem>
+            ))}
           </Select>
         </StyledViewFormControl>
 
-        <Tooltip title="ניהול תצוגות">
-          <div>
-            <ViewManageButton
-              variant="contained"
-              onClick={() => setIsSidePanelOpen?.(true)}
-              disabled={isSidePanelOpen}>
-              <CalendarViewWeek />
-            </ViewManageButton>
-          </div>
+        <Tooltip title={HebrewTitles.MANAGE_VIEWS}>
+          <ViewManageButton
+            variant="contained"
+            onClick={() => setIsSidePanelOpen?.(true)}
+            disabled={isSidePanelOpen}>
+            <TableViewIcon />
+          </ViewManageButton>
         </Tooltip>
       </ViewControlsContainer>
     </>

@@ -26,7 +26,7 @@ interface SidePanelProps {
 const SidePanel: React.FC<SidePanelProps> = ({
   isOpen,
   onClose,
-  title = "תצוגת טבלה",
+  title,
   children,
   form,
   user,
