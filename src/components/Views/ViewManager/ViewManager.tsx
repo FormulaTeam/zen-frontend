@@ -50,8 +50,6 @@ export function ViewManager({
     switchToList();
   };
 
-  alert(showHeader);
-
   return (
     <ViewManagerContainer>
       {showHeader && <ViewModeHeader mode={mode} onBack={switchToList} />}
