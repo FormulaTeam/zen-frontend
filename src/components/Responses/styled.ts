@@ -82,12 +82,24 @@ export const ViewMenuItem = styled(Box)`
 `;
 
 export const ViewManageButton = styled(SmallRoundButton)`
-  &:disabled {
-    opacity: 0.6;
-  }
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  width: auto;
+  margin: 5px 0;
+  padding: 6px 14px;
+
+  font-size: 1rem;
+  font-weight: 500;
 
   .MuiSvgIcon-root {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;
 

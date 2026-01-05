@@ -15,9 +15,11 @@ import {
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 
 enum HebrewTitles {
-  EditView = "עריכת תצוגה",
-  DeleteView = "מחיקת תצוגה",
-  CreatedBy = "נוצרה על ידי",
+  EDIT_VIEW = "עריכת תצוגה",
+  DELETE_VIEW = "מחיקת תצוגה",
+  CREATED_BY = "נוצרה על ידי",
+  DEFAULT = "ברירת מחדל",
+  PUBLIC_VIEW = "תצוגה ציבורית",
 }
 
 interface SavedViewCardProps {
@@ -60,21 +62,25 @@ export function SavedViewCard({
               <ViewNameTypography variant="body1" $isDefault={view.isDefault}>
                 {view.name}
               </ViewNameTypography>
-              {view.isPublic && <PublicIcon fontSize="small" />}
-              {view.isDefault && <Chip label="ברירת מחדל" size="small"></Chip>}
+              {view.isPublic && (
+                <Tooltip title={HebrewTitles.PUBLIC_VIEW}>
+                  <PublicIcon fontSize="small" />
+                </Tooltip>
+              )}
+              {view.isDefault && <Chip label={HebrewTitles.DEFAULT} size="small"></Chip>}
             </Stack>
 
             <ViewChipsContainer></ViewChipsContainer>
 
             <Typography variant="caption" color="text.secondary">
-              {HebrewTitles.CreatedBy} {view.createdByName}
+              {HebrewTitles.CREATED_BY} {view.createdByName}
             </Typography>
           </ViewCardInfo>
 
           {canEdit && (
             <ViewCardButtons>
               {onEditView && (
-                <Tooltip title={HebrewTitles.EditView}>
+                <Tooltip title={HebrewTitles.EDIT_VIEW}>
                   <IconButton
                     size="small"
                     onClick={(e) => {
@@ -87,7 +93,7 @@ export function SavedViewCard({
               )}
 
               {onDeleteView && (
-                <Tooltip title={HebrewTitles.DeleteView}>
+                <Tooltip title={HebrewTitles.DELETE_VIEW}>
                   <IconButton
                     size="small"
                     color="error"

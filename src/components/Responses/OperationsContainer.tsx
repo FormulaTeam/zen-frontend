@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Tooltip, Select, MenuItem, InputLabel } from "@mui/material";
-import TableViewIcon from "@mui/icons-material/TableView";
 import { useViewControls } from "../../hooks/useViewControls";
 import { ViewControlsContainer, StyledViewFormControl, ViewManageButton } from "./styled";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
+import { BackupTable } from "@mui/icons-material";
 
 interface OperationsContainerProps {
   user: any;
@@ -45,63 +45,24 @@ enum HebrewTitles {
   ALL_FIELDS = "כל השדות",
 }
 
-const OperationsContainer: React.FC<OperationsContainerProps> = ({
-  user,
-  form,
-  allResponsesCount,
-  currentFilter,
-  rowSelection,
-  permissionTypes,
-
-  viewResponse,
-  editResponse,
-  deleteAllSelectedResponses,
-  deleteAllResponsesConfirmation,
-
+export function OperationsContainer({
   allViews,
   selectedViewId,
   handleViewDropdownChange,
   setIsSidePanelOpen,
   isSidePanelOpen,
-
-  isQuickEditMode,
-  onToggleQuickEdit,
-  onSaveChanges,
-  onCancelChanges,
-  onAddNewResponse,
-  hasUnsavedChanges,
-
-  isEditButtonDisabled,
-  editButtonDisabledReason,
-}) => {
-  const [isSaving, setIsSaving] = useState(false);
-
-  const { getViewDisplayName, isViewDefault } = useViewControls({
+}: OperationsContainerProps) {
+  const { getViewDisplayName } = useViewControls({
     allViews,
     selectedViewId,
     handleViewDropdownChange,
   });
 
-  const handleSaveAndExit = async () => {
-    setIsSaving(true);
-    try {
-      await onSaveChanges();
-      onToggleQuickEdit();
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancelAndExit = () => {
-    onCancelChanges();
-    onToggleQuickEdit();
-  };
+  const hasViews: boolean = allViews && allViews.length > 0;
 
   return (
-    <>
-      {isSaving && <LoadingOverlay />}
-
-      <ViewControlsContainer>
+    <ViewControlsContainer>
+      {hasViews && (
         <StyledViewFormControl variant="standard">
           <InputLabel id="view-select-label">{HebrewTitles.TABLE_VIEW}</InputLabel>
 
@@ -122,18 +83,19 @@ const OperationsContainer: React.FC<OperationsContainerProps> = ({
             ))}
           </Select>
         </StyledViewFormControl>
+      )}
 
-        <Tooltip title={HebrewTitles.MANAGE_VIEWS}>
+      <Tooltip title={HebrewTitles.MANAGE_VIEWS} disableHoverListener={!hasViews}>
+        <span>
           <ViewManageButton
             variant="contained"
             onClick={() => setIsSidePanelOpen?.(true)}
             disabled={isSidePanelOpen}>
-            <TableViewIcon />
+            <BackupTable />
+            {!hasViews && <span>{HebrewTitles.MANAGE_VIEWS}</span>}
           </ViewManageButton>
-        </Tooltip>
-      </ViewControlsContainer>
-    </>
+        </span>
+      </Tooltip>
+    </ViewControlsContainer>
   );
-};
-
-export default OperationsContainer;
+}

@@ -28,7 +28,7 @@ import {
 } from "./styled";
 import Header from "../../components/Responses/Header";
 import SearchInfo from "../../components/Responses/SearchInfo";
-import OperationsContainer from "../../components/Responses/OperationsContainer";
+import { OperationsContainer } from "../../components/Responses/OperationsContainer";
 import { useResponsesTable } from "../../hooks/useResponsesTable";
 import { useTableColumns } from "../../hooks/useTableColumns";
 import { useResponsesList } from "../../hooks/useResponsesList";
