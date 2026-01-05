@@ -49,7 +49,7 @@ export const ResponsesTable = () => {
           disableRowSelectionOnClick
           columns={form.columns}
           editMode="cell"
-          rows={rows || []}
+          rows={rows ?? []}
         />
       </MainContent>
     </ContentContainer>

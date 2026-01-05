@@ -228,7 +228,7 @@ export const useGetForm = ({
   >;
 }): UseQueryResult<Form | null> => {
   return useFetch<undefined, Form | null>({
-    endpoint: `/forms/${formId ?? "10"}`,
+    endpoint: `/forms/${formId}`,
     queryKey: () => [formId],
     queryOptions: {
       enabled: !!formId,
