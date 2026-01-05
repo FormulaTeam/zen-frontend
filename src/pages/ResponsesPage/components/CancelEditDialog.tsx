@@ -22,17 +22,17 @@ export const CancelEditDialog = ({
         <StyledCancelDialog open={open} onClose={onCancel}>
             <StyledDialogTitle>
                 <DialogTitleBox>
-                    <Typography variant="h5" component="span">
+                    <Typography variant="h6" component="span">
                         יציאה ממצב עריכה
                     </Typography>
                 </DialogTitleBox>
             </StyledDialogTitle>
             <StyledDialogContent>
-                <Typography variant="body1">
+                <Typography variant="body2">
                     קיימים שינויים לא שמורים.
                 </Typography>
-                <Typography variant="body1">
-                    האם ברצונך לצאת ממצב עריכה שינויים לא שמורים ימחקו?
+                <Typography variant="body2">
+                    האם ברצונך לצאת ממצב עריכה, שינויים לא שמורים ימחקו?
                 </Typography>
             </StyledDialogContent>
             <StyledDialogActions>

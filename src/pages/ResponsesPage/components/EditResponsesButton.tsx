@@ -1,8 +1,8 @@
-import { Button, Tooltip } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import SaveIcon from "@mui/icons-material/Save";
-import CancelIcon from "@mui/icons-material/Cancel";
-import { EditButtonWrapper } from "../styled";
+import { Tooltip, IconButton } from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
+import { EditButtonWrapper, StyledEditButton } from "../styled";
+import TableEditIconSvg from "../../../icons/tableEdit.svg";
 
 interface EditResponsesButtonProps {
     isInEditMode: boolean;
@@ -21,41 +21,35 @@ export const EditResponsesButton = ({
 }: EditResponsesButtonProps) => {
     const enterEditModeButton: JSX.Element = (
         <Tooltip title="עריכה מהירה">
-            <Button
-                variant="outlined"
+            <StyledEditButton
+                variant="contained"
                 size="small"
-                startIcon={<EditIcon />}
+                startIcon={<img src={TableEditIconSvg} alt="edit" />}
                 onClick={onToggleEditMode}
             >
-                עריכת תגובות
-            </Button>
+                עריכה מהירה
+            </StyledEditButton>
         </Tooltip>
     );
 
     const editModeActions: JSX.Element = (
         <>
-            <Tooltip title="שמור שינויים">
-                <Button
-                    variant="contained"
+            <Tooltip title="שמירה ויציאה מעריכה מהירה">
+                <IconButton
                     size="small"
-                    color="primary"
-                    startIcon={<SaveIcon />}
                     onClick={onSaveChanges}
                     disabled={editedRowsCount === 0 || isUpdating}
                 >
-                    {isUpdating ? "שומר..." : "שמור"}
-                </Button>
+                    <CheckIcon />
+                </IconButton>
             </Tooltip>
-            <Tooltip title="בטל עריכה">
-                <Button
-                    variant="outlined"
+            <Tooltip title="יציאה מעריכה מהירה ללא שמירה">
+                <IconButton
                     size="small"
-                    color="error"
-                    startIcon={<CancelIcon />}
                     onClick={onToggleEditMode}
                 >
-                    בטל
-                </Button>
+                    <CloseIcon />
+                </IconButton>
             </Tooltip>
         </>
     );

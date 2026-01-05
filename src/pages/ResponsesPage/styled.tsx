@@ -7,6 +7,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Button,
+  Typography,
+  IconButton,
+  Tooltip,
+  TooltipProps,
 } from "@mui/material";
 
 export const DetailsContainer = styled(Box)<BoxProps>(({ theme }) => ({
@@ -30,8 +35,8 @@ export const FormActionsContainer = styled(Box)<BoxProps>(({ theme }) => ({
 export const EditButtonWrapper = styled(Box)<BoxProps>(({ theme }) => ({
   display: "flex",
   flexDirection: "row",
-  gap: theme.spacing(1),
-  alignItems: "center"
+  marginBottom: theme.spacing(2),
+  alignItems: "center",
 }));
 
 export const MainContentWrapper = styled(Box)<BoxProps>(() => ({
@@ -49,7 +54,7 @@ export const TopSection = styled(Box)<BoxProps>(() => ({
   display: "flex",
   justifyContent: "space-between",
   alignItems: "flex-start",
-  marginBottom: "40px",
+  marginBottom: "5px",
 }));
 
 export const CenteredBox = styled(Box)<BoxProps>(() => ({
@@ -87,8 +92,8 @@ export const QuickEditTableContainer = styled(MuiTableContainer)<{ isQuickEditMo
 
 export const ContentContainer = styled(Box)<BoxProps>(() => ({
   display: "flex",
-  height: "calc(100vh - 400px)",
-  maxHeight: "calc(100vh - 400px)",
+  height: "calc(100vh - 200px)",
+  maxHeight: "calc(100vh - 200px)",
   gap: 0,
 }));
 
@@ -215,7 +220,7 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
   },
   "& .MuiDataGrid-columnHeaderTitle": {
     width: "100%",
-    fontSize: "21px",
+    fontSize: "1.2rem",
     fontWeight: 600,
   },
   "& .MuiDataGrid-columnHeaderTitleContainer": {
@@ -237,7 +242,7 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     },
   },
   "& .MuiDataGrid-cell": {
-    fontSize: "21px",
+    fontSize: "1.2rem",
     display: "flex",
     alignItems: "center",
   },
@@ -331,12 +336,15 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
   "& .MuiDataGrid-row.Mui-selected:hover > .MuiDataGrid-cell": {
     backgroundColor: "#d5d5d5",
   },
+  "& .MuiDataGrid-footerContainer": {
+    flexDirection: 'row-reverse',
+  },
 }));
 
 export const StyledCancelDialog = styled(Dialog)(() => ({
   "& .MuiDialog-paper": {
     padding: "30px",
-    minWidth: "650px",
+    minWidth: "550px",
   },
 }));
 
@@ -344,8 +352,8 @@ export const StyledDialogTitle = styled(DialogTitle)(() => ({
   padding: 0,
   paddingBottom: "20px",
   "& .MuiTypography-root": {
-    fontSize: "2.2rem",
-    fontWeight: 620,
+    fontSize: "2rem",
+    fontWeight: 600,
   },
 }));
 
@@ -354,7 +362,7 @@ export const StyledDialogContent = styled(DialogContent)(() => ({
   padding: 0,
   paddingBottom: "32px",
   "& .MuiTypography-root": {
-    fontSize: "1.7rem",
+    fontSize: "1.3rem",
     lineHeight: 1.6,
   },
 }));
@@ -364,8 +372,8 @@ export const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
   gap: theme.spacing(2),
   padding: 0,
   "& .MuiButton-root": {
-    fontSize: "1.3rem",
-    padding: "12px 32px"
+    fontSize: "1rem",
+    padding: "8px 28px"
   },
 }));
 
@@ -374,3 +382,100 @@ export const DialogTitleBox = styled(Box)(() => ({
   alignItems: "center",
   justifyContent: "center",
 }));
+
+export const StyledEditButton = styled(Button)(() => ({
+  backgroundColor: '#DBE7F4',
+  color: '#000000',
+  fontSize: '1.2rem !important',
+  "&:hover": {
+    backgroundColor: "#bbdefb",
+  },
+  "& .MuiButton-startIcon": {
+    marginRight: "8px",
+    height: '2vh',
+    width: '2vh'
+  },
+}));
+
+export const ResponsesAmountText = styled(Typography)(() => ({
+  color: "#666666",
+  fontSize: "1.4rem !important",
+}));
+
+export const ResponsesAmountBox = styled(Box)(() => ({
+  padding: "8px 36px",
+  display: "flex",
+  alignItems: "center",
+}));
+
+export const ExpandIconBox = styled(Box)(() => ({
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  width: "100%",
+  height: "100%",
+}));
+
+export const SyncStatusIconBox = styled(Box)(() => ({
+  display: "flex",
+  alignItems: "center",
+  height: "100%",
+}));
+
+export const FormInfoContentBox = styled(Box)(() => ({
+  maxWidth: "28vw",
+  maxHeight: "15vh",
+  overflowY: "auto",
+  direction: "ltr",
+  padding: "4px",
+}));
+
+export const FormInfoSectionBox = styled(Box)(() => ({
+  marginBottom: "12px",
+}));
+
+export const CreatorInfoBox = styled(Box)(() => ({
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  fontWeight: 400,
+}));
+
+export const FormNameTypography = styled(Typography)(() => ({
+  maxWidth: "400px",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+}));
+
+export const InfoIconButton = styled(IconButton)(() => ({
+  marginLeft: "8px",
+  alignSelf: "flex-end",
+  marginBottom: "6px",
+}));
+
+export const FormNameInTooltipTypography = styled(Typography)(() => ({
+  fontWeight: 600,
+  marginBottom: "4px",
+}));
+
+export const FormDescriptionTypography = styled(Typography)(() => ({
+  fontWeight: 300,
+}));
+
+export const formInfoTooltipSlotProps = {
+  tooltip: {
+    sx: {
+      backgroundColor: "#ffffff",
+      color: "#000000",
+      boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.15)",
+      border: "1px solid #e0e0e0",
+      "& .MuiTooltip-arrow": {
+        color: "#ffffff",
+        "&::before": {
+          border: "1px solid #e0e0e0",
+        },
+      },
+    },
+  },
+};
