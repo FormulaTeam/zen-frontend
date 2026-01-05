@@ -47,63 +47,7 @@ export function SavedViewsList({
     user,
     permissionTypes,
   });
-
   const [currentViewId, setCurrentViewId] = useState<number | null>(null);
-
-  // Example / fake views — can be removed when real data is provided
-  if (savedViews.length === 0) {
-    savedViews = [
-      {
-        id: 1,
-        name: "דף הבית",
-        isDefault: true,
-        isPublic: true,
-        createdBy: "user1",
-        createdByName: "שירה רייכר",
-        formId: "form1",
-        config: { columns: [{ columnId: "id", displayName: "מספר", order: 0, visible: true }] },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: 2,
-        name: "תצוגה אישית",
-        isDefault: false,
-        isPublic: false,
-        createdBy: "user2",
-        createdByName: "ארז טור",
-        formId: "form1",
-        config: { columns: [] },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: 3,
-        name: "תצוגה ציבורית",
-        isDefault: false,
-        isPublic: true,
-        createdBy: "user3",
-        createdByName: "גלי צבי",
-        formId: "form1",
-        config: { columns: [] },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: 4,
-        name: "תצוגה של רויטל",
-        isDefault: false,
-        isPublic: false,
-        createdBy: "user4",
-        createdByName: "רויטל פריד",
-        formId: "form1",
-        config: { columns: [] },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ];
-  }
-
   const hasViews = savedViews.length > 0;
 
   return (
