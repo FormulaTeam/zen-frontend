@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from "react";
-import { Box, Divider } from "@mui/material";
+import { Box, Divider, Stack } from "@mui/material";
 
 import { ResponsesView, ViewColumn } from "../../../types/interfaces/tableViews.types";
 import { useViewColumnConfiguration } from "../../../hooks/useViewColumnConfiguration";
@@ -22,6 +22,7 @@ interface ResponsesViewPageProps {
 }
 
 const ACTIONS_HEIGHT: Number = 10;
+const HEBREW_FORM: string = "טופס";
 
 export function ResponsesViewPage({
   form,
@@ -69,12 +70,12 @@ export function ResponsesViewPage({
   }, [formLogic, onCancel]);
 
   return (
-    <>
+    <Stack direction="column" height="100vh" justifyContent="space-between">
       <Box overflow="auto" pb={`${ACTIONS_HEIGHT}px`}>
         <Box width="97%">
           <ResponsesViewSettings
             formId={+(form?.id ?? 0)}
-            formName={form?.name ?? ""}
+            formName={form?.name ?? HEBREW_FORM}
             columns={columns}
             hasFullAccess={hasFullAccess}
             viewName={formLogic.viewName}
@@ -108,6 +109,6 @@ export function ResponsesViewPage({
           onSave={formLogic.handleSaveView}
         />
       </Box>
-    </>
+    </Stack>
   );
 }

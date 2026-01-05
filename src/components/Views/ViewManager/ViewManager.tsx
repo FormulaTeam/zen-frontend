@@ -41,17 +41,20 @@ export function ViewManager({
 }: ViewManagerProps) {
   const { mode, editingView, switchToList, switchToCreate, switchToEdit } = useViewMode();
 
-  const isListMode = mode === Modes.LIST;
-  const isFormMode = mode === Modes.CREATE || mode === Modes.EDIT;
+  const isListMode: boolean = mode === Modes.LIST;
+  const isFormMode: boolean = mode === Modes.CREATE || mode === Modes.EDIT;
+  const showHeader: boolean = (savedViews && savedViews.length > 0) || isFormMode;
 
   const handleSave = (view: IResponsesView) => {
     onSaveView(view);
     switchToList();
   };
 
+  alert(showHeader);
+
   return (
     <ViewManagerContainer>
-      <ViewModeHeader mode={mode} onBack={switchToList} />
+      {showHeader && <ViewModeHeader mode={mode} onBack={switchToList} />}
 
       {isListMode && (
         <SavedViewsList
