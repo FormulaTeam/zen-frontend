@@ -14,7 +14,6 @@ import { Box, IconButton, TextField, Tooltip } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
-import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
@@ -433,7 +432,7 @@ export const ResponsesTable = ({
           }}
           getCellClassName={getCellClassName}
           density="comfortable"
-          rowHeight={65}
+          rowHeight={isInEditMode ? 140 : 65}
           loading={!rows}
           pagination
           checkboxSelection

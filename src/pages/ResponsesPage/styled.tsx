@@ -10,8 +10,6 @@ import {
   Button,
   Typography,
   IconButton,
-  Tooltip,
-  TooltipProps,
 } from "@mui/material";
 
 export const DetailsContainer = styled(Box)<BoxProps>(({ theme }) => ({
@@ -135,19 +133,36 @@ export const LoadingBtnBox = styled(Box)<LoadingBtnBoxProps>(({ $bgColor }) => (
   alignItems: "center",
 }));
 
-export const StyledDataGrid = styled(DataGridPro)(() => ({
+export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   "&.MuiDataGrid-root": {
     fontSize: "21px",
     transition: "all 0.3s ease",
+    border: `1px solid ${theme.palette.grid?.border}`,
+    "& .MuiDataGrid-cell": {
+      borderRight: `1px solid ${theme.palette.grid?.border}`,
+      "&:nth-last-of-type(2)": {
+        borderRight: 'none'
+      }
+    },
+    "& .MuiDataGrid-columnHeader": {
+      borderRight: `1px solid ${theme.palette.grid?.border}`,
+      borderBottom: `1px solid ${theme.palette.grid?.border}`,
+      "&--last": {
+        borderRight: `none`,
+      },
+    },
+    "& .MuiDataGrid-row": {
+      borderBottom: `1px solid ${theme.palette.grid?.border}`,
+    },
   },
   "&.MuiDataGrid-root--edit-mode": {
-    border: "3px solid #9e9e9e",
-    boxShadow: "0 0 0 2px rgba(158, 158, 158, 0.35), 0 0 20px rgba(0, 0, 0, 0.12)",
+    border: `3px solid ${theme.palette.grid?.editModeBorder}`,
+    boxShadow: `0 0 0 2px ${theme.palette.grid?.editModeShadow}, 0 0 20px rgba(0, 0, 0, 0.12)`,
     overflow: "visible",
     "& .MuiDataGrid-cell, & .MuiDataGrid-columnHeader": {
       borderRight: "none",
       backgroundImage:
-        "repeating-linear-gradient(to bottom, rgba(189,189,189,0.9) 0 2px, transparent 2px 10px)",
+        `repeating-linear-gradient(to bottom, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
       backgroundRepeat: "repeat-y",
       backgroundSize: "1px 100%",
       backgroundPosition: "left top",
@@ -155,7 +170,7 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     "& .MuiDataGrid-row": {
       borderBottom: "none",
       backgroundImage:
-        "repeating-linear-gradient(to right, rgba(189,189,189,0.9) 0 2px, transparent 2px 10px)",
+        `repeating-linear-gradient(to right, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
       backgroundRepeat: "repeat-x",
       backgroundSize: "100% 1px",
       backgroundPosition: "left bottom",
@@ -163,7 +178,7 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     "& .MuiDataGrid-cell": {
       borderBottom: "none",
       backgroundImage:
-        "repeating-linear-gradient(to bottom, rgba(189,189,189,0.9) 0 2px, transparent 2px 10px), repeating-linear-gradient(to right, rgba(189,189,189,0.9) 0 2px, transparent 2px 10px)",
+        `repeating-linear-gradient(to bottom, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px), repeating-linear-gradient(to right, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
       backgroundRepeat: "repeat-y, repeat-x",
       backgroundSize: "1px 100%, 100% 1px",
       backgroundPosition: "left top, left bottom",
@@ -171,7 +186,7 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     "& .MuiDataGrid-columnHeaders": {
       borderBottom: "none",
       backgroundImage:
-        "repeating-linear-gradient(to right, rgba(189,189,189,0.9) 0 2px, transparent 2px 10px)",
+        `repeating-linear-gradient(to right, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
       backgroundRepeat: "repeat-x",
       backgroundSize: "100% 1px",
       backgroundPosition: "left bottom",
@@ -179,23 +194,27 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     "& .MuiDataGrid-columnHeaderRow": {
       borderBottom: "none",
       backgroundImage:
-        "repeating-linear-gradient(to right, rgba(189,189,189,0.9) 0 2px, transparent 2px 10px)",
+        `repeating-linear-gradient(to right, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
       backgroundRepeat: "repeat-x",
       backgroundSize: "100% 1px",
       backgroundPosition: "left bottom",
     },
     "& .MuiDataGrid-row--even:hover": {
-      backgroundColor: "#fafafa",
+      backgroundColor: theme.palette.grid?.rowEven,
     },
     "& .MuiDataGrid-row--odd:hover": {
-      backgroundColor: "#ffffff",
+      backgroundColor: theme.palette.grid?.rowOdd,
     },
   },
   "& .MuiDataGrid-columnHeaders": {
-    backgroundColor: "#D5E6F6"
+    backgroundColor: theme.palette.grid?.headerBackground,
+    "& .MuiDataGrid-filler": {
+      backgroundColor: theme.palette.grid?.headerBackground,
+      borderBottom: `1px solid ${theme.palette.grid?.border}`,
+    },
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-columnHeaders": {
-    backgroundColor: "#D5E6F6",
+    backgroundColor: theme.palette.grid?.headerBackground,
     color: "#000000",
     "& .MuiDataGrid-columnHeaderTitle": {
       color: "#000000",
@@ -206,9 +225,9 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     },
   },
   "& .MuiDataGrid-columnHeader": {
-    backgroundColor: "#D5E6F6",
+    backgroundColor: theme.palette.grid?.headerBackground,
     "&:hover": {
-      backgroundColor: "#bbdefb",
+      backgroundColor: theme.palette.grid?.headerHover,
     },
   },
   "& .MuiDataGrid-columnSeparator": {
@@ -230,15 +249,15 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     justifyContent: "flex-start",
   },
   "& .MuiDataGrid-row--even": {
-    backgroundColor: "#fafafa",
+    backgroundColor: theme.palette.grid?.rowEven,
     "&:hover": {
-      backgroundColor: "#e3f2fd",
+      backgroundColor: theme.palette.grid?.rowHover,
     },
   },
   "& .MuiDataGrid-row--odd": {
-    backgroundColor: "#ffffff",
+    backgroundColor: theme.palette.grid?.rowOdd,
     "&:hover": {
-      backgroundColor: "#e3f2fd",
+      backgroundColor: theme.palette.grid?.rowHover,
     },
   },
   "& .MuiDataGrid-cell": {
@@ -264,23 +283,23 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
   },
   "& .MuiDataGrid-cell--editing": {
     outline: "none",
-    boxShadow: "0 0 0 2px #9e9e9e",
-    backgroundColor: "#ffffff",
+    boxShadow: `0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
+    backgroundColor: theme.palette.grid?.cellEditable,
   },
   "& .MuiDataGrid-cell--editing:focus, & .MuiDataGrid-cell--editing:focus-within": {
     outline: "none",
-    boxShadow: "0 0 0 2px #9e9e9e",
+    boxShadow: `0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus-within": {
     backgroundImage: "none",
-    boxShadow: "inset 0 0 0 2px #9e9e9e",
+    boxShadow: `inset 0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
     borderRadius: "4px",
     outline: "none",
     borderColor: "transparent",
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--editing": {
     backgroundImage: "none",
-    boxShadow: "inset 0 0 0 2px #9e9e9e",
+    boxShadow: `inset 0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
     borderRadius: "4px",
     outline: "none",
     borderColor: "transparent",
@@ -290,20 +309,20 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     display: "none",
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--editable": {
-    backgroundColor: "#ffffff",
+    backgroundColor: theme.palette.grid?.cellEditable,
     border: "none",
     borderRadius: "4px",
     cursor: "text",
     boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)",
     transition: "all 0.2s ease",
     "&:hover": {
-      backgroundColor: "#ffffff",
+      backgroundColor: theme.palette.grid?.cellEditable,
       boxShadow: "inset 0 1px 3px rgba(0,0,0,0.15)",
     },
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--non-editable-in-edit-mode": {
     backgroundColor: "transparent",
-    color: "#d0d0d0",
+    color: theme.palette.grid?.cellNonEditable,
     cursor: "not-allowed",
     opacity: 1,
     userSelect: "none",
@@ -324,17 +343,17 @@ export const StyledDataGrid = styled(DataGridPro)(() => ({
     left: "0",
   },
   "& .MuiDataGrid-row.Mui-selected": {
-    backgroundColor: "#e0e0e0",
+    backgroundColor: theme.palette.grid?.rowSelected,
     "&:hover": {
-      backgroundColor: "#d5d5d5",
+      backgroundColor: theme.palette.grid?.rowSelectedHover,
     },
   },
 
   "& .MuiDataGrid-row.Mui-selected > .MuiDataGrid-cell": {
-    backgroundColor: "#e0e0e0",
+    backgroundColor: theme.palette.grid?.rowSelected,
   },
   "& .MuiDataGrid-row.Mui-selected:hover > .MuiDataGrid-cell": {
-    backgroundColor: "#d5d5d5",
+    backgroundColor: theme.palette.grid?.rowSelectedHover,
   },
   "& .MuiDataGrid-footerContainer": {
     flexDirection: 'row-reverse',
@@ -446,6 +465,11 @@ export const FormNameTypography = styled(Typography)(() => ({
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
+  fontWeight: 600,
+}));
+
+export const FormIdTypography = styled(Typography)(() => ({
+  fontSize: "1.6rem !important",
 }));
 
 export const InfoIconButton = styled(IconButton)(() => ({

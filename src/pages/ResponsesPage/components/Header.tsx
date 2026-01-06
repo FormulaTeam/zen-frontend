@@ -13,6 +13,7 @@ import {
   FormNameInTooltipTypography,
   FormDescriptionTypography,
   formInfoTooltipSlotProps,
+  FormIdTypography,
 } from "../styled";
 
 
@@ -49,9 +50,9 @@ const Header = () => {
           {form.name}
         </FormNameTypography>
         <Tooltip title="מזהה הטופס">
-          <Typography variant="h5">
+          <FormIdTypography>
             {form.id}
-          </Typography>
+          </FormIdTypography>
         </Tooltip>
 
         <Tooltip
