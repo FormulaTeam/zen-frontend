@@ -3,6 +3,11 @@ export enum NumberType {
   DOUBLE = "double",
 }
 
+export enum CoordinateType {
+  UTM = "UTM",
+  WKT = "WKT",
+}
+
 export interface BaseFieldConfig {
   required?: boolean;
   uniqueId?: string;
@@ -36,7 +41,7 @@ export interface TimeFieldConfig extends BaseFieldConfig {
 }
 
 export interface LocationFieldConfig extends BaseFieldConfig {
-  coordinateType?: "UTM" | "WKT";
+  coordinateType?: CoordinateType;
 }
 
 export interface ListFieldConfig extends BaseFieldConfig {
@@ -55,6 +60,8 @@ export interface FileFieldConfig extends BaseFieldConfig {
   allowedTypes?: string[];
 }
 
+export type FormFieldConfig = { displayName?: string; connectedFormId?: number };
+
 export type CheckboxFieldConfig = BaseFieldConfig;
 
 export type FieldConfigUnion =
@@ -65,4 +72,5 @@ export type FieldConfigUnion =
   | TimeFieldConfig
   | LocationFieldConfig
   | ListFieldConfig
-  | FileFieldConfig;
+  | FileFieldConfig
+  | FormFieldConfig;

@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { FormField } from "../../utils/interfaces";
 import { Info } from "@mui/icons-material";
+import { CoordinateType } from "../../validation/field-config.types";
 
 type Props = {
   formField: FormField;
@@ -30,7 +31,7 @@ export default function CoordinateField({
     const newFormFields = [...formFields];
     const currentField = newFormFields.find((i) => i.index === index);
     if (currentField) {
-      currentField.coordinateType = event.target.value;
+      currentField.coordinateType = event.target.value as CoordinateType;
     }
     setFormFields(newFormFields);
   }

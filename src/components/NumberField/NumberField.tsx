@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { FormField } from "../../utils/interfaces";
 import { useState } from "react";
+import { NumberType } from "../../validation/field-config.types";
 
 type Props = {
   formField: FormField;
@@ -64,7 +65,7 @@ export default function NumberField({
         if (currentField.initialNumberValue !== undefined)
           currentField.initialNumberValue = Math.floor(currentField.initialNumberValue);
       }
-      currentField.numberType = event.target.value;
+      currentField.numberType = event.target.value as NumberType;
       setFormFields(newFormFields);
       validateNumberField(currentField);
     }

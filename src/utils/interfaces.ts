@@ -126,8 +126,8 @@ export interface FormField {
   multiSelect?: boolean;
   showSeconds?: boolean;
   dateAndTime?: boolean;
-  numberType?: string;
-  coordinateType?: string;
+  numberType?: NumberType;
+  coordinateType?: CoordinateType;
   maxValue?: number;
   minValue?: number;
   initialNumberValue?: number;
@@ -363,6 +363,10 @@ export type LinkValueError = {
   link: boolean;
   linkTxt: boolean;
 };
+
+export type FileValue = {
+
+}
 
 export type FieldValue =
   | string
@@ -773,6 +777,7 @@ export const DEFAULT_FORM_ICONS: IconNameObj[] = [
 
 // Import condition-related types and utilities from conditionUtils
 import type { ConditionOperatorType, LogicalOperatorType } from "./conditionUtils";
+import { CoordinateType, NumberType } from "../validation/field-config.types";
 
 // Re-export condition utilities for backward compatibility
 export type {

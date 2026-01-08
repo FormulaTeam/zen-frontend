@@ -18,6 +18,7 @@ import NumberField from "../NumberField/NumberField";
 import FormFieldWrapper from "../FormFieldWrapper/FormFieldWrapper";
 import FormInFormField from "../FormInFormField/FormInFormField";
 import { ErrorMessageType } from "../../types/interfaces/forms.types";
+import { NumberType } from "../../validation/field-config.types";
 
 export interface FormPropertyRendererProps {
   formField: FormField;
@@ -297,7 +298,7 @@ export default function FormPropertyRenderer({
       break;
 
     case FieldTypeIds.number:
-      if (!formField.numberType) formField.numberType = "integer";
+      if (!formField.numberType) formField.numberType = NumberType.INTEGER;
       input = (
         <>
           {getFormPropertyTitleTextField(formField, index)}
