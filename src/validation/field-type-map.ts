@@ -10,9 +10,12 @@ import { checkboxFieldSchema } from "./field-schemas/checkbox-field.schema";
 import { listFieldSchema } from "./field-schemas/list-field.schema";
 import { fileFieldSchema } from "./field-schemas/file-field.schema";
 import { optionsFieldSchema } from "./field-schemas/options-field.schema";
-import {
+import { formFieldSchema } from "./field-schemas/form-field.schema";
+import type { Form, FormField } from "../utils/interfaces";
+import type {
   DateFieldConfig,
   FileFieldConfig,
+  FormFieldConfig,
   ListFieldConfig,
   LocationFieldConfig,
   NumberFieldConfig,
@@ -32,7 +35,22 @@ export type FieldConfigUnion =
   | TimeFieldConfig
   | LocationFieldConfig
   | ListFieldConfig
-  | FileFieldConfig;
+  | FileFieldConfig
+  | FormFieldConfig;
+
+/**
+ * Runtime context for schema factories that need it (typeId=12).
+ */
+export type SchemaFactoryContext = {
+  fetchFormById: (id: number) => Promise<Form | null>;
+  buildDynamicRowSchema: (
+    form: Form,
+    row: Record<string, unknown>,
+    fetchFormById: (id: number) => Promise<Form | null>,
+    ancestorFormIds?: number[],
+  ) => Promise<{ schema: z.ZodTypeAny; visibleFields: FormField[] }>;
+  ancestorFormIds: number[];
+};
 
 /**
  * Result returned by schema factories when they include a dependency validator.
@@ -42,10 +60,10 @@ export interface SchemaFactoryResult {
   dependencyValidator?: (row: Record<string, unknown>, ctx: z.RefinementCtx) => void;
 }
 
-/**
- * A field schema factory returns either a raw Zod schema or a SchemaFactoryResult.
- */
-export type SchemaFactory = (config: FieldConfigUnion) => z.ZodTypeAny | SchemaFactoryResult;
+export type SchemaFactory = (
+  config: any,
+  ctx?: SchemaFactoryContext,
+) => z.ZodTypeAny | SchemaFactoryResult;
 
 // Maps a numeric FieldTypeId to appropriate schema factory.
 const fieldTypeToSchemaMap: Record<number, SchemaFactory> = {
@@ -60,6 +78,7 @@ const fieldTypeToSchemaMap: Record<number, SchemaFactory> = {
   9: listFieldSchema,
   10: numberFieldSchema,
   11: fileFieldSchema,
+  12: formFieldSchema,
 };
 
 export default fieldTypeToSchemaMap;
