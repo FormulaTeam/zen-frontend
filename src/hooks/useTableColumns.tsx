@@ -101,7 +101,7 @@ export const useTableColumns = (
             title={
               row?.original?.pushed_to_metro
                 ? "סונכרן למטרו ב-" +
-                  moment(row?.original?.pushed_to_metro).format(DEFAULT_DATE_FORMAT)
+                moment(row?.original?.pushed_to_metro).format(DEFAULT_DATE_FORMAT)
                 : "לא סונכרן"
             }>
             <div>
@@ -128,11 +128,9 @@ export const useTableColumns = (
         grow: true,
         innerName: field.name,
         Cell: ({ cell, row }) => {
-          const renderKey = `${
-            row.original.id
-          }-${uniqueId}-${isQuickEditMode}-${timestamp}-${JSON.stringify(rowSelection)}-${
-            forceRenderCounter || 0
-          }`;
+          const renderKey = `${row.original.id
+            }-${uniqueId}-${isQuickEditMode}-${timestamp}-${JSON.stringify(rowSelection)}-${forceRenderCounter || 0
+            }`;
           if (row && row.original && row.original.data) {
             let item = row.original.data?.find((f) => f.uniqueId === uniqueId);
             let value = ![undefined, null].includes(item?.value) ? item?.value : "";
@@ -219,7 +217,7 @@ export const useTableColumns = (
                 <></>
               );
             }
-            if (field.typeId === FieldTypeIds.hour) {
+            if (field.typeId === FieldTypeIds.time) {
               if (value && value !== "") {
                 if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(value)) {
                   return (

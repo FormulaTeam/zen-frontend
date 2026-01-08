@@ -569,7 +569,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
             case FieldTypeIds.longText:
               formattedValue = value as string;
               break;
-            case FieldTypeIds.smallText:
+            case FieldTypeIds.shortText:
               formattedValue = value as string;
               break;
             case FieldTypeIds.options:
@@ -595,7 +595,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
                 formattedValue = moment(dateValue).format(DEFAULT_DATE_FORMAT);
               }
               break;
-            case FieldTypeIds.hour:
+            case FieldTypeIds.time:
               const timeValue = value as string;
               // If it's already in the correct format, use it directly
               if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(timeValue)) {

@@ -66,11 +66,11 @@ export interface RequestConfig {
 }
 export const FieldTypeIds = {
   longText: 1,
-  smallText: 2,
+  shortText: 2,
   options: 3,
   link: 4,
   date: 5,
-  hour: 6,
+  time: 6,
   location: 7,
   checkbox: 8,
   list: 9,
@@ -429,7 +429,7 @@ export const DEFAULT_FIELDS: DefaultField[] = [
     fieldType: FieldTypes.string,
   },
   {
-    typeId: FieldTypeIds.smallText,
+    typeId: FieldTypeIds.shortText,
     name: "שורה אחת",
     icon: "dragHandle",
     fieldType: FieldTypes.string,
@@ -453,7 +453,7 @@ export const DEFAULT_FIELDS: DefaultField[] = [
     fieldType: FieldTypes.date,
   },
   {
-    typeId: FieldTypeIds.hour,
+    typeId: FieldTypeIds.time,
     name: "שעה",
     icon: "accessTime",
     fieldType: FieldTypes.string,
@@ -835,7 +835,7 @@ export interface Condition {
 }
 
 export const ALLOWED_FIELD_TYPES_FOR_CONDITION: number[] = [
-  FieldTypeIds.smallText,
+  FieldTypeIds.shortText,
   FieldTypeIds.longText,
   FieldTypeIds.number,
   FieldTypeIds.date,

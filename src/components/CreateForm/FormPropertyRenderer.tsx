@@ -66,7 +66,7 @@ export default function FormPropertyRenderer({
   // Field‐type specific rendering
   switch (formField.typeId) {
     case FieldTypeIds.longText:
-    case FieldTypeIds.smallText:
+    case FieldTypeIds.shortText:
       input = getFormPropertyTitleTextField(formField, index);
       break;
 
@@ -236,7 +236,7 @@ export default function FormPropertyRenderer({
       );
       break;
 
-    case FieldTypeIds.hour:
+    case FieldTypeIds.time:
       input = (
         <HourField
           getBaseFieldElement={() => getFormPropertyTitleTextField(formField, index)}

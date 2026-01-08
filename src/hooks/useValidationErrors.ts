@@ -17,16 +17,16 @@ export const useValidationErrors = ({
 }: UseValidationErrorsParams) => {
   const generateValidationErrorMessages = (): string[] => {
     const errors: string[] = [];
-    
+
     // Check main form validation errors
     if (form?.fields) {
       form.fields.forEach((field) => {
         const uniqueId = field?.uniqueId + "";
         const isValid = formFieldsValidMap.get(uniqueId);
-        
+
         if (isValid === false || (typeof isValid === 'object' && isValid !== null)) {
           const fieldName = field.displayName || field.name || `שדה ${uniqueId}`;
-          
+
           // Handle different field types and their specific validation errors
           if (field.typeId === FieldTypeIds.link && typeof isValid === 'object') {
             if (!isValid.link && !isValid.linkTxt) {
@@ -50,7 +50,7 @@ export const useValidationErrors = ({
         }
       });
     }
-    
+
     // Check child form validation errors
     if (childForms && childForms.length > 0) {
       childForms.forEach((childForm, childFormIndex) => {
@@ -58,7 +58,7 @@ export const useValidationErrors = ({
           // Get the field name for this child form
           const childFormField = formFields.find(f => f.connectedFormId === childForm.formId);
           const childFormName = childFormField?.displayName || childFormField?.name || `טופס משובץ ${childFormIndex + 1}`;
-          
+
           // Check if any child responses have validation errors
           childForm.children.forEach((child, childIndex) => {
             // Check if this child has validation errors
@@ -67,7 +67,7 @@ export const useValidationErrors = ({
               errors.push(`${childFormName} (תגובה ${childIndex + 1}): יש שדות חובה שלא מולאו`);
             }
           });
-          
+
           // If we're currently validating child forms and some haven't been validated yet
           if (childFormsValidate && childForm.valid && childForm.valid.length < childForm.children.length) {
             errors.push(`${childFormName}: יש לוודא שכל השדות החובה מולאו`);
@@ -75,7 +75,7 @@ export const useValidationErrors = ({
         }
       });
     }
-    
+
     return errors;
   };
 
@@ -86,7 +86,7 @@ export const useValidationErrors = ({
         return `${fieldName}: יש לבחור אפשרות`;
       } else if (field.typeId === FieldTypeIds.date) {
         return `${fieldName}: יש להזין תאריך תקף`;
-      } else if (field.typeId === FieldTypeIds.hour) {
+      } else if (field.typeId === FieldTypeIds.time) {
         return `${fieldName}: יש להזין שעה תקפה`;
       } else if (field.typeId === FieldTypeIds.number) {
         if (field.minValue !== undefined || field.maxValue !== undefined) {
@@ -115,7 +115,7 @@ export const useValidationErrors = ({
       // Field is not required but has validation errors (e.g., regex, format)
       if (field.validationRegex) {
         return `${fieldName}: הפורמט אינו תקין`;
-      } else if (field.typeId === FieldTypeIds.hour) {
+      } else if (field.typeId === FieldTypeIds.time) {
         return `${fieldName}: פורמט השעה אינו תקין`;
       } else if (field.typeId === FieldTypeIds.number) {
         return `${fieldName}: פורמט המספר אינו תקין`;
