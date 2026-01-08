@@ -15,7 +15,7 @@ const saveFunction = async (
   formFieldsByIdMap: any,
   formFieldsValuesMap: any,
   setSaved: (v: boolean) => void,
-  setError: (v: boolean) => void
+  setError: (v: boolean) => void,
 ) => {
   try {
     console.log(`[CHILD FORM SAVE] Starting save for child form index ${index}`);
@@ -57,7 +57,7 @@ export const saveChildForm = async (
   formFieldsByIdMap: any,
   formFieldsValuesMap: any,
   setSaved: (v: boolean) => void,
-  setError: (v: boolean) => void
+  setError: (v: boolean) => void,
 ) => {
   saveQueue.push({
     index,
@@ -76,7 +76,7 @@ const clearSaveQueue = () => {
 interface useFormInFormResponseSaveProps {
   shouldSave: boolean;
   shouldValidate: boolean;
-  validateRequiredFields: () => boolean;
+  validateRequiredFields: () => Promise<boolean>;
   form: any;
   saveResponse: saveResponse;
   formFieldsByIdMap: any;
@@ -103,29 +103,53 @@ export function useFormInFormResponseSave({
   const [valid, setValid] = useState(true);
 
   useEffect(() => {
-    if (shouldSave && validateRequiredFields() && form) {
-      saveChildForm(index, saveResponse, formFieldsByIdMap, formFieldsValuesMap, setSaved, setError)
-        .then(() => {
-          childSaved(true);
-        })
-        .catch((error) => {
+    const run = async () => {
+      if (shouldSave && form) {
+        const isValid = await validateRequiredFields();
+
+        if (isValid) {
+          saveChildForm(
+            index,
+            saveResponse,
+            formFieldsByIdMap,
+            formFieldsValuesMap,
+            setSaved,
+            setError,
+          )
+            .then(() => {
+              childSaved(true);
+            })
+            .catch(() => {
+              childSaved(false);
+            });
+        } else {
+          setError(false);
           childSaved(false);
-        });
-    } else {
-      setError(false);
-    }
+        }
+      } else {
+        setError(false);
+      }
+    };
+
+    run();
   }, [shouldSave]);
 
   useEffect(() => {
-    if (form) {
-      if (validateRequiredFields()) {
-        childValid(true);
-        setValid(true);
-      } else {
-        childValid(false);
-        setValid(false);
+    const run = async () => {
+      if (form && shouldValidate) {
+        const isValid = await validateRequiredFields();
+
+        if (isValid) {
+          childValid(true);
+          setValid(true);
+        } else {
+          childValid(false);
+          setValid(false);
+        }
       }
-    }
+    };
+
+    run();
   }, [shouldValidate]);
 
   return { saved, error, valid, setSaved, setError };

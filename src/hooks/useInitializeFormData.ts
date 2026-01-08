@@ -65,9 +65,6 @@ export const useInitializeFormData = () => {
               console.log("[INIT FORM DATA] Processing child form field:", field);
               getResponses({
                 form_id: field.connectedFormId,
-                query: {
-                  parentResponse: { $regex: `${form.id};` },
-                },
               })
                 .then((res) => {
                   console.log(

@@ -47,7 +47,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
   } = useResponseState(formId, id, viewMode, copyMode);
 
   const saveAll = async () => {
-    if (validateRequiredFields() && form) {
+    if ((await validateRequiredFields()) && form) {
       try {
         const result = await saveResponse(formFieldsByIdMap, formFieldsValuesMap);
         if (!Array.isArray(result)) setSavedResponse(result);
