@@ -1090,6 +1090,15 @@ export function validateByRegex(value: string, regex: string) {
   return regexValidator.test(value);
 }
 
+export const preventEnterKeyNavigation = (event: React.KeyboardEvent, allowEnter: boolean = false) => {
+  if (event.key === 'Enter') {
+    event.stopPropagation();
+    if (!allowEnter) {
+      event.preventDefault();
+    }
+  }
+};
+
 // using TextDecoder to interpret the bytes as UTF‑8 to display the correct characters
 export function decodeFileName(fileName: string) {
   const bytes = new Uint8Array(fileName.split("").map((char) => char.charCodeAt(0)));

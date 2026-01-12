@@ -1,5 +1,25 @@
 import React, { useEffect, useState } from "react";
-import { Autocomplete, TextField, Chip } from "@mui/material";
+import { Autocomplete, TextField, Chip, styled } from "@mui/material";
+
+const StyledTextField = styled(TextField)({
+    "& .MuiInputBase-root": {
+        fontSize: "1rem",
+        padding: "4px 8px",
+        minHeight: "40px",
+    },
+});
+
+const StyledAutocomplete = styled(Autocomplete)({
+    "& .MuiAutocomplete-inputRoot": {
+        padding: "2px 8px",
+        paddingRight: "65px !important",
+    },
+}) as typeof Autocomplete;
+
+const StyledChip = styled(Chip)({
+    margin: "2px",
+    fontSize: "1rem",
+});
 
 interface OptionsCellEditorProps {
     value: string | string[];
@@ -9,6 +29,24 @@ interface OptionsCellEditorProps {
     isRequired?: boolean;
 }
 
+const normalizeValue = (value: string | string[], multiSelect: boolean): string | string[] => {
+    if (multiSelect) {
+        if (Array.isArray(value)) {
+            return value;
+        } else if (value) {
+            return [value];
+        } else {
+            return [];
+        }
+    } else {
+        if (Array.isArray(value)) {
+            return value[0] || "";
+        } else {
+            return value || "";
+        }
+    }
+};
+
 export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
     value,
     onChange,
@@ -16,46 +54,30 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
     multiSelect = false,
     isRequired = false,
 }) => {
-    const [localValue, setLocalValue] = useState<string | string[]>(
-        multiSelect
-            ? Array.isArray(value)
-                ? value
-                : value
-                    ? [value]
-                    : []
-            : Array.isArray(value)
-                ? value[0] || ""
-                : value || ""
+    const [localValue, setLocalValue] = useState<string | string[]>(() =>
+        normalizeValue(value, multiSelect)
     );
 
     useEffect(() => {
-        const normalized = multiSelect
-            ? Array.isArray(value)
-                ? value
-                : value
-                    ? [value]
-                    : []
-            : Array.isArray(value)
-                ? value[0] || ""
-                : value || "";
+        const normalized = normalizeValue(value, multiSelect);
         setLocalValue(normalized);
     }, [value, multiSelect]);
 
     const handleChange = (_event: React.SyntheticEvent, newValue: string | string[] | null) => {
-        const normalized = newValue == null ? (multiSelect ? [] : "") : newValue;
+        let normalized: string | string[];
+
+        if (newValue == null) {
+            normalized = multiSelect ? [] : "";
+        } else {
+            normalized = newValue;
+        }
+
         setLocalValue(normalized);
         onChange(normalized);
     };
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        // Stop propagation to prevent grid navigation while typing
-        if (event.key !== 'Escape' && event.key !== 'Tab') {
-            event.stopPropagation();
-        }
-    };
-
     return (
-        <Autocomplete
+        <StyledAutocomplete
             fullWidth
             multiple={multiSelect}
             value={localValue}
@@ -64,39 +86,41 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             disableCloseOnSelect={multiSelect}
             autoHighlight
             openOnFocus
+            slotProps={{
+                clearIndicator: {
+                    title: "",
+                },
+                popupIndicator: {
+                    title: "",
+                },
+            }}
             renderInput={(params) => (
-                <TextField
+                <StyledTextField
                     {...params}
                     variant="standard"
                     autoFocus
-                    onKeyDown={handleKeyDown}
-                    InputProps={{
-                        ...params.InputProps,
-                        disableUnderline: true,
-                        sx: {
-                            fontSize: "1rem",
-                            padding: "4px 8px",
-                            minHeight: "40px",
+                    slotProps={{
+                        input: {
+                            ...params.InputProps,
+                            disableUnderline: true,
                         },
                     }}
                 />
             )}
             renderTags={(tagValue, getTagProps) =>
-                tagValue.map((option, index) => (
-                    <Chip
-                        {...getTagProps({ index })}
-                        key={option}
-                        label={option}
-                        size="small"
-                        sx={{ margin: "2px" }}
-                    />
-                ))
+                tagValue.map((option, index) => {
+                    const { key, ...chipProps } = getTagProps({ index });
+
+                    return (
+                        <StyledChip
+                            key={key}
+                            {...chipProps}
+                            label={option}
+                            size="small"
+                        />
+                    );
+                })
             }
-            sx={{
-                "& .MuiAutocomplete-inputRoot": {
-                    padding: "2px 8px",
-                },
-            }}
         />
     );
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, TextField, IconButton } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { preventEnterKeyNavigation } from "../../../../utils/utils";
 
 interface ListCellEditorProps {
     value: string[];
@@ -41,11 +42,6 @@ export const ListCellEditor: React.FC<ListCellEditorProps> = ({
         onChange(updated);
     };
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        // Stop event propagation to prevent grid navigation
-        event.stopPropagation();
-    };
-
     return (
         <Box
             sx={{
@@ -56,7 +52,6 @@ export const ListCellEditor: React.FC<ListCellEditorProps> = ({
                 maxHeight: "120px",
                 overflowY: "auto",
             }}
-            onKeyDown={handleKeyDown}
         >
             {localValue.map((item, index) => (
                 <Box key={index} sx={{ display: "flex", gap: 1, alignItems: "center" }}>
@@ -64,12 +59,13 @@ export const ListCellEditor: React.FC<ListCellEditorProps> = ({
                         size="small"
                         value={item}
                         onChange={(e) => handleItemChange(index, e.target.value)}
+                        onKeyDown={(e) => preventEnterKeyNavigation(e)}
                         variant="standard"
                         fullWidth
                         autoFocus={index === 0}
                         InputProps={{
                             disableUnderline: true,
-                            sx: { fontSize: "0.9rem" },
+                            sx: { fontSize: "1rem" },
                         }}
                     />
                     <IconButton

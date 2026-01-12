@@ -1,9 +1,48 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Box, Typography, Chip } from "@mui/material";
+import { Box, Chip, styled, Typography } from "@mui/material";
 import { useDropzone } from "react-dropzone";
 import CloseIcon from "@mui/icons-material/Close";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import { decodeFileName } from "../../../../utils/utils";
+
+const StyledContainer = styled(Box)({
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+    padding: "8px",
+    maxHeight: "170px",
+    width: "100%",
+    overflowY: "auto",
+});
+
+const StyledDropzone = styled(Box)<{ isDragActive: boolean }>(({ theme, isDragActive }) => ({
+    border: "2px dashed",
+    borderColor: isDragActive ? theme.palette.primary.main : theme.palette.grey[400],
+    borderRadius: theme.shape.borderRadius,
+    padding: theme.spacing(1),
+    textAlign: "center",
+    cursor: "pointer",
+    backgroundColor: isDragActive ? theme.palette.action.hover : "transparent",
+    width: "100%",
+    display: 'flex',
+    height: '130px',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    "&:hover": {
+        backgroundColor: theme.palette.action.hover,
+    },
+}));
+
+const StyledFilesContainer = styled(Box)({
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 4,
+});
+
+const StyledChip = styled(Chip)({
+    fontSize: "1rem",
+});
 
 interface FileCellEditorProps {
     value: any;
@@ -56,72 +95,38 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
         noKeyboard: true,
     });
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        // Stop event propagation to prevent grid navigation
-        event.stopPropagation();
-    };
-
     const handleClick = (event: React.MouseEvent) => {
         event.stopPropagation();
     };
 
     return (
-        <Box
-            sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-                padding: "8px",
-                maxHeight: "120px",
-                overflowY: "auto",
-            }}
-            onKeyDown={handleKeyDown}
-            onClick={handleClick}
-        >
-            {/* Dropzone */}
-            <Box
-                {...getRootProps()}
-                sx={{
-                    border: "2px dashed",
-                    borderColor: isDragActive ? "primary.main" : "grey.400",
-                    borderRadius: 1,
-                    padding: 1,
-                    textAlign: "center",
-                    cursor: "pointer",
-                    backgroundColor: isDragActive ? "action.hover" : "transparent",
-                    "&:hover": {
-                        backgroundColor: "action.hover",
-                    },
-                }}
-            >
+        <StyledContainer onClick={handleClick}>
+            <StyledDropzone {...getRootProps()} isDragActive={isDragActive}>
                 <input {...getInputProps()} />
                 <AttachFileIcon fontSize="small" />
                 <Typography variant="caption" display="block">
                     {isDragActive ? "שחרר קבצים כאן..." : "לחץ או גרור קבצים"}
                 </Typography>
-            </Box>
+            </StyledDropzone>
 
-            {/* Display new files */}
             {files.length > 0 && (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                <StyledFilesContainer>
                     {files.map((file, index) => (
-                        <Chip
+                        <StyledChip
                             key={`new-${index}`}
                             label={file.name}
                             size="small"
                             onDelete={() => deleteNewFile(index)}
                             deleteIcon={<CloseIcon fontSize="small" />}
-                            sx={{ fontSize: "0.75rem" }}
                         />
                     ))}
-                </Box>
+                </StyledFilesContainer>
             )}
 
-            {/* Display attached files */}
             {responseFiles?.files && responseFiles.files.length > 0 && (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                <StyledFilesContainer>
                     {responseFiles.files.map((file: any, index: number) => (
-                        <Chip
+                        <StyledChip
                             key={`attached-${index}`}
                             label={decodeFileName(file.name)}
                             size="small"
@@ -129,11 +134,10 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
                             variant="outlined"
                             onDelete={() => deleteAttachedFile(file, index)}
                             deleteIcon={<CloseIcon fontSize="small" />}
-                            sx={{ fontSize: "0.75rem" }}
                         />
                     ))}
-                </Box>
+                </StyledFilesContainer>
             )}
-        </Box>
+        </StyledContainer>
     );
 };

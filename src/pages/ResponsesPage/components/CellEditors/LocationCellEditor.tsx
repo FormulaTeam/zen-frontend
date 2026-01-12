@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, TextField } from "@mui/material";
 import { LocationValue } from "../../../../utils/interfaces";
-import { utmRegex, wktLatitudeRegexY, wktLongitudeRegexX } from "../../../../utils/utils";
+import { utmRegex, wktLatitudeRegexY, wktLongitudeRegexX, preventEnterKeyNavigation } from "../../../../utils/utils";
 
 interface LocationCellEditorProps {
     value: LocationValue;
@@ -54,11 +54,6 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
         onChange({ x: latitude, y: newLongitude });
     };
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        // Stop event propagation to prevent grid navigation
-        event.stopPropagation();
-    };
-
     const getPlaceholder = (isLatitude: boolean) => {
         if (coordinateType === "UTM") {
             return isLatitude ? "Y (דוגמה: 500000)" : "X (דוגמה: 200000)";
@@ -74,13 +69,13 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
                 gap: 1,
                 padding: "8px",
             }}
-            onKeyDown={handleKeyDown}
         >
             <TextField
                 fullWidth
                 placeholder={getPlaceholder(true)}
                 value={latitude}
                 onChange={handleLatitudeChange}
+                onKeyDown={(e) => preventEnterKeyNavigation(e)}
                 error={latitudeError}
                 helperText={latitudeError ? "ערך לא תקין" : ""}
                 variant="standard"
@@ -88,7 +83,7 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
                 InputProps={{
                     disableUnderline: true,
                     sx: {
-                        fontSize: "0.9rem",
+                        fontSize: "1rem",
                         padding: "4px 8px",
                     },
                 }}
@@ -98,13 +93,14 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
                 placeholder={getPlaceholder(false)}
                 value={longitude}
                 onChange={handleLongitudeChange}
+                onKeyDown={(e) => preventEnterKeyNavigation(e)}
                 error={longitudeError}
                 helperText={longitudeError ? "ערך לא תקין" : ""}
                 variant="standard"
                 InputProps={{
                     disableUnderline: true,
                     sx: {
-                        fontSize: "0.9rem",
+                        fontSize: "1rem",
                         padding: "4px 8px",
                     },
                 }}

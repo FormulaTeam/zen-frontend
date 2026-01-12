@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { TextField } from "@mui/material";
+import { preventEnterKeyNavigation } from "../../../../utils/utils";
 
 interface NumberCellEditorProps {
     value: number | string;
@@ -48,18 +49,13 @@ export const NumberCellEditor: React.FC<NumberCellEditorProps> = ({
         onChange(newValue);
     };
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        // Stop event propagation to prevent grid navigation
-        event.stopPropagation();
-    };
-
     return (
         <TextField
             fullWidth
             type="number"
             value={localValue}
             onChange={handleChange}
-            onKeyDown={handleKeyDown}
+            onKeyDown={(e) => preventEnterKeyNavigation(e)}
             error={error}
             variant="standard"
             autoFocus

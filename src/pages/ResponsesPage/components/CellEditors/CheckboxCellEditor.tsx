@@ -1,5 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, FormControlLabel, Switch } from "@mui/material";
+import { Box, FormControlLabel, Switch, styled } from "@mui/material";
+
+const CenteredBox = styled(Box)({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100%",
+    width: "100%",
+    padding: "8px 12px",
+});
+
+const StyledFormControlLabel = styled(FormControlLabel)({
+    margin: 0,
+    "& .MuiFormControlLabel-label": {
+        fontSize: "1rem",
+    },
+});
 
 interface CheckboxCellEditorProps {
     value: boolean;
@@ -25,15 +41,8 @@ export const CheckboxCellEditor: React.FC<CheckboxCellEditorProps> = ({
     };
 
     return (
-        <Box
-            sx={{
-                display: "flex",
-                alignItems: "center",
-                height: "100%",
-                padding: "8px 12px",
-            }}
-        >
-            <FormControlLabel
+        <CenteredBox>
+            <StyledFormControlLabel
                 control={
                     <Switch
                         checked={localValue}
@@ -42,13 +51,7 @@ export const CheckboxCellEditor: React.FC<CheckboxCellEditorProps> = ({
                     />
                 }
                 label={label}
-                sx={{
-                    margin: 0,
-                    "& .MuiFormControlLabel-label": {
-                        fontSize: "1rem",
-                    },
-                }}
             />
-        </Box>
+        </CenteredBox>
     );
 };

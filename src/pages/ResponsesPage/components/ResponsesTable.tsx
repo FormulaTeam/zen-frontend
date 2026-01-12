@@ -7,11 +7,11 @@ import {
   GridCellModes,
   GridFooterContainer,
   GridFooter,
-  GridRenderEditCellParams,
   GridColDef,
+  GridRenderCellParams,
 } from "@mui/x-data-grid-pro";
 import { useFormStore } from "../stores/form.store";
-import { IconButton, TextField, Tooltip } from "@mui/material";
+import { IconButton, Tooltip } from "@mui/material";
 import clsx from "clsx";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
@@ -22,19 +22,10 @@ import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrow
 import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp";
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "../../../components/formInForm/ZoomCell";
-import { FieldTypeIds, Row } from "../../../utils/interfaces";
-import {
-  TextCellEditor,
-  OptionsCellEditor,
-  NumberCellEditor,
-  DateCellEditor,
-  TimeCellEditor,
-  CheckboxCellEditor,
-  ListCellEditor,
-  LinkCellEditor,
-  LocationCellEditor,
-  FileCellEditor,
-} from "./CellEditors";
+import { Row } from "../../../utils/interfaces";
+import { useCellEditors } from "../hooks/useCellEditors";
+import { useCellDisplay } from "../hooks/useCellDisplay";
+import { downloadFileFromResponse } from "../../../api/filesApi";
 import { ContentContainer, ExpandIconBox, MainContent, ResponsesAmountBox, ResponsesAmountText, StyledDataGrid, SyncStatusIconBox } from "../styled";
 
 interface ResponsesTableProps {
@@ -55,217 +46,19 @@ export const ResponsesTable = ({
   const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
   const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
 
-  type EditableFieldTypeId = number;
+  const { renderEditCell } = useCellEditors({
+    apiRef,
+    formFields: form?.fields,
+  });
 
-  type FormFieldLike = {
-    uniqueId: string;
-    displayName: string;
-    typeId: number;
-    required?: boolean;
-    options?: string[];
-    multiSelect?: boolean;
-    validationRegex?: string;
-    coordinateType?: string;
-    numberType?: string;
-    minValue?: number;
-    maxValue?: number;
-    defaultValue?: string;
-    dateAndTime?: boolean;
-  };
+  const handleFileClick = useCallback((file: any) => {
+    downloadFileFromResponse(file, String(form?.id));
+  }, [form?.id]);
 
-  const formFieldByColumnKey = useMemo(() => {
-    const index = new Map<string, FormFieldLike>();
-
-    const formFields = (form?.fields ?? []) as unknown as Array<Partial<FormFieldLike> & { uniqueId: string }>;
-
-    formFields.forEach((field) => {
-      if (!field.displayName) {
-        return;
-      }
-
-      index.set(field.displayName, {
-        uniqueId: field.uniqueId,
-        displayName: field.displayName,
-        typeId: field.typeId ?? 0,
-        required: field.required,
-        options: field.options as string[] | undefined,
-        multiSelect: field.multiSelect,
-        validationRegex: field.validationRegex,
-        coordinateType: field.coordinateType,
-        numberType: field.numberType,
-        minValue: field.minValue,
-        maxValue: field.maxValue,
-        defaultValue: field.defaultValue,
-        dateAndTime: field.dateAndTime,
-      });
-    });
-
-    return index;
-  }, [form?.fields]);
-
-  const setEditCellValue = useCallback(
-    (params: GridRenderEditCellParams, newValue: unknown) => {
-      apiRef.current?.setEditCellValue({
-        id: params.id,
-        field: params.field,
-        value: newValue,
-      });
-    },
-    [apiRef],
-  );
-
-  const renderEditCellWithCellEditor = useCallback(
-    (params: GridRenderEditCellParams) => {
-      const formField = formFieldByColumnKey.get(params.field);
-      if (!formField) {
-        return (
-          <TextField
-            variant="standard"
-            fullWidth
-            value={(params.value as string | null | undefined) ?? ""}
-            onChange={(e) => setEditCellValue(params, e.target.value)}
-            InputProps={{ disableUnderline: true }}
-            sx={{ px: 1 }}
-          />
-        );
-      }
-
-      const typeId: number = formField.typeId;
-
-      switch (typeId) {
-        case FieldTypeIds.shortText:
-          return (
-            <TextCellEditor
-              value={params.value as string}
-              onChange={(newValue) => setEditCellValue(params, newValue)}
-              validationRegex={formField.validationRegex}
-              isRequired={formField.required}
-              multiline={false}
-            />
-          );
-
-        case FieldTypeIds.longText:
-          return (
-            <TextCellEditor
-              value={params.value as string}
-              onChange={(newValue) => setEditCellValue(params, newValue)}
-              validationRegex={formField.validationRegex}
-              isRequired={formField.required}
-              multiline={true}
-            />
-          );
-
-        case FieldTypeIds.options:
-          return (
-            <OptionsCellEditor
-              value={params.value as string | string[]}
-              onChange={(newValue) => setEditCellValue(params, newValue)}
-              options={formField.options || []}
-              multiSelect={formField.multiSelect}
-              isRequired={formField.required}
-            />
-          );
-
-        case FieldTypeIds.number:
-          return (
-            <NumberCellEditor
-              value={params.value as number | string}
-              onChange={(newValue) => setEditCellValue(params, newValue)}
-              numberType={formField.numberType}
-              minValue={formField.minValue}
-              maxValue={formField.maxValue}
-              isRequired={formField.required}
-            />
-          );
-
-        case FieldTypeIds.date:
-          return (
-            <DateCellEditor
-              value={params.value as string | null}
-              onChange={(newValue) => setEditCellValue(params, newValue)}
-              dateAndTime={formField.dateAndTime}
-              isRequired={formField.required}
-            />
-          );
-
-        case FieldTypeIds.time:
-          return (
-            <TimeCellEditor
-              value={params.value as string | null}
-              onChange={(newValue) => setEditCellValue(params, newValue)}
-              isRequired={formField.required}
-            />
-          );
-
-        case FieldTypeIds.checkbox:
-          return (
-            <CheckboxCellEditor
-              value={params.value as boolean}
-              onChange={(newValue) => setEditCellValue(params, newValue)}
-              label=""
-            />
-          );
-
-        case FieldTypeIds.list:
-          return (
-            <ListCellEditor
-              value={params.value as string[]}
-              onChange={(newValue) => setEditCellValue(params, newValue)}
-              isRequired={formField.required}
-            />
-          );
-
-        case FieldTypeIds.link:
-          return (
-            <LinkCellEditor
-              value={params.value as any}
-              onChange={(newValue) => setEditCellValue(params, newValue)}
-              isRequired={formField.required}
-            />
-          );
-
-        case FieldTypeIds.location:
-          return (
-            <LocationCellEditor
-              value={params.value as any}
-              onChange={(newValue) => setEditCellValue(params, newValue)}
-              coordinateType={formField.coordinateType}
-              isRequired={formField.required}
-            />
-          );
-
-        case FieldTypeIds.file:
-          return (
-            <FileCellEditor
-              value={params.value as any}
-              onChange={(newValue) => setEditCellValue(params, newValue)}
-              isRequired={formField.required}
-            />
-          );
-
-        default:
-          // Fallback for unsupported types
-          return (
-            <TextField
-              variant="standard"
-              fullWidth
-              value={String(params.value ?? "")}
-              onChange={(e) => setEditCellValue(params, e.target.value)}
-              InputProps={{ disableUnderline: true }}
-              sx={{ px: 1 }}
-            />
-          );
-      }
-    },
-    [formFieldByColumnKey, setEditCellValue],
-  );
-
-  const renderEditCellByType = useCallback(
-    (params: GridRenderEditCellParams, fieldTypeId?: EditableFieldTypeId) => {
-      return renderEditCellWithCellEditor(params);
-    },
-    [renderEditCellWithCellEditor],
-  );
+  const { formatCellValue } = useCellDisplay({
+    formId: form?.id,
+    onFileClick: handleFileClick,
+  });
 
   const handleCellClick = useCallback((params: GridCellParams, event: any) => {
     if (params.field === "__check__") {
@@ -284,8 +77,6 @@ export const ResponsesTable = ({
     if (!isInEditMode || !params.isEditable) {
       return;
     }
-
-
 
     // changes to in edit mode, set the local rows to the response rows
     onCellEditStart();
@@ -359,7 +150,6 @@ export const ResponsesTable = ({
     return expandedRowIds.has(String(row.id));
   };
 
-
   const SyncStatusIcon: React.FC<{ pushedToMetro?: string | null }> = ({ pushedToMetro }) => (
     <SyncStatusIconBox>
       {pushedToMetro ? <CloudDoneIcon fontSize="small" /> : <CloudOffIcon fontSize="small" />}
@@ -412,19 +202,27 @@ export const ResponsesTable = ({
     );
   };
 
-
   const getFormColumns = (): GridColDef[] => {
     const baseFormColumns = (form?.columns && form.columns?.length > 0)
-      ? form?.columns.map((column: GridColDef) => ({
-        flex: (column.field === "id") ? 0 : 2,
-        minWidth: (column.field === "id") ? 120 : 200,
-        width: (column.field === "id") ? 150 : 400,
-        ...column,
-        editable: column.field !== "id",
-        fieldTypeId: formFieldByColumnKey.get(column.field)?.typeId,
-        renderEditCell: (params: GridRenderEditCellParams) =>
-          renderEditCellByType(params, formFieldByColumnKey.get(column.field)?.typeId),
-      }))
+      ? form?.columns.map((column: GridColDef) => {
+        const formField = form?.fields?.find((field) => field.displayName === column.field);
+
+        return {
+          flex: (column.field === "id") ? 0 : 2,
+          minWidth: (column.field === "id") ? 120 : 200,
+          width: (column.field === "id") ? 150 : 400,
+          ...column,
+          editable: column.field !== "id",
+          fieldTypeId: formField?.typeId,
+          renderEditCell: renderEditCell,
+          renderCell: (params: GridRenderCellParams) => {
+            if (formField && params.value !== undefined && params.value !== null) {
+              return formatCellValue(params.value, formField);
+            }
+            return params.value;
+          },
+        };
+      })
       : [];
 
     const syncColumn: GridColDef = {
@@ -495,7 +293,6 @@ export const ResponsesTable = ({
     ];
   };
 
-
   const CustomFooter = (): JSX.Element => {
     return (
       <GridFooterContainer>
@@ -508,7 +305,6 @@ export const ResponsesTable = ({
       </GridFooterContainer>
     );
   };
-
 
   return (
     <ContentContainer>

@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { TimePicker, LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
-import "dayjs/locale/he";
+import { TimePickerComponent } from "./TimePickerComponent";
 
 interface TimeCellEditorProps {
     value: string | null;
@@ -35,38 +33,11 @@ export const TimeCellEditor: React.FC<TimeCellEditorProps> = ({
     };
 
     return (
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
-            <TimePicker
-                value={localValue}
-                onChange={handleChange}
-                ampm={false}
-                format={showSeconds ? "HH:mm:ss" : "HH:mm"}
-                slotProps={{
-                    textField: {
-                        variant: "standard",
-                        fullWidth: true,
-                        autoFocus: true,
-                        InputProps: {
-                            disableUnderline: true,
-                            sx: {
-                                fontSize: "1rem",
-                                padding: "8px 12px",
-                                minHeight: "40px",
-                            },
-                        },
-                        onKeyDown: (event) => {
-                            // Stop propagation to prevent grid navigation
-                            event.stopPropagation();
-                        },
-                    },
-                    popper: {
-                        placement: "bottom-start",
-                    },
-                }}
-                sx={{
-                    width: "100%",
-                }}
-            />
-        </LocalizationProvider>
+        <TimePickerComponent
+            value={localValue}
+            onChange={handleChange}
+            showSeconds={showSeconds}
+            autoFocus={true}
+        />
     );
 };

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, TextField } from "@mui/material";
 import { LinkValue } from "../../../../utils/interfaces";
+import { preventEnterKeyNavigation } from "../../../../utils/utils";
 
 interface LinkCellEditorProps {
     value: LinkValue | null;
@@ -41,11 +42,6 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
         onChange({ link: url, linkTxt: newLinkText });
     };
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        // Stop event propagation to prevent grid navigation
-        event.stopPropagation();
-    };
-
     return (
         <Box
             sx={{
@@ -54,13 +50,13 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
                 gap: 1,
                 padding: "8px",
             }}
-            onKeyDown={handleKeyDown}
         >
             <TextField
                 fullWidth
                 placeholder="https://example.co.il"
                 value={url}
                 onChange={handleUrlChange}
+                onKeyDown={(e) => preventEnterKeyNavigation(e)}
                 error={urlError}
                 helperText={urlError ? "היפר-קישור לא תקין" : ""}
                 variant="standard"
@@ -68,7 +64,7 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
                 InputProps={{
                     disableUnderline: true,
                     sx: {
-                        fontSize: "0.9rem",
+                        fontSize: "1rem",
                         padding: "4px 8px",
                     },
                 }}
@@ -79,11 +75,12 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
                 placeholder="טקסט להיפר-קישור"
                 value={linkText}
                 onChange={handleLinkTextChange}
+                onKeyDown={(e) => preventEnterKeyNavigation(e)}
                 variant="standard"
                 InputProps={{
                     disableUnderline: true,
                     sx: {
-                        fontSize: "0.9rem",
+                        fontSize: "1rem",
                         padding: "4px 8px",
                     },
                 }}
