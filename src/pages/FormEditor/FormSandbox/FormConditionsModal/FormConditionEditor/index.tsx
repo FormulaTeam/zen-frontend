@@ -1,5 +1,5 @@
 import { Button, Step, StepLabel, Stepper } from "@mui/material";
-import { FunctionComponent, useMemo, useState } from "react";
+import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./style.module.css";
 import { useFormStructureContext } from "../../../context/FormStructureContext";
 import { FormConditionsBuilder } from "./steps/FormConditionBuilder";
@@ -7,8 +7,14 @@ import { FormConditionsDependencyPicker } from "./steps/FormConditionDependencyP
 import { FormConditionsSummary } from "./steps/FormConditionSummary";
 import { FormConditionEditorContext } from "./context/FormConditionEditorContext";
 import { ConditionEditorStepId } from "./constants";
-import { useFormConditionEditorData } from "./context/useFormConditionEditorData";
+import { ConditionEditorValidationErrors, useFormConditionEditorData } from "./context/useFormConditionEditorData";
 import { ValueOf } from "../../../../../types/utils";
+import {
+  validateCondition,
+  validateConditionDependantComponents,
+  validateConditionGroups,
+} from "../../../hooks/useFormStructure";
+import { FormCondition } from "../../../schemas/conditions";
 
 type ModifiedConditionStatus = "new" | "existing";
 
@@ -33,25 +39,29 @@ interface ConditionEditorStep {
   id: ValueOf<typeof ConditionEditorStepId>;
   label: string;
   content: FunctionComponent;
+  validator: (conditionData: FormCondition) => ValueOf<ConditionEditorValidationErrors>;
 }
 
-const ConditionEditorSteps: ConditionEditorStep[] = [
+const ConditionEditorSteps = [
   {
     id: ConditionEditorStepId.CONDITION_BUILDER,
     label: "הגדרת תנאים",
     content: FormConditionsBuilder,
+    validator: ({ groups }) => validateConditionGroups(groups),
   },
   {
     id: ConditionEditorStepId.DEPENDENCY_PICKER,
     label: "בחירת אלמנטים מותנים",
     content: FormConditionsDependencyPicker,
+    validator: ({ dependantComponents }) => validateConditionDependantComponents(dependantComponents),
   },
   {
     id: ConditionEditorStepId.SUMMARY,
     label: "סיכום ותצוגה מקדימה",
     content: FormConditionsSummary,
+    validator: (conditionData) => validateCondition(conditionData),
   },
-];
+] as const satisfies ConditionEditorStep[];
 
 interface Props {
   modifiedCondition: ModifiedCondition;
@@ -62,7 +72,12 @@ interface Props {
 function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
   const { formStructure: { conditions } } = useFormStructureContext();
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
-  const [conditionData, setConditionData] = useFormConditionEditorData(modifiedCondition.index !== undefined ? conditions[modifiedCondition.index] : undefined);
+  const {
+    conditionData,
+    setConditionData,
+    validationErrors,
+    setStepValidationErrors,
+  } = useFormConditionEditorData(modifiedCondition.index !== undefined ? conditions[modifiedCondition.index] : undefined);
 
   const completedSteps = useMemo<Record<ValueOf<typeof ConditionEditorStepId>, boolean>>(() => {
     const newState = !!conditionData ? {
@@ -75,52 +90,72 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
 
     return ({
       ...newState,
-      [ConditionEditorStepId.SUMMARY]: newState[ConditionEditorStepId.CONDITION_BUILDER] && newState[ConditionEditorStepId.DEPENDENCY_PICKER],
+      [ConditionEditorStepId.SUMMARY]: (
+        newState[ConditionEditorStepId.CONDITION_BUILDER] &&
+        newState[ConditionEditorStepId.DEPENDENCY_PICKER]
+      ),
     });
   }, [conditionData]);
 
   const isFirstStepActive = activeStepIndex === 0;
   const isLastStepActive = activeStepIndex === ConditionEditorSteps.length - 1;
 
-  const handleNext = () => {
-    !isLastStepActive ?
-      completedSteps[activeStepIndex] &&
-      setActiveStepIndex((prev) => (prev + 1)) :
-      onSubmit();
-  };
+  const validateCurrentStep = useCallback(() => {
+    const errors = ConditionEditorSteps[activeStepIndex].validator(conditionData as FormCondition);
+    setStepValidationErrors(ConditionEditorSteps[activeStepIndex].id, errors);
 
-  const handlePrev = () => {
+    console.log(errors);
+    console.log(conditionData);
+
+    return errors;
+  }, [conditionData, activeStepIndex]);
+
+  const handleNext = useCallback(() => {
+    const validationErrors = validateCurrentStep();
+
+    if (!validationErrors) {
+      !isLastStepActive ?
+        (completedSteps[activeStepIndex] && setActiveStepIndex((prev) => (prev + 1))) :
+        onSubmit();
+    }
+  }, [validateCurrentStep, completedSteps]);
+
+  const handlePrev = useCallback(() => {
+    validateCurrentStep();
+
     !isFirstStepActive &&
     setActiveStepIndex((prev) => prev - 1);
-  };
+  }, [validateCurrentStep]);
+
+  useEffect(() => {
+    validateCurrentStep();
+  }, [conditionData]);
 
   const StepContent = ConditionEditorSteps[activeStepIndex].content;
 
   return (
     <div className={styles.container}>
       <div className={styles.stepperContainer}>
-        <Stepper alternativeLabel
-                 activeStep={activeStepIndex}
-                 sx={{
-                   fontSize: 27,
-                 }}>
+        <Stepper alternativeLabel activeStep={activeStepIndex} sx={{ fontSize: 27 }}>
           {
             ConditionEditorSteps.map(({ id, label }, index) => (
-              <Step key={id} completed={completedSteps[id]} sx={{
-                "& .MuiStepLabel-label": {
-                  transition: "all 100ms ease-in-out",
-                  lineHeight: "21px",
-                  ...(
-                    index === activeStepIndex ? {
-                      color: "#1976D2 !important",
-                      fontSize: 21,
-                      fontWeight: "bold !important",
-                    } : {
-                      fontWeight: 500,
-                      fontSize: 20,
-                    }),
-                },
-              }}>
+              <Step key={id}
+                    completed={completedSteps[id]}
+                    sx={{
+                      "& .MuiStepLabel-label": {
+                        transition: "all 100ms ease-in-out",
+                        lineHeight: "21px",
+                        ...(
+                          index === activeStepIndex ? {
+                            color: "#1976D2 !important",
+                            fontSize: 21,
+                            fontWeight: "bold !important",
+                          } : {
+                            fontWeight: 500,
+                            fontSize: 20,
+                          }),
+                      },
+                    }}>
                 <StepLabel>{label}</StepLabel>
               </Step>
             ))
@@ -132,6 +167,8 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
           value={{
             conditionData,
             setConditionData,
+            validationErrors,
+            setStepValidationErrors,
           }}>
           <StepContent />
         </FormConditionEditorContext.Provider>
@@ -139,7 +176,6 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
       <div className={styles.footer}>
         <Button variant={isLastStepActive ? "contained" : "outlined"}
                 className={styles.button}
-                disabled={!completedSteps[activeStepIndex]}
                 size={"large"}
                 onClick={handleNext}>
           {isLastStepActive ? "שמור" : "הבא"}

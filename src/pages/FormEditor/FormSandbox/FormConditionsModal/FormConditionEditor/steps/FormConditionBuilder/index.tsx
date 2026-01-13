@@ -10,7 +10,11 @@ import { useEffect, useMemo, useState } from "react";
 import { usePrevious } from "@dnd-kit/utilities";
 
 function FormConditionsBuilder() {
-  const { conditionData: { groups }, setData } = useFormConditionEditorContext(ConditionEditorStepId.CONDITION_BUILDER);
+  const {
+    conditionData: { groups },
+    setData,
+    validationErrors: { [ConditionEditorStepId.CONDITION_BUILDER]: errors },
+  } = useFormConditionEditorContext(ConditionEditorStepId.CONDITION_BUILDER);
   const [scrollNewGroupIntoView, setScrollNewGroupIntoView] = useState(false);
 
   const totalConditionsCount = useMemo(() => (
@@ -41,6 +45,7 @@ function FormConditionsBuilder() {
                                        index={groupIndex}
                                        hasSiblings={hasMultipleGroups}
                                        shouldScrollIntoView={scrollNewGroupIntoView}
+                                       validationErrors={errors?.[groupIndex] ?? null}
                                        setData={setData} />
           ))
         }

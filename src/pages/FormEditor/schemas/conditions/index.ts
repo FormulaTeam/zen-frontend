@@ -1,4 +1,4 @@
-import { array, enum as zod_enum, infer as zod_infer, strictObject, string, partialRecord } from "zod";
+import { array, enum as zod_enum, infer as zod_infer, partialRecord, strictObject, string } from "zod";
 import { conditionFieldSchema } from "./conditionField";
 
 enum FormConditionOperator {
@@ -15,23 +15,22 @@ const conditionGroupSchema = strictObject({
   id: string(),
   operator: zod_enum(FormConditionOperator).optional(),
   conditions: array(strictObject({
-    id: string(),
+    id: string("חובה לבחור שדה"),
     operator: zod_enum(FormConditionOperator).optional(),
     field: conditionFieldSchema,
-  })).min(1).refine((conditions) => (
-    conditions.some((condition, index) => index !== 0 && condition.operator != undefined)
+  })).min(1, "לא ניתן להגדיר קבוצת תנאים ריקה").refine((conditions) => (
+    conditions.some((condition, index) => index === 0 || condition.operator != undefined)
   ), {
     error: "חובה לציין אופרטור בין תנאים",
   }),
 });
 
-const conditionGroupsSchema = array(conditionGroupSchema)
-  .min(1)
-  .refine((groups) => (
-    groups.some((group, index) => index !== 0 && group.operator != undefined)
+const conditionGroupsSchema = array(conditionGroupSchema).min(1).refine((groups) => (
+    groups.some((group, index) => index === 0 || group.operator != undefined)
   ), {
     error: "חובה לציין אופרטור בין קבוצות תנאים",
-  });
+  },
+);
 
 const conditionDependantComponentsSchema = partialRecord(zod_enum(FormComponentType), array(string())).refine((dependantFields) => {
   for (const componentType of Object.keys(dependantFields)) {
@@ -62,6 +61,7 @@ type FormConditions = zod_infer<typeof conditionsSchema>;
 export {
   conditionGroupsSchema,
   conditionDependantComponentsSchema,
+  conditionSchema,
   conditionsSchema,
   FormConditionOperator,
   FormComponentType,

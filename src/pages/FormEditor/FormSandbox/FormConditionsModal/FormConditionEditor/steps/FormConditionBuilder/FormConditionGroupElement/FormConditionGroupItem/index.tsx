@@ -8,7 +8,7 @@ import {
 import { ConditionTypeOptions } from "../../utils";
 import { FormConditionField, FormConditionGroup } from "../../../../../../../schemas/conditions";
 import { FORM_ELEMENT_ICONS } from "../../../../../../../../../components/FORM_ELEMENT_ICONS";
-import { FORM_ELEMENTS } from "../../../../../../../../../utils/interfaces";
+import { FieldTypeIds, FORM_ELEMENTS } from "../../../../../../../../../utils/interfaces";
 import { useEffect, useMemo, useRef } from "react";
 import { ConditionOperationToggle } from "../../ConditionOperationToggle";
 import { ConditionEditorSetDataFunction } from "../../../../context/FormConditionEditorContext";
@@ -16,6 +16,13 @@ import { ConditionEditorStepId } from "../../../../constants";
 import { ArrayElement, DeepPartial } from "../../../../../../../../../types/utils";
 import styles from "./style.module.scss";
 import { FormStructure } from "../../../../../../../context/FormStructureContext";
+import { FormFieldExtra } from "../../../../../../../schemas/fields";
+import { OptionsSource } from "../../../../../../../schemas/fields/optionsSchema";
+import {
+  SpecificOptions,
+} from "../../../../../../FormStructure/FormFieldElement/ExtraElement/elements/OptionsFieldExtra";
+import { GroupItemValidationErrors } from "../../types";
+
 
 interface Props {
   condition: DeepPartial<ArrayElement<FormConditionGroup["conditions"]>>;
@@ -26,6 +33,7 @@ interface Props {
   fields: FormStructure["fields"];
   availableFieldIds: string[];
   shouldScrollIntoView: boolean;
+  validationErrors: GroupItemValidationErrors;
   setData: ConditionEditorSetDataFunction<typeof ConditionEditorStepId.CONDITION_BUILDER>;
 }
 
@@ -38,6 +46,7 @@ function FormConditionGroupItem({
                                   fields,
                                   availableFieldIds,
                                   shouldScrollIntoView,
+                                  validationErrors,
                                   setData,
                                 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,27 +55,43 @@ function FormConditionGroupItem({
     !(condition.field?.typeId && conditionType && ConditionTypeOptions[condition.field?.typeId].optionsProperties[conditionType].requiresTargetValue)
   );
 
-  const renderTargetValueField = useMemo(() => (
-    ConditionTypeOptions[condition.field?.typeId ?? ConditionFieldTypeIds.shortText].valueProperties.inputComponent({
-      disabled: !condition.field?.typeId || getIsTargetValueNotRequired(condition.field.conditionType),
-      value: condition.field?.targetValue ?? "",
-      helperText: index % 2 === 0 ? "דגכדגכ דג דגכ בדיקה הודעת שגיאה" : "",
-      error: true,
-      label: "ערך",
-      onChange: (e) => setData((prev) => {
-        const group = { ...prev[parentGroupIndex] };
-        const modifiedCondition = { ...condition };
+  const renderTargetValueField = useMemo(() => {
+    const disabled = !condition.field?.typeId || getIsTargetValueNotRequired(condition.field.conditionType);
 
-        modifiedCondition.field = {
-          ...modifiedCondition.field,
-          targetValue: ConditionTypeOptions[condition.field!.typeId!].valueProperties.valueTransformer(e.target.value) as any,
-        };
-        group.conditions = group.conditions!.toSpliced(index, 1, { ...modifiedCondition });
+    console.log(validationErrors?.field?.properties?.targetValue?.errors);
 
-        return prev.toSpliced(parentGroupIndex, 1, group);
-      }),
-    })
-  ), [condition.field?.conditionType, condition.field?.targetValue, setData, parentGroupIndex, condition]);
+    return (
+      ConditionTypeOptions[condition.field?.typeId ?? ConditionFieldTypeIds.shortText].valueProperties.inputComponent({
+        disabled: disabled,
+        value: condition.field?.targetValue ?? "",
+        helperText: !disabled ? (validationErrors?.field?.properties?.targetValue?.errors[0] ?? "") : "",
+        error: !disabled && !!validationErrors?.field?.properties?.targetValue?.errors,
+        label: "ערך",
+        ...(condition.field?.typeId === ConditionFieldTypeIds.options && condition.field.id ?
+            {
+              items: (
+                (
+                  fields[condition.field.id].data.extra as FormFieldExtra<typeof FieldTypeIds.options>
+                )?.options as SpecificOptions<typeof OptionsSource.MANUAL>
+              ).items,
+            } :
+            undefined
+        ),
+        onChange: (e) => setData((prev) => {
+          const group = { ...prev[parentGroupIndex] };
+          const modifiedCondition = { ...condition };
+
+          modifiedCondition.field = {
+            ...modifiedCondition.field,
+            targetValue: ConditionTypeOptions[condition.field!.typeId!].valueProperties.valueTransformer(e.target.value) as any,
+          };
+          group.conditions = group.conditions!.toSpliced(index, 1, { ...modifiedCondition });
+
+          return prev.toSpliced(parentGroupIndex, 1, group);
+        }),
+      })
+    );
+  }, [condition.field?.conditionType, condition.field?.targetValue, setData, parentGroupIndex, condition, validationErrors]);
 
   useEffect(() => {
     shouldScrollIntoView &&
@@ -157,6 +182,8 @@ function FormConditionGroupItem({
                       renderInput={(params) => (
                         <TextField {...params}
                                    label={"שדה"}
+                                   error={!!validationErrors?.field?.properties?.id?.errors}
+                                   helperText={validationErrors?.field?.properties?.id?.errors[0]}
                                    slotProps={{
                                      htmlInput: {
                                        ...params.inputProps,

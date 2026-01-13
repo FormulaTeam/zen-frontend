@@ -20,7 +20,7 @@ const CONDITION_FIELD_TYPE_IDS = Object.values(ConditionFieldTypeIds);
 
 type ConditionFieldTypeId = ArrayElement<typeof CONDITION_FIELD_TYPE_IDS>;
 
-const fieldNotDefinedErrorMessage = "חובה לבחור שדה לכל תנאי, באפשרותכם למחוק את התנאי במידה ואינו נחוץ";
+const fieldNotDefinedErrorMessage = "חובה לציין שדה לכל תנאי";
 
 const literalConditionFieldTypeId = union(
   CONDITION_FIELD_TYPE_IDS.map((v: FormFieldTypeId) => literal(v)),
@@ -44,6 +44,6 @@ const baseConditionFieldSchema = strictObject({
   targetValue: unknown().optional(),
 });
 
-export { ConditionFieldTypeIds, FieldTypeIdToConditionType, CONDITION_FIELD_TYPE_IDS };
+export { ConditionFieldTypeIds, FieldTypeIdToConditionType, CONDITION_FIELD_TYPE_IDS, fieldNotDefinedErrorMessage };
 export type { ConditionFieldTypeId, FormConditionType };
 export default baseConditionFieldSchema;

@@ -8,7 +8,14 @@ import { FormFieldData, FormFieldSchema } from "../schemas/fields";
 import { z } from "zod";
 import { $ZodErrorTree } from "zod/v4/core";
 import { FormMetadataSchema } from "../schemas/metadata";
-import { FormConditions, conditionsSchema } from "../schemas/conditions";
+import {
+  conditionDependantComponentsSchema,
+  conditionGroupsSchema,
+  conditionSchema,
+  FormCondition,
+  FormConditionDependantComponents,
+  FormConditionGroups,
+} from "../schemas/conditions";
 
 function yieldFormStructure(form: object) {
   return form as FormStructure; // TODO change to actual logic that translates form json to form structure
@@ -79,11 +86,31 @@ const validateField = (prev: FormStructure, fieldId: string) => {
   return {};
 };
 
-const validateConditions = (conditions: FormConditions) => {
-  const result = conditionsSchema.safeParse(conditions);
+const validateConditionGroups = (groups: FormConditionGroups) => {
+  const result = conditionGroupsSchema.safeParse(groups);
 
   if (!result.success) {
-    return z.treeifyError(result.error) ?? null;
+    return z.treeifyError(result.error)?.items ?? null;
+  }
+
+  return null;
+};
+
+const validateConditionDependantComponents = (dependantComponents: FormConditionDependantComponents) => {
+  const result = conditionDependantComponentsSchema.safeParse(dependantComponents);
+
+  if (!result.success) {
+    return z.treeifyError(result.error)?.properties ?? null;
+  }
+
+  return null;
+};
+
+const validateCondition = (condition: FormCondition) => {
+  const result = conditionSchema.safeParse(condition);
+
+  if (!result.success) {
+    return z.treeifyError(result.error)?.properties ?? null;
   }
 
   return null;
@@ -365,4 +392,9 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
   };
 }
 
-export { useFormStructure };
+export {
+  useFormStructure,
+  validateConditionGroups,
+  validateConditionDependantComponents,
+  validateCondition,
+};

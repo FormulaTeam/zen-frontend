@@ -14,16 +14,25 @@ import { useFormStructureContext } from "../../../../../../context/FormStructure
 import { DeepPartial } from "../../../../../../../../types/utils";
 import styles from "./style.module.scss";
 import { FormConditionGroupItem } from "./FormConditionGroupItem";
+import { GroupValidationErrors } from "../types";
 
 interface Props {
   group: DeepPartial<FormConditionGroup>;
   index: number;
   hasSiblings: boolean;
   shouldScrollIntoView: boolean;
+  validationErrors: GroupValidationErrors;
   setData: ConditionEditorSetDataFunction<typeof ConditionEditorStepId.CONDITION_BUILDER>;
 }
 
-function FormConditionGroupElement({ group, index, hasSiblings, shouldScrollIntoView, setData }: Props) {
+function FormConditionGroupElement({
+                                     group,
+                                     index,
+                                     hasSiblings,
+                                     shouldScrollIntoView,
+                                     setData,
+                                     validationErrors,
+                                   }: Props) {
   const { formStructure: { fields } } = useFormStructureContext();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -92,7 +101,8 @@ function FormConditionGroupElement({ group, index, hasSiblings, shouldScrollInto
                                       hasSiblings={group.conditions!.length > 1}
                                       fields={fields}
                                       availableFieldIds={availableFieldIds}
-                                      shouldScrollIntoView={shouldScrollIntoView} />
+                                      shouldScrollIntoView={shouldScrollIntoView}
+                                      validationErrors={validationErrors?.["properties"]?.["conditions"]?.items?.[conditionIndex]?.properties ?? null} />
             ))
           }
           <div className={styles.addConditionButtonContainer}>

@@ -73,10 +73,10 @@ const ConditionTypeOptionsProperties = {
     [DateConditionType.NOT_EMPTY]: { label: "לא ריק" },
   },
   [FieldTypeIds.options]: {
-    [OptionsConditionType.ONLY]: { label: "רק", requiresTargetValue: true },
-    [OptionsConditionType.OTHER_THAN]: { label: "חוץ מ", requiresTargetValue: true },
-    [OptionsConditionType.INCLUDES]: { label: "כולל", requiresTargetValue: true },
-    [OptionsConditionType.NOT_INCLUDES]: { label: "לא כולל", requiresTargetValue: true },
+    [OptionsConditionType.ONLY]: { label: "שווה ל", requiresTargetValue: true },
+    [OptionsConditionType.OTHER_THAN]: { label: "שונה מ", requiresTargetValue: true },
+    [OptionsConditionType.INCLUDES]: { label: "מכיל", requiresTargetValue: true },
+    [OptionsConditionType.NOT_INCLUDES]: { label: "לא מכיל", requiresTargetValue: true },
     [OptionsConditionType.NONE]: { label: "ריק" },
     [OptionsConditionType.ANY]: { label: "לא ריק" },
   },
@@ -132,9 +132,10 @@ const ConditionTypeValueProperties = {
                      }: ConditionTypeValueComponentProps) => (
       <FormControl disabled={disabled}
                    error={error}
-                   sx={{ width: "100%", marginTop: 1}}>
+                   sx={{ width: "100%", marginTop: 1 }}>
         <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale="he">
           <DatePicker value={!!value ? moment(String(value)) : null}
+                      disabled={disabled}
                       sx={{ "& .MuiInputBase-root": { borderRadius: 2 } }}
                       onChange={(date) => onChange({ target: { value: date } })}
                       {...restProps} />
@@ -157,8 +158,7 @@ const ConditionTypeValueProperties = {
                      }: ConditionTypeValueComponentProps & {
       items?: Pick<ArrayElement<ManualItems>, "id" | "text">[],
     }) => (
-      <FormControl disabled={disabled}
-                   error={error}>
+      <FormControl disabled={disabled} error={error} fullWidth sx={{marginTop: 1}}>
         <InputLabel id="options-value-label">{label}</InputLabel>
         <Select labelId="options-value-label"
                 fullWidth
@@ -179,9 +179,9 @@ const ConditionTypeValueProperties = {
   },
   [FieldTypeIds.checkbox]: {
     valueTransformer: Boolean,
-    inputComponent: ({ helperText, disabled, error, value, onChange, ...restProps }) => (
-      <FormControl disabled={disabled} error={error}>
-        <InputLabel id="checkbox-value-label">ערך ברירת מחדל</InputLabel>
+    inputComponent: ({ helperText, disabled, error, value, ...restProps }) => (
+      <FormControl disabled={disabled} error={error} fullWidth>
+        <InputLabel id="checkbox-value-label" sx={{marginTop: 1}}>ערך</InputLabel>
         <Select labelId="checkbox-value-label"
                 fullWidth
                 variant={"standard"}

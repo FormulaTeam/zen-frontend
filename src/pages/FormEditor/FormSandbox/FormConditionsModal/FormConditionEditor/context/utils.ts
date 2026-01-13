@@ -4,7 +4,7 @@ import { generateConditionId } from "../../../../utils";
 function generateEmptyConditionGroup(): FormConditionGroup {
   return {
     id: generateConditionId(),
-    conditions: [{ id: generateConditionId() }] as FormConditionGroup["conditions"],
+    conditions: [{ id: generateConditionId(), field: {} }] as FormConditionGroup["conditions"],
   };
 }
 
