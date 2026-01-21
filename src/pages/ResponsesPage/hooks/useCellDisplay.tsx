@@ -145,7 +145,7 @@ export const useCellDisplay = ({ formId, onFileClick }: UseCellDisplayParams): U
         return (
             <Tooltip title={displayValue} arrow>
                 <EllipsisBox>
-                    {displayValue}
+                    <span dir="ltr">{displayValue}</span>
                 </EllipsisBox>
             </Tooltip>
         );
@@ -169,10 +169,12 @@ export const useCellDisplay = ({ formId, onFileClick }: UseCellDisplayParams): U
     const formatDefaultCell = useCallback((value: any): React.ReactElement => {
         if (typeof value === "string" || typeof value === "number") {
             const displayValue = String(value);
+            // If it's a number, force LTR for correct minus sign display
+            const isNumber = typeof value === "number" || /^-?\d+(\.\d+)?$/.test(displayValue);
             return (
                 <Tooltip title={displayValue} arrow>
-                    <EllipsisBox >
-                        <label>{displayValue}</label>
+                    <EllipsisBox>
+                        {isNumber ? <span dir="ltr">{displayValue}</span> : <label>{displayValue}</label>}
                     </EllipsisBox>
                 </Tooltip>
             );

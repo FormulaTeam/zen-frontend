@@ -37,6 +37,12 @@ export const EditButtonWrapper = styled(Box)<BoxProps>(({ theme }) => ({
   alignItems: "center",
 }));
 
+export const ActionsRow = styled(Box)(() => ({
+  display: "flex",
+  gap: '16px',
+  alignItems: "center",
+}));
+
 export const MainContentWrapper = styled(Box)<BoxProps>(() => ({
   padding: "24px",
   maxWidth: "100%",
@@ -138,6 +144,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     fontSize: "21px",
     transition: "all 0.3s ease",
     border: `1px solid ${theme.palette.grid?.border}`,
+    "& [data-field='__detail_panel_toggle__']": {
+      display: "none",
+    },
     "& .MuiDataGrid-cell": {
       borderRight: `1px solid ${theme.palette.grid?.border}`,
       "&:nth-last-of-type(2)": {
@@ -308,6 +317,11 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus::after, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus-within::after": {
     display: "none",
   },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--has-error": {
+    backgroundColor: "#ffebee",
+    border: `1px solid ${theme.palette.error.main}`,
+    color: theme.palette.text.primary,
+  },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--editable": {
     backgroundColor: theme.palette.grid?.cellEditable,
     border: "none",
@@ -336,6 +350,13 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     cursor: "pointer",
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cellCheckbox.MuiDataGrid-cell--non-editable-in-edit-mode *": {
+    pointerEvents: "auto",
+  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell[data-field='expand'].MuiDataGrid-cell--non-editable-in-edit-mode": {
+    pointerEvents: "auto",
+    cursor: "pointer",
+  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell[data-field='expand'].MuiDataGrid-cell--non-editable-in-edit-mode *": {
     pointerEvents: "auto",
   },
   "& .MuiDataGrid-scrollbar--vertical": {
@@ -413,6 +434,14 @@ export const StyledEditButton = styled(Button)(() => ({
     marginRight: "8px",
     height: '2vh',
     width: '2vh'
+  },
+}));
+
+export const StyledAddButton = styled(StyledEditButton)(() => ({
+  backgroundColor: '#4976CB',
+  color: '#ffffff',
+  "&:hover": {
+    backgroundColor: '#3f69b3',
   },
 }));
 
@@ -503,3 +532,43 @@ export const formInfoTooltipSlotProps = {
     },
   },
 };
+
+export const HeaderAsterisk = styled("span")(({ theme }) => ({
+  color: "#d32f2f",
+  fontWeight: 700,
+}));
+
+export const HeaderFlex = styled("div")({
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+  position: "relative",
+});
+
+export const CellErrorWrapper = styled("div")({
+  position: "relative",
+  height: "100%",
+});
+
+export const CellErrorText = styled("span")(({ theme }) => ({
+  color: "#d32f2f",
+  fontSize: "0.9rem",
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  zIndex: 2,
+  background: "rgba(255,255,255,0.95)",
+  padding: "2px 4px",
+  borderRadius: 4,
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  maxWidth: "100%",
+}));
+
+export const CellValueFlex = styled("div")({
+  height: "100%",
+  display: "flex",
+  alignItems: "center",
+});

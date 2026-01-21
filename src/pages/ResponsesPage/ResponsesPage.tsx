@@ -4,10 +4,11 @@ import Loader from "../../components/Responses/Loader";
 import { Role, User } from "../../utils/interfaces";
 import { FormActionsToolbar } from "./components/FormActionsToolbar";
 import { EditResponsesButton } from "./components/EditResponsesButton";
+import AddResponseButton from "./components/AddResponseButton";
 import { CancelEditDialog } from "./components/CancelEditDialog";
 import { useFormLoader } from "./hooks/useFormLoader";
 import { useResponsesEdit } from "./hooks/useResponsesEdit";
-import { MainContentWrapper, PageWrapper, TopSection } from "./styled";
+import { MainContentWrapper, PageWrapper, TopSection, ActionsRow } from "./styled";
 import SearchInfo from "../../components/Responses/SearchInfo";
 import { ResponsesTable } from "./components/ResponsesTable";
 import Header from "./components/Header";
@@ -48,6 +49,8 @@ const ResponsesPageContent = (): JSX.Element => {
     isInEditMode,
     editedRowsCount,
     localRows,
+    validationErrors,
+    handleCellLiveChange,
     isUpdating,
     showCancelDialog,
     handleToggleEditMode,
@@ -66,18 +69,23 @@ const ResponsesPageContent = (): JSX.Element => {
           <FormActionsToolbar />
           {/* <SearchInfo search={search} setSearch={setSearch} allResponsesCount={allResponsesCount} /> */}
         </TopSection>
-        <EditResponsesButton
-          isInEditMode={isInEditMode}
-          editedRowsCount={editedRowsCount}
-          isUpdating={isUpdating}
-          onToggleEditMode={handleToggleEditMode}
-          onSaveChanges={handleSaveChanges}
-        />
+        <ActionsRow>
+          {!isInEditMode && <AddResponseButton />}
+          <EditResponsesButton
+            isInEditMode={isInEditMode}
+            editedRowsCount={editedRowsCount}
+            isUpdating={isUpdating}
+            onToggleEditMode={handleToggleEditMode}
+            onSaveChanges={handleSaveChanges}
+          />
+        </ActionsRow>
         <ResponsesTable
           isInEditMode={isInEditMode}
           localRows={localRows}
           handleProcessRowUpdate={handleProcessRowUpdate}
           onCellEditStart={handleCellEditStart}
+          validationErrors={validationErrors}
+          onCellLiveChange={handleCellLiveChange}
         />
         <CancelEditDialog
           open={showCancelDialog}

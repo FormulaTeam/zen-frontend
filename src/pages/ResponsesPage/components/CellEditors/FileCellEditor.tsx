@@ -44,33 +44,56 @@ const StyledChip = styled(Chip)({
     fontSize: "1rem",
 });
 
+interface AttachedFile {
+    name: string;
+    fileName?: string;
+    fileUrl?: string;
+    fileExtension?: string;
+    [key: string]: any;
+}
+
+interface FileCellEditorValue {
+    files: {
+        newFiles: File[];
+        attachedFiles: AttachedFile[];
+    };
+    deletedFiles: AttachedFile[];
+}
+
 interface FileCellEditorProps {
-    value: any;
-    onChange: (value: any) => void;
+    value: FileCellEditorValue | null;
+    onChange: (value: FileCellEditorValue, isValid: boolean) => void;
     isRequired?: boolean;
+    errorMessage?: string;
 }
 
 export const FileCellEditor: React.FC<FileCellEditorProps> = ({
     value,
     onChange,
     isRequired = false,
+    errorMessage,
 }) => {
-    const [responseFiles, setResponseFiles] = useState<any>(value || []);
+    const [responseFiles, setResponseFiles] = useState<{ files?: AttachedFile[] } | null>(value?.files ? { files: value.files.attachedFiles } : null);
     const [files, setFiles] = useState<File[]>([]);
-    const [deletedFiles, setDeletedFiles] = useState<File[]>([]);
+    const [deletedFiles, setDeletedFiles] = useState<AttachedFile[]>([]);
 
     useEffect(() => {
-        setResponseFiles(value || []);
+        setResponseFiles(value?.files ? { files: value.files.attachedFiles } : null);
     }, [value]);
 
     useEffect(() => {
         const combinedFiles = {
             newFiles: files,
             attachedFiles: responseFiles?.files || [],
+        };
+        const payload: FileCellEditorValue = {
+            files: combinedFiles,
             deletedFiles: deletedFiles,
         };
-        onChange(combinedFiles);
-    }, [files, responseFiles, deletedFiles]);
+        const hasAnyFiles = (combinedFiles.newFiles?.length || 0) + (combinedFiles.attachedFiles?.length || 0) > 0;
+        const isValid = !(isRequired && !hasAnyFiles);
+        onChange(payload, isValid);
+    }, [files, responseFiles, deletedFiles, isRequired]);
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
         setFiles((prev) => [...prev, ...acceptedFiles]);
@@ -137,6 +160,9 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
                         />
                     ))}
                 </StyledFilesContainer>
+            )}
+            {errorMessage && (
+                <div style={{ color: "#d32f2f", fontSize: "0.75rem" }}>{errorMessage}</div>
             )}
         </StyledContainer>
     );

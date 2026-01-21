@@ -848,5 +848,19 @@ export interface Row {
   edited?: string;
   editedByName?: string;
   parentResponse?: string;
+  created?: string;
+  createdByName?: string;
+  [key: string]: unknown;
+}
+
+export interface ChildResponseForm {
+  id: number;
+  form_id: number;
+  created: string;
+  created_by_name: string;
+  createdByName: string;
+  editedByName?: string;
+  edited?: string;
+  parentResponse?: string;
   [key: string]: unknown;
 }

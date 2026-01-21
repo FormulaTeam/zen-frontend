@@ -5,14 +5,16 @@ import { preventEnterKeyNavigation } from "../../../../utils/utils";
 
 interface LinkCellEditorProps {
     value: LinkValue | null;
-    onChange: (value: LinkValue) => void;
+    onChange: (value: LinkValue, isValid?: boolean) => void;
     isRequired?: boolean;
+    errorMessage?: string;
 }
 
 export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
     value,
     onChange,
     isRequired = false,
+    errorMessage,
 }) => {
     const [url, setUrl] = useState(value?.link || "");
     const [linkText, setLinkText] = useState(value?.linkTxt || "");
@@ -33,13 +35,15 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
         const isValid = newUrl === "" || urlRegex.test(newUrl);
         setUrlError(!isValid && newUrl !== "");
 
-        onChange({ link: newUrl, linkTxt: linkText });
+        const overallValid = !(isRequired && (!newUrl || newUrl === ""));
+        onChange({ link: newUrl, linkTxt: linkText }, overallValid);
     };
 
     const handleLinkTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newLinkText = event.target.value;
         setLinkText(newLinkText);
-        onChange({ link: url, linkTxt: newLinkText });
+        const overallValid = !(isRequired && (!url || url === ""));
+        onChange({ link: url, linkTxt: newLinkText }, overallValid);
     };
 
     return (
@@ -85,6 +89,9 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
                     },
                 }}
             />
+            {errorMessage && (
+                <div style={{ color: "#d32f2f", fontSize: "0.75rem", marginTop: 4 }}>{errorMessage}</div>
+            )}
         </Box>
     );
 };

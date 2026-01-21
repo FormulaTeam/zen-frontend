@@ -356,3 +356,30 @@ export const useUpdateResponse = (formId: number, id: number) => {
     },
   });
 };
+
+/**
+ * Fetch rows for a form with optional query parameters.
+ *
+ * @param filter - Optional filter parameters for querying rows.
+ * @returns A promise that resolves to an array of rows.
+ */
+export const getResponsesRows = async ({ filter }: { filter?: Filter }): Promise<Row[]> => {
+  try {
+    if (!filter?.form_id) {
+      console.error("Form ID is required to fetch rows.");
+      return [];
+    }
+    const params = {
+      query: filter?.query ? JSON.stringify(filter.query) : undefined,
+      sortBy: filter?.sortBy,
+      orderBy: filter?.orderBy,
+      pageSize: filter?.pageSize,
+      pageNumber: filter?.pageNumber,
+    };
+    const response = await apiClient.get<Row[]>(`/responses/get-rows?form_id=${filter.form_id}`, { params });
+    return response?.data || [];
+  } catch (error) {
+    console.error("Failed to fetch rows:", error);
+    throw error;
+  }
+};

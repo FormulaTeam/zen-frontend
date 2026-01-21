@@ -19,14 +19,18 @@ const StyledFormControlLabel = styled(FormControlLabel)({
 
 interface CheckboxCellEditorProps {
     value: boolean;
-    onChange: (value: boolean) => void;
+    onChange: (value: boolean, isValid?: boolean) => void;
     label?: string;
+    isRequired?: boolean;
+    errorMessage?: string;
 }
 
 export const CheckboxCellEditor: React.FC<CheckboxCellEditorProps> = ({
     value,
     onChange,
     label = "",
+    isRequired = false,
+    errorMessage,
 }) => {
     const [localValue, setLocalValue] = useState(!!value);
 
@@ -37,7 +41,8 @@ export const CheckboxCellEditor: React.FC<CheckboxCellEditorProps> = ({
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = event.target.checked;
         setLocalValue(newValue);
-        onChange(newValue);
+        const isValid = !(isRequired && !newValue);
+        onChange(newValue, isValid);
     };
 
     return (
@@ -52,6 +57,9 @@ export const CheckboxCellEditor: React.FC<CheckboxCellEditorProps> = ({
                 }
                 label={label}
             />
+            {errorMessage && (
+                <div style={{ color: "#d32f2f", fontSize: "0.75rem", marginTop: 4 }}>{errorMessage}</div>
+            )}
         </CenteredBox>
     );
 };

@@ -23,10 +23,11 @@ const StyledChip = styled(Chip)({
 
 interface OptionsCellEditorProps {
     value: string | string[];
-    onChange: (value: string | string[]) => void;
+    onChange: (value: string | string[], isValid: boolean) => void;
     options: string[];
     multiSelect?: boolean;
     isRequired?: boolean;
+    errorMessage?: string;
 }
 
 const normalizeValue = (value: string | string[], multiSelect: boolean): string | string[] => {
@@ -53,6 +54,7 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
     options,
     multiSelect = false,
     isRequired = false,
+    errorMessage,
 }) => {
     const [localValue, setLocalValue] = useState<string | string[]>(() =>
         normalizeValue(value, multiSelect)
@@ -73,7 +75,9 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
         }
 
         setLocalValue(normalized);
-        onChange(normalized);
+        const isEmpty = (multiSelect ? (Array.isArray(normalized) && normalized.length === 0) : (!normalized || normalized === ""));
+        const isValid = !(isRequired && isEmpty);
+        onChange(normalized, isValid);
     };
 
     return (
@@ -105,6 +109,8 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                             disableUnderline: true,
                         },
                     }}
+                    error={!!errorMessage}
+                    helperText={errorMessage}
                 />
             )}
             renderTags={(tagValue, getTagProps) =>

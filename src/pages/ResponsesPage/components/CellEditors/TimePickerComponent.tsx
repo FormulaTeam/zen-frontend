@@ -10,6 +10,7 @@ interface TimePickerComponentProps {
     showSeconds?: boolean;
     autoFocus?: boolean;
     compact?: boolean;
+    errorMessage?: string;
 }
 
 const compactInputStyles = {
@@ -38,6 +39,7 @@ export const TimePickerComponent: React.FC<TimePickerComponentProps> = ({
     showSeconds = false,
     autoFocus = false,
     compact = false,
+    errorMessage,
 }) => {
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
@@ -57,6 +59,8 @@ export const TimePickerComponent: React.FC<TimePickerComponentProps> = ({
                             disableUnderline: true,
                         },
                         sx: compact ? compactInputStyles : standardInputStyles,
+                        error: !!errorMessage,
+                        helperText: errorMessage,
                     },
                     popper: {
                         placement: "bottom-start",

@@ -1,14 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { TextField } from "@mui/material";
-import { preventEnterKeyNavigation } from "../../../../utils/utils";
+import { TextField, styled } from "@mui/material";
+import { preventEnterKeyNavigation } from "@utils/utils";
+
+const StyledNumberTextField = styled(TextField)({
+    width: "100%",
+    '& .MuiInputBase-root': {
+        fontSize: "1rem",
+        padding: "8px 12px",
+        minHeight: "40px",
+    },
+    '& input[type=number]::-webkit-inner-spin-button, & input[type=number]::-webkit-outer-spin-button': {
+        opacity: 1,
+    },
+});
 
 interface NumberCellEditorProps {
     value: number | string;
-    onChange: (value: number | string) => void;
+    onChange: (value: number | string, isValid: boolean) => void;
     numberType?: string;
     minValue?: number;
     maxValue?: number;
     isRequired?: boolean;
+    errorMessage?: string;
 }
 
 export const NumberCellEditor: React.FC<NumberCellEditorProps> = ({
@@ -18,65 +31,78 @@ export const NumberCellEditor: React.FC<NumberCellEditorProps> = ({
     minValue,
     maxValue,
     isRequired = false,
+    errorMessage: externalErrorMessage,
 }) => {
-    const [localValue, setLocalValue] = useState<string>(String(value ?? ""));
-    const [error, setError] = useState(false);
+    const [inputValue, setInputValue] = useState<string>(String(value ?? ""));
+    const [errorMessage, setErrorMessage] = useState<string>("");
 
     useEffect(() => {
-        setLocalValue(String(value ?? ""));
+        setInputValue(String(value ?? ""));
     }, [value]);
 
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = event.target.value;
-        setLocalValue(newValue);
+    const integerRegex = /^-?\d+$/;
+    const floatRegex = /^-?\d+(\.\d+)?$/;
 
-        // Validate
-        let isValid = true;
-        if (isRequired && !newValue) {
-            isValid = false;
-        } else if (newValue) {
-            const numValue = numberType === "integer" ? parseInt(newValue, 10) : parseFloat(newValue);
-
-            if (isNaN(numValue)) {
-                isValid = false;
-            } else {
-                if (minValue !== undefined && numValue < minValue) isValid = false;
-                if (maxValue !== undefined && numValue > maxValue) isValid = false;
+    const validate = (val: string): { isValid: boolean; errorMsg: string; parsed: number | string } => {
+        if (val === "") {
+            if (isRequired) {
+                return { isValid: false, errorMsg: "נדרש להזין מספר", parsed: "" };
             }
+            return { isValid: true, errorMsg: "", parsed: "" };
         }
+        let isValidFormat = false;
+        if (numberType === "integer") {
+            isValidFormat = integerRegex.test(val);
+        } else {
+            isValidFormat = floatRegex.test(val);
+        }
+        if (!isValidFormat) {
+            return {
+                isValid: false,
+                errorMsg: numberType === "integer" ? "חובה להזין מספר שלם" : "חובה להזין מספר עשרוני",
+                parsed: val,
+            };
+        }
+        const parsed = numberType === "integer" ? parseInt(val, 10) : parseFloat(val);
+        if (minValue !== undefined && parsed < minValue) {
+            return {
+                isValid: false,
+                errorMsg: `המספר חייב להיות גדול מ- ${minValue}`,
+                parsed,
+            };
+        }
+        if (maxValue !== undefined && parsed > maxValue) {
+            return {
+                isValid: false,
+                errorMsg: `המספר חייב להיות קטן מ- ${maxValue}`,
+                parsed,
+            };
+        }
+        return { isValid: true, errorMsg: "", parsed };
+    };
 
-        setError(!isValid);
-        onChange(newValue);
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const val = event.target.value;
+        setInputValue(val);
+        const { isValid, errorMsg, parsed } = validate(val);
+        setErrorMessage(errorMsg);
+        const finalValid = isValid && !(isRequired && val === "");
+        onChange(parsed, finalValid);
     };
 
     return (
-        <TextField
+        <StyledNumberTextField
             fullWidth
             type="number"
-            value={localValue}
+            value={inputValue}
             onChange={handleChange}
             onKeyDown={(e) => preventEnterKeyNavigation(e)}
-            error={error}
+            error={!!externalErrorMessage || !!errorMessage}
+            helperText={externalErrorMessage || errorMessage || " "}
             variant="standard"
             autoFocus
-            InputProps={{
-                disableUnderline: true,
-                sx: {
-                    fontSize: "1rem",
-                    padding: "8px 12px",
-                    minHeight: "40px",
-                },
-            }}
             inputProps={{
-                step: numberType === "integer" ? 1 : "any",
-                min: minValue,
-                max: maxValue,
-            }}
-            sx={{
-                width: "100%",
-                "& input[type=number]::-webkit-inner-spin-button, & input[type=number]::-webkit-outer-spin-button": {
-                    opacity: 1,
-                },
+                step: numberType === "integer" ? 1 : "any"
             }}
         />
     );

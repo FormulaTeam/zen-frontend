@@ -49,9 +49,10 @@ const commonSlotProps = {
 
 interface DateCellEditorProps {
     value: string | null;
-    onChange: (value: string) => void;
+    onChange: (value: string, isValid?: boolean) => void;
     dateAndTime?: boolean;
     isRequired?: boolean;
+    errorMessage?: string;
 }
 
 export const DateCellEditor: React.FC<DateCellEditorProps> = ({
@@ -59,6 +60,7 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
     onChange,
     dateAndTime = false,
     isRequired = false,
+    errorMessage,
 }) => {
     const [localValue, setLocalValue] = useState<Dayjs | null>(
         value ? dayjs(value) : null
@@ -71,9 +73,9 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
     const handleChange = (newValue: Dayjs | null) => {
         setLocalValue(newValue);
         if (newValue && newValue.isValid()) {
-            onChange(newValue.format("YYYY-MM-DD[T]HH:mm:ss.000"));
+            onChange(newValue.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
         } else {
-            onChange("");
+            onChange("", !(isRequired ?? false));
         }
     };
 
@@ -96,7 +98,10 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
                         value={localValue}
                         onChange={handleChange}
                         format="DD/MM/YYYY"
-                        slotProps={commonSlotProps}
+                        slotProps={{
+                            ...commonSlotProps,
+                            textField: { ...commonSlotProps.textField, error: !!errorMessage, helperText: errorMessage },
+                        }}
                     />
                     <TimePickerComponent
                         value={localValue}
@@ -114,7 +119,10 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
                 value={localValue}
                 onChange={handleChange}
                 format="DD/MM/YYYY"
-                slotProps={commonSlotProps}
+                slotProps={{
+                    ...commonSlotProps,
+                    textField: { ...commonSlotProps.textField, error: !!errorMessage, helperText: errorMessage },
+                }}
             />
         </LocalizationProvider>
     );

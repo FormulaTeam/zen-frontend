@@ -29,10 +29,11 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
 
 interface TextCellEditorProps {
     value: string;
-    onChange: (value: string) => void;
+    onChange: (value: string, isValid: boolean) => void;
     multiline?: boolean;
     validationRegex?: string;
     isRequired?: boolean;
+    errorMessage?: string;
 }
 
 export const TextCellEditor: React.FC<TextCellEditorProps> = ({
@@ -41,6 +42,7 @@ export const TextCellEditor: React.FC<TextCellEditorProps> = ({
     multiline = false,
     validationRegex,
     isRequired = false,
+    errorMessage,
 }) => {
     const [localValue, setLocalValue] = useState(value || "");
     const [error, setError] = useState(false);
@@ -63,7 +65,7 @@ export const TextCellEditor: React.FC<TextCellEditorProps> = ({
         }
 
         setError(!isValid);
-        onChange(newValue);
+        onChange(newValue, isValid);
     };
 
     return (
@@ -73,7 +75,8 @@ export const TextCellEditor: React.FC<TextCellEditorProps> = ({
             value={localValue}
             onChange={handleChange}
             onKeyDown={(e) => preventEnterKeyNavigation(e, multiline)}
-            error={error}
+            error={!!errorMessage || error}
+            helperText={errorMessage}
             variant="standard"
             autoFocus
             slotProps={{

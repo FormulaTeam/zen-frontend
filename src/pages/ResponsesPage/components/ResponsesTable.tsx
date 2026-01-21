@@ -11,28 +11,28 @@ import {
   GridRenderCellParams,
 } from "@mui/x-data-grid-pro";
 import { useFormStore } from "../stores/form.store";
-import { IconButton, Tooltip } from "@mui/material";
 import clsx from "clsx";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
-import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp";
 import { heIL } from "@mui/x-data-grid/locales";
-import ZoomCell from "../../../components/formInForm/ZoomCell";
-import { Row } from "../../../utils/interfaces";
+import ZoomCell from "@components/formInForm/ZoomCell";
+import { Box } from "@mui/material";
+import { FormField, Row } from "@utils/interfaces";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
-import { downloadFileFromResponse } from "../../../api/filesApi";
-import { ContentContainer, ExpandIconBox, MainContent, ResponsesAmountBox, ResponsesAmountText, StyledDataGrid, SyncStatusIconBox } from "../styled";
+import { downloadFileFromResponse } from "@api/filesApi";
+import { ContentContainer, MainContent, ResponsesAmountBox, ResponsesAmountText, StyledDataGrid, SyncStatusIconBox, HeaderAsterisk, HeaderFlex, CellErrorWrapper, CellErrorText, CellValueFlex } from "../styled";
+import { useChildForms } from "../hooks/useChildForms";
+import { useDetailPanel } from "../hooks/useDetailPanel";
 
 interface ResponsesTableProps {
   isInEditMode: boolean;
   localRows: Row[];
   handleProcessRowUpdate: (newRow: GridRowModel, oldRow: GridRowModel) => GridRowModel;
   onCellEditStart: () => void;
+  validationErrors?: Record<number, Record<string, string>>;
+  onCellLiveChange?: (rowId: number, columnName: string, value: unknown) => void;
 }
 
 export const ResponsesTable = ({
@@ -40,18 +40,42 @@ export const ResponsesTable = ({
   localRows,
   handleProcessRowUpdate,
   onCellEditStart,
+  validationErrors,
+  onCellLiveChange,
 }: ResponsesTableProps) => {
   const { form, rows } = useFormStore();
+
   const apiRef = useGridApiRef();
-  const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
   const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
+
+  const {
+    childrenFormsData,
+    hasFormInFormFields,
+    getChildFormData,
+  } = useChildForms({ form });
+
+  const {
+    expandColumn,
+    getDetailPanelContent,
+    getDetailPanelHeight,
+    detailPanelExpandedRowIds,
+  } = useDetailPanel({
+    form,
+    rows,
+    hasFormInFormFields,
+    childrenFormsData,
+    isInEditMode,
+    getChildFormData,
+  });
 
   const { renderEditCell } = useCellEditors({
     apiRef,
     formFields: form?.fields,
+    validationErrors,
+    onLiveChange: onCellLiveChange,
   });
 
-  const handleFileClick = useCallback((file: any) => {
+  const handleFileClick = useCallback((file: File) => {
     downloadFileFromResponse(file, String(form?.id));
   }, [form?.id]);
 
@@ -61,7 +85,7 @@ export const ResponsesTable = ({
   });
 
   const handleCellClick = useCallback((params: GridCellParams, event: any) => {
-    if (params.field === "__check__") {
+    if (params.field === "__check__" || params.field === "expand") {
       return;
     }
 
@@ -78,7 +102,6 @@ export const ResponsesTable = ({
       return;
     }
 
-    // changes to in edit mode, set the local rows to the response rows
     onCellEditStart();
 
     setCellModesModel((prevModel: GridCellModesModel) => {
@@ -125,104 +148,66 @@ export const ResponsesTable = ({
     [rows]
   );
 
-  const toggleRowExpanded = useCallback((rowId: string): void => {
-    setExpandedRowIds((currentExpandedIds: Set<string>) => {
-      const updatedExpandedIds = new Set(currentExpandedIds);
-      if (updatedExpandedIds.has(rowId)) {
-        updatedExpandedIds.delete(rowId);
-      } else {
-        updatedExpandedIds.add(rowId);
-      }
-
-      return updatedExpandedIds;
-    });
-  }, []);
-
-  const toggleAllExpanded = useCallback((): void => {
-    setExpandedRowIds((currentExpandedIds) =>
-      currentExpandedIds.size === rows.length
-        ? new Set()
-        : new Set(rows.map((row: Row) => String(row.id)))
-    );
-  }, [rows]);
-
-  const isRowExpanded = (row: Row): boolean => {
-    return expandedRowIds.has(String(row.id));
-  };
-
   const SyncStatusIcon: React.FC<{ pushedToMetro?: string | null }> = ({ pushedToMetro }) => (
     <SyncStatusIconBox>
       {pushedToMetro ? <CloudDoneIcon fontSize="small" /> : <CloudOffIcon fontSize="small" />}
     </SyncStatusIconBox>
   );
 
-
-  const renderRowExpandIcon = (row: Row): JSX.Element => {
-    const isExpanded: boolean = isRowExpanded(row);
-
-    return (
-      <ExpandIconBox>
-        <Tooltip title={isExpanded ? "כיווץ" : "הרחבה"}>
-          <IconButton
-            size="small"
-            onClick={(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-              event.stopPropagation();
-              toggleRowExpanded(String(row.id));
-            }}
-          >
-            {isExpanded ? (
-              <KeyboardArrowUpIcon fontSize="small" />
-            ) : (
-              <KeyboardArrowDownIcon fontSize="small" />
-            )}
-          </IconButton>
-        </Tooltip>
-      </ExpandIconBox>
-    );
-  };
-
-  const renderExpandAllHeader = (): JSX.Element => {
-    const allExpanded: boolean = expandedRowIds.size === responsesRows.length && responsesRows.length > 0;
-    return (
-      <Tooltip title={allExpanded ? "כיווץ הכל" : "הרחב הכל"}>
-        <IconButton
-          size="small"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleAllExpanded();
-          }}
-        >
-          {allExpanded ? (
-            <KeyboardDoubleArrowUpIcon fontSize="small" />
-          ) : (
-            <KeyboardDoubleArrowDownIcon fontSize="small" />
-          )}
-        </IconButton>
-      </Tooltip>
-    );
-  };
-
   const getFormColumns = (): GridColDef[] => {
     const baseFormColumns = (form?.columns && form.columns?.length > 0)
-      ? form?.columns.map((column: GridColDef) => {
-        const formField = form?.fields?.find((field) => field.displayName === column.field);
+      ? form.columns
+        .filter((column: GridColDef | undefined) => !!column && typeof column === 'object' && column.field)
+        .map((column: GridColDef) => {
+          const formField: FormField | undefined = form?.fields?.find((field) => field.displayName === column.field);
+          const isColumnId: boolean = column.field === "id";
+          return {
+            flex: isColumnId ? 0 : 2,
+            minWidth: isColumnId ? 120 : 200,
+            width: isColumnId ? 150 : 400,
+            ...column,
+            headerName: column?.headerName ?? column?.field ?? "",
+            editable: !isColumnId,
+            fieldTypeId: formField?.typeId,
+            renderEditCell: renderEditCell,
+            renderHeader: () => {
+              const header: string = column?.headerName || column?.field || "";
+              return (
+                <HeaderFlex>
+                  <span>{header}</span>
+                  {isInEditMode && formField?.required && (
+                    <HeaderAsterisk>*</HeaderAsterisk>
+                  )}
+                </HeaderFlex>
+              );
+            },
+            renderCell: (params: GridRenderCellParams) => {
+              const rowId = Number(params.id);
+              const cellError = validationErrors?.[rowId]?.[column.field as string];
+              let display: React.ReactNode;
+              if (isColumnId) {
+                display = params.value ?? <Box component="span" className="cell-box"></Box>;
+              } else if (formField) {
+                const content = (params.value !== undefined && params.value !== null)
+                  ? formatCellValue(params.value, formField)
+                  : null;
+                display = content ?? <Box component="span" className="cell-box"></Box>;
+              } else {
+                display = <Box component="span" className="cell-box"></Box>;
+              }
 
-        return {
-          flex: (column.field === "id") ? 0 : 2,
-          minWidth: (column.field === "id") ? 120 : 200,
-          width: (column.field === "id") ? 150 : 400,
-          ...column,
-          editable: column.field !== "id",
-          fieldTypeId: formField?.typeId,
-          renderEditCell: renderEditCell,
-          renderCell: (params: GridRenderCellParams) => {
-            if (formField && params.value !== undefined && params.value !== null) {
-              return formatCellValue(params.value, formField);
-            }
-            return params.value;
-          },
-        };
-      })
+              if (isInEditMode && cellError) {
+                return (
+                  <CellErrorWrapper>
+                    <CellErrorText>{cellError}</CellErrorText>
+                    <CellValueFlex>{display}</CellValueFlex>
+                  </CellErrorWrapper>
+                );
+              }
+              return display;
+            },
+          };
+        })
       : [];
 
     const syncColumn: GridColDef = {
@@ -233,24 +218,9 @@ export const ResponsesTable = ({
       editable: false,
       align: "center" as const,
       headerAlign: "center" as const,
-      renderCell: (params: any) => (
+      renderCell: (params: GridRenderCellParams) => (
         <SyncStatusIcon pushedToMetro={params.row?.pushed_to_metro} />
       ),
-    };
-
-    const expandColumn: GridColDef = {
-      field: "expand",
-      headerName: "",
-      minWidth: 120,
-      width: 150,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
-      editable: false,
-      align: "center" as const,
-      headerAlign: "center" as const,
-      renderHeader: () => renderExpandAllHeader(),
-      renderCell: ({ row }: { row: Row }) => renderRowExpandIcon(row),
     };
 
     const editedByColumn: GridColDef = {
@@ -284,7 +254,7 @@ export const ResponsesTable = ({
       : [];
 
     return [
-      expandColumn,
+      ...(expandColumn ? [expandColumn] : []),
       ...baseFormColumns,
       syncColumn,
       editedByColumn,
@@ -342,6 +312,9 @@ export const ResponsesTable = ({
           slots={{
             footer: CustomFooter,
           }}
+          getDetailPanelContent={getDetailPanelContent}
+          getDetailPanelHeight={getDetailPanelHeight}
+          detailPanelExpandedRowIds={detailPanelExpandedRowIds}
         />
       </MainContent>
     </ContentContainer>

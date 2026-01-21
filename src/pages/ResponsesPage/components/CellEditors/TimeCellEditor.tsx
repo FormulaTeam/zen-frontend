@@ -4,9 +4,10 @@ import { TimePickerComponent } from "./TimePickerComponent";
 
 interface TimeCellEditorProps {
     value: string | null;
-    onChange: (value: string) => void;
+    onChange: (value: string, isValid?: boolean) => void;
     showSeconds?: boolean;
     isRequired?: boolean;
+    errorMessage?: string;
 }
 
 export const TimeCellEditor: React.FC<TimeCellEditorProps> = ({
@@ -14,30 +15,44 @@ export const TimeCellEditor: React.FC<TimeCellEditorProps> = ({
     onChange,
     showSeconds = false,
     isRequired = false,
+    errorMessage,
 }) => {
-    const [localValue, setLocalValue] = useState<Dayjs | null>(
-        value ? dayjs(value) : null
+    const parseTimeToDayjs = (time: string | null): Dayjs | null => {
+        if (!time) return null;
+        const [hours, minutes, seconds] = time.split(":").map(Number);
+        if (isNaN(hours) || isNaN(minutes)) return null;
+        return dayjs()
+            .hour(hours)
+            .minute(minutes)
+            .second(seconds ?? 0)
+            .millisecond(0);
+    };
+
+    const [selectedTime, setSelectedTime] = useState<Dayjs | null>(
+        parseTimeToDayjs(value)
     );
 
     useEffect(() => {
-        setLocalValue(value && dayjs(value).isValid() ? dayjs(value) : null);
+        setSelectedTime(parseTimeToDayjs(value));
     }, [value]);
 
-    const handleChange = (newValue: Dayjs | null) => {
-        setLocalValue(newValue);
-        if (newValue && newValue.isValid()) {
-            onChange(newValue.format("YYYY-MM-DD[T]HH:mm:ss.000"));
+    const handleTimeChange = (newTime: Dayjs | null) => {
+        setSelectedTime(newTime);
+        if (newTime && newTime.isValid()) {
+            const timeFormat = showSeconds ? "HH:mm:ss" : "HH:mm";
+            onChange(newTime.format(timeFormat), true);
         } else {
-            onChange("");
+            onChange("", !(isRequired ?? false));
         }
     };
 
     return (
         <TimePickerComponent
-            value={localValue}
-            onChange={handleChange}
+            value={selectedTime}
+            onChange={handleTimeChange}
             showSeconds={showSeconds}
-            autoFocus={true}
+            autoFocus
+            errorMessage={errorMessage}
         />
     );
 };

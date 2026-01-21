@@ -1,13 +1,36 @@
 import React, { useEffect, useState } from "react";
 import { Box, TextField } from "@mui/material";
-import { LocationValue } from "../../../../utils/interfaces";
-import { utmRegex, wktLatitudeRegexY, wktLongitudeRegexX, preventEnterKeyNavigation } from "../../../../utils/utils";
+import { LocationValue } from "@utils/interfaces";
+import { utmRegex, wktLatitudeRegexY, wktLongitudeRegexX, preventEnterKeyNavigation } from "@utils/utils";
+import { styled } from "@mui/material/styles";
+
+const LocationEditorRoot = styled(Box)({
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+    padding: "8px",
+});
+
+const LocationErrorText = styled("div")(({ theme }) => ({
+    color: theme.palette.error.main,
+    fontSize: "0.75rem",
+    marginTop: 4,
+}));
+
+const LocationInputProps = {
+    disableUnderline: true,
+    sx: {
+        fontSize: "1rem",
+        padding: "4px 8px",
+    },
+};
 
 interface LocationCellEditorProps {
     value: LocationValue;
-    onChange: (value: LocationValue) => void;
+    onChange: (value: LocationValue, isValid?: boolean) => void;
     coordinateType?: string;
     isRequired?: boolean;
+    errorMessage?: string;
 }
 
 export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
@@ -15,6 +38,7 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
     onChange,
     coordinateType = "WKT",
     isRequired = false,
+    errorMessage,
 }) => {
     const [latitude, setLatitude] = useState(value?.x || "");
     const [longitude, setLongitude] = useState(value?.y || "");
@@ -44,14 +68,16 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
         const newLatitude = event.target.value;
         setLatitude(newLatitude);
         setLatitudeError(!validateLatitude(newLatitude));
-        onChange({ x: newLatitude, y: longitude });
+        const isValid = validateLatitude(newLatitude) && validateLongitude(longitude) && !(isRequired && (newLatitude === "" || longitude === ""));
+        onChange({ x: newLatitude, y: longitude }, isValid);
     };
 
     const handleLongitudeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newLongitude = event.target.value;
         setLongitude(newLongitude);
         setLongitudeError(!validateLongitude(newLongitude));
-        onChange({ x: latitude, y: newLongitude });
+        const isValid = validateLatitude(latitude) && validateLongitude(newLongitude) && !(isRequired && (latitude === "" || newLongitude === ""));
+        onChange({ x: latitude, y: newLongitude }, isValid);
     };
 
     const getPlaceholder = (isLatitude: boolean) => {
@@ -62,14 +88,7 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
     };
 
     return (
-        <Box
-            sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-                padding: "8px",
-            }}
-        >
+        <LocationEditorRoot>
             <TextField
                 fullWidth
                 placeholder={getPlaceholder(true)}
@@ -80,13 +99,7 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
                 helperText={latitudeError ? "ערך לא תקין" : ""}
                 variant="standard"
                 autoFocus
-                InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                        fontSize: "1rem",
-                        padding: "4px 8px",
-                    },
-                }}
+                InputProps={LocationInputProps}
             />
             <TextField
                 fullWidth
@@ -97,14 +110,11 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
                 error={longitudeError}
                 helperText={longitudeError ? "ערך לא תקין" : ""}
                 variant="standard"
-                InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                        fontSize: "1rem",
-                        padding: "4px 8px",
-                    },
-                }}
+                InputProps={LocationInputProps}
             />
-        </Box>
+            {errorMessage && (
+                <LocationErrorText>{errorMessage}</LocationErrorText>
+            )}
+        </LocationEditorRoot>
     );
 };
