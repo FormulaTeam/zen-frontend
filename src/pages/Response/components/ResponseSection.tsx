@@ -37,6 +37,8 @@ interface ResponseSectionProps {
   formFieldsByIdMap: Map<string, FormField & ResponseFieldValue>;
   formFieldsValuesMap: Map<string, any>;
   formFieldsValidMap: Map<string, any>;
+  touchedFields: Record<string, boolean>;
+  onBlurField: (uniqueId: string) => void;
   onChangeHandler: (value: any, uniqueId: any, inputValueValid: any) => void;
   viewMode?: boolean;
   fieldOptions?: Record<string, ResponseFieldValue[]>;
@@ -54,6 +56,8 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
   formFieldsByIdMap,
   formFieldsValuesMap,
   formFieldsValidMap,
+  touchedFields,
+  onBlurField,
   onChangeHandler,
   viewMode = false,
   fieldOptions = {},
@@ -63,9 +67,7 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
 }) => {
   const theme = useTheme();
 
-  if (!section.id) {
-    section.id = NOT_A_SECTION_ID;
-  }
+  const effectiveSectionId = section.id || NOT_A_SECTION_ID;
 
   return (
     <FieldsWrapper key={sectionId || sectionIdx}>
@@ -73,16 +75,18 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
       <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
         <Box>
           <Typography variant="h6">
-            {section.id !== NOT_A_SECTION_ID && !section.name
+            {effectiveSectionId !== NOT_A_SECTION_ID && !section.name
               ? texts.heb.undefinedSection
               : section.name}
           </Typography>
+
           {section.description && (
             <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
               {section.description}
             </Typography>
           )}
         </Box>
+
         <IconButton onClick={() => toggleSectionCollapse(sectionId)} size="small">
           {collapsedSections[sectionId] ? <ExpandMore /> : <ExpandLess />}
         </IconButton>
@@ -94,26 +98,24 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
           {section.fields
             .sort((a, b) => a.index - b.index)
             .map((formField, index) => {
+              const key = formField.uniqueId || formField.uniqId || `${sectionId}-${index}`;
+
               // getFormInFormProperty – full width
               if (formField.typeId === FieldTypeIds.form && getFormInFormProperty) {
-                return (
-                  <GridItemFull
-                    key={formField.uniqueId || formField.uniqId || `${sectionId}-${index}`}>
-                    {getFormInFormProperty(formField)}
-                  </GridItemFull>
-                );
+                return <GridItemFull key={key}>{getFormInFormProperty(formField)}</GridItemFull>;
               }
-              if (isLoading) {
-                return null;
-              }
-              // Regular field
+
+              if (isLoading) return null;
+
               return (
-                <div key={formField.uniqueId || formField.uniqId || `${sectionId}-${index}`}>
+                <div key={key}>
                   <FormFieldRenderer
                     formField={formField}
                     formFieldsByIdMap={formFieldsByIdMap}
                     formFieldsValuesMap={formFieldsValuesMap}
                     formFieldsValidMap={formFieldsValidMap}
+                    touchedFields={touchedFields}
+                    onBlurField={onBlurField}
                     onChangeHandler={onChangeHandler}
                     viewMode={viewMode}
                     fieldOptions={fieldOptions}

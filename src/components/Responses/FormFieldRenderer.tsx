@@ -23,6 +23,8 @@ interface FormFieldRendererProps {
   formFieldsByIdMap: Map<string, any>;
   formFieldsValuesMap: Map<string, any>;
   formFieldsValidMap: Map<string, any>;
+  touchedFields: Record<string, boolean>;
+  onBlurField: (uniqueId: string) => void;
   onChangeHandler: (value: any, uniqueId: string, valid: any) => void;
   viewMode: boolean;
   fieldOptions: Record<string, ResponseFieldValue[]>;
@@ -36,6 +38,8 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   formFieldsByIdMap,
   formFieldsValuesMap,
   formFieldsValidMap,
+  touchedFields,
+  onBlurField,
   onChangeHandler,
   viewMode,
   fieldOptions,
@@ -57,7 +61,14 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   ) {
     formFieldValue = "";
   }
-  let valid: any = formFieldsValidMap.get(uniqueId);
+  const valid = formFieldsValidMap.get(uniqueId);
+  const zodMsg =
+    valid && typeof valid === "object" && "valid" in valid && (valid as any).valid === false
+      ? (valid as any).message
+      : "";
+
+  const touched = !!touchedFields[String(uniqueId)];
+  const onBlur = () => onBlurField(String(uniqueId));
 
   switch (formField.typeId) {
     case FieldTypeIds.longText:
@@ -140,10 +151,13 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           label={formField.displayName}
           isRequired={formField.required}
           isValid={valid}
+          errorMessage={zodMsg}
           isDisabled={viewMode}
           onChangeHandler={(value: any, valid: boolean | null) => {
             onChangeHandler(value, uniqueId, valid);
           }}
+          touched={touched}
+          onBlur={onBlur}
           value={formFieldValue}
           showSeconds={formField?.showSeconds}
           defaultValue={formField?.initialValType}

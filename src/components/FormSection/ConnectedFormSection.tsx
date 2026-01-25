@@ -58,7 +58,9 @@ function ConnectedFormSection({
     formFieldsValuesMap,
     formFieldsValidMap,
     onChangeHandler,
-    validateRequiredFields,
+    touchedFields,
+    onBlurField,
+    validateVisibleFields,
     loading,
     form,
     response,
@@ -77,7 +79,7 @@ function ConnectedFormSection({
   const { saved, error, valid } = useFormInFormResponseSave({
     shouldSave,
     shouldValidate,
-    validateRequiredFields,
+    validateVisibleFields,
     form,
     saveResponse,
     formFieldsByIdMap,
@@ -125,6 +127,8 @@ function ConnectedFormSection({
                       formFieldsByIdMap={formFieldsByIdMap}
                       formFieldsValuesMap={formFieldsValuesMap}
                       formFieldsValidMap={formFieldsValidMap}
+                      touchedFields={touchedFields}
+                      onBlurField={onBlurField}
                       onChangeHandler={onChangeHandler}
                       viewMode={viewMode}
                       fieldOptions={fieldOptions}

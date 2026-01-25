@@ -1,6 +1,6 @@
 import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { CustomInputFormFieldProps } from "../../../utils/interfaces";
@@ -15,7 +15,26 @@ interface CustomTimePickerProps extends CustomInputFormFieldProps {
   defaultValue?: string;
   showSeconds?: boolean;
   isTabularEdit?: boolean;
+  touched?: boolean;
+  onBlur?: () => void;
+  errorMessage?: string;
 }
+
+const toDayjs = (value: any, defaultValue?: string): Dayjs | null => {
+  if (value instanceof Date) return dayjs(value);
+
+  if (typeof value === "string" && value.includes(":")) {
+    const [hours, minutes, seconds] = value.split(":").map(Number);
+    const date = new Date();
+    date.setHours(hours);
+    date.setMinutes(minutes);
+    if (seconds !== undefined) date.setSeconds(seconds);
+    return dayjs(date);
+  }
+
+  if (defaultValue === "currentTime") return dayjs();
+  return null;
+};
 
 const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
   value,
@@ -27,26 +46,36 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
   defaultValue,
   showSeconds = false,
   isTabularEdit = false,
+  touched,
+  onBlur,
+  errorMessage,
 }) => {
-  const [timeValue, setTimeValue] = useState<Dayjs | null>(() => {
-    if (value instanceof Date) {
-      return dayjs(value);
-    }
-    if (typeof value === "string" && value.includes(":")) {
-      const [hours, minutes, seconds] = value.split(":").map(Number);
-      const date = new Date();
-      date.setHours(hours);
-      date.setMinutes(minutes);
-      if (seconds !== undefined) {
-        date.setSeconds(seconds);
-      }
-      return dayjs(date);
-    }
-    if (defaultValue === "currentTime") return dayjs();
-    return null;
-  });
+  const [timeValue, setTimeValue] = useState<Dayjs | null>(() => toDayjs(value, defaultValue));
 
   useEffect(() => {
+    setTimeValue(toDayjs(value, defaultValue));
+  }, [value, defaultValue]);
+
+  const isOk = isValid === true;
+
+  const showError =
+    !!touched && ((isRequired && timeValue === null) || (timeValue !== null && !isOk));
+
+  const helperText = useMemo(() => {
+    if (!showError) return " ";
+    return errorMessage || "שדה זה הינו חובה";
+  }, [showError, errorMessage]);
+
+  const commit = (e?: React.FocusEvent<HTMLInputElement>) => {
+    onBlur?.();
+
+    const raw = e?.target?.value?.trim?.() ?? "";
+    if (raw === "") {
+      setTimeValue(null);
+      onChangeHandler("", true);
+      return;
+    }
+
     if (timeValue && timeValue.isValid()) {
       const hours = timeValue.hour().toString().padStart(2, "0");
       const minutes = timeValue.minute().toString().padStart(2, "0");
@@ -59,22 +88,14 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
 
       onChangeHandler(timeString, true);
     } else {
-      onChangeHandler("", !isRequired);
+      onChangeHandler("", true);
     }
-  }, [timeValue]);
-
-  const errorMessage = !isValid
-    ? isRequired && timeValue === null
-      ? "שדה זה הינו חובה"
-      : "יש להזין שעה בפורמט תקין"
-    : "";
+  };
 
   return (
     <Chrome90RTLFixContainer>
       <LocalizationProvider
-        localeText={{
-          okButtonLabel: "אישור",
-        }}
+        localeText={{ okButtonLabel: "אישור" }}
         dateAdapter={AdapterDayjs}
         adapterLocale="he">
         <TimePicker
@@ -84,23 +105,22 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
           onChange={(newValue) => {
             setTimeValue(newValue);
           }}
-          // Using the component directly prevents recreation each render and keeps a stable anchor element
+          onAccept={(newValue) => {
+            setTimeValue(newValue ?? null);
+            commit();
+          }}
           slots={{ textField: BaseFieldInput }}
           slotProps={{
-            // Cast to any so we can pass custom prop isTabularEdit to our wrapped component
             textField: {
               isTabularEdit,
               required: isRequired,
-              error: !isValid,
-              helperText: errorMessage,
+              error: showError,
+              helperText,
               size: isTabularEdit ? "medium" : undefined,
+              onBlur: (e: any) => commit(e),
             } as any,
             inputAdornment: {
-              sx: {
-                ".MuiIconButton-root": {
-                  p: 0,
-                },
-              },
+              sx: { ".MuiIconButton-root": { p: 0 } },
             },
           }}
           views={showSeconds ? ["hours", "minutes", "seconds"] : ["hours", "minutes"]}

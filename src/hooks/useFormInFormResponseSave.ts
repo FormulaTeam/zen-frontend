@@ -76,7 +76,7 @@ const clearSaveQueue = () => {
 interface useFormInFormResponseSaveProps {
   shouldSave: boolean;
   shouldValidate: boolean;
-  validateRequiredFields: () => Promise<boolean>;
+  validateVisibleFields: () => Promise<boolean>;
   form: any;
   saveResponse: saveResponse;
   formFieldsByIdMap: any;
@@ -89,7 +89,7 @@ interface useFormInFormResponseSaveProps {
 export function useFormInFormResponseSave({
   shouldSave,
   shouldValidate,
-  validateRequiredFields,
+  validateVisibleFields,
   form,
   saveResponse,
   formFieldsByIdMap,
@@ -105,7 +105,7 @@ export function useFormInFormResponseSave({
   useEffect(() => {
     const run = async () => {
       if (shouldSave && form) {
-        const isValid = await validateRequiredFields();
+        const isValid = await validateVisibleFields();
 
         if (isValid) {
           saveChildForm(
@@ -137,7 +137,7 @@ export function useFormInFormResponseSave({
   useEffect(() => {
     const run = async () => {
       if (form && shouldValidate) {
-        const isValid = await validateRequiredFields();
+        const isValid = await validateVisibleFields();
 
         if (isValid) {
           childValid(true);

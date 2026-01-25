@@ -31,9 +31,15 @@ interface SectionsMap {
   };
 }
 
-type LinkFlags = { link: boolean; linkTxt: boolean };
-type LocationFlags = { x: boolean; y: boolean };
-type FieldValidity = boolean | LinkFlags | LocationFlags;
+/**
+ * Validity Types
+ * - Simple fields: true OR { valid:false, message }
+ * - Link/location: keep per-part booleans + per-part messages
+ */
+type LinkValidity = { link: boolean; linkTxt: boolean; linkMsg?: string; linkTxtMsg?: string };
+type LocationValidity = { x: boolean; y: boolean; xMsg?: string; yMsg?: string };
+type Invalid = { valid: false; message: string };
+export type FieldValidity = true | Invalid | LinkValidity | LocationValidity;
 
 const initFieldValidity = (field: FormField): FieldValidity => {
   if (field.typeId === FieldTypeIds.link) return { link: true, linkTxt: true };
@@ -59,61 +65,89 @@ const evaluateVisibility = (field: FormField, row: ResponseRow, allFields: FormF
   }
 };
 
+const isLinkValidity = (v: FieldValidity | undefined): v is LinkValidity =>
+  !!v && typeof v === "object" && "link" in v && "linkTxt" in v;
+
+const isLocationValidity = (v: FieldValidity | undefined): v is LocationValidity =>
+  !!v && typeof v === "object" && "x" in v && "y" in v;
+
 const setIssueValidity = (
   validMap: Map<string, FieldValidity>,
   fieldsById: Map<string, FormField>,
   issuePath: (string | number)[],
+  message: string,
 ) => {
   const fieldId = issuePath?.[0];
   if (typeof fieldId !== "string") return;
 
   const field = fieldsById.get(fieldId);
-
   if (!field) {
-    validMap.set(fieldId, false);
+    validMap.set(fieldId, { valid: false, message });
     return;
   }
 
+  // Link field: expect paths like [fieldId, "link"] or [fieldId, "linkTxt"]
   if (field.typeId === FieldTypeIds.link) {
     const current = validMap.get(fieldId);
-    const flags: LinkFlags =
-      current && typeof current === "object" && "link" in current && "linkTxt" in current
-        ? (current as LinkFlags)
-        : { link: true, linkTxt: true };
+    const next: LinkValidity = isLinkValidity(current)
+      ? { ...current }
+      : { link: true, linkTxt: true };
 
     const part = issuePath?.[1];
-    if (part === "link") flags.link = false;
-    else if (part === "linkTxt") flags.linkTxt = false;
-    else {
-      flags.link = false;
-      flags.linkTxt = false;
+    if (part === "link") {
+      next.link = false;
+      next.linkMsg = message;
+    } else if (part === "linkTxt") {
+      next.linkTxt = false;
+      next.linkTxtMsg = message;
+    } else {
+      next.link = false;
+      next.linkTxt = false;
+      next.linkMsg = message;
+      next.linkTxtMsg = message;
     }
 
-    validMap.set(fieldId, { ...flags });
+    validMap.set(fieldId, next);
     return;
   }
 
+  // Location field: expect paths like [fieldId, "x"] or [fieldId, "y"]
   if (field.typeId === FieldTypeIds.location) {
     const current = validMap.get(fieldId);
-    const flags: LocationFlags =
-      current && typeof current === "object" && "x" in current && "y" in current
-        ? (current as LocationFlags)
-        : { x: true, y: true };
+    const next: LocationValidity = isLocationValidity(current)
+      ? { ...current }
+      : { x: true, y: true };
 
     const part = issuePath?.[1];
-    if (part === "x") flags.x = false;
-    else if (part === "y") flags.y = false;
-    else {
-      flags.x = false;
-      flags.y = false;
+    if (part === "x") {
+      next.x = false;
+      next.xMsg = message;
+    } else if (part === "y") {
+      next.y = false;
+      next.yMsg = message;
+    } else {
+      next.x = false;
+      next.y = false;
+      next.xMsg = message;
+      next.yMsg = message;
     }
 
-    validMap.set(fieldId, { ...flags });
+    validMap.set(fieldId, next);
     return;
   }
 
-  validMap.set(fieldId, false);
+  // Simple field
+  validMap.set(fieldId, { valid: false, message });
 };
+
+const markAllTouched = (fields: FormField[], prev: Record<string, boolean>) =>
+  fields.reduce<Record<string, boolean>>(
+    (acc, f) => {
+      acc[String(f.uniqueId)] = true;
+      return acc;
+    },
+    { ...prev },
+  );
 
 export const useResponseState = (
   formId: string | undefined,
@@ -135,7 +169,9 @@ export const useResponseState = (
   const [formFieldsValidMap, setFormFieldsValidMap] = useState<Map<string, FieldValidity>>(
     new Map(),
   );
-  const [interactedFields, setInteractedFields] = useState<Set<string>>(new Set());
+
+  // replaces Set with plain object map
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
 
   const [form, setForm] = useState<Form | null>(null);
   const [response, setResponse] = useState<ResponseForm | null>(null);
@@ -152,14 +188,14 @@ export const useResponseState = (
     setCollapsedSections((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
   };
 
-  /** Load form + response */
+  // Load form + response (no "let cancelled")
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
-    const load = async () => {
+    (async () => {
       if (formId) {
         const f = await getFormById(Number(formId));
-        if (!cancelled && f) setForm(f);
+        if (!controller.signal.aborted && f) setForm(f);
       }
 
       if (responseId && formId) {
@@ -171,20 +207,18 @@ export const useResponseState = (
         const res: any = await searchResponses(filter);
         const first = res?.responses?.[0];
 
-        if (!cancelled && first) {
-          if (copyMode) setResponse({ ...first, id: null });
-          else setResponse(first);
+        if (!controller.signal.aborted && first) {
+          setResponse(copyMode ? { ...first, id: null } : first);
         }
       }
-    };
+    })();
 
-    load();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [formId, responseId, copyMode]);
 
-  /** Init state once we have form (+ response if editing) */
+  // Init state once we have form (+ response if editing)
   useEffect(() => {
     if (!form) return;
 
@@ -205,15 +239,14 @@ export const useResponseState = (
 
     fields.forEach((field: any) => {
       const uniqueId = String(field?.uniqueId || field?.uniqId);
-
       byId.set(uniqueId, field);
 
-      let defaultValue = field?.value;
-      if (field.typeId === FieldTypeIds.number && field?.initialNumberValue !== undefined) {
-        defaultValue = field.initialNumberValue;
-      } else if (field.typeId === FieldTypeIds.checkbox && field?.defaultValue !== undefined) {
-        defaultValue = field.defaultValue;
-      }
+      const defaultValue =
+        field.typeId === FieldTypeIds.number && field?.initialNumberValue !== undefined
+          ? field.initialNumberValue
+          : field.typeId === FieldTypeIds.checkbox && field?.defaultValue !== undefined
+          ? field.defaultValue
+          : field?.value;
 
       values.set(uniqueId, defaultValue);
       valid.set(uniqueId, initFieldValidity(field));
@@ -228,30 +261,27 @@ export const useResponseState = (
     setFormFieldsByIdsMap(byId);
     setFormFieldsValuesMap(values);
     setFormFieldsValidMap(valid);
+    setTouchedFields({});
 
-    if (viewMode) setFormTitle("צפייה בתגובה - " + form.name);
-    else if (responseId) setFormTitle((copyMode ? "יצירת תגובה - " : "עריכת תגובה - ") + form.name);
-    else setFormTitle("יצירת תגובה - " + form.name);
+    setFormTitle(
+      viewMode
+        ? "צפייה בתגובה - " + form.name
+        : responseId
+        ? (copyMode ? "יצירת תגובה - " : "עריכת תגובה - ") + form.name
+        : "יצירת תגובה - " + form.name,
+    );
 
     setLoading(false);
   }, [form, response, responseId, viewMode, copyMode, roles, user, isSuperAdmin, navigate]);
 
-  /** Current row (used for visibility + validation) */
+  // Current row
   const rowObject = useMemo(() => rowFromValuesMap(formFieldsValuesMap), [formFieldsValuesMap]);
 
-  /** Visible fields (pure memo) */
+  // Visible fields
   const visibleFormFields = useMemo(() => {
-    const visible = formFields.filter((f) => evaluateVisibility(f, rowObject, formFields));
-
-    console.log(
-      "====== visible fields",
-      visible.map((f) => ({ id: String(f.uniqueId), name: f.displayName, typeId: f.typeId })),
-    );
-
-    return visible;
+    return formFields.filter((f) => evaluateVisibility(f, rowObject, formFields));
   }, [formFields, rowObject]);
 
-  /** Clear hidden fields (values + validity) */
   useEffect(() => {
     if (!formFields.length) return;
 
@@ -259,16 +289,18 @@ export const useResponseState = (
 
     setFormFieldsValuesMap((prev) => {
       const next = new Map(prev);
+
       const changed = formFields.some((f) => {
         const id = String(f.uniqueId);
         if (visibleIds.has(id)) return false;
 
         const current = next.get(id);
-        if (current !== undefined && current !== null && current !== "" && current !== false) {
-          next.set(id, f.typeId === FieldTypeIds.checkbox ? false : "");
-          return true;
-        }
-        return false;
+        const shouldClear =
+          current !== undefined && current !== null && current !== "" && current !== false;
+        if (!shouldClear) return false;
+
+        next.set(id, f.typeId === FieldTypeIds.checkbox ? false : "");
+        return true;
       });
 
       return changed ? next : prev;
@@ -276,24 +308,38 @@ export const useResponseState = (
 
     setFormFieldsValidMap((prev) => {
       const next = new Map(prev);
+
       const changed = formFields.some((f) => {
         const id = String(f.uniqueId);
         if (visibleIds.has(id)) return false;
 
         const reset = initFieldValidity(f);
         const current = next.get(id);
-        if (JSON.stringify(current) !== JSON.stringify(reset)) {
-          next.set(id, reset);
-          return true;
-        }
-        return false;
+
+        // shallow-ish compare (good enough for our shapes)
+        const same = JSON.stringify(current) === JSON.stringify(reset);
+        if (same) return false;
+
+        next.set(id, reset);
+        return true;
       });
 
       return changed ? next : prev;
     });
+
+    setTouchedFields((prev) => {
+      const keys = Object.keys(prev);
+      const changed = keys.some((id) => !visibleIds.has(id));
+      if (!changed) return prev;
+
+      const next = { ...prev };
+      keys.forEach((id) => {
+        if (!visibleIds.has(id)) delete next[id];
+      });
+      return next;
+    });
   }, [formFields, visibleFormFields]);
 
-  /** Optional UX: sanitize dependent options */
   const applyDependentOptionsCleanup = useCallback(
     (nextValues: Map<string, any>, parentUniqueId: string, parentValue: any) => {
       if (!formFields.length) return;
@@ -320,26 +366,21 @@ export const useResponseState = (
             const dep = childField.parentDependencies!.find(
               (d) => d.parentOptionIndex === parentIndex,
             );
-            if (dep) {
-              dep.childOptionIndices.forEach((childIdx) => {
-                const opt = childField.options?.[childIdx];
-                if (opt) allowed.add(opt);
-              });
-            }
+            dep?.childOptionIndices.forEach((childIdx) => {
+              const opt = childField.options?.[childIdx];
+              if (opt) allowed.add(opt);
+            });
           }
         });
 
         const childId = String(childField.uniqueId);
         const current = nextValues.get(childId);
 
-        if (allowed.size > 0) {
-          if (current) {
-            const currentArr = Array.isArray(current) ? current : [current];
-            const filtered = currentArr.filter((v) => allowed.has(v));
-
-            if (filtered.length !== currentArr.length) {
-              nextValues.set(childId, childField.multiSelect ? filtered : filtered[0] ?? "");
-            }
+        if (allowed.size > 0 && current) {
+          const currentArr = Array.isArray(current) ? current : [current];
+          const filtered = currentArr.filter((v) => allowed.has(v));
+          if (filtered.length !== currentArr.length) {
+            nextValues.set(childId, childField.multiSelect ? filtered : filtered[0] ?? "");
           }
         } else if (parentValues.length > 0) {
           nextValues.set(childId, childField.multiSelect ? [] : "");
@@ -349,11 +390,10 @@ export const useResponseState = (
     [formFields],
   );
 
-  /** Change handler */
+  // Change handler: ONLY updates values.
+  // (Validation and "show error" happen on blur via onBlurField)
   const onChangeHandler = useCallback(
     (value: any, uniqueId: string) => {
-      console.log("====== onChange", { uniqueId, value });
-
       setFormFieldsValuesMap((prev) => {
         const next = new Map(prev);
         const prevValue = prev.get(uniqueId);
@@ -365,29 +405,15 @@ export const useResponseState = (
 
         return next;
       });
-
-      setInteractedFields((prev) => {
-        const next = new Set(prev);
-        next.add(uniqueId);
-        return next;
-      });
     },
     [applyDependentOptionsCleanup, setHasUnsavedChanges],
   );
 
-  /**
-   * Validate visible fields using your dynamic Zod schema builder.
-   */
-  const validateRequiredFields = useCallback(async (): Promise<boolean> => {
-    if (!form) return false;
+  // Shared validation runner
+  const runValidation = useCallback(async () => {
+    if (!form) return null;
 
     const row = rowFromValuesMap(formFieldsValuesMap);
-
-    console.log("====== validate start", {
-      formId: form.id,
-      visibleCount: visibleFormFields.length,
-      rowKeys: Object.keys(row),
-    });
 
     const { schema, visibleFields } = await buildDynamicRowSchema(
       form,
@@ -396,51 +422,75 @@ export const useResponseState = (
       [form.id],
     );
 
-    console.log("====== schema built", {
-      visibleFields: visibleFields.map((f) => ({
-        id: String(f.uniqueId),
-        name: f.displayName,
-        typeId: f.typeId,
-      })),
-    });
-
     const byId = new Map<string, FormField>();
     visibleFields.forEach((f) => byId.set(String(f.uniqueId), f));
 
-    const nextValid = new Map(formFieldsValidMap);
-    visibleFields.forEach((f) => nextValid.set(String(f.uniqueId), initFieldValidity(f)));
+    const baseValid = new Map(formFieldsValidMap);
+    visibleFields.forEach((f) => baseValid.set(String(f.uniqueId), initFieldValidity(f)));
 
     const result = await schema.safeParseAsync(row);
 
+    return { result, visibleFields, byId, baseValid };
+  }, [form, formFieldsValuesMap, formFieldsValidMap]);
+
+  /**
+   * Validate ALL visible fields (used on Save).
+   * Returns true if valid.
+   */
+  const validateVisibleFields = useCallback(async (): Promise<boolean> => {
+    const out = await runValidation();
+    if (!out) return false;
+
+    const { result, visibleFields, byId, baseValid } = out;
+
     if (result.success) {
-      console.log("====== validate success ✅");
-      setFormFieldsValidMap(nextValid);
+      setFormFieldsValidMap(baseValid);
+      setTouchedFields((prev) => markAllTouched(visibleFields, prev));
       return true;
     }
 
-    console.log("====== validate fail ❌", {
-      issues: result.error.issues.map((i) => ({ path: i.path, message: i.message })),
-    });
-
-    const visibleIds = new Set(visibleFields.map((f) => String(f.uniqueId)));
-
     result.error.issues.forEach((issue) => {
-      const top = issue.path?.[0];
-      if (typeof top === "string" && visibleIds.has(top)) {
-        setIssueValidity(nextValid, byId, issue.path as any);
-      }
+      setIssueValidity(baseValid, byId, issue.path as any, issue.message);
     });
 
-    setFormFieldsValidMap(nextValid);
-
-    setInteractedFields((prev) => {
-      const next = new Set(prev);
-      visibleFields.forEach((f) => next.add(String(f.uniqueId)));
-      return next;
-    });
-
+    setFormFieldsValidMap(baseValid);
+    setTouchedFields((prev) => markAllTouched(visibleFields, prev));
     return false;
-  }, [form, formFieldsValuesMap, formFieldsValidMap, visibleFormFields.length]);
+  }, [runValidation]);
+
+  /**
+   * Validate ONE field on blur.
+   * - Marks the field as touched
+   * - Validates the row
+   * - Updates validity ONLY for that field (including link/location subparts)
+   */
+  const onBlurField = useCallback(
+    async (uniqueId: string) => {
+      const id = String(uniqueId);
+      setTouchedFields((prev) => ({ ...prev, [id]: true }));
+
+      const out = await runValidation();
+      if (!out) return;
+
+      const { result, visibleFields, byId } = out;
+
+      // keep other fields as-is; reset + apply issues only for this field
+      const nextValid = new Map(formFieldsValidMap);
+      const field = visibleFields.find((f) => String(f.uniqueId) === id);
+      if (field) nextValid.set(id, initFieldValidity(field));
+
+      if (!result.success) {
+        result.error.issues
+          .filter((issue) => String(issue.path?.[0]) === id)
+          .forEach((issue) => {
+            setIssueValidity(nextValid, byId, issue.path as any, issue.message);
+          });
+      }
+
+      setFormFieldsValidMap(nextValid);
+    },
+    [runValidation, formFieldsValidMap],
+  );
 
   const responsSections: SectionsMap = useMemo(() => {
     return visibleFormFields.reduce((acc: SectionsMap, field: FormField) => {
@@ -467,10 +517,12 @@ export const useResponseState = (
     formFieldsByIdMap,
     formFieldsValuesMap,
     formFieldsValidMap,
-    interactedFields,
+
+    touchedFields,
 
     onChangeHandler,
-    validateRequiredFields,
+    onBlurField,
+    validateVisibleFields,
 
     loading,
     form,

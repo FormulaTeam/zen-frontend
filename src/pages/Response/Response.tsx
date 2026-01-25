@@ -28,14 +28,17 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
   const location = useLocation();
   const navigate = useNavigate();
   const { isSuperAdmin } = useSuperAdmin();
+
   const {
     formTitle,
     formFields,
     formFieldsByIdMap,
     formFieldsValuesMap,
     formFieldsValidMap,
+    touchedFields,
+    onBlurField,
     onChangeHandler,
-    validateRequiredFields,
+    validateVisibleFields,
     loading,
     form,
     response,
@@ -46,15 +49,13 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
     toggleSectionCollapse,
   } = useResponseState(formId, id, viewMode, copyMode);
 
+  const { saveResponse, isSaving } = useResponseSave(form, response, user);
+
   const saveAll = async () => {
-    if ((await validateRequiredFields()) && form) {
+    if ((await validateVisibleFields()) && form) {
       try {
         const result = await saveResponse(formFieldsByIdMap, formFieldsValuesMap);
         if (!Array.isArray(result)) setSavedResponse(result);
-
-        // if (result) {
-        //   navigate(`/responses/${formId}`);
-        // }
         setChildFormsSaving(true);
       } catch (error: any) {
         console.error("error:", error);
@@ -67,8 +68,6 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
       }
     }
   };
-
-  const { saveResponse, isSaving } = useResponseSave(form, response, user);
 
   const {
     childForms,
@@ -139,23 +138,11 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
     );
   };
 
-  // Sort sections by their order and ensure proper section hierarchy
   const sortedSections = useMemo(() => {
     return Object.entries(responsSections).sort((a, b) => {
-      // Extract section order from the first field in each section
-      // Default to 0 if no sectionOrder is defined
       const aOrder = a[1].fields[0]?.sectionOrder ?? 0;
       const bOrder = b[1].fields[0]?.sectionOrder ?? 0;
-
-      // If both sections have the same order value, sort by section ID
-      // This ensures section_0 comes before other sections with the same order
-      // Using localeCompare for proper string comparison
-      if (aOrder === bOrder) {
-        return a[0].localeCompare(b[0]);
-      }
-
-      // Primary sorting: by section order (ascending - lower numbers first)
-      // This ensures sections appear in their intended sequence
+      if (aOrder === bOrder) return a[0].localeCompare(b[0]);
       return aOrder - bOrder;
     });
   }, [responsSections]);
@@ -172,6 +159,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
           onSaveAndClose={onSaveAndClose}
           saveIsLoading={isSaving || childFormsSaving}
         />
+
         <FormSectionsContainer>
           {sortedSections.map(([sectionId, section], sectionIdx) => (
             <ResponseSection
@@ -184,6 +172,8 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
               formFieldsByIdMap={formFieldsByIdMap}
               formFieldsValuesMap={formFieldsValuesMap}
               formFieldsValidMap={formFieldsValidMap}
+              touchedFields={touchedFields}
+              onBlurField={onBlurField}
               onChangeHandler={onChangeHandler}
               viewMode={viewMode}
               fieldOptions={fieldOptions}
