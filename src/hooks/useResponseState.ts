@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -36,11 +36,17 @@ interface SectionsMap {
  * - Simple fields: true OR { valid:false, message }
  * - Link/location: keep per-part booleans + per-part messages
  */
-type LinkValidity = { link: boolean; linkTxt: boolean; linkMsg?: string; linkTxtMsg?: string };
-type LocationValidity = { x: boolean; y: boolean; xMsg?: string; yMsg?: string };
+export type LinkValidity = {
+  link: boolean;
+  linkTxt: boolean;
+  linkMsg?: string;
+  linkTxtMsg?: string;
+};
+export type LocationValidity = { x: boolean; y: boolean; xMsg?: string; yMsg?: string };
 type Invalid = { valid: false; message: string };
 export type FieldValidity = true | Invalid | LinkValidity | LocationValidity;
 
+// Helpers
 const initFieldValidity = (field: FormField): FieldValidity => {
   if (field.typeId === FieldTypeIds.link) return { link: true, linkTxt: true };
   if (field.typeId === FieldTypeIds.location) return { x: true, y: true };
@@ -81,12 +87,13 @@ const setIssueValidity = (
   if (typeof fieldId !== "string") return;
 
   const field = fieldsById.get(fieldId);
+
   if (!field) {
     validMap.set(fieldId, { valid: false, message });
     return;
   }
 
-  // Link field: expect paths like [fieldId, "link"] or [fieldId, "linkTxt"]
+  // Link field: paths like [fieldId, "link"] or [fieldId, "linkTxt"]
   if (field.typeId === FieldTypeIds.link) {
     const current = validMap.get(fieldId);
     const next: LinkValidity = isLinkValidity(current)
@@ -111,7 +118,7 @@ const setIssueValidity = (
     return;
   }
 
-  // Location field: expect paths like [fieldId, "x"] or [fieldId, "y"]
+  // Location field: paths like [fieldId, "x"] or [fieldId, "y"]
   if (field.typeId === FieldTypeIds.location) {
     const current = validMap.get(fieldId);
     const next: LocationValidity = isLocationValidity(current)
@@ -149,6 +156,7 @@ const markAllTouched = (fields: FormField[], prev: Record<string, boolean>) =>
     { ...prev },
   );
 
+
 export const useResponseState = (
   formId: string | undefined,
   responseId: string | undefined,
@@ -159,6 +167,8 @@ export const useResponseState = (
   isSuperAdmin?: boolean,
   setHasUnsavedChanges?: (hasUnsavedChanges: boolean) => void,
 ) => {
+  const navigate = useNavigate();
+
   const [formTitle, setFormTitle] = useState("");
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [formFieldsByIdMap, setFormFieldsByIdsMap] = useState<
@@ -169,8 +179,6 @@ export const useResponseState = (
   const [formFieldsValidMap, setFormFieldsValidMap] = useState<Map<string, FieldValidity>>(
     new Map(),
   );
-
-  // replaces Set with plain object map
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
 
   const [form, setForm] = useState<Form | null>(null);
@@ -178,17 +186,28 @@ export const useResponseState = (
   const [loading, setLoading] = useState(true);
 
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
-  const navigate = useNavigate();
 
   const { fieldOptions, isLoading: loadingConnections } = useConnectedFormOptions({
     formFields: form?.fields || [],
   });
 
+  // Always-current refs (avoid stale async reads)
+  const valuesRef = useRef(formFieldsValuesMap);
+  const validRef = useRef(formFieldsValidMap);
+  const touchedRef = useRef(touchedFields);
+
+  useEffect(() => void (valuesRef.current = formFieldsValuesMap), [formFieldsValuesMap]);
+  useEffect(() => void (validRef.current = formFieldsValidMap), [formFieldsValidMap]);
+  useEffect(() => void (touchedRef.current = touchedFields), [touchedFields]);
+
+  // Prevent async validation races (older results overwriting newer ones)
+  const validationSeqRef = useRef(0);
+
   const toggleSectionCollapse = (sectionId: string) => {
     setCollapsedSections((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
   };
 
-  // Load form + response (no "let cancelled")
+  // Load form + response
   useEffect(() => {
     const controller = new AbortController();
 
@@ -213,12 +232,10 @@ export const useResponseState = (
       }
     })();
 
-    return () => {
-      controller.abort();
-    };
+    return () => controller.abort();
   }, [formId, responseId, copyMode]);
 
-  // Init state once we have form (+ response if editing)
+  // Initialize state once form is ready
   useEffect(() => {
     if (!form) return;
 
@@ -238,8 +255,8 @@ export const useResponseState = (
     const valid = new Map<string, FieldValidity>();
 
     fields.forEach((field: any) => {
-      const uniqueId = String(field?.uniqueId || field?.uniqId);
-      byId.set(uniqueId, field);
+      const id = String(field?.uniqueId || field?.uniqId);
+      byId.set(id, field);
 
       const defaultValue =
         field.typeId === FieldTypeIds.number && field?.initialNumberValue !== undefined
@@ -248,8 +265,8 @@ export const useResponseState = (
           ? field.defaultValue
           : field?.value;
 
-      values.set(uniqueId, defaultValue);
-      valid.set(uniqueId, initFieldValidity(field));
+      values.set(id, defaultValue);
+      valid.set(id, initFieldValidity(field));
     });
 
     if (responseId && response) {
@@ -265,23 +282,24 @@ export const useResponseState = (
 
     setFormTitle(
       viewMode
-        ? "צפייה בתגובה - " + form.name
+        ? `צפייה בתגובה - ${form.name}`
         : responseId
-        ? (copyMode ? "יצירת תגובה - " : "עריכת תגובה - ") + form.name
-        : "יצירת תגובה - " + form.name,
+        ? `${copyMode ? "יצירת תגובה - " : "עריכת תגובה - "}${form.name}`
+        : `יצירת תגובה - ${form.name}`,
     );
 
     setLoading(false);
   }, [form, response, responseId, viewMode, copyMode, roles, user, isSuperAdmin, navigate]);
 
-  // Current row
+  // Visibility
   const rowObject = useMemo(() => rowFromValuesMap(formFieldsValuesMap), [formFieldsValuesMap]);
 
-  // Visible fields
-  const visibleFormFields = useMemo(() => {
-    return formFields.filter((f) => evaluateVisibility(f, rowObject, formFields));
-  }, [formFields, rowObject]);
+  const visibleFormFields = useMemo(
+    () => formFields.filter((f) => evaluateVisibility(f, rowObject, formFields)),
+    [formFields, rowObject],
+  );
 
+  // Clear hidden field values/validity/touched
   useEffect(() => {
     if (!formFields.length) return;
 
@@ -289,57 +307,57 @@ export const useResponseState = (
 
     setFormFieldsValuesMap((prev) => {
       const next = new Map(prev);
+      let changed = false;
 
-      const changed = formFields.some((f) => {
+      formFields.forEach((f) => {
         const id = String(f.uniqueId);
-        if (visibleIds.has(id)) return false;
+        if (visibleIds.has(id)) return;
 
         const current = next.get(id);
         const shouldClear =
           current !== undefined && current !== null && current !== "" && current !== false;
-        if (!shouldClear) return false;
+        if (!shouldClear) return;
 
         next.set(id, f.typeId === FieldTypeIds.checkbox ? false : "");
-        return true;
+        changed = true;
       });
 
+      if (changed) valuesRef.current = next;
       return changed ? next : prev;
     });
 
     setFormFieldsValidMap((prev) => {
       const next = new Map(prev);
+      let changed = false;
 
-      const changed = formFields.some((f) => {
+      formFields.forEach((f) => {
         const id = String(f.uniqueId);
-        if (visibleIds.has(id)) return false;
+        if (visibleIds.has(id)) return;
 
         const reset = initFieldValidity(f);
         const current = next.get(id);
-
-        // shallow-ish compare (good enough for our shapes)
-        const same = JSON.stringify(current) === JSON.stringify(reset);
-        if (same) return false;
+        if (JSON.stringify(current) === JSON.stringify(reset)) return;
 
         next.set(id, reset);
-        return true;
+        changed = true;
       });
 
+      if (changed) validRef.current = next;
       return changed ? next : prev;
     });
 
     setTouchedFields((prev) => {
       const keys = Object.keys(prev);
-      const changed = keys.some((id) => !visibleIds.has(id));
-      if (!changed) return prev;
+      const toRemove = keys.filter((id) => !visibleIds.has(id));
+      if (!toRemove.length) return prev;
 
       const next = { ...prev };
-      keys.forEach((id) => {
-        if (!visibleIds.has(id)) delete next[id];
-      });
+      toRemove.forEach((id) => delete next[id]);
       return next;
     });
   }, [formFields, visibleFormFields]);
 
+  // Dependent options cleanup
   const applyDependentOptionsCleanup = useCallback(
     (nextValues: Map<string, any>, parentUniqueId: string, parentValue: any) => {
       if (!formFields.length) return;
@@ -362,15 +380,15 @@ export const useResponseState = (
 
         parentValues.forEach((pv) => {
           const parentIndex = parentField.options!.indexOf(pv);
-          if (parentIndex !== -1) {
-            const dep = childField.parentDependencies!.find(
-              (d) => d.parentOptionIndex === parentIndex,
-            );
-            dep?.childOptionIndices.forEach((childIdx) => {
-              const opt = childField.options?.[childIdx];
-              if (opt) allowed.add(opt);
-            });
-          }
+          if (parentIndex === -1) return;
+
+          const dep = childField.parentDependencies!.find(
+            (d) => d.parentOptionIndex === parentIndex,
+          );
+          dep?.childOptionIndices.forEach((childIdx) => {
+            const opt = childField.options?.[childIdx];
+            if (opt) allowed.add(opt);
+          });
         });
 
         const childId = String(childField.uniqueId);
@@ -390,60 +408,75 @@ export const useResponseState = (
     [formFields],
   );
 
-  // Change handler: ONLY updates values.
-  // (Validation and "show error" happen on blur via onBlurField)
-  const onChangeHandler = useCallback(
-    (value: any, uniqueId: string) => {
-      setFormFieldsValuesMap((prev) => {
-        const next = new Map(prev);
-        const prevValue = prev.get(uniqueId);
+  // Validation
+  const runValidation = useCallback(
+    async (valuesOverride?: Map<string, any>) => {
+      if (!form) return null;
 
-        if (isDifferent(prevValue, value)) setHasUnsavedChanges?.(true);
+      const row = rowFromValuesMap(valuesOverride ?? valuesRef.current);
 
-        next.set(uniqueId, value);
-        applyDependentOptionsCleanup(next, uniqueId, value);
+      const { schema, visibleFields } = await buildDynamicRowSchema(
+        form,
+        row,
+        async (id: number) => getFormById(id),
+        [form.id],
+      );
 
-        return next;
-      });
+      const byId = new Map<string, FormField>();
+      visibleFields.forEach((f) => byId.set(String(f.uniqueId), f));
+
+      const baseValid = new Map(validRef.current);
+      visibleFields.forEach((f) => baseValid.set(String(f.uniqueId), initFieldValidity(f)));
+
+      const result = await schema.safeParseAsync(row);
+      return { result, visibleFields, byId, baseValid };
     },
-    [applyDependentOptionsCleanup, setHasUnsavedChanges],
+    [form],
   );
 
-  // Shared validation runner
-  const runValidation = useCallback(async () => {
-    if (!form) return null;
+  const revalidateFieldIfTouched = useCallback(
+    async (uniqueId: string, valuesSnapshot?: Map<string, any>) => {
+      const id = String(uniqueId);
+      if (!touchedRef.current?.[id]) return;
 
-    const row = rowFromValuesMap(formFieldsValuesMap);
+      const seq = ++validationSeqRef.current;
 
-    const { schema, visibleFields } = await buildDynamicRowSchema(
-      form,
-      row,
-      async (id: number) => getFormById(id),
-      [form.id],
-    );
+      const out = await runValidation(valuesSnapshot);
+      if (!out) return;
 
-    const byId = new Map<string, FormField>();
-    visibleFields.forEach((f) => byId.set(String(f.uniqueId), f));
+      if (seq !== validationSeqRef.current) return; // ignore stale results
 
-    const baseValid = new Map(formFieldsValidMap);
-    visibleFields.forEach((f) => baseValid.set(String(f.uniqueId), initFieldValidity(f)));
+      const { result, visibleFields, byId } = out;
+      const field = visibleFields.find((f) => String(f.uniqueId) === id);
+      if (!field) return;
 
-    const result = await schema.safeParseAsync(row);
+      const nextValid = new Map(validRef.current);
+      nextValid.set(id, initFieldValidity(field));
 
-    return { result, visibleFields, byId, baseValid };
-  }, [form, formFieldsValuesMap, formFieldsValidMap]);
+      if (!result.success) {
+        result.error.issues
+          .filter((issue) => String(issue.path?.[0]) === id)
+          .forEach((issue) => setIssueValidity(nextValid, byId, issue.path as any, issue.message));
+      }
 
-  /**
-   * Validate ALL visible fields (used on Save).
-   * Returns true if valid.
-   */
+      validRef.current = nextValid;
+      setFormFieldsValidMap(nextValid);
+    },
+    [runValidation],
+  );
+
   const validateVisibleFields = useCallback(async (): Promise<boolean> => {
+    const seq = ++validationSeqRef.current;
+
     const out = await runValidation();
     if (!out) return false;
+
+    if (seq !== validationSeqRef.current) return false; // ignore stale results
 
     const { result, visibleFields, byId, baseValid } = out;
 
     if (result.success) {
+      validRef.current = baseValid;
       setFormFieldsValidMap(baseValid);
       setTouchedFields((prev) => markAllTouched(visibleFields, prev));
       return true;
@@ -453,45 +486,100 @@ export const useResponseState = (
       setIssueValidity(baseValid, byId, issue.path as any, issue.message);
     });
 
+    validRef.current = baseValid;
     setFormFieldsValidMap(baseValid);
     setTouchedFields((prev) => markAllTouched(visibleFields, prev));
     return false;
   }, [runValidation]);
 
-  /**
-   * Validate ONE field on blur.
-   * - Marks the field as touched
-   * - Validates the row
-   * - Updates validity ONLY for that field (including link/location subparts)
-   */
   const onBlurField = useCallback(
-    async (uniqueId: string) => {
+    async (uniqueId: string, part?: "x" | "y" | "link" | "linkTxt") => {
       const id = String(uniqueId);
-      setTouchedFields((prev) => ({ ...prev, [id]: true }));
+
+      setTouchedFields((prev) => {
+        if (prev[id]) return prev;
+        return { ...prev, [id]: true };
+      });
+
+      const seq = ++validationSeqRef.current;
 
       const out = await runValidation();
       if (!out) return;
 
+      if (seq !== validationSeqRef.current) return; // ignore stale results
+
       const { result, visibleFields, byId } = out;
 
-      // keep other fields as-is; reset + apply issues only for this field
-      const nextValid = new Map(formFieldsValidMap);
+      const nextValid = new Map(validRef.current);
+
       const field = visibleFields.find((f) => String(f.uniqueId) === id);
-      if (field) nextValid.set(id, initFieldValidity(field));
+      if (field) {
+        const reset = initFieldValidity(field);
+        const current = nextValid.get(id);
+
+        // If a sub-part is provided, reset only that part's message/flag
+        if (part && current && typeof current === "object" && reset && typeof reset === "object") {
+          const merged: any = { ...current };
+
+          if (part === "x" || part === "y") {
+            merged[part] = (reset as any)[part];
+            merged[`${part}Msg`] = undefined;
+          } else if (part === "link" || part === "linkTxt") {
+            merged[part] = (reset as any)[part];
+            merged[`${part}Msg`] = undefined;
+          } else {
+            Object.assign(merged, reset);
+          }
+
+          nextValid.set(id, merged);
+        } else {
+          nextValid.set(id, reset);
+        }
+      }
 
       if (!result.success) {
         result.error.issues
-          .filter((issue) => String(issue.path?.[0]) === id)
-          .forEach((issue) => {
-            setIssueValidity(nextValid, byId, issue.path as any, issue.message);
-          });
+          .filter((issue) => {
+            if (String(issue.path?.[0]) !== id) return false;
+            if (part) return String(issue.path?.[1]) === part;
+            return true;
+          })
+          .forEach((issue) => setIssueValidity(nextValid, byId, issue.path as any, issue.message));
       }
 
+      validRef.current = nextValid;
       setFormFieldsValidMap(nextValid);
     },
-    [runValidation, formFieldsValidMap],
+    [runValidation],
   );
 
+  // Change handler
+  const onChangeHandler = useCallback(
+    (value: any, uniqueId: string, _inputValid?: any) => {
+      let snapshot: Map<string, any> | null = null;
+
+      setFormFieldsValuesMap((prev) => {
+        const next = new Map(prev);
+        const prevValue = prev.get(uniqueId);
+
+        if (isDifferent(prevValue, value)) setHasUnsavedChanges?.(true);
+
+        next.set(uniqueId, value);
+        applyDependentOptionsCleanup(next, uniqueId, value);
+
+        valuesRef.current = next;
+        snapshot = next;
+
+        return next;
+      });
+
+      if (snapshot) void revalidateFieldIfTouched(uniqueId, snapshot);
+      else void revalidateFieldIfTouched(uniqueId);
+    },
+    [applyDependentOptionsCleanup, setHasUnsavedChanges, revalidateFieldIfTouched],
+  );
+
+  // Sections
   const responsSections: SectionsMap = useMemo(() => {
     return visibleFormFields.reduce((acc: SectionsMap, field: FormField) => {
       const sectionId = field.sectionId || NOT_A_SECTION_ID;
@@ -517,20 +605,15 @@ export const useResponseState = (
     formFieldsByIdMap,
     formFieldsValuesMap,
     formFieldsValidMap,
-
     touchedFields,
-
     onChangeHandler,
     onBlurField,
     validateVisibleFields,
-
     loading,
     form,
     response,
-
     fieldOptions,
     loadingConnections,
-
     responsSections,
     collapsedSections,
     toggleSectionCollapse,

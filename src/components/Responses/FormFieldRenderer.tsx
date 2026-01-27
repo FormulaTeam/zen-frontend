@@ -24,7 +24,7 @@ interface FormFieldRendererProps {
   formFieldsValuesMap: Map<string, any>;
   formFieldsValidMap: Map<string, any>;
   touchedFields: Record<string, boolean>;
-  onBlurField: (uniqueId: string) => void;
+  onBlurField: (uniqueId: string, part?: "x" | "y" | "link" | "linkTxt") => void;
   onChangeHandler: (value: any, uniqueId: string, valid: any) => void;
   viewMode: boolean;
   fieldOptions: Record<string, ResponseFieldValue[]>;
@@ -68,7 +68,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       : "";
 
   const touched = !!touchedFields[String(uniqueId)];
-  const onBlur = () => onBlurField(String(uniqueId));
+  const onBlur = (part?: "x" | "y" | "link" | "linkTxt") => onBlurField(String(uniqueId), part);
 
   switch (formField.typeId) {
     case FieldTypeIds.longText:
@@ -180,6 +180,8 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           }}
           value={formFieldValue}
           isTabularEdit={isTabularEdit}
+          touched={touched}
+          onBlur={onBlur}
         />
       );
       break;

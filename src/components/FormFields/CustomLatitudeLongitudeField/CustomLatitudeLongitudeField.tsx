@@ -1,24 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Box } from "@mui/material";
-import { LocationValue, LocationValueError } from "../../../utils/interfaces";
 import classes from "./CustomLatitudeLongitudeField.module.scss";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
-import {
-  wktLatitudeRegexY,
-  wktLongitudeRegexX,
-  latitudeRegexX,
-  latitudeRegexY,
-} from "../../../utils/utils";
+import { LocationValue } from "../../../utils/interfaces";
+import { LocationValidity } from "../../../hooks/useResponseState";
 
 type CustomLatitudeLongitudeFieldProps = {
-  value: LocationValue;
+  value: LocationValue | undefined | null;
   isDisabled: boolean;
-  onChangeHandler: (value: any, valid: LocationValueError | null) => void;
-  isValid: LocationValueError;
+  onChangeHandler: (value: any, valid: any) => void;
+  isValid: any;
   isRequired: boolean;
   label: string;
   coordinateType?: string;
   isTabularEdit?: boolean;
+
+  touched?: boolean;
+  onBlur?: (part: "x" | "y") => void;
+
+  errorMessage?: string;
+};
+
+const normalize = (xRaw: string, yRaw: string) => {
+  const x = (xRaw ?? "").trim();
+  const y = (yRaw ?? "").trim();
+  const bothEmpty = x === "" && y === "";
+  return bothEmpty ? undefined : { x, y };
 };
 
 const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> = ({
@@ -28,69 +35,53 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
   isValid,
   label,
   isRequired,
-  coordinateType = "UTM",
   isTabularEdit = false,
+  touched = false,
+  onBlur,
 }) => {
-  const [coords, setCoords] = useState<LocationValue>({
-    x: value?.x || "",
-    y: value?.y || "",
-  });
-
-  const [valid, setValid] = useState<LocationValueError>({
-    x: true,
-    y: true,
-  });
+  const [coords, setCoords] = useState<{ x: string; y: string }>(() => ({
+    x: value?.x ?? "",
+    y: value?.y ?? "",
+  }));
 
   useEffect(() => {
-    setValid(isValid);
+    setCoords({
+      x: value?.x ?? "",
+      y: value?.y ?? "",
+    });
+  }, [value?.x, value?.y]);
+
+  const v: LocationValidity = useMemo(() => {
+    if (isValid && typeof isValid === "object" && "x" in isValid && "y" in isValid) {
+      return isValid as LocationValidity;
+    }
+    return { x: true, y: true };
   }, [isValid]);
 
-  const validateField = (name: "x" | "y", val: string): boolean => {
-    if (val === "" && !isRequired) return true;
+  const showXError = touched && v.x === false;
+  const showYError = touched && v.y === false;
 
-    if (coordinateType === "UTM") {
-      return name === "x" ? latitudeRegexX.test(val) : latitudeRegexY.test(val);
-    }
+  const xHelper = showXError ? v.xMsg || " " : " ";
+  const yHelper = showYError ? v.yMsg || " " : " ";
 
-    if (coordinateType === "WKT") {
-      return name === "x" ? wktLongitudeRegexX.test(val) : wktLatitudeRegexY.test(val);
-    }
-
-    return true;
+  const pushUp = (nextCoords: { x: string; y: string }) => {
+    const normalized = normalize(nextCoords.x, nextCoords.y);
+    onChangeHandler(normalized, true);
   };
 
-  const onChangeHandlerInput = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    field: "x" | "y",
-  ) => {
+  const onChange = (field: "x" | "y") => (event: React.ChangeEvent<HTMLInputElement>) => {
     const val = event.target.value;
 
-    setCoords((prev) => ({ ...prev, [field]: val }));
-
-    const isFieldValid = validateField(field, val);
-
-    setValid((prev) => ({ ...prev, [field]: isFieldValid }));
+    setCoords((prev) => {
+      const next = { ...prev, [field]: val };
+      pushUp(next);
+      return next;
+    });
   };
 
-  useEffect(() => {
-    onChangeHandler(coords, valid);
-  }, [coords]);
-
-  const getErrorMessage = (field: "x" | "y") => {
-    if (isRequired && !coords[field]) {
-      return "שדה זה הינו חובה";
-    }
-    if (coordinateType === "WKT") {
-      if (field === "x") {
-        return !valid?.x && "יש להזין מספר בין 180- ל180 בפורמט עשרוני תקין";
-      }
-      return !valid?.y && "יש להזין מספר בין 90- ל90 בפורמט עשרוני תקין";
-    } else {
-      if (field === "x") {
-        return !valid?.x && "חייב להכיל מספר בן 6 ספרות בין 100000 ל־900000";
-      }
-      return !valid?.y && "חייב להכין מספר בין 0–10,000,000";
-    }
+  const handleBlur = (part: "x" | "y") => {
+    onBlur?.(part);
+    onChangeHandler(normalize(coords.x, coords.y), true);
   };
 
   return (
@@ -107,9 +98,10 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
           label={isTabularEdit ? "" : label}
           required={isRequired}
           value={coords.y}
-          onChange={(e) => onChangeHandlerInput(e, "y")}
-          error={!valid?.y}
-          helperText={!valid?.y ? getErrorMessage("y") : ""}
+          onChange={onChange("y")}
+          onBlur={() => handleBlur("y")}
+          error={showYError}
+          helperText={yHelper}
           disabled={isDisabled}
           adornment={isTabularEdit ? undefined : "Y"}
           size={isTabularEdit ? "small" : undefined}
@@ -123,11 +115,12 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
           isTabularEdit={isTabularEdit}
           fullWidth
           label={isTabularEdit ? "" : " "}
-          value={coords.x}
           required={isRequired}
-          onChange={(e) => onChangeHandlerInput(e, "x")}
-          error={!valid?.x}
-          helperText={!valid?.x ? getErrorMessage("x") : ""}
+          value={coords.x}
+          onChange={onChange("x")}
+          onBlur={() => handleBlur("x")}
+          error={showXError}
+          helperText={xHelper}
           disabled={isDisabled}
           adornment={isTabularEdit ? undefined : "X"}
           size={isTabularEdit ? "small" : undefined}
