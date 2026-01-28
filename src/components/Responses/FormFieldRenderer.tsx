@@ -19,6 +19,7 @@ import { FormFieldWrapper, StyledBox } from "./FormFieldRenderer.styled";
 import { renderOptionsField } from "./OptionsFieldRenderer";
 
 interface FormFieldRendererProps {
+  formId: number;
   formField: any;
   formFieldsByIdMap: Map<string, any>;
   formFieldsValuesMap: Map<string, any>;
@@ -34,6 +35,7 @@ interface FormFieldRendererProps {
 }
 
 const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
+  formId,
   formField,
   formFieldsByIdMap,
   formFieldsValuesMap,
@@ -54,13 +56,26 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   field.name = formField.name;
   let formFieldValue: any = formFieldsValuesMap.get(uniqueId);
   if (
-    ![FieldTypeIds.date, FieldTypeIds.hour, FieldTypeIds.checkbox, FieldTypeIds.number].includes(
-      field.typeId,
-    ) &&
+    ![
+      FieldTypeIds.date,
+      FieldTypeIds.hour,
+      FieldTypeIds.checkbox,
+      FieldTypeIds.number,
+      FieldTypeIds.file,
+    ].includes(field.typeId) &&
     !formFieldValue
   ) {
     formFieldValue = "";
   }
+
+  // if file is empty/null, make it an empty object shape
+  if (
+    field.typeId === FieldTypeIds.file &&
+    (!formFieldValue || typeof formFieldValue !== "object")
+  ) {
+    formFieldValue = { files: [] };
+  }
+
   const valid = formFieldsValidMap.get(uniqueId);
   const zodMsg =
     valid && typeof valid === "object" && "valid" in valid && (valid as any).valid === false
@@ -243,6 +258,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       input = (
         <CustomFileInputField
           key={index}
+          formId={formId}
           label={formField.displayName}
           isRequired={formField.required}
           isValid={valid}

@@ -180,6 +180,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
               formFields={formFields}
               getFormInFormProperty={getFormInFormProperty}
               isLoading={isLoading}
+              formId={form?.id ?? Number(formId) ?? 0}
             />
           ))}
         </FormSectionsContainer>

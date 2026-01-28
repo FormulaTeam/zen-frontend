@@ -1,15 +1,20 @@
-import { z } from 'zod';
-import { baseFieldSchema } from './base-field.schema';
-import { FileFieldConfig } from '../field-config.types';
+import { z } from "zod";
+import { baseFieldSchema } from "./base-field.schema";
+import { FileFieldConfig } from "../field-config.types";
 
 export const fileFieldSchema = (config: FileFieldConfig = {}) => {
+  const { required = false } = config;
+
   const schema = z
     .object({
-      files: z
-        .array(
-          z.object({
-            name: z.string(),
-            url: z.string().refine(
+      files: z.array(
+        z.object({
+          name: z.string().trim().min(1, "שם הקובץ אינו חוקי"),
+          url: z
+            .string()
+            .trim()
+            .min(1, "כתובת ה-URL של הקובץ אינה חוקית")
+            .refine(
               (v) => {
                 try {
                   new URL(v);
@@ -18,31 +23,19 @@ export const fileFieldSchema = (config: FileFieldConfig = {}) => {
                   return false;
                 }
               },
-              { message: 'כתובת ה-URL של הקובץ אינה חוקית' },
+              { message: "כתובת ה-URL של הקובץ אינה חוקית" },
             ),
-          }),
-        )
-        .optional(),
+        }),
+      ),
     })
     .superRefine((value, ctx) => {
-      if (!value.files) return;
-
-      value.files.forEach((f, i) => {
-        if (!f.name?.trim()) {
-          ctx.addIssue({
-            code: 'custom',
-            path: ['files', i, 'name'],
-            message: 'שם הקובץ אינו חוקי',
-          });
-        }
-        if (!f.url?.trim()) {
-          ctx.addIssue({
-            code: 'custom',
-            path: ['files', i, 'url'],
-            message: 'כתובת ה-URL של הקובץ אינה חוקית',
-          });
-        }
-      });
+      if (required && (!value.files || value.files.length === 0)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["files"],
+          message: "שדה זה הינו שדה חובה",
+        });
+      }
     });
 
   return baseFieldSchema(schema, config);

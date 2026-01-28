@@ -224,6 +224,7 @@ export const useTableColumns = (
                     "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.02)" },
                   }}>
                   <FormFieldRenderer
+                    formId={form.id}
                     formField={field}
                     formFieldsByIdMap={formFieldsByIdMap}
                     formFieldsValuesMap={formFieldsValuesMap}

@@ -45,6 +45,7 @@ interface ResponseSectionProps {
   formFields?: FormField[];
   getFormInFormProperty?: (formField: FormField) => React.ReactNode;
   isLoading?: boolean;
+  formId: number;
 }
 
 const ResponseSection: React.FC<ResponseSectionProps> = ({
@@ -64,6 +65,7 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
   formFields = [],
   getFormInFormProperty,
   isLoading,
+  formId,
 }) => {
   const theme = useTheme();
 
@@ -71,7 +73,6 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
 
   return (
     <FieldsWrapper key={sectionId || sectionIdx}>
-      {/* Header */}
       <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
         <Box>
           <Typography variant="h6">
@@ -92,7 +93,6 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
         </IconButton>
       </Box>
 
-      {/* Content */}
       <Collapse in={!collapsedSections[sectionId]} timeout="auto" unmountOnExit>
         <GridContainer>
           {section.fields
@@ -100,7 +100,6 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
             .map((formField, index) => {
               const key = formField.uniqueId || formField.uniqId || `${sectionId}-${index}`;
 
-              // getFormInFormProperty – full width
               if (formField.typeId === FieldTypeIds.form && getFormInFormProperty) {
                 return <GridItemFull key={key}>{getFormInFormProperty(formField)}</GridItemFull>;
               }
@@ -110,6 +109,7 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
               return (
                 <div key={key}>
                   <FormFieldRenderer
+                    formId={formId}
                     formField={formField}
                     formFieldsByIdMap={formFieldsByIdMap}
                     formFieldsValuesMap={formFieldsValuesMap}

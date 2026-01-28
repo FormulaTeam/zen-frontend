@@ -1,53 +1,78 @@
-import { useState } from "react";
 import { getResponseWithFlatFields, useCreateResponse, useUpdateResponse } from "../api";
 import { getUserName, showErrorNotification } from "../utils/utils";
-import { uploadFilesToS3 } from "../api/filesApi";
+import { deleteFilesFromS3 } from "../api/filesApi";
 import { FieldTypeIds, NotificationTexts, ResponseFieldValue } from "../utils/interfaces";
 import moment from "moment";
 
+type FileMeta = { name: string; url: string };
+
+const safeFiles = (v: any): FileMeta[] => {
+  const arr = v?.files;
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .filter((f: any) => f && typeof f.name === "string" && typeof f.url === "string")
+    .map((f: any) => ({ name: f.name, url: f.url }));
+};
+
+const diffDeleted = (prev: FileMeta[], next: FileMeta[]) => {
+  const nextByUrl = new Set(next.map((f) => f.url));
+  return prev.filter((f) => !nextByUrl.has(f.url));
+};
+
 export const useResponseSave = (form: any, response: any, user: any, parentResponse?: string) => {
-  const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } = useCreateResponse();
-  const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } = useUpdateResponse(form?.id, response?.id);
+  const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } =
+    useCreateResponse();
+  const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } =
+    useUpdateResponse(form?.id, response?.id);
 
   const saveResponse = async (
     formFieldsByIdMap: Map<string, any>,
     formFieldsValuesMap: Map<string, any>,
   ) => {
     const dataArr: ResponseFieldValue[] = [];
-    const deletedFiles: ResponseFieldValue[] = [];
+    const deletedFilesFlat: ResponseFieldValue[] = [];
+
+    const s3Deletes: string[] = [];
 
     for (const [key, field] of formFieldsByIdMap) {
       let value = formFieldsValuesMap.get(key) ?? field.value;
-      if (field.fieldType === "file") {
-        try {
-          const uploadResponse = await uploadFilesToS3(value.files, form.id);
-          const responsesToCombinedSave = {
-            files: [...uploadResponse, ...value.files?.attachedFiles],
-          };
 
-          const fieldToSave: ResponseFieldValue = {
+      // FILE FIELD
+      if (field.typeId === FieldTypeIds.file || field.fieldType === "file") {
+        const nextFiles = safeFiles(value);
+
+        const fieldToSave: ResponseFieldValue = {
+          uniqueId: field.uniqueId,
+          value: { files: nextFiles },
+        };
+        dataArr.push(fieldToSave);
+
+        if (response && response.id) {
+          const prevValue =
+            response?.[field.name] ??
+            response?.data?.find((rf: any) => String(rf.uniqueId) === String(field.uniqueId))
+              ?.value;
+
+          const prevFiles = safeFiles(prevValue);
+          const deleted = diffDeleted(prevFiles, nextFiles);
+
+          deleted.forEach((f) => {
+            if (f?.name) s3Deletes.push(f.name);
+          });
+
+          const currentDeletedFiles = response?.[field.name]?.deletedFiles || [];
+          const mergedDeleted = currentDeletedFiles.concat(deleted);
+
+          deletedFilesFlat.push({
             uniqueId: field.uniqueId,
-            value: responsesToCombinedSave,
-          };
-          if (response) {
-            // if response exists, it means files can be deleted
-            const currentDeletedFiles = response[field.name]?.deletedFiles || [];
-            const newDeletedFiles = value?.deletedFiles || [];
-            const deletedFilesToSave: ResponseFieldValue = {
-              uniqueId: field.uniqueId,
-              value: currentDeletedFiles.concat(newDeletedFiles),
-            };
-            deletedFiles.push(deletedFilesToSave);
-          }
-
-          dataArr.push(fieldToSave);
-        } catch (error) {
-          console.log(error);
+            value: mergedDeleted,
+          });
         }
-        continue; // Skip the rest of the loop for file fields
+
+        continue;
       }
 
-      // Check if the value is a valid time string for hour fields
+      // TIME FIELD normalization
       if (field.typeId === FieldTypeIds.hour && value) {
         const isValidTimeValue =
           /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(value) ||
@@ -57,21 +82,22 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
           const time = moment(value);
           value = field.showSeconds ? time.format("HH:mm:ss") : time.format("HH:mm");
         }
-        // If it's already a string, it's already in the correct format
       }
-      const fieldToSave: ResponseFieldValue = {
+
+      // DEFAULT
+      dataArr.push({
         uniqueId: field.uniqueId,
         value,
-      };
-      dataArr.push(fieldToSave);
+      });
     }
 
     const userName = getUserName(user?.firstName, user?.lastName);
-    const fieldsNameValueObj = getResponseWithFlatFields(dataArr, form.fields, deletedFiles);
+    const fieldsNameValueObj = getResponseWithFlatFields(dataArr, form.fields, deletedFilesFlat);
 
     try {
+      let saved: any;
+
       if (response && response.id) {
-        // Update existing response
         const editedResponse = {
           id: response.id,
           uniqueId: response.id,
@@ -82,10 +108,8 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
           parentResponse: parentResponse,
           ...fieldsNameValueObj,
         };
-
-        return await mutateUpdateResponseAsync(editedResponse);
+        saved = await mutateUpdateResponseAsync(editedResponse);
       } else {
-        // Create new response
         const newResponse = {
           form_id: form.id,
           created_by_name: userName,
@@ -96,9 +120,18 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
           parentResponse: parentResponse,
           ...fieldsNameValueObj,
         };
-
-        return await mutateCreateResponseAsync(newResponse);
+        saved = await mutateCreateResponseAsync(newResponse);
       }
+
+      if (s3Deletes.length > 0) {
+        try {
+          await deleteFilesFromS3(s3Deletes);
+        } catch (e) {
+          console.error("Failed deleting files from S3:", e);
+        }
+      }
+
+      return saved;
     } catch (error: any) {
       if (error?.response?.data?.error?.includes("Metro")) {
         showErrorNotification(

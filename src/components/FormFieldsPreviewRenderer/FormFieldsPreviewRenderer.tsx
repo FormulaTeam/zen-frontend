@@ -10,54 +10,59 @@ import CustomTextField from "../FormFields/CustomTextField/CustomTextField";
 import CustomTimePicker from "../FormFields/CustomTimePicker/CustomTimePicker";
 import LinkTextField from "../FormFields/LinkTextField/LinkTextField";
 
-function FormFieldsPreviewRenderer({ formField }) {
-  let formFieldValue = null;
+type Props = {
+  formField: any;
+  formId?: number;
+};
+
+function FormFieldsPreviewRenderer({ formField, formId = 0 }: Props) {
+  const formFieldValue = null;
   const viewMode = true;
   const valid = true;
 
   switch (formField.typeId) {
-    case FieldTypeIds.longText: //מס' שורות טקסט
+    case FieldTypeIds.longText:
       return (
         <CustomTextField
           label={formField.displayName}
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, valid: boolean | null) => {}}
+          onChangeHandler={(_value: any, _valid: boolean | null) => {}}
           value={formFieldValue}
           multiline
         />
       );
 
-    case FieldTypeIds.smallText: //שורה אחת
+    case FieldTypeIds.smallText:
       return (
         <CustomTextField
           label={formField.displayName}
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, valid: boolean | null) => {}}
+          onChangeHandler={(_value: any, _valid: boolean | null) => {}}
           value={formFieldValue}
         />
       );
 
-    case FieldTypeIds.options: //אפשרויות
-      let availableOptions: any = [];
-
+    case FieldTypeIds.options: {
+      const availableOptions: any[] = [];
       return (
         <CustomDropDownSelect
           label={formField.displayName}
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(values: string[] | string, valid: boolean | null) => {}}
+          onChangeHandler={(_values: string[] | string, _valid: boolean | null) => {}}
           value={formFieldValue || (formField.multiSelect ? [] : "")}
           multiple={formField.multiSelect}
           options={availableOptions}
         />
       );
+    }
 
-    case FieldTypeIds.link: //היפר-קישור
+    case FieldTypeIds.link:
       return (
         <LinkTextField
           label={formField.displayName}
@@ -65,42 +70,42 @@ function FormFieldsPreviewRenderer({ formField }) {
           isValid={{ link: valid, linkTxt: valid }}
           isDisabled={viewMode}
           onChangeHandler={(
-            value: LinkValue,
-            valid: { link: boolean; linkTxt: boolean } | null,
+            _value: LinkValue,
+            _valid: { link: boolean; linkTxt: boolean } | null,
           ) => {}}
           value={formFieldValue || null}
         />
       );
 
-    case FieldTypeIds.date: //תאריך
+    case FieldTypeIds.date:
       return (
         <CustomDateTime
           label={formField.displayName}
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, valid: boolean | null) => {}}
+          onChangeHandler={(_value: any, _valid: boolean | null) => {}}
           value={formFieldValue}
           dateAndTime={formField?.dateAndTime}
           defaultValue={formField?.initialValType}
         />
       );
 
-    case FieldTypeIds.hour: //שעה
+    case FieldTypeIds.hour:
       return (
         <CustomTimePicker
           label={formField.displayName}
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, valid: boolean | null) => {}}
+          onChangeHandler={(_value: any, _valid: boolean | null) => {}}
           value={formFieldValue}
           showSeconds={formField?.showSeconds}
           defaultValue={formField?.initialValType}
         />
       );
 
-    case FieldTypeIds.location: //מיקום
+    case FieldTypeIds.location:
       return (
         <CustomLatitudeLongitudeField
           label={formField.displayName}
@@ -108,31 +113,30 @@ function FormFieldsPreviewRenderer({ formField }) {
           isValid={{ x: valid, y: valid }}
           isDisabled={viewMode}
           coordinateType={formField.coordinateType}
-          onChangeHandler={(value: any, valid: LocationValueError | null) => {}}
+          onChangeHandler={(_value: any, _valid: LocationValueError | null) => {}}
           value={{ x: "", y: "" }}
         />
       );
 
-    case FieldTypeIds.checkbox: //
-      // generate input from type checkbox that if the initial value is empty, it will be nonChceked and if true or "כן" it will be checked
+    case FieldTypeIds.checkbox:
       return (
         <CustomSwitch
           label={formField.displayName}
           isDisabled={viewMode}
-          onChangeHandler={(value: boolean) => {}}
+          onChangeHandler={(_value: boolean) => {}}
           value={true}
           defaultValue={formField?.initialValType}
         />
       );
 
-    case FieldTypeIds.list: //
+    case FieldTypeIds.list:
       return (
         <CustomMultiInputField
           label={formField.displayName}
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any[]) => {}}
+          onChangeHandler={(_value: any[]) => {}}
           value={formFieldValue}
         />
       );
@@ -144,7 +148,7 @@ function FormFieldsPreviewRenderer({ formField }) {
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, valid: boolean) => {}}
+          onChangeHandler={(_value: any, _valid: boolean) => {}}
           value={formFieldValue ?? formField?.initialNumberValue ?? ""}
           numberType={formField?.numberType}
           minValue={formField?.minValue}
@@ -159,8 +163,9 @@ function FormFieldsPreviewRenderer({ formField }) {
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any) => {}}
+          onChangeHandler={(_value: any) => {}}
           value={formFieldValue}
+          formId={formId}
         />
       );
 
@@ -168,4 +173,5 @@ function FormFieldsPreviewRenderer({ formField }) {
       return <></>;
   }
 }
+
 export default FormFieldsPreviewRenderer;

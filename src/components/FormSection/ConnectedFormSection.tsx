@@ -55,6 +55,7 @@ function ConnectedFormSection({
   handleRemoveChildForm,
 }: Props) {
   const connectedFormId = field.connectedFormId?.toString();
+  if (!connectedFormId) return null;
 
   const {
     formFields,
@@ -70,7 +71,7 @@ function ConnectedFormSection({
     response,
     fieldOptions,
     loadingConnections,
-  } = useResponseState(connectedFormId!, id?.toString(), viewMode, copyMode);
+  } = useResponseState(connectedFormId, id?.toString(), viewMode, copyMode);
 
   const { isSaving, saveResponse } = useResponseSave(
     form,
@@ -92,6 +93,10 @@ function ConnectedFormSection({
     index,
   });
 
+  const renderFormId = useMemo(() => {
+    return form?.id ?? Number(connectedFormId);
+  }, [form?.id, connectedFormId]);
+
   const isBusy = useMemo(() => {
     return shouldLoad || loading || loadingConnections || isSaving || shouldSave || shouldValidate;
   }, [shouldLoad, loading, loadingConnections, isSaving, shouldSave, shouldValidate]);
@@ -101,12 +106,14 @@ function ConnectedFormSection({
       <ConnectedFormWrapper>
         {formsLength > 1 && index > 0 && <ConnectedResponseDivider />}
         {index === 0 && <ConnectedFormTitle>{field.displayName}</ConnectedFormTitle>}
+
         <ConnectedFormHeader
           formsLength={formsLength}
           index={index}
           onDelete={handleRemoveChildForm}
           viewMode={viewMode}
         />
+
         <LoadingContainer>
           <CircularProgress />
         </LoadingContainer>
@@ -140,9 +147,12 @@ function ConnectedFormSection({
             .map((formFieldItem, fieldIdx) => {
               if (!formFieldItem) return null;
 
+              const key = String(formFieldItem.uniqueId || formFieldItem.uniqId || fieldIdx);
+
               return (
                 <FormFieldRenderer
-                  key={String(formFieldItem.uniqueId || formFieldItem.uniqId || fieldIdx)}
+                  key={key}
+                  formId={renderFormId}
                   formField={formFieldItem}
                   formFieldsByIdMap={formFieldsByIdMap}
                   formFieldsValuesMap={formFieldsValuesMap}

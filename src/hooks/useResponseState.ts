@@ -156,7 +156,6 @@ const markAllTouched = (fields: FormField[], prev: Record<string, boolean>) =>
     { ...prev },
   );
 
-
 export const useResponseState = (
   formId: string | undefined,
   responseId: string | undefined,
@@ -259,7 +258,11 @@ export const useResponseState = (
       byId.set(id, field);
 
       const defaultValue =
-        field.typeId === FieldTypeIds.number && field?.initialNumberValue !== undefined
+        field.typeId === FieldTypeIds.file
+          ? field?.value && typeof field.value === "object"
+            ? field.value
+            : { files: [] }
+          : field.typeId === FieldTypeIds.number && field?.initialNumberValue !== undefined
           ? field.initialNumberValue
           : field.typeId === FieldTypeIds.checkbox && field?.defaultValue !== undefined
           ? field.defaultValue
@@ -318,7 +321,9 @@ export const useResponseState = (
           current !== undefined && current !== null && current !== "" && current !== false;
         if (!shouldClear) return;
 
-        next.set(id, f.typeId === FieldTypeIds.checkbox ? false : "");
+        if (f.typeId === FieldTypeIds.checkbox) next.set(id, false);
+        else if (f.typeId === FieldTypeIds.file) next.set(id, { files: [] });
+        else next.set(id, "");
         changed = true;
       });
 
