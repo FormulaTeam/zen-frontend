@@ -349,19 +349,18 @@ export type LocationValue = {
   y: string;
 };
 
-export type LocationValueError = {
-  x: boolean;
-  y: boolean;
-};
+export type LocationValidity = { x: boolean; y: boolean; xMsg?: string; yMsg?: string };
 
 export type LinkValue = {
   link: string;
   linkTxt: string;
 };
 
-export type LinkValueError = {
+export type LinkValidity = {
   link: boolean;
   linkTxt: boolean;
+  linkMsg?: string;
+  linkTxtMsg?: string;
 };
 
 export type FileValue = {

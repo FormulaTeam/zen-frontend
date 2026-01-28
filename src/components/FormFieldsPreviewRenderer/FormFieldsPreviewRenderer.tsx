@@ -1,4 +1,4 @@
-import { FieldTypeIds, LinkValue, LocationValueError } from "../../utils/interfaces";
+import { FieldTypeIds, LinkValue, LocationValidity } from "../../utils/interfaces";
 import CustomDateTime from "../FormFields/CustomDateTime/CustomDateTime";
 import CustomDropDownSelect from "../FormFields/CustomDropDownSelect/CustomDropDownSelect";
 import CustomFileInputField from "../FormFields/CustomFileInputField/CustomFileInputField";
@@ -113,7 +113,7 @@ function FormFieldsPreviewRenderer({ formField, formId = 0 }: Props) {
           isValid={{ x: valid, y: valid }}
           isDisabled={viewMode}
           coordinateType={formField.coordinateType}
-          onChangeHandler={(_value: any, _valid: LocationValueError | null) => {}}
+          onChangeHandler={(_value: any, _valid: LocationValidity | null) => {}}
           value={{ x: "", y: "" }}
         />
       );

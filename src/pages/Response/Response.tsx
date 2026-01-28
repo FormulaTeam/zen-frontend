@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ResponseForm } from "../../utils/interfaces";
+import { FieldTypeIds, ResponseForm } from "../../utils/interfaces";
 import { Container } from "@mui/material";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useResponseSave } from "../../hooks/useResponseSave";
@@ -19,6 +19,26 @@ const PageContainer = styled(Container)`
   display: flex;
   flex-direction: column;
 `;
+
+const normalizeLinkTextOnSubmit = (values: Map<string, any>, fieldsById: Map<string, any>) => {
+  const next = new Map(values);
+
+  for (const [key, field] of fieldsById) {
+    if (field?.typeId !== FieldTypeIds.link && field?.fieldType !== "link") continue;
+
+    const raw = next.get(key);
+    if (!raw || typeof raw !== "object") continue;
+
+    const link = String((raw as any).link ?? "").trim();
+    const linkTxt = String((raw as any).linkTxt ?? "").trim();
+
+    if (link && !linkTxt) {
+      next.set(key, { ...(raw as any), linkTxt: link });
+    }
+  }
+
+  return next;
+};
 
 export default function Response({ user, roles, viewMode = false, copyMode = false }) {
   const [permissionTypes, setPermissionTypes] = useState<number[]>([]);
@@ -54,7 +74,9 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
   const saveAll = async () => {
     if ((await validateVisibleFields()) && form) {
       try {
-        const result = await saveResponse(formFieldsByIdMap, formFieldsValuesMap);
+        const normalizedValues = normalizeLinkTextOnSubmit(formFieldsValuesMap, formFieldsByIdMap);
+
+        const result = await saveResponse(formFieldsByIdMap, normalizedValues);
         if (!Array.isArray(result)) setSavedResponse(result);
         setChildFormsSaving(true);
       } catch (error: any) {

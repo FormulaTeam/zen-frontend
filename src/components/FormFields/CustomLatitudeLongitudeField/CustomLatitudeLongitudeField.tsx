@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Box } from "@mui/material";
 import classes from "./CustomLatitudeLongitudeField.module.scss";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
-import { LocationValue } from "../../../utils/interfaces";
-import { LocationValidity } from "../../../hooks/useResponseState";
+import { LocationValidity, LocationValue } from "../../../utils/interfaces";
 
 type CustomLatitudeLongitudeFieldProps = {
   value: LocationValue | undefined | null;

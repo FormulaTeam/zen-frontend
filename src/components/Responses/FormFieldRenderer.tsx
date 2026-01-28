@@ -3,7 +3,7 @@ import {
   FieldTypeIds,
   FormField,
   LinkValue,
-  LocationValueError,
+  LocationValidity,
   ResponseFieldValue,
 } from "../../utils/interfaces";
 import CustomTextField from "../FormFields/CustomTextField/CustomTextField";
@@ -50,11 +50,14 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   isTabularEdit = false,
 }) => {
   let input: any = null;
-  let uniqueId = formField?.uniqueId || formField?.uniqId;
-  let field = formFieldsByIdMap.get(uniqueId);
+  const uniqueId = formField?.uniqueId || formField?.uniqId;
+  const field = formFieldsByIdMap.get(uniqueId);
 
   field.name = formField.name;
+
   let formFieldValue: any = formFieldsValuesMap.get(uniqueId);
+
+  // Do not coerce to "" for file/link/date/hour/checkbox/number.
   if (
     ![
       FieldTypeIds.date,
@@ -62,18 +65,27 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       FieldTypeIds.checkbox,
       FieldTypeIds.number,
       FieldTypeIds.file,
+      FieldTypeIds.link,
     ].includes(field.typeId) &&
-    !formFieldValue
+    (formFieldValue === undefined || formFieldValue === null)
   ) {
     formFieldValue = "";
   }
 
-  // if file is empty/null, make it an empty object shape
+  // Ensure file value has { files: [] } shape
   if (
     field.typeId === FieldTypeIds.file &&
     (!formFieldValue || typeof formFieldValue !== "object")
   ) {
     formFieldValue = { files: [] };
+  }
+
+  // Ensure link value has { link:"", linkTxt:"" } shape
+  if (
+    field.typeId === FieldTypeIds.link &&
+    (!formFieldValue || typeof formFieldValue !== "object")
+  ) {
+    formFieldValue = { link: "", linkTxt: "" };
   }
 
   const valid = formFieldsValidMap.get(uniqueId);
@@ -87,7 +99,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 
   switch (formField.typeId) {
     case FieldTypeIds.longText:
-    case FieldTypeIds.smallText: //מס' שורות טקסט או שורה אחת
+    case FieldTypeIds.smallText:
       input = (
         <CustomTextField
           key={index}
@@ -105,7 +117,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case FieldTypeIds.options: //אפשרויות
+    case FieldTypeIds.options:
       input = renderOptionsField({
         formField,
         formFieldsByIdMap,
@@ -120,7 +132,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       });
       break;
 
-    case FieldTypeIds.link: //היפר-קישור
+    case FieldTypeIds.link:
       input = (
         <LinkTextField
           key={index}
@@ -136,11 +148,13 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           }}
           value={formFieldValue || null}
           isTabularEdit={isTabularEdit}
+          onBlur={onBlur}
+          touched={touched}
         />
       );
       break;
 
-    case FieldTypeIds.date: //תאריך
+    case FieldTypeIds.date:
       input = (
         <CustomDateTime
           key={index}
@@ -159,7 +173,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case FieldTypeIds.hour: //שעה
+    case FieldTypeIds.hour:
       input = (
         <CustomTimePicker
           key={index}
@@ -181,7 +195,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case FieldTypeIds.location: //מיקום
+    case FieldTypeIds.location:
       input = (
         <CustomLatitudeLongitudeField
           key={index}
@@ -190,7 +204,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           isValid={valid}
           isDisabled={viewMode}
           coordinateType={formField.coordinateType}
-          onChangeHandler={(value: any, valid: LocationValueError | null) => {
+          onChangeHandler={(value: any, valid: LocationValidity | null) => {
             onChangeHandler(value, uniqueId, valid);
           }}
           value={formFieldValue}
@@ -201,7 +215,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case FieldTypeIds.checkbox: //כן לא
+    case FieldTypeIds.checkbox:
       input = (
         <CustomSwitch
           key={index}
@@ -217,7 +231,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case FieldTypeIds.list: // list
+    case FieldTypeIds.list:
       input = (
         <CustomMultiInputField
           key={index}
@@ -234,7 +248,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case FieldTypeIds.number: //מספר
+    case FieldTypeIds.number:
       input = (
         <CustomNumberField
           key={index}
@@ -254,7 +268,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case FieldTypeIds.file: //קובץ
+    case FieldTypeIds.file:
       input = (
         <CustomFileInputField
           key={index}
@@ -271,48 +285,20 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         />
       );
       break;
+
     default:
       break;
   }
 
-  if (input) {
-    return isTabularEdit ? (
-      <StyledBox>
-        <FormFieldWrapper>{input}</FormFieldWrapper>
-      </StyledBox>
-    ) : (
+  if (!input) return null;
+
+  return isTabularEdit ? (
+    <StyledBox>
       <FormFieldWrapper>{input}</FormFieldWrapper>
-    );
-  } else {
-    return null;
-  }
+    </StyledBox>
+  ) : (
+    <FormFieldWrapper>{input}</FormFieldWrapper>
+  );
 };
 
-// const shouldSkipRerenderHOF = (prevProps, nextProps) => {
-//   const {
-//     formField: prevField,
-//     formFieldsValuesMap: prevValues,
-//     formFieldsValidMap: prevValid,
-//   } = prevProps;
-//   const {
-//     formField: nextField,
-//     formFieldsValuesMap: nextValues,
-//     formFieldsValidMap: nextValid,
-//   } = nextProps;
-
-//   const uniqueId = prevField.uniqueId || prevField.uniqId;
-
-//   // רק אם הערך או התוקף השתנה - נעשה רינדור
-//   const prevVal = prevValues.get(uniqueId);
-//   const nextVal = nextValues.get(uniqueId);
-//   const prevValidVal = prevValid.get(uniqueId);
-//   const nextValidVal = nextValid.get(uniqueId);
-
-//   const valueChanged = JSON.stringify(prevVal) !== JSON.stringify(nextVal);
-//   const validChanged = JSON.stringify(prevValidVal) !== JSON.stringify(nextValidVal);
-
-//   return !valueChanged && !validChanged;
-// };
-
-//export default React.memo(FormFieldRenderer, shouldSkipRerenderHOF);
 export default FormFieldRenderer;

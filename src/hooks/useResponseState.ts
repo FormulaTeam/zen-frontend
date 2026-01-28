@@ -6,6 +6,8 @@ import {
   FieldTypeIds,
   Form,
   FormField,
+  LinkValidity,
+  LocationValidity,
   ResponseFieldValue,
   ResponseForm,
   Role,
@@ -36,13 +38,6 @@ interface SectionsMap {
  * - Simple fields: true OR { valid:false, message }
  * - Link/location: keep per-part booleans + per-part messages
  */
-export type LinkValidity = {
-  link: boolean;
-  linkTxt: boolean;
-  linkMsg?: string;
-  linkTxtMsg?: string;
-};
-export type LocationValidity = { x: boolean; y: boolean; xMsg?: string; yMsg?: string };
 type Invalid = { valid: false; message: string };
 export type FieldValidity = true | Invalid | LinkValidity | LocationValidity;
 
@@ -546,9 +541,14 @@ export const useResponseState = (
         result.error.issues
           .filter((issue) => {
             if (String(issue.path?.[0]) !== id) return false;
+
+            const field = visibleFields.find((f) => String(f.uniqueId) === id);
+            if (field?.typeId === FieldTypeIds.link) return true;
+
             if (part) return String(issue.path?.[1]) === part;
             return true;
           })
+
           .forEach((issue) => setIssueValidity(nextValid, byId, issue.path as any, issue.message));
       }
 
@@ -565,8 +565,8 @@ export const useResponseState = (
 
       setFormFieldsValuesMap((prev) => {
         const next = new Map(prev);
-        const prevValue = prev.get(uniqueId);
 
+        const prevValue = prev.get(uniqueId);
         if (isDifferent(prevValue, value)) setHasUnsavedChanges?.(true);
 
         next.set(uniqueId, value);
@@ -581,7 +581,12 @@ export const useResponseState = (
       if (snapshot) void revalidateFieldIfTouched(uniqueId, snapshot);
       else void revalidateFieldIfTouched(uniqueId);
     },
-    [applyDependentOptionsCleanup, setHasUnsavedChanges, revalidateFieldIfTouched],
+    [
+      applyDependentOptionsCleanup,
+      setHasUnsavedChanges,
+      revalidateFieldIfTouched,
+      formFieldsByIdMap,
+    ],
   );
 
   // Sections
