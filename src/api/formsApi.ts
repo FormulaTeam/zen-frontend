@@ -42,14 +42,9 @@ export const getForms = async (filter?: Filter): Promise<Form[]> => {
   }
 };
 
-export const getFormById = async (formId?: number): Promise<Form | null> => {
-  let filter = {
-    query: {
-      id: formId,
-    },
-  };
-  let forms = await getForms(filter);
-  return forms && forms[0] ? forms[0] : null;
+export const getFormById = async (id: number): Promise<Form> => {
+  const res = await apiClient.get<Form>(`/forms/${id}`);
+  return res.data;
 };
 
 /**
@@ -210,23 +205,22 @@ export const editSourceToMetro = async (id: number): Promise<any> => {
   }
 };
 
-// Yahel's edits - above is the original file - below are the changes
-// ============================================================
-
 export const useGetForm = ({
   formId,
   config,
 }: {
   formId?: string;
-  config?: Omit<
-    UseQueryOptions<Form | null, Error, Form | null, readonly unknown[]>,
-    "queryKey" | "queryFn"
-  >;
-}): UseQueryResult<Form | null> => {
-  return useFetch<undefined, Form | null>({
-    endpoint: `/forms/${formId}`,
-    queryKey: () => [formId],
-    queryOptions: config,
+  config?: Omit<UseQueryOptions<Form, Error, Form, readonly unknown[]>, "queryKey" | "queryFn">;
+}): UseQueryResult<Form, Error> => {
+  const enabled = Boolean(formId);
+
+  return useFetch<undefined, Form>({
+    endpoint: enabled ? `/forms/${formId}` : "/forms/0",
+    queryKey: () => ["form", formId] as const,
+    queryOptions: {
+      enabled,
+      ...config,
+    },
   });
 };
 

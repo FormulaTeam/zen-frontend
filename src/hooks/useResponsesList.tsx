@@ -7,7 +7,7 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from "../utils/utils";
-import { MRT_ColumnFiltersState, MRT_PaginationState } from "material-react-table";
+import { MRT_ColumnDef, MRT_ColumnFiltersState, MRT_PaginationState } from "material-react-table";
 import { SearchResponsesFilter } from "../utils/interfaces";
 import { IOrderBy } from "../types/enums/filtersAndSorts.enum";
 import moment from "moment";
@@ -29,7 +29,7 @@ export const useResponsesList = ({
   const [loadingTable, setLoadingTable] = useState(true);
   const [loadingInsideTable, setLoadingInsideTable] = useState(false);
   const [form, setForm] = useState<any>(null);
-  const [columns, setColumns] = useState([]);
+  const [columns, setColumns] = useState<MRT_ColumnDef<any>[]>([]);
   const [allFilteredResponses, setAllFilteredResponses] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [allResponsesCount, setAllResponsesCount] = useState(0);

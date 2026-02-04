@@ -15,6 +15,7 @@ import { ResponseCount } from "../types/interfaces/responses.types";
 import { useCreate } from "../utils/useCreate";
 import queryClient from "./queryClient";
 import { useUpdate } from "../utils/useUpdate";
+import { useFetch } from "../utils/useFetch";
 
 /**
  * Fetch all responses with optional query parameters.
@@ -30,15 +31,18 @@ export const getResponses = async (filter?: Filter): Promise<ResponseForm[]> => 
     pageSize: filter?.pageSize,
     pageNumber: filter?.pageNumber,
   };
+
   try {
     if (!filter?.form_id) {
       console.error("Form ID is required to fetch responses.");
       return [];
     }
+
     const response = await apiClient.get<ResponseForm[]>(
-      `/responses/get-responses?form_id=${filter?.form_id}`,
+      `/responses/get-responses?form_id=${filter.form_id}`,
       { params },
     );
+
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch responses:", error);
@@ -254,6 +258,18 @@ export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseFo
 
 // Gali's changes
 // ========================
+
+export const useGetResponseById = (formId?: number, responseId?: number) => {
+  return useFetch<{ form_id: number; id: number }, ResponseForm>({
+    queryKey: (p) => ["response", p?.form_id, p?.id] as const,
+    endpoint: "/responses/get-by-id",
+    params: formId && responseId ? { form_id: formId, id: responseId } : undefined,
+    queryOptions: {
+      enabled: Boolean(formId) && Boolean(responseId),
+    },
+  });
+};
+
 export const useCreateResponse = () => {
   return useCreate<NewResponse | NewResponse[], ResponseForm | ResponseForm[]>({
     endpoint: "/responses/create",

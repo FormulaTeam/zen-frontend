@@ -1,14 +1,17 @@
-import { MRT_ColumnFiltersState, useMaterialReactTable } from "material-react-table";
+import {
+  MRT_ColumnFiltersState,
+  useMaterialReactTable,
+  MRT_ActionMenuItem,
+} from "material-react-table";
 import { MRT_Localization_Hebrew } from "../utils/hebrew";
 import { Edit } from "@mui/icons-material";
-import { MRT_ActionMenuItem } from "material-react-table";
 import { useTheme } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { ViewColumn } from "../types/interfaces/tableViews.types";
 import { useColumnVisibility } from "./useColumnVisibility";
 
-interface ResponseForm {
+interface ResponseFormProps {
   columns: any[];
   data: any[];
   searchCount: number;
@@ -22,8 +25,7 @@ interface ResponseForm {
   rowSelection: any;
   setRowSelection: (val: any) => void;
   getResponseDetails: (responseId: number) => JSX.Element | undefined;
-  responsesWithChildren: any[];
-  responsesHaveParents: boolean;
+  enableRowExpanding: boolean;
   currentViewConfig?: ViewColumn[];
 }
 
@@ -41,46 +43,47 @@ export const useResponsesTable = ({
   rowSelection,
   setRowSelection,
   getResponseDetails,
-  responsesWithChildren,
-  responsesHaveParents,
+  enableRowExpanding,
   currentViewConfig,
-}: ResponseForm) => {
+}: ResponseFormProps) => {
   const [showColumnFilters, setShowColumnFilters] = useState(false);
   const theme = useTheme();
   const navigate = useNavigate();
 
-  // Use column visibility hook
   const { columnVisibility } = useColumnVisibility({
     columns,
     currentViewConfig,
   });
 
-  const copyResponse = (rowData) => {
+  const copyResponse = (rowData: any) => {
     if (rowData) navigate(`/response/create/${rowData.form_id}/${rowData.id}`);
   };
 
-  // Create column order based on the columns array order
-  const columnOrder = [
-    "mrt-row-select",
-    "mrt-row-expand",
-    ...columns.map((col) => col.id || col.accessorKey),
-  ];
+  const columnOrder = useMemo(() => {
+    const appCols = columns.map((col) => col.id || col.accessorKey);
+    return enableRowExpanding
+      ? ["mrt-row-select", "mrt-row-expand", ...appCols]
+      : ["mrt-row-select", ...appCols];
+  }, [columns, enableRowExpanding]);
 
   return useMaterialReactTable({
     columns,
     data,
-    enableTopToolbar: showColumnFilters, // Show top toolbar only when filters are shown so we can hide them if needed
+    enableTopToolbar: showColumnFilters,
     manualFiltering: true,
     manualSorting: true,
     manualPagination: true,
     rowCount: searchCount,
+
     onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
+
     enableHiding: false,
     positionExpandColumn: "last",
     localization: MRT_Localization_Hebrew,
     columnResizeMode: "onChange",
+
     enableGrouping: false,
     enableStickyHeader: true,
     enableStickyFooter: true,
@@ -93,15 +96,18 @@ export const useResponsesTable = ({
     enableColumnActions: true,
     groupedColumnMode: false,
     paginationDisplayMode: "pages",
+
     initialState: {
       density: "spacious",
       columnVisibility,
       columnOrder,
     },
+
     enableRowSelection: true,
-    getRowId: (row) => row.id,
+    getRowId: (row: any) => row.id,
     onRowSelectionChange: setRowSelection,
     onShowColumnFiltersChange: setShowColumnFilters,
+
     state: {
       rowSelection,
       isLoading: loadingInsideTable,
@@ -112,6 +118,28 @@ export const useResponsesTable = ({
       columnVisibility,
       columnOrder,
     },
+
+    enableExpanding: enableRowExpanding,
+
+    ...(enableRowExpanding
+      ? {
+          getRowCanExpand: (row: any) => {
+            const id = row?.original?.id;
+            if (id == null) return false;
+            return Boolean(getResponseDetails(Number(id)));
+          },
+          renderDetailPanel: ({ row }: any) =>
+            getResponseDetails(Number(row?.original?.id)) ?? null,
+          muiDetailPanelProps: {
+            sx: {
+              "& .MuiCollapse-root": {
+                width: "100%",
+              },
+            },
+          },
+        }
+      : {}),
+
     muiPaginationProps: {
       color: "primary",
       shape: "rounded",
@@ -121,22 +149,18 @@ export const useResponsesTable = ({
     },
     muiToolbarAlertBannerChipProps: { color: "primary" },
     muiTopToolbarProps: {
-      sx: {
-        backgroundColor: theme.palette.tableHeader,
-      },
+      sx: { backgroundColor: theme.palette.tableHeader },
     },
+
     enableEditing: false,
     enableCellActions: true,
     enableClickToCopy: "context-menu",
+
     muiTableHeadRowProps: {
-      sx: {
-        backgroundColor: theme.palette.tableHeader,
-      },
+      sx: { backgroundColor: theme.palette.tableHeader },
     },
     muiTableContainerProps: {
-      sx: {
-        flex: "1 1 0",
-      },
+      sx: { flex: "1 1 0" },
     },
     muiTableHeadCellProps: {
       sx: {
@@ -147,7 +171,9 @@ export const useResponsesTable = ({
         },
       },
     },
-    muiTableHeadProps: { sx: { backgroundColor: theme.palette.background.paper } },
+    muiTableHeadProps: {
+      sx: { backgroundColor: theme.palette.background.paper },
+    },
     muiTablePaperProps: {
       sx: {
         flex: "1 1 0",
@@ -162,7 +188,8 @@ export const useResponsesTable = ({
         },
       },
     },
-    renderCellActionMenuItems: ({ closeMenu, row, table }) => [
+
+    renderCellActionMenuItems: ({ closeMenu, row, table }: any) => [
       <MRT_ActionMenuItem
         icon={<Edit />}
         key={1}
@@ -174,22 +201,9 @@ export const useResponsesTable = ({
         table={table}
       />,
     ],
+
     muiTableBodyCellProps: () => ({
       style: { justifyContent: "start" },
     }),
-
-    renderDetailPanel:
-      responsesWithChildren.length > 0
-        ? ({ row }) => {
-            return getResponseDetails(row?.original.id);
-          }
-        : undefined,
-    muiDetailPanelProps: {
-      sx: {
-        "& .MuiCollapse-root": {
-          width: "100%",
-        },
-      },
-    },
   });
 };

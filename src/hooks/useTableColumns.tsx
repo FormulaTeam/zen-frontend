@@ -1,7 +1,6 @@
 import React from "react";
 import moment from "moment";
 import { Box, Tooltip } from "@mui/material";
-import { type MRT_ColumnDef, MRT_Column } from "material-react-table";
 import cloudSync from "../images/cloud.png";
 import { CustomIcon } from "../theme/icons";
 import { FieldTypeIds } from "../utils/interfaces";
@@ -10,15 +9,15 @@ import CustomCarousel from "../components/FilePreview/CustomCarousel";
 import ZoomCell from "../components/formInForm/ZoomCell";
 import FormFieldRenderer from "../components/Responses/FormFieldRenderer";
 import { ViewColumn } from "../types/interfaces/tableViews.types";
-import type { FieldValidity } from "../hooks/useResponseState"; // adjust import path if needed
+import type { FieldValidity } from "../hooks/useResponseState";
 
 export const useTableColumns = (
-  setColumns,
+  setColumns: (cols: any[]) => void,
   fileOnClickHandler: (file: any) => void,
   isSynchedToMetro: Function,
-  sorting: any[],
-  setLoadingInsideTable,
-  responsesHaveParents,
+  sorting: any[], // kept for signature compatibility
+  setLoadingInsideTable: (val: boolean) => void,
+  responsesHaveParents: boolean,
   isQuickEditMode = false,
   onCellValueChange?: (rowId: string, fieldId: string, value: any) => void,
   validationErrors?: Record<string, Record<string, string>>,
@@ -56,38 +55,31 @@ export const useTableColumns = (
     return { valid: false, message: msg };
   };
 
-  const createTableColumns = (form, permissionTypes, viewConfig?: ViewColumn[]) => {
-    let cols: any[] = [];
-
-    // Create a timestamp to force re-render when called
+  const createTableColumns = (form: any, permissionTypes: any, viewConfig?: ViewColumn[]) => {
     const timestamp = Date.now();
 
-    // Ensure we have a form before proceeding
     if (!form || !form.fields) {
       setColumns([]);
       setLoadingInsideTable(false);
       return;
     }
 
-    if (!permissionTypes) {
-      permissionTypes = [];
-    }
+    if (!permissionTypes) permissionTypes = [];
 
-    if (responsesHaveParents) {
-      cols.push({
-        id: 1,
-        header: "תגובת אב",
-        accessorKey: "parentResponse",
-        enableFiltering: false,
-        enableSorting: false,
-        grow: false,
-        enableResizing: false,
-        size: 140,
-        Cell: ({ row }) => <ZoomCell row={row} form={form} />,
-      });
-    }
+    const buildParentResponseColumn = () => ({
+      id: "parentResponse",
+      header: "תגובת אב",
+      accessorKey: "parentResponse",
+      enableFiltering: false,
+      enableSorting: false,
+      grow: false,
+      enableResizing: false,
+      size: 140,
+      Cell: ({ row }: any) => {
+        return <ZoomCell row={row} form={form} />;
+      },
+    });
 
-    // Helper builders for system columns so they can be inserted per viewConfig order
     const buildIdColumn = () => ({
       id: "id",
       header: "מזהה",
@@ -114,7 +106,7 @@ export const useTableColumns = (
       enableGrouping: false,
       grow: false,
       size: 125,
-      renderColumnActionsMenuItems: ({ internalColumnMenuItems }) => {
+      renderColumnActionsMenuItems: ({ internalColumnMenuItems }: any) => {
         const arr: any[] = [];
         internalColumnMenuItems.forEach((element: any) => {
           const newLabel = element?.props?.label?.replace("[object Object]", "pushed_to_metro");
@@ -125,7 +117,7 @@ export const useTableColumns = (
         });
         return arr;
       },
-      Cell: ({ row }) => (
+      Cell: ({ row }: any) => (
         <Box>
           <Tooltip
             title={
@@ -147,7 +139,34 @@ export const useTableColumns = (
       enableResizing: false,
     });
 
-    const buildDynamicFieldColumn = (field: any, orderIndex: number = 0) => {
+    const addSystemEditedByColumn = () => ({
+      id: "edited_by_name",
+      header: "השתנה ע״י",
+      accessorKey: "edited_by_name",
+      enableColumnFilter: true,
+      filterVariant: "text",
+      filterFn: "contains",
+    });
+
+    const addSystemEditedColumn = () => ({
+      id: "edited",
+      header: "השתנה",
+      accessorKey: "edited",
+      enableGrouping: false,
+      grow: true,
+      size: 150,
+      Cell: ({ row }: any) => {
+        const value = moment(row?.original?.edited).format(DEFAULT_DATE_FORMAT);
+        return (
+          <Box className="cell-box" component="span">
+            <label title={value}>{value}</label>
+          </Box>
+        );
+      },
+      enableResizing: false,
+    });
+
+    const buildDynamicFieldColumn = (field: any) => {
       if (field.typeId === FieldTypeIds.form) return; // skip connected forms
 
       const displayName = String(field.displayName ?? "");
@@ -160,15 +179,15 @@ export const useTableColumns = (
         enableGrouping: false,
         grow: true,
         innerName: field.name,
-        Cell: ({ cell, row }) => {
+        Cell: ({ row }: any) => {
           const renderKey = `${
             row.original.id
           }-${uniqueId}-${isQuickEditMode}-${timestamp}-${JSON.stringify(rowSelection)}-${
             forceRenderCounter || 0
           }`;
 
-          if (row && row.original && row.original.data) {
-            const item = row.original.data?.find((f) => f.uniqueId === uniqueId);
+          if (row?.original?.data) {
+            const item = row.original.data?.find((f: any) => f.uniqueId === uniqueId);
             const value = ![undefined, null].includes(item?.value) ? item?.value : "";
 
             const shouldShowEditableField = isQuickEditMode && isRowInEditMode?.(row.original.id);
@@ -199,21 +218,6 @@ export const useTableColumns = (
               return (
                 <Box
                   key={renderKey}
-                  onClick={(e) => {
-                    const target = e.target as HTMLElement;
-                    if (
-                      target.tagName !== "INPUT" &&
-                      target.tagName !== "SELECT" &&
-                      target.tagName !== "TEXTAREA"
-                    ) {
-                      const cellElement = e.currentTarget;
-                      const inputElement = cellElement.querySelector("input, select, textarea") as
-                        | HTMLInputElement
-                        | HTMLSelectElement
-                        | HTMLTextAreaElement;
-                      if (inputElement) inputElement.focus();
-                    }
-                  }}
                   sx={{
                     zoom: 0.9,
                     display: "flex",
@@ -229,8 +233,8 @@ export const useTableColumns = (
                     formFieldsByIdMap={formFieldsByIdMap}
                     formFieldsValuesMap={formFieldsValuesMap}
                     formFieldsValidMap={formFieldsValidMap}
-                    touchedFields={{ [String(uniqueId)]: true }} // always show table quick-edit errors
-                    onBlurField={() => {}} // no-op in table
+                    touchedFields={{ [String(uniqueId)]: true }}
+                    onBlurField={() => {}}
                     onChangeHandler={handleCellValueChange}
                     viewMode={false}
                     fieldOptions={cellFieldOptions}
@@ -242,11 +246,11 @@ export const useTableColumns = (
               );
             }
 
-            // Display modes
+            // display modes
             if (field.typeId === FieldTypeIds.link) {
               return (
                 <Box className="cell-box" component="span">
-                  <label title={value && value.link ? value?.link : ""}>
+                  <label title={value?.link || ""}>
                     <a
                       href={/^https?:\/\//.test(value.link) ? value.link : `https://${value.link}`}
                       target="_blank"
@@ -283,10 +287,9 @@ export const useTableColumns = (
                   const hours = value.getHours().toString().padStart(2, "0");
                   const minutes = value.getMinutes().toString().padStart(2, "0");
                   const seconds = value.getSeconds().toString().padStart(2, "0");
-                  const timeString = `${hours}:${minutes}:${seconds}`;
                   return (
                     <Box className="cell-box-date" component="span">
-                      <label>{timeString}</label>
+                      <label>{`${hours}:${minutes}:${seconds}`}</label>
                     </Box>
                   );
                 }
@@ -339,10 +342,9 @@ export const useTableColumns = (
             }
 
             if (value && Array.isArray(value)) {
-              const str = value.join(", ");
               return (
                 <Box className="cell-box" component="span">
-                  <label>{str}</label>
+                  <label>{value.join(", ")}</label>
                 </Box>
               );
             }
@@ -356,7 +358,7 @@ export const useTableColumns = (
         col.filterFn = "equals";
         col.filterSelectOptions =
           (fieldOptions?.[field.uniqueId] && [
-            ...new Set(fieldOptions[field.uniqueId].map((option) => option.value)),
+            ...new Set(fieldOptions[field.uniqueId].map((option: any) => option.value)),
           ]) ||
           field.options ||
           [];
@@ -365,7 +367,7 @@ export const useTableColumns = (
 
       if (field.typeId === FieldTypeIds.number) {
         col.filterVariant = "number";
-        col.sortingFn = (rowA, rowB, columnId) => {
+        col.sortingFn = (rowA: any, rowB: any, columnId: string) => {
           const valueA = rowA.getValue(columnId);
           const valueB = rowB.getValue(columnId);
           return valueB - valueA;
@@ -383,46 +385,16 @@ export const useTableColumns = (
         ];
       }
 
-      cols.push(col);
+      return col;
     };
 
-    const addSystemEditedByColumn = () => {
-      return {
-        id: "edited_by_name",
-        header: "השתנה ע״י",
-        accessorKey: "edited_by_name",
-        enableColumnFilter: true,
-        filterVariant: "text",
-        filterFn: "contains",
-      };
-    };
+    const cols: any[] = [];
 
-    const addSystemEditedColumn = () => {
-      return {
-        id: "edited",
-        header: "השתנה",
-        accessorKey: "edited",
-        enableGrouping: false,
-        grow: true,
-        size: 150,
-        Cell: ({ row }) => {
-          const value = moment(row?.original?.edited).format(DEFAULT_DATE_FORMAT);
-          return (
-            <Box className="cell-box" component="span">
-              <label title={value}>{value}</label>
-            </Box>
-          );
-        },
-        enableResizing: false,
-      };
-    };
-
-    if (viewConfig && viewConfig.length > 0) {
+    if (viewConfig?.length) {
       const visibleConfigs = viewConfig
         .filter((vc) => vc.visible)
         .sort((a, b) => a.order - b.order);
 
-      cols = [];
       visibleConfigs.forEach((vc) => {
         switch (vc.columnId) {
           case "id":
@@ -438,8 +410,11 @@ export const useTableColumns = (
             cols.push(addSystemEditedColumn());
             break;
           default: {
-            const f = form.fields.find((ff) => ff.uniqueId === vc.columnId);
-            if (f) buildDynamicFieldColumn(f, vc.order);
+            const f = form.fields.find((ff: any) => ff.uniqueId === vc.columnId);
+            if (f) {
+              const dyn = buildDynamicFieldColumn(f);
+              if (dyn) cols.push(dyn);
+            }
             break;
           }
         }
@@ -448,16 +423,22 @@ export const useTableColumns = (
       cols.push(buildIdColumn());
       cols.push(buildSyncColumn());
 
-      const sortedFormFields = [...form.fields].sort((a, b) => {
+      const sortedFormFields = [...form.fields].sort((a: any, b: any) => {
         const sectionOrderDiff = (a?.sectionOrder ?? 0) - (b?.sectionOrder ?? 0);
         if (sectionOrderDiff !== 0) return sectionOrderDiff;
         return a.index - b.index;
       });
 
-      sortedFormFields.forEach((f, i) => buildDynamicFieldColumn(f, i));
+      sortedFormFields.forEach((f: any) => {
+        const dyn = buildDynamicFieldColumn(f);
+        if (dyn) cols.push(dyn);
+      });
+
       cols.push(addSystemEditedByColumn());
       cols.push(addSystemEditedColumn());
     }
+
+    if (responsesHaveParents) cols.push(buildParentResponseColumn());
 
     setColumns(cols);
     setLoadingInsideTable(false);
