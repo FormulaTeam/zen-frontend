@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Box, TextField, IconButton } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
 import { preventEnterKeyNavigation } from "../../../../utils/utils";
 import { CellErrorText } from "../../styled";
 
@@ -18,10 +21,13 @@ export const ListCellEditor: React.FC<ListCellEditorProps> = ({
     isRequired = false,
     errorMessage,
 }) => {
-    const [localValue, setLocalValue] = useState<string[]>(Array.isArray(value) ? value : []);
+    const [listItems, setListItems] = useState<string[]>(Array.isArray(value) ? value : []);
+    const [newItemValue, setNewItemValue] = useState<string>("");
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [editingValue, setEditingValue] = useState<string>("");
 
     useEffect(() => {
-        setLocalValue(Array.isArray(value) ? value : []);
+        setListItems(Array.isArray(value) ? value : []);
     }, [value]);
 
     const notifyChange = (updated: string[]): void => {
@@ -29,23 +35,54 @@ export const ListCellEditor: React.FC<ListCellEditorProps> = ({
         onChange(updated, isValid);
     };
 
-    const handleItemChange = (index: number, newValue: string) => {
-        const updated = [...localValue];
-        updated[index] = newValue;
-        setLocalValue(updated);
-        notifyChange(updated);
-    };
-
     const handleAddItem = () => {
-        const updated = [...localValue, ""];
-        setLocalValue(updated);
+        if (newItemValue.trim() === "") {
+            return;
+        }
+        const updated = [...listItems, newItemValue.trim()];
+        setListItems(updated);
+        setNewItemValue("");
         notifyChange(updated);
     };
 
     const handleRemoveItem = (index: number) => {
-        const updated = localValue.filter((_, i) => i !== index);
-        setLocalValue(updated);
+        const updated = listItems.filter((_, i) => i !== index);
+        setListItems(updated);
         notifyChange(updated);
+        setEditingIndex(null);
+    };
+
+    const handleEditItem = (index: number) => {
+        setEditingIndex(index);
+        setEditingValue(listItems[index]);
+    };
+
+    const handleSaveEdit = (index: number) => {
+        const updated = [...listItems];
+        const trimmed = editingValue.trim();
+        if (!trimmed) {
+            updated.splice(index, 1);
+        } else {
+            updated[index] = trimmed;
+        }
+        setListItems(updated);
+        notifyChange(updated);
+        setEditingIndex(null);
+        setEditingValue("");
+    };
+
+    const handleCancelEdit = () => {
+        setEditingIndex(null);
+        setEditingValue("");
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter" && newItemValue.trim() !== "") {
+            e.preventDefault();
+            handleAddItem();
+        } else {
+            preventEnterKeyNavigation(e);
+        }
     };
 
     return (
@@ -53,35 +90,104 @@ export const ListCellEditor: React.FC<ListCellEditorProps> = ({
             sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 1,
-                padding: "8px",
-                maxHeight: "120px",
+                padding: "2px",
+                height: "170px",
                 overflowY: "auto",
+                width: "100%",
             }}
         >
-            {localValue.map((item, index) => (
-                <Box key={index} sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                    <TextField
-                        size="small"
-                        value={item}
-                        onChange={(e) => handleItemChange(index, e.target.value)}
-                        onKeyDown={(e) => preventEnterKeyNavigation(e)}
-                        variant="standard"
-                        fullWidth
-                        autoFocus={index === 0}
-                        InputProps={{
-                            disableUnderline: true,
-                            sx: { fontSize: "1rem" },
-                        }}
-                    />
-                    <IconButton size="small" onClick={() => handleRemoveItem(index)} sx={{ padding: "4px" }}>
-                        <DeleteIcon fontSize="small" />
-                    </IconButton>
+            <Box sx={{ display: "flex" }}>
+                <TextField
+                    size="small"
+                    value={newItemValue}
+                    onChange={(e) => setNewItemValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    variant="standard"
+                    fullWidth
+                    autoFocus
+                    placeholder="הוספת פריט"
+                    slotProps={{
+                        input: {
+                            disableUnderline: true
+                        }
+                    }}
+                />
+                <IconButton
+                    size="small"
+                    onClick={handleAddItem}
+                    disabled={newItemValue.trim() === ""}
+                >
+                    <AddIcon fontSize="small" />
+                </IconButton>
+            </Box>
+            {errorMessage && (
+                <CellErrorText sx={{ marginTop: '2px' }}>{errorMessage}</CellErrorText>
+            )}
+            {listItems.map((item, index) => (
+                <Box key={index} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "3vh" }}>
+                    {editingIndex === index ? (
+                        <TextField
+                            size="small"
+                            value={editingValue}
+                            onChange={(e) => setEditingValue(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    handleSaveEdit(index);
+                                } else if (e.key === "Escape") {
+                                    handleCancelEdit();
+                                } else {
+                                    preventEnterKeyNavigation(e);
+                                }
+                            }}
+                            variant="standard"
+                            autoFocus
+                            fullWidth
+                            InputProps={{
+                                disableUnderline: true,
+                                sx: { fontSize: "1rem" },
+                            }}
+                        />
+                    ) : (
+                        <Box sx={{ display: "flex", alignItems: "center", flex: 1 }}>
+                            <Box sx={{ fontSize: "1.2rem", minWidth: "12px" }}>•</Box>
+                            <Box sx={{ fontSize: "1rem", ml: 0.5 }}>{item}</Box>
+                        </Box>
+                    )}
+                    <Box sx={{ display: "flex", gap: 0.5 }}>
+                        {editingIndex === index ? (
+                            <>
+                                <IconButton
+                                    size="small"
+                                    onClick={() => handleSaveEdit(index)}
+                                    sx={{ padding: "4px" }}
+                                >
+                                    <CheckIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton
+                                    size="small"
+                                    onClick={handleCancelEdit}
+                                    sx={{ padding: "4px" }}
+                                >
+                                    <CloseIcon fontSize="small" />
+                                </IconButton>
+                            </>
+                        ) : (
+                            <>
+                                <IconButton
+                                    size="small"
+                                    onClick={() => handleEditItem(index)}
+                                    sx={{ padding: "4px" }}
+                                >
+                                    <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton size="small" onClick={() => handleRemoveItem(index)} sx={{ padding: "4px" }}>
+                                    <DeleteIcon fontSize="small" />
+                                </IconButton>
+                            </>
+                        )}
+                    </Box>
                 </Box>
             ))}
-            <IconButton size="small" onClick={handleAddItem} sx={{ alignSelf: "flex-start", padding: "4px" }}>
-                <AddIcon fontSize="small" />
-            </IconButton>
             {errorMessage && (
                 <CellErrorText sx={{ marginTop: 1 }}>{errorMessage}</CellErrorText>
             )}

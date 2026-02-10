@@ -135,11 +135,10 @@ export const useResponsesEdit = () => {
         return next;
       });
 
-      // mark row as edited so save button becomes active - use keyName as the edited column key
       setEditedRows((prev) => {
         const next = new Map(prev);
         const existing = next.get(rowId) || ({} as Row);
-        next.set(rowId, { ...existing, [keyName]: value } as Row);
+        next.set(rowId, { ...existing, [field.displayName]: value } as Row);
         return next;
       });
     } catch (e) {
@@ -238,15 +237,30 @@ export const useResponsesEdit = () => {
       }
     });
 
-    const updatedData: ResponseFieldValue[] = original.data.map((field) => {
-      const columnField = Array.from(columnToUniqueId.entries())?.find(
-        ([_, uid]) => uid === field.uniqueId
+    const updatedData: ResponseFieldValue[] = (form?.fields || []).map((formField) => {
+      const existingFieldData = original.data.find((d) => d.uniqueId === formField.uniqueId);
+
+      const columnField = Array.from(columnToUniqueId.entries()).find(
+        ([_, uid]) => uid === formField.uniqueId
       )?.[0];
 
       if (columnField && editedRow.hasOwnProperty(columnField)) {
-        return { ...field, value: editedRow[columnField] };
+        const baseData = existingFieldData || {
+          uniqueId: formField.uniqueId,
+          name: formField.name,
+          typeId: formField.typeId,
+          value: null,
+        };
+
+        return { ...baseData, value: editedRow[columnField] };
       }
-      return field;
+
+      return existingFieldData || {
+        uniqueId: formField.uniqueId,
+        name: formField.name,
+        typeId: formField.typeId,
+        value: null,
+      };
     });
 
     return {
