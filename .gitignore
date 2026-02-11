@@ -30,3 +30,9 @@ yarn-error.log*
 
 # GitHub Copilot instructions
 .github/copilot-instructions.md
+
+# Security/API Keys
+.env
+
+# Local Configs
+settings.json
