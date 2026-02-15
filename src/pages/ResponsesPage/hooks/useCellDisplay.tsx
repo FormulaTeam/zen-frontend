@@ -64,13 +64,26 @@ export const useCellDisplay = ({ formId, onFileClick }: UseCellDisplayParams): U
     }, []);
 
     const formatFileCell = useCallback((value: any): React.ReactElement => {
-        if (!value || !value.files || value.files.length === 0) {
+        if (!value || !value.files) {
+            return <Box component="span" className="cell-box"></Box>;
+        }
+
+        let filesList: any[] = [];
+        if (Array.isArray(value.files)) {
+            filesList = value.files;
+        } else if (value.files && typeof value.files === 'object') {
+            const { newFiles = [], attachedFiles = [] } = value.files;
+            const newFilesData = newFiles.map((f: File) => ({ name: f.name, file: f }));
+            filesList = [...attachedFiles, ...newFilesData];
+        }
+
+        if (filesList.length === 0) {
             return <Box component="span" className="cell-box"></Box>;
         }
 
         return (
             <CenteredBox>
-                <CustomCarousel formId={formId} items={value.files} onItemClickHandler={onFileClick || (() => { })} />
+                <CustomCarousel formId={formId} items={filesList} onItemClickHandler={onFileClick || (() => { })} />
             </CenteredBox>
         );
     }, [formId, onFileClick]);

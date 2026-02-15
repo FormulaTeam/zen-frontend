@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { Box, Chip, styled, Typography } from "@mui/material";
 import { useDropzone } from "react-dropzone";
 import CloseIcon from "@mui/icons-material/Close";
@@ -15,14 +15,16 @@ const StyledContainer = styled(Box)({
     overflowY: "auto",
 });
 
-const StyledDropzone = styled(Box)<{ isDragActive: boolean }>(({ theme, isDragActive }) => ({
+const StyledDropzone = styled(Box, { shouldForwardProp: (prop) => prop !== '$isDragActive' })<{
+    $isDragActive: boolean;
+}>(({ theme, $isDragActive }) => ({
     border: "2px dashed",
-    borderColor: isDragActive ? theme.palette.primary.main : theme.palette.grey[400],
+    borderColor: $isDragActive ? theme.palette.primary.main : theme.palette.grey[400],
     borderRadius: theme.shape.borderRadius,
     padding: theme.spacing(1),
     textAlign: "center",
     cursor: "pointer",
-    backgroundColor: isDragActive ? theme.palette.action.hover : "transparent",
+    backgroundColor: $isDragActive ? theme.palette.action.hover : "transparent",
     width: "100%",
     display: 'flex',
     height: '130px',
@@ -73,27 +75,64 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
     isRequired = false,
     errorMessage,
 }) => {
-    const [responseFiles, setResponseFiles] = useState<{ files?: AttachedFile[] } | null>(value?.files ? { files: value.files.attachedFiles } : null);
-    const [files, setFiles] = useState<File[]>([]);
-    const [deletedFiles, setDeletedFiles] = useState<AttachedFile[]>([]);
+    const parseFileValue = (value) => {
+        if (!value) return { newFiles: [], attachedFiles: [] };
+        
+        if (Array.isArray(value.files)) {
+            return { newFiles: [], attachedFiles: value.files };
+        }
+        
+        if (value.files && typeof value.files === 'object') {
+            return {
+                newFiles: value.files.newFiles || [],
+                attachedFiles: value.files.attachedFiles || []
+            };
+        }
+        
+        return { newFiles: [], attachedFiles: [] };
+    };
 
+    const fileState = parseFileValue(value);
+    const [files, setFiles] = useState<File[]>(fileState.newFiles);
+    const [responseFiles, setResponseFiles] = useState<AttachedFile[]>(fileState.attachedFiles);
+    const [deletedFiles, setDeletedFiles] = useState<AttachedFile[]>(value?.deletedFiles || []);
+
+    // Update internal state when the external value prop changes
     useEffect(() => {
-        setResponseFiles(value?.files ? { files: value.files.attachedFiles } : null);
+        const fileState = parseFileValue(value);
+        setResponseFiles(fileState.attachedFiles);
+        setFiles(fileState.newFiles);
+        if (value?.deletedFiles) {
+            setDeletedFiles(value.deletedFiles);
+        }
     }, [value]);
 
+    const buildFilesSignature = (newFiles: File[], attachedFiles: AttachedFile[], deletedFilesList: AttachedFile[]) => {
+        const newFilesNames = (newFiles || []).map((f) => f.name).join("|");
+        const attachedFileNames = (attachedFiles || []).map((f) => f.name || f.fileName || "").join("|");
+        const deletedFileNames = (deletedFilesList || []).map((f) => f.name || f.fileName || "").join("|");
+        return `${newFilesNames}::${attachedFileNames}::${deletedFileNames}`;
+    };
+
+    const initialSignature = buildFilesSignature(files, responseFiles, deletedFiles);
+    const lastEmittedSignatureRef = useRef<string>(initialSignature);
+
     useEffect(() => {
-        const combinedFiles = {
-            newFiles: files,
-            attachedFiles: responseFiles?.files || [],
-        };
+        const currentSignature = buildFilesSignature(files, responseFiles, deletedFiles);
+        if (currentSignature === lastEmittedSignatureRef.current) return;
+        lastEmittedSignatureRef.current = currentSignature;
+
         const payload: FileCellEditorValue = {
-            files: combinedFiles,
+            files: {
+                newFiles: files,
+                attachedFiles: responseFiles,
+            },
             deletedFiles: deletedFiles,
         };
-        const hasAnyFiles = (combinedFiles.newFiles?.length || 0) + (combinedFiles.attachedFiles?.length || 0) > 0;
+        const hasAnyFiles = (files?.length || 0) + (responseFiles?.length || 0) > 0;
         const isValid = !(isRequired && !hasAnyFiles);
         onChange(payload, isValid);
-    }, [files, responseFiles, deletedFiles, isRequired]);
+    }, [files, responseFiles, deletedFiles, isRequired, onChange]);
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
         setFiles((prev) => [...prev, ...acceptedFiles]);
@@ -103,11 +142,8 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
         setFiles((prevFiles) => prevFiles.filter((_, idx) => idx !== index));
     };
 
-    const deleteAttachedFile = (file: any, index: number) => {
-        setResponseFiles((prevFiles: any) => ({
-            ...prevFiles,
-            files: prevFiles.files.filter((_: any, idx: number) => idx !== index),
-        }));
+    const deleteAttachedFile = (file: AttachedFile, index: number) => {
+        setResponseFiles((prevFiles) => prevFiles.filter((_: any, idx: number) => idx !== index));
         file.name = decodeFileName(file.name);
         setDeletedFiles((prevFiles) => [...prevFiles, file]);
     };
@@ -124,7 +160,7 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
 
     return (
         <StyledContainer onClick={handleClick}>
-            <StyledDropzone {...getRootProps()} isDragActive={isDragActive}>
+              <StyledDropzone {...getRootProps()} $isDragActive={isDragActive}>
                 <input {...getInputProps()} />
                 <AttachFileIcon fontSize="small" />
                 <Typography variant="caption" display="block">
@@ -146,20 +182,23 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
                 </StyledFilesContainer>
             )}
 
-            {responseFiles?.files && responseFiles.files.length > 0 && (
-                <StyledFilesContainer>
-                    {responseFiles.files.map((file: any, index: number) => (
-                        <StyledChip
-                            key={`attached-${index}`}
-                            label={decodeFileName(file.name)}
-                            size="small"
-                            color="primary"
-                            variant="outlined"
-                            onDelete={() => deleteAttachedFile(file, index)}
-                            deleteIcon={<CloseIcon fontSize="small" />}
-                        />
-                    ))}
-                </StyledFilesContainer>
+            {responseFiles && responseFiles.length > 0 && (
+                <Box>
+                    <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'text.secondary' }}>קבצים קיימים:</Typography>
+                    <StyledFilesContainer>
+                        {responseFiles.map((file: AttachedFile, index: number) => (
+                            <StyledChip
+                                key={`attached-${index}`}
+                                label={decodeFileName(file.name)}
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                                onDelete={() => deleteAttachedFile(file, index)}
+                                deleteIcon={<CloseIcon fontSize="small" />}
+                            />
+                        ))}
+                    </StyledFilesContainer>
+                </Box>
             )}
             {errorMessage && (
                 <div style={{ color: "#d32f2f", fontSize: "0.75rem" }}>{errorMessage}</div>

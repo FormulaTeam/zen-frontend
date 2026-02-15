@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { GridRowModel } from "@mui/x-data-grid-pro";
 import { showSuccessNotification, showErrorNotification } from "@utils/utils";
-import { useBatchUpdateResponses, useGetResponses } from "@api/responsesApi";
+import { useBatchUpdateResponses, useGetResponses, getResponseWithFlatFields } from "@api/responsesApi";
+import { uploadFilesToS3 } from "@api/filesApi";
 import { useFormStore } from "../stores/form.store";
 import { useAuth } from "@contexts/AuthContext";
 import { FieldTypeIds, ResponseFieldValue, Row } from "@utils/interfaces";
@@ -221,7 +222,7 @@ export const useResponsesEdit = () => {
   };
 
 
-  const buildResponseUpdatePayload = (rowId: number, editedRow: Partial<Row>) => {
+  const buildResponseUpdatePayload = async (rowId: number, editedRow: Partial<Row>) => {
     const original = fullResponses?.find((r) => Number(r?.id) === rowId);
     if (!original) {
       return null;
@@ -237,12 +238,13 @@ export const useResponsesEdit = () => {
       }
     });
 
-    const updatedData: ResponseFieldValue[] = (form?.fields || []).map((formField) => {
-      const existingFieldData = original.data.find((d) => d.uniqueId === formField.uniqueId);
+    const updatedData: ResponseFieldValue[] = await Promise.all(
+      (form?.fields || []).map(async (formField) => {
+        const existingFieldData = original.data.find((d) => d.uniqueId === formField.uniqueId);
 
-      const columnField = Array.from(columnToUniqueId.entries()).find(
-        ([_, uid]) => uid === formField.uniqueId
-      )?.[0];
+        const columnField = Array.from(columnToUniqueId.entries()).find(
+          ([_, uid]) => uid === formField.uniqueId
+        )?.[0];
 
       if (columnField && editedRow.hasOwnProperty(columnField)) {
         const baseData = existingFieldData || {
@@ -252,16 +254,61 @@ export const useResponsesEdit = () => {
           value: null,
         };
 
-        return { ...baseData, value: editedRow[columnField] };
+        // Handle file fields: upload new files and normalize attached files
+        if (formField.fieldType === 'file' || formField.typeId === FieldTypeIds.file) {
+          try { 
+            // Try to locate edited value using multiple possible keys (column field, displayName, name, uniqueId)
+            const editedValue = (():any => {
+              if (columnField && editedRow.hasOwnProperty(columnField)) {
+                return editedRow[columnField];
+              }
+        
+              return undefined;
+            })();
+            let newFilesToUpload: File[] = [];
+            let attachedFilesFromValue: any[] = [];
+            let deletedFilesFromValue: any[] = [];
+
+            if (Array.isArray(editedValue)) {
+              attachedFilesFromValue = editedValue;
+            } else if (editedValue && typeof editedValue === 'object') {
+              if (editedValue.files) {
+                newFilesToUpload = editedValue.files.newFiles || [];
+                attachedFilesFromValue = editedValue.files.attachedFiles || [];
+              } else if (Array.isArray(editedValue.files)) {
+                attachedFilesFromValue = editedValue.files;
+              }
+              deletedFilesFromValue = editedValue.deletedFiles || [];
+            }
+
+            const uploadResponse = newFilesToUpload.length > 0 ? await uploadFilesToS3({ newFiles: newFilesToUpload }, form.id) : [];
+
+            const normalizeAttached = (fileItem: any) => {
+              const name = fileItem.name || fileItem.fileName || "";
+              const url = fileItem.url || fileItem.fileUrl || fileItem.downloadUrl || "";
+              return { name, url };
+            };
+
+            const normalizedAttachedFiles = attachedFilesFromValue.map(normalizeAttached);
+            const combinedFiles = [...uploadResponse, ...normalizedAttachedFiles];
+
+            return { uniqueId: formField.uniqueId, value: { files: combinedFiles } };
+          } catch (error) {
+            return { ...baseData, value: editedRow[columnField] };
+          }
+        }
+
+        return { uniqueId: formField.uniqueId, value: editedRow[columnField] };
       }
 
-      return existingFieldData || {
-        uniqueId: formField.uniqueId,
-        name: formField.name,
-        typeId: formField.typeId,
-        value: null,
-      };
-    });
+        return existingFieldData || {
+          uniqueId: formField.uniqueId,
+          value: null,
+        };
+      }),
+    );
+
+    const fieldsNameValueObj = getResponseWithFlatFields(updatedData, form.fields, []);
 
     return {
       id: rowId,
@@ -270,6 +317,7 @@ export const useResponsesEdit = () => {
         data: updatedData,
         edited_by: user?.upn?.toLowerCase() || original.edited_by,
         edited_by_name: user?.displayName || original.edited_by_name,
+        ...fieldsNameValueObj,
       },
     };
   };
@@ -347,15 +395,23 @@ export const useResponsesEdit = () => {
         throw new FormNotLoadedError();
       }
 
-      const updatesToSend = Array.from(editedRows.entries())
-        .map(([rowId, editedRow]) => buildResponseUpdatePayload(rowId, editedRow))
-        .filter((updatedRow) => updatedRow !== null);
+      const updatesToSendPromises = Array.from(editedRows.entries()).map(async ([rowId, editedRow]) =>
+        await buildResponseUpdatePayload(rowId, editedRow),
+      );
+
+      const updatesToSendResults = await Promise.all(updatesToSendPromises);
+      const updatesToSend = updatesToSendResults.filter((updatedRow) => updatedRow !== null);
 
       if (updatesToSend.length === 0) {
         throw new NoValidChangesError();
       }
 
-      await batchUpdateResponses(updatesToSend as any);
+      try {
+        await batchUpdateResponses(updatesToSend as any);
+      } catch (batchError) {
+        console.error('batchUpdateResponses failed:', batchError);
+        throw batchError;
+      }
 
       setRows(localRows);
       setEditedRows(new Map());
