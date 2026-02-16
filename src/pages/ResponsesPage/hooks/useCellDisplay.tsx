@@ -83,7 +83,7 @@ export const useCellDisplay = ({ formId, onFileClick }: UseCellDisplayParams): U
 
         return (
             <CenteredBox>
-                <CustomCarousel formId={formId} items={filesList} onItemClickHandler={onFileClick || (() => { })} />
+                <CustomCarousel formId={formId} items={filesList} onItemClickHandler={onFileClick || (() => { })} shouldSpaceFiles={true} />
             </CenteredBox>
         );
     }, [formId, onFileClick]);

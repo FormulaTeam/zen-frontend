@@ -12,6 +12,9 @@ import { MainContentWrapper, PageWrapper, TopSection, ActionsRow } from "./style
 import SearchInfo from "../../components/Responses/SearchInfo";
 import { ResponsesTable } from "./components/ResponsesTable";
 import Header from "./components/Header";
+import Tooltip from "@mui/material/Tooltip";
+import { ViewManageButton } from "@components/Responses/styled";
+import { BackupTable, CalendarViewWeek } from "@mui/icons-material";
 
 interface ResponsesPageProps {
   user: User | null;
@@ -67,18 +70,37 @@ const ResponsesPageContent = (): JSX.Element => {
         <TopSection>
           <Header />
           <FormActionsToolbar />
-          {/* <SearchInfo search={search} setSearch={setSearch} allResponsesCount={allResponsesCount} /> */}
         </TopSection>
-        <ActionsRow>
-          {!isInEditMode && <AddResponseButton />}
-          <EditResponsesButton
-            isInEditMode={isInEditMode}
-            editedRowsCount={editedRowsCount}
-            isUpdating={isUpdating}
-            onToggleEditMode={handleToggleEditMode}
-            onSaveChanges={handleSaveChanges}
-          />
-        </ActionsRow>
+        <TopSection>
+          <ActionsRow>
+            {!isInEditMode && <AddResponseButton />}
+            <EditResponsesButton
+              isInEditMode={isInEditMode}
+              editedRowsCount={editedRowsCount}
+              isUpdating={isUpdating}
+              onToggleEditMode={handleToggleEditMode}
+              onSaveChanges={handleSaveChanges}
+            />
+          </ActionsRow>
+          <SearchInfo />
+          <Tooltip title="ניהול תצוגות">
+            <span>
+              <ViewManageButton
+                variant="contained"
+                 onClick={() => {}} disabled={false}>
+                <BackupTable />
+                 <span>ניהול תצוגות</span>
+              </ViewManageButton>
+            </span>
+          </Tooltip>
+          {/* <Tooltip title="ניהול תצוגות">
+            <div>
+              <ViewManageButton variant="contained" onClick={() => {}} disabled={false}>
+                <CalendarViewWeek />
+              </ViewManageButton>
+            </div>
+          </Tooltip> */}
+        </TopSection>
         <ResponsesTable
           isInEditMode={isInEditMode}
           localRows={localRows}
@@ -95,4 +117,4 @@ const ResponsesPageContent = (): JSX.Element => {
       </MainContentWrapper>
     </PageWrapper>
   );
-}
+};

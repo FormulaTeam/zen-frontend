@@ -47,6 +47,7 @@ export const ResponsesTable = ({
 
   const apiRef = useGridApiRef();
   const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
+  const [paginationModel, setPaginationModel] = useState({ pageSize: 25, page: 0 });
 
   const {
     childrenFormsData,
@@ -299,6 +300,9 @@ export const ResponsesTable = ({
           rowHeight={isInEditMode ? 140 : 65}
           loading={!rows}
           pagination
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          pageSizeOptions={[15, 25, 50, 100]}
           checkboxSelection
           disableRowSelectionOnClick
           getRowClassName={(params) => params.indexRelativeToCurrentPage % 2 === 0 ? 'MuiDataGrid-row--even' : 'MuiDataGrid-row--odd'}

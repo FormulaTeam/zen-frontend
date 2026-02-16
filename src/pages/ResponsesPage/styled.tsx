@@ -39,7 +39,7 @@ export const EditButtonWrapper = styled(Box)<BoxProps>(({ theme }) => ({
 
 export const ActionsRow = styled(Box)(() => ({
   display: "flex",
-  gap: '16px',
+  gap: "16px",
   alignItems: "center",
 }));
 
@@ -71,7 +71,7 @@ export const CenteredBox = styled(Box)<BoxProps>(() => ({
 export const TitleWrapper = styled(Box)<BoxProps>(() => ({
   display: "flex",
   alignItems: "baseline",
-  gap: '12px'
+  gap: "12px",
 }));
 
 export const QuickEditTableContainer = styled(MuiTableContainer)<{ isQuickEditMode?: boolean }>(
@@ -96,8 +96,8 @@ export const QuickEditTableContainer = styled(MuiTableContainer)<{ isQuickEditMo
 
 export const ContentContainer = styled(Box)<BoxProps>(() => ({
   display: "flex",
-  height: "calc(100vh - 200px)",
-  maxHeight: "calc(100vh - 200px)",
+  height: "calc(100vh - 240px)",
+  maxHeight: "calc(100vh - 240px)",
   gap: 0,
 }));
 
@@ -150,8 +150,8 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     "& .MuiDataGrid-cell": {
       borderRight: `1px solid ${theme.palette.grid?.border}`,
       "&:nth-last-of-type(2)": {
-        borderRight: 'none'
-      }
+        borderRight: "none",
+      },
     },
     "& .MuiDataGrid-columnHeader": {
       borderRight: `1px solid ${theme.palette.grid?.border}`,
@@ -170,40 +170,35 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     overflow: "visible",
     "& .MuiDataGrid-cell, & .MuiDataGrid-columnHeader": {
       borderRight: "none",
-      backgroundImage:
-        `repeating-linear-gradient(to bottom, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
+      backgroundImage: `repeating-linear-gradient(to bottom, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
       backgroundRepeat: "repeat-y",
       backgroundSize: "1px 100%",
       backgroundPosition: "left top",
     },
     "& .MuiDataGrid-row": {
       borderBottom: "none",
-      backgroundImage:
-        `repeating-linear-gradient(to right, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
+      backgroundImage: `repeating-linear-gradient(to right, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
       backgroundRepeat: "repeat-x",
       backgroundSize: "100% 1px",
       backgroundPosition: "left bottom",
     },
     "& .MuiDataGrid-cell": {
       borderBottom: "none",
-      backgroundImage:
-        `repeating-linear-gradient(to bottom, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px), repeating-linear-gradient(to right, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
+      backgroundImage: `repeating-linear-gradient(to bottom, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px), repeating-linear-gradient(to right, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
       backgroundRepeat: "repeat-y, repeat-x",
       backgroundSize: "1px 100%, 100% 1px",
       backgroundPosition: "left top, left bottom",
     },
     "& .MuiDataGrid-columnHeaders": {
       borderBottom: "none",
-      backgroundImage:
-        `repeating-linear-gradient(to right, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
+      backgroundImage: `repeating-linear-gradient(to right, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
       backgroundRepeat: "repeat-x",
       backgroundSize: "100% 1px",
       backgroundPosition: "left bottom",
     },
     "& .MuiDataGrid-columnHeaderRow": {
       borderBottom: "none",
-      backgroundImage:
-        `repeating-linear-gradient(to right, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
+      backgroundImage: `repeating-linear-gradient(to right, ${theme.palette.grid?.border} 0 2px, transparent 2px 10px)`,
       backgroundRepeat: "repeat-x",
       backgroundSize: "100% 1px",
       backgroundPosition: "left bottom",
@@ -299,13 +294,14 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     outline: "none",
     boxShadow: `0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
   },
-  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus-within": {
-    backgroundImage: "none",
-    boxShadow: `inset 0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
-    borderRadius: "4px",
-    outline: "none",
-    borderColor: "transparent",
-  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus-within":
+    {
+      backgroundImage: "none",
+      boxShadow: `inset 0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
+      borderRadius: "4px",
+      outline: "none",
+      borderColor: "transparent",
+    },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--editing": {
     backgroundImage: "none",
     boxShadow: `inset 0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
@@ -314,9 +310,10 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     borderColor: "transparent",
   },
 
-  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus::after, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus-within::after": {
-    display: "none",
-  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus::after, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus-within::after":
+    {
+      display: "none",
+    },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--has-error": {
     backgroundColor: "#ffebee",
     border: `1px solid ${theme.palette.error.main}`,
@@ -345,23 +342,27 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
       pointerEvents: "none",
     },
   },
-  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cellCheckbox.MuiDataGrid-cell--non-editable-in-edit-mode": {
-    pointerEvents: "auto",
-    cursor: "pointer",
-  },
-  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cellCheckbox.MuiDataGrid-cell--non-editable-in-edit-mode *": {
-    pointerEvents: "auto",
-  },
-  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell[data-field='expand'].MuiDataGrid-cell--non-editable-in-edit-mode": {
-    pointerEvents: "auto",
-    cursor: "pointer",
-  },
-  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell[data-field='expand'].MuiDataGrid-cell--non-editable-in-edit-mode *": {
-    pointerEvents: "auto",
-  },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cellCheckbox.MuiDataGrid-cell--non-editable-in-edit-mode":
+    {
+      pointerEvents: "auto",
+      cursor: "pointer",
+    },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cellCheckbox.MuiDataGrid-cell--non-editable-in-edit-mode *":
+    {
+      pointerEvents: "auto",
+    },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell[data-field='expand'].MuiDataGrid-cell--non-editable-in-edit-mode":
+    {
+      pointerEvents: "auto",
+      cursor: "pointer",
+    },
+  "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell[data-field='expand'].MuiDataGrid-cell--non-editable-in-edit-mode *":
+    {
+      pointerEvents: "auto",
+    },
   "& .MuiDataGrid-scrollbar--vertical": {
-    right: "auto",
-    left: "0",
+    right: "0",
+    left: "auto",
   },
   "& .MuiDataGrid-row.Mui-selected": {
     backgroundColor: theme.palette.grid?.rowSelected,
@@ -377,7 +378,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     backgroundColor: theme.palette.grid?.rowSelectedHover,
   },
   "& .MuiDataGrid-footerContainer": {
-    flexDirection: 'row-reverse',
+    flexDirection: "row-reverse",
   },
 }));
 
@@ -413,7 +414,7 @@ export const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
   padding: 0,
   "& .MuiButton-root": {
     fontSize: "1rem",
-    padding: "8px 28px"
+    padding: "8px 28px",
   },
 }));
 
@@ -424,24 +425,24 @@ export const DialogTitleBox = styled(Box)(() => ({
 }));
 
 export const StyledEditButton = styled(Button)(() => ({
-  backgroundColor: '#DBE7F4',
-  color: '#000000',
-  fontSize: '1.2rem !important',
+  backgroundColor: "#DBE7F4",
+  color: "#000000",
+  fontSize: "1.2rem !important",
   "&:hover": {
     backgroundColor: "#bbdefb",
   },
   "& .MuiButton-startIcon": {
     marginRight: "8px",
-    height: '2vh',
-    width: '2vh'
+    height: "2vh",
+    width: "2vh",
   },
 }));
 
 export const StyledAddButton = styled(StyledEditButton)(() => ({
-  backgroundColor: '#4976CB',
-  color: '#ffffff',
+  backgroundColor: "#4976CB",
+  color: "#ffffff",
   "&:hover": {
-    backgroundColor: '#3f69b3',
+    backgroundColor: "#3f69b3",
   },
 }));
 
