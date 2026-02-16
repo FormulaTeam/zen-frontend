@@ -1,5 +1,18 @@
-import { useState } from "react";
-import { Tooltip, Select, MenuItem, InputLabel } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import AlertMsg from "../AlertMsg/AlertMsg";
+import { IconButton, Tooltip, useTheme, Select, MenuItem, InputLabel } from "@mui/material";
+import {
+  Delete,
+  Edit,
+  Add,
+  Visibility,
+  CalendarViewWeek,
+  EditNote,
+  CheckOutlined,
+  Close,
+} from "@mui/icons-material";
+import { PERMISSION_TYPES, getResponsesAndExportToExcel } from "../../utils/utils";
+import { CustomIcon } from "../../theme/icons";
 import { useViewControls } from "../../hooks/useViewControls";
 import { ViewControlsContainer, StyledViewFormControl, ViewManageButton } from "./styled";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
@@ -62,29 +75,6 @@ export function OperationsContainer({
 
   return (
     <ViewControlsContainer>
-      {hasViews && (
-        <StyledViewFormControl variant="standard">
-          <InputLabel id="view-select-label">{HebrewTitles.TABLE_VIEW}</InputLabel>
-
-          <Select
-            labelId="view-select-label"
-            value={selectedViewId ?? ""}
-            onChange={handleViewDropdownChange}
-            size="small"
-            sx={{ minWidth: 200 }}>
-            <MenuItem value="">
-              <em>{HebrewTitles.ALL_FIELDS}</em>
-            </MenuItem>
-
-            {allViews?.map((view) => (
-              <MenuItem key={view.id} value={view.id}>
-                {getViewDisplayName(view)}
-              </MenuItem>
-            ))}
-          </Select>
-        </StyledViewFormControl>
-      )}
-
       <Tooltip title={HebrewTitles.MANAGE_VIEWS} disableHoverListener={!hasViews}>
         <span>
           <ViewManageButton

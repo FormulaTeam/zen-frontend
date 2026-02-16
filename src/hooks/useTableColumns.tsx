@@ -336,7 +336,7 @@ export const useTableColumns = (
     const addSystemEditedColumn = () => {
       return {
         id: "edited",
-        header: "השתנה",
+        header: "תאריך שינוי",
         accessorKey: "edited",
         enableGrouping: false,
         grow: true,

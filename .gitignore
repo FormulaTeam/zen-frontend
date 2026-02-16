@@ -29,3 +29,6 @@ yarn-error.log*
 *.7z
 
 .env
+
+.gemini/settings.json
+.vscode/settings.json
