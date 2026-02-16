@@ -28,14 +28,14 @@ import {
 } from "./styled";
 import Header from "../../components/Responses/Header";
 import SearchInfo from "../../components/Responses/SearchInfo";
-import OperationsContainer from "../../components/Responses/OperationsContainer";
+import { OperationsContainer } from "../../components/Responses/OperationsContainer";
 import { useResponsesTable } from "../../hooks/useResponsesTable";
 import { useTableColumns } from "../../hooks/useTableColumns";
 import { useResponsesList } from "../../hooks/useResponsesList";
 import { ResponseCount } from "../../types/interfaces/responses.types";
 import ResponseDetailsPanel from "../../components/ResponseDetailsPanel/ResponseDetailsPanel";
 import SidePanel from "../../components/SidePanel/SidePanel";
-import { TableView, ViewColumn } from "../../types/interfaces/tableViews.types";
+import { ResponsesView, ViewColumn } from "../../types/interfaces/tableViews.types";
 import { useQuickEdit } from "../../hooks/useQuickEdit";
 import { useConnectedFormOptions } from "../../hooks/useConnectedFormOptions";
 
@@ -456,7 +456,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
           />
         </TopSection>
         <SearchInfo search={search} setSearch={setSearch} allResponsesCount={allResponsesCount} />
-        {/* <OperationsContainer
+        <OperationsContainer
           user={user}
           form={form}
           allResponsesCount={allResponsesCount}
@@ -481,7 +481,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
           hasUnsavedChanges={hasUnsavedChanges}
           isEditButtonDisabled={isEditButtonDisabled}
           editButtonDisabledReason={editButtonDisabledReason}
-        /> */}
+        />
         <ContentContainer>
           <MainContent $sidePanelOpen={isSidePanelOpen}>
             {loadingTable ? <Loader /> : <MaterialReactTable table={responsesTable} />}
@@ -524,7 +524,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
       <SidePanel
         isOpen={isSidePanelOpen}
         onClose={() => setIsSidePanelOpen(false)}
-        title="תצוגת טבלה"
+        title="ניהול תצוגות"
         form={form}
         user={user}
         onSaveView={handleSaveView}

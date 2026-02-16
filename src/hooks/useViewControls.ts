@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { TableView } from "../types/interfaces/tableViews.types";
+import { ResponsesView } from "../types/interfaces/tableViews.types";
 
 interface UseViewControlsProps {
-  allViews?: TableView[];
+  allViews?: ResponsesView[];
   selectedViewId?: string | number;
   handleViewDropdownChange?: (event: any) => void;
 }
@@ -11,8 +11,8 @@ interface UseViewControlsReturn {
   isSidePanelOpen: boolean;
   setIsSidePanelOpen: (open: boolean) => void;
   toggleSidePanel: () => void;
-  getViewDisplayName: (view: TableView) => string;
-  isViewDefault: (view: TableView) => boolean;
+  getViewDisplayName: (view: ResponsesView) => string;
+  isViewDefault: (view: ResponsesView) => boolean;
   hasViews: boolean;
 }
 
@@ -27,11 +27,11 @@ export const useViewControls = ({
     setIsSidePanelOpen(!isSidePanelOpen);
   };
 
-  const getViewDisplayName = (view: TableView): string => {
+  const getViewDisplayName = (view: ResponsesView): string => {
     return view.name || "Unnamed View";
   };
 
-  const isViewDefault = (view: TableView): boolean => {
+  const isViewDefault = (view: ResponsesView): boolean => {
     return view.isDefault || false;
   };
 
