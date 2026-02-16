@@ -73,19 +73,20 @@ interface CustomIconProps {
   style?: React.CSSProperties;
   onClick?: () => void;
   forcePointer?: boolean;
+  testClassName?: string;
 }
 
-export const CustomIcon = ({ iconName, style, onClick, forcePointer }: CustomIconProps) => {
+export const CustomIcon = ({ iconName, style, onClick, forcePointer, testClassName }: CustomIconProps) => {
   const defaultStyle: React.CSSProperties = {
     cursor: onClick || forcePointer ? "pointer" : "default",
   };
 
   if (iconName && iconName in icons) {
-    return <img src={icons[iconName]} style={{ ...defaultStyle, ...style }} onClick={onClick} />;
+    return <img src={icons[iconName]} style={{ ...defaultStyle, ...style }} onClick={onClick} className={testClassName} />;
   } else if (iconName && iconName in fieldIcons) {
     return (
-      <img src={fieldIcons[iconName]} onClick={onClick} style={{ ...defaultStyle, ...style }} />
+      <img src={fieldIcons[iconName]} onClick={onClick} style={{ ...defaultStyle, ...style }} className={testClassName} />
     );
   }
-  return <img src={fieldIcons.text} style={{ ...defaultStyle, ...style }} onClick={onClick} />;
+  return <img src={fieldIcons.text} style={{ ...defaultStyle, ...style }} onClick={onClick} className={testClassName} />;
 };

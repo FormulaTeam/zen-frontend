@@ -177,6 +177,13 @@ export interface FormFieldEditableMetaData {
  */
 export type NewForm = Omit<Form, "id" | "created" | "edited" | "permissions">;
 
+export interface UpdateFormPayload {
+  id: number;
+  formData: Partial<Form>;
+
+  isUpdateMetro?: boolean;
+}
+
 export type FormsTab = (typeof formsTabs)[keyof typeof formsTabs];
 
 /**

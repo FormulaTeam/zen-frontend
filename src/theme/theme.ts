@@ -285,7 +285,6 @@ theme.components = {
   MuiAutocomplete: {
     styleOverrides: {
       root: {
-        direction: "rtl",
         zIndex: 1000,
         "&.MuiInputBase-input": { direction: "rtl", marginTop: "5px" },
         "&.MuiAutocomplete-root .MuiOutlinedInput-root": {
@@ -304,6 +303,13 @@ theme.components = {
     styleOverrides: {
       root: {
         color: theme.palette.text.primary,
+      },
+    },
+  },
+  MuiSelect: {
+    defaultProps: {
+      MenuProps: {
+        disableScrollLock: true,
       },
     },
   },
