@@ -1,4 +1,4 @@
-import { TableView } from "../types/interfaces/tableViews.types";
+import { ResponsesView } from "../types/interfaces/tableViews.types";
 import { PERMISSION_TYPES } from "../utils/utils";
 
 interface UseViewPermissionsProps {
@@ -12,7 +12,7 @@ interface UseViewPermissionsProps {
 
 interface UseViewPermissionsReturn {
   hasFullAccess: boolean;
-  canEditOrDeleteView: (view: TableView) => boolean;
+  canEditOrDeleteView: (view: ResponsesView) => boolean;
 }
 
 export const useViewPermissions = ({
@@ -23,7 +23,7 @@ export const useViewPermissions = ({
   const hasFullAccess = user?.isSuperAdmin || permissionTypes?.includes(PERMISSION_TYPES.EDIT_FORM);
 
   // Helper function to check if user can edit/delete a specific view
-  const canEditOrDeleteView = (view: TableView): boolean => {
+  const canEditOrDeleteView = (view: ResponsesView): boolean => {
     // Super admin or full access can edit/delete any view
     if (hasFullAccess) {
       return true;

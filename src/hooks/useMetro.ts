@@ -13,7 +13,7 @@ export const useMetro = ({
   getResponsesForCurrentPage,
 }: {
   form: any;
-  getResponsesForCurrentPage: (form: any, arg: any, action: string) => void;
+  getResponsesForCurrentPage: (form: any) => void;
 }) => {
   const [showMetroPopup, setShowMetroPopup] = useState(false);
   const [showMetroInputsPopup, setShowMetroInputsPopup] = useState(false);
@@ -42,7 +42,7 @@ export const useMetro = ({
       if (ans?.responseIds?.length > 0) {
         showSuccessNotification(`${ans.responseIds.length} סונכרנו בהצלחה`);
       }
-      getResponsesForCurrentPage(theForm, null, "pushToMetro");
+      getResponsesForCurrentPage(theForm);
     } catch (error) {
       showErrorNotification("הסנכרון למטרו נכשל");
     } finally {

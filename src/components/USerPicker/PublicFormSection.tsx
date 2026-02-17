@@ -17,8 +17,6 @@ import {
 } from "./publicForm.styled";
 
 interface PublicFormSectionProps {
-  form: Form;
-  roles: any[];
   user: User | null;
   hasPermission: boolean;
   isPublic: boolean;
@@ -29,8 +27,6 @@ interface PublicFormSectionProps {
 }
 
 const PublicFormSection: React.FC<PublicFormSectionProps> = ({
-  form,
-  roles,
   user,
   hasPermission,
   isPublic,
@@ -70,10 +66,8 @@ const PublicFormSection: React.FC<PublicFormSectionProps> = ({
               </RoleLabel>
             ) : (
               <RolesAutocomplete
-                roles={roles}
                 isDisabled={!hasPermission}
                 handleRoleChange={handleLocalFormPermissionChange}
-                user={user}
               />
             )}
           </PermissionsRow>

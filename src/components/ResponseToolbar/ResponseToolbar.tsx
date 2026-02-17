@@ -1,4 +1,4 @@
-import { Portal, Snackbar, Stack } from "@mui/material";
+import { Box, Portal, Snackbar, Stack } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useExcel } from "../../hooks/useExcel";
 import { useMetro } from "../../hooks/useMetro";
@@ -8,6 +8,10 @@ import MetroSyncingPopup from "./Popups/MetroSyncingPopup";
 import MenusContainer from "./Menus/MenusContainer";
 import "./ResponseToolbar.scss";
 import styled from "styled-components";
+import { Add } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import { IPath } from "../../types/enums/global.enums";
+import { Button } from "@mui/material";
 
 export const HiddenInput = styled("input")`
   display: none !important;
@@ -24,6 +28,7 @@ function ResponseToolbar({
   setShouldRefreshPage,
 }) {
   const uploadRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   const [anchorElMoreActions, setAnchorElMoreActions] = useState<null | HTMLElement>(null);
   const [anchorElSourceType, setAnchorElSourceType] = useState<null | HTMLElement>(null);
@@ -35,8 +40,6 @@ function ResponseToolbar({
     setShowMetroInputsPopup,
     theForm,
     pushToMetro,
-    syncSourceToMetro,
-    editSource,
     copied,
     setCopied,
     metroInputsPopupLoading,
@@ -61,32 +64,12 @@ function ResponseToolbar({
     setShowErrorsFromExcelPopup,
     showErrorFileTooBig,
     excelErrorPopupLoading,
-    setExcelErrorPopupLoading,
     errorFromExcel,
     setErrorsFromExcel,
-    createExcelMold,
   } = useExcel({
     form: theForm,
     setShouldRefreshPage,
   });
-  const handleCloseMoreActions = () => {
-    setAnchorElMoreActions(null);
-    setAnchorElSourceType(null);
-  };
-
-  const handleAutomaticSource = () => {
-    if (theForm?.metro_access_url) {
-      editSource();
-    } else {
-      syncSourceToMetro();
-    }
-    handleCloseMoreActions();
-  };
-
-  const handleManualSource = () => {
-    setShowMetroInputsPopup(true);
-    handleCloseMoreActions();
-  };
 
   return (
     <Stack gap={1}>
@@ -116,7 +99,6 @@ function ResponseToolbar({
       {showMetroPopup && <MetroSyncingPopup setShowMetroPopup={setShowMetroPopup} />}
       {showMetroInputsPopup && (
         <ManualMetroSource
-          getResponsesForCurrentPage={getResponsesForCurrentPage}
           form={form}
           setShowMetroInputsPopup={setShowMetroInputsPopup}
           metroInputsPopupLoading={metroInputsPopupLoading}
@@ -130,7 +112,7 @@ function ResponseToolbar({
           copySchemaToClipboard={copySchemaToClipboard}
         />
       )}
-      {showImportFromExcelPopup && (
+      {/* {showImportFromExcelPopup && (
         <ImportFromExcelPopup
           form={theForm}
           setShouldRefreshPage={setShouldRefreshPage}
@@ -140,12 +122,10 @@ function ResponseToolbar({
           setShowErrorsFromExcelPopup={setShowErrorsFromExcelPopup}
           showErrorFileTooBig={showErrorFileTooBig}
           excelErrorPopupLoading={excelErrorPopupLoading}
-          setExcelErrorPopupLoading={setExcelErrorPopupLoading}
           errorFromExcel={errorFromExcel}
           setErrorsFromExcel={setErrorsFromExcel}
-          createExcelMold={createExcelMold}
         />
-      )}
+      )} */}
       <Portal>
         <Snackbar
           open={copied}
@@ -154,6 +134,17 @@ function ResponseToolbar({
           message="הסכמה הועתקה בהצלחה"
         />
       </Portal>
+      <Box>
+        <Button
+          color="primary"
+          variant="contained"
+          onClick={() => {
+            navigate(IPath.RESPONSE_CREATE.replace(":formId", form.id));
+          }}
+          startIcon={<Add />}>
+          הוספת תגובה חדשה
+        </Button>
+      </Box>
     </Stack>
   );
 }

@@ -4,7 +4,6 @@ import BasePopup from "../../BasePopup/BasePopup";
 import Loader from "./Loader";
 
 interface ManualMetroSourceProps {
-  getResponsesForCurrentPage: () => void;
   form: any;
   setShowMetroInputsPopup: (value: boolean) => void;
   metroInputsPopupLoading: boolean;

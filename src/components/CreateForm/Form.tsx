@@ -21,7 +21,7 @@ import useCustomFormFields from "../../hooks/Forms/useCustomFormFields";
 import FormSectionsList from "./FormSectionsList";
 import FormPropertyRenderer from "./FormPropertyRenderer";
 import { ResponseCount } from "../../types/interfaces/responses.types";
-import { createForm, getResponsesCount, updateForm } from "../../api";
+import { useCreateForm, getResponsesCount, useUpdateForm } from "../../api";
 import {
   generateNewFormFieldData,
   getUserName,
@@ -47,6 +47,7 @@ import {
   handleFieldMovedBetweenSections,
 } from "../../utils/sectionConditionUtils";
 import { RESERVED_FIELD_NAMES } from "../../consts/form";
+import queryClient from "../../api/queryClient";
 
 interface FormProps {
   formToEdit: any;
@@ -60,6 +61,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
 
   const [loading, setLoading] = useState<boolean>(false);
   const [currentFormId, setCurrentFormId] = useState<number>(formToEdit.id);
+  const [isFormCreated, setIsFormCreated] = useState(!!formToEdit?.id);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
   const [title, setTitle] = useState("");
   const [showTitleRedText, setShowTitleRedText] = useState(false);
@@ -78,6 +80,9 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   const [formFieldsDisplayErrors, setFormFieldsDisplayErrors] = useState<Map<string, string[]>>(
     new Map(),
   );
+
+  const { mutateAsync: mutateCreateFormAsync } = useCreateForm();
+  const { mutateAsync: mutateUpdateFormAsync } = useUpdateForm(currentFormId || 0);
 
   const [originalTitle, setOriginalTitle] = useState("");
   const [originalDescription, setOriginalDescription] = useState("");
@@ -309,19 +314,25 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     const userName = getUserName(currentUser.firstName, currentUser.lastName);
 
     // Check if this is a new form (no ID or no fields initially)
-    const isNewForm = !formToEdit.id || formToEdit.fields?.length === 0;
+    const isNewForm = !isFormCreated;
     let formId = formToEdit?.id || currentFormId;
 
     if (isNewForm) {
       const newFormStructure = getInitialNewForm(currentUser, title, description);
 
-      const createdForm = await createForm(newFormStructure);
-      // Update the form ID and formToEdit with the newly created form data
-      formId = createdForm.id;
-      setCurrentFormId(createdForm.id);
+      try {
+        const createdForm = await mutateCreateFormAsync(newFormStructure);
+        // Update the form ID and formToEdit with the newly created form data
+        formId = createdForm.id;
+        setCurrentFormId(createdForm.id);
 
-      // Update formToEdit with the created form data for the updateForm call
-      Object.assign(formToEdit, createdForm);
+        // Update formToEdit with the created form data for the updateForm call
+        Object.assign(formToEdit, createdForm);
+        setIsFormCreated(true);
+      } catch (error) {
+        showErrorNotification("יצירת הטופס נכשלה");
+        return;
+      }
     }
 
     const form: Partial<Form> = {
@@ -335,7 +346,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     };
 
     try {
-      await updateForm(formId, form, isUpdateMetro);
+      await mutateUpdateFormAsync({ id: formId, formData: form, isUpdateMetro });
     } catch (error) {
       showErrorNotification("עידכון הטופס נכשל");
     } finally {
@@ -346,24 +357,24 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   const getFormPropertyTitleTextField = (formField: FormField, index: number) => {
     const isNameValid =
       formFieldsNamesValidMap.get(index) !== undefined &&
-      formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
+        formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
         ? formFieldsNamesValidMap.get(index) && !formFieldsUniqueNamesValidMap.get(formField.name)
         : formFieldsNamesValidMap.get(index) !== undefined
-        ? formFieldsNamesValidMap.get(index)
-        : formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
-        ? !formFieldsUniqueNamesValidMap.get(formField.name)
-        : true;
+          ? formFieldsNamesValidMap.get(index)
+          : formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
+            ? !formFieldsUniqueNamesValidMap.get(formField.name)
+            : true;
 
     const isDisplayNameValid =
       formFieldsDisplayNamesValidMap.get(index) !== undefined &&
-      formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
+        formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
         ? formFieldsDisplayNamesValidMap.get(index) &&
-          !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
+        !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
         : formFieldsDisplayNamesValidMap.get(index) !== undefined
-        ? formFieldsDisplayNamesValidMap.get(index)
-        : formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
-        ? !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
-        : true;
+          ? formFieldsDisplayNamesValidMap.get(index)
+          : formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
+            ? !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
+            : true;
 
     const showNameError = !isNameValid;
     const showDisplayNameError = !isDisplayNameValid;
@@ -970,8 +981,8 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
             currentSectionId
               ? () => removeSection(currentSectionId)
               : hasUnsavedChanges && showButtonsOnPopup
-              ? () => saveForm(true)
-              : undefined
+                ? () => saveForm(true)
+                : undefined
           }
           onClose={
             hasUnsavedChanges && showButtonsOnPopup && !currentSectionId ? exitForm : undefined

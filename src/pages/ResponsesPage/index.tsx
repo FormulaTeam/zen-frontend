@@ -31,10 +31,12 @@ import deleteResponseImg from "../../images/delete_response.png";
 import { Form } from "../../utils/interfaces";
 import { useResponsesQuery } from "../../hooks/useResponsesQuery";
 import { useQueryClient } from "@tanstack/react-query";
+import { OperationsContainer } from "../../components/Responses/OperationsContainer";
 
 function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles }) {
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [currentViewConfig, setCurrentViewConfig] = useState<ViewColumn[] | undefined>();
+  const { id } = useParams();
 
   const {
     isLoading,
@@ -88,10 +90,9 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     mainSearch,
     setMainSearch,
     permissionTypes,
-    setPermissionTypes,
     deleteFormFromBtn,
     confirmBtnText,
-  } = useResponsesList({ setShouldRefreshPage, user, currentViewConfig });
+  } = useResponsesList({ setShouldRefreshPage, currentViewConfig, user });
 
   // Quick Edit hook
   const {
@@ -118,7 +119,6 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     setShouldRefreshPage,
   });
 
-  const { id } = useParams();
   const { isSuperAdmin } = useSuperAdmin();
   const {
     initializeFormData,
@@ -149,7 +149,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     }
   }, [responsesData]);
 
-  const getResponsesForCurrentPage = async (form: Form, permissionTypes1: number[]) => {
+  const getResponsesForCurrentPage = async (form: Form) => {
     if (!form?.id) return;
     await queryClient.invalidateQueries({ queryKey: ["responses", form.id] });
   };
@@ -194,9 +194,8 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
       id,
       roles,
       user,
-      isSuperAdmin as boolean,
+      !!isSuperAdmin,
       setForm,
-      setPermissionTypes,
       setCurrentFilter,
       getResponsesForCurrentPage,
       setFirstRun,
@@ -206,7 +205,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
 
   useEffect(() => {
     if (form && permissionTypes.length > 0) {
-      createTableColumns(form, permissionTypes, currentViewConfig);
+      createTableColumns(form, permissionTypes);
     }
   }, [responsesHaveParents, currentViewConfig, form, permissionTypes, fieldOptions]);
 
@@ -363,9 +362,8 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
         handleRowSelectionChange(newSelection);
       }
     },
-    getResponseDetails,
+    // getResponseDetails,
     responsesWithChildren,
-    responsesHaveParents,
     currentViewConfig,
   });
 
@@ -377,8 +375,8 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     <PageWrapper>
       <MainContentWrapper>
         <TopSection>
-          <Header form={form} />
-          <ResponseToolbar
+          <Header />
+          {/* <ResponseToolbar
             deleteAllResponsesConfirmation={deleteAllResponsesConfirmation}
             deleteFormFromBtn={deleteFormFromBtn}
             form={form}
@@ -387,10 +385,10 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
             setShowSharePopup={setShowSharePopup}
             permissionTypes={permissionTypes}
             setShouldRefreshPage={setShouldRefreshPage}
-          />
+          /> */}
         </TopSection>
         <SearchInfo search={search} setSearch={setSearch} allResponsesCount={allResponsesCount} />
-        {/* <OperationsContainer
+        <OperationsContainer
           user={user}
           form={form}
           allResponsesCount={allResponsesCount}
@@ -415,7 +413,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
           hasUnsavedChanges={hasUnsavedChanges}
           isEditButtonDisabled={isEditButtonDisabled}
           editButtonDisabledReason={editButtonDisabledReason}
-        /> */}
+        />
         <ContentContainer>
           <MainContent $sidePanelOpen={isSidePanelOpen}>
             {isLoadingTable ? <Loader /> : <MaterialReactTable table={responsesTable} />}
@@ -425,8 +423,6 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
         {showSharePopup && (
           <UserPicker
             form={form}
-            roles={roles}
-            currentUser={user}
             closeSharePopupAndRefreshForm={(users, updatedForm) => {
               // if we got updated form from UserPicker, use it to update the form state, otherwise use existing form and just update users
               const formToUpdate = updatedForm || { ...form, users };
@@ -458,7 +454,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
       <SidePanel
         isOpen={isSidePanelOpen}
         onClose={() => setIsSidePanelOpen(false)}
-        title="תצוגת טבלה"
+        title="ניהול תצוגות"
         form={form}
         user={user}
         onSaveView={handleSaveView}

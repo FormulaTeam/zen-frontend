@@ -5,7 +5,7 @@ import { Box, Divider, Icon, Tooltip, useTheme } from "@mui/material";
 import {
   formIconsNamesMap,
   PERMISSION_TYPES,
-  searchResponsesWithFilterAndExportToExcel,
+  getResponsesAndExportToExcel,
   showErrorNotification,
   showSuccessNotification,
 } from "../../utils/utils";
@@ -63,7 +63,7 @@ const FormCard = ({
     let filter: Filter = {
       form_id: form.id,
     };
-    await searchResponsesWithFilterAndExportToExcel(form, filter);
+    await getResponsesAndExportToExcel(form);
     setShowLoadingExportBtn(false);
     setLoadingForFormId(0);
   };
@@ -111,24 +111,24 @@ const FormCard = ({
   };
 
   return (
-    <StyledCard sx={{ backgroundcolor: theme.palette.background.paper }}>
+    <StyledCard sx={{ backgroundcolor: theme.palette.background.paper }} data-testid={`form-id-${form.id}`} className="form-card">
       <ItemImgAndTitles>
         <ItemTitles>
           <ItemTitleAndNum>
             <Box sx={{ display: "flex", alignItems: "center", overflow: "hidden" }}>
               {getIcon(form?.icon)}
-              <ItemTitle onClick={(event) => goToResponsesPage(event, form)} title={form.name}>
+              <ItemTitle onClick={(event) => goToResponsesPage(event, form)} title={form.name} className="form-title">
                 {form.name}
               </ItemTitle>
             </Box>
-            <ItemResponsesNum>
+            <ItemResponsesNum className="form-responses-count">
               <CustomIcon iconName="comments" />
               {form?.numberOfResponses || 0}
             </ItemResponsesNum>
           </ItemTitleAndNum>
 
           <DescriptionDiv>
-            <ItemDescription>{form.description ? form.description : "-"}</ItemDescription>
+            <ItemDescription className="form-description">{form.description ? form.description : "-"}</ItemDescription>
           </DescriptionDiv>
 
           <CardCreationDetails form={form} />
@@ -151,6 +151,7 @@ const FormCard = ({
             <Tooltip title="עריכת טופס">
               <div>
                 <CustomIcon
+                  testClassName="form-edit-button"
                   forcePointer
                   iconName="pencil"
                   onClick={() =>
@@ -161,7 +162,7 @@ const FormCard = ({
             </Tooltip>
             {form?.fields?.length > 0 &&
               (form?.numberOfResponses > 0 &&
-              (permissionTypes?.includes(PERMISSION_TYPES.EXPORT_FORM) || isSuperAdmin) ? (
+                (permissionTypes?.includes(PERMISSION_TYPES.EXPORT_FORM) || isSuperAdmin) ? (
                 <Tooltip title={"ייצוא נתונים לאקסל"}>
                   {showLoadingExportBtn && loadingForFormId === form.id ? (
                     <LoadingSyncIconBox>
@@ -176,6 +177,7 @@ const FormCard = ({
                       <CustomIcon
                         iconName={"excelGray"}
                         style={{ height: "17px" }}
+                        testClassName="form-export-button"
                         onClick={() => {
                           setShowLoadingExportBtn(true);
                           setLoadingForFormId(form.id);
@@ -188,7 +190,7 @@ const FormCard = ({
                 <Tooltip
                   title={<span className="tooltip-span">לא ניתן לייצא טופס ללא תגובות</span>}>
                   <div>
-                    <CustomIcon iconName={"excelGray"} style={{ height: "17px" }} />
+                    <CustomIcon iconName={"excelGray"} style={{ height: "17px" }} testClassName="form-export-button" />
                   </div>
                 </Tooltip>
               ))}
@@ -199,6 +201,7 @@ const FormCard = ({
                   <div>
                     <CustomIcon
                       iconName="syncGray"
+                      testClassName="sync-button"
                       forcePointer
                       onClick={() => pushFormToMetro(form)}
                     />
@@ -209,27 +212,28 @@ const FormCard = ({
             {((form?.fields?.length > 0 &&
               permissionTypes?.includes(PERMISSION_TYPES.SHARE_FORM)) ||
               isSuperAdmin) && (
-              <Tooltip title="שיתוף טופס">
-                <div>
-                  <CustomIcon
-                    forcePointer
-                    iconName="share"
-                    style={{ height: "14px", opacity: "0.5" }}
-                    onClick={() => {
-                      setFormToEdit(form);
-                      setShowSharePopup(true);
-                    }}
-                  />
-                </div>
-              </Tooltip>
-            )}
+                <Tooltip title="שיתוף טופס">
+                  <div>
+                    <CustomIcon
+                      forcePointer
+                      iconName="share"
+                      testClassName="form-share-button"
+                      style={{ height: "14px", opacity: "0.5" }}
+                      onClick={() => {
+                        setFormToEdit(form);
+                        setShowSharePopup(true);
+                      }}
+                    />
+                  </div>
+                </Tooltip>
+              )}
           </ItemIconsDiv>
         )}
 
         <ItemBtnsDiv>
           {form?.fields?.length > 0 &&
             (permissionTypes?.includes(PERMISSION_TYPES.CREATE_RESPONSE) || isSuperAdmin) && (
-              <ItemButton
+              <ItemButton className="form-add-response-button"
                 onClick={() => navigate(`/response/create/${form.id}`)}
                 sx={{
                   backgroundColor: theme.palette.primary.main,
@@ -248,21 +252,21 @@ const FormCard = ({
           {(permissionTypes?.includes(PERMISSION_TYPES.VIEW_RESPONSE) ||
             permissionTypes?.includes(PERMISSION_TYPES.VIEW_YOUR_RESPONSES) ||
             isSuperAdmin) && (
-            <ItemButton
-              onClick={(event) => goToResponsesPage(event, form)}
-              sx={{
-                backgroundColor: theme.palette.primary.main,
-                color: "white",
-                borderRadius: "15px",
-                "&:hover": {
-                  backgroundColor: "white",
-                  color: theme.palette.primary.main,
-                  outline: "1px solid " + theme.palette.primary.main,
-                },
-              }}>
-              צפייה בתגובות
-            </ItemButton>
-          )}
+              <ItemButton className="form-watch-responses-button"
+                onClick={(event) => goToResponsesPage(event, form)}
+                sx={{
+                  backgroundColor: theme.palette.primary.main,
+                  color: "white",
+                  borderRadius: "15px",
+                  "&:hover": {
+                    backgroundColor: "white",
+                    color: theme.palette.primary.main,
+                    outline: "1px solid " + theme.palette.primary.main,
+                  },
+                }}>
+                צפייה בתגובות
+              </ItemButton>
+            )}
         </ItemBtnsDiv>
       </ItemBottomDiv>
     </StyledCard>

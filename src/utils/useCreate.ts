@@ -3,6 +3,7 @@ import apiClient from "../api/config";
 
 interface UseCreateOptions<TData = unknown, TResponse = unknown> {
   endpoint: string;
+  headers?: Record<string, string>;
   mutationOptions?: Omit<
     UseMutationOptions<TResponse, Error, TData, unknown>,
     "mutationFn" | "mutationKey"
@@ -15,6 +16,7 @@ interface UseCreateOptions<TData = unknown, TResponse = unknown> {
 // Generic useCreate hook for POST requests
 export function useCreate<TData = unknown, TResponse = unknown>({
   endpoint,
+  headers,
   mutationOptions,
   mutationKey = [endpoint, "create"],
   axiosConfig,

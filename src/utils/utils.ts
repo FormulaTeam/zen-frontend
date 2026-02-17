@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as XLSX from "sheetjs-style";
 import * as FileSaver from "file-saver";
 import moment from "moment";
-import { searchResponses } from "../api";
+import { getResponses, searchResponses } from "../api";
 import {
   CustomFormField,
   FieldTypeIds,
@@ -101,6 +101,8 @@ export const RESPONSE_ACCESS_PERMISSIONS = [
 ];
 
 export type LegacyPermission = (typeof PERMISSION_TYPES)[keyof typeof PERMISSION_TYPES];
+
+export const allLegacyPermissions: LegacyPermission[] = Object.values(PERMISSION_TYPES);
 
 export const CREATE_RESPONSE_PERMISSIONS = [PERMISSION_TYPES.CREATE_RESPONSE];
 // human labels for debug/admin UI
@@ -354,8 +356,9 @@ export const cellLinkStyle = {
 
 export const HEBREW_TITLES = {
   isSynchronized: "סונכרן",
-  edited: "השתנה",
+  edited: "תאריך שינוי",
   edited_by: 'השתנה ע"י',
+  id: "מזהה",
 };
 
 function preferredOrder(obj, order) {
@@ -368,20 +371,23 @@ function preferredOrder(obj, order) {
   return newObject;
 }
 
-export const searchResponsesWithFilterAndExportToExcel = async (form: Form, filter: Filter) => {
+export const getResponsesAndExportToExcel = async (form: Form) => {
   try {
-    let responses: any = await searchResponses(filter);
-    if (responses && responses.responses) {
-      exportToExcel(responses.responses, form);
+    let responses: ResponseForm[] = await getResponses({ form_id: form.id });
+
+    if (responses?.length > 0) {
+      exportToExcel(responses, form);
     }
+
+    showSuccessNotification(NotificationTexts.SuccessfulExportToExcel);
   } catch (error) {
-    showErrorNotification(NotificationTexts.FailedLoadingResponses);
+    showErrorNotification(NotificationTexts.FailedExportToExcel);
     console.log(error);
   }
 };
 
 /** create excel file with only titles based on the form fields */
-export function createExcelMold(form) {
+export function createExcelMold(form: Form) {
   let formFields = form.fields;
   let formFieldsIds: string[] = [];
   let data: any[] = [];
@@ -392,16 +398,14 @@ export function createExcelMold(form) {
 
   //add column for each field and save fields order with arr of names
   let names: string[] = [];
-  formFields.forEach((field, j) => {
-    if (field.typeId === FieldTypeIds.form) {
-      // If the field is of type 'form', we skip it as it doesn't have a value in the response
-      return;
+  formFields.forEach((field) => {
+    if (field.typeId !== FieldTypeIds.form) {
+      data[0] = {
+        ...data[0],
+        [field.displayName]: "",
+      };
+      names.push(field.displayName);
     }
-    data[0] = {
-      ...data[0],
-      [field.displayName]: "",
-    };
-    names.push(field.displayName);
   });
 
   const fileType =
@@ -474,6 +478,7 @@ export function getFieldType(field: FormField) {
     }
   }
 }
+
 export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
   // Sort responses by id in ascending order to maintain consistent order
   const sortedResponses = [...responsesArr].sort((a, b) => (a.id || 0) - (b.id || 0));
@@ -482,9 +487,9 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
   const formFieldsIds: string[] = [];
   const data: any[] = [];
 
-  sortedResponses?.forEach((element, i) => {
+  sortedResponses?.forEach((element, index) => {
     //add columns isSynchronized, edited_by, edited
-    data[i] = {
+    data[index] = {
       [HEBREW_TITLES.isSynchronized]: element.pushed_to_metro
         ? moment(element.pushed_to_metro).format("DD.MM.YY")
         : "לא סונכרן",
@@ -494,21 +499,21 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
 
     //add column for each field and save fields order with arr of names
     let names: string[] = [];
-    formFields.forEach((field, j) => {
+    formFields.forEach((field) => {
       if (field.typeId === FieldTypeIds.form) {
-        delete data[i][field.displayName];
+        delete data[index][field.displayName];
         return;
       }
-      data[i] = {
-        ...data[i],
+      data[index] = {
+        ...data[index],
         [field.displayName]: "",
       };
       names.push(field.displayName);
     });
 
     //get column with order (first isSynchronized, then fields. then edited_by, then edited)
-    data[i] = preferredOrder(
-      data[i],
+    data[index] = preferredOrder(
+      data[index],
       [HEBREW_TITLES.isSynchronized]
         .concat(names)
         .concat([HEBREW_TITLES.edited_by, HEBREW_TITLES.edited]),
