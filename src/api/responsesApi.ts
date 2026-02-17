@@ -40,11 +40,11 @@ export const getResponses = async (filter?: Filter): Promise<ResponseForm[]> => 
       console.error("Form ID is required to fetch responses.");
       return [];
     }
-    // const response = await apiClient.get<ResponseForm[]>(
-    //   `/responses/get-responses?form_id=${filter?.form_id}`,
-    //   { params },
-    // );
-    return [];
+    const response = await apiClient.get<ResponseForm[]>(
+      `/responses/get-responses?form_id=${filter?.form_id}`,
+      { params },
+    );
+    return response?.data ?? [];
   } catch (error) {
     console.error("Failed to fetch responses:", error);
     throw error;
@@ -274,7 +274,7 @@ export const useGetResponsesRows = ({ filter }: { filter?: Filter }) => {
     endpoint: `/responses/get-rows`,
     queryKey: () => ["rows", filter],
     params: filter,
-    // queryOptions: { enabled: !!formId },
+    queryOptions: { enabled: !!filter?.form_id },
   });
 };
 

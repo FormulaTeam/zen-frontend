@@ -20,7 +20,15 @@ import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "../../../components/formInForm/ZoomCell";
 import { Row } from "../../../utils/interfaces";
-import { ContentContainer, MainContent, StyledDataGrid, ResponsesAmountText, ResponsesAmountBox, ExpandIconBox, SyncStatusIconBox } from "../styled";
+import {
+  ContentContainer,
+  MainContent,
+  StyledDataGrid,
+  ResponsesAmountText,
+  ResponsesAmountBox,
+  ExpandIconBox,
+  SyncStatusIconBox,
+} from "../styled";
 
 interface ResponsesTableProps {
   isInEditMode: boolean;
@@ -40,35 +48,37 @@ export const ResponsesTable = ({
   const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
   const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
 
-  const handleCellClick = useCallback((params: GridCellParams, event: any): void => {
-    // Makes clicking on the checkbox possible even in edit mode
-    if (params.field === "__check__" || !isInEditMode || !params.isEditable) {
-      return;
-    }
-
-    if (isInEditMode && !params.isEditable) {
-      event?.preventDefault?.();
-      event?.stopPropagation?.();
-      if (event) {
-        event.defaultMuiPrevented = true;
+  const handleCellClick = useCallback(
+    (params: GridCellParams, event: any): void => {
+      // Makes clicking on the checkbox possible even in edit mode
+      if (params.field === "__check__" || !isInEditMode || !params.isEditable) {
+        return;
       }
-      return;
-    }
 
-
-    // changes to in edit mode, set the local rows to the response rows
-    onCellEditStart();
-
-    setCellModesModel((prevModel: GridCellModesModel) => {
-      return {
-        ...prevModel,
-        [params.id]: {
-          ...prevModel[params.id],
-          [params.field]: { mode: GridCellModes.Edit }
+      if (isInEditMode && !params.isEditable) {
+        event?.preventDefault?.();
+        event?.stopPropagation?.();
+        if (event) {
+          event.defaultMuiPrevented = true;
         }
-      };
-    });
-  }, [isInEditMode, onCellEditStart]);
+        return;
+      }
+
+      // changes to in edit mode, set the local rows to the response rows
+      onCellEditStart();
+
+      setCellModesModel((prevModel: GridCellModesModel) => {
+        return {
+          ...prevModel,
+          [params.id]: {
+            ...prevModel[params.id],
+            [params.field]: { mode: GridCellModes.Edit },
+          },
+        };
+      });
+    },
+    [isInEditMode, onCellEditStart],
+  );
 
   const handleCellModesModelChange = useCallback((newModel: GridCellModesModel): void => {
     setCellModesModel(newModel);
@@ -88,15 +98,16 @@ export const ResponsesTable = ({
   );
 
   // disable double click to edit when not in edit mode
-  const handleCellDoubleClick = useCallback((params: GridCellParams, event: any): void => {
-    if (!isInEditMode) {
-      event.defaultMuiPrevented = true;
-    }
-  }, [isInEditMode]);
-
-  const hasParentResponses: boolean = rows.some(
-    (row: Row) => !!(row?.parentResponse)
+  const handleCellDoubleClick = useCallback(
+    (params: GridCellParams, event: any): void => {
+      if (!isInEditMode) {
+        event.defaultMuiPrevented = true;
+      }
+    },
+    [isInEditMode],
   );
+
+  const hasParentResponses: boolean = rows.some((row: Row) => !!row?.parentResponse);
 
   const toggleRowExpanded = useCallback((rowId: string): void => {
     setExpandedRowIds((currentExpandedIds: Set<string>) => {
@@ -115,7 +126,7 @@ export const ResponsesTable = ({
     setExpandedRowIds((currentExpandedIds) =>
       currentExpandedIds.size === rows.length
         ? new Set()
-        : new Set(rows.map((row: Row) => String(row.id)))
+        : new Set(rows.map((row: Row) => String(row.id))),
     );
   }, [rows]);
 
@@ -123,13 +134,11 @@ export const ResponsesTable = ({
     return expandedRowIds.has(String(row.id));
   };
 
-
   const SyncStatusIcon: React.FC<{ pushedToMetro?: string | null }> = ({ pushedToMetro }) => (
     <SyncStatusIconBox>
       {pushedToMetro ? <CloudDoneIcon fontSize="small" /> : <CloudOffIcon fontSize="small" />}
     </SyncStatusIconBox>
   );
-
 
   const renderRowExpandIcon = (row: Row): JSX.Element => {
     const isExpanded: boolean = isRowExpanded(row);
@@ -142,8 +151,7 @@ export const ResponsesTable = ({
             onClick={(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
               event.stopPropagation();
               toggleRowExpanded(String(row.id));
-            }}
-          >
+            }}>
             {isExpanded ? (
               <KeyboardArrowUpIcon fontSize="small" />
             ) : (
@@ -164,8 +172,7 @@ export const ResponsesTable = ({
           onClick={(e) => {
             e.stopPropagation();
             toggleAllExpanded();
-          }}
-        >
+          }}>
           {allExpanded ? (
             <KeyboardDoubleArrowUpIcon fontSize="small" />
           ) : (
@@ -176,16 +183,17 @@ export const ResponsesTable = ({
     );
   };
 
-
   const getFormColumns = () => {
     const baseFormColumns = Array.isArray(form?.columns)
       ? form?.columns.map((col: any) => ({
-        flex: (col.field === "id" || col.field === "_id" || col.field === "responseId") ? 0 : 2,
-        minWidth: (col.field === "id" || col.field === "_id" || col.field === "responseId") ? 120 : 200,
-        width: (col.field === "id" || col.field === "_id" || col.field === "responseId") ? 150 : 400,
-        ...col,
-        editable: col.field !== "id" && col.field !== "_id" && col.field !== "responseId",
-      }))
+          flex: col.field === "id" || col.field === "_id" || col.field === "responseId" ? 0 : 2,
+          minWidth:
+            col.field === "id" || col.field === "_id" || col.field === "responseId" ? 120 : 200,
+          width:
+            col.field === "id" || col.field === "_id" || col.field === "responseId" ? 150 : 400,
+          ...col,
+          editable: col.field !== "id" && col.field !== "_id" && col.field !== "responseId",
+        }))
       : [];
 
     const syncColumn = {
@@ -196,9 +204,7 @@ export const ResponsesTable = ({
       editable: false,
       align: "center" as const,
       headerAlign: "center" as const,
-      renderCell: (params: any) => (
-        <SyncStatusIcon pushedToMetro={params.row?.pushed_to_metro} />
-      ),
+      renderCell: (params: any) => <SyncStatusIcon pushedToMetro={params.row?.pushed_to_metro} />,
     };
 
     const expandColumn = {
@@ -236,14 +242,14 @@ export const ResponsesTable = ({
 
     const parentResponseColumns = hasParentResponses
       ? [
-        {
-          field: "parentResponse",
-          headerName: "תגובת אב",
-          flex: 1,
-          editable: false,
-          renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
-        },
-      ]
+          {
+            field: "parentResponse",
+            headerName: "תגובת אב",
+            flex: 1,
+            editable: false,
+            renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
+          },
+        ]
       : [];
 
     return [
@@ -255,7 +261,6 @@ export const ResponsesTable = ({
       ...parentResponseColumns,
     ];
   };
-
 
   const CustomFooter = (): JSX.Element => {
     return (
@@ -270,13 +275,12 @@ export const ResponsesTable = ({
     );
   };
 
-
   return (
     <ContentContainer>
       <MainContent>
         <StyledDataGrid
           apiRef={apiRef}
-          className={isInEditMode ? 'MuiDataGrid-root--edit-mode' : ''}
+          className={isInEditMode ? "MuiDataGrid-root--edit-mode" : ""}
           isRowSelectable={({ row }) => true}
           disableColumnMenu={isInEditMode}
           disableColumnSorting={isInEditMode}
@@ -297,7 +301,11 @@ export const ResponsesTable = ({
           pagination
           checkboxSelection
           disableRowSelectionOnClick
-          getRowClassName={(params) => params.indexRelativeToCurrentPage % 2 === 0 ? 'MuiDataGrid-row--even' : 'MuiDataGrid-row--odd'}
+          getRowClassName={(params) =>
+            params.indexRelativeToCurrentPage % 2 === 0
+              ? "MuiDataGrid-row--even"
+              : "MuiDataGrid-row--odd"
+          }
           getRowId={(row) => row?.id}
           localeText={{
             ...heIL.components.MuiDataGrid.defaultProps.localeText,
