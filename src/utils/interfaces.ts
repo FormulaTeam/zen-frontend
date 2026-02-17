@@ -180,7 +180,7 @@ export type NewForm = Omit<Form, "id" | "created" | "edited" | "permissions">;
 export interface UpdateFormPayload {
   id: number;
   formData: Partial<Form>;
-  
+
   isUpdateMetro?: boolean;
 }
 
@@ -344,6 +344,8 @@ export enum NotificationTexts {
   UpdateButSyncFaild = "התגובה עודכנה אך הסנכרון נכשל",
   DeletedSuccessfully = "התגובה נמחקה בהצלחה",
   DeletedFailed = "התגובה לא נמחקה",
+  SuccessfulExportToExcel = "הייצוא לאקסל בוצע בהצלחה",
+  FailedExportToExcel = "הייצוא לאקסל נכשל",
 }
 
 export enum fieldConnectionTooltipTexts {

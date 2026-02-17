@@ -336,7 +336,7 @@ export const useTableColumns = (
     const addSystemEditedColumn = (): MRT_ColumnDef<MRT_RowData> => {
       return {
         id: "edited",
-        header: "השתנה",
+        header: "תאריך שינוי",
         accessorKey: "edited",
         enableGrouping: false,
         grow: true,

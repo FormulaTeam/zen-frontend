@@ -150,7 +150,7 @@ function MainPage({
     <Box className="main-page-container" style={{ backgroundColor: theme.palette.white }}>
       <Box className="tabs-and-select-div">
         <RowBox>
-          <StyledTypography>{`היי ${user.firstName}`}</StyledTypography>
+          <StyledTypography id="greeting">{`היי ${user.firstName}`}</StyledTypography>
           <img src={wavingHand} />
         </RowBox>
 
@@ -161,9 +161,9 @@ function MainPage({
             onChange={handleTabValueChange}
             aria-label="tabs for forms"
             sx={{ borderBottom: `1px solid ${theme.palette.white}`, direction: "rtl" }}>
-            <Tab label="הטפסים שאני יצרתי" sx={{ fontSize: "20px" }} />
-            <Tab label="הטפסים ששותפו איתי" sx={{ fontSize: "20px" }} />
-            {isSuperAdmin && <Tab label="כל הטפסים" sx={{ fontSize: "20px" }} />}
+            <Tab label="הטפסים שאני יצרתי" sx={{ fontSize: "20px" }} data-testid="my-forms-button" />
+            <Tab label="הטפסים ששותפו איתי" sx={{ fontSize: "20px" }} data-testid="shared-forms-button" />
+            {isSuperAdmin && <Tab label="כל הטפסים" sx={{ fontSize: "20px" }} data-testid="all-forms-button" />}
           </Tabs>
         </Box>
 
@@ -173,11 +173,13 @@ function MainPage({
             setPage={setPage}
             getSortFilter={getSortFilter}
             setCurrentFilter={setCurrentFilter}
+            dataTestId="sort-forms"
           />
           <Tooltip title="סל המיחזור">
             <IconButton
               sx={{ color: theme.palette.primary.main }}
-              onClick={() => navigate("/deleted-forms")}>
+              onClick={() => navigate("/deleted-forms")}
+              data-testid="recycle-bin-button">
               <AutoDelete />
             </IconButton>
           </Tooltip>

@@ -1,4 +1,4 @@
-import { Box, Button, FormControl, Select } from "@mui/material";
+import { Box, Button, FormControl, Select, Typography } from "@mui/material";
 import styled from "styled-components";
 
 export const Container = styled(Box)`
@@ -57,6 +57,7 @@ export const LoadingBtnBox = styled(Box)<LoadingBtnBoxProps>`
 // View Management Styled Components
 export const ViewControlsContainer = styled(Box)`
   display: flex;
+  justify-content: end;
   align-items: center;
   gap: 16px;
 `;
@@ -81,11 +82,66 @@ export const ViewMenuItem = styled(Box)`
 `;
 
 export const ViewManageButton = styled(SmallRoundButton)`
-  &:disabled {
-    opacity: 0.6;
-  }
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  width: auto;
+  margin: 5px 0;
+  padding: 6px 14px;
+
+  font-size: 1rem;
+  font-weight: 500;
 
   .MuiSvgIcon-root {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+export const EmptyViewsState = styled(Box)`
+  padding: 20px 18px;
+  display: flex;
+  margin: 0 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+`;
+
+export const EmptyViewsTitle = styled(Box)`
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #111827;
+`;
+
+export const EmptyViewsSubtitle = styled(Box)`
+  font-size: 1.15rem;
+  color: #6b7280;
+  line-height: 1.5;
+`;
+
+export const CreateFirstViewButton = styled(Button)`
+  margin-top: 10px;
+  font-size: 1rem;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 6px 18px;
+
+  .MuiButton-endIcon,
+  .MuiButton-startIcon {
+    margin-inline-start: 8px;
+    margin-inline-end: 8px;
+  }
+
+  &:hover {
+    box-shadow: 0 10px 20px rgba(25, 118, 210, 0.45);
+  }
+
+  &:active {
+    box-shadow: 0 4px 10px rgba(25, 118, 210, 0.3);
   }
 `;

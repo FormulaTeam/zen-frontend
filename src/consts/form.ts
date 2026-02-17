@@ -1,4 +1,3 @@
-
 export const RESERVED_FIELD_NAMES = [
   "id",
   "data",
