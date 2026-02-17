@@ -187,8 +187,8 @@ const OperationsContainer = ({
               isQuickEditMode
                 ? "שמירה ויציאה מעריכה מהירה"
                 : isEditButtonDisabled
-                ? editButtonDisabledReason
-                : "עריכה מהירה"
+                  ? editButtonDisabledReason
+                  : "עריכה מהירה"
             }>
             <div>
               <IconButton
