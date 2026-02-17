@@ -21,7 +21,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useViewControls } from "../../../hooks/useViewControls";
 import { CustomIcon } from "../../../theme/icons";
-import { PERMISSION_TYPES, searchResponsesWithFilterAndExportToExcel } from "../../../utils/utils";
+import { PERMISSION_TYPES, getResponsesAndExportToExcel } from "../../../utils/utils";
 
 import AlertMsg from "../../../components/AlertMsg/AlertMsg";
 import LoadingOverlay from "../../../components/LoadingOverlay/LoadingOverlay";
@@ -39,8 +39,8 @@ import {
 import { useFormStore } from "../stores/form.store";
 import { PermissionGate } from "../PermissionGate";
 import { Filter } from "../../../utils/interfaces";
-import { TableView } from "../../../types/interfaces/tableViews.types";
 import { useResponsesList } from "../../../hooks/useResponsesList";
+import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 
 const OperationsContainer = ({
   rowSelection,
@@ -75,7 +75,7 @@ const OperationsContainer = ({
   isEditButtonDisabled?: boolean;
   editButtonDisabledReason?: string;
   // View management props
-  allViews: TableView[];
+  allViews: ResponsesView[];
   selectedViewId: string | number;
   handleViewDropdownChange: (event: any) => void;
   setIsSidePanelOpen?: (isOpen: boolean) => void;
@@ -287,7 +287,7 @@ const OperationsContainer = ({
               }>
               <SmallRoundButton
                 backgroundcolor={theme.palette.success.main}
-                onClick={() => searchResponsesWithFilterAndExportToExcel(form, currentFilter)}
+                onClick={() => getResponsesAndExportToExcel(form)}
                 disabled={isQuickEditMode || !(form?.fields?.length > 0) || allResponsesCount === 0}
                 variant="contained">
                 <CustomIcon iconName="excel" forcePointer />
