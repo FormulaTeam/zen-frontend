@@ -6,11 +6,11 @@ export function getResponseFieldStringValue(field: FormField, value: any) {
   if ([undefined, null].includes(value)) return "";
   switch (field.typeId) {
     case FieldTypeIds.longText:
-    case FieldTypeIds.smallText:
+    case FieldTypeIds.shortText:
       return value;
     case FieldTypeIds.number:
       return value.toString();
-    case FieldTypeIds.hour:
+    case FieldTypeIds.time:
       if (value && value !== "") {
         const validTimeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/;
         // Check if it's already in the correct format

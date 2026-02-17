@@ -10,6 +10,7 @@ import {
   FieldValue,
   LinkValue,
   LocationValue,
+  Row,
 } from "../utils/interfaces";
 import { ResponseCount } from "../types/interfaces/responses.types";
 import { useDelete } from "../utils/useDelete";
@@ -17,6 +18,7 @@ import queryClient from "./queryClient";
 import { useCreate } from "../utils/useCreate";
 import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
+import { useMutation } from "@tanstack/react-query";
 import { useUpdate } from "../utils/useUpdate";
 
 /**
@@ -248,7 +250,7 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
 };
 
 export const useGetResponsesRows = ({ filter }: { filter?: Filter }) => {
-  return useFetch<Filter, { [key: string]: string }[]>({
+  return useFetch<Filter, Row[]>({
     endpoint: `/responses/get-rows`,
     queryKey: () => ["rows", filter],
     params: filter,
@@ -281,6 +283,23 @@ export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
         queryClient.invalidateQueries({ queryKey: [formId] });
         queryClient.invalidateQueries({ queryKey: ["responses"] });
       },
+    },
+  });
+};
+
+export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
+  return useMutation({
+    mutationFn: async (responses: Array<{ id: number; responseData: Partial<ResponseForm> }>) => {
+      const responsesPromises = responses.map(({ id, responseData }) => {
+        return apiClient.put<ResponseForm>(`/responses/edit/${formId}/${id}`, responseData);
+      });
+      const responsesResults = await Promise.all(responsesPromises);
+      return responsesResults.map(response => response.data);
+    },
+    mutationKey: ["batch-update-responses", formId],
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses"] });
+      queryClient.invalidateQueries({ queryKey: ["rows"] });
     },
   });
 };
@@ -335,4 +354,31 @@ export const useUpdateResponse = (formId: number, id: number) => {
       },
     },
   });
+};
+
+/**
+ * Fetch rows for a form with optional query parameters.
+ *
+ * @param filter - Optional filter parameters for querying rows.
+ * @returns A promise that resolves to an array of rows.
+ */
+export const getResponsesRows = async ({ filter }: { filter?: Filter }): Promise<Row[]> => {
+  try {
+    if (!filter?.form_id) {
+      console.error("Form ID is required to fetch rows.");
+      return [];
+    }
+    const params = {
+      query: filter?.query ? JSON.stringify(filter.query) : undefined,
+      sortBy: filter?.sortBy,
+      orderBy: filter?.orderBy,
+      pageSize: filter?.pageSize,
+      pageNumber: filter?.pageNumber,
+    };
+    const response = await apiClient.get<Row[]>(`/responses/get-rows?form_id=${filter.form_id}`, { params });
+    return response?.data || [];
+  } catch (error) {
+    console.error("Failed to fetch rows:", error);
+    throw error;
+  }
 };

@@ -221,8 +221,8 @@ export const useResponseState = (
                   const newValue = childField.multiSelect
                     ? validValues
                     : validValues.length > 0
-                    ? validValues[0]
-                    : "";
+                      ? validValues[0]
+                      : "";
 
                   newFormFieldsValuesMap.set(childUniqueId, newValue);
 
@@ -305,7 +305,7 @@ export const useResponseState = (
         const excludedTypeIds: number[] = [
           FieldTypeIds.link,
           FieldTypeIds.date,
-          FieldTypeIds.hour,
+          FieldTypeIds.time,
           FieldTypeIds.location,
           FieldTypeIds.checkbox,
           FieldTypeIds.number,
@@ -391,7 +391,7 @@ export const useResponseState = (
         }
 
         //שעה
-        else if (field.typeId === FieldTypeIds.hour) {
+        else if (field.typeId === FieldTypeIds.time) {
           //if no value and not required - is valid
           if (!val && !field.required) {
             newFormFieldsValidMap.set(uniqueId, true);

@@ -18,7 +18,7 @@ import "slick-carousel/slick/slick-theme.css";
 import { decodeFileName, showSuccessNotification } from "../../utils/utils";
 
 // 📦 Carousel Component
-const CustomCarousel = ({ items, onItemClickHandler, formId }) => {
+const CustomCarousel = ({ items, onItemClickHandler, formId, shouldSpaceFiles = false }) => {
   const theme = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [open, setOpen] = useState(false);
@@ -91,7 +91,10 @@ const CustomCarousel = ({ items, onItemClickHandler, formId }) => {
   };
 
   return (
-    <div className={classes.carouselWrapper} dir="ltr">
+    <div
+      className={classes.carouselWrapper}
+      dir="ltr"
+      style={{ ...(shouldSpaceFiles && items.length > 1 ? { marginTop: "30px" } : {}) }}>
       {items.length > 1 ? (
         <Slider {...settings}>
           {items.map((value, index) => {
@@ -123,7 +126,12 @@ const CustomCarousel = ({ items, onItemClickHandler, formId }) => {
                     </Box>
                   }>
                   <div
-                    style={{ width: "35px", justifySelf: "center", cursor: "pointer" }}
+                    style={{
+                      width: "35px",
+                      justifySelf: "center",
+                      cursor: "pointer",
+                      ...(shouldSpaceFiles ? { margin: "0 10px" } : {}),
+                    }}
                     onClick={() => onItemClickHandler(value)}>
                     <FileIcon extension={extension} {...(defaultStyles[extension] || {})} />
                   </div>

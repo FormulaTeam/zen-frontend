@@ -66,11 +66,11 @@ export interface RequestConfig {
 }
 export const FieldTypeIds = {
   longText: 1,
-  smallText: 2,
+  shortText: 2,
   options: 3,
   link: 4,
   date: 5,
-  hour: 6,
+  time: 6,
   location: 7,
   checkbox: 8,
   list: 9,
@@ -431,7 +431,7 @@ export const DEFAULT_FIELDS: DefaultField[] = [
     fieldType: FieldTypes.string,
   },
   {
-    typeId: FieldTypeIds.smallText,
+    typeId: FieldTypeIds.shortText,
     name: "שורה אחת",
     icon: "dragHandle",
     fieldType: FieldTypes.string,
@@ -455,7 +455,7 @@ export const DEFAULT_FIELDS: DefaultField[] = [
     fieldType: FieldTypes.date,
   },
   {
-    typeId: FieldTypeIds.hour,
+    typeId: FieldTypeIds.time,
     name: "שעה",
     icon: "accessTime",
     fieldType: FieldTypes.string,
@@ -837,10 +837,32 @@ export interface Condition {
 }
 
 export const ALLOWED_FIELD_TYPES_FOR_CONDITION: number[] = [
-  FieldTypeIds.smallText,
+  FieldTypeIds.shortText,
   FieldTypeIds.longText,
   FieldTypeIds.number,
   FieldTypeIds.date,
   FieldTypeIds.options,
   FieldTypeIds.checkbox,
 ];
+
+export interface Row {
+  id: number;
+  edited?: string;
+  editedByName?: string;
+  parentResponse?: string;
+  created?: string;
+  createdByName?: string;
+  [key: string]: unknown;
+}
+
+export interface ChildResponseForm {
+  id: number;
+  form_id: number;
+  created: string;
+  created_by_name: string;
+  createdByName: string;
+  editedByName?: string;
+  edited?: string;
+  parentResponse?: string;
+  [key: string]: unknown;
+}

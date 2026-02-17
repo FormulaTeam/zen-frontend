@@ -82,7 +82,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   );
 
   const { mutateAsync: mutateCreateFormAsync } = useCreateForm();
-  const { mutateAsync: mutateUpdateFormAsync } = useUpdateForm(currentFormId || 0);
+  const { mutateAsync: mutateUpdateFormAsync } = useUpdateForm();
 
   const [originalTitle, setOriginalTitle] = useState("");
   const [originalDescription, setOriginalDescription] = useState("");

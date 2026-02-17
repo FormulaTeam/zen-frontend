@@ -5,12 +5,11 @@ import rtlPlugin from "@mui/stylis-plugin-rtl";
 import { CssBaseline, GlobalStyles } from "@mui/material";
 import { prefixer } from "stylis";
 import { ThemeProvider } from "@mui/material/styles";
-import { CacheProvider } from "@emotion/react";
 import { theme } from "./theme/theme";
 import "./index.scss";
 import "./polyfills";
-import * as _ from "lodash";
 import "material-icons/iconfont/material-icons.css";
+import { CacheProvider } from "@emotion/react";
 
 const cacheRtl = createCache({
   key: "muirtl",

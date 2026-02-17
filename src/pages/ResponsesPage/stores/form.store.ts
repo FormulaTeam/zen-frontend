@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Filter, Form, ResponseForm } from "../../../utils/interfaces";
+import { Filter, Form, ResponseForm, Row } from "../../../utils/interfaces";
 import { LegacyPermission } from "../../../utils/utils";
 
 interface FormsState {
@@ -11,8 +11,8 @@ interface FormsState {
   setResponses: (responses: ResponseForm[] | null) => void;
   filter: Filter | null;
   setFilter: (filter: Filter | null) => void;
-  rows: { [key: string]: string }[] | null;
-  setRows: (rows: { [key: string]: string }[] | null) => void;
+  rows: Row[];
+  setRows: (rows: Row[]) => void;
   isRowsLoading?: boolean;
 }
 
@@ -26,7 +26,7 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
   filter: { pageSize: 25, pageNumber: 1 },
   setFilter: (filter: Filter | null) => set({ filter }),
   rows: [],
-  setRows: (rows: { [key: string]: string }[] | null) => set({ rows }),
+  setRows: (rows: Row[]) => set({ rows }),
 }));
 
 export function useFormStore() {

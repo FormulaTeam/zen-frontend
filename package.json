@@ -9,6 +9,7 @@
     "@mui/icons-material": "^7.0.2",
     "@mui/lab": "^7.0.0-beta.11",
     "@mui/material": "^7.0.2",
+    "@mui/stylis-plugin-rtl": "^7.3.5",
     "@mui/x-data-grid": "^8.16.0",
     "@mui/x-data-grid-pro": "^8.16.0",
     "@mui/stylis-plugin-rtl": "^7.3.6",
@@ -43,12 +44,13 @@
     "zustand": "^5.0.8"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test",
     "eject": "react-scripts eject"
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
     "@babel/plugin-proposal-class-properties": "^7.16.7",
     "@babel/plugin-proposal-private-property-in-object": "^7.16.7",
     "@types/react": "^18.3.23",

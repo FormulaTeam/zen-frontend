@@ -28,6 +28,11 @@ yarn-error.log*
 *.tar
 *.7z
 
+# GitHub Copilot instructions
+.github/copilot-instructions.md
+
+# Local Configs
+settings.json
 .env
 
 .gemini/settings.json

@@ -23,14 +23,14 @@ function FormFieldsPreviewRenderer({ formField }) {
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, valid: boolean | null) => {}}
+          onChangeHandler={(value: any, valid: boolean | null) => { }}
           value={formFieldValue}
           validationRegex={formField.validationRegex}
           multiline
         />
       );
 
-    case FieldTypeIds.smallText: //שורה אחת
+    case FieldTypeIds.shortText: //שורה אחת
       console.log(formField);
 
       return (
@@ -39,7 +39,7 @@ function FormFieldsPreviewRenderer({ formField }) {
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, valid: boolean | null) => {}}
+          onChangeHandler={(value: any, valid: boolean | null) => { }}
           value={formFieldValue}
           validationRegex={formField.validationRegex}
         />
@@ -55,7 +55,7 @@ function FormFieldsPreviewRenderer({ formField }) {
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(values: string[] | string, valid: boolean | null) => {}}
+          onChangeHandler={(values: string[] | string, valid: boolean | null) => { }}
           value={formFieldValue || (formField.multiSelect ? [] : "")}
           multiple={formField.multiSelect}
           options={availableOptions}
@@ -72,7 +72,7 @@ function FormFieldsPreviewRenderer({ formField }) {
           onChangeHandler={(
             value: LinkValue,
             valid: { link: boolean; linkTxt: boolean } | null,
-          ) => {}}
+          ) => { }}
           value={formFieldValue || null}
         />
       );
@@ -84,21 +84,21 @@ function FormFieldsPreviewRenderer({ formField }) {
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, valid: boolean | null) => {}}
+          onChangeHandler={(value: any, valid: boolean | null) => { }}
           value={formFieldValue}
           dateAndTime={formField?.dateAndTime}
           defaultValue={formField?.initialValType}
         />
       );
 
-    case FieldTypeIds.hour: //שעה
+    case FieldTypeIds.time: //שעה
       return (
         <CustomTimePicker
           label={formField.displayName}
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, valid: boolean | null) => {}}
+          onChangeHandler={(value: any, valid: boolean | null) => { }}
           value={formFieldValue}
           showSeconds={formField?.showSeconds}
           defaultValue={formField?.initialValType}
@@ -113,7 +113,7 @@ function FormFieldsPreviewRenderer({ formField }) {
           isValid={{ x: valid, y: valid }}
           isDisabled={viewMode}
           coordinateType={formField.coordinateType}
-          onChangeHandler={(value: any, valid: LocationValueError | null) => {}}
+          onChangeHandler={(value: any, valid: LocationValueError | null) => { }}
           value={{ x: "", y: "" }}
         />
       );
@@ -124,7 +124,7 @@ function FormFieldsPreviewRenderer({ formField }) {
         <CustomSwitch
           label={formField.displayName}
           isDisabled={viewMode}
-          onChangeHandler={(value: boolean) => {}}
+          onChangeHandler={(value: boolean) => { }}
           value={true}
           defaultValue={formField?.initialValType}
         />
@@ -137,7 +137,7 @@ function FormFieldsPreviewRenderer({ formField }) {
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any[]) => {}}
+          onChangeHandler={(value: any[]) => { }}
           value={formFieldValue}
         />
       );
@@ -149,7 +149,7 @@ function FormFieldsPreviewRenderer({ formField }) {
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, valid: boolean) => {}}
+          onChangeHandler={(value: any, valid: boolean) => { }}
           value={formFieldValue ?? formField?.initialNumberValue ?? ""}
           numberType={formField?.numberType}
           minValue={formField?.minValue}
@@ -164,7 +164,7 @@ function FormFieldsPreviewRenderer({ formField }) {
           isRequired={formField.required}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any) => {}}
+          onChangeHandler={(value: any) => { }}
           value={formFieldValue}
         />
       );
