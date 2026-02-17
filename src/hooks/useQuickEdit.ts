@@ -20,7 +20,7 @@ export const useQuickEdit = ({
 }: UseQuickEditProps) => {
   const [isQuickEditMode, setIsQuickEditMode] = useState(false);
   const [originalDataMap, setOriginalDataMap] = useState<Record<string, any>>({});
-  const [editedData, setEditedData] = useState({});
+  const [updatedData, setUpdatedData] = useState({});
   const [validationErrors, setValidationErrors] = useState({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [newResponseCounter, setNewResponseCounter] = useState(0);
@@ -55,7 +55,7 @@ export const useQuickEdit = ({
     });
 
     originalDataRef.current = JSON.parse(JSON.stringify(initialData));
-    setEditedData(initialData);
+    setUpdatedData(initialData);
     setOriginalDataMap(initialData);
     setRowEditMode(initialRowEditMode);
     setValidationErrors({});
@@ -68,7 +68,7 @@ export const useQuickEdit = ({
 
   const handleCellValueChange = useCallback(
     (responseId, fieldId, value) => {
-      setEditedData((prev) => {
+      setUpdatedData((prev) => {
         if (isEqual(prev[responseId]?.[fieldId], value)) return prev;
         return {
           ...prev,
@@ -115,7 +115,7 @@ export const useQuickEdit = ({
       }
 
       hasChangesTimeoutRef.current = setTimeout(() => {
-        setEditedData((currentData) => {
+        setUpdatedData((currentData) => {
           const hasChanged = Object.entries(currentData).some(
             ([id, data]: any) => !isEqual(data, originalDataRef.current?.[id]),
           );
@@ -139,9 +139,9 @@ export const useQuickEdit = ({
       created_by: user?.upn?.toLowerCase() || "",
       created_by_name: user?.displayName || "",
       created_at: new Date().toISOString(),
-      edited_by: user?.upn?.toLowerCase() || "",
-      edited_by_name: user?.displayName || "",
-      edited_at: new Date().toISOString(),
+      updated_by: user?.upn?.toLowerCase() || "",
+      updated_by_name: user?.displayName || "",
+      updated_at: new Date().toISOString(),
       data: form.fields.map((field) => ({
         uniqueId: field.uniqueId,
         value: "",
@@ -150,7 +150,7 @@ export const useQuickEdit = ({
     };
     setNewResponses((prev) => [newResponse, ...prev]);
 
-    setEditedData((prev) => {
+    setUpdatedData((prev) => {
       const newData = { ...prev, [newResponseId]: {} };
       form.fields.forEach((field) => {
         newData[newResponseId][field.uniqueId] = "";
@@ -209,7 +209,7 @@ export const useQuickEdit = ({
     const errors: any = {};
     const requiredFields = getRequiredFields();
 
-    Object.entries(editedData).forEach(([responseId, responseData]: [string, any]) => {
+    Object.entries(updatedData).forEach(([responseId, responseData]: [string, any]) => {
       requiredFields.forEach((field: any) => {
         const value = responseData[field.uniqueId];
         if (
@@ -226,19 +226,19 @@ export const useQuickEdit = ({
     // Update validation errors state immediately
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [editedData, getRequiredFields]);
+  }, [updatedData, getRequiredFields]);
 
   const getChangedRows = (
-    editedData: Record<string, any>,
+    updatedData: Record<string, any>,
     originalDataMap: Record<string, any>,
   ): Record<string, any> => {
     const changedRows: Record<string, any> = {};
 
-    Object.entries(editedData).forEach(([rowId, editedRow]) => {
+    Object.entries(updatedData).forEach(([rowId, updatedRow]) => {
       const originalRow = originalDataMap[rowId];
 
-      if (!isEqual(editedRow, originalRow)) {
-        changedRows[rowId] = editedRow;
+      if (!isEqual(updatedRow, originalRow)) {
+        changedRows[rowId] = updatedRow;
       }
     });
 
@@ -254,7 +254,7 @@ export const useQuickEdit = ({
     const errors: any = {};
     const requiredFields = getRequiredFields();
 
-    Object.entries(editedData).forEach(([responseId, responseData]: [string, any]) => {
+    Object.entries(updatedData).forEach(([responseId, responseData]: [string, any]) => {
       requiredFields.forEach((field: any) => {
         const value = responseData[field.uniqueId];
         if (
@@ -280,7 +280,7 @@ export const useQuickEdit = ({
     try {
       const updates: Promise<any>[] = [];
       const creates: Promise<any>[] = [];
-      const changedRows = getChangedRows(editedData, originalDataMap);
+      const changedRows = getChangedRows(updatedData, originalDataMap);
 
       Object.entries(changedRows).forEach(([responseId, responseData]: [string, any]) => {
         if (responseId.startsWith("new_")) {
@@ -288,8 +288,8 @@ export const useQuickEdit = ({
             form_id: form.id,
             created_by: user?.upn?.toLowerCase() || "",
             created_by_name: user?.displayName || "",
-            edited_by: user?.upn?.toLowerCase() || "",
-            edited_by_name: user?.displayName || "",
+            updated_by: user?.upn?.toLowerCase() || "",
+            updated_by_name: user?.displayName || "",
             data: form.fields.map((field) => ({
               uniqueId: field.uniqueId,
               value: responseData[field.uniqueId] || "",
@@ -317,8 +317,8 @@ export const useQuickEdit = ({
           const { _id, ...responseWithoutId } = originalResponse;
           const updatedData = {
             ...responseWithoutId,
-            edited_by: user?.upn?.toLowerCase() || originalResponse.edited_by,
-            edited_by_name: user?.displayName || originalResponse.edited_by_name,
+            updated_by: user?.upn?.toLowerCase() || originalResponse.updated_by,
+            updated_by_name: user?.displayName || originalResponse.updated_by_name,
             data: originalResponse.data.map((field) => ({
               ...field,
               value: responseData[field.uniqueId] ?? field.value,
@@ -344,7 +344,7 @@ export const useQuickEdit = ({
 
       const updatedOriginal = { ...originalDataRef.current };
       Object.keys(changedRows).forEach((responseId) => {
-        updatedOriginal[responseId] = { ...editedData[responseId] };
+        updatedOriginal[responseId] = { ...updatedData[responseId] };
       });
       originalDataRef.current = updatedOriginal;
 
@@ -357,7 +357,7 @@ export const useQuickEdit = ({
       showErrorNotification("שגיאה בשמירת השינויים");
       return false;
     }
-  }, [editedData, validateData, form, allFilteredResponses, setShouldRefreshPage, user]);
+  }, [updatedData, validateData, form, allFilteredResponses, setShouldRefreshPage, user]);
 
   const toggleQuickEdit = useCallback(() => {
     if (hasChangesTimeoutRef.current) {
@@ -367,7 +367,7 @@ export const useQuickEdit = ({
 
     if (isQuickEditMode) {
       setIsQuickEditMode(false);
-      setEditedData({});
+      setUpdatedData({});
       setValidationErrors({});
       setHasUnsavedChanges(false);
       setNewResponses([]);
@@ -385,7 +385,7 @@ export const useQuickEdit = ({
     const success = await saveChanges();
     if (success) {
       setIsQuickEditMode(false);
-      setEditedData({});
+      setUpdatedData({});
       setValidationErrors({});
       setHasUnsavedChanges(false);
       setNewResponses([]);
@@ -401,11 +401,11 @@ export const useQuickEdit = ({
       hasChangesTimeoutRef.current = null;
     }
 
-    setEditedData(JSON.parse(JSON.stringify(originalDataRef.current)));
+    setUpdatedData(JSON.parse(JSON.stringify(originalDataRef.current)));
     setValidationErrors({});
     setHasUnsavedChanges(false);
     setIsQuickEditMode(false);
-    setEditedData({});
+    setUpdatedData({});
     setNewResponses([]);
     setNewResponseCounter(0);
     setRowEditMode({});
@@ -414,7 +414,7 @@ export const useQuickEdit = ({
 
   return {
     isQuickEditMode,
-    editedData,
+    updatedData,
     validationErrors,
     hasUnsavedChanges,
     forceRenderCounter,

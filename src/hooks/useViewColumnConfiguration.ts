@@ -16,10 +16,9 @@ const PRE_SYSTEM_COLUMNS: SystemViewColumn[] = [
   { columnId: "id", displayName: "מזהה", defaultVisible: true },
   { columnId: "pushed_to_metro", displayName: "סטטוס סנכרון", defaultVisible: true },
 ];
-
-const POST_SYSTEM_COLUMNS: SystemViewColumn[] = [
-  { columnId: "edited_by_name", displayName: 'השתנה ע"י', defaultVisible: true },
-  { columnId: "edited", displayName: "תאריך שינוי", defaultVisible: true },
+const POST_SYSTEM_VIEW_COLUMNS: SystemViewColumn[] = [
+  { columnId: "updated_by_name", displayName: "עודכן על ידי", defaultVisible: true },
+  { columnId: "updated", displayName: "עודכן בתאריך", defaultVisible: true },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -96,7 +95,7 @@ export function useViewColumnConfiguration({
           defaultVisible: true,
         }),
       ),
-      ...POST_SYSTEM_COLUMNS.map(buildColumn),
+      ...POST_SYSTEM_VIEW_COLUMNS.map(buildColumn),
     ].sort((a, b) => a.order - b.order);
 
     setColumns(merged);
@@ -175,7 +174,7 @@ export function useViewColumnConfiguration({
         visible: true,
         order: order++,
       })),
-      ...POST_SYSTEM_COLUMNS.map((c) => ({
+      ...POST_SYSTEM_VIEW_COLUMNS.map((c) => ({
         columnId: c.columnId,
         displayName: c.displayName,
         visible: c.defaultVisible,

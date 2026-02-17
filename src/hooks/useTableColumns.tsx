@@ -22,7 +22,7 @@ export const useTableColumns = (
   onCellValueChange?: (rowId: string, fieldId: string, value: any) => void,
   validationErrors?: Record<string, Record<string, string>>,
   rowSelection?: Record<string, boolean>,
-  editedData?: Record<string, Record<string, any>>,
+  updatedData?: Record<string, Record<string, any>>,
   isRowInEditMode?: (rowId: string) => boolean,
   forceRenderCounter?: number,
   fieldOptions?: Record<string, any>,
@@ -105,7 +105,7 @@ export const useTableColumns = (
                 : "לא סונכרן"
             }>
             <div>
-              {isSynchedToMetro(row?.original?.pushed_to_metro, row?.original?.edited) ? (
+              {isSynchedToMetro(row?.original?.pushed_to_metro, row?.original?.updated) ? (
                 <CustomIcon iconName="metroSynced" />
               ) : (
                 <CustomIcon iconName="metroUnsynced" />
@@ -139,8 +139,8 @@ export const useTableColumns = (
               const handleCellValueChange = (newValue: any, uniqueId: string) => {
                 onCellValueChange?.(row.original.id, uniqueId, newValue);
               };
-              const editedValue = editedData?.[row.original.id]?.[uniqueId];
-              const currentValue = editedValue !== undefined ? editedValue : value;
+              const updatedValue = updatedData?.[row.original.id]?.[uniqueId];
+              const currentValue = updatedValue !== undefined ? updatedValue : value;
               const formFieldsByIdMap = new Map();
               const formFieldsValuesMap = new Map();
               const formFieldsValidMap = new Map();
@@ -323,9 +323,9 @@ export const useTableColumns = (
 
     const addSystemEditedByColumn = (): MRT_ColumnDef<MRT_RowData> => {
       return {
-        id: "edited_by_name",
+        id: "updated_by_name",
         header: "השתנה ע״י",
-        accessorKey: "edited_by_name",
+        accessorKey: "updated_by_name",
         enableColumnFilter: true,
         filterVariant: "text",
         filterFn: "contains",
@@ -333,14 +333,14 @@ export const useTableColumns = (
     };
     const addSystemEditedColumn = (): MRT_ColumnDef<MRT_RowData> => {
       return {
-        id: "edited",
-        header: "תאריך שינוי",
-        accessorKey: "edited",
+        id: "updated",
+        header: "השתנה",
+        accessorKey: "updated",
         enableGrouping: false,
         grow: true,
         size: 150,
         Cell: ({ row }) => {
-          let value = moment(row?.original?.edited).format(DEFAULT_DATE_FORMAT);
+          let value = moment(row?.original?.updated).format(DEFAULT_DATE_FORMAT);
           return (
             <Box className="cell-box" component="span">
               <label title={value}>{value}</label>
@@ -372,10 +372,10 @@ export const useTableColumns = (
           case "pushed_to_metro":
             cols.push(buildSyncColumn());
             break;
-          case "edited_by_name":
+          case "updated_by_name":
             cols.push(addSystemEditedByColumn());
             break;
-          case "edited":
+          case "updated":
             cols.push(addSystemEditedColumn());
             break;
           default: {
@@ -391,7 +391,7 @@ export const useTableColumns = (
       // When viewConfig is provided, respect it completely - no fallback additions
       // Only add missing essential columns if explicitly needed for functionality
     } else {
-      // Default order: id, sync, fields, edited_by_name, edited
+      // Default order: id, sync, fields, updated_by_name, updated
       cols.push(buildIdColumn());
       cols.push(buildSyncColumn());
       const sortedFormFields = [...form.fields].sort((a, b) => {

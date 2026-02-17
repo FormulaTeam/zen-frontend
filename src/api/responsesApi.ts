@@ -101,7 +101,7 @@ export const getResponseWithFlatFields = (
   deletedFiles?: ResponseFieldValue[],
 ): Record<string, FieldValue> => {
   const fieldsNameValueObj = responseData.reduce((acc, field) => {
-    const fieldMetaData = fieldsMetaData.find((metaData) => metaData.uniqueId === field.uniqueId);
+    const fieldMetaData = fieldsMetaData.find((metaData) => metaData.uniqueId === field.field_id);
     if (fieldMetaData && fieldMetaData.name) {
       const fieldName = fieldMetaData.name;
 
@@ -127,7 +127,7 @@ export const getResponseWithFlatFields = (
           break;
         case FieldTypeIds.file:
           const deletedFilesForField = deletedFiles?.filter(
-            (deletedFile) => deletedFile.uniqueId === field.uniqueId,
+            (deletedFile) => deletedFile.field_id === field.field_id,
           );
           if (deletedFilesForField && deletedFilesForField.length > 0) {
             acc[fieldName] = { ...field.value, deletedFiles: deletedFilesForField[0].value };
@@ -223,12 +223,14 @@ export const restoreResponse = async (formId: number, id: number): Promise<Respo
  */
 export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseForm[]> => {
   try {
-    const response = await apiClient.post<ResponseForm[]>("/responses/get-deleted-responses", {
+    const body = {
       pageSize: filter?.pageSize,
       pageNumber: filter?.pageNumber,
       query: filter?.query || {},
-      isDeletedForm: filter?.query?.isDeletedForm || false,
-    });
+      isDeletedForm: Boolean(filter?.query?.isDeletedForm || filter?.isDeletedForm),
+    };
+
+    const response = await apiClient.post<ResponseForm[]>("/responses/get-deleted-responses", body);
 
     return response?.data || [];
   } catch (error) {

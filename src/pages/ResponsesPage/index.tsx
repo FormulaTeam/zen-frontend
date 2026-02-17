@@ -97,7 +97,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
   // Quick Edit hook
   const {
     isQuickEditMode,
-    editedData,
+    updatedData,
     validationErrors,
     hasUnsavedChanges,
     forceRenderCounter,
@@ -166,7 +166,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     handleCellValueChange,
     validationErrors,
     rowSelection,
-    editedData,
+    updatedData,
     isRowInEditMode,
     forceRenderCounter,
     fieldOptions,
@@ -305,11 +305,9 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
 
   const getResponseDetails = (responseId: number) => {
     const responseChildren = responsesWithChildren.filter((response) => {
-      const parentResponse = response.parentResponse?.split(";") || []; // parentResponse = "formId;responseId"
-      if (!parentResponse || parentResponse.length === 0) {
-        return [];
-      }
-      return parentResponse[1] === responseId.toString();
+      if (!Array.isArray(response.mainResponses)) return false;
+
+      return response.mainResponses.some((p) => Number(p?.index) === Number(responseId));
     });
 
     if (responseChildren.length === 0) {

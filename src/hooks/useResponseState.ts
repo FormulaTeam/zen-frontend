@@ -142,8 +142,8 @@ export const useResponseState = (
       if (responseId) {
         if (!response) return; // will keep loading untill response is fetched
         setFormTitle((copyMode ? "יצירת תגובה - " : "עריכת תגובה - ") + form.name);
-        response.data.map((res: any) => {
-          formFieldsValuesMap.set(res.uniqueId + "", res?.value);
+        response.fieldValues.map((res: ResponseFieldValue) => {
+          formFieldsValuesMap.set(res.field_id + "", res?.value);
         });
       } else {
         setFormTitle("יצירת תגובה - " + form.name);

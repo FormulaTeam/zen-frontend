@@ -121,13 +121,15 @@ export const useChildForms = ({
         const responses = childrenIds.map(async (childId) => {
           const response = await getResponses({ form_id: childId });
           const children = response
-            .filter((res) => {
-              if (typeof res.parentResponse === "string" && res.parentResponse.includes(";")) {
-                const parentIds = res.parentResponse.split(";");
-                return parentIds[1] === id;
+            .filter((res: any) => {
+              if (Array.isArray(res.mainResponses) && id) {
+                return res.mainResponses.some(
+                  (p: any) => p?.id === id || String(p?.index) === String(id),
+                );
               }
               return false;
             })
+
             .map((res) => {
               const childField = formFields.find((field) => field.connectedFormId === childId);
               return { ...childField, id: res.id };

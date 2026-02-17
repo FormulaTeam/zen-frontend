@@ -240,7 +240,7 @@ export const useResponsesEdit = () => {
 
     const updatedData: ResponseFieldValue[] = await Promise.all(
       (form?.fields || []).map(async (formField) => {
-        const existingFieldData = original.data.find((d) => d.uniqueId === formField.uniqueId);
+        const existingFieldData = (original as any).data?.find((d: any) => d.uniqueId === formField.uniqueId);
 
         const columnField = Array.from(columnToUniqueId.entries()).find(
           ([_, uid]) => uid === formField.uniqueId
