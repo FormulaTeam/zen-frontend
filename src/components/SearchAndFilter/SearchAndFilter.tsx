@@ -8,6 +8,7 @@ interface SearchAndFilterProps {
   searchValue: string;
   borderType?: "" | "none";
   variant?: "standard" | "outlined" | "filled";
+  dataTestId?: string;
 }
 const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
   handleSearch,
@@ -15,6 +16,7 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
   searchValue,
   borderType,
   variant = "outlined",
+  dataTestId,
 }) => {
   const theme = useTheme();
 
@@ -40,6 +42,9 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
         }}
         size="small"
         onKeyUp={handleKeyUp}
+        inputProps={{
+          'data-testid': dataTestId,
+        }}
         InputProps={{
           endAdornment: (
             <>

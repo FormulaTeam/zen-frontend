@@ -93,13 +93,6 @@ const ResponsesPageContent = (): JSX.Element => {
               </ViewManageButton>
             </span>
           </Tooltip>
-          {/* <Tooltip title="ניהול תצוגות">
-            <div>
-              <ViewManageButton variant="contained" onClick={() => {}} disabled={false}>
-                <CalendarViewWeek />
-              </ViewManageButton>
-            </div>
-          </Tooltip> */}
         </TopSection>
         <ResponsesTable
           isInEditMode={isInEditMode}

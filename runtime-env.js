@@ -4,7 +4,7 @@ const path = require("path");
 const envVars = {
   REACT_APP_API_URL: process.env.REACT_APP_API_URL || "http://localhost:3000",
   REACT_MAX_PAYLOAD_SIZE_MB: process.env.REACT_MAX_PAYLOAD_SIZE_MB || 1,
-  // Add other environment variables here as needed
+  IS_PROD: process.env.IS_PROD || false,
 };
 
 const envFilePath = path.join(__dirname, "runtime-env.js");

@@ -5,7 +5,7 @@ import { showErrorNotification, showSuccessNotification } from "../../../utils/u
 import { useParams } from "react-router-dom";
 import { useFormStore } from "../stores/form.store";
 
-const MAX_PAYLOAD_SIZE_MB = (window as any).RUNTIME_ENV?.REACT_MAX_PAYLOAD_SIZE_MB || 1;
+const MAX_PAYLOAD_SIZE_MB = (window as any).RUNTIME_ENV?.REACT_MAX_PAYLOAD_SIZE_MB ?? 1;
 
 export const UploadResponses = ({
   showImportFromExcelPopup,
@@ -24,7 +24,7 @@ export const UploadResponses = ({
     error: importError,
     isPending: importPending,
   } = useImportResponsesFromFile({
-    formId: formId || "",
+    formId: formId ?? "",
   });
 
   useEffect(() => {

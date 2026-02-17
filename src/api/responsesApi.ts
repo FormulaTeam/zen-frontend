@@ -40,11 +40,11 @@ export const getResponses = async (filter?: Filter): Promise<ResponseForm[]> => 
       console.error("Form ID is required to fetch responses.");
       return [];
     }
-    // const response = await apiClient.get<ResponseForm[]>(
-    //   `/responses/get-responses?form_id=${filter?.form_id}`,
-    //   { params },
-    // );
-    return [];
+    const response = await apiClient.get<ResponseForm[]>(
+      `/responses/get-responses?form_id=${filter?.form_id}`,
+      { params },
+    );
+    return response?.data ?? [];
   } catch (error) {
     console.error("Failed to fetch responses:", error);
     throw error;
@@ -198,26 +198,6 @@ export const deleteAllResponses = async (formId: number): Promise<number> => {
   }
 };
 
-export const createResponsesFromFile = async (formId: number, file: File): Promise<any> => {
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await apiClient.post<any>(
-      `/responses/create-from-file?form_id=${formId}`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      },
-    );
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to create responses from file:", error);
-    throw error;
-  }
-};
-
 /**
  * Restore a deleted response.
  *
@@ -274,7 +254,7 @@ export const useGetResponsesRows = ({ filter }: { filter?: Filter }) => {
     endpoint: `/responses/get-rows`,
     queryKey: () => ["rows", filter],
     params: filter,
-    // queryOptions: { enabled: !!formId },
+    queryOptions: { enabled: !!filter?.form_id },
   });
 };
 
@@ -326,6 +306,25 @@ export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
 
 // Gali's changes
 // ========================
+export const useCreateResponsesFromFile = (formId: string) => {
+  return useCreate<FormData, any>({
+    endpoint: `/responses/create-from-file?form_id=${formId}`,
+    mutationKey: ["create-responses-from-file", formId],
+    axiosConfig: {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+      onError: (error) => {
+        console.error("Failed to create responses from file:", error);
+      },
+    },
+  });
+};
 
 export const useCreateResponse = () => {
   return useCreate<NewResponse | NewResponse[], ResponseForm | ResponseForm[]>({

@@ -344,6 +344,8 @@ export enum NotificationTexts {
   UpdateButSyncFaild = "התגובה עודכנה אך הסנכרון נכשל",
   DeletedSuccessfully = "התגובה נמחקה בהצלחה",
   DeletedFailed = "התגובה לא נמחקה",
+  SuccessfulExportToExcel = "הייצוא לאקסל בוצע בהצלחה",
+  FailedExportToExcel = "הייצוא לאקסל נכשל",
 }
 
 export enum fieldConnectionTooltipTexts {

@@ -54,7 +54,9 @@ export const useResponsesTable = ({
   });
 
   const copyResponse = (rowData) => {
-    if (rowData) navigate(`/response/create/${rowData.form_id}/${rowData.id}`);
+    if (rowData) {
+      navigate(`/response/create/${rowData.form_id}/${rowData.id}`);
+    }
   };
 
   // Create column order based on the columns array order
