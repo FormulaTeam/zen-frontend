@@ -201,8 +201,10 @@ export interface Form {
   updated: string;
   created_by: string;
   created_by_name: string;
-  updated_by: string;
-  updated_by_name: string;
+  updated_by?: string;
+  edited_by?: string;
+  updated_by_name?: string;
+  edited_by_name?: string;
   deleted?: string;
   numberOfResponses: number;
   lastUpdatedResponse?: string;
@@ -278,7 +280,8 @@ export interface ResponseForm {
 export type NewResponse = {
   form_id: number;
   created_by: string; // UPN
-  updated_by: string; // UPN
+  updated_by?: string; // UPN
+  edited_by?: string; // UPN
   data: ResponseFieldValue[];
   parentResponse?: string; // parent Response.id (UUID) if linked
 };
@@ -409,7 +412,8 @@ export type FieldValue =
 
 export interface ResponseFieldValue {
   value: FieldValue;
-  field_id: string;
+  field_id?: string;
+  uniqueId?: string;
 }
 
 export type CustomFormField = Pick<

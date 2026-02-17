@@ -550,8 +550,15 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
         return acc;
       }, []);
 
-      for (const { displayName, typeId, value, field_id, dateAndTime } of fieldValuesWithMetaData) {
-        if (formFieldsIds.includes(field_id)) {
+      for (const {
+        displayName,
+        typeId,
+        value,
+        field_id,
+        uniqueId,
+        dateAndTime,
+      } of fieldValuesWithMetaData) {
+        if (formFieldsIds.includes(field_id || uniqueId || "")) {
           let formattedValue: string | { f: string } = "";
           if (typeId === FieldTypeIds.form) {
             // If the field is of type 'form', we skip it as it doesn't have a value in the response
@@ -1173,8 +1180,8 @@ export const getInitialNewForm = (
     owner_upn: currentUserLowerCaseUpn,
     created_by: currentUserLowerCaseUpn,
     created_by_name: userName,
-    updated_by: currentUserLowerCaseUpn,
-    updated_by_name: userName,
+    edited_by: currentUserLowerCaseUpn,
+    edited_by_name: userName,
     users: [
       {
         id: currentUser.id,

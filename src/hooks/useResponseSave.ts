@@ -6,8 +6,10 @@ import { FieldTypeIds, NotificationTexts, ResponseFieldValue } from "../utils/in
 import moment from "moment";
 
 export const useResponseSave = (form: any, response: any, user: any, parentResponse?: string) => {
-  const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } = useCreateResponse();
-  const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } = useUpdateResponse(form?.id, response?.id);
+  const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } =
+    useCreateResponse();
+  const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } =
+    useUpdateResponse(form?.id, response?.id);
 
   const saveResponse = async (
     formFieldsByIdMap: Map<string, any>,
@@ -26,7 +28,7 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
           };
 
           const fieldToSave: ResponseFieldValue = {
-            field_id: field.uniqueId,
+            uniqueId: field.uniqueId,
             value: responsesToCombinedSave,
           };
           if (response) {
@@ -34,7 +36,7 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
             const currentDeletedFiles = response[field.name]?.deletedFiles || [];
             const newDeletedFiles = value?.deletedFiles || [];
             const deletedFilesToSave: ResponseFieldValue = {
-              field_id: field.uniqueId,
+              uniqueId: field.uniqueId,
               value: currentDeletedFiles.concat(newDeletedFiles),
             };
             deletedFiles.push(deletedFilesToSave);
@@ -60,7 +62,7 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
         // If it's already a string, it's already in the correct format
       }
       const fieldToSave: ResponseFieldValue = {
-        field_id: field.uniqueId,
+        uniqueId: field.uniqueId,
         value,
       };
       dataArr.push(fieldToSave);
@@ -73,13 +75,14 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
       if (response && response.id) {
         // Update existing response
         const updatedResponse = {
-          updated_by: user.upn?.toLowerCase(),
-          updated_by_name: userName,
+          edited_by: user.upn?.toLowerCase(),
+          edited_by_name: userName,
           data: dataArr,
           parentResponse: parentResponse,
           ...fieldsNameValueObj,
         };
 
+        console.log("Updating response with data:", updatedResponse);
         return await mutateUpdateResponseAsync(updatedResponse);
       } else {
         // Create new response
@@ -87,12 +90,14 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
           form_id: form.id,
           created_by_name: userName,
           created_by: user.upn?.toLowerCase(),
-          updated_by: user.upn?.toLowerCase(),
-          updated_by_name: userName,
+          edited_by: user.upn?.toLowerCase(),
+          edited_by_name: userName,
           data: dataArr,
           parentResponse: parentResponse,
           ...fieldsNameValueObj,
         };
+
+        console.log("Creating new response with data:", newResponse);
 
         return await mutateCreateResponseAsync(newResponse);
       }
