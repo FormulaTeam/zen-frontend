@@ -1024,6 +1024,11 @@ export function generateNewFormFieldData(item: Partial<CustomFormField>) {
   if (item.typeId === FieldTypeIds.options) {
     newField.options = ["", ""];
   }
+
+  if (item.typeId === FieldTypeIds.location) {
+    newField.coordinateType = "UTM";
+  }
+
   return newField;
 }
 

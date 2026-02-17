@@ -196,26 +196,6 @@ export const deleteAllResponses = async (formId: number): Promise<number> => {
   }
 };
 
-export const createResponsesFromFile = async (formId: number, file: File): Promise<any> => {
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await apiClient.post<any>(
-      `/responses/create-from-file?form_id=${formId}`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      },
-    );
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to create responses from file:", error);
-    throw error;
-  }
-};
-
 /**
  * Restore a deleted response.
  *
@@ -307,6 +287,25 @@ export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
 
 // Gali's changes
 // ========================
+export const useCreateResponsesFromFile = (formId: string) => {
+  return useCreate<FormData, any>({
+    endpoint: `/responses/create-from-file?form_id=${formId}`,
+    mutationKey: ["create-responses-from-file", formId],
+    axiosConfig: {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+      onError: (error) => {
+        console.error("Failed to create responses from file:", error);
+      },
+    },
+  });
+};
 
 export const useCreateResponse = () => {
   return useCreate<NewResponse | NewResponse[], ResponseForm | ResponseForm[]>({

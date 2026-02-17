@@ -39,8 +39,8 @@ import {
 import { useFormStore } from "../stores/form.store";
 import { PermissionGate } from "../PermissionGate";
 import { Filter } from "../../../utils/interfaces";
-import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { useResponsesList } from "../../../hooks/useResponsesList";
+import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 
 const OperationsContainer = ({
   rowSelection,
