@@ -38,10 +38,13 @@ import SidePanel from "../../components/SidePanel/SidePanel";
 import { ResponsesView, ViewColumn } from "../../types/interfaces/tableViews.types";
 import { useQuickEdit } from "../../hooks/useQuickEdit";
 import { useConnectedFormOptions } from "../../hooks/useConnectedFormOptions";
+import { useFormStore } from "./stores/form.store";
+import { useFormLoader } from "./hooks/useFormLoader";
 
 function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles }) {
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [currentViewConfig, setCurrentViewConfig] = useState<ViewColumn[] | undefined>();
+  const { id } = useParams();
 
   const {
     loading,
@@ -95,10 +98,9 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     mainSearch,
     setMainSearch,
     permissionTypes,
-    setPermissionTypes,
     deleteFormFromBtn,
     confirmBtnText,
-  } = useResponsesList({ setShouldRefreshPage, user, currentViewConfig });
+  } = useResponsesList({ setShouldRefreshPage, currentViewConfig, user });
 
   // Quick Edit hook
   const {
@@ -125,7 +127,6 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     setShouldRefreshPage,
   });
 
-  const { id } = useParams();
   const { isSuperAdmin } = useSuperAdmin();
   const {
     initializeFormData,
@@ -134,6 +135,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     responsesWithChildren,
     childrenForms,
   } = useInitializeFormData();
+
   const { fieldOptions, isLoading: loadingConnections } = useConnectedFormOptions({
     formFields: form?.fields,
   });
@@ -177,9 +179,8 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
       id,
       roles,
       user,
-      isSuperAdmin as boolean,
+      !!isSuperAdmin,
       setForm,
-      setPermissionTypes,
       setCurrentFilter,
       getResponsesForCurrentPage,
       setFirstRun,
@@ -189,7 +190,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
 
   useEffect(() => {
     if (form && permissionTypes.length > 0) {
-      createTableColumns(form, permissionTypes, currentViewConfig);
+      createTableColumns(form, permissionTypes);
     }
   }, [responsesHaveParents, currentViewConfig, form, permissionTypes, fieldOptions]);
 
@@ -349,12 +350,10 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
   };
 
   /** get Responses by Form id */
-  const getResponsesForCurrentPage = async (form: Form, permissionTypes1: number[]) => {
+  const getResponsesForCurrentPage = async (form: Form) => {
     try {
-      let responses: ResponseCount = await getResponsesCount(form.id);
-      let responsesCount: number = responses?.count || 0;
-      setAllResponsesCount(responsesCount);
-      setSearchCount(responsesCount);
+      setAllResponsesCount(form.numberOfResponses);
+      setSearchCount(form.numberOfResponses);
       let filter: any = {
         form_id: form.id,
         pageSize: pagination.pageSize,
@@ -429,11 +428,24 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
         handleRowSelectionChange(newSelection);
       }
     },
-    getResponseDetails,
+    // getResponseDetails,
     responsesWithChildren,
-    responsesHaveParents,
     currentViewConfig,
   });
+
+  const { isLoading, isError } = useFormLoader("10"); // try to fix later
+
+  if (isLoading) {
+    return (
+      <div style={{ margin: "auto" }}>
+        <Loader />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return <div>Error loading form data.</div>;
+  }
 
   if (loading) {
     return <Loader />;
@@ -443,8 +455,8 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
     <PageWrapper>
       <MainContentWrapper>
         <TopSection>
-          <Header form={form} />
-          <ResponseToolbar
+          <Header />
+          {/* <ResponseToolbar
             deleteAllResponsesConfirmation={deleteAllResponsesConfirmation}
             deleteFormFromBtn={deleteFormFromBtn}
             form={form}
@@ -453,7 +465,7 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
             setShowSharePopup={setShowSharePopup}
             permissionTypes={permissionTypes}
             setShouldRefreshPage={setShouldRefreshPage}
-          />
+          /> */}
         </TopSection>
         <SearchInfo search={search} setSearch={setSearch} allResponsesCount={allResponsesCount} />
         <OperationsContainer
@@ -491,8 +503,6 @@ function ResponsesPage({ user, shouldRefreshPage, setShouldRefreshPage, roles })
         {showSharePopup && (
           <UserPicker
             form={form}
-            roles={roles}
-            currentUser={user}
             closeSharePopupAndRefreshForm={(users, updatedForm) => {
               // if we got updated form from UserPicker, use it to update the form state, otherwise use existing form and just update users
               const formToUpdate = updatedForm || { ...form, users };

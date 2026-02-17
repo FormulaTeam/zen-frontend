@@ -15,8 +15,10 @@ import {
   StyledIconButton,
 } from "./styled";
 import RolesAutocomplete from "./RolesAutocomplete";
+import { useAuth } from "../../contexts/AuthContext";
 
-const SharedUser = ({ user, roles, handleRoleChange, removeUserFromShare, currentUser }) => {
+const SharedUser = ({ user, roles, handleRoleChange, removeUserFromShare }) => {
+  const { user: currentUser } = useAuth();
   const theme = useTheme();
   const first = user?.firstName || "";
   const last = user?.lastName || "";
@@ -50,12 +52,7 @@ const SharedUser = ({ user, roles, handleRoleChange, removeUserFromShare, curren
             {roleName}
           </RoleLabel>
         ) : (
-          <RolesAutocomplete
-            roles={roles}
-            isDisabled={isDisabled}
-            handleRoleChange={handleRoleChange}
-            user={user}
-          />
+          <RolesAutocomplete isDisabled={isDisabled} handleRoleChange={handleRoleChange} />
         )}
 
         {/* Always show the X button, just disable it for current user */}

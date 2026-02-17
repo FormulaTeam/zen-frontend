@@ -204,6 +204,7 @@ export const useUpdateForm = (id: number) => {
     mutationKey: ["update-form"],
     mutationOptions: {
       onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [id] });
         queryClient.invalidateQueries({ queryKey: ["forms"] });
       },
       onError: (error) => {
@@ -229,7 +230,10 @@ export const useGetForm = ({
   return useFetch<undefined, Form | null>({
     endpoint: `/forms/${formId}`,
     queryKey: () => [formId],
-    queryOptions: config,
+    queryOptions: {
+      enabled: !!formId,
+      ...config,
+    },
   });
 };
 
@@ -237,12 +241,11 @@ export const useDeleteForm = ({ id }: { id: string }) => {
   return useDelete<null, { upn: string | undefined; userName: string | undefined }>({
     endpoint: `/forms/delete/${id}`,
     mutationKey: ["deleteForm", id],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["forms"] });
+      },
+    },
   });
 };
 
-export const useDeleteAllFormsResponses = ({ id }: { id: string }) => {
-  return useDelete<string, { upn: string | undefined; userName: string | undefined }>({
-    endpoint: `/delete-all-form-responses`,
-    mutationKey: ["delete-all-form-responses", id],
-  });
-};

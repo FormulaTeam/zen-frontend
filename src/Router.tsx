@@ -5,7 +5,7 @@ import { Box } from "@mui/material";
 import MainPage from "./pages/MainPage/MainPage";
 import Login from "./pages/Login/Login";
 import { useAuth } from "./contexts/AuthContext";
-import ResponsesPage from "./pages/ResponsesPage";
+import ResponsesPage from "./pages/ResponsesPage/ResponsesPage";
 import ProtectedRoute from "./components/ProrectedRoute/ProtectedRoute";
 import Navbar from "./components/Navbar/Navbar";
 import { ToastContainer } from "react-toastify";

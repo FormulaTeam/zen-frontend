@@ -21,9 +21,8 @@ interface ResponseForm {
   loadingInsideTable: boolean;
   rowSelection: any;
   setRowSelection: (val: any) => void;
-  getResponseDetails: (responseId: number) => JSX.Element | undefined;
+  // getResponseDetails: (responseId: number) => JSX.Element | undefined;
   responsesWithChildren: any[];
-  responsesHaveParents: boolean;
   currentViewConfig?: ViewColumn[];
 }
 
@@ -40,9 +39,8 @@ export const useResponsesTable = ({
   loadingInsideTable,
   rowSelection,
   setRowSelection,
-  getResponseDetails,
+  // getResponseDetails,
   responsesWithChildren,
-  responsesHaveParents,
   currentViewConfig,
 }: ResponseForm) => {
   const [showColumnFilters, setShowColumnFilters] = useState(false);
@@ -180,12 +178,12 @@ export const useResponsesTable = ({
       style: { justifyContent: "start" },
     }),
 
-    renderDetailPanel:
-      responsesWithChildren.length > 0
-        ? ({ row }) => {
-            return getResponseDetails(row?.original.id);
-          }
-        : undefined,
+    // renderDetailPanel:
+    //   responsesWithChildren.length > 0
+    //     ? ({ row }) => {
+    //         return getResponseDetails(row?.original.id);
+    //       }
+    //     : undefined,
     muiDetailPanelProps: {
       sx: {
         "& .MuiCollapse-root": {

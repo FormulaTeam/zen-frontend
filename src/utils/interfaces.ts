@@ -207,6 +207,7 @@ export interface Form {
   numberOfResponses: number;
   lastEditedResponse?: string;
   permissions: number[];
+  columns?: GridColDef[];
 
   isPublic?: boolean;
   formPermission?: {
@@ -782,6 +783,7 @@ export const DEFAULT_FORM_ICONS: IconNameObj[] = [
 
 // Import condition-related types and utilities from conditionUtils
 import type { ConditionOperatorType, LogicalOperatorType } from "./conditionUtils";
+import { GridColDef } from "@mui/x-data-grid";
 
 // Re-export condition utilities for backward compatibility
 export type {

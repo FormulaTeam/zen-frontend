@@ -1,7 +1,5 @@
 import React from "react";
-// import { useMyTablePerms } from "./useTablePermissions"/;
 import { LegacyPermission, makePermSet } from "../../utils/utils";
-// import { LegacyPermission } from "";
 
 type PermissionGateProps = {
   userPermissions: LegacyPermission[];
@@ -29,7 +27,7 @@ export function PermissionGate({
       <div
         aria-disabled
         style={{ opacity: 0.5, pointerEvents: "none" }}
-        title="You don't have permission">
+        title="Access Denied: You don't have permission">
         {children}
       </div>
     );

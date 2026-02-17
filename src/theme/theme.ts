@@ -1,4 +1,6 @@
 import { createTheme, responsiveFontSizes } from "@mui/material";
+import { heIL } from "@mui/x-data-grid-pro/locales";
+import { heIL as coreHeIL } from "@mui/material/locale";
 
 const fontRegular = {
   fontFamily: "assistant",
@@ -55,27 +57,31 @@ const palette = {
   tableHeader: "#d5e6f6",
 };
 
-export let theme = createTheme({
-  direction: "rtl",
-  typography: {
-    fontFamily: "assistant, sans-serif",
-    fontSize: 16,
+export let theme = createTheme(
+  {
+    direction: "rtl",
+    typography: {
+      fontFamily: "assistant, sans-serif",
+      fontSize: 16,
+    },
+    palette,
+    components: {},
+    borders: {
+      base: "0px",
+      lg: "8px",
+      color: "#dcdcdc",
+    },
+    scrollBar: {
+      width: "3px",
+      height: "5px",
+      color: "#c3c0c0",
+      borderRadius: "9999px",
+    },
+    darkPaper: "#f1f1f14d",
   },
-  palette,
-  components: {},
-  borders: {
-    base: "0px",
-    lg: "8px",
-    color: "#dcdcdc",
-  },
-  scrollBar: {
-    width: "3px",
-    height: "5px",
-    color: "#c3c0c0",
-    borderRadius: "9999px",
-  },
-  darkPaper: "#f1f1f14d",
-});
+  coreHeIL,
+  heIL,
+);
 
 // moved components overrides so we can use palette default colors in overrides styles
 theme.components = {

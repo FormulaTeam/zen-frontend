@@ -242,8 +242,6 @@ function MainPage({
       {showSharePopup && formToEdit && (
         <UserPicker
           form={formToEdit}
-          roles={roles}
-          currentUser={user}
           closeSharePopupAndRefreshForm={(users, updatedForm) => {
             const formToUpdate = updatedForm ?? { ...formToEdit, users };
             setFormToEdit(formToUpdate);

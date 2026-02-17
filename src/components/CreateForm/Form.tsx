@@ -47,6 +47,7 @@ import {
   handleFieldMovedBetweenSections,
 } from "../../utils/sectionConditionUtils";
 import { RESERVED_FIELD_NAMES } from "../../consts/form";
+import queryClient from "../../api/queryClient";
 
 interface FormProps {
   formToEdit: any;
@@ -356,24 +357,24 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   const getFormPropertyTitleTextField = (formField: FormField, index: number) => {
     const isNameValid =
       formFieldsNamesValidMap.get(index) !== undefined &&
-      formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
+        formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
         ? formFieldsNamesValidMap.get(index) && !formFieldsUniqueNamesValidMap.get(formField.name)
         : formFieldsNamesValidMap.get(index) !== undefined
-        ? formFieldsNamesValidMap.get(index)
-        : formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
-        ? !formFieldsUniqueNamesValidMap.get(formField.name)
-        : true;
+          ? formFieldsNamesValidMap.get(index)
+          : formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
+            ? !formFieldsUniqueNamesValidMap.get(formField.name)
+            : true;
 
     const isDisplayNameValid =
       formFieldsDisplayNamesValidMap.get(index) !== undefined &&
-      formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
+        formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
         ? formFieldsDisplayNamesValidMap.get(index) &&
-          !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
+        !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
         : formFieldsDisplayNamesValidMap.get(index) !== undefined
-        ? formFieldsDisplayNamesValidMap.get(index)
-        : formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
-        ? !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
-        : true;
+          ? formFieldsDisplayNamesValidMap.get(index)
+          : formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
+            ? !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
+            : true;
 
     const showNameError = !isNameValid;
     const showDisplayNameError = !isDisplayNameValid;
@@ -980,8 +981,8 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
             currentSectionId
               ? () => removeSection(currentSectionId)
               : hasUnsavedChanges && showButtonsOnPopup
-              ? () => saveForm(true)
-              : undefined
+                ? () => saveForm(true)
+                : undefined
           }
           onClose={
             hasUnsavedChanges && showButtonsOnPopup && !currentSectionId ? exitForm : undefined

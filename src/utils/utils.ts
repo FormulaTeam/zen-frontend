@@ -102,6 +102,8 @@ export const RESPONSE_ACCESS_PERMISSIONS = [
 
 export type LegacyPermission = (typeof PERMISSION_TYPES)[keyof typeof PERMISSION_TYPES];
 
+export const allLegacyPermissions: LegacyPermission[] = Object.values(PERMISSION_TYPES);
+
 export const CREATE_RESPONSE_PERMISSIONS = [PERMISSION_TYPES.CREATE_RESPONSE];
 // human labels for debug/admin UI
 export const PERMISSION_LABELS: Record<LegacyPermission, string> = {

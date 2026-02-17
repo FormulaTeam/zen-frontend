@@ -24,6 +24,7 @@ import {
   UsersList,
   UserUPN,
 } from "./styled";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface UserPickerProps {
   loading: boolean;
@@ -34,8 +35,6 @@ interface UserPickerProps {
   handleRoleChange: (event: any, newValue: any, user: any) => void;
   handleValueChange: (event: any, newValue: any) => void;
   handleInputChange: (event: any, value: string) => void;
-  roles: any;
-  currentUser: any;
 }
 
 const UserPickerContent: React.FC<UserPickerProps> = ({
@@ -47,11 +46,10 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
   handleInputChange,
   handleRoleChange,
   removeUserFromShare,
-  roles,
-  currentUser,
 }) => {
   const theme = useTheme();
   const [inputValue, setInputValue] = useState("");
+  const { roles } = useAuth();
 
   const creatorRole = roles.find((r) => r.role_id === formCreator?.role_id);
 
@@ -213,7 +211,6 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
             roles={roles}
             handleRoleChange={handleRoleChange}
             removeUserFromShare={removeUserFromShare}
-            currentUser={currentUser}
           />
         ))}
       </UsersList>
