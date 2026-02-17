@@ -76,7 +76,7 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
     if (!field) return [];
 
     switch (field.typeId) {
-      case FieldTypeIds.smallText:
+      case FieldTypeIds.shortText:
       case FieldTypeIds.longText:
         return [
           ConditionOperators.equals,

@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { TableView } from "../types/interfaces/tableViews.types";
+import { ResponsesView } from "../types/interfaces/tableViews.types";
 
 export type ViewDisplayMode = "list" | "create" | "edit";
 
 interface UseViewModeReturn {
   mode: ViewDisplayMode;
-  editingView: TableView | null;
+  editingView: ResponsesView | null;
   setMode: (mode: ViewDisplayMode) => void;
-  setEditingView: (view: TableView | null) => void;
+  setEditingView: (view: ResponsesView | null) => void;
   switchToList: () => void;
   switchToCreate: () => void;
-  switchToEdit: (view: TableView) => void;
+  switchToEdit: (view: ResponsesView) => void;
   isListMode: boolean;
   isCreateMode: boolean;
   isEditMode: boolean;
@@ -18,7 +18,7 @@ interface UseViewModeReturn {
 
 export const useViewMode = (): UseViewModeReturn => {
   const [mode, setMode] = useState<ViewDisplayMode>("list");
-  const [editingView, setEditingView] = useState<TableView | null>(null);
+  const [editingView, setEditingView] = useState<ResponsesView | null>(null);
 
   const switchToList = () => {
     setMode("list");
@@ -30,7 +30,7 @@ export const useViewMode = (): UseViewModeReturn => {
     setEditingView(null);
   };
 
-  const switchToEdit = (view: TableView) => {
+  const switchToEdit = (view: ResponsesView) => {
     setMode("edit");
     setEditingView(view);
   };

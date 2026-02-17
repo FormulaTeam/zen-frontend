@@ -26,7 +26,7 @@ const CardCreationDetails: React.FC<CardCreationDetailsProps> = ({ form }) => {
           <Tooltip
             placement="top-start"
             title={<span className="tooltip-span">{form.created_by}</span>}>
-            <TextValue className="text-value" style={{ color: theme.palette.text.secondary }}>
+            <TextValue className="text-value form-created-by" style={{ color: theme.palette.text.secondary }}>
               {form?.created_by_name ?? form.created_by}
             </TextValue>
           </Tooltip>

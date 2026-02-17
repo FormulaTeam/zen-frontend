@@ -6,8 +6,8 @@ import { FieldTypeIds, NotificationTexts, ResponseFieldValue } from "../utils/in
 import moment from "moment";
 
 export const useResponseSave = (form: any, response: any, user: any, parentResponse?: string) => {
-  const {mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending} = useCreateResponse();
-  const {mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending} = useUpdateResponse(form?.id, response?.id);
+  const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } = useCreateResponse();
+  const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } = useUpdateResponse(form?.id, response?.id);
 
   const saveResponse = async (
     formFieldsByIdMap: Map<string, any>,
@@ -48,7 +48,7 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
       }
 
       // Check if the value is a valid time string for hour fields
-      if (field.typeId === FieldTypeIds.hour && value) {
+      if (field.typeId === FieldTypeIds.time && value) {
         const isValidTimeValue =
           /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(value) ||
           (value instanceof Date && moment(value).isValid());

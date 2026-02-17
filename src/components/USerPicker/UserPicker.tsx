@@ -19,17 +19,10 @@ const ContentWrapper = styled.div`
 interface UserPickerProps {
   form: Form;
   closeSharePopupAndRefreshForm: (users: any[], updatedForm?: Form) => void;
-  roles: Role[];
-  currentUser: User;
 }
 
-const UserPicker: React.FC<UserPickerProps> = ({
-  form,
-  closeSharePopupAndRefreshForm,
-  roles,
-  currentUser,
-}) => {
-  const { user } = useAuth();
+const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) => {
+  const { user, roles } = useAuth();
   const {
     loading,
     shareWithOptionsUsers,
@@ -89,15 +82,11 @@ const UserPicker: React.FC<UserPickerProps> = ({
             handleInputChange={handleInputChange}
             handleRoleChange={handleRoleChange}
             removeUserFromShare={removeUserFromShare}
-            roles={roles}
-            currentUser={currentUser}
           />
 
           <Divider />
 
           <PublicFormSection
-            form={form}
-            roles={roles}
             user={user}
             hasPermission={hasPermission}
             isPublic={isPublic}

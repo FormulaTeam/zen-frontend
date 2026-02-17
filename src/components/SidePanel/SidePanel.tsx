@@ -2,35 +2,23 @@ import React from "react";
 import { IconButton, Typography, Box } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { SidePanelContainer, SidePanelHeader, SidePanelContent } from "./styled";
-import ViewManager from "../ViewManager/ViewManager";
-import { TableView, ViewColumn } from "../../types/interfaces/tableViews.types";
-
-interface Form {
-  id: string;
-  fields: any[];
-  [key: string]: any;
-}
-
-interface User {
-  upn?: string;
-  email?: string;
-  isSuperAdmin?: boolean;
-  [key: string]: any;
-}
+import { ViewManager } from "../Views/ViewManager/ViewManager";
+import { ResponsesView, ViewColumn } from "../../types/interfaces/tableViews.types";
+import { ViewFormBase, ViewUserBase } from "../../types/interfaces/view.types";
 
 interface SidePanelProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
   children?: React.ReactNode;
-  form?: Form;
-  user?: User;
-  onSaveView?: (view: TableView) => void;
-  onLoadView?: (view: TableView) => void;
-  onDeleteView?: (view: TableView) => void;
+  form?: ViewFormBase;
+  user?: ViewUserBase;
+  onSaveView?: (view: ResponsesView) => void;
+  onLoadView?: (view: ResponsesView) => void;
+  onDeleteView?: (view: ResponsesView) => void;
   onApplyView?: (viewConfig: ViewColumn[]) => void;
-  currentView?: TableView;
-  savedViews?: TableView[];
+  currentView?: ResponsesView;
+  savedViews?: ResponsesView[];
   permissionTypes?: number[];
   isSaving?: boolean;
 }
@@ -38,7 +26,7 @@ interface SidePanelProps {
 const SidePanel: React.FC<SidePanelProps> = ({
   isOpen,
   onClose,
-  title = "תצוגת טבלה",
+  title,
   children,
   form,
   user,

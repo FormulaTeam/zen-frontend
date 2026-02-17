@@ -43,7 +43,7 @@ export const useUserPicker = ({
   const [formPublicState, setFormPublicState] = useState<boolean>(!!form.isPublic);
   const [formPermissionState, setFormPermissionState] = useState<any>(form.formPermission || null);
 
-  const { mutateAsync: mutateUpdateFormAsync } = useUpdateForm(form.id);
+  const { mutateAsync: mutateUpdateFormAsync } = useUpdateForm();
 
   // update local state when form changes
   useEffect(() => {

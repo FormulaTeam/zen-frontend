@@ -60,7 +60,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   field.name = formField.name;
   let formFieldValue: any = formFieldsValuesMap.get(uniqueId);
   if (
-    ![FieldTypeIds.date, FieldTypeIds.hour, FieldTypeIds.checkbox, FieldTypeIds.number].includes(
+    ![FieldTypeIds.date, FieldTypeIds.time, FieldTypeIds.checkbox, FieldTypeIds.number].includes(
       field.typeId,
     ) &&
     !formFieldValue
@@ -89,7 +89,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case FieldTypeIds.smallText: //שורה אחת
+    case FieldTypeIds.shortText: //שורה אחת
       input = (
         <CustomTextField
           key={index}
@@ -158,8 +158,8 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             parentField?.connectionType === connectionTypes.form || connectedToForm
               ? fieldOptions[formField.parentFieldId]?.map((field) => String(field.value)) // if field or parent is connected to form
               : Array.isArray(parentValue)
-              ? parentValue
-              : [parentValue];
+                ? parentValue
+                : [parentValue];
           const allowedOptions = new Set();
           // Find the parent field to access its options
           if (
@@ -373,7 +373,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       );
       break;
 
-    case FieldTypeIds.hour: //שעה
+    case FieldTypeIds.time: //שעה
       input = (
         <CustomTimePicker
           key={index}

@@ -9,11 +9,10 @@ import {
 } from "../utils/interfaces";
 import { UserData } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
-import { UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
+import { UseQueryOptions, UseQueryResult, useMutation } from "@tanstack/react-query";
 import { useDelete } from "../utils/useDelete";
 import { useCreate } from "../utils/useCreate";
 import queryClient from "./queryClient";
-import { useUpdate } from "../utils/useUpdate";
 
 /**
  * Fetch all forms with optional query parameters.
@@ -198,17 +197,19 @@ export const useCreateForm = () => {
   });
 };
 
-export const useUpdateForm = (id: number) => {
-  return useUpdate<UpdateFormPayload, Form>({
-    endpoint: `/forms/edit/${id}`,
+export const useUpdateForm = () => {
+  return useMutation({
+    mutationFn: async (data: UpdateFormPayload) => {
+      const response = await apiClient.put<Form>(`/forms/edit/${data.id}`, data);
+      return response.data;
+    },
     mutationKey: ["update-form"],
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["forms"] });
-      },
-      onError: (error) => {
-        console.error("Failed to update form:", error);
-      },
+    onSuccess: (data: Form) => {
+      queryClient.invalidateQueries({ queryKey: [data.id] });
+      queryClient.invalidateQueries({ queryKey: ["forms"] });
+    },
+    onError: (error) => {
+      console.error("Failed to update form:", error);
     },
   });
 };
@@ -229,7 +230,10 @@ export const useGetForm = ({
   return useFetch<undefined, Form | null>({
     endpoint: `/forms/${formId}`,
     queryKey: () => [formId],
-    queryOptions: config,
+    queryOptions: {
+      enabled: !!formId,
+      ...config,
+    },
   });
 };
 
@@ -237,12 +241,11 @@ export const useDeleteForm = ({ id }: { id: string }) => {
   return useDelete<null, { upn: string | undefined; userName: string | undefined }>({
     endpoint: `/forms/delete/${id}`,
     mutationKey: ["deleteForm", id],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["forms"] });
+      },
+    },
   });
 };
 
-export const useDeleteAllFormsResponses = ({ id }: { id: string }) => {
-  return useDelete<string, { upn: string | undefined; userName: string | undefined }>({
-    endpoint: `/delete-all-form-responses`,
-    mutationKey: ["delete-all-form-responses", id],
-  });
-};

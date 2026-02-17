@@ -84,6 +84,8 @@ export const MRT_Localization_Hebrew = {
   toggleFullScreen: "החלף מסך מלא",
   toggleSelectAll: "החלף בחר הכל",
   toggleSelectRow: "החלף בחירת שורה",
+  selectRow: "בחר שורה",
+  unSelectRow: "בטל בחירת שורה",
   toggleVisibility: "החלף נראות",
   ungroupByColumn: "בטל קיבוץ לפי {column}",
   unpin: "Unpin",

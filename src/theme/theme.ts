@@ -53,13 +53,27 @@ const palette = {
   },
   shadow: "#1976D21A",
   tableHeader: "#d5e6f6",
+  grid: {
+    border: "rgba(189,189,189,0.9)",
+    editModeBorder: "#9e9e9e",
+    editModeShadow: "rgba(158, 158, 158, 0.35)",
+    rowEven: "#fafafa",
+    rowOdd: "#ffffff",
+    rowHover: "#e3f2fd",
+    rowSelected: "#e0e0e0",
+    rowSelectedHover: "#d5d5d5",
+    headerBackground: "#D5E6F6",
+    headerHover: "#bbdefb",
+    cellEditable: "#ffffff",
+    cellNonEditable: "#d0d0d0",
+  },
 };
 
 export let theme = createTheme({
   direction: "rtl",
   typography: {
     fontFamily: "assistant, sans-serif",
-    fontSize: 16,
+    fontSize: 19,
   },
   palette,
   components: {},
@@ -228,7 +242,7 @@ theme.components = {
         "& .MuiSwitch-track": {
           borderRadius: 22 / 2,
           "&::before, &::after": {
-            content: '""',
+            content: "\"\"",
             position: "absolute",
             top: "50%",
             transform: "translateY(-50%)",
@@ -285,7 +299,6 @@ theme.components = {
   MuiAutocomplete: {
     styleOverrides: {
       root: {
-        direction: "rtl",
         zIndex: 1000,
         "&.MuiInputBase-input": { direction: "rtl", marginTop: "5px" },
         "&.MuiAutocomplete-root .MuiOutlinedInput-root": {
@@ -304,6 +317,13 @@ theme.components = {
     styleOverrides: {
       root: {
         color: theme.palette.text.primary,
+      },
+    },
+  },
+  MuiSelect: {
+    defaultProps: {
+      MenuProps: {
+        disableScrollLock: true,
       },
     },
   },
@@ -330,6 +350,20 @@ declare module "@mui/material/" {
     };
     white: string;
     tableHeader?: string;
+    grid?: {
+      border: string;
+      editModeBorder: string;
+      editModeShadow: string;
+      rowEven: string;
+      rowOdd: string;
+      rowHover: string;
+      rowSelected: string;
+      rowSelectedHover: string;
+      headerBackground: string;
+      headerHover: string;
+      cellEditable: string;
+      cellNonEditable: string;
+    };
   }
 
   interface SimplePaletteOptions {
@@ -343,5 +377,19 @@ declare module "@mui/material/" {
     };
     white: string;
     tableHeader?: string;
+    grid?: {
+      border: string;
+      editModeBorder: string;
+      editModeShadow: string;
+      rowEven: string;
+      rowOdd: string;
+      rowHover: string;
+      rowSelected: string;
+      rowSelectedHover: string;
+      headerBackground: string;
+      headerHover: string;
+      cellEditable: string;
+      cellNonEditable: string;
+    };
   }
 }

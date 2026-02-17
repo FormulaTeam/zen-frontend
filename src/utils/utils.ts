@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as XLSX from "sheetjs-style";
 import * as FileSaver from "file-saver";
 import moment from "moment";
-import { searchResponses } from "../api";
+import { getResponses, searchResponses } from "../api";
 import {
   CustomFormField,
   FieldTypeIds,
@@ -101,6 +101,8 @@ export const RESPONSE_ACCESS_PERMISSIONS = [
 ];
 
 export type LegacyPermission = (typeof PERMISSION_TYPES)[keyof typeof PERMISSION_TYPES];
+
+export const allLegacyPermissions: LegacyPermission[] = Object.values(PERMISSION_TYPES);
 
 export const CREATE_RESPONSE_PERMISSIONS = [PERMISSION_TYPES.CREATE_RESPONSE];
 // human labels for debug/admin UI
@@ -368,20 +370,23 @@ function preferredOrder(obj, order) {
   return newObject;
 }
 
-export const searchResponsesWithFilterAndExportToExcel = async (form: Form, filter: Filter) => {
+export const getResponsesAndExportToExcel = async (form: Form) => {
   try {
-    let responses: any = await searchResponses(filter);
-    if (responses && responses.responses) {
-      exportToExcel(responses.responses, form);
+    let responses: ResponseForm[] = await getResponses({ form_id: form.id });
+
+    if (responses?.length > 0) {
+      exportToExcel(responses, form);
     }
+
+    showSuccessNotification(NotificationTexts.SuccessfulExportToExcel);
   } catch (error) {
-    showErrorNotification(NotificationTexts.FailedLoadingResponses);
+    showErrorNotification(NotificationTexts.FailedExportToExcel);
     console.log(error);
   }
 };
 
 /** create excel file with only titles based on the form fields */
-export function createExcelMold(form) {
+export function createExcelMold(form: Form) {
   let formFields = form.fields;
   let formFieldsIds: string[] = [];
   let data: any[] = [];
@@ -392,16 +397,14 @@ export function createExcelMold(form) {
 
   //add column for each field and save fields order with arr of names
   let names: string[] = [];
-  formFields.forEach((field, j) => {
-    if (field.typeId === FieldTypeIds.form) {
-      // If the field is of type 'form', we skip it as it doesn't have a value in the response
-      return;
+  formFields.forEach((field) => {
+    if (field.typeId !== FieldTypeIds.form) {
+      data[0] = {
+        ...data[0],
+        [field.displayName]: "",
+      };
+      names.push(field.displayName);
     }
-    data[0] = {
-      ...data[0],
-      [field.displayName]: "",
-    };
-    names.push(field.displayName);
   });
 
   const fileType =
@@ -474,6 +477,7 @@ export function getFieldType(field: FormField) {
     }
   }
 }
+
 export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
   // Sort responses by id in ascending order to maintain consistent order
   const sortedResponses = [...responsesArr].sort((a, b) => (a.index || 0) - (b.index || 0));
@@ -491,13 +495,13 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
 
     //add column for each field and save fields order with arr of names
     let names: string[] = [];
-    formFields.forEach((field, j) => {
+    formFields.forEach((field, index) => {
       if (field.typeId === FieldTypeIds.form) {
-        delete data[i][field.displayName];
+        delete data[index][field.displayName];
         return;
       }
-      data[i] = {
-        ...data[i],
+      data[index] = {
+        ...data[index],
         [field.displayName]: "",
       };
       names.push(field.displayName);
@@ -561,7 +565,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
             case FieldTypeIds.longText:
               formattedValue = value as string;
               break;
-            case FieldTypeIds.smallText:
+            case FieldTypeIds.shortText:
               formattedValue = value as string;
               break;
             case FieldTypeIds.options:
@@ -587,7 +591,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
                 formattedValue = moment(dateValue).format(DEFAULT_DATE_FORMAT);
               }
               break;
-            case FieldTypeIds.hour:
+            case FieldTypeIds.time:
               const timeValue = value as string;
               // If it's already in the correct format, use it directly
               if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(timeValue)) {
@@ -1016,6 +1020,11 @@ export function generateNewFormFieldData(item: Partial<CustomFormField>) {
   if (item.typeId === FieldTypeIds.options) {
     newField.options = ["", ""];
   }
+
+  if (item.typeId === FieldTypeIds.location) {
+    newField.coordinateType = "UTM";
+  }
+
   return newField;
 }
 
@@ -1081,6 +1090,18 @@ export function validateByRegex(value: string, regex: string) {
   const regexValidator = new RegExp(regex);
   return regexValidator.test(value);
 }
+
+export const preventEnterKeyNavigation = (
+  event: React.KeyboardEvent,
+  allowEnter: boolean = false,
+) => {
+  if (event.key === "Enter") {
+    event.stopPropagation();
+    if (!allowEnter) {
+      event.preventDefault();
+    }
+  }
+};
 
 // using TextDecoder to interpret the bytes as UTF‑8 to display the correct characters
 export function decodeFileName(fileName: string) {

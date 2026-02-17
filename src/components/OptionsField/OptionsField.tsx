@@ -79,7 +79,7 @@ export default function OptionsField({
   getBaseFieldElement,
   isOptionValid,
   onChange,
-  onBlur = () => {},
+  onBlur = () => { },
   onClose,
   onAddOption,
   onChangeDefaultValue,
@@ -446,7 +446,7 @@ export default function OptionsField({
               // It won't affect the functionality since it is not used as a real typeId
               const filtered = options.filter((option) => {
                 return [
-                  FieldTypeIds.smallText,
+                  FieldTypeIds.shortText,
                   FieldTypeIds.longText,
                   FieldTypeIds.number,
                   DRAGGED_ITEM_ID,
@@ -548,8 +548,8 @@ export default function OptionsField({
     const options = connectedField?.options?.length
       ? connectedField.options
       : defaultValues?.length
-      ? defaultValues
-      : formField.options;
+        ? defaultValues
+        : formField.options;
 
     return Array.from(new Set(options.filter((val) => val !== null && val !== undefined)));
   };
@@ -588,31 +588,31 @@ export default function OptionsField({
         {formField.connectionType === connectionTypes.form
           ? renderFormSelectBlock()
           : formField.options?.map((option, optionIndex) => {
-              // const isValid = isOptionValid(option);
-              return (
-                <Grid
-                  sx={{ flexWrap: "nowrap" }}
-                  container
-                  key={"option_" + optionIndex}
-                  direction="row"
-                  gap={2}
-                  alignItems="center">
-                  <BaseFormInput
-                    className={
-                      isOptionValid(option) ? "formField-textfield" : "formField-textfield-invalid"
-                    }
-                    value={formField.options && formField.options[optionIndex]}
-                    name="title"
-                    placeholder={"הזנת אפשרות " + (optionIndex + 1 || 0)}
-                    onChange={(e) => onChange(e, optionIndex)}
-                    onBlur={onBlur}
-                    InputLabelProps={{ shrink: false }}
-                  />
-                  <Close style={{ cursor: "pointer" }} onClick={(e) => onClose(e, optionIndex)} />
-                  {formField.parentFieldId && renderOptionAccordionBlock(optionIndex)}
-                </Grid>
-              );
-            })}
+            // const isValid = isOptionValid(option);
+            return (
+              <Grid
+                sx={{ flexWrap: "nowrap" }}
+                container
+                key={"option_" + optionIndex}
+                direction="row"
+                gap={2}
+                alignItems="center">
+                <BaseFormInput
+                  className={
+                    isOptionValid(option) ? "formField-textfield" : "formField-textfield-invalid"
+                  }
+                  value={formField.options && formField.options[optionIndex]}
+                  name="title"
+                  placeholder={"הזנת אפשרות " + (optionIndex + 1 || 0)}
+                  onChange={(e) => onChange(e, optionIndex)}
+                  onBlur={onBlur}
+                  InputLabelProps={{ shrink: false }}
+                />
+                <Close style={{ cursor: "pointer" }} onClick={(e) => onClose(e, optionIndex)} />
+                {formField.parentFieldId && renderOptionAccordionBlock(optionIndex)}
+              </Grid>
+            );
+          })}
         {error && <ErrorMessage msg={error} />}
       </Grid>
       {formField.connectionType !== connectionTypes.form && (
@@ -640,7 +640,7 @@ export default function OptionsField({
           <DefaultValueAutocomplete
             options={availableOptions}
             defaultValue={defaultValue ? defaultValue : ""}
-            onChange={onChangeDefaultValue ?? (() => {})}
+            onChange={onChangeDefaultValue ?? (() => { })}
           />
         ))}
 

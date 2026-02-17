@@ -1,5 +1,6 @@
 import { FormField } from "../types/interfaces/tableViews.types";
 import { DEFAULT_FIELDS } from "../utils/interfaces";
+import { HEBREW_TITLES } from "../utils/utils";
 
 // System columns meta (not part of form.fields)
 const SYSTEM_COLUMNS_META: Record<string, { displayName: string; type: string }> = {

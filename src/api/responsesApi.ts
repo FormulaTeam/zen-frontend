@@ -10,10 +10,15 @@ import {
   FieldValue,
   LinkValue,
   LocationValue,
+  Row,
 } from "../utils/interfaces";
 import { ResponseCount } from "../types/interfaces/responses.types";
-import { useCreate } from "../utils/useCreate";
+import { useDelete } from "../utils/useDelete";
 import queryClient from "./queryClient";
+import { useCreate } from "../utils/useCreate";
+import { ExcelImportResult } from "../types/interfaces/forms.types";
+import { useFetch } from "../utils/useFetch";
+import { useMutation } from "@tanstack/react-query";
 import { useUpdate } from "../utils/useUpdate";
 
 /**
@@ -39,7 +44,7 @@ export const getResponses = async (filter?: Filter): Promise<ResponseForm[]> => 
       `/responses/get-responses?form_id=${filter?.form_id}`,
       { params },
     );
-    return response?.data || [];
+    return response?.data ?? [];
   } catch (error) {
     console.error("Failed to fetch responses:", error);
     throw error;
@@ -193,26 +198,6 @@ export const deleteAllResponses = async (formId: number): Promise<number> => {
   }
 };
 
-export const createResponsesFromFile = async (formId: number, file: File): Promise<any> => {
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await apiClient.post<any>(
-      `/responses/create-from-file?form_id=${formId}`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      },
-    );
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to create responses from file:", error);
-    throw error;
-  }
-};
-
 /**
  * Restore a deleted response.
  *
@@ -254,8 +239,94 @@ export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseFo
   }
 };
 
+// Yahel's changes - above is the original file - below are the changes
+// ============================================================
+
+export const useGetResponses = ({ filter }: { filter?: Filter }) => {
+  return useFetch<Filter, ResponseForm[]>({
+    endpoint: `/responses/get-responses`,
+    queryKey: () => ["responses", filter],
+    params: filter,
+    // queryOptions: { enabled: !!filter?.form_id },
+  });
+};
+
+export const useGetResponsesRows = ({ filter }: { filter?: Filter }) => {
+  return useFetch<Filter, Row[]>({
+    endpoint: `/responses/get-rows`,
+    queryKey: () => ["rows", filter],
+    params: filter,
+    queryOptions: { enabled: !!filter?.form_id },
+  });
+};
+
+export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
+  return useDelete<{ form_id: string }, void>({
+    endpoint: `/responses/delete-all-form-responses`,
+    mutationKey: ["delete-all-form-responses", formId],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [formId] });
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+    },
+  });
+};
+
+export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
+  return useCreate<FormData, ExcelImportResult>({
+    endpoint: `/responses/create-from-file?form_id=${formId}`,
+    mutationKey: ["import-responses-from-file", formId],
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [formId] });
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+    },
+  });
+};
+
+export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
+  return useMutation({
+    mutationFn: async (responses: Array<{ id: number; responseData: Partial<ResponseForm> }>) => {
+      const responsesPromises = responses.map(({ id, responseData }) => {
+        return apiClient.put<ResponseForm>(`/responses/edit/${formId}/${id}`, responseData);
+      });
+      const responsesResults = await Promise.all(responsesPromises);
+      return responsesResults.map(response => response.data);
+    },
+    mutationKey: ["batch-update-responses", formId],
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses"] });
+      queryClient.invalidateQueries({ queryKey: ["rows"] });
+    },
+  });
+};
+
 // Gali's changes
 // ========================
+export const useCreateResponsesFromFile = (formId: string) => {
+  return useCreate<FormData, any>({
+    endpoint: `/responses/create-from-file?form_id=${formId}`,
+    mutationKey: ["create-responses-from-file", formId],
+    axiosConfig: {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+      onError: (error) => {
+        console.error("Failed to create responses from file:", error);
+      },
+    },
+  });
+};
 
 export const useCreateResponse = () => {
   return useCreate<NewResponse | NewResponse[], ResponseForm | ResponseForm[]>({
@@ -285,4 +356,31 @@ export const useUpdateResponse = (formId: number, id: number) => {
       },
     },
   });
+};
+
+/**
+ * Fetch rows for a form with optional query parameters.
+ *
+ * @param filter - Optional filter parameters for querying rows.
+ * @returns A promise that resolves to an array of rows.
+ */
+export const getResponsesRows = async ({ filter }: { filter?: Filter }): Promise<Row[]> => {
+  try {
+    if (!filter?.form_id) {
+      console.error("Form ID is required to fetch rows.");
+      return [];
+    }
+    const params = {
+      query: filter?.query ? JSON.stringify(filter.query) : undefined,
+      sortBy: filter?.sortBy,
+      orderBy: filter?.orderBy,
+      pageSize: filter?.pageSize,
+      pageNumber: filter?.pageNumber,
+    };
+    const response = await apiClient.get<Row[]>(`/responses/get-rows?form_id=${filter.form_id}`, { params });
+    return response?.data || [];
+  } catch (error) {
+    console.error("Failed to fetch rows:", error);
+    throw error;
+  }
 };

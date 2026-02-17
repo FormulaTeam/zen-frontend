@@ -1,10 +1,10 @@
 import React from "react";
 import moment from "moment";
 import { Box, Tooltip } from "@mui/material";
-import { type MRT_ColumnDef, MRT_Column } from "material-react-table";
+import { type MRT_ColumnDef, MRT_RowData } from "material-react-table";
 import cloudSync from "../images/cloud.png";
 import { CustomIcon } from "../theme/icons";
-import { FieldTypeIds } from "../utils/interfaces";
+import { FieldTypeIds, Form, FormField } from "../utils/interfaces";
 import { DEFAULT_DATE_FORMAT, DEFAULT_DATE_TIME_FORMAT } from "../utils/utils";
 import CustomCarousel from "../components/FilePreview/CustomCarousel";
 import ZoomCell from "../components/formInForm/ZoomCell";
@@ -27,7 +27,7 @@ export const useTableColumns = (
   forceRenderCounter?: number,
   fieldOptions?: Record<string, any>,
 ) => {
-  const createTableColumns = (form, permissionTypes, viewConfig?: ViewColumn[]) => {
+  const createTableColumns = (form: Form, permissionTypes, viewConfig?: ViewColumn[]) => {
     let cols: any[] = [];
 
     // Create a timestamp to force re-render when called
@@ -58,19 +58,19 @@ export const useTableColumns = (
       });
     }
     // Helper builders for system columns so they can be inserted per viewConfig order
-    const buildIdColumn = () => ({
+    const buildIdColumn = (): MRT_ColumnDef<MRT_RowData> => ({
       id: "id",
       header: "מזהה",
       accessorKey: "id",
       enableColumnFilter: true,
-      filterVariant: "number",
+      filterVariant: "text",
       filterFn: "equals",
       muiFilterTextFieldProps: { type: "number" },
       grow: false,
       enableResizing: false,
       size: 140,
     });
-    const buildSyncColumn = () => ({
+    const buildSyncColumn = (): MRT_ColumnDef<MRT_RowData> => ({
       id: "pushed_to_metro",
       header: "סטטוס סנכרון",
       Header: (
@@ -83,6 +83,7 @@ export const useTableColumns = (
       enableGrouping: false,
       grow: false,
       size: 125,
+      enableResizing: false,
       renderColumnActionsMenuItems: ({ internalColumnMenuItems }) => {
         let arr: any[] = [];
         internalColumnMenuItems.forEach((element: any) => {
@@ -100,7 +101,7 @@ export const useTableColumns = (
             title={
               row?.original?.pushed_to_metro
                 ? "סונכרן למטרו ב-" +
-                  moment(row?.original?.pushed_to_metro).format(DEFAULT_DATE_FORMAT)
+                moment(row?.original?.pushed_to_metro).format(DEFAULT_DATE_FORMAT)
                 : "לא סונכרן"
             }>
             <div>
@@ -113,14 +114,13 @@ export const useTableColumns = (
           </Tooltip>
         </Box>
       ),
-      enableResizing: false,
     });
 
-    const buildDynamicFieldColumn = (field: any, orderIndex: number = 0) => {
+    const buildDynamicFieldColumn = (field: FormField): MRT_ColumnDef<MRT_RowData> | undefined => {
       if (field.typeId === FieldTypeIds.form) return; // skip connected forms
       let displayName = field.displayName + "";
       let uniqueId = field?.uniqueId;
-      let col: any = {
+      let col: MRT_ColumnDef<MRT_RowData> & { innerName: string } = {
         id: uniqueId, // Use uniqueId instead of calculated index
         header: displayName,
         accessorKey: uniqueId,
@@ -128,11 +128,9 @@ export const useTableColumns = (
         grow: true,
         innerName: field.name,
         Cell: ({ cell, row }) => {
-          const renderKey = `${
-            row.original.id
-          }-${uniqueId}-${isQuickEditMode}-${timestamp}-${JSON.stringify(rowSelection)}-${
-            forceRenderCounter || 0
-          }`;
+          const renderKey = `${row.original.id
+            }-${uniqueId}-${isQuickEditMode}-${timestamp}-${JSON.stringify(rowSelection)}-${forceRenderCounter || 0
+            }`;
           if (row && row.original && row.original.data) {
             let item = row.original.data?.find((f) => f.uniqueId === uniqueId);
             let value = ![undefined, null].includes(item?.value) ? item?.value : "";
@@ -219,7 +217,7 @@ export const useTableColumns = (
                 <></>
               );
             }
-            if (field.typeId === FieldTypeIds.hour) {
+            if (field.typeId === FieldTypeIds.time) {
               if (value && value !== "") {
                 if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(value)) {
                   return (
@@ -294,7 +292,7 @@ export const useTableColumns = (
         },
       };
       if (field.typeId === FieldTypeIds.options) {
-        col.filterFn = "equals";
+        col.filterFn = "";
         col.filterSelectOptions =
           (fieldOptions?.[field.uniqueId] && [
             ...new Set(fieldOptions[field.uniqueId].map((option) => option.value)),
@@ -304,10 +302,10 @@ export const useTableColumns = (
         col.filterVariant = "select";
       }
       if (field.typeId === FieldTypeIds.number) {
-        col.filterVariant = "number";
+        col.filterVariant = "text";
         col.sortingFn = (rowA, rowB, columnId) => {
-          const valueA = rowA.getValue(columnId);
-          const valueB = rowB.getValue(columnId);
+          const valueA = rowA.getValue<number>(columnId);
+          const valueB = rowB.getValue<number>(columnId);
           return valueB - valueA;
         };
         col.muiFilterTextFieldProps = { type: "number" };
@@ -323,7 +321,7 @@ export const useTableColumns = (
       cols.push(col);
     };
 
-    const addSystemEditedByColumn = () => {
+    const addSystemEditedByColumn = (): MRT_ColumnDef<MRT_RowData> => {
       return {
         id: "updated_by_name",
         header: "השתנה ע״י",
@@ -333,7 +331,7 @@ export const useTableColumns = (
         filterFn: "contains",
       };
     };
-    const addSystemEditedColumn = () => {
+    const addSystemEditedColumn = (): MRT_ColumnDef<MRT_RowData> => {
       return {
         id: "updated",
         header: "השתנה",
@@ -383,7 +381,7 @@ export const useTableColumns = (
           default: {
             const field = form.fields.find((f) => f.uniqueId === vc.columnId);
             if (field) {
-              buildDynamicFieldColumn(field, vc.order);
+              buildDynamicFieldColumn(field);
             }
             break;
           }
@@ -401,7 +399,7 @@ export const useTableColumns = (
         if (sectionOrderDiff !== 0) return sectionOrderDiff;
         return a.index - b.index;
       });
-      sortedFormFields.forEach((field, i) => buildDynamicFieldColumn(field, i));
+      sortedFormFields.forEach((field) => buildDynamicFieldColumn(field));
       cols.push(addSystemEditedByColumn());
       cols.push(addSystemEditedColumn());
     }

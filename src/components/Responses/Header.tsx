@@ -2,21 +2,19 @@ import React from "react";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { getCreatorName } from "../../utils/formFieldsResponses";
 import { Form } from "../../utils/interfaces";
+import { useFormStore } from "../../pages/ResponsesPage/stores/form.store";
 
-interface HeaderProps {
-  form: Form;
-}
-
-const Header: React.FC<HeaderProps> = ({ form }) => {
+const Header = () => {
+  const { form } = useFormStore();
   return (
     <Box>
       <Tooltip title="מזהה הטופס">
         <Typography width={"fit-content"} variant="subtitle2">
-          {form?.id}
+          {form.id}
         </Typography>
       </Tooltip>
-      <Typography variant="h4">{form?.name}</Typography>
-      <Typography variant="subtitle2">{form?.description || "ללא תיאור"}</Typography>
+      <Typography variant="h4">{form.name}</Typography>
+      <Typography variant="subtitle2">{form.description || "ללא תיאור"}</Typography>
       <Typography variant="subtitle1">{`נוצר על ידי ${getCreatorName(form)}`}</Typography>
     </Box>
   );
