@@ -41,7 +41,7 @@ function FormConditionsDependencyPicker() {
   } = useFormConditionEditorContext(ConditionEditorStepId.DEPENDENCY_PICKER);
 
   const availableComponents: Record<ValueOf<typeof FormComponentType>, AvailableComponentsData> = useMemo(() => {
-    const conditionedFieldIds = groups?.flatMap((group) => group?.conditions).map((condition) => condition?.field?.id);
+    const conditionedFieldIds = groups?.flatMap((group) => group?.predicates).map((predicate) => predicate?.field?.id);
     const conditionedFieldsParentIds = conditionedFieldIds?.map((fieldId) => fields[fieldId ?? ""]?.parentSectionId);
 
     return {
@@ -92,7 +92,7 @@ function FormConditionsDependencyPicker() {
                               (_, ids) => setData((prev) => {
                                 return {
                                   ...prev,
-                                  [componentType]: ids,
+                                  [componentType]: ids ?? [],
                                 };
                               })
                             }

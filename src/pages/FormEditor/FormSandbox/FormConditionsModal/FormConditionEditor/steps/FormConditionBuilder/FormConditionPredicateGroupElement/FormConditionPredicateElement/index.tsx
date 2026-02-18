@@ -3,10 +3,10 @@ import { DeleteOutlined } from "@mui/icons-material";
 import {
   ConditionFieldTypeId,
   ConditionFieldTypeIds,
-  FormConditionType,
+  FormComparator,
 } from "../../../../../../../schemas/conditions/conditionField/baseConditionFieldSchema";
-import { ConditionTypeOptions } from "../../utils";
-import { FormConditionField, FormConditionGroup } from "../../../../../../../schemas/conditions";
+import { ComparatorOptions } from "../../utils";
+import { FormConditionField, FormConditionPredicateGroup } from "../../../../../../../schemas/conditions";
 import { FORM_ELEMENT_ICONS } from "../../../../../../../../../components/FORM_ELEMENT_ICONS";
 import { FieldTypeIds, FORM_ELEMENTS } from "../../../../../../../../../utils/interfaces";
 import { useEffect, useMemo, useRef } from "react";
@@ -25,7 +25,7 @@ import { GroupItemValidationErrors } from "../../types";
 
 
 interface Props {
-  condition: DeepPartial<ArrayElement<FormConditionGroup["conditions"]>>;
+  condition: DeepPartial<ArrayElement<FormConditionPredicateGroup["predicates"]>>;
   index: number;
   parentGroupIndex: number;
   isLastCondition: boolean;
@@ -37,7 +37,7 @@ interface Props {
   setData: ConditionEditorSetDataFunction<typeof ConditionEditorStepId.CONDITION_BUILDER>;
 }
 
-function FormConditionGroupItem({
+function FormConditionPredicateElement({
                                   condition,
                                   index,
                                   parentGroupIndex,
@@ -51,21 +51,19 @@ function FormConditionGroupItem({
                                 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const getIsTargetValueNotRequired = (conditionType: ArrayElement<FormConditionGroup["conditions"]>["field"]["conditionType"] | undefined) => (
-    !(condition.field?.typeId && conditionType && ConditionTypeOptions[condition.field?.typeId].optionsProperties[conditionType].requiresTargetValue)
+  const getIsTargetValueNotRequired = (comparator: ArrayElement<FormConditionPredicateGroup["predicates"]>["field"]["comparator"] | undefined) => (
+    !(condition.field?.typeId && comparator && ComparatorOptions[condition.field?.typeId].optionsProperties[comparator].requiresTargetValue)
   );
 
   const renderTargetValueField = useMemo(() => {
-    const disabled = !condition.field?.typeId || getIsTargetValueNotRequired(condition.field.conditionType);
-
-    console.log(validationErrors?.field?.properties?.targetValue?.errors);
+    const disabled = !condition.field?.typeId || getIsTargetValueNotRequired(condition.field.comparator);
 
     return (
-      ConditionTypeOptions[condition.field?.typeId ?? ConditionFieldTypeIds.shortText].valueProperties.inputComponent({
+      ComparatorOptions[condition.field?.typeId ?? ConditionFieldTypeIds.shortText].valueProperties.inputComponent({
         disabled: disabled,
         value: condition.field?.targetValue ?? "",
         helperText: !disabled ? (validationErrors?.field?.properties?.targetValue?.errors[0] ?? "") : "",
-        error: !disabled && !!validationErrors?.field?.properties?.targetValue?.errors,
+        error: !disabled && !!validationErrors?.field?.properties?.targetValue?.errors[0],
         label: "ערך",
         ...(condition.field?.typeId === ConditionFieldTypeIds.options && condition.field.id ?
             {
@@ -83,15 +81,15 @@ function FormConditionGroupItem({
 
           modifiedCondition.field = {
             ...modifiedCondition.field,
-            targetValue: ConditionTypeOptions[condition.field!.typeId!].valueProperties.valueTransformer(e.target.value) as any,
+            targetValue: e.target.value != undefined ? ComparatorOptions[condition.field!.typeId!].valueProperties.valueTransformer(e.target.value) as any : "",
           };
-          group.conditions = group.conditions!.toSpliced(index, 1, { ...modifiedCondition });
+          group.predicates = group.predicates!.toSpliced(index, 1, { ...modifiedCondition });
 
           return prev.toSpliced(parentGroupIndex, 1, group);
         }),
       })
     );
-  }, [condition.field?.conditionType, condition.field?.targetValue, setData, parentGroupIndex, condition, validationErrors]);
+  }, [condition.field?.comparator, condition.field?.targetValue, setData, parentGroupIndex, condition, validationErrors]);
 
   useEffect(() => {
     shouldScrollIntoView &&
@@ -117,7 +115,7 @@ function FormConditionGroupItem({
                                             const modifiedCondition = { ...condition };
 
                                             modifiedCondition.operator = operator;
-                                            group.conditions = group.conditions!.toSpliced(index, 1, { ...modifiedCondition });
+                                            group.predicates = group.predicates!.toSpliced(index, 1, { ...modifiedCondition });
 
                                             return prev.toSpliced(parentGroupIndex, 1, group);
                                           })
@@ -147,21 +145,21 @@ function FormConditionGroupItem({
 
                           if (fieldId) {
                             const typeId = fields[fieldId]?.data?.typeId as ConditionFieldTypeId;
-                            const newConditionType = ConditionTypeOptions[typeId].values[0];
+                            const newComparator = ComparatorOptions[typeId].values[0];
 
                             modifiedCondition.field = {
                               ...modifiedCondition.field,
                               id: fieldId,
                               typeId,
-                              conditionType: newConditionType,
-                              ...(getIsTargetValueNotRequired(newConditionType) && { targetValue: undefined }),
+                              comparator: newComparator,
+                              targetValue: undefined,
                             } as FormConditionField;
                           } else {
                             modifiedCondition.field = undefined;
                           }
 
 
-                          group.conditions = group.conditions!.toSpliced(index, 1, { ...modifiedCondition });
+                          group.predicates = group.predicates!.toSpliced(index, 1, { ...modifiedCondition });
 
                           return prev.toSpliced(parentGroupIndex, 1, group);
                         })
@@ -182,8 +180,8 @@ function FormConditionGroupItem({
                       renderInput={(params) => (
                         <TextField {...params}
                                    label={"שדה"}
-                                   error={!!validationErrors?.field?.properties?.id?.errors}
-                                   helperText={validationErrors?.field?.properties?.id?.errors[0]}
+                                   error={!!validationErrors?.field?.errors[0]}
+                                   helperText={validationErrors?.field?.errors[0]}
                                    slotProps={{
                                      htmlInput: {
                                        ...params.inputProps,
@@ -196,21 +194,21 @@ function FormConditionGroupItem({
         <Autocomplete
           disableClearable
           disabled={condition.field?.typeId === undefined}
-          options={condition.field?.typeId ? ConditionTypeOptions[condition.field?.typeId].values : []}
-          value={condition.field?.conditionType ?? (condition.field?.typeId ? ConditionTypeOptions[condition.field?.typeId].values[0] : -1)}
-          getOptionLabel={(conditionType) => condition.field?.typeId ? ConditionTypeOptions[condition.field?.typeId].optionsProperties[conditionType].label : ""}
+          options={condition.field?.typeId ? ComparatorOptions[condition.field?.typeId].values : []}
+          value={condition.field?.comparator ?? (condition.field?.typeId ? ComparatorOptions[condition.field?.typeId].values[0] : -1)}
+          getOptionLabel={(comparator) => condition.field?.typeId ? ComparatorOptions[condition.field?.typeId].optionsProperties[comparator].label : ""}
           onChange={
-            (_, conditionType) => setData((prev) => {
+            (_, comparator) => setData((prev) => {
               const group = { ...prev[parentGroupIndex] };
               const modifiedCondition = { ...condition };
-              const newConditionType = (conditionType ?? undefined) as FormConditionType;
+              const newComparator = (comparator ?? undefined) as FormComparator;
 
               modifiedCondition.field = {
                 ...modifiedCondition.field,
-                conditionType: newConditionType,
-                ...(getIsTargetValueNotRequired(newConditionType) && { targetValue: undefined }),
+                comparator: newComparator,
+                ...(getIsTargetValueNotRequired(newComparator) && { targetValue: undefined }),
               };
-              group.conditions = group.conditions!.toSpliced(index, 1, { ...modifiedCondition });
+              group.predicates = group.predicates!.toSpliced(index, 1, { ...modifiedCondition });
 
               return prev.toSpliced(parentGroupIndex, 1, group);
             })
@@ -237,10 +235,10 @@ function FormConditionGroupItem({
           <Button className={styles.deleteConditionButton}
                   onClick={() => setData((prev) => {
                     const group = { ...prev[parentGroupIndex] };
-                    group.conditions = group.conditions!.toSpliced(index, 1);
+                    group.predicates = group.predicates!.toSpliced(index, 1);
 
-                    if (index === 0 && group.conditions.length) {
-                      group.conditions[0]!.operator = undefined;
+                    if (index === 0 && group.predicates.length) {
+                      group.predicates[0]!.operator = undefined;
                     }
 
                     return prev.toSpliced(parentGroupIndex, 1, group);
@@ -253,4 +251,4 @@ function FormConditionGroupItem({
   );
 }
 
-export { FormConditionGroupItem };
+export { FormConditionPredicateElement };

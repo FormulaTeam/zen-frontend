@@ -1,22 +1,22 @@
 import {
   CONDITION_FIELD_TYPE_IDS,
   ConditionFieldTypeId,
-  FieldTypeIdToConditionType,
-  FormConditionType,
+  FieldTypeIdToComparator,
+  FormComparator,
 } from "../../../../../schemas/conditions/conditionField/baseConditionFieldSchema";
 import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { ArrayElement, ValueOf } from "../../../../../../../types/utils";
-import { TextConditionType } from "../../../../../schemas/conditions/conditionField/conditionTypes/TextConditionType";
+import { TextComparator } from "../../../../../schemas/conditions/conditionField/comparators/TextComparator";
 import {
-  NumberConditionType,
-} from "../../../../../schemas/conditions/conditionField/conditionTypes/NumberConditionType";
-import { DateConditionType } from "../../../../../schemas/conditions/conditionField/conditionTypes/DateConditionType";
+  NumberComparator,
+} from "../../../../../schemas/conditions/conditionField/comparators/NumberComparator";
+import { DateComparator } from "../../../../../schemas/conditions/conditionField/comparators/DateComparator";
 import {
-  OptionsConditionType,
-} from "../../../../../schemas/conditions/conditionField/conditionTypes/OptionsConditionType";
+  OptionsComparator,
+} from "../../../../../schemas/conditions/conditionField/comparators/OptionsComparator";
 import {
-  CheckboxConditionType,
-} from "../../../../../schemas/conditions/conditionField/conditionTypes/CheckboxConditionType";
+  CheckboxComparator,
+} from "../../../../../schemas/conditions/conditionField/comparators/CheckboxComparator";
 import { FunctionComponent } from "react";
 import { FormControl, FormHelperText, InputLabel, MenuItem, Select, TextField } from "@mui/material";
 import {
@@ -27,65 +27,65 @@ import moment, { Moment } from "moment";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import "moment/locale/he";
 
-interface ConditionTypeOptionData {
+interface ComparatorOptionData {
   label: string;
 
   requiresTargetValue?: boolean;
 }
 
-type ConditionTypeOptionsProperties = { [key in keyof typeof FieldTypeIdToConditionType]: { [k in ValueOf<typeof FieldTypeIdToConditionType[key]> & number]: ConditionTypeOptionData } };
+type ComparatorOptionsProperties = { [key in keyof typeof FieldTypeIdToComparator]: { [k in ValueOf<typeof FieldTypeIdToComparator[key]> & number]: ComparatorOptionData } };
 
-const ConditionTypeOptionsProperties = {
+const ComparatorOptionsProperties = {
   [FieldTypeIds.longText]: {
-    [TextConditionType.EQUAL]: { label: "שווה ל", requiresTargetValue: true },
-    [TextConditionType.NOT_EQUAL]: { label: "שונה מ", requiresTargetValue: true },
-    [TextConditionType.CONTAINS]: { label: "מכיל", requiresTargetValue: true },
-    [TextConditionType.NOT_CONTAINS]: { label: "לא מכיל", requiresTargetValue: true },
-    [TextConditionType.EMPTY]: { label: "ריק" },
-    [TextConditionType.NOT_EMPTY]: { label: "לא ריק" },
+    [TextComparator.EQUAL]: { label: "שווה ל", requiresTargetValue: true },
+    [TextComparator.NOT_EQUAL]: { label: "שונה מ", requiresTargetValue: true },
+    [TextComparator.CONTAINS]: { label: "מכיל", requiresTargetValue: true },
+    [TextComparator.NOT_CONTAINS]: { label: "לא מכיל", requiresTargetValue: true },
+    [TextComparator.EMPTY]: { label: "ריק" },
+    [TextComparator.NOT_EMPTY]: { label: "לא ריק" },
   },
   [FieldTypeIds.shortText]: {
-    [TextConditionType.EQUAL]: { label: "שווה ל", requiresTargetValue: true },
-    [TextConditionType.NOT_EQUAL]: { label: "שונה מ", requiresTargetValue: true },
-    [TextConditionType.CONTAINS]: { label: "מכיל", requiresTargetValue: true },
-    [TextConditionType.NOT_CONTAINS]: { label: "לא מכיל", requiresTargetValue: true },
-    [TextConditionType.EMPTY]: { label: "ריק" },
-    [TextConditionType.NOT_EMPTY]: { label: "לא ריק" },
+    [TextComparator.EQUAL]: { label: "שווה ל", requiresTargetValue: true },
+    [TextComparator.NOT_EQUAL]: { label: "שונה מ", requiresTargetValue: true },
+    [TextComparator.CONTAINS]: { label: "מכיל", requiresTargetValue: true },
+    [TextComparator.NOT_CONTAINS]: { label: "לא מכיל", requiresTargetValue: true },
+    [TextComparator.EMPTY]: { label: "ריק" },
+    [TextComparator.NOT_EMPTY]: { label: "לא ריק" },
   },
   [FieldTypeIds.number]: {
-    [NumberConditionType.EQUAL]: { label: "שווה ל", requiresTargetValue: true },
-    [NumberConditionType.NOT_EQUAL]: { label: "שונה מ", requiresTargetValue: true },
-    [NumberConditionType.LARGER]: { label: "גדול מ", requiresTargetValue: true },
-    [NumberConditionType.SMALLER]: { label: "קטן מ", requiresTargetValue: true },
-    [NumberConditionType.LARGER_OR_EQUAL]: { label: "גדול או שווה ל", requiresTargetValue: true },
-    [NumberConditionType.SMALLER_OR_EQUAL]: { label: "קטן או שווה ל", requiresTargetValue: true },
-    [NumberConditionType.EMPTY]: { label: "ריק" },
-    [NumberConditionType.NOT_EMPTY]: { label: "לא ריק" },
+    [NumberComparator.EQUAL]: { label: "שווה ל", requiresTargetValue: true },
+    [NumberComparator.NOT_EQUAL]: { label: "שונה מ", requiresTargetValue: true },
+    [NumberComparator.LARGER]: { label: "גדול מ", requiresTargetValue: true },
+    [NumberComparator.SMALLER]: { label: "קטן מ", requiresTargetValue: true },
+    [NumberComparator.LARGER_OR_EQUAL]: { label: "גדול או שווה ל", requiresTargetValue: true },
+    [NumberComparator.SMALLER_OR_EQUAL]: { label: "קטן או שווה ל", requiresTargetValue: true },
+    [NumberComparator.EMPTY]: { label: "ריק" },
+    [NumberComparator.NOT_EMPTY]: { label: "לא ריק" },
   },
   [FieldTypeIds.date]: {
-    [DateConditionType.EQUAL]: { label: "זהה ל", requiresTargetValue: true },
-    [DateConditionType.NOT_EQUAL]: { label: "שונה מ", requiresTargetValue: true },
-    [DateConditionType.BEFORE]: { label: "קודם ל", requiresTargetValue: true },
-    [DateConditionType.AFTER]: { label: "מאוחר מ", requiresTargetValue: true },
-    [DateConditionType.BEFORE_OR_EQUAL]: { label: "קודם או זהה ל", requiresTargetValue: true },
-    [DateConditionType.AFTER_OR_EQUAL]: { label: "מאוחר או זהה ל", requiresTargetValue: true },
-    [DateConditionType.EMPTY]: { label: "ריק" },
-    [DateConditionType.NOT_EMPTY]: { label: "לא ריק" },
+    [DateComparator.EQUAL]: { label: "זהה ל", requiresTargetValue: true },
+    [DateComparator.NOT_EQUAL]: { label: "שונה מ", requiresTargetValue: true },
+    [DateComparator.BEFORE]: { label: "קודם ל", requiresTargetValue: true },
+    [DateComparator.AFTER]: { label: "מאוחר מ", requiresTargetValue: true },
+    [DateComparator.BEFORE_OR_EQUAL]: { label: "קודם או זהה ל", requiresTargetValue: true },
+    [DateComparator.AFTER_OR_EQUAL]: { label: "מאוחר או זהה ל", requiresTargetValue: true },
+    [DateComparator.EMPTY]: { label: "ריק" },
+    [DateComparator.NOT_EMPTY]: { label: "לא ריק" },
   },
   [FieldTypeIds.options]: {
-    [OptionsConditionType.ONLY]: { label: "שווה ל", requiresTargetValue: true },
-    [OptionsConditionType.OTHER_THAN]: { label: "שונה מ", requiresTargetValue: true },
-    [OptionsConditionType.INCLUDES]: { label: "מכיל", requiresTargetValue: true },
-    [OptionsConditionType.NOT_INCLUDES]: { label: "לא מכיל", requiresTargetValue: true },
-    [OptionsConditionType.NONE]: { label: "ריק" },
-    [OptionsConditionType.ANY]: { label: "לא ריק" },
+    [OptionsComparator.ONLY]: { label: "שווה ל", requiresTargetValue: true },
+    [OptionsComparator.OTHER_THAN]: { label: "שונה מ", requiresTargetValue: true },
+    [OptionsComparator.INCLUDES]: { label: "מכיל", requiresTargetValue: true },
+    [OptionsComparator.NOT_INCLUDES]: { label: "לא מכיל", requiresTargetValue: true },
+    [OptionsComparator.NONE]: { label: "ריק" },
+    [OptionsComparator.ANY]: { label: "לא ריק" },
   },
   [FieldTypeIds.checkbox]: {
-    [CheckboxConditionType.EQUAL]: { label: "שווה ל", requiresTargetValue: true },
+    [CheckboxComparator.EQUAL]: { label: "שווה ל", requiresTargetValue: true },
   },
-} as const satisfies ConditionTypeOptionsProperties;
+} as const satisfies ComparatorOptionsProperties;
 
-interface ConditionTypeValueComponentProps {
+interface ComparatorValueComponentProps {
   label: string;
   value: unknown;
   disabled: boolean;
@@ -95,27 +95,27 @@ interface ConditionTypeValueComponentProps {
   helperText?: string;
 }
 
-interface ConditionTypeValueProperty {
+interface ComparatorValueProperty {
   valueTransformer: (value: unknown) => any;
-  inputComponent: FunctionComponent<ConditionTypeValueComponentProps>;
+  inputComponent: FunctionComponent<ComparatorValueComponentProps>;
 }
 
-const ConditionTypeValueProperties = {
+const ComparatorValueProperties = {
   [FieldTypeIds.longText]: {
     valueTransformer: String,
-    inputComponent: ({ ...restProps }: ConditionTypeValueComponentProps) => (
+    inputComponent: ({ ...restProps }: ComparatorValueComponentProps) => (
       <TextField fullWidth multiline variant={"standard"} type={"text"} {...restProps} />
     ),
   },
   [FieldTypeIds.shortText]: {
     valueTransformer: String,
-    inputComponent: ({ ...restProps }: ConditionTypeValueComponentProps) => (
+    inputComponent: ({ ...restProps }: ComparatorValueComponentProps) => (
       <TextField fullWidth variant={"standard"} type={"text"} {...restProps} />
     ),
   },
   [FieldTypeIds.number]: {
     valueTransformer: Number,
-    inputComponent: ({ ...restProps }: ConditionTypeValueComponentProps) => (
+    inputComponent: ({ ...restProps }: ComparatorValueComponentProps) => (
       <TextField fullWidth variant={"standard"} type={"number"} {...restProps} />
     ),
   },
@@ -129,7 +129,7 @@ const ConditionTypeValueProperties = {
                        error,
                        helperText,
                        ...restProps
-                     }: ConditionTypeValueComponentProps) => (
+                     }: ComparatorValueComponentProps) => (
       <FormControl disabled={disabled}
                    error={error}
                    sx={{ width: "100%", marginTop: 1 }}>
@@ -155,7 +155,7 @@ const ConditionTypeValueProperties = {
                        items,
                        helperText,
                        ...restProps
-                     }: ConditionTypeValueComponentProps & {
+                     }: ComparatorValueComponentProps & {
       items?: Pick<ArrayElement<ManualItems>, "id" | "text">[],
     }) => (
       <FormControl disabled={disabled} error={error} fullWidth sx={{marginTop: 1}}>
@@ -185,7 +185,7 @@ const ConditionTypeValueProperties = {
         <Select labelId="checkbox-value-label"
                 fullWidth
                 variant={"standard"}
-                value={+(value as boolean)}
+                value={value != undefined ? +(value as boolean) : ""}
                 {...restProps}>
           <MenuItem value={+false}>לא</MenuItem>
           <MenuItem value={+true}>כן</MenuItem>
@@ -196,26 +196,25 @@ const ConditionTypeValueProperties = {
       </FormControl>
     ),
   },
-} as const satisfies Record<keyof typeof FieldTypeIdToConditionType, ConditionTypeValueProperty>;
+} as const satisfies Record<keyof typeof FieldTypeIdToComparator, ComparatorValueProperty>;
 
-interface ConditionTypeOption {
-  values: FormConditionType[];
-  optionsProperties: ValueOf<ConditionTypeOptionsProperties>;
-  valueProperties: ValueOf<typeof ConditionTypeValueProperties>;
+interface ComparatorOption {
+  values: FormComparator[];
+  optionsProperties: ValueOf<ComparatorOptionsProperties>;
+  valueProperties: ValueOf<typeof ComparatorValueProperties>;
 }
 
-const ConditionTypeOptions = CONDITION_FIELD_TYPE_IDS.reduce((obj, typeId) => {
+const ComparatorOptions = CONDITION_FIELD_TYPE_IDS.reduce((obj, typeId) => {
   obj[typeId] = {
-    values: Object.values(FieldTypeIdToConditionType[typeId]),
-    optionsProperties: ConditionTypeOptionsProperties[typeId],
-    valueProperties: ConditionTypeValueProperties[typeId],
-  } as ConditionTypeOption;
+    values: Object.values(FieldTypeIdToComparator[typeId]),
+    optionsProperties: ComparatorOptionsProperties[typeId],
+    valueProperties: ComparatorValueProperties[typeId],
+  } as ComparatorOption;
 
   return obj;
-}, {}) as Record<ConditionFieldTypeId, ConditionTypeOption>;
-
+}, {}) as Record<ConditionFieldTypeId, ComparatorOption>;
 
 export {
-  ConditionTypeOptions,
-  ConditionTypeOptionsProperties,
+  ComparatorOptions,
+  ComparatorOptionsProperties,
 };

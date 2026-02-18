@@ -1,4 +1,4 @@
-const OptionsConditionType = {
+const OptionsComparator = {
   ONLY: 1,
   OTHER_THAN: 2,
 
@@ -9,4 +9,4 @@ const OptionsConditionType = {
   ANY: 6,
 } as const;
 
-export { OptionsConditionType };
+export { OptionsComparator };

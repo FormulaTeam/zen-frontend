@@ -1,4 +1,4 @@
-const NumberConditionType = {
+const NumberComparator = {
   EQUAL: 1,
   NOT_EQUAL: 2,
 
@@ -12,4 +12,4 @@ const NumberConditionType = {
   NOT_EMPTY: 8,
 } as const;
 
-export { NumberConditionType };
+export { NumberComparator };

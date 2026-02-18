@@ -1,12 +1,15 @@
 import { Button, Modal } from "@mui/material";
 import { useFormSandboxContext } from "../context/FormSandboxContext";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import styles from "./style.module.css";
 import { FormConditionsOverview } from "./FormConditionsOverview";
 import { Add, Close, List } from "@mui/icons-material";
 import { FormConditionEditor, ModifiedCondition } from "./FormConditionEditor";
+import { useFormStructureContext } from "../../context/FormStructureContext";
+import { FormCondition } from "../../schemas/conditions";
 
 function FormConditionsModal() {
+  const { appendCondition, setConditionDataAt } = useFormStructureContext();
   const { isConditionsDialogOpen, setIsConditionsDialogOpen } = useFormSandboxContext();
   const [modifiedCondition, setModifiedCondition] = useState<ModifiedCondition | null>(null);
 
@@ -19,11 +22,22 @@ function FormConditionsModal() {
     setModifiedCondition(null);
   };
 
+  const handleSubmit = useCallback((condition: FormCondition) => {
+    const validationErrors = (
+      modifiedCondition?.status === "existing" ?
+        setConditionDataAt(modifiedCondition.index, condition) :
+        appendCondition(condition)
+    );
+
+    !validationErrors && setModifiedCondition(null);
+  }, [appendCondition, modifiedCondition, setConditionDataAt]);
+
   return (
     <Modal className={styles.modal} open={isConditionsDialogOpen}>
       <div className={styles.content}>
         <div className={styles.header}>
-          <div className={styles.conditionsListButtonContainer} style={{ display: modifiedCondition ? "block" : "none" }}>
+          <div className={styles.conditionsListButtonContainer}
+               style={{ display: modifiedCondition ? "block" : "none" }}>
             <Button className={styles.headerButton}
                     variant={"outlined"}
                     onClick={handleReturnToOverview}>
@@ -42,7 +56,7 @@ function FormConditionsModal() {
           modifiedCondition !== null ? (
             <div className={styles.editorContainer}>
               <FormConditionEditor modifiedCondition={modifiedCondition}
-                                   onSubmit={() => setModifiedCondition(null)}
+                                   onSubmit={handleSubmit}
                                    onReturn={handleReturnToOverview} />
             </div>
           ) : (

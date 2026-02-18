@@ -1,11 +1,11 @@
 import { date, enum as zod_enum, literal } from "zod";
 import { FieldTypeIds } from "../../../../../utils/interfaces";
 import baseConditionFieldSchema from "./baseConditionFieldSchema";
-import { DateConditionType } from "./conditionTypes/DateConditionType";
+import { DateComparator } from "./comparators/DateComparator";
 
 const dateConditionSchema = baseConditionFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.date),
-  conditionType: zod_enum(DateConditionType),
+  comparator: zod_enum(DateComparator),
   targetValue: date().optional(),
 });
 

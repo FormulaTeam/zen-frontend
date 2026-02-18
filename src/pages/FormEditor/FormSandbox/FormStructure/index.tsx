@@ -1,6 +1,6 @@
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useFormStructureContext } from "../../context/FormStructureContext";
-import { FormSection } from "./FormSection";
+import { FormSectionElement } from "./FormSectionElement";
 import styles from "./style.module.css";
 
 function FormStructureContainer() {
@@ -11,7 +11,7 @@ function FormStructureContainer() {
       <div className={styles.container}>
         <SortableContext items={formStructure.orderedSectionIds} strategy={verticalListSortingStrategy}>
           {
-            formStructure.orderedSectionIds.map((sectionId) => <FormSection key={sectionId} id={sectionId} />)
+            formStructure.orderedSectionIds.map((sectionId) => <FormSectionElement key={sectionId} id={sectionId} />)
           }
         </SortableContext>
       </div>

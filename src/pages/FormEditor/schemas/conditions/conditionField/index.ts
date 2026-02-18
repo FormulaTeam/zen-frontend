@@ -6,7 +6,7 @@ import dateConditionSchema from "./dateConditionSchema";
 import checkboxConditionSchema from "./checkboxConditionSchema";
 import numberConditionSchema from "./numberConditionSchema";
 import {
-  ConditionTypeOptions,
+  ComparatorOptions,
 } from "../../../FormSandbox/FormConditionsModal/FormConditionEditor/steps/FormConditionBuilder/utils";
 import { fieldNotDefinedErrorMessage } from "./baseConditionFieldSchema";
 
@@ -17,14 +17,8 @@ const conditionFieldSchema = discriminatedUnion("typeId", [
   dateConditionSchema,
   checkboxConditionSchema,
   numberConditionSchema,
-]).refine(({ id, typeId }) => (
-    id != undefined && typeId != undefined
-  ), {
-    error: fieldNotDefinedErrorMessage,
-    path: ["id"],
-  },
-).refine(({ typeId, targetValue, conditionType }) => (
-    !ConditionTypeOptions[typeId ?? -1]?.optionsProperties[conditionType ?? -1]?.requiresTargetValue || (targetValue != undefined && String(targetValue).length > 0)
+], fieldNotDefinedErrorMessage).refine(({ typeId, targetValue, comparator }) => (
+    !ComparatorOptions[typeId ?? -1]?.optionsProperties[comparator ?? -1]?.requiresTargetValue || (targetValue != undefined && String(targetValue).length > 0)
   ),
   {
     error: "חייב להגדיר ערך עבור סוג התנאי שנבחר",

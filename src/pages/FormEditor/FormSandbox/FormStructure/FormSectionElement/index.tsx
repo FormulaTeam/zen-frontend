@@ -22,7 +22,7 @@ interface Props {
   id: string;
 }
 
-function FormSection({ id }: Props) {
+function FormSectionElement({ id }: Props) {
   const {
     attributes,
     listeners,
@@ -239,4 +239,4 @@ function FormSection({ id }: Props) {
     ;
 }
 
-export { FormSection };
+export { FormSectionElement };

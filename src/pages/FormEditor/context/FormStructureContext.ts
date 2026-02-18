@@ -5,7 +5,8 @@ import { FormFieldData } from "../schemas/fields";
 import { $ZodErrorTree } from "zod/v4/core";
 import { FormMetadata } from "../schemas/metadata";
 import { typeToFlattenedError } from "zod/v3";
-import { FormConditions } from "../schemas/conditions";
+import { FormCondition, FormConditions } from "../schemas/conditions";
+import { validateCondition } from "../hooks/useFormStructure";
 
 interface Section {
   title: string;
@@ -32,7 +33,7 @@ interface FormStructure {
 
 interface FormStructureContext {
   formStructure: FormStructure;
-  setFormStructure: (value: SetStateAction<FormStructure>) => void; //TODO break down into specific functions
+  setFormStructure: (value: SetStateAction<FormStructure>) => void;
   appendSection: () => void;
   deleteSection: (sectionId: string) => void;
   renameSection: (sectionId: string, title: string) => void;
@@ -40,7 +41,9 @@ interface FormStructureContext {
   appendFieldToFirstSection: (elementTypeId: FormFieldTypeId) => void;
   deleteField: (fieldId: string) => void;
   setFieldData: (fieldId: string, data: Partial<FormFieldData>) => void;
+  appendCondition: (condition: FormCondition) => ReturnType<typeof validateCondition>;
   deleteConditionAt: (index: number) => void;
+  setConditionDataAt: (index: number, condition: FormCondition) => void;
   validateForm: () => void;
   setFormMetadata: (metadata: Partial<FormMetadata>) => boolean;
 }
@@ -55,7 +58,9 @@ const FormStructureContext = createContext<FormStructureContext>({
   appendFieldToFirstSection: () => null,
   deleteField: () => null,
   setFieldData: () => null,
+  appendCondition: () => null,
   deleteConditionAt: () => null,
+  setConditionDataAt: () => null,
   validateForm: () => null,
   setFormMetadata: () => false,
 });

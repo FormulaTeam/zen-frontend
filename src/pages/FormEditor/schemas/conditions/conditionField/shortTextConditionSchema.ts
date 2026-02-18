@@ -1,11 +1,11 @@
 import { enum as zod_enum, literal, string } from "zod";
 import { FieldTypeIds } from "../../../../../utils/interfaces";
 import baseConditionFieldSchema from "./baseConditionFieldSchema";
-import { TextConditionType } from "./conditionTypes/TextConditionType";
+import { TextComparator } from "./comparators/TextComparator";
 
 const shortTextConditionSchema = baseConditionFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.shortText),
-  conditionType: zod_enum(TextConditionType),
+  comparator: zod_enum(TextComparator),
   targetValue: string().optional(),
 });
 

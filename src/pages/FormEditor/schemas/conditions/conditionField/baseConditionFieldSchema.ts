@@ -1,10 +1,10 @@
 import { literal, number, strictObject, string, union, unknown } from "zod";
 import { FieldTypeIds, FormFieldTypeId } from "../../../../../utils/interfaces";
-import { TextConditionType } from "./conditionTypes/TextConditionType";
-import { NumberConditionType } from "./conditionTypes/NumberConditionType";
-import { DateConditionType } from "./conditionTypes/DateConditionType";
-import { OptionsConditionType } from "./conditionTypes/OptionsConditionType";
-import { CheckboxConditionType } from "./conditionTypes/CheckboxConditionType";
+import { TextComparator } from "./comparators/TextComparator";
+import { NumberComparator } from "./comparators/NumberComparator";
+import { DateComparator } from "./comparators/DateComparator";
+import { OptionsComparator } from "./comparators/OptionsComparator";
+import { CheckboxComparator } from "./comparators/CheckboxComparator";
 import { ArrayElement, ValueOf } from "../../../../../types/utils";
 
 const ConditionFieldTypeIds = {
@@ -24,26 +24,26 @@ const fieldNotDefinedErrorMessage = "חובה לציין שדה לכל תנאי"
 
 const literalConditionFieldTypeId = union(
   CONDITION_FIELD_TYPE_IDS.map((v: FormFieldTypeId) => literal(v)),
-  fieldNotDefinedErrorMessage);
+);
 
-const FieldTypeIdToConditionType = {
-  [FieldTypeIds.shortText]: TextConditionType,
-  [FieldTypeIds.longText]: TextConditionType,
-  [FieldTypeIds.number]: NumberConditionType,
-  [FieldTypeIds.date]: DateConditionType,
-  [FieldTypeIds.options]: OptionsConditionType,
-  [FieldTypeIds.checkbox]: CheckboxConditionType,
+const FieldTypeIdToComparator = {
+  [FieldTypeIds.shortText]: TextComparator,
+  [FieldTypeIds.longText]: TextComparator,
+  [FieldTypeIds.number]: NumberComparator,
+  [FieldTypeIds.date]: DateComparator,
+  [FieldTypeIds.options]: OptionsComparator,
+  [FieldTypeIds.checkbox]: CheckboxComparator,
 } as const satisfies Record<ConditionFieldTypeId, Record<string, number>>;
 
-type FormConditionType = ValueOf<ValueOf<typeof FieldTypeIdToConditionType>>;
+type FormComparator = ValueOf<ValueOf<typeof FieldTypeIdToComparator>>;
 
 const baseConditionFieldSchema = strictObject({
   id: string(fieldNotDefinedErrorMessage).min(1, fieldNotDefinedErrorMessage),
   typeId: literalConditionFieldTypeId,
-  conditionType: number(),
+  comparator: number(),
   targetValue: unknown().optional(),
 });
 
-export { ConditionFieldTypeIds, FieldTypeIdToConditionType, CONDITION_FIELD_TYPE_IDS, fieldNotDefinedErrorMessage };
-export type { ConditionFieldTypeId, FormConditionType };
+export { ConditionFieldTypeIds, FieldTypeIdToComparator, CONDITION_FIELD_TYPE_IDS, fieldNotDefinedErrorMessage };
+export type { ConditionFieldTypeId, FormComparator };
 export default baseConditionFieldSchema;

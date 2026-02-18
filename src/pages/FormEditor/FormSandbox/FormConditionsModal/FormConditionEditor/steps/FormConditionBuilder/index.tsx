@@ -2,10 +2,10 @@ import { useFormConditionEditorContext } from "../../context/FormConditionEditor
 import { ConditionEditorStepId } from "../../constants";
 import { Button } from "@mui/material";
 import styles from "./style.module.scss";
-import { FormConditionOperator } from "../../../../../schemas/conditions";
+import { FormConditionBooleanOperator } from "../../../../../schemas/conditions";
 import { Add } from "@mui/icons-material";
-import { generateEmptyConditionGroup } from "../../context/utils";
-import { FormConditionGroupElement } from "./FormConditionGroupElement";
+import { generateEmptyConditionPredicateGroup } from "../../context/utils";
+import { FormConditionPredicateGroupElement } from "./FormConditionPredicateGroupElement";
 import { useEffect, useMemo, useState } from "react";
 import { usePrevious } from "@dnd-kit/utilities";
 
@@ -18,7 +18,7 @@ function FormConditionsBuilder() {
   const [scrollNewGroupIntoView, setScrollNewGroupIntoView] = useState(false);
 
   const totalConditionsCount = useMemo(() => (
-    groups?.flatMap((group) => group?.conditions).length
+    groups?.flatMap((group) => group?.predicates).length
   ), [groups]);
 
   const previousTotalConditionCount = usePrevious(totalConditionsCount);
@@ -40,7 +40,7 @@ function FormConditionsBuilder() {
         {
           groups?.map((group, groupIndex) => (
             group &&
-            <FormConditionGroupElement key={group.id}
+            <FormConditionPredicateGroupElement key={group.id}
                                        group={group}
                                        index={groupIndex}
                                        hasSiblings={hasMultipleGroups}
@@ -57,7 +57,7 @@ function FormConditionsBuilder() {
                 onClick={() => {
                   setData((prev) => {
                     const groups = [...prev];
-                    groups.push({ ...generateEmptyConditionGroup(), operator: FormConditionOperator.AND });
+                    groups.push({ ...generateEmptyConditionPredicateGroup(), operator: FormConditionBooleanOperator.AND });
 
                     return groups;
                   });

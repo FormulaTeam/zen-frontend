@@ -23,37 +23,13 @@ interface CreateModeProps extends EditorProps {
 type Props = CreateModeProps | EditModeProps;
 
 function FormEditor({ mode, editedForm }: Props) {
-  const {
-    formStructure,
-    setFormStructure,
-    appendSection,
-    deleteSection,
-    renameSection,
-    toggleSectionExpanded,
-    appendFieldToFirstSection,
-    deleteField,
-    setFieldData,
-    deleteConditionAt,
-    validateForm,
-    setFormMetadata,
-  } = useFormStructure(editedForm);
+  const { ...formStructure } = useFormStructure(editedForm);
 
   return (
     <div className={styles.editorContainer}>
       <FormEditorContext.Provider value={{ mode }}>
         <FormStructureContext.Provider value={{
-          formStructure,
-          setFormStructure,
-          appendSection,
-          deleteSection,
-          renameSection,
-          toggleSectionExpanded,
-          appendFieldToFirstSection,
-          deleteField,
-          setFieldData,
-          deleteConditionAt,
-          validateForm,
-          setFormMetadata,
+          ...formStructure,
         }}>
           <FormEditorHeader />
           <div className={styles.sandboxContainer}>

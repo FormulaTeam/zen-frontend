@@ -1,10 +1,10 @@
-import { FormCondition, FormConditionGroup } from "../../../../schemas/conditions";
+import { FormCondition, FormConditionPredicateGroup } from "../../../../schemas/conditions";
 import { generateConditionId } from "../../../../utils";
 
-function generateEmptyConditionGroup(): FormConditionGroup {
+function generateEmptyConditionPredicateGroup(): FormConditionPredicateGroup {
   return {
     id: generateConditionId(),
-    conditions: [{ id: generateConditionId(), field: {} }] as FormConditionGroup["conditions"],
+    predicates: [{ id: generateConditionId() }] as FormConditionPredicateGroup["predicates"],
   };
 }
 
@@ -12,10 +12,13 @@ function generateEmptyCondition(): FormCondition {
   return (
     {
       id: generateConditionId(),
-      groups: [generateEmptyConditionGroup()],
-      dependantComponents: {},
+      groups: [generateEmptyConditionPredicateGroup()],
+      dependantComponents: {
+        field: [],
+        section: [],
+      },
     }
   );
 }
 
-export { generateEmptyCondition, generateEmptyConditionGroup };
+export { generateEmptyCondition, generateEmptyConditionPredicateGroup };

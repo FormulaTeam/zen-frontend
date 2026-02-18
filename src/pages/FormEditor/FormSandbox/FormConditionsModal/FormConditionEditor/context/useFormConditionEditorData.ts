@@ -3,16 +3,16 @@ import { useCallback, useMemo, useState } from "react";
 import { DeepPartial } from "../../../../../../types/utils";
 import { generateEmptyCondition } from "./utils";
 import {
-  validateCondition,
   validateConditionDependantComponents,
-  validateConditionGroups,
+  validateConditionPredicateGroups,
+  validateConditionSummary,
 } from "../../../../hooks/useFormStructure";
 import { ConditionEditorStepId } from "../constants";
 
 type ConditionEditorValidationErrors = {
-  [ConditionEditorStepId.CONDITION_BUILDER]: ReturnType<typeof validateConditionGroups>,
+  [ConditionEditorStepId.CONDITION_BUILDER]: ReturnType<typeof validateConditionPredicateGroups>,
   [ConditionEditorStepId.DEPENDENCY_PICKER]: ReturnType<typeof validateConditionDependantComponents>,
-  [ConditionEditorStepId.SUMMARY]: ReturnType<typeof validateCondition>,
+  [ConditionEditorStepId.SUMMARY]: ReturnType<typeof validateConditionSummary>,
 };
 
 const EMPTY_VALIDATION_ERRORS: ConditionEditorValidationErrors = {

@@ -2,7 +2,7 @@ import { useFormStructureContext } from "../../../context/FormStructureContext";
 import { useMemo } from "react";
 import styles from "./style.module.css";
 import { Typography } from "@mui/material";
-import { FormComponentType, FormConditionDependantComponents } from "../../../schemas/conditions";
+import { FormComponentType } from "../../../schemas/conditions";
 import { FormConditionsListItem } from "./FormConditionsListItem";
 
 interface Props {
@@ -17,17 +17,20 @@ function FormConditionsOverview({ onEditCondition }: Props) {
   const renderConditionsListItems = useMemo(() => (
     formStructure.conditions?.length ? (
       formStructure.conditions.map(({ id, name, groups, dependantComponents }, index) => {
-        const conditionCount = groups.reduce((sum, { conditions: currentConditions }) => sum + currentConditions.length, 0);
-        const dependantComponentNames = Object.keys(dependantComponents).map((componentType) => (
-          dependantComponents[componentType as keyof FormConditionDependantComponents]?.map((componentId) => {
+        const conditionCount = groups.reduce((sum, { predicates: currentPredicates }) => sum + currentPredicates.length, 0);
+        const dependantComponentNames = Object.keys(dependantComponents).flatMap((componentType) => {
             switch (componentType) {
               case FormComponentType.SECTION:
-                return `${formStructure.sections[componentId]?.title ?? COMPONENT_NOT_FOUND_NAME} (מקטע)`;
+                return dependantComponents[FormComponentType.SECTION]?.map((sectionId) => (
+                  `${formStructure.sections[sectionId]?.title ?? COMPONENT_NOT_FOUND_NAME} (מקטע)`
+                ));
               case FormComponentType.FIELD:
-                return formStructure.fields[componentId]?.data?.displayName ?? COMPONENT_NOT_FOUND_NAME;
+                return dependantComponents[FormComponentType.FIELD]?.map((fieldId) => (
+                  formStructure.fields[fieldId]?.data?.displayName ?? COMPONENT_NOT_FOUND_NAME
+                ));
             }
-          })
-        )).join(", ");
+          },
+        ).join(", ");
 
         return (
           <FormConditionsListItem key={id}
@@ -52,7 +55,7 @@ function FormConditionsOverview({ onEditCondition }: Props) {
           renderConditionsListItems ??
           <div className={styles.noConditionsTextContainer}>
             <Typography color={"#a7abb1"} variant={"h4"} align={"center"} sx={{ userSelect: "none" }}>
-              אין תנאים מוגדרים
+              אין התניות מוגדרות
             </Typography>
             <Typography color={"#a7abb1"} variant={"h5"} align={"center"} sx={{ userSelect: "none" }}>
               לחצו על "הוספת התנייה חדשה" כדי להתחיל

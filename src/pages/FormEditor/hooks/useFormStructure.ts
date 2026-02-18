@@ -10,12 +10,16 @@ import { $ZodErrorTree } from "zod/v4/core";
 import { FormMetadataSchema } from "../schemas/metadata";
 import {
   conditionDependantComponentsSchema,
-  conditionGroupsSchema,
   conditionSchema,
+  conditionSummarySchema,
+  FormComponentType,
   FormCondition,
   FormConditionDependantComponents,
-  FormConditionGroups,
+  FormConditionPredicateGroups, FormConditions,
+  FormConditionSummary,
+  predicateGroupsSchema,
 } from "../schemas/conditions";
+import { ValueOf } from "../../../types/utils";
 
 function yieldFormStructure(form: object) {
   return form as FormStructure; // TODO change to actual logic that translates form json to form structure
@@ -33,7 +37,6 @@ function pickSharedKeysDeep<T extends object>(
       const refValue = reference[key as keyof T];
 
       if (Array.isArray(sourceValue) && Array.isArray(refValue)) {
-        // Copy arrays directly (or handle them specially if needed)
         result[key] = sourceValue;
       } else if (
         sourceValue !== null &&
@@ -86,8 +89,8 @@ const validateField = (prev: FormStructure, fieldId: string) => {
   return {};
 };
 
-const validateConditionGroups = (groups: FormConditionGroups) => {
-  const result = conditionGroupsSchema.safeParse(groups);
+const validateConditionPredicateGroups = (groups: FormConditionPredicateGroups) => {
+  const result = predicateGroupsSchema.safeParse(groups);
 
   if (!result.success) {
     return z.treeifyError(result.error)?.items ?? null;
@@ -98,6 +101,16 @@ const validateConditionGroups = (groups: FormConditionGroups) => {
 
 const validateConditionDependantComponents = (dependantComponents: FormConditionDependantComponents) => {
   const result = conditionDependantComponentsSchema.safeParse(dependantComponents);
+
+  if (!result.success) {
+    return z.treeifyError(result.error)?.errors ?? null;
+  }
+
+  return null;
+};
+
+const validateConditionSummary = (summary: FormConditionSummary) => {
+  const result = conditionSummarySchema.safeParse(summary);
 
   if (!result.success) {
     return z.treeifyError(result.error)?.properties ?? null;
@@ -116,7 +129,87 @@ const validateCondition = (condition: FormCondition) => {
   return null;
 };
 
-function useFormStructure(editedForm?: object) { //TODO consider making singleton
+function applyComponentDeletionToConditionsDependantComponents(componentType: ValueOf<typeof FormComponentType>, componentId: string, conditions: FormConditions) {
+  const modifiedConditions: FormConditions = [];
+
+  conditions.forEach((condition) => {
+    let isConditionKept: boolean;
+
+    if (!condition.dependantComponents[componentType]?.length) {
+      isConditionKept = true;
+    } else {
+
+      const componentIndex = condition.dependantComponents[componentType]?.findIndex((id) => id === componentId);
+
+      if (componentIndex === -1) {
+        isConditionKept = true;
+      } else if (condition.dependantComponents[componentType]?.length > 1) {
+        condition.dependantComponents[componentType]?.splice(componentIndex, 1);
+        isConditionKept = true;
+      } else {
+        delete condition.dependantComponents[componentType];
+
+        isConditionKept = Object.values(condition.dependantComponents).some((dependants) => dependants?.length);
+      }
+    }
+
+    isConditionKept && modifiedConditions.push(condition);
+  });
+
+  return modifiedConditions;
+}
+
+function applyFieldDeletionToConditionsPredicates(fieldId: string, conditions: FormConditions) {
+  const modifiedConditions: FormConditions = [];
+
+  conditions.forEach((condition) => {
+    condition.groups = condition.groups.filter((group) => {
+      group.predicates = group.predicates.filter(({ field }) => field.id !== fieldId);
+
+      const isGroupKept = group.predicates.length;
+
+      if (isGroupKept) {
+        delete group.predicates[0].operator;
+      }
+
+      return isGroupKept;
+    });
+
+    const isConditionKept = condition.groups.length;
+
+    if (isConditionKept) {
+      delete condition.groups[0].operator;
+    }
+
+    isConditionKept && modifiedConditions.push(condition);
+  });
+
+  return modifiedConditions;
+}
+
+function applyComponentDeletionToConditions(componentType: ValueOf<typeof FormComponentType>, componentId: string, conditions: FormConditions): FormConditions {
+  if (!conditions.length) {
+    return conditions;
+  }
+
+  let modifiedConditions: FormConditions = [...conditions];
+
+  modifiedConditions = applyComponentDeletionToConditionsDependantComponents(componentType, componentId, modifiedConditions);
+
+  if (modifiedConditions.length) {
+    switch (componentType) {
+      case "field":
+        modifiedConditions = applyFieldDeletionToConditionsPredicates(componentId, modifiedConditions);
+        break;
+      default:
+        break;
+    }
+  }
+
+  return modifiedConditions;
+}
+
+function useFormStructure(editedForm?: object) {
   const [formStructure, setFormStructure] = useState<FormStructure>(editedForm ? yieldFormStructure(editedForm) : { ...getEmptyForm() });
 
   const appendSection = useCallback(() => {
@@ -151,11 +244,14 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
 
         orderedSectionIds.splice(orderedSectionIds.indexOf(sectionId), 1);
 
+        const conditions = applyComponentDeletionToConditions("section", sectionId, prev.conditions);
+
         return {
           ...prev,
           sections,
           fields,
           orderedSectionIds,
+          conditions,
         };
       }
 
@@ -248,6 +344,8 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
 
       delete fields[fieldId];
 
+      const conditions = applyComponentDeletionToConditions("field", fieldId, prev.conditions);
+
       return {
         ...prev,
         sections: {
@@ -255,6 +353,7 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
           [sectionId]: section,
         },
         fields,
+        conditions,
       };
     });
   }, []);
@@ -322,6 +421,21 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
     return !validationErrors;
   }, []);
 
+  const appendCondition = useCallback((condition: FormCondition) => {
+    let validationErrors = validateCondition(condition);
+
+    if (!validationErrors) {
+      setFormStructure((prev) => {
+        return {
+          ...prev,
+          conditions: [...prev.conditions, condition],
+        };
+      });
+    }
+
+    return validationErrors;
+  }, []);
+
   const deleteConditionAt = useCallback((index: number) => {
     setFormStructure((prev) => {
       const conditions = prev.conditions.toSpliced(index, 1);
@@ -333,21 +447,22 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
     });
   }, []);
 
-  // const setFormConditions = useCallback((conditions: FormConditions) => {
-  //   let validationErrors = validateConditions(conditions);
-  //
-  //   if (!validationErrors) {
-  //     setFormStructure((prev) => {
-  //
-  //       return {
-  //         ...prev,
-  //         conditions: [...conditions],
-  //       };
-  //     });
-  //   }
-  //
-  //   return validationErrors;
-  // }, []);
+  const setConditionDataAt = useCallback((index: number, condition: FormCondition) => {
+    let validationErrors = validateCondition(condition);
+
+    if (!validationErrors) {
+      setFormStructure((prev) => {
+        const conditions = prev.conditions.toSpliced(index, 1, condition);
+
+        return {
+          ...prev,
+          conditions,
+        };
+      });
+    }
+
+    return validationErrors;
+  }, []);
 
   const validateForm = useCallback(() => {
     setFormStructure((prev) => {
@@ -386,7 +501,9 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
 
     setFormMetadata,
 
+    appendCondition,
     deleteConditionAt,
+    setConditionDataAt,
 
     validateForm,
   };
@@ -394,7 +511,11 @@ function useFormStructure(editedForm?: object) { //TODO consider making singleto
 
 export {
   useFormStructure,
-  validateConditionGroups,
+  validateConditionPredicateGroups,
   validateConditionDependantComponents,
+  validateConditionSummary,
+};
+
+export type {
   validateCondition,
 };

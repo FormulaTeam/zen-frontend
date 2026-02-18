@@ -92,7 +92,7 @@ function useFormDndHandlers() {
 
               if (newParentSectionId === oldParentSectionId) {
                 newParentSection.fieldIds = arrayMove(oldParentSection.fieldIds,
-                  oldParentSection.fieldIds.indexOf(activeFieldId), // TODO add index attribute to Field
+                  oldParentSection.fieldIds.indexOf(activeFieldId),
                   oldParentSection.fieldIds.indexOf(overFieldId));
 
                 return {

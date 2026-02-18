@@ -3,7 +3,7 @@ import { AddOutlined, DeleteOutlined } from "@mui/icons-material";
 import {
   CONDITION_FIELD_TYPE_IDS,
 } from "../../../../../../schemas/conditions/conditionField/baseConditionFieldSchema";
-import { FormConditionGroup, FormConditionOperator } from "../../../../../../schemas/conditions";
+import { FormConditionBooleanOperator, FormConditionPredicateGroup } from "../../../../../../schemas/conditions";
 import { FormFieldTypeId } from "../../../../../../../../utils/interfaces";
 import { generateConditionId } from "../../../../../../utils";
 import { Fragment, useEffect, useRef } from "react";
@@ -13,11 +13,11 @@ import { ConditionEditorStepId } from "../../../constants";
 import { useFormStructureContext } from "../../../../../../context/FormStructureContext";
 import { DeepPartial } from "../../../../../../../../types/utils";
 import styles from "./style.module.scss";
-import { FormConditionGroupItem } from "./FormConditionGroupItem";
+import { FormConditionPredicateElement } from "./FormConditionPredicateElement";
 import { GroupValidationErrors } from "../types";
 
 interface Props {
-  group: DeepPartial<FormConditionGroup>;
+  group: DeepPartial<FormConditionPredicateGroup>;
   index: number;
   hasSiblings: boolean;
   shouldScrollIntoView: boolean;
@@ -25,14 +25,14 @@ interface Props {
   setData: ConditionEditorSetDataFunction<typeof ConditionEditorStepId.CONDITION_BUILDER>;
 }
 
-function FormConditionGroupElement({
-                                     group,
-                                     index,
-                                     hasSiblings,
-                                     shouldScrollIntoView,
-                                     setData,
-                                     validationErrors,
-                                   }: Props) {
+function FormConditionPredicateGroupElement({
+                                              group,
+                                              index,
+                                              hasSiblings,
+                                              shouldScrollIntoView,
+                                              setData,
+                                              validationErrors,
+                                            }: Props) {
   const { formStructure: { fields } } = useFormStructureContext();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -90,19 +90,19 @@ function FormConditionGroupElement({
         </div>
         <div className={styles.conditionsWrapper}>
           {
-            group.conditions?.map((condition, conditionIndex) => (
-              condition &&
-              <FormConditionGroupItem key={condition.id}
-                                      condition={condition}
-                                      index={conditionIndex}
-                                      parentGroupIndex={index}
-                                      setData={setData}
-                                      isLastCondition={conditionIndex === group.conditions!.length - 1}
-                                      hasSiblings={group.conditions!.length > 1}
-                                      fields={fields}
-                                      availableFieldIds={availableFieldIds}
-                                      shouldScrollIntoView={shouldScrollIntoView}
-                                      validationErrors={validationErrors?.["properties"]?.["conditions"]?.items?.[conditionIndex]?.properties ?? null} />
+            group.predicates?.map((predicate, conditionIndex) => (
+              predicate &&
+              <FormConditionPredicateElement key={predicate.id}
+                                               condition={predicate}
+                                               index={conditionIndex}
+                                               parentGroupIndex={index}
+                                               setData={setData}
+                                               isLastCondition={conditionIndex === group.predicates!.length - 1}
+                                               hasSiblings={group.predicates!.length > 1}
+                                               fields={fields}
+                                               availableFieldIds={availableFieldIds}
+                                               shouldScrollIntoView={shouldScrollIntoView}
+                                               validationErrors={validationErrors?.["properties"]?.["conditions"]?.items?.[conditionIndex]?.properties ?? null} />
             ))
           }
           <div className={styles.addConditionButtonContainer}>
@@ -111,9 +111,9 @@ function FormConditionGroupElement({
                     variant={"contained"}
                     onClick={() => setData((prev) => {
                       const group = { ...prev[index] };
-                      group.conditions = [...group.conditions ?? [], {
+                      group.predicates = [...group.predicates ?? [], {
                         id: generateConditionId(),
-                        operator: FormConditionOperator.AND,
+                        operator: FormConditionBooleanOperator.AND,
                       }];
 
                       return prev.toSpliced(index, 1, group);
@@ -127,4 +127,4 @@ function FormConditionGroupElement({
   );
 }
 
-export { FormConditionGroupElement };
+export { FormConditionPredicateGroupElement };

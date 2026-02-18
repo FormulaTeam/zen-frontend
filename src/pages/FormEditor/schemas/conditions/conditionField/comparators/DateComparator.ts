@@ -1,4 +1,4 @@
-const DateConditionType = {
+const DateComparator = {
   EQUAL: 1,
   NOT_EQUAL: 2,
 
@@ -12,4 +12,4 @@ const DateConditionType = {
   NOT_EMPTY: 8,
 } as const;
 
-export { DateConditionType };
+export { DateComparator };

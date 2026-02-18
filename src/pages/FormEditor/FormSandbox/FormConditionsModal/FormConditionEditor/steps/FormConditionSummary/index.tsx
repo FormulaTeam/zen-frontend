@@ -1,7 +1,7 @@
 import { useFormConditionEditorContext } from "../../context/FormConditionEditorContext";
 import { ConditionEditorStepId, ConditionOperatorLabel } from "../../constants";
 import { useFormStructureContext } from "../../../../../context/FormStructureContext";
-import { ConditionTypeOptionsProperties } from "../FormConditionBuilder/utils";
+import { ComparatorOptionsProperties } from "../FormConditionBuilder/utils";
 import { TextField, Typography } from "@mui/material";
 import { FormComponentType } from "../../../../../schemas/conditions";
 import styles from "../../../../../FormEditorHeader/style.module.css";
@@ -14,14 +14,14 @@ function FormConditionsSummary() {
   const { formStructure: { fields, sections } } = useFormStructureContext();
 
   const conditionsString = groups?.flatMap((group) => {
-    const { conditions, operator = "" } = group ?? {};
+    const { predicates, operator = "" } = group ?? {};
 
     return (
       `${
         operator ? `${ConditionOperatorLabel[operator]} \n` : ""
       }${
-        conditions?.map((condition) => {
-          const { field, operator = "" } = condition ?? {};
+        predicates?.map((predicate) => {
+          const { field, operator = "" } = predicate ?? {};
 
           return (
             `${
@@ -29,7 +29,7 @@ function FormConditionsSummary() {
             }\n${
               fields[field?.id ?? ""]?.data?.displayName ?? "שגיאה - שדה אינו קיים"
             } ${
-              ConditionTypeOptionsProperties[field?.typeId ?? -1]?.[field?.conditionType].label ?? ""
+              ComparatorOptionsProperties[field?.typeId ?? -1]?.[field?.comparator].label ?? ""
             } ${
               field?.targetValue ?? ""
             }`

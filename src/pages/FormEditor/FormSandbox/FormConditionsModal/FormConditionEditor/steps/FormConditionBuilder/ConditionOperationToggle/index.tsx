@@ -1,4 +1,4 @@
-import { FormConditionOperator } from "../../../../../../schemas/conditions";
+import { FormConditionBooleanOperator } from "../../../../../../schemas/conditions";
 import styles from "./style.module.scss";
 import { ToggleButton, ToggleButtonGroup, ToggleButtonGroupProps } from "@mui/material";
 import { ConditionOperatorLabel } from "../../../constants";
@@ -16,9 +16,9 @@ const toggleButtonSx = {
 
 function ConditionOperationToggle({ type, value, onChange }: {
   type: "group" | "condition",
-  value: FormConditionOperator,
+  value: FormConditionBooleanOperator,
 
-  onChange?: (value: FormConditionOperator) => void;
+  onChange?: (value: FormConditionBooleanOperator) => void;
 }) {
   const className = type === "group" ? styles.groupOperatorButtonGroup : styles.conditionOperatorButtonGroup;
   const orientation: ToggleButtonGroupProps["orientation"] = type === "group" ? "horizontal" : "vertical";
@@ -28,18 +28,18 @@ function ConditionOperationToggle({ type, value, onChange }: {
                        orientation={orientation}
                        className={className}
                        value={value}
-                       onClick={() => onChange?.(value === FormConditionOperator.AND ? FormConditionOperator.OR : FormConditionOperator.AND)}>
+                       onClick={() => onChange?.(value === FormConditionBooleanOperator.AND ? FormConditionBooleanOperator.OR : FormConditionBooleanOperator.AND)}>
       <ToggleButton className={styles.operatorButton}
                     disabled={true}
-                    value={FormConditionOperator.AND}
+                    value={FormConditionBooleanOperator.AND}
                     sx={toggleButtonSx}>
-        {ConditionOperatorLabel[FormConditionOperator.AND]}
+        {ConditionOperatorLabel[FormConditionBooleanOperator.AND]}
       </ToggleButton>
       <ToggleButton className={styles.operatorButton}
                     disabled={true}
-                    value={FormConditionOperator.OR}
+                    value={FormConditionBooleanOperator.OR}
                     sx={toggleButtonSx}>
-        {ConditionOperatorLabel[FormConditionOperator.OR]}
+        {ConditionOperatorLabel[FormConditionBooleanOperator.OR]}
       </ToggleButton>
     </ToggleButtonGroup>
   );

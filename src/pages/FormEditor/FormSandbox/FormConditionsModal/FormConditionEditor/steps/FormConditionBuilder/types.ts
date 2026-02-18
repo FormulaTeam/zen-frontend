@@ -8,8 +8,8 @@ type GroupValidationErrors =
 
 type GroupItemValidationErrors =
   (ArrayElement<NonNullable<(NonNullable<GroupValidationErrors>["properties"] & {
-    conditions: []
-  })["conditions"]["items"]>>["properties"])
+    predicates: []
+  })["predicates"]["items"]>>["properties"])
   | null;
 
 export type { GroupValidationErrors, GroupItemValidationErrors };

@@ -1,4 +1,4 @@
-const TextConditionType = {
+const TextComparator = {
   EQUAL: 1,
   NOT_EQUAL: 2,
 
@@ -9,4 +9,4 @@ const TextConditionType = {
   NOT_EMPTY: 6,
 } as const;
 
-export { TextConditionType };
+export { TextComparator };
