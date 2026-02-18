@@ -5,15 +5,21 @@ import {
   updateMetroLbsInForm,
   upsertSourceToMetro,
 } from "../api";
-import { showErrorNotification, showSuccessNotification } from "../utils/utils";
+import { showErrorNotification, showLoadingNotification, showSuccessNotification } from "../utils/utils";
 import { FieldTypeIds } from "../utils/interfaces";
+import { SourceOperationStatus, SourceOperationStatusType } from "@pages/ResponsesPage/components/FormActionsToolbar";
+import { toast } from "react-toastify";
 
 export const useMetro = ({
   form,
   getResponsesForCurrentPage,
+  loadingIcon,
+  setSourceOperationStatus,
 }: {
   form: any;
-  getResponsesForCurrentPage: (form: any) => void;
+  getResponsesForCurrentPage?: (form: any, arg: any, action: string) => void;
+  loadingIcon?: JSX.Element;
+  setSourceOperationStatus?: (sourceOperationStatus: SourceOperationStatusType) => void;
 }) => {
   const [showMetroPopup, setShowMetroPopup] = useState(false);
   const [showMetroInputsPopup, setShowMetroInputsPopup] = useState(false);
@@ -42,7 +48,7 @@ export const useMetro = ({
       if (ans?.responseIds?.length > 0) {
         showSuccessNotification(`${ans.responseIds.length} סונכרנו בהצלחה`);
       }
-      getResponsesForCurrentPage(theForm);
+      getResponsesForCurrentPage && getResponsesForCurrentPage(theForm, null, "pushToMetro");
     } catch (error) {
       showErrorNotification("הסנכרון למטרו נכשל");
     } finally {
@@ -51,26 +57,34 @@ export const useMetro = ({
   };
 
   const syncSourceToMetro = async () => {
-    setShowMetroPopup(true);
+    setSourceOperationStatus && setSourceOperationStatus(SourceOperationStatus.CREATING);
+    const toastId = showLoadingNotification("תהליך בביצוע - נא לא לרענן", loadingIcon);
+
     try {
       await upsertSourceToMetro(theForm?.id);
+      toast.dismiss(toastId);
       showSuccessNotification("יצירת מקור בוצעה בהצלחה");
     } catch (error) {
+      toast.dismiss(toastId);
       showErrorNotification("סנכרון המקור למטרו נכשל");
     } finally {
-      setShowMetroPopup(false);
+      setSourceOperationStatus && setSourceOperationStatus(SourceOperationStatus.NOT_IN_PROGRESS);
     }
   };
 
   const editSource = async () => {
-    setShowMetroPopup(true);
+    setSourceOperationStatus && setSourceOperationStatus(SourceOperationStatus.EDITING);
+    const toastId = showLoadingNotification("תהליך בביצוע - נא לא לרענן", loadingIcon);
+
     try {
       await editSourceToMetro(theForm?.id);
+      toast.dismiss(toastId);
       showSuccessNotification("עריכת מקור בוצעה בהצלחה");
     } catch (error) {
+      toast.dismiss(toastId);
       showErrorNotification("שגיאה בעת עריכת מקור. אנא פנו לתמיכה.");
     } finally {
-      setShowMetroPopup(false);
+      setSourceOperationStatus && setSourceOperationStatus(SourceOperationStatus.NOT_IN_PROGRESS);
     }
   };
 
@@ -105,11 +119,10 @@ export const useMetro = ({
         .map(
           (field) => `{
           "name": "${field.name}",
-        "type": ${
-          field.typeId === FieldTypeIds.number // if field is a number field
-            ? '["null", "double", "int"]'
-            : '["null", "string"]'
-        },
+        "type": ${field.typeId === FieldTypeIds.number // if field is a number field
+              ? '["null", "double", "int"]'
+              : '["null", "string"]'
+            },
           "path": "${field.name}"
         }`,
         )

@@ -14,7 +14,7 @@ import { ResponsesTable } from "./components/ResponsesTable";
 import Header from "./components/Header";
 import Tooltip from "@mui/material/Tooltip";
 import { ViewManageButton } from "@components/Responses/styled";
-import { BackupTable, CalendarViewWeek } from "@mui/icons-material";
+import { BackupTable } from "@mui/icons-material";
 
 interface ResponsesPageProps {
   user: User | null;
@@ -87,19 +87,12 @@ const ResponsesPageContent = (): JSX.Element => {
             <span>
               <ViewManageButton
                 variant="contained"
-                 onClick={() => {}} disabled={false}>
+                onClick={() => { }} disabled={false}>
                 <BackupTable />
-                 <span>ניהול תצוגות</span>
+                <span>ניהול תצוגות</span>
               </ViewManageButton>
             </span>
           </Tooltip>
-          {/* <Tooltip title="ניהול תצוגות">
-            <div>
-              <ViewManageButton variant="contained" onClick={() => {}} disabled={false}>
-                <CalendarViewWeek />
-              </ViewManageButton>
-            </div>
-          </Tooltip> */}
         </TopSection>
         <ResponsesTable
           isInEditMode={isInEditMode}
