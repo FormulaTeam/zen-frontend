@@ -103,6 +103,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
     user,
     isSuperAdmin,
     roles,
+    copyMode,
   });
 
   const { generateValidationErrorMessages } = useValidationErrors({

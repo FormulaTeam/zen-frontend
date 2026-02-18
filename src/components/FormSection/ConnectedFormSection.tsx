@@ -71,6 +71,7 @@ function ConnectedFormSection({
     response,
     user,
     `${formId};${parentResponse}`,
+    copyMode,
   );
 
   // Use the form-in-form response save hook with index to ensure sequential saving order

@@ -5,7 +5,7 @@ import { uploadFilesToS3 } from "../api/filesApi";
 import { FieldTypeIds, NotificationTexts, ResponseFieldValue } from "../utils/interfaces";
 import moment from "moment";
 
-export const useResponseSave = (form: any, response: any, user: any, parentResponse?: string) => {
+export const useResponseSave = (form: any, response: any, user: any, parentResponse?: string, copyMode?: boolean) => {
   const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } =
     useCreateResponse();
   const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } =
@@ -72,8 +72,8 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
     const fieldsNameValueObj = getResponseWithFlatFields(dataArr, form.fields, deletedFiles);
 
     try {
-      if (response && response.id) {
-        // Update existing response
+      if (response && response.id && !copyMode) {
+        // Update existing response (only if not in copy mode)
         const updatedResponse = {
           edited_by: user.upn?.toLowerCase(),
           edited_by_name: userName,
