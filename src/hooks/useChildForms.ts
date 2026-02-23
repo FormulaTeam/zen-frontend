@@ -237,6 +237,7 @@ export const useChildForms = ({
       } else {
         // Don't reset validation arrays immediately - let the parent component handle errors
         // The parent component will show validation popup and reset when needed
+        console.log("Child form validation failed");
       }
     }
   }, [childForms, childFormsSaving, childFormsValidate, formId, navigate, saveAll]);

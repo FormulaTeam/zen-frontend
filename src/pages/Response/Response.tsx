@@ -76,7 +76,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
           setSavedResponse(result);
         }
 
-  setChildFormsSaving(true);
+        setChildFormsSaving(true);
       } catch (error: any) {
         if (error?.response?.data?.error?.includes("Metro")) {
           navigate(`/responses/${form.id}`);
