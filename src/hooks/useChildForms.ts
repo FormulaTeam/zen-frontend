@@ -129,9 +129,7 @@ export const useChildForms = ({
                 const [parentFormId, parentResponseId] = res.parentResponse.split(';');
                 const matchById = parentResponseId === id || parentResponseId === String(id);
                 const matchByFormId = parentFormId === formId || parentFormId === String(formId);
-                const matches = matchByFormId && matchById;
-                console.log(`useChildForms: response ${res.id} parentResponse="${res.parentResponse}" matches parent ${formId};${id}? ${matches}`);
-                return matches;
+                return matchByFormId && matchById;
               }
 
               // Old structure: mainResponses array (keep for backward compatibility)
@@ -239,7 +237,6 @@ export const useChildForms = ({
       } else {
         // Don't reset validation arrays immediately - let the parent component handle errors
         // The parent component will show validation popup and reset when needed
-        console.log("Child form validation failed");
       }
     }
   }, [childForms, childFormsSaving, childFormsValidate, formId, navigate, saveAll]);

@@ -66,17 +66,18 @@ function ConnectedFormSection({
     loadingConnections,
   } = useResponseState(field.connectedFormId?.toString()!, id?.toString(), viewMode, copyMode);
 
+  const computedParentResponse = parentResponse ? `${formId};${parentResponse}` : undefined;
+
   const { isSaving, saveResponse } = useResponseSave(
     form,
     response,
     user,
-    `${formId};${parentResponse}`,
+    computedParentResponse,
     copyMode,
   );
 
-  // Use the form-in-form response save hook with index to ensure sequential saving order
   const { saved, error, valid } = useFormInFormResponseSave({
-    shouldSave,
+    shouldSave: shouldSave && !!parentResponse,
     shouldValidate,
     validateRequiredFields,
     form,
@@ -85,7 +86,7 @@ function ConnectedFormSection({
     formFieldsValuesMap,
     childSaved,
     childValid,
-    index, // Pass the index for sequential saving order
+    index,
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -109,7 +110,7 @@ function ConnectedFormSection({
         </Typography>
       )}
       <ConnectedFormFieldsWrapper>
-        {loading || loadingConnections ? ( // this is required since some fields might not be loaded yet, like options from form
+        {loading || loadingConnections ? (
           <LoadingContainer>
             <CircularProgress />
           </LoadingContainer>
