@@ -260,12 +260,12 @@ export const ResponsesTable = ({
       ...(expandColumn ? [expandColumn] : []),
       ...(hasFormInFormFields
         ? [{
-            ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
-            field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
-            renderHeader: (params: any) => (
-              <div aria-label={params?.colDef?.headerName ?? ""} />
-            ),
-          }]
+          ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
+          field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
+          renderHeader: (params: any) => (
+            <div aria-label={params?.colDef?.headerName ?? ""} />
+          ),
+        }]
         : []),
       ...baseFormColumns,
       syncColumn,
