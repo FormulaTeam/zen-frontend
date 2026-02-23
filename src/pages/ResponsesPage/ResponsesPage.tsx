@@ -62,6 +62,7 @@ const ResponsesPageContent = (): JSX.Element => {
     handleSaveChanges,
     handleConfirmCancel,
     handleCancelDialogClose,
+    handleAddNewResponse,
   } = useResponsesEdit();
 
   return (
@@ -80,6 +81,7 @@ const ResponsesPageContent = (): JSX.Element => {
               isUpdating={isUpdating}
               onToggleEditMode={handleToggleEditMode}
               onSaveChanges={handleSaveChanges}
+              onAddNewResponse={handleAddNewResponse}
             />
           </ActionsRow>
           <SearchInfo />
@@ -87,9 +89,9 @@ const ResponsesPageContent = (): JSX.Element => {
             <span>
               <ViewManageButton
                 variant="contained"
-                 onClick={() => {}} disabled={false}>
+                onClick={() => { }} disabled={false}>
                 <BackupTable />
-                 <span>ניהול תצוגות</span>
+                <span>ניהול תצוגות</span>
               </ViewManageButton>
             </span>
           </Tooltip>

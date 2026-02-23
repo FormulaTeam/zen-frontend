@@ -1,6 +1,7 @@
 import { Tooltip, IconButton } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import { Add } from "@mui/icons-material";
 import { EditButtonWrapper, StyledEditButton } from "../styled";
 import TableEditIconSvg from "../../../icons/tableEdit.svg";
 
@@ -10,6 +11,7 @@ interface EditResponsesButtonProps {
     isUpdating: boolean;
     onToggleEditMode: () => void;
     onSaveChanges: () => void;
+    onAddNewResponse: () => void;
 }
 
 export const EditResponsesButton = ({
@@ -18,6 +20,7 @@ export const EditResponsesButton = ({
     isUpdating,
     onToggleEditMode,
     onSaveChanges,
+    onAddNewResponse,
 }: EditResponsesButtonProps) => {
     const enterEditModeButton: JSX.Element = (
         <Tooltip title="עריכה מהירה">
@@ -50,6 +53,13 @@ export const EditResponsesButton = ({
                 >
                     <CloseIcon />
                 </IconButton>
+            </Tooltip>
+            <Tooltip title="הוספת שורה חדשה">
+                <div>
+                    <IconButton onClick={onAddNewResponse} color="primary">
+                        <Add />
+                    </IconButton>
+                </div>
             </Tooltip>
         </>
     );

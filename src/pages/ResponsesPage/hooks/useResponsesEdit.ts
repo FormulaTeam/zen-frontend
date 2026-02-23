@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { GridRowModel } from "@mui/x-data-grid-pro";
 import { showSuccessNotification, showErrorNotification } from "@utils/utils";
-import { useBatchUpdateResponses, useGetResponses, getResponseWithFlatFields } from "@api/responsesApi";
+import { useBatchUpdateResponses, useGetResponses, getResponseWithFlatFields, useCreateResponse } from "@api/responsesApi";
 import { uploadFilesToS3 } from "@api/filesApi";
 import { useFormStore } from "../stores/form.store";
 import { useAuth } from "@contexts/AuthContext";
-import { FieldTypeIds, ResponseFieldValue, Row } from "@utils/interfaces";
+import { FieldTypeIds, NewResponse, ResponseFieldValue, Row } from "@utils/interfaces";
 import {
   CustomError,
   NoUnsavedChangesError,
@@ -14,6 +14,8 @@ import {
   NoValidChangesError,
   SaveFailedError,
 } from "../../../errors";
+import moment from "moment";
+import { DEFAULT_DATE_FORMAT } from "@utils/utils";
 
 export const useResponsesEdit = () => {
   const { form, rows, setRows, filter } = useFormStore();
@@ -21,12 +23,12 @@ export const useResponsesEdit = () => {
 
   const [isInEditMode, setIsInEditMode] = useState(false);
 
-  const [editedRows, setEditedRows] = useState<Map<number, Row>>(new Map());
+  const [editedRows, setEditedRows] = useState<Map<number | string, Row>>(new Map());
   const [localRows, setLocalRows] = useState<Row[]>([]);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<number, Record<string, string>>>({});
+  const [validationErrors, setValidationErrors] = useState<Record<number | string, Record<string, string>>>({});
 
-
+  const newRowCounterRef = useRef(0);
   const { data: fullResponses } = useGetResponses({
     filter: { ...filter, form_id: form?.id },
   });
@@ -34,6 +36,8 @@ export const useResponsesEdit = () => {
   const { mutateAsync: batchUpdateResponses, isPending: isUpdating } = useBatchUpdateResponses({
     formId: form?.id || 0,
   });
+
+  const { mutateAsync: createResponse } = useCreateResponse();
 
   const responseRows: Row[] = rows?.filter((row) => row != null) || [];
   const hasUnsavedChanges: boolean = editedRows.size > 0;
@@ -50,6 +54,7 @@ export const useResponsesEdit = () => {
       setLocalRows(nextEditMode ? [...responseRows] : responseRows);
       if (!nextEditMode) {
         setValidationErrors({});
+        newRowCounterRef.current = 0;
       }
     }
   };
@@ -60,6 +65,7 @@ export const useResponsesEdit = () => {
     setIsInEditMode(false);
     setShowCancelDialog(false);
     setValidationErrors({});
+    newRowCounterRef.current = 0;
   };
 
   const closeCancelDialog = (): void => {
@@ -73,7 +79,7 @@ export const useResponsesEdit = () => {
     }
   };
 
-  const handleCellLiveChange = <T,>(rowId: number, columnName: string, value: T, isValid?: boolean): void => {
+  const handleCellLiveChange = <T,>(rowId: number | string, columnName: string, value: T, isValid?: boolean): void => {
     try {
       const field = form?.fields?.find((f) => f.displayName === columnName || f.name === columnName || f.uniqueId === columnName);
       if (!field) return;
@@ -148,17 +154,18 @@ export const useResponsesEdit = () => {
   };
 
   const processRowUpdate = (newRow: GridRowModel, oldRow: GridRowModel): GridRowModel => {
-    const newRowId: number = newRow.id
+    const newRowId: number | string = newRow.id;
+    const numericId = Number(newRowId);
 
-    if (Number.isNaN(newRowId)) {
+    if (typeof newRowId === "number" && Number.isNaN(numericId)) {
       return newRow;
     }
 
     setLocalRows((prevRows: Row[]) =>
-      prevRows.map((row: Row) => row?.id === newRowId ? ({ ...row, ...newRow }) : row)
+      prevRows.map((row: Row) => String(row?.id) === String(newRowId) ? ({ ...row, ...newRow }) : row)
     );
 
-    setEditedRows((prevEditedRows: Map<number, Row>) => new Map(prevEditedRows).set(newRowId, newRow as Row));
+    setEditedRows((prevEditedRows: Map<number | string, Row>) => new Map(prevEditedRows).set(newRowId, newRow as Row));
 
     // Validate the updated row and set validation errors per cell if needed
     try {
@@ -246,60 +253,60 @@ export const useResponsesEdit = () => {
           ([_, uid]) => uid === formField.uniqueId
         )?.[0];
 
-      if (columnField && editedRow.hasOwnProperty(columnField)) {
-        const baseData = existingFieldData || {
-          uniqueId: formField.uniqueId,
-          name: formField.name,
-          typeId: formField.typeId,
-          value: null,
-        };
+        if (columnField && editedRow.hasOwnProperty(columnField)) {
+          const baseData = existingFieldData || {
+            uniqueId: formField.uniqueId,
+            name: formField.name,
+            typeId: formField.typeId,
+            value: null,
+          };
 
-        // Handle file fields: upload new files and normalize attached files
-        if (formField.fieldType === 'file' || formField.typeId === FieldTypeIds.file) {
-          try { 
-            // Try to locate edited value using multiple possible keys (column field, displayName, name, uniqueId)
-            const editedValue = (():any => {
-              if (columnField && editedRow.hasOwnProperty(columnField)) {
-                return editedRow[columnField];
-              }
-        
-              return undefined;
-            })();
-            let newFilesToUpload: File[] = [];
-            let attachedFilesFromValue: any[] = [];
-            let deletedFilesFromValue: any[] = [];
+          // Handle file fields: upload new files and normalize attached files
+          if (formField.fieldType === 'file' || formField.typeId === FieldTypeIds.file) {
+            try {
+              // Try to locate edited value using multiple possible keys (column field, displayName, name, uniqueId)
+              const editedValue = ((): any => {
+                if (columnField && editedRow.hasOwnProperty(columnField)) {
+                  return editedRow[columnField];
+                }
 
-            if (Array.isArray(editedValue)) {
-              attachedFilesFromValue = editedValue;
-            } else if (editedValue && typeof editedValue === 'object') {
-              if (editedValue.files) {
-                newFilesToUpload = editedValue.files.newFiles || [];
-                attachedFilesFromValue = editedValue.files.attachedFiles || [];
-              } else if (Array.isArray(editedValue.files)) {
-                attachedFilesFromValue = editedValue.files;
+                return undefined;
+              })();
+              let newFilesToUpload: File[] = [];
+              let attachedFilesFromValue: any[] = [];
+              let deletedFilesFromValue: any[] = [];
+
+              if (Array.isArray(editedValue)) {
+                attachedFilesFromValue = editedValue;
+              } else if (editedValue && typeof editedValue === 'object') {
+                if (editedValue.files) {
+                  newFilesToUpload = editedValue.files.newFiles || [];
+                  attachedFilesFromValue = editedValue.files.attachedFiles || [];
+                } else if (Array.isArray(editedValue.files)) {
+                  attachedFilesFromValue = editedValue.files;
+                }
+                deletedFilesFromValue = editedValue.deletedFiles || [];
               }
-              deletedFilesFromValue = editedValue.deletedFiles || [];
+
+              const uploadResponse = newFilesToUpload.length > 0 ? await uploadFilesToS3({ newFiles: newFilesToUpload }, form.id) : [];
+
+              const normalizeAttached = (fileItem: any) => {
+                const name = fileItem.name || fileItem.fileName || "";
+                const url = fileItem.url || fileItem.fileUrl || fileItem.downloadUrl || "";
+                return { name, url };
+              };
+
+              const normalizedAttachedFiles = attachedFilesFromValue.map(normalizeAttached);
+              const combinedFiles = [...uploadResponse, ...normalizedAttachedFiles];
+
+              return { uniqueId: formField.uniqueId, value: { files: combinedFiles } };
+            } catch (error) {
+              return { ...baseData, value: editedRow[columnField] };
             }
-
-            const uploadResponse = newFilesToUpload.length > 0 ? await uploadFilesToS3({ newFiles: newFilesToUpload }, form.id) : [];
-
-            const normalizeAttached = (fileItem: any) => {
-              const name = fileItem.name || fileItem.fileName || "";
-              const url = fileItem.url || fileItem.fileUrl || fileItem.downloadUrl || "";
-              return { name, url };
-            };
-
-            const normalizedAttachedFiles = attachedFilesFromValue.map(normalizeAttached);
-            const combinedFiles = [...uploadResponse, ...normalizedAttachedFiles];
-
-            return { uniqueId: formField.uniqueId, value: { files: combinedFiles } };
-          } catch (error) {
-            return { ...baseData, value: editedRow[columnField] };
           }
-        }
 
-        return { uniqueId: formField.uniqueId, value: editedRow[columnField] };
-      }
+          return { uniqueId: formField.uniqueId, value: editedRow[columnField] };
+        }
 
         return existingFieldData || {
           uniqueId: formField.uniqueId,
@@ -322,11 +329,34 @@ export const useResponsesEdit = () => {
     };
   };
 
+  const addNewResponse = (): void => {
+    if (!isInEditMode || !form?.fields) return;
+
+    newRowCounterRef.current += 1;
+    const tempId = `new_${newRowCounterRef.current}`;
+
+    const now = moment().format(DEFAULT_DATE_FORMAT);
+    const newRow: Row = {
+      id: tempId as unknown as number,
+      created: now,
+      createdByName: user?.displayName || "",
+      edited: now,
+      editedByName: user?.displayName || "",
+    };
+
+    form.fields.forEach((field) => {
+      newRow[field.displayName] = "";
+    });
+
+    setLocalRows((prev) => [newRow, ...prev]);
+    setEditedRows((prev) => new Map(prev).set(tempId, newRow));
+  };
+
 
   const saveChanges = async (): Promise<void> => {
     try {
       // Validate edited rows before attempting to save
-      const newValidationErrors: Record<number, Record<string, string>> = {};
+      const newValidationErrors: Record<number | string, Record<string, string>> = {};
       editedRows.forEach((editedRow, rowId) => {
         try {
           const rowErrs: Record<string, string> = {};
@@ -388,31 +418,61 @@ export const useResponsesEdit = () => {
       if (!hasUnsavedChanges) {
         throw new NoUnsavedChangesError();
       }
-      if (!fullResponses?.length) {
-        throw new NoResponsesFoundError();
-      }
       if (!form) {
         throw new FormNotLoadedError();
       }
 
-      const updatesToSendPromises = Array.from(editedRows.entries()).map(async ([rowId, editedRow]) =>
-        await buildResponseUpdatePayload(rowId, editedRow),
+      const newRowEntries = Array.from(editedRows.entries()).filter(([rowId]) => typeof rowId === "string");
+      const existingRowEntries = Array.from(editedRows.entries()).filter(([rowId]) => typeof rowId === "number");
+
+      if (existingRowEntries.length > 0 && !fullResponses?.length) {
+        throw new NoResponsesFoundError();
+      }
+
+      const updatesToSendPromises = existingRowEntries.map(async ([rowId, editedRow]) =>
+        await buildResponseUpdatePayload(rowId as number, editedRow),
       );
 
       const updatesToSendResults = await Promise.all(updatesToSendPromises);
       const updatesToSend = updatesToSendResults.filter((updatedRow) => updatedRow !== null);
 
-      if (updatesToSend.length === 0) {
+      // Sort new rows in ascending insertion order so the first added (top of list) is saved first
+      const sortedNewRowEntries = [...newRowEntries].sort(([idA], [idB]) => {
+        const numA = parseInt(String(idA).replace("new_", ""), 10);
+        const numB = parseInt(String(idB).replace("new_", ""), 10);
+        return numA - numB;
+      });
+
+      if (updatesToSend.length === 0 && sortedNewRowEntries.length === 0) {
         throw new NoValidChangesError();
       }
 
-      try {
-        await batchUpdateResponses(updatesToSend as any);
-      } catch (batchError) {
-        console.error('batchUpdateResponses failed:', batchError);
-        throw batchError;
+      if (updatesToSend.length > 0) {
+        try {
+          await batchUpdateResponses(updatesToSend as any);
+        } catch (batchError) {
+          console.error('batchUpdateResponses failed:', batchError);
+          throw batchError;
+        }
       }
 
+      for (const [, editedRow] of sortedNewRowEntries) {
+        const newResponsePayload = {
+          form_id: form.id,
+          created_by: user?.upn?.toLowerCase() as string,
+          created_by_name: user?.displayName || "",
+          updated_by: user?.upn?.toLowerCase(),
+          edited_by: user?.upn?.toLowerCase(),
+          edited_by_name: user?.displayName || "",
+          data: form.fields.map((field) => ({
+            uniqueId: field.uniqueId,
+            value: (editedRow as any)[field.displayName] ?? "",
+          })),
+        };
+        await createResponse(newResponsePayload as NewResponse);
+      }
+
+      newRowCounterRef.current = 0;
       setRows(localRows);
       setEditedRows(new Map());
       setIsInEditMode(false);
@@ -447,5 +507,6 @@ export const useResponsesEdit = () => {
     handleSaveChanges: saveChanges,
     handleConfirmCancel: confirmCancel,
     handleCancelDialogClose: closeCancelDialog,
+    handleAddNewResponse: addNewResponse,
   };
 };
