@@ -1,9 +1,9 @@
 import { Tooltip, IconButton } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import { Add } from "@mui/icons-material";
 import { EditButtonWrapper, StyledEditButton } from "../styled";
 import TableEditIconSvg from "../../../icons/tableEdit.svg";
+import { CustomIcon } from "@theme/icons";
 
 interface EditResponsesButtonProps {
     isInEditMode: boolean;
@@ -57,7 +57,11 @@ export const EditResponsesButton = ({
             <Tooltip title="הוספת שורה חדשה">
                 <div>
                     <IconButton onClick={onAddNewResponse} color="primary">
-                        <Add />
+                        <CustomIcon
+                            iconName="newComment"
+                            style={{ width: 24, height: 24 }}
+                            forcePointer
+                        />
                     </IconButton>
                 </div>
             </Tooltip>

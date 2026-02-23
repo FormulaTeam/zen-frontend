@@ -15,6 +15,7 @@ import ExportCardIcon from "../images/export.png";
 import SyncGrayIcon from "../images/sync.png";
 import ShareGrayIcon from "../images/share.png";
 import CommentsIcon from "../images/stash_comments.png";
+import NewCommentIcon from "../icons/newComment.svg";
 import SourceIcon from "../icons/source.svg";
 import SyncIcon from "../icons/sync.svg";
 
@@ -51,6 +52,7 @@ export const icons = {
   syncGray: SyncGrayIcon,
   shareGray: ShareGrayIcon,
   comments: CommentsIcon,
+  newComment: NewCommentIcon,
 };
 
 export const fieldIcons = {
@@ -62,7 +64,7 @@ export const fieldIcons = {
   number: NumberIcon,
   text: TextIcon,
   time: TimeIcon,
-  link: LinkIcon,
+  link: LinkIcon
 };
 
 export type IconName = keyof typeof icons;

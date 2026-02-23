@@ -5,7 +5,7 @@ import { useBatchUpdateResponses, useGetResponses, getResponseWithFlatFields, us
 import { uploadFilesToS3 } from "@api/filesApi";
 import { useFormStore } from "../stores/form.store";
 import { useAuth } from "@contexts/AuthContext";
-import { FieldTypeIds, NewResponse, ResponseFieldValue, Row } from "@utils/interfaces";
+import { FieldTypeIds, FormField, NewResponse, ResponseFieldValue, Row } from "@utils/interfaces";
 import {
   CustomError,
   NoUnsavedChangesError,
@@ -345,7 +345,11 @@ export const useResponsesEdit = () => {
     };
 
     form.fields.forEach((field) => {
-      newRow[field.displayName] = "";
+      if (field.typeId === FieldTypeIds.link || field.typeId === FieldTypeIds.file) {
+        newRow[field.displayName] = null;
+      } else {
+        newRow[field.displayName] = "";
+      }
     });
 
     setLocalRows((prev) => [newRow, ...prev]);
@@ -457,6 +461,49 @@ export const useResponsesEdit = () => {
       }
 
       for (const [, editedRow] of sortedNewRowEntries) {
+        const data: ResponseFieldValue[] = await Promise.all(
+          form.fields.map(async (field: FormField) => {
+            const rawValue: any = (editedRow as any)[field.displayName];
+
+            if (field.typeId === FieldTypeIds.file) {
+              try {
+                let newFilesToUpload: File[] = [];
+                let attachedFiles: any[] = [];
+
+                if (rawValue && typeof rawValue === "object") {
+                  if (rawValue.files && typeof rawValue.files === "object" && !Array.isArray(rawValue.files)) {
+                    newFilesToUpload = rawValue.files.newFiles || [];
+                    attachedFiles = rawValue.files.attachedFiles || [];
+                  } else if (Array.isArray(rawValue.files)) {
+                    attachedFiles = rawValue.files;
+                  } else if (Array.isArray(rawValue)) {
+                    attachedFiles = rawValue;
+                  }
+                }
+
+                const uploadedFiles = newFilesToUpload.length > 0
+                  ? await uploadFilesToS3({ newFiles: newFilesToUpload }, form.id)
+                  : [];
+
+                const normalizedAttached = attachedFiles.map((f: any) => ({
+                  name: f.name || f.fileName || "",
+                  url: f.url || f.fileUrl || f.downloadUrl || "",
+                }));
+
+                const allFiles = [...uploadedFiles, ...normalizedAttached];
+                return { uniqueId: field.uniqueId, value: allFiles.length > 0 ? { files: allFiles } : null };
+              } catch {
+                return { uniqueId: field.uniqueId, value: null };
+              }
+            }
+
+            return {
+              uniqueId: field.uniqueId,
+              value: (rawValue !== undefined && rawValue !== null) ? rawValue : "",
+            };
+          }),
+        );
+
         const newResponsePayload = {
           form_id: form.id,
           created_by: user?.upn?.toLowerCase() as string,
@@ -464,10 +511,7 @@ export const useResponsesEdit = () => {
           updated_by: user?.upn?.toLowerCase(),
           edited_by: user?.upn?.toLowerCase(),
           edited_by_name: user?.displayName || "",
-          data: form.fields.map((field) => ({
-            uniqueId: field.uniqueId,
-            value: (editedRow as any)[field.displayName] ?? "",
-          })),
+          data,
         };
         await createResponse(newResponsePayload as NewResponse);
       }
