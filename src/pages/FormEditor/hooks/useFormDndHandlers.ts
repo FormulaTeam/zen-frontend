@@ -5,22 +5,22 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { PLACEHOLDER_FIELD_ID } from "../context/constants";
 import { FormFieldTypeId } from "../../../utils/interfaces";
 import { generateFieldId, generateFieldName } from "../utils";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 function useFormDndHandlers() {
-  const { formStructure, setFormStructure } = useFormStructureContext();
+  const { setFormStructure } = useFormStructureContext();
   const [draggingElement, setDraggingElement] = useState<DraggingElement | null>(null);
 
-  const handleDragStart = (event: DragStartEvent) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
 
     setDraggingElement({ id: active.id, type: (active.data.current as DraggableElementData).elementType });
-  };
+  }, [setDraggingElement]);
 
-  const handleDragOver = (event: DragOverEvent) => {
+  const handleDragOver = useCallback((event: DragOverEvent) => {
     const { active, over } = event;
 
-    if (active.id !== over?.id) {
+    if (active.id !== over?.id && over?.id !== PLACEHOLDER_FIELD_ID) {
       setFormStructure((prevFormStructure) => {
 
         const activeElementType = (active.data.current as DraggableElementData).elementType;
@@ -75,7 +75,7 @@ function useFormDndHandlers() {
                   fields: {
                     ...prevFormStructure.fields,
                     [activeFieldId]: {
-                      ...formStructure.fields[activeFieldId],
+                      ...prevFormStructure.fields[activeFieldId],
                       parentSectionId: newParentSectionId,
                     },
                   },
@@ -117,7 +117,7 @@ function useFormDndHandlers() {
                 fields: {
                   ...prevFormStructure.fields,
                   [activeFieldId]: {
-                    ...formStructure.fields[activeFieldId],
+                    ...prevFormStructure.fields[activeFieldId],
                     parentSectionId: newParentSectionId,
                   },
                 },
@@ -129,7 +129,7 @@ function useFormDndHandlers() {
 
               if (overElementType === "section") {
                 const newParentSectionId = over.id as string;
-                if (prevFormStructure.sections[newParentSectionId].fieldIds.length == 0) {
+                if (prevFormStructure.sections[newParentSectionId].fieldIds.length === 0) {
                   const newParentSection = { ...prevFormStructure.sections[newParentSectionId] };
 
                   // insert placeholder into the current section
@@ -155,7 +155,7 @@ function useFormDndHandlers() {
                       fields: {
                         ...prevFormStructure.fields,
                         [PLACEHOLDER_FIELD_ID]: {
-                          ...formStructure.fields[PLACEHOLDER_FIELD_ID],
+                          ...prevFormStructure.fields[PLACEHOLDER_FIELD_ID],
                           parentSectionId: newParentSectionId,
                         },
                       },
@@ -185,7 +185,7 @@ function useFormDndHandlers() {
                 }
 
                 return prevFormStructure;
-              } else if (overElementType === "field" && over.id !== PLACEHOLDER_FIELD_ID) {
+              } else if (overElementType === "field") {
                 const fields = { ...prevFormStructure.fields };
                 const sections = { ...prevFormStructure.sections };
 
@@ -216,9 +216,11 @@ function useFormDndHandlers() {
                   };
 
                   oldParentSection.fieldIds.splice(oldParentSection.fieldIds.indexOf(PLACEHOLDER_FIELD_ID), 1);
-
                   sections[oldParentSectionId] = oldParentSection;
+
                   newParentSection.fieldIds.splice(newParentSection.fieldIds.indexOf(over.id as string), 0, PLACEHOLDER_FIELD_ID);
+
+                  fields[PLACEHOLDER_FIELD_ID].parentSectionId = newParentSectionId;
                 } else {
                   newParentSection.fieldIds = arrayMove(newParentSection.fieldIds, newParentSection.fieldIds.indexOf(PLACEHOLDER_FIELD_ID), newParentSection.fieldIds.indexOf(over.id as string));
                 }
@@ -263,9 +265,9 @@ function useFormDndHandlers() {
         return prevFormStructure;
       });
     }
-  };
+  }, [setFormStructure]);
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -315,7 +317,7 @@ function useFormDndHandlers() {
     }
 
     setDraggingElement(null);
-  };
+  }, [setDraggingElement, setFormStructure]);
 
   return {
     handleDragStart,
