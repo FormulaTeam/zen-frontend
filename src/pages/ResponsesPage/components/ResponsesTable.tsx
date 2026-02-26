@@ -9,6 +9,7 @@ import {
   GridFooter,
   GridColDef,
   GridRenderCellParams,
+  GridRowSelectionModel,
   GRID_DETAIL_PANEL_TOGGLE_FIELD,
   GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
 } from "@mui/x-data-grid-pro";
@@ -37,6 +38,7 @@ interface ResponsesTableProps {
   onCellEditStart: () => void;
   validationErrors?: Record<number, Record<string, string>>;
   onCellLiveChange?: (rowId: number | string, columnName: string, value: unknown) => void;
+  onRowSelectionModelChange?: (model: GridRowSelectionModel) => void;
 }
 
 export const ResponsesTable = ({
@@ -46,6 +48,7 @@ export const ResponsesTable = ({
   onCellEditStart,
   validationErrors,
   onCellLiveChange,
+  onRowSelectionModelChange,
 }: ResponsesTableProps) => {
   const { form, rows } = useFormStore();
   const navigate = useNavigate();
@@ -367,6 +370,7 @@ export const ResponsesTable = ({
           pageSizeOptions={[15, 25, 50, 100]}
           checkboxSelection
           disableRowSelectionOnClick
+          onRowSelectionModelChange={onRowSelectionModelChange}
           getRowClassName={(params) => params.indexRelativeToCurrentPage % 2 === 0 ? 'MuiDataGrid-row--even' : 'MuiDataGrid-row--odd'}
           getRowId={(row) => row?.id}
           localeText={{

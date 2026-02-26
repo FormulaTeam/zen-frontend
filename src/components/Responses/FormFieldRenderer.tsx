@@ -31,6 +31,7 @@ interface FormFieldRendererProps {
   formFields: FormField[];
   index?: number;
   isTabularEdit?: boolean;
+  formId?: number | string;
 }
 
 const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
@@ -44,6 +45,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   formFields,
   index = 0,
   isTabularEdit = false,
+  formId,
 }) => {
   const isConnectedToForm = (field: any) => {
     return (
@@ -476,6 +478,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           }}
           value={formFieldValue}
           isTabularEdit={isTabularEdit}
+          formId={formId}
         />
       );
       break;

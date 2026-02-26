@@ -68,7 +68,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
           // use the stored promise
           result = await (saveAll as any)._parentCreatePromise;
         } else {
-          // non-copy mode: just save normally
+          // non-copy mode saves normally
           result = await saveResponse(formFieldsByIdMap, formFieldsValuesMap) as any;
         }
 
@@ -302,6 +302,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
               formFields={formFields}
               getFormInFormProperty={getFormInFormProperty}
               isLoading={isLoading}
+              formId={formId}
             />
           ))}
         </FormSectionsContainer>
