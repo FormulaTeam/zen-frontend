@@ -5,6 +5,7 @@ import { Role, User } from "../../utils/interfaces";
 import { FormActionsToolbar } from "./components/FormActionsToolbar";
 import { EditResponsesButton } from "./components/EditResponsesButton";
 import AddResponseButton from "./components/AddResponseButton";
+import { RowActionsButtons } from "./components/RowActionsButtons";
 import { CancelEditDialog } from "./components/CancelEditDialog";
 import { useFormLoader } from "./hooks/useFormLoader";
 import { useResponsesEdit } from "./hooks/useResponsesEdit";
@@ -14,7 +15,9 @@ import { ResponsesTable } from "./components/ResponsesTable";
 import Header from "./components/Header";
 import Tooltip from "@mui/material/Tooltip";
 import { ViewManageButton } from "@components/Responses/styled";
-import { BackupTable, CalendarViewWeek } from "@mui/icons-material";
+import { BackupTable } from "@mui/icons-material";
+import { useState } from "react";
+import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 
 interface ResponsesPageProps {
   user: User | null;
@@ -48,6 +51,11 @@ export default function ResponsesPage({
 }
 
 const ResponsesPageContent = (): JSX.Element => {
+  const [rowSelectionModel, setRowSelectionModel] = useState<GridRowSelectionModel>({
+    type: "include",
+    ids: new Set<GridRowId>(),
+  });
+
   const {
     isInEditMode,
     editedRowsCount,
@@ -64,6 +72,15 @@ const ResponsesPageContent = (): JSX.Element => {
     handleCancelDialogClose,
   } = useResponsesEdit();
 
+  const selectedIds: GridRowId[] = Array.from(rowSelectionModel.ids);
+  const hasSelection = rowSelectionModel.type === "include"
+    ? selectedIds.length > 0
+    : true;
+
+  const handleRowDeleted = () => {
+    setRowSelectionModel({ type: "include", ids: new Set<GridRowId>() });
+  };
+
   return (
     <PageWrapper>
       <MainContentWrapper>
@@ -73,23 +90,32 @@ const ResponsesPageContent = (): JSX.Element => {
         </TopSection>
         <TopSection>
           <ActionsRow>
-            {!isInEditMode && <AddResponseButton />}
-            <EditResponsesButton
-              isInEditMode={isInEditMode}
-              editedRowsCount={editedRowsCount}
-              isUpdating={isUpdating}
-              onToggleEditMode={handleToggleEditMode}
-              onSaveChanges={handleSaveChanges}
-            />
+            {hasSelection ? (
+              <RowActionsButtons
+                selectedIds={selectedIds}
+                onDeleted={handleRowDeleted}
+              />
+            ) : (
+              <>
+                {!isInEditMode && <AddResponseButton />}
+                <EditResponsesButton
+                  isInEditMode={isInEditMode}
+                  editedRowsCount={editedRowsCount}
+                  isUpdating={isUpdating}
+                  onToggleEditMode={handleToggleEditMode}
+                  onSaveChanges={handleSaveChanges}
+                />
+              </>
+            )}
           </ActionsRow>
           <SearchInfo />
           <Tooltip title="ניהול תצוגות">
             <span>
               <ViewManageButton
                 variant="contained"
-                 onClick={() => {}} disabled={false}>
+                onClick={() => { }} disabled={false}>
                 <BackupTable />
-                 <span>ניהול תצוגות</span>
+                <span>ניהול תצוגות</span>
               </ViewManageButton>
             </span>
           </Tooltip>
@@ -101,6 +127,7 @@ const ResponsesPageContent = (): JSX.Element => {
           onCellEditStart={handleCellEditStart}
           validationErrors={validationErrors}
           onCellLiveChange={handleCellLiveChange}
+          onRowSelectionModelChange={setRowSelectionModel}
         />
         <CancelEditDialog
           open={showCancelDialog}

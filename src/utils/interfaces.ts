@@ -259,7 +259,8 @@ export interface ResponseForm {
     name?: string;
   };
 
-  fieldValues: ResponseFieldValue[];
+  fieldValues?: ResponseFieldValue[];
+  data?: ResponseFieldValue[];
 
   mainResponses?: { id: string; index: number; form_id: number }[];
   subResponses?: { id: string; index: number; form_id: number }[];

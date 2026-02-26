@@ -1,17 +1,14 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  connectionTypes,
   FieldTypeIds,
   Form,
   FormField,
   ResponseFieldValue,
   ResponseForm,
   Role,
-  SearchResponsesFilter,
   ConditionUtils,
-  ConditionGroup,
 } from "../utils/interfaces";
-import { getFormById, searchResponses } from "../api";
+import { getFormById, getResponses, searchResponses } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
 import {
   checkUserAccessForResponse,
@@ -80,18 +77,16 @@ export const useResponseState = (
       });
     }
     if (responseId) {
-      const filter: SearchResponsesFilter = {
+      searchResponses({
         form_id: Number(formId),
         searchFilters: [{ searchText: Number(responseId), searchField: "id" }],
-      };
-      searchResponses(filter).then((res: any) => {
-        if (res) {
+      }).then((res: any) => {
+        const found = res?.responses?.[0] ?? null;
+        if (found) {
           if (copyMode) {
-            const copyResponse = res.responses[0];
-            copyResponse.id = null;
-            setResponse(copyResponse);
+            setResponse({ ...found, id: null as any });
           } else {
-            setResponse(res.responses[0]);
+            setResponse(found);
           }
         }
       });
@@ -142,9 +137,46 @@ export const useResponseState = (
       if (responseId) {
         if (!response) return; // will keep loading untill response is fetched
         setFormTitle((copyMode ? "יצירת תגובה - " : "עריכת תגובה - ") + form.name);
-        response.fieldValues.map((res: ResponseFieldValue) => {
-          formFieldsValuesMap.set(res.field_id + "", res?.value);
+        const fieldValuesArray = response.fieldValues ?? response.data ?? [];
+        const newValuesMap = new Map(formFieldsValuesMap);
+        // Build a lookup map from uniqueId → field definition for type coercion
+        const fieldDefsMap = new Map<string, any>();
+        form.fields.forEach((f: any) => {
+          const uid = (f?.uniqueId || f?.uniqId) + "";
+          fieldDefsMap.set(uid, f);
         });
+        fieldValuesArray.forEach((res: ResponseFieldValue) => {
+          const uid = (res.uniqueId || res.field_id) + "";
+          const fieldDef = fieldDefsMap.get(uid);
+          let value: any = res?.value;
+          if (fieldDef) {
+            switch (fieldDef.typeId) {
+              case FieldTypeIds.checkbox:
+                if (typeof value === "string") {
+                  value = value === "true";
+                } else if (value === null || value === undefined) {
+                  value = false;
+                }
+                break;
+              case FieldTypeIds.options:
+                if (fieldDef.multiSelect && value && !Array.isArray(value)) {
+                  value = [value];
+                } else if (!fieldDef.multiSelect && Array.isArray(value)) {
+                  value = value[0] ?? "";
+                }
+                break;
+              case FieldTypeIds.list:
+                if (value && !Array.isArray(value)) {
+                  value = [value];
+                }
+                break;
+              default:
+                break;
+            }
+          }
+          newValuesMap.set(uid, value);
+        });
+        setFormFieldsValuesMap(newValuesMap);
       } else {
         setFormTitle("יצירת תגובה - " + form.name);
       }
