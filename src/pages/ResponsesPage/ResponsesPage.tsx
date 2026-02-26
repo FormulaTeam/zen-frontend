@@ -92,7 +92,7 @@ const ResponsesPageContent = (): JSX.Element => {
           <ActionsRow>
             {hasSelection ? (
               <RowActionsButtons
-                selectedIds={selectedIds}
+                rowSelectionModel={rowSelectionModel}
                 onDeleted={handleRowDeleted}
               />
             ) : (

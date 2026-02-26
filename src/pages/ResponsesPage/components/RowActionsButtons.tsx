@@ -2,7 +2,7 @@ import React from "react";
 import { Tooltip, IconButton } from "@mui/material";
 import { Visibility, Edit, Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import { GridRowId } from "@mui/x-data-grid-pro";
+import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { EditButtonWrapper } from "../styled";
 import { useFormStore } from "../stores/form.store";
 import { PERMISSION_TYPES } from "../../../utils/utils";
@@ -14,14 +14,21 @@ import { queryClient } from "../../../api/queryClient";
 import { showSuccessNotification, showErrorNotification } from "../../../utils/utils";
 
 interface RowActionsButtonsProps {
-    selectedIds: GridRowId[];
+    rowSelectionModel: GridRowSelectionModel;
     onDeleted: () => void;
 }
 
-export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({ selectedIds, onDeleted }) => {
+export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({ rowSelectionModel, onDeleted }) => {
     const navigate = useNavigate();
     const { form, permissions, rows } = useFormStore();
     const { isSuperAdmin } = useSuperAdmin();
+
+    // "exclude" type means select-all: every row except those in the ids Set
+    const isExcludeAll = rowSelectionModel.type === "exclude";
+    const excludedIds = new Set(Array.from(rowSelectionModel.ids).map((id) => Number(id)));
+    const selectedIds: GridRowId[] = isExcludeAll
+        ? rows.filter((row) => !excludedIds.has(row.id)).map((row) => row.id)
+        : Array.from(rowSelectionModel.ids);
 
     const isSingleSelection = selectedIds.length === 1;
     const hasSelection = selectedIds.length > 0;
