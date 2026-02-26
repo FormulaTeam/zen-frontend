@@ -187,7 +187,7 @@ export const ResponsesTable = ({
       return;
     }
 
-    const rowData = (isInEditMode && localRows.length > 0 ? localRows : responsesRows).find(
+    const rowData = (localRows.length > 0 ? localRows : responsesRows).find(
       (r) => String(r.id) === rowId
     );
 
@@ -378,7 +378,9 @@ export const ResponsesTable = ({
             columnMenuLabel: "פעולות",
           }}
           columns={getFormColumns}
-          rows={isInEditMode && localRows.length > 0 ? localRows : responsesRows}
+          // TEMPORARY: `localRows` carries frontend-filtered rows when search is active (see ResponsesPage).
+          // When backend search is connected, revert this to: `isInEditMode && localRows.length > 0 ? localRows : responsesRows`
+          rows={localRows}
           slots={{
             footer: CustomFooter,
           }}
