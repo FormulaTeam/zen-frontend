@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { ResponsesView, ViewColumn } from "../types/interfaces/tableViews.types";
 import { ViewFormBase, ViewUserBase } from "../types/interfaces/view.types";
 import { getUserName } from "../utils/utils";
@@ -69,10 +69,17 @@ export const useViewFormLogic = ({
     columns: cloneColumns(columns),
   });
 
+  // Track the last view ID we synced from to avoid re-syncing on every re-render
+  // when the parent passes a new currentView object with the same ID.
+  const lastSyncedViewId = useRef<number | undefined>(undefined);
+
   /* ------------------------ Sync ------------------------ */
 
   useEffect(() => {
     if (!currentView) return;
+    // Only sync when switching to a genuinely different saved view.
+    if (currentView.id === lastSyncedViewId.current) return;
+    lastSyncedViewId.current = currentView.id;
 
     setIsCreatingNew(false);
     setViewName(currentView.name);

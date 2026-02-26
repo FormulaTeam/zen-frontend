@@ -1,7 +1,8 @@
 import { useParams } from "react-router";
+import { useMemo, useState } from "react";
 
 import Loader from "../../components/Responses/Loader";
-import { Role, User } from "../../utils/interfaces";
+import { Role, Row, User } from "../../utils/interfaces";
 import { FormActionsToolbar } from "./components/FormActionsToolbar";
 import { EditResponsesButton } from "./components/EditResponsesButton";
 import AddResponseButton from "./components/AddResponseButton";
@@ -9,15 +10,16 @@ import { RowActionsButtons } from "./components/RowActionsButtons";
 import { CancelEditDialog } from "./components/CancelEditDialog";
 import { useFormLoader } from "./hooks/useFormLoader";
 import { useResponsesEdit } from "./hooks/useResponsesEdit";
-import { MainContentWrapper, PageWrapper, TopSection, ActionsRow } from "./styled";
+import { useFormStore } from "./stores/form.store";
+import { MainContentWrapper, PageWrapper, TopSection, ActionsRow, CenteredBox } from "./styled";
 import SearchInfo from "../../components/Responses/SearchInfo";
 import { ResponsesTable } from "./components/ResponsesTable";
 import Header from "./components/Header";
-import Tooltip from "@mui/material/Tooltip";
-import { ViewManageButton } from "@components/Responses/styled";
-import { BackupTable } from "@mui/icons-material";
-import { useState } from "react";
 import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
+import { useResponsesViews } from "./hooks/useResponsesViews";
+import { ViewsButton } from "./components/ViewsButton";
+import SidePanel from "../../components/SidePanel/SidePanel";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface ResponsesPageProps {
   user: User | null;
@@ -37,9 +39,9 @@ export default function ResponsesPage({
 
   if (isLoading) {
     return (
-      <div style={{ margin: "auto" }}>
+      <CenteredBox>
         <Loader />
-      </div>
+      </CenteredBox>
     );
   }
 
@@ -55,6 +57,10 @@ const ResponsesPageContent = (): JSX.Element => {
     type: "include",
     ids: new Set<GridRowId>(),
   });
+
+  // TEMPORARY: client-side search filter — remove once backend search is wired through SearchInfo.
+  const [search, setSearch] = useState<string>("");
+  const { rows: storeRows } = useFormStore();
 
   const {
     isInEditMode,
@@ -73,6 +79,35 @@ const ResponsesPageContent = (): JSX.Element => {
     handleAddNewResponse,
   } = useResponsesEdit();
 
+  const {
+    isSidePanelOpen,
+    setIsSidePanelOpen,
+    currentViewConfig,
+    currentView,
+    savedViews,
+    isSaving,
+    handleSaveView,
+    handleLoadView,
+    handleDeleteView,
+    handleApplyView,
+  } = useResponsesViews();
+
+  const displayedRows = useMemo<Row[]>(() => {
+    const trimmed = search.trim().toLowerCase();
+    if (!trimmed) {
+      return isInEditMode ? localRows : storeRows;
+    }
+    const sourceRows = isInEditMode ? localRows : storeRows;
+    return sourceRows.filter((row) =>
+      Object.values(row).some((val) => {
+        if (val == null) {
+          return false;
+        }
+        return String(val).toLowerCase().includes(trimmed);
+      }),
+    );
+  }, [storeRows, localRows, isInEditMode, search]);
+
   const selectedIds: GridRowId[] = Array.from(rowSelectionModel.ids);
   const hasSelection = rowSelectionModel.type === "include"
     ? selectedIds.length > 0
@@ -81,6 +116,36 @@ const ResponsesPageContent = (): JSX.Element => {
   const handleRowDeleted = () => {
     setRowSelectionModel({ type: "include", ids: new Set<GridRowId>() });
   };
+
+  const { form, permissions } = useFormStore();
+  const { user } = useAuth();
+
+  const sidePanelForm = useMemo(
+    () =>
+      form
+        ? {
+          id: String(form.id),
+          name: form.name ?? "",
+          fields: (form.fields ?? []).map((f) => ({
+            uniqueId: String(f.uniqueId ?? f.name),
+            name: f.name ?? "",
+            displayName: f.displayName ?? f.name ?? "",
+            required: !!f.required,
+            index: f.index ?? 0,
+            fieldType: String(f.typeId ?? ""),
+          })),
+        }
+        : undefined,
+    [form?.id, form?.fields],
+  );
+
+  const sidePanelUser = useMemo(
+    () =>
+      user
+        ? { upn: user.upn, firstName: user.firstName, lastName: user.lastName }
+        : undefined,
+    [user?.upn, user?.firstName, user?.lastName],
+  );
 
   return (
     <PageWrapper>
@@ -110,26 +175,21 @@ const ResponsesPageContent = (): JSX.Element => {
               </>
             )}
           </ActionsRow>
-          <SearchInfo />
-          <Tooltip title="ניהול תצוגות">
-            <span>
-              <ViewManageButton
-                variant="contained"
-                onClick={() => { }} disabled={false}>
-                <BackupTable />
-                <span>ניהול תצוגות</span>
-              </ViewManageButton>
-            </span>
-          </Tooltip>
+          <SearchInfo search={search} setSearch={setSearch} />
+          <ViewsButton
+            isSidePanelOpen={isSidePanelOpen}
+            setIsSidePanelOpen={setIsSidePanelOpen}
+          />
         </TopSection>
         <ResponsesTable
           isInEditMode={isInEditMode}
-          localRows={localRows}
+          localRows={displayedRows}
           handleProcessRowUpdate={handleProcessRowUpdate}
           onCellEditStart={handleCellEditStart}
           validationErrors={validationErrors}
           onCellLiveChange={handleCellLiveChange}
           onRowSelectionModelChange={setRowSelectionModel}
+          currentViewConfig={currentViewConfig}
         />
         <CancelEditDialog
           open={showCancelDialog}
@@ -137,6 +197,22 @@ const ResponsesPageContent = (): JSX.Element => {
           onCancel={handleCancelDialogClose}
         />
       </MainContentWrapper>
+
+      <SidePanel
+        isOpen={isSidePanelOpen}
+        onClose={() => setIsSidePanelOpen(false)}
+        title="ניהול תצוגות"
+        form={sidePanelForm}
+        user={sidePanelUser}
+        onSaveView={handleSaveView}
+        onLoadView={handleLoadView}
+        onDeleteView={handleDeleteView}
+        onApplyView={handleApplyView}
+        currentView={currentView}
+        savedViews={savedViews}
+        permissionTypes={permissions}
+        isSaving={isSaving}
+      />
     </PageWrapper>
   );
 };

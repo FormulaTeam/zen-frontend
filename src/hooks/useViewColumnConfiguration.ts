@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { DropResult } from "@hello-pangea/dnd";
 import { ViewColumn, FormField, ResponsesView } from "../types/interfaces/tableViews.types";
 
@@ -17,8 +17,8 @@ const PRE_SYSTEM_COLUMNS: SystemViewColumn[] = [
   { columnId: "pushed_to_metro", displayName: "סטטוס סנכרון", defaultVisible: true },
 ];
 const POST_SYSTEM_VIEW_COLUMNS: SystemViewColumn[] = [
-  { columnId: "updated_by_name", displayName: "עודכן על ידי", defaultVisible: true },
-  { columnId: "updated", displayName: "עודכן בתאריך", defaultVisible: true },
+  { columnId: "updated_by_name", displayName: "השתנה ע״י", defaultVisible: true },
+  { columnId: "updated", displayName: "תאריך שינוי", defaultVisible: true },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -59,14 +59,19 @@ export function useViewColumnConfiguration({
 }: UseViewColumnConfigurationProps): UseViewColumnConfigurationReturn {
   const [columns, setColumns] = useState<ViewColumn[]>([]);
 
+  // Track which view ID and form fields we last initialized from, so we only
+  // re-initialize when the view or form genuinely changes — not on every render.
+  const lastInitViewId = useRef<number | string | undefined>(undefined);
+  const lastInitFormFields = useRef<FormField[] | undefined>(undefined);
+
   /* -------------------------- Initialization ------------------------ */
 
-  const initialize = useCallback(() => {
+  const initialize = useCallback((viewToLoad?: ResponsesView) => {
     if (!form?.fields) return;
 
     let order = 0;
 
-    const existing = currentView?.config.columns ?? [];
+    const existing = viewToLoad?.config.columns ?? [];
 
     const getExisting = (id: string) => existing.find((c) => c.columnId === id);
 
@@ -99,11 +104,18 @@ export function useViewColumnConfiguration({
     ].sort((a, b) => a.order - b.order);
 
     setColumns(merged);
-  }, [form, currentView]);
+  }, [form]);
 
   useEffect(() => {
-    initialize();
-  }, [initialize]);
+    const formFieldsChanged = form?.fields !== lastInitFormFields.current;
+    const viewIdChanged = currentView?.id !== lastInitViewId.current;
+
+    if (formFieldsChanged || viewIdChanged) {
+      lastInitFormFields.current = form?.fields;
+      lastInitViewId.current = currentView?.id;
+      initialize(currentView);
+    }
+  }, [form?.fields, currentView, initialize]);
 
   /* --------------------------- Visibility --------------------------- */
 

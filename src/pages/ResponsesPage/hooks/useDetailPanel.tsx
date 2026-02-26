@@ -9,14 +9,16 @@ import { Row, FieldTypeIds, Form } from "@utils/interfaces";
 import { useRowExpansion } from "./useRowExpansion";
 import { ExpandIconBox } from "../styled";
 import { ExpandedRowContent } from "../components/childForms/ExpandedRowContent";
+import { ViewColumn } from "../../../types/interfaces/tableViews.types";
 
 interface UseDetailPanelProps {
     form: Form | null;
     rows: Row[];
     hasFormInFormFields: boolean;
-    childrenFormsData: any[];
+    childrenFormsData: { form: Form; rows: Row[] }[];
     isInEditMode: boolean;
-    getChildFormData: (formId: number) => any;
+    getChildFormData: (formId: number) => { form: Form; rows: Row[] } | undefined;
+    currentViewConfig?: ViewColumn[];
 }
 
 interface UseDetailPanelReturn {
@@ -37,7 +39,21 @@ export const useDetailPanel = ({
     childrenFormsData,
     isInEditMode,
     getChildFormData,
+    currentViewConfig,
 }: UseDetailPanelProps): UseDetailPanelReturn => {
+
+    const visibleFormInFormUniqueIds = useMemo((): Set<string> | null => {
+        if (!currentViewConfig || currentViewConfig.length === 0) {
+            return null;
+        }
+        const visibleIds = new Set<string>();
+        currentViewConfig.forEach((viewColumn) => {
+            if (viewColumn.visible) {
+                visibleIds.add(viewColumn.columnId);
+            }
+        });
+        return visibleIds;
+    }, [currentViewConfig]);
 
     const getChildRowsForParent = useCallback((parentRowId: number, connectedFormId: number): Row[] => {
         const childFormData = getChildFormData(connectedFormId);
@@ -57,16 +73,24 @@ export const useDetailPanel = ({
             return false;
         }
 
-        const formInFormFields = form.fields.filter(field => field.typeId === FieldTypeIds.form);
+        const formInFormFields = form.fields.filter((field) => {
+            if (field.typeId !== FieldTypeIds.form) {
+                return false;
+            }
+            if (visibleFormInFormUniqueIds !== null) {
+                return visibleFormInFormUniqueIds.has(String(field.uniqueId ?? field.name));
+            }
+            return true;
+        });
 
-        return formInFormFields.some(field => {
+        return formInFormFields.some((field) => {
             if (!field.connectedFormId) {
                 return false;
             }
             const childRows = getChildRowsForParent(rowId, field.connectedFormId);
             return childRows.length > 0;
         });
-    }, [hasFormInFormFields, form?.fields, getChildRowsForParent]);
+    }, [hasFormInFormFields, form?.fields, getChildRowsForParent, visibleFormInFormUniqueIds]);
 
     const {
         expandedRowIds,
@@ -168,16 +192,22 @@ export const useDetailPanel = ({
             return <Box />;
         }
 
+        const visibleParentFields = visibleFormInFormUniqueIds !== null
+            ? (form.fields ?? []).filter((field) =>
+                visibleFormInFormUniqueIds.has(String(field.uniqueId ?? field.name))
+            )
+            : (form.fields ?? []);
+
         return (
             <ExpandedRowContent
                 parentRowId={params.row?.id}
                 parentFormId={form.id}
-                parentFormFields={form.fields || []}
+                parentFormFields={visibleParentFields}
                 childrenFormsData={childrenFormsData}
                 isInEditMode={isInEditMode}
             />
         );
-    }, [hasFormInFormFields, form, childrenFormsData, isInEditMode]);
+    }, [hasFormInFormFields, form, childrenFormsData, isInEditMode, visibleFormInFormUniqueIds]);
 
     const getDetailPanelHeight = useCallback(() => {
         return 'auto' as const;

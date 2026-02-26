@@ -1,21 +1,27 @@
 import styled from "styled-components";
 import { Box } from "@mui/material";
 
-export const SidePanelContainer = styled(Box)`
-  width: 450px;
-  min-width: 350px;
+interface OpenProps {
+  $isOpen: boolean;
+}
+
+export const SidePanelContainer = styled(Box) <OpenProps>`
+  width: ${({ $isOpen }) => ($isOpen ? "450px" : "0")};
+  min-width: ${({ $isOpen }) => ($isOpen ? "350px" : "0")};
   max-width: 90vw;
   height: 100%;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid #e0e0e0;
+  border-left: ${({ $isOpen }) => ($isOpen ? "1px solid #e0e0e0" : "none")};
   background-color: #ffffff;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  box-shadow: ${({ $isOpen }) => ($isOpen ? "-2px 0 8px rgba(0, 0, 0, 0.1)" : "none")};
   flex-shrink: 0;
+  overflow: hidden;
+  transition: width 0.3s ease, min-width 0.3s ease, box-shadow 0.3s ease;
 `;
 
-export const SidePanelHeader = styled(Box)`
-  display: flex;
+export const SidePanelHeader = styled(Box) <OpenProps>`
+  display: ${({ $isOpen }) => ($isOpen ? "flex" : "none")};
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
@@ -24,7 +30,8 @@ export const SidePanelHeader = styled(Box)`
   min-height: 60px;
 `;
 
-export const SidePanelContent = styled(Box)`
+export const SidePanelContent = styled(Box) <OpenProps>`
+  display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};
   flex: 1;
   overflow-y: auto;
   padding: 0;
