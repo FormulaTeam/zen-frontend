@@ -19,8 +19,8 @@ import {
 interface UseCellEditorsParams {
     apiRef: React.MutableRefObject<GridApiPro | null>;
     formFields: FormField[] | undefined;
-    validationErrors?: Record<number, Record<string, string>>;
-    onLiveChange?: <T>(rowId: number, columnName: string, value: T, isValid?: boolean) => void;
+    validationErrors?: Record<number | string, Record<string, string>>;
+    onLiveChange?: <T>(rowId: number | string, columnName: string, value: T, isValid?: boolean) => void;
 }
 
 interface UseCellEditorsReturn {
@@ -35,7 +35,7 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
                 field: params.field,
                 value: newValue,
             });
-            onLiveChange?.<T>(Number(params.id), params.field as string, newValue, isValid);
+            onLiveChange?.<T>(params.id, params.field as string, newValue, isValid);
         },
         [apiRef, onLiveChange],
     );

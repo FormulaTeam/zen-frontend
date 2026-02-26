@@ -76,33 +76,35 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
     errorMessage,
 }) => {
     const parseFileValue = (value) => {
-        if (!value) return { newFiles: [], attachedFiles: [] };
-        
+        if (!value || typeof value !== "object") return { newFiles: [], attachedFiles: [] };
+
         if (Array.isArray(value.files)) {
             return { newFiles: [], attachedFiles: value.files };
         }
-        
+
         if (value.files && typeof value.files === 'object') {
             return {
                 newFiles: value.files.newFiles || [],
                 attachedFiles: value.files.attachedFiles || []
             };
         }
-        
+
         return { newFiles: [], attachedFiles: [] };
     };
 
     const fileState = parseFileValue(value);
     const [files, setFiles] = useState<File[]>(fileState.newFiles);
     const [responseFiles, setResponseFiles] = useState<AttachedFile[]>(fileState.attachedFiles);
-    const [deletedFiles, setDeletedFiles] = useState<AttachedFile[]>(value?.deletedFiles || []);
+    const [deletedFiles, setDeletedFiles] = useState<AttachedFile[]>(
+        (value && typeof value === "object" && value.deletedFiles) ? value.deletedFiles : []
+    );
 
     // Update internal state when the external value prop changes
     useEffect(() => {
         const fileState = parseFileValue(value);
         setResponseFiles(fileState.attachedFiles);
         setFiles(fileState.newFiles);
-        if (value?.deletedFiles) {
+        if (value && typeof value === "object" && value.deletedFiles) {
             setDeletedFiles(value.deletedFiles);
         }
     }, [value]);
@@ -160,7 +162,7 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
 
     return (
         <StyledContainer onClick={handleClick}>
-              <StyledDropzone {...getRootProps()} $isDragActive={isDragActive}>
+            <StyledDropzone {...getRootProps()} $isDragActive={isDragActive}>
                 <input {...getInputProps()} />
                 <AttachFileIcon fontSize="small" />
                 <Typography variant="caption" display="block">

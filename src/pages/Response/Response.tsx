@@ -55,7 +55,22 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
   const saveAll = async () => {
     if (validateRequiredFields() && form) {
       try {
-        const result = await saveResponse(formFieldsByIdMap, formFieldsValuesMap);
+        let result;
+
+        if (copyMode) {
+          // store a component-scoped promise to dedupe parent creation
+          if (!(saveAll as any)._parentCreatePromise) {
+            (saveAll as any)._parentCreatePromise = saveResponse(
+              formFieldsByIdMap,
+              formFieldsValuesMap,
+            );
+          }
+          // use the stored promise
+          result = await (saveAll as any)._parentCreatePromise;
+        } else {
+          // non-copy mode: just save normally
+          result = await saveResponse(formFieldsByIdMap, formFieldsValuesMap) as any;
+        }
 
         if (!Array.isArray(result)) {
           setSavedResponse(result);
@@ -82,7 +97,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
     }
   };
 
-  const { saveResponse, isSaving } = useResponseSave(form, response, user);
+  const { saveResponse, isSaving } = useResponseSave(form, response, user, undefined, copyMode);
 
   const {
     childForms,
@@ -103,6 +118,7 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
     user,
     isSuperAdmin,
     roles,
+    copyMode,
   });
 
   const { generateValidationErrorMessages } = useValidationErrors({
@@ -148,8 +164,8 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
 
   const onBack = () => {
     location.state?.parentFormId ?
-       navigate(`/responses/${location.state.parentFormId}`, {}) :
-       (form && navigate(`/responses/${form.id}`));
+      navigate(`/responses/${location.state.parentFormId}`, {}) :
+      (form && navigate(`/responses/${form.id}`));
   };
 
   const onEdit = () => navigate(`/response/edit/${formId}/${id}`);
@@ -203,32 +219,32 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
     return (
       <Box key={`child-form-${formField.connectedFormId}`}>
         {
-           childFormData.children.map(
-          (child, index) =>
-            childFormData.shown && (
-              <ConnectedFormSection
-                key={child.id || child.uniqueId || `child-${formField.connectedFormId}-${index}`}
-                handleRemoveChildForm={() => {
-                  handleRemoveChildForm(childFormIndex, index);
-                }}
-                formsLength={childFormData.children.length}
-                shouldSave={childFormsSaving}
-                user={user}
-                viewMode={viewMode}
-                copyMode={copyMode}
-                formId={formId!}
-                field={child}
-                parentResponse={savedResponse?.id}
-                index={index}
-                childSaved={(success: boolean) => handleChildSaved(childFormIndex, success)}
-                shouldValidate={childFormsValidate}
-                childValid={(success: boolean) => handleChildValid(childFormIndex, success)}
-                id={child.id}
-                shouldLoad={isSaving}
-              />
-            ),
-            )
-            }
+          childFormData.children.map(
+            (child, index) =>
+              childFormData.shown && (
+                <ConnectedFormSection
+                  key={child.id || child.uniqueId || `child-${formField.connectedFormId}-${index}`}
+                  handleRemoveChildForm={() => {
+                    handleRemoveChildForm(childFormIndex, index);
+                  }}
+                  formsLength={childFormData.children.length}
+                  shouldSave={childFormsSaving}
+                  user={user}
+                  viewMode={viewMode}
+                  copyMode={copyMode}
+                  formId={formId!}
+                  field={child}
+                  parentResponse={savedResponse?.id}
+                  index={index}
+                  childSaved={(success: boolean) => handleChildSaved(childFormIndex, success)}
+                  shouldValidate={childFormsValidate}
+                  childValid={(success: boolean) => handleChildValid(childFormIndex, success)}
+                  id={child.id}
+                  shouldLoad={isSaving}
+                />
+              ),
+          )
+        }
         {!isLoading && !viewMode && (
           <Button
             variant="text"
@@ -248,13 +264,13 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
   };
 
   const sortedSections = useMemo(() =>
-      Object.entries(responsSections).sort(([idA, a], [idB, b]) => {
-        const orderA = a.fields[0]?.sectionOrder ?? 0;
-        const orderB = b.fields[0]?.sectionOrder ?? 0;
+    Object.entries(responsSections).sort(([idA, a], [idB, b]) => {
+      const orderA = a.fields[0]?.sectionOrder ?? 0;
+      const orderB = b.fields[0]?.sectionOrder ?? 0;
 
-        return orderA === orderB ? idA.localeCompare(idB) : orderA - orderB;
-      }
-      ),[responsSections]);
+      return orderA === orderB ? idA.localeCompare(idB) : orderA - orderB;
+    }
+    ), [responsSections]);
 
   return (
     <div className="response-page">
