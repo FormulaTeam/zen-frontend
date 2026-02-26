@@ -4,11 +4,16 @@ import { LinkValue } from "../../../../utils/interfaces";
 import { preventEnterKeyNavigation } from "../../../../utils/utils";
 
 interface LinkCellEditorProps {
-    value: LinkValue | null;
+    value: LinkValue | string | null;
     onChange: (value: LinkValue, isValid?: boolean) => void;
     isRequired?: boolean;
     errorMessage?: string;
 }
+
+const toLinkValue = (value: LinkValue | string | null): LinkValue | null => {
+    if (!value || typeof value !== "object") return null;
+    return value;
+};
 
 export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
     value,
@@ -16,15 +21,17 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
     isRequired = false,
     errorMessage,
 }) => {
-    const [url, setUrl] = useState(value?.link || "");
-    const [linkText, setLinkText] = useState(value?.linkTxt || "");
+    const linkValue = toLinkValue(value);
+    const [url, setUrl] = useState(linkValue?.link || "");
+    const [linkText, setLinkText] = useState(linkValue?.linkTxt || "");
     const [urlError, setUrlError] = useState(false);
 
     const urlRegex = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,6})([/\w .-]*)*\/?$/i;
 
     useEffect(() => {
-        setUrl(value?.link || "");
-        setLinkText(value?.linkTxt || "");
+        const lv = toLinkValue(value);
+        setUrl(lv?.link || "");
+        setLinkText(lv?.linkTxt || "");
     }, [value]);
 
     const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {

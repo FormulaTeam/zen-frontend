@@ -277,6 +277,20 @@ export function showWarningNotification(msg: string) {
   toast.warn(msg + "", notificationProps);
 }
 
+export function showLoadingNotification(msg: string, icon?: JSX.Element) {
+  const toastId = toast.loading(msg, {
+    style: {
+      background: '#d5e6f6',
+      color: '#000000'
+    },
+    closeButton: false,
+    hideProgressBar: true,
+    icon: icon
+  });
+
+  return toastId;
+}
+
 export const titleBgStyle = {
   fill: {
     fgColor: { rgb: "00c7d9c9" },

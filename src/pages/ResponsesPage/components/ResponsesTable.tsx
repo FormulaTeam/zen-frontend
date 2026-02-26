@@ -10,15 +10,18 @@ import {
   GridColDef,
   GridRenderCellParams,
   GridRowSelectionModel,
+  GRID_DETAIL_PANEL_TOGGLE_FIELD,
+  GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
 } from "@mui/x-data-grid-pro";
 import { useFormStore } from "../stores/form.store";
 import clsx from "clsx";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "@components/formInForm/ZoomCell";
-import { Box } from "@mui/material";
+import { Box, Menu, MenuItem, ListItemIcon, ListItemText } from "@mui/material";
 import { FormField, Row } from "@utils/interfaces";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
@@ -26,6 +29,7 @@ import { downloadFileFromResponse } from "@api/filesApi";
 import { ContentContainer, MainContent, ResponsesAmountBox, ResponsesAmountText, StyledDataGrid, SyncStatusIconBox, HeaderAsterisk, HeaderFlex, CellErrorWrapper, CellErrorText, CellValueFlex } from "../styled";
 import { useChildForms } from "../hooks/useChildForms";
 import { useDetailPanel } from "../hooks/useDetailPanel";
+import { useNavigate } from "react-router-dom";
 
 interface ResponsesTableProps {
   isInEditMode: boolean;
@@ -47,10 +51,16 @@ export const ResponsesTable = ({
   onRowSelectionModelChange,
 }: ResponsesTableProps) => {
   const { form, rows } = useFormStore();
+  const navigate = useNavigate();
 
   const apiRef = useGridApiRef();
   const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
   const [paginationModel, setPaginationModel] = useState({ pageSize: 25, page: 0 });
+  const [contextMenu, setContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+    row: Row | null;
+  } | null>(null);
 
   const {
     childrenFormsData,
@@ -158,7 +168,50 @@ export const ResponsesTable = ({
     </SyncStatusIconBox>
   );
 
-  const getFormColumns = (): GridColDef[] => {
+  const copyResponse = (rowData: Row): void => {
+    if (rowData && form?.id) {
+      navigate(`/response/create/${form.id}/${rowData.id}`);
+    }
+  };
+
+  const handleContextMenu = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    const target = event.target as HTMLElement;
+    const row = target.closest('.MuiDataGrid-row');
+    if (!row) {
+      return;
+    }
+
+    const rowId = row.getAttribute('data-id');
+    if (!rowId) {
+      return;
+    }
+
+    const rowData = (isInEditMode && localRows.length > 0 ? localRows : responsesRows).find(
+      (r) => String(r.id) === rowId
+    );
+
+    if (rowData) {
+      setContextMenu({
+        mouseX: event.clientX - 2,
+        mouseY: event.clientY - 4,
+        row: rowData,
+      });
+    }
+  }, [isInEditMode, localRows, responsesRows]);
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  const handleDuplicateResponse = useCallback(() => {
+    if (contextMenu?.row) {
+      copyResponse(contextMenu.row);
+    }
+    handleCloseContextMenu();
+  }, [contextMenu, copyResponse, handleCloseContextMenu]);
+
+  const getFormColumns = useMemo((): GridColDef[] => {
     const baseFormColumns = (form?.columns && form.columns?.length > 0)
       ? form.columns
         .filter((column: GridColDef | undefined) => !!column && typeof column === 'object' && column.field)
@@ -259,13 +312,22 @@ export const ResponsesTable = ({
 
     return [
       ...(expandColumn ? [expandColumn] : []),
+      ...(hasFormInFormFields
+        ? [{
+          ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
+          field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
+          renderHeader: (params: any) => (
+            <div aria-label={params?.colDef?.headerName ?? ""} />
+          ),
+        }]
+        : []),
       ...baseFormColumns,
       syncColumn,
       editedByColumn,
       editedAtColumn,
       ...parentResponseColumns,
     ];
-  };
+  }, [form, hasParentResponses, expandColumn, hasFormInFormFields, isInEditMode, validationErrors, renderEditCell, formatCellValue]);
 
   const CustomFooter = (): JSX.Element => {
     return (
@@ -315,15 +377,40 @@ export const ResponsesTable = ({
             ...heIL.components.MuiDataGrid.defaultProps.localeText,
             columnMenuLabel: "פעולות",
           }}
-          columns={getFormColumns()}
+          columns={getFormColumns}
           rows={isInEditMode && localRows.length > 0 ? localRows : responsesRows}
           slots={{
             footer: CustomFooter,
           }}
-          getDetailPanelContent={getDetailPanelContent}
-          getDetailPanelHeight={getDetailPanelHeight}
-          detailPanelExpandedRowIds={detailPanelExpandedRowIds}
+          {...(hasFormInFormFields && {
+            getDetailPanelContent,
+            getDetailPanelHeight,
+            detailPanelExpandedRowIds,
+          })}
+          slotProps={{
+            row: {
+              onContextMenu: handleContextMenu,
+              style: { cursor: 'context-menu' },
+            },
+          }}
         />
+        <Menu
+          open={contextMenu !== null}
+          onClose={handleCloseContextMenu}
+          anchorReference="anchorPosition"
+          anchorPosition={
+            contextMenu !== null
+              ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+              : undefined
+          }
+        >
+          <MenuItem onClick={handleDuplicateResponse}>
+            <ListItemIcon>
+              <ContentCopyIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>שכפול תגובה</ListItemText>
+          </MenuItem>
+        </Menu>
       </MainContent>
     </ContentContainer>
   );

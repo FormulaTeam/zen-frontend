@@ -216,6 +216,10 @@ export interface Form {
     role_id?: number;
     roleName?: string;
   };
+  metro_access_url?: string;
+  metro_access_token?: string;
+  oasisSourceKey?: string;
+  oasisSourceId?: string;
 }
 
 export interface FormUser extends User {
@@ -261,7 +265,6 @@ export interface ResponseForm {
 
   fieldValues?: ResponseFieldValue[];
   data?: ResponseFieldValue[];
-
   mainResponses?: { id: string; index: number; form_id: number }[];
   subResponses?: { id: string; index: number; form_id: number }[];
 
