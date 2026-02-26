@@ -16,11 +16,8 @@ import Header from "./components/Header";
 import Tooltip from "@mui/material/Tooltip";
 import { ViewManageButton } from "@components/Responses/styled";
 import { BackupTable } from "@mui/icons-material";
-<<<<<<< HEAD
 import { useState } from "react";
 import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
-=======
->>>>>>> 4224c177369458dc0bec0731725a05095f4ed419
 
 interface ResponsesPageProps {
   user: User | null;
@@ -94,7 +91,6 @@ const ResponsesPageContent = (): JSX.Element => {
         </TopSection>
         <TopSection>
           <ActionsRow>
-<<<<<<< HEAD
             {hasSelection ? (
               <RowActionsButtons
                 rowSelectionModel={rowSelectionModel}
@@ -109,20 +105,10 @@ const ResponsesPageContent = (): JSX.Element => {
                   isUpdating={isUpdating}
                   onToggleEditMode={handleToggleEditMode}
                   onSaveChanges={handleSaveChanges}
+                  onAddNewResponse={handleAddNewResponse}
                 />
               </>
             )}
-=======
-            {!isInEditMode && <AddResponseButton />}
-            <EditResponsesButton
-              isInEditMode={isInEditMode}
-              editedRowsCount={editedRowsCount}
-              isUpdating={isUpdating}
-              onToggleEditMode={handleToggleEditMode}
-              onSaveChanges={handleSaveChanges}
-              onAddNewResponse={handleAddNewResponse}
-            />
->>>>>>> 4224c177369458dc0bec0731725a05095f4ed419
           </ActionsRow>
           <SearchInfo />
           <Tooltip title="ניהול תצוגות">
