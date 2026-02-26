@@ -1,5 +1,5 @@
 import React from "react";
-import { IconButton, Typography, Box } from "@mui/material";
+import { IconButton, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { SidePanelContainer, SidePanelHeader, SidePanelContent } from "./styled";
 import { ViewManager } from "../Views/ViewManager/ViewManager";
@@ -39,11 +39,9 @@ const SidePanel: React.FC<SidePanelProps> = ({
   permissionTypes,
   isSaving = false,
 }) => {
-  if (!isOpen) return <></>;
-
   return (
-    <SidePanelContainer>
-      <SidePanelHeader>
+    <SidePanelContainer $isOpen={isOpen}>
+      <SidePanelHeader $isOpen={isOpen}>
         <Typography variant="h6" component="h2">
           {title}
         </Typography>
@@ -51,13 +49,13 @@ const SidePanel: React.FC<SidePanelProps> = ({
           <CloseIcon />
         </IconButton>
       </SidePanelHeader>
-      <SidePanelContent>
+      <SidePanelContent $isOpen={isOpen}>
         {children || (
           <ViewManager
             form={form}
             user={user}
-            onSaveView={onSaveView || (() => {})}
-            onLoadView={onLoadView || (() => {})}
+            onSaveView={onSaveView || (() => { })}
+            onLoadView={onLoadView || (() => { })}
             onDeleteView={onDeleteView}
             onApplyView={onApplyView}
             currentView={currentView}

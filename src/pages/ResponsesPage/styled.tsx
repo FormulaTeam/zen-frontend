@@ -45,12 +45,11 @@ export const ActionsRow = styled(Box)(() => ({
 
 export const MainContentWrapper = styled(Box)<BoxProps>(() => ({
   padding: "24px",
-  maxWidth: "100%",
-  maxHeight: "100%",
   display: "flex",
   flexDirection: "column",
   flex: 1,
   minWidth: 0,
+  minHeight: 0,
   overflow: "hidden",
 }));
 
@@ -96,9 +95,9 @@ export const QuickEditTableContainer = styled(MuiTableContainer)<{ isQuickEditMo
 
 export const ContentContainer = styled(Box)<BoxProps>(() => ({
   display: "flex",
-  height: "calc(100vh - 240px)",
-  maxHeight: "calc(100vh - 240px)",
-  gap: 0,
+  flex: 1,
+  minHeight: 0,
+  overflow: "hidden",
 }));
 
 interface MainContentProps extends BoxProps {
@@ -109,7 +108,6 @@ export const MainContent = styled(Box)<MainContentProps>(() => ({
   flex: 1,
   display: "flex",
   flexDirection: "column",
-  transition: "margin-right 0.3s ease",
   minWidth: 0,
   overflow: "hidden",
 }));
@@ -121,7 +119,9 @@ export const TableContainer = styled(Box)<BoxProps>(() => ({
 
 export const PageWrapper = styled(Box)<BoxProps>(() => ({
   width: "100vw",
+  height: "100%",
   display: "flex",
+  flexDirection: "row",
   overflow: "hidden",
 }));
 
@@ -295,13 +295,13 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     boxShadow: `0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus-within":
-    {
-      backgroundImage: "none",
-      boxShadow: `inset 0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
-      borderRadius: "4px",
-      outline: "none",
-      borderColor: "transparent",
-    },
+  {
+    backgroundImage: "none",
+    boxShadow: `inset 0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
+    borderRadius: "4px",
+    outline: "none",
+    borderColor: "transparent",
+  },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--editing": {
     backgroundImage: "none",
     boxShadow: `inset 0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
@@ -311,9 +311,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   },
 
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus::after, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus-within::after":
-    {
-      display: "none",
-    },
+  {
+    display: "none",
+  },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--has-error": {
     backgroundColor: "#ffebee",
     border: `1px solid ${theme.palette.error.main}`,
@@ -343,23 +343,23 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     },
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cellCheckbox.MuiDataGrid-cell--non-editable-in-edit-mode":
-    {
-      pointerEvents: "auto",
-      cursor: "pointer",
-    },
+  {
+    pointerEvents: "auto",
+    cursor: "pointer",
+  },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cellCheckbox.MuiDataGrid-cell--non-editable-in-edit-mode *":
-    {
-      pointerEvents: "auto",
-    },
+  {
+    pointerEvents: "auto",
+  },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell[data-field='expand'].MuiDataGrid-cell--non-editable-in-edit-mode":
-    {
-      pointerEvents: "auto",
-      cursor: "pointer",
-    },
+  {
+    pointerEvents: "auto",
+    cursor: "pointer",
+  },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell[data-field='expand'].MuiDataGrid-cell--non-editable-in-edit-mode *":
-    {
-      pointerEvents: "auto",
-    },
+  {
+    pointerEvents: "auto",
+  },
   "& .MuiDataGrid-scrollbar--vertical": {
     right: "0",
     left: "auto",

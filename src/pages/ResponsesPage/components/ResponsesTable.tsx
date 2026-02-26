@@ -12,6 +12,7 @@ import {
   GridRowSelectionModel,
   GRID_DETAIL_PANEL_TOGGLE_FIELD,
   GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
+  GridSortModel,
 } from "@mui/x-data-grid-pro";
 import { useFormStore } from "../stores/form.store";
 import clsx from "clsx";
@@ -30,6 +31,14 @@ import { ContentContainer, MainContent, ResponsesAmountBox, ResponsesAmountText,
 import { useChildForms } from "../hooks/useChildForms";
 import { useDetailPanel } from "../hooks/useDetailPanel";
 import { useNavigate } from "react-router-dom";
+import { ViewColumn } from "../../../types/interfaces/tableViews.types";
+
+const VIEW_COLUMN_ID_TO_GRID_FIELD: Record<string, string> = {
+  id: "id",
+  pushed_to_metro: "sync",
+  updated_by_name: "editedByName",
+  updated: "edited",
+};
 
 interface ResponsesTableProps {
   isInEditMode: boolean;
@@ -39,7 +48,14 @@ interface ResponsesTableProps {
   validationErrors?: Record<number, Record<string, string>>;
   onCellLiveChange?: (rowId: number | string, columnName: string, value: unknown) => void;
   onRowSelectionModelChange?: (model: GridRowSelectionModel) => void;
+  currentViewConfig?: ViewColumn[];
 }
+
+const SyncStatusIcon: React.FC<{ pushedToMetro?: string | null }> = ({ pushedToMetro }) => (
+  <SyncStatusIconBox>
+    {pushedToMetro ? <CloudDoneIcon fontSize="small" /> : <CloudOffIcon fontSize="small" />}
+  </SyncStatusIconBox>
+);
 
 export const ResponsesTable = ({
   isInEditMode,
@@ -49,6 +65,7 @@ export const ResponsesTable = ({
   validationErrors,
   onCellLiveChange,
   onRowSelectionModelChange,
+  currentViewConfig,
 }: ResponsesTableProps) => {
   const { form, rows } = useFormStore();
   const navigate = useNavigate();
@@ -80,6 +97,7 @@ export const ResponsesTable = ({
     childrenFormsData,
     isInEditMode,
     getChildFormData,
+    currentViewConfig,
   });
 
   const { renderEditCell } = useCellEditors({
@@ -162,17 +180,11 @@ export const ResponsesTable = ({
     [rows]
   );
 
-  const SyncStatusIcon: React.FC<{ pushedToMetro?: string | null }> = ({ pushedToMetro }) => (
-    <SyncStatusIconBox>
-      {pushedToMetro ? <CloudDoneIcon fontSize="small" /> : <CloudOffIcon fontSize="small" />}
-    </SyncStatusIconBox>
-  );
-
-  const copyResponse = (rowData: Row): void => {
+  const navigateToCreateResponseCopy = useCallback((rowData: Row): void => {
     if (rowData && form?.id) {
       navigate(`/response/create/${form.id}/${rowData.id}`);
     }
-  };
+  }, [form?.id, navigate]);
 
   const handleContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
@@ -198,7 +210,7 @@ export const ResponsesTable = ({
         row: rowData,
       });
     }
-  }, [isInEditMode, localRows, responsesRows]);
+  }, [localRows, responsesRows]);
 
   const handleCloseContextMenu = useCallback(() => {
     setContextMenu(null);
@@ -206,10 +218,10 @@ export const ResponsesTable = ({
 
   const handleDuplicateResponse = useCallback(() => {
     if (contextMenu?.row) {
-      copyResponse(contextMenu.row);
+      navigateToCreateResponseCopy(contextMenu.row);
     }
     handleCloseContextMenu();
-  }, [contextMenu, copyResponse, handleCloseContextMenu]);
+  }, [contextMenu, navigateToCreateResponseCopy, handleCloseContextMenu]);
 
   const getFormColumns = useMemo((): GridColDef[] => {
     const baseFormColumns = (form?.columns && form.columns?.length > 0)
@@ -310,7 +322,7 @@ export const ResponsesTable = ({
       ]
       : [];
 
-    return [
+    const allColumns: GridColDef[] = [
       ...(expandColumn ? [expandColumn] : []),
       ...(hasFormInFormFields
         ? [{
@@ -327,7 +339,59 @@ export const ResponsesTable = ({
       editedAtColumn,
       ...parentResponseColumns,
     ];
-  }, [form, hasParentResponses, expandColumn, hasFormInFormFields, isInEditMode, validationErrors, renderEditCell, formatCellValue]);
+
+    if (!currentViewConfig || currentViewConfig.length === 0) {
+      return allColumns;
+    }
+
+    // Structural columns (toggles, expand) are always kept at the front regardless of the view.
+    const structuralFieldNames = new Set([GRID_DETAIL_PANEL_TOGGLE_FIELD, "expand"]);
+    const structuralColumns = allColumns.filter((col) => structuralFieldNames.has(col.field));
+    const dataColumns = allColumns.filter((col) => !structuralFieldNames.has(col.field));
+
+    const gridFieldToColDef = new Map<string, GridColDef>(dataColumns.map((col) => [col.field, col]));
+
+    const uniqueIdToGridField = new Map<string, string>(
+      (form?.fields ?? []).map((field) => [String(field.uniqueId ?? field.name), field.displayName ?? field.name ?? ""])
+    );
+
+    const resolveViewColumnIdToGridField = (columnId: string): string | undefined => {
+      if (VIEW_COLUMN_ID_TO_GRID_FIELD[columnId] !== undefined) {
+        return VIEW_COLUMN_ID_TO_GRID_FIELD[columnId];
+      }
+      return uniqueIdToGridField.get(columnId);
+    };
+
+    const orderedVisibleColumns = currentViewConfig
+      .filter((viewColumn) => viewColumn.visible)
+      .sort((a, b) => a.order - b.order)
+      .map((viewColumn) => {
+        const resolvedField = resolveViewColumnIdToGridField(viewColumn.columnId);
+        return resolvedField !== undefined ? gridFieldToColDef.get(resolvedField) : undefined;
+      })
+      .filter((col): col is GridColDef => col !== undefined);
+
+    return [...structuralColumns, ...orderedVisibleColumns];
+  }, [form, hasParentResponses, expandColumn, hasFormInFormFields, isInEditMode, validationErrors, renderEditCell, formatCellValue, currentViewConfig]);
+
+  const sortModel = useMemo((): GridSortModel => {
+    if (!currentViewConfig) {
+      return [];
+    }
+
+    const uniqueIdToGridField = new Map<string, string>(
+      (form?.fields ?? []).map((field) => [String(field.uniqueId ?? field.name), field.displayName ?? field.name ?? ""])
+    );
+
+    const sorted = currentViewConfig
+      .filter((viewColumn) => viewColumn.sortDirection && viewColumn.visible)
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
+    return sorted.map((viewColumn) => {
+      const gridField = VIEW_COLUMN_ID_TO_GRID_FIELD[viewColumn.columnId] ?? uniqueIdToGridField.get(viewColumn.columnId) ?? viewColumn.columnId;
+      return { field: gridField, sort: viewColumn.sortDirection as "asc" | "desc" };
+    });
+  }, [currentViewConfig, form?.fields]);
 
   const CustomFooter = (): JSX.Element => {
     return (
@@ -378,6 +442,7 @@ export const ResponsesTable = ({
             columnMenuLabel: "פעולות",
           }}
           columns={getFormColumns}
+          sortModel={sortModel}
           // TEMPORARY: `localRows` carries frontend-filtered rows when search is active (see ResponsesPage).
           // When backend search is connected, revert this to: `isInEditMode && localRows.length > 0 ? localRows : responsesRows`
           rows={localRows}

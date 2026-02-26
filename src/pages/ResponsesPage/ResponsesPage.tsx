@@ -11,14 +11,15 @@ import { CancelEditDialog } from "./components/CancelEditDialog";
 import { useFormLoader } from "./hooks/useFormLoader";
 import { useResponsesEdit } from "./hooks/useResponsesEdit";
 import { useFormStore } from "./stores/form.store";
-import { MainContentWrapper, PageWrapper, TopSection, ActionsRow } from "./styled";
+import { MainContentWrapper, PageWrapper, TopSection, ActionsRow, CenteredBox } from "./styled";
 import SearchInfo from "../../components/Responses/SearchInfo";
 import { ResponsesTable } from "./components/ResponsesTable";
 import Header from "./components/Header";
-import Tooltip from "@mui/material/Tooltip";
-import { ViewManageButton } from "@components/Responses/styled";
-import { BackupTable } from "@mui/icons-material";
 import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
+import { useResponsesViews } from "./hooks/useResponsesViews";
+import { ViewsButton } from "./components/ViewsButton";
+import SidePanel from "../../components/SidePanel/SidePanel";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface ResponsesPageProps {
   user: User | null;
@@ -38,9 +39,9 @@ export default function ResponsesPage({
 
   if (isLoading) {
     return (
-      <div style={{ margin: "auto" }}>
+      <CenteredBox>
         <Loader />
-      </div>
+      </CenteredBox>
     );
   }
 
@@ -57,16 +58,7 @@ const ResponsesPageContent = (): JSX.Element => {
     ids: new Set<GridRowId>(),
   });
 
-  // ---------------------------------------------------------------------------
-  // TEMPORARY: Frontend-only search filter.
-  // This is a basic client-side filter applied over the already-loaded rows.
-  // Once backend search is wired through SearchInfo, remove:
-  //   - the `search` / `setSearch` state below
-  //   - the `displayedRows` memo
-  //   - the `search` / `setSearch` props on <SearchInfo>
-  //   - the `localRows={displayedRows}` prop override on <ResponsesTable>
-  //     (revert to `localRows={localRows}`)
-  // ---------------------------------------------------------------------------
+  // TEMPORARY: client-side search filter — remove once backend search is wired through SearchInfo.
   const [search, setSearch] = useState<string>("");
   const { rows: storeRows } = useFormStore();
 
@@ -87,9 +79,19 @@ const ResponsesPageContent = (): JSX.Element => {
     handleAddNewResponse,
   } = useResponsesEdit();
 
-  // TEMPORARY: Filter rows client-side by search term across all string fields.
-  // Filters from the store's rows (source of truth) so it works in both view and edit mode.
-  // Remove this memo when backend search is connected (see comment above).
+  const {
+    isSidePanelOpen,
+    setIsSidePanelOpen,
+    currentViewConfig,
+    currentView,
+    savedViews,
+    isSaving,
+    handleSaveView,
+    handleLoadView,
+    handleDeleteView,
+    handleApplyView,
+  } = useResponsesViews();
+
   const displayedRows = useMemo<Row[]>(() => {
     const trimmed = search.trim().toLowerCase();
     if (!trimmed) {
@@ -114,6 +116,36 @@ const ResponsesPageContent = (): JSX.Element => {
   const handleRowDeleted = () => {
     setRowSelectionModel({ type: "include", ids: new Set<GridRowId>() });
   };
+
+  const { form, permissions } = useFormStore();
+  const { user } = useAuth();
+
+  const sidePanelForm = useMemo(
+    () =>
+      form
+        ? {
+          id: String(form.id),
+          name: form.name ?? "",
+          fields: (form.fields ?? []).map((f) => ({
+            uniqueId: String(f.uniqueId ?? f.name),
+            name: f.name ?? "",
+            displayName: f.displayName ?? f.name ?? "",
+            required: !!f.required,
+            index: f.index ?? 0,
+            fieldType: String(f.typeId ?? ""),
+          })),
+        }
+        : undefined,
+    [form?.id, form?.fields],
+  );
+
+  const sidePanelUser = useMemo(
+    () =>
+      user
+        ? { upn: user.upn, firstName: user.firstName, lastName: user.lastName }
+        : undefined,
+    [user?.upn, user?.firstName, user?.lastName],
+  );
 
   return (
     <PageWrapper>
@@ -143,20 +175,12 @@ const ResponsesPageContent = (): JSX.Element => {
               </>
             )}
           </ActionsRow>
-          {/* TEMPORARY: pass search state for frontend-only filtering (remove when backend search is ready) */}
           <SearchInfo search={search} setSearch={setSearch} />
-          <Tooltip title="ניהול תצוגות">
-            <span>
-              <ViewManageButton
-                variant="contained"
-                onClick={() => { }} disabled={false}>
-                <BackupTable />
-                <span>ניהול תצוגות</span>
-              </ViewManageButton>
-            </span>
-          </Tooltip>
+          <ViewsButton
+            isSidePanelOpen={isSidePanelOpen}
+            setIsSidePanelOpen={setIsSidePanelOpen}
+          />
         </TopSection>
-        {/* TEMPORARY: using `displayedRows` (frontend-filtered) instead of `localRows` — revert to `localRows` when backend search is connected */}
         <ResponsesTable
           isInEditMode={isInEditMode}
           localRows={displayedRows}
@@ -165,6 +189,7 @@ const ResponsesPageContent = (): JSX.Element => {
           validationErrors={validationErrors}
           onCellLiveChange={handleCellLiveChange}
           onRowSelectionModelChange={setRowSelectionModel}
+          currentViewConfig={currentViewConfig}
         />
         <CancelEditDialog
           open={showCancelDialog}
@@ -172,6 +197,22 @@ const ResponsesPageContent = (): JSX.Element => {
           onCancel={handleCancelDialogClose}
         />
       </MainContentWrapper>
+
+      <SidePanel
+        isOpen={isSidePanelOpen}
+        onClose={() => setIsSidePanelOpen(false)}
+        title="ניהול תצוגות"
+        form={sidePanelForm}
+        user={sidePanelUser}
+        onSaveView={handleSaveView}
+        onLoadView={handleLoadView}
+        onDeleteView={handleDeleteView}
+        onApplyView={handleApplyView}
+        currentView={currentView}
+        savedViews={savedViews}
+        permissionTypes={permissions}
+        isSaving={isSaving}
+      />
     </PageWrapper>
   );
 };
