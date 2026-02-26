@@ -14,7 +14,7 @@ import { ResponsesTable } from "./components/ResponsesTable";
 import Header from "./components/Header";
 import Tooltip from "@mui/material/Tooltip";
 import { ViewManageButton } from "@components/Responses/styled";
-import { BackupTable, CalendarViewWeek } from "@mui/icons-material";
+import { BackupTable } from "@mui/icons-material";
 
 interface ResponsesPageProps {
   user: User | null;

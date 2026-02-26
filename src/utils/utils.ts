@@ -277,6 +277,20 @@ export function showWarningNotification(msg: string) {
   toast.warn(msg + "", notificationProps);
 }
 
+export function showLoadingNotification(msg: string, icon?: JSX.Element) {
+  const toastId = toast.loading(msg, {
+    style: {
+      background: '#d5e6f6',
+      color: '#000000'
+    },
+    closeButton: false,
+    hideProgressBar: true,
+    icon: icon
+  });
+
+  return toastId;
+}
+
 export const titleBgStyle = {
   fill: {
     fgColor: { rgb: "00c7d9c9" },
@@ -531,24 +545,54 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
 
   sortedResponses.forEach((element, i) => {
     if (element) {
-      const fieldValuesWithMetaData = element.fieldValues.reduce<
-        (ResponseFieldValue & {
-          displayName: string;
-          typeId: (typeof FieldTypeIds)[keyof typeof FieldTypeIds];
-          dateAndTime?: boolean;
-        })[]
-      >((acc, field) => {
-        const currentFieldMetaData = formFields.find(
-          (fieldData) => fieldData.uniqueId === field.field_id,
-        );
-        if (currentFieldMetaData) {
-          const { displayName, typeId, dateAndTime } = currentFieldMetaData;
-          const validTypeId = typeId as FormFieldTypeId;
-          const { value, field_id } = field;
-          acc.push({ displayName, value, field_id, dateAndTime, typeId: validTypeId });
-        }
-        return acc;
-      }, []);
+      // Handle both old and new data structures
+      let fieldValuesWithMetaData: (ResponseFieldValue & {
+        displayName: string;
+        typeId: (typeof FieldTypeIds)[keyof typeof FieldTypeIds];
+        dateAndTime?: boolean;
+      })[] = [];
+
+      if (element.data && Array.isArray(element.data)) {
+        // New structure: response.data array with uniqueId and value
+        fieldValuesWithMetaData = element.data.reduce<
+          (ResponseFieldValue & {
+            displayName: string;
+            typeId: (typeof FieldTypeIds)[keyof typeof FieldTypeIds];
+            dateAndTime?: boolean;
+          })[]
+        >((acc, item) => {
+          const currentFieldMetaData = formFields.find(
+            (fieldData) => fieldData.uniqueId === item.uniqueId,
+          );
+          if (currentFieldMetaData) {
+            const { displayName, typeId, dateAndTime } = currentFieldMetaData;
+            const validTypeId = typeId as FormFieldTypeId;
+            const { value, uniqueId } = item;
+            acc.push({ displayName, value, field_id: uniqueId, dateAndTime, typeId: validTypeId });
+          }
+          return acc;
+        }, []);
+      } else if (element.fieldValues && Array.isArray(element.fieldValues)) {
+        // Old structure: response.fieldValues array
+        fieldValuesWithMetaData = element.fieldValues.reduce<
+          (ResponseFieldValue & {
+            displayName: string;
+            typeId: (typeof FieldTypeIds)[keyof typeof FieldTypeIds];
+            dateAndTime?: boolean;
+          })[]
+        >((acc, field) => {
+          const currentFieldMetaData = formFields.find(
+            (fieldData) => fieldData.uniqueId === field.field_id,
+          );
+          if (currentFieldMetaData) {
+            const { displayName, typeId, dateAndTime } = currentFieldMetaData;
+            const validTypeId = typeId as FormFieldTypeId;
+            const { value, field_id } = field;
+            acc.push({ displayName, value, field_id, dateAndTime, typeId: validTypeId });
+          }
+          return acc;
+        }, []);
+      }
 
       for (const {
         displayName,
