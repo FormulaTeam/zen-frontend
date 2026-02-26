@@ -62,6 +62,7 @@ const ResponsesPageContent = (): JSX.Element => {
     handleSaveChanges,
     handleConfirmCancel,
     handleCancelDialogClose,
+    handleAddNewResponse,
   } = useResponsesEdit();
 
   return (
@@ -80,6 +81,7 @@ const ResponsesPageContent = (): JSX.Element => {
               isUpdating={isUpdating}
               onToggleEditMode={handleToggleEditMode}
               onSaveChanges={handleSaveChanges}
+              onAddNewResponse={handleAddNewResponse}
             />
           </ActionsRow>
           <SearchInfo />

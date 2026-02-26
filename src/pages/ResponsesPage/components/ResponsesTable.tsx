@@ -34,7 +34,7 @@ interface ResponsesTableProps {
   handleProcessRowUpdate: (newRow: GridRowModel, oldRow: GridRowModel) => GridRowModel;
   onCellEditStart: () => void;
   validationErrors?: Record<number, Record<string, string>>;
-  onCellLiveChange?: (rowId: number, columnName: string, value: unknown) => void;
+  onCellLiveChange?: (rowId: number | string, columnName: string, value: unknown) => void;
 }
 
 export const ResponsesTable = ({
