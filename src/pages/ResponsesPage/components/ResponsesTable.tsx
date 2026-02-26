@@ -9,6 +9,8 @@ import {
   GridFooter,
   GridColDef,
   GridRenderCellParams,
+  GRID_DETAIL_PANEL_TOGGLE_FIELD,
+  GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
 } from "@mui/x-data-grid-pro";
 import { useFormStore } from "../stores/form.store";
 import clsx from "clsx";
@@ -206,7 +208,7 @@ export const ResponsesTable = ({
     handleCloseContextMenu();
   }, [contextMenu, copyResponse, handleCloseContextMenu]);
 
-  const getFormColumns = (): GridColDef[] => {
+  const getFormColumns = useMemo((): GridColDef[] => {
     const baseFormColumns = (form?.columns && form.columns?.length > 0)
       ? form.columns
         .filter((column: GridColDef | undefined) => !!column && typeof column === 'object' && column.field)
@@ -307,13 +309,22 @@ export const ResponsesTable = ({
 
     return [
       ...(expandColumn ? [expandColumn] : []),
+      ...(hasFormInFormFields
+        ? [{
+          ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
+          field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
+          renderHeader: (params: any) => (
+            <div aria-label={params?.colDef?.headerName ?? ""} />
+          ),
+        }]
+        : []),
       ...baseFormColumns,
       syncColumn,
       editedByColumn,
       editedAtColumn,
       ...parentResponseColumns,
     ];
-  };
+  }, [form, hasParentResponses, expandColumn, hasFormInFormFields, isInEditMode, validationErrors, renderEditCell, formatCellValue]);
 
   const CustomFooter = (): JSX.Element => {
     return (
@@ -362,20 +373,22 @@ export const ResponsesTable = ({
             ...heIL.components.MuiDataGrid.defaultProps.localeText,
             columnMenuLabel: "פעולות",
           }}
-          columns={getFormColumns()}
+          columns={getFormColumns}
           rows={isInEditMode && localRows.length > 0 ? localRows : responsesRows}
           slots={{
             footer: CustomFooter,
           }}
+          {...(hasFormInFormFields && {
+            getDetailPanelContent,
+            getDetailPanelHeight,
+            detailPanelExpandedRowIds,
+          })}
           slotProps={{
             row: {
               onContextMenu: handleContextMenu,
               style: { cursor: 'context-menu' },
             },
           }}
-          getDetailPanelContent={getDetailPanelContent}
-          getDetailPanelHeight={getDetailPanelHeight}
-          detailPanelExpandedRowIds={detailPanelExpandedRowIds}
         />
         <Menu
           open={contextMenu !== null}
