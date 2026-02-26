@@ -142,9 +142,20 @@ export const useResponseState = (
       if (responseId) {
         if (!response) return; // will keep loading untill response is fetched
         setFormTitle((copyMode ? "יצירת תגובה - " : "עריכת תגובה - ") + form.name);
-        response.data.map((res: any) => {
-          formFieldsValuesMap.set(res.uniqueId + "", res?.value);
-        });
+        // Handle both old and new data structures
+        if (response.data && Array.isArray(response.data)) {
+          // New structure: response.data array with uniqueId and value
+          response.data.forEach((item: any) => {
+            if (item.uniqueId && item.value !== undefined) {
+              formFieldsValuesMap.set(item.uniqueId, item.value);
+            }
+          });
+        } else if (response.fieldValues && Array.isArray(response.fieldValues)) {
+          // Old structure: response.fieldValues array
+          response.fieldValues.forEach((res: ResponseFieldValue) => {
+            formFieldsValuesMap.set(res.field_id + "", res?.value);
+          });
+        }
       } else {
         setFormTitle("יצירת תגובה - " + form.name);
       }

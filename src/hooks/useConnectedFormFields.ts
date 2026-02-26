@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { FormField, connectionTypes, ResponseFieldValue } from "../utils/interfaces";
+import { FormField, connectionTypes, ResponseFieldValue, ResponseForm } from "../utils/interfaces";
 import { getResponses } from "../api";
 import { v4 as uuidv4 } from "uuid";
 
@@ -58,7 +58,7 @@ export const useConnectedFormFields = ({
   const formatFieldOptions = (options: any[]): ResponseFieldValue[] => {
     return options.map((option) => ({
       value: option?.value,
-      uniqueId: option?.uniqueId || `generated-${uuidv4()}`,
+      field_id: option?.uniqueId || `generated-${uuidv4()}`,
     }));
   };
 
@@ -77,7 +77,7 @@ export const useConnectedFormFields = ({
    * Processes responses and updates field options
    */
   const processResponses = (
-    responses: any[],
+    responses: ResponseForm[][],
     connectedFields: FormField[],
   ): Record<string, ResponseFieldValue[]> => {
     const newFieldOptions: Record<string, ResponseFieldValue[]> = {};
@@ -87,7 +87,7 @@ export const useConnectedFormFields = ({
         loadedFieldsRef.current.add(field.uniqueId);
 
         const options = response
-          .map((res: any) => res.data?.find((res: any) => res.uniqueId === field.connectedFieldId))
+          .map((res: ResponseForm) => res.fieldValues?.find((res: ResponseFieldValue) => res.field_id === field.connectedFieldId))
           .filter(Boolean);
 
         if (options && options.length > 0) {

@@ -151,9 +151,9 @@ export const useMetro = ({
             "path": "created_by"
           },
           {
-            "name": "edited_by",
+            "name": "updated_by",
             "type": ["null", "string"],
-            "path": "edited_by"
+            "path": "updated_by"
           },
           {
             "name": "created",
@@ -161,9 +161,9 @@ export const useMetro = ({
             "path": "created"
           },
           {
-            "name": "edited",
+            "name": "updated",
             "type": ["null", "string"],
-            "path": "edited"
+            "path": "updated"
           },
           {
             "name": "deleted",

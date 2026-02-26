@@ -5,9 +5,15 @@ import { uploadFilesToS3 } from "../api/filesApi";
 import { FieldTypeIds, NotificationTexts, ResponseFieldValue } from "../utils/interfaces";
 import moment from "moment";
 
-export const useResponseSave = (form: any, response: any, user: any, parentResponse?: string) => {
-  const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } = useCreateResponse();
-  const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } = useUpdateResponse(form?.id, response?.id);
+// Cache to deduplicate create requests during a save operation
+const createRequestCache: Map<string, Promise<any>> = new Map();
+
+
+export const useResponseSave = (form: any, response: any, user: any, parentResponse?: string, copyMode?: boolean) => {
+  const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } =
+    useCreateResponse();
+  const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } =
+    useUpdateResponse(form?.id, response?.id);
 
   const saveResponse = async (
     formFieldsByIdMap: Map<string, any>,
@@ -70,12 +76,10 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
     const fieldsNameValueObj = getResponseWithFlatFields(dataArr, form.fields, deletedFiles);
 
     try {
-      if (response && response.id) {
-        // Update existing response
-        const editedResponse = {
-          id: response.id,
-          uniqueId: response.id,
-          form_id: response.form_id,
+      // If updating an existing response (and not in copy mode)
+      if (response && response.id && !copyMode) {
+        // Update existing response (only if not in copy mode)
+        const updatedResponse = {
           edited_by: user.upn?.toLowerCase(),
           edited_by_name: userName,
           data: dataArr,
@@ -83,7 +87,8 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
           ...fieldsNameValueObj,
         };
 
-        return await mutateUpdateResponseAsync(editedResponse);
+        const updated = await mutateUpdateResponseAsync(updatedResponse);
+        return updated;
       } else {
         // Create new response
         const newResponse = {
@@ -97,7 +102,29 @@ export const useResponseSave = (form: any, response: any, user: any, parentRespo
           ...fieldsNameValueObj,
         };
 
-        return await mutateCreateResponseAsync(newResponse);
+
+
+        // Deduplicate identical create requests within the same client session/save cycle.
+        // Key is based on form id + parentResponse + stable payload (fieldsNameValueObj)
+        const createKey = `${form.id}::${parentResponse ?? ""}::${JSON.stringify(fieldsNameValueObj)}`;
+
+        // Use a module-scoped cache to avoid duplicate create calls
+        if (!createRequestCache.has(createKey)) {
+          const p = mutateCreateResponseAsync(newResponse)
+            .then((res) => {
+              createRequestCache.delete(createKey);
+              return res;
+            })
+            .catch((err) => {
+              createRequestCache.delete(createKey);
+              throw err;
+            });
+          createRequestCache.set(createKey, p);
+        } else {
+
+        }
+
+        return await createRequestCache.get(createKey)!;
       }
     } catch (error: any) {
       if (error?.response?.data?.error?.includes("Metro")) {

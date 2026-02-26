@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { deleteResponse, deleteAllResponses, searchResponses, deleteForm } from "../api";
+import {
+  deleteResponse,
+  deleteAllResponses,
+  searchResponses,
+  deleteForm,
+  deleteMultipleResponses,
+} from "../api";
 import {
   BASE_COLUMNS_NAMES_ARRAY,
   getUserName,
@@ -26,11 +32,9 @@ export const useResponsesList = ({
   user,
   currentViewConfig,
 }: UseResponsesListProps) => {
-  // const { user } = useAuth();
-
-  const [loading, setLoading] = useState(true);
-  const [loadingTable, setLoadingTable] = useState(true);
-  const [loadingInsideTable, setLoadingInsideTable] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingTable, setIsLoadingTable] = useState(true);
+  const [isLoadingInsideTable, setIsLoadingInsideTable] = useState(false);
   const [form, setForm] = useState<any>(null);
   const [columns, setColumns] = useState([]);
   const [allFilteredResponses, setAllFilteredResponses] = useState<any[]>([]);
@@ -80,7 +84,7 @@ export const useResponsesList = ({
     }
 
     try {
-      setLoadingInsideTable(true);
+      setIsLoadingInsideTable(true);
       setCurrentFilterWithoutPagination(filter);
       let ans: any = await searchResponses(filter);
       if (ans) {
@@ -93,7 +97,7 @@ export const useResponsesList = ({
     } catch (error) {
       showErrorNotification("חיפוש התגובות נכשל"); //Failed to search responses:" + error);
     } finally {
-      setLoadingInsideTable(false);
+      setIsLoadingInsideTable(false);
     }
   };
 
@@ -143,7 +147,7 @@ export const useResponsesList = ({
       signal: abortController?.signal,
     };
     try {
-      setLoadingInsideTable(true);
+      setIsLoadingInsideTable(true);
       setCurrentFilterWithoutPagination(filter);
       let ans: any = await searchResponses(filter);
       if (ans) {
@@ -151,19 +155,19 @@ export const useResponsesList = ({
         setSearchCount(ans?.countAllResponses || 0);
         createTableColumns(form, permissionTypes, currentViewConfig);
       }
-      setLoadingInsideTable(false);
+      setIsLoadingInsideTable(false);
     } catch (error: any) {
       if (error?.message === "canceled") {
         return;
       }
       showErrorNotification("חיפוש התגובות נכשל"); //Failed to search responses:" + error);
-      setLoadingInsideTable(false);
+      setIsLoadingInsideTable(false);
     }
   };
 
   const searchBySorting = async (sorting) => {
     if (sorting && sorting[0]) {
-      setLoadingInsideTable(true);
+      setIsLoadingInsideTable(true);
       const searchFilters: any[] = getSearchFilters(columnFilters);
       const colKey = sorting[0].id; // may be accessorKey or column numeric id
       const colOrderBy: IOrderBy.ASC | IOrderBy.DESC =
@@ -200,7 +204,7 @@ export const useResponsesList = ({
           } catch (error) {
             showErrorNotification("שליפת התגובות נכשלה");
           } finally {
-            setLoadingInsideTable(false);
+            setIsLoadingInsideTable(false);
           }
         }
       }
@@ -228,7 +232,7 @@ export const useResponsesList = ({
         pageSize: pagination.pageSize,
         pageNumber: 1,
       };
-      setLoadingInsideTable(true);
+      setIsLoadingInsideTable(true);
       setCurrentFilterWithoutPagination(filter);
       let ans: any = await searchResponses(filter);
       if (ans) {
@@ -236,7 +240,7 @@ export const useResponsesList = ({
         setSearchCount(ans.countAllResponses || 0);
         createTableColumns(form, permissionTypes, currentViewConfig);
       }
-      setLoadingInsideTable(false);
+      setIsLoadingInsideTable(false);
     }
   };
 
@@ -260,46 +264,49 @@ export const useResponsesList = ({
   const fileOnClickHandler = (file: any) => downloadFileFromResponse(file, id);
 
   const deleteSelectedResponses = async () => {
-    let promises: any[] = [];
+    const selectedIds = Object.keys(rowSelection)
+      .map((k) => Number.parseInt(k, 10))
+      .filter((n) => Number.isFinite(n));
 
-    for (const key of Object.keys(rowSelection)) {
-      let rowId = parseInt(key);
-      promises.push(deleteResponse(form.id, rowId));
-    }
+    if (selectedIds.length === 0) return;
 
-    setLoadingTable(true);
-    Promise.all(
-      // TODO - instead of Promise.all().then, maybe change to await
-      promises.map((p) =>
-        p.catch((error) => {
-          showErrorNotification("מחיקת התגובה נכשלה"); //Failed to delete response:" + error);
-        }),
-      ),
-    )
-      .then(() => {
-        setRowSelection({});
-        setShouldRefreshPage(true);
-      })
-      .finally(() => {
-        setLoadingTable(false);
+    setIsLoadingTable(true);
+
+    try {
+      await deleteMultipleResponses({
+        form_id: form.id,
+        response_ids: selectedIds,
       });
+
+      setRowSelection({});
+      setShouldRefreshPage(true);
+    } catch (error) {
+      showErrorNotification("מחיקת התגובות נכשלה");
+    } finally {
+      setIsLoadingTable(false);
+    }
   };
 
-  /** delete All Selected Responses - TODO - use api function deleteMultipleResponses */
+  /** delete All Selected Responses */
   const deleteAllSelectedResponses = async () => {
-    if (Object.keys(rowSelection) && Object.keys(rowSelection).length === 1) {
-      let rowId = parseInt(Object.keys(rowSelection)[0]);
-      let response = allFilteredResponses.find((re) => re.id === rowId);
+    const keys = Object.keys(rowSelection);
+
+    if (keys.length === 0) return;
+
+    if (keys.length === 1) {
+      const rowId = Number.parseInt(keys[0], 10);
+      const response = allFilteredResponses.find((re) => re.id === rowId);
       if (response) {
         deleteResponseFromTable(response);
       }
-    } else if (Object.keys(rowSelection) && Object.keys(rowSelection).length > 1) {
-      setConfirmMsg("האם את/ה בטוח/ה שברצונך למחוק את התגובות?");
-      setConfirmOkFunc(() => () => {
-        deleteSelectedResponses();
-      });
-      setShowConfirmMsg(true);
+      return;
     }
+
+    setConfirmMsg("האם את/ה בטוח/ה שברצונך למחוק את התגובות?");
+    setConfirmOkFunc(() => () => {
+      void deleteSelectedResponses();
+    });
+    setShowConfirmMsg(true);
   };
 
   const editResponse = () => {
@@ -331,7 +338,7 @@ export const useResponsesList = ({
 
   const deleteResponseFromBtn = async (item) => {
     try {
-      setLoadingTable(true);
+      setIsLoadingTable(true);
       await deleteResponse(item.form_id, item.id);
       setShouldRefreshPage(true);
     } catch (error) {
@@ -368,7 +375,7 @@ export const useResponsesList = ({
 
   const deleteAllResponseFromForm = async () => {
     try {
-      setLoadingTable(true);
+      setIsLoadingTable(true);
       await deleteAllResponses(form.id);
       showSuccessNotification("מחיקת כל התגובות בוצעה בהצלחה");
       setShouldRefreshPage(true);
@@ -378,11 +385,11 @@ export const useResponsesList = ({
   };
 
   return {
-    loading,
-    setLoading,
-    loadingInsideTable,
-    loadingTable,
-    setLoadingTable,
+    isLoading,
+    setIsLoading,
+    isLoadingInsideTable,
+    isLoadingTable,
+    setIsLoadingTable,
     form,
     setForm,
     columns,
@@ -409,7 +416,7 @@ export const useResponsesList = ({
     currentFilter,
     setCurrentFilter,
     setRowSelection,
-    setLoadingInsideTable,
+    setIsLoadingInsideTable,
     rowSelection,
     changePageSizeAndRefreshTable,
     sorting,

@@ -341,8 +341,8 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
       name: title,
       description,
       icon: formIcon,
-      edited_by: currentUserLowerCaseUpn,
-      edited_by_name: userName,
+      updated_by: currentUserLowerCaseUpn,
+      updated_by_name: userName,
     };
 
     try {
@@ -351,8 +351,6 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
       showErrorNotification("עידכון הטופס נכשל");
     } finally {
       setLoading(false);
-      // future teamate please remove this; in the future massive refactor is needs to be done here; change to react-query mutation
-      queryClient.invalidateQueries({ queryKey: [`${formId}`] });
     }
   };
 

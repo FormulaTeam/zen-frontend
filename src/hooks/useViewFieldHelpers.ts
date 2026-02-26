@@ -1,12 +1,13 @@
 import { FormField } from "../types/interfaces/tableViews.types";
 import { DEFAULT_FIELDS } from "../utils/interfaces";
+import { HEBREW_TITLES } from "../utils/utils";
 
 // System columns meta (not part of form.fields)
 const SYSTEM_COLUMNS_META: Record<string, { displayName: string; type: string }> = {
   id: { displayName: "מזהה", type: "מספר" },
   pushed_to_metro: { displayName: "סטטוס סנכרון", type: "מערכת" },
-  edited: { displayName: "השתנה", type: "תאריך" },
-  edited_by_name: { displayName: "השתנה ע\"י", type: "טקסט" },
+  updated: { displayName: "השתנה", type: "תאריך" },
+  updated_by_name: { displayName: "השתנה ע\"י", type: "טקסט" },
 };
 
 interface UseViewFieldHelpersProps {

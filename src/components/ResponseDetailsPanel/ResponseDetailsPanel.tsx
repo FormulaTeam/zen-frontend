@@ -33,7 +33,7 @@ function ResponseDetailsPanel({ responses, form, parentFormId, title }: Response
           <TableBody>
             {responses
               .sort((a, b) => {
-                return a.id - b.id;
+                return a.index - b.index;
               })
               .map((response, index) => (
                 <ResponseDetailRow

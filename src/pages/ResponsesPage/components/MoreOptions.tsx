@@ -23,8 +23,8 @@ export const MoreOptions: FC<MoreOptionsProps> = ({ setAnchorElSourceType, pushT
   const navigate = useNavigate();
   const { permissions, form, rows } = useFormStore();
   const [anchorElMoreActions, setAnchorElMoreActions] = useState<HTMLElement | null>(null);
-  const { mutate: deleteForm } = useDeleteForm({ id: formId || "" });
-  const { mutate: deleteAllResponses } = useDeleteAllFormsResponses({ formId: formId || "" });
+  const { mutate: deleteForm } = useDeleteForm({ id: formId ?? "" });
+  const { mutate: deleteAllResponses } = useDeleteAllFormsResponses({ formId: formId ?? "" });
 
   const [showDeleteFormPopup, setShowDeleteFormPopup] = useState(false);
   const [showDeleteResponsesPopup, setShowDeleteResponsesPopup] = useState(false);

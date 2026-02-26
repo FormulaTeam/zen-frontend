@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { showErrorNotification, showSuccessNotification, createExcelMold } from "../utils/utils";
-import { createResponsesFromFile } from "../api";
+import { useCreateResponsesFromFile } from "../api";
 
 const MAX_PAYLOAD_SIZE_MB = (window as any).RUNTIME_ENV?.REACT_MAX_PAYLOAD_SIZE_MB || 1;
 
@@ -22,6 +22,8 @@ export const useExcel = ({
     if (fileInput) fileInput.value = "";
   };
 
+  const { mutateAsync: mutateCreateResponsesFromFile } = useCreateResponsesFromFile(form?.id);
+
   const onChangeFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
     setShowErrorFileTooBig(false);
@@ -37,22 +39,34 @@ export const useExcel = ({
       setShowErrorsFromExcelPopup(true);
       setExcelErrorPopupLoading(true);
 
+      const formData = new FormData();
+      formData.append("file", file);
+
       try {
-        const res = await createResponsesFromFile(form?.id, file);
-        if (res.errors) {
+        const res = await mutateCreateResponsesFromFile(formData);
+
+        showSuccessNotification(
+          Array.isArray(res) ? `${res.length} תגובות נוצרו בהצלחה` : "תגובה נוצרה בהצלחה",
+        );
+        setShowErrorsFromExcelPopup(false);
+        setShowImportFromExcelPopup(false);
+        setShouldRefreshPage(true);
+        resetFileInput();
+      } catch (err: any) {
+        const validationErrors = err?.response?.data?.validation_errors;
+
+        if (validationErrors) {
           showErrorNotification("היו שגיאות בייבוא הנתונים");
-          setErrorsFromExcel(res.errors);
-        } else {
-          showSuccessNotification(
-            Array.isArray(res) ? `${res.length} תגובות נוצרו בהצלחה` : "תגובה נוצרה בהצלחה",
+
+          const formattedErrors = validationErrors.map(
+            (e: any) => `שדה ${e.field_name} שורה ${e.row_number}: ${e.error_message}`,
           );
-          setShowErrorsFromExcelPopup(false);
-          setShowImportFromExcelPopup(false);
-          setShouldRefreshPage(true);
-          resetFileInput();
+
+          setErrorsFromExcel(formattedErrors);
+          setShowErrorsFromExcelPopup(true);
+        } else {
+          showErrorNotification("יצירת התגובה נכשלה");
         }
-      } catch (err) {
-        showErrorNotification("יצירת התגובה נכשלה");
       } finally {
         setExcelErrorPopupLoading(false);
         resetFileInput();
@@ -79,5 +93,6 @@ export const useExcel = ({
     setErrorsFromExcel,
     onChangeFile,
     downloadExcelTemplate,
+    createExcelMold,
   };
 };

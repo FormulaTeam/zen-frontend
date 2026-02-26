@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as XLSX from "sheetjs-style";
 import * as FileSaver from "file-saver";
 import moment from "moment";
-import { searchResponses } from "../api";
+import { getResponses, searchResponses } from "../api";
 import {
   CustomFormField,
   FieldTypeIds,
@@ -65,8 +65,8 @@ export const LIST_NAMES = {
 export const BASE_COLUMNS_NAMES_ARRAY = [
   "isSynchronized",
   "pushed_to_metro",
-  "edited",
-  "edited_by_name",
+  "updated",
+  "updated_by_name",
   "id",
 ];
 
@@ -370,8 +370,8 @@ export const cellLinkStyle = {
 
 export const HEBREW_TITLES = {
   isSynchronized: "סונכרן",
-  edited: "השתנה",
-  edited_by: 'השתנה ע"י',
+  updated: "השתנה",
+  updated_by: 'השתנה ע"י',
 };
 
 function preferredOrder(obj, order) {
@@ -384,23 +384,23 @@ function preferredOrder(obj, order) {
   return newObject;
 }
 
-export const searchResponsesWithFilterAndExportToExcel = async (
-  form: Form,
-  filter: Filter | null,
-) => {
+export const getResponsesAndExportToExcel = async (form: Form) => {
   try {
-    let responses: any = await searchResponses(filter ?? {});
-    if (responses && responses.responses) {
-      exportToExcel(responses.responses, form);
+    let responses: ResponseForm[] = await getResponses({ form_id: form.id });
+
+    if (responses?.length > 0) {
+      exportToExcel(responses, form);
     }
+
+    showSuccessNotification(NotificationTexts.SuccessfulExportToExcel);
   } catch (error) {
-    showErrorNotification(NotificationTexts.FailedLoadingResponses);
+    showErrorNotification(NotificationTexts.FailedExportToExcel);
     console.log(error);
   }
 };
 
 /** create excel file with only titles based on the form fields */
-export function createExcelMold(form) {
+export function createExcelMold(form: Form) {
   let formFields = form.fields;
   let formFieldsIds: string[] = [];
   let data: any[] = [];
@@ -411,16 +411,14 @@ export function createExcelMold(form) {
 
   //add column for each field and save fields order with arr of names
   let names: string[] = [];
-  formFields.forEach((field, j) => {
-    if (field.typeId === FieldTypeIds.form) {
-      // If the field is of type 'form', we skip it as it doesn't have a value in the response
-      return;
+  formFields.forEach((field) => {
+    if (field.typeId !== FieldTypeIds.form) {
+      data[0] = {
+        ...data[0],
+        [field.displayName]: "",
+      };
+      names.push(field.displayName);
     }
-    data[0] = {
-      ...data[0],
-      [field.displayName]: "",
-    };
-    names.push(field.displayName);
   });
 
   const fileType =
@@ -493,44 +491,42 @@ export function getFieldType(field: FormField) {
     }
   }
 }
+
 export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
   // Sort responses by id in ascending order to maintain consistent order
-  const sortedResponses = [...responsesArr].sort((a, b) => (a.id || 0) - (b.id || 0));
+  const sortedResponses = [...responsesArr].sort((a, b) => (a.index || 0) - (b.index || 0));
 
   const formFields = form.fields;
   const formFieldsIds: string[] = [];
   const data: any[] = [];
 
   sortedResponses?.forEach((element, i) => {
-    //add columns isSynchronized, edited_by, edited
+    //add columns isSynchronized, updated_by, updated
     data[i] = {
-      [HEBREW_TITLES.isSynchronized]: element.pushed_to_metro
-        ? moment(element.pushed_to_metro).format("DD.MM.YY")
-        : "לא סונכרן",
-      [HEBREW_TITLES.edited_by]: element.edited_by_name,
-      [HEBREW_TITLES.edited]: moment(element.edited).format("DD.MM.YY"),
+      [HEBREW_TITLES.updated_by]: element.updated_by,
+      [HEBREW_TITLES.updated]: moment(element.updated_at).format("DD.MM.YY"),
     };
 
     //add column for each field and save fields order with arr of names
     let names: string[] = [];
-    formFields.forEach((field, j) => {
+    formFields.forEach((field, index) => {
       if (field.typeId === FieldTypeIds.form) {
-        delete data[i][field.displayName];
+        delete data[index][field.displayName];
         return;
       }
-      data[i] = {
-        ...data[i],
+      data[index] = {
+        ...data[index],
         [field.displayName]: "",
       };
       names.push(field.displayName);
     });
 
-    //get column with order (first isSynchronized, then fields. then edited_by, then edited)
+    //get column with order (first isSynchronized, then fields. then updated_by, then updated)
     data[i] = preferredOrder(
       data[i],
       [HEBREW_TITLES.isSynchronized]
         .concat(names)
-        .concat([HEBREW_TITLES.edited_by, HEBREW_TITLES.edited]),
+        .concat([HEBREW_TITLES.updated_by, HEBREW_TITLES.updated]),
     );
   });
 
@@ -549,27 +545,64 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
 
   sortedResponses.forEach((element, i) => {
     if (element) {
-      const fieldValuesWithMetaData = element.data.reduce<
-        (ResponseFieldValue & {
-          displayName: string;
-          typeId: (typeof FieldTypeIds)[keyof typeof FieldTypeIds];
-          dateAndTime?: boolean;
-        })[]
-      >((acc, field) => {
-        const currentFieldMetaData = formFields.find(
-          (fieldData) => fieldData.uniqueId === field.uniqueId,
-        );
-        if (currentFieldMetaData) {
-          const { displayName, typeId, dateAndTime } = currentFieldMetaData;
-          const validTypeId = typeId as FormFieldTypeId;
-          const { value, uniqueId } = field;
-          acc.push({ displayName, value, uniqueId, dateAndTime, typeId: validTypeId });
-        }
-        return acc;
-      }, []);
+      // Handle both old and new data structures
+      let fieldValuesWithMetaData: (ResponseFieldValue & {
+        displayName: string;
+        typeId: (typeof FieldTypeIds)[keyof typeof FieldTypeIds];
+        dateAndTime?: boolean;
+      })[] = [];
 
-      for (const { displayName, typeId, value, uniqueId, dateAndTime } of fieldValuesWithMetaData) {
-        if (formFieldsIds.includes(uniqueId)) {
+      if (element.data && Array.isArray(element.data)) {
+        // New structure: response.data array with uniqueId and value
+        fieldValuesWithMetaData = element.data.reduce<
+          (ResponseFieldValue & {
+            displayName: string;
+            typeId: (typeof FieldTypeIds)[keyof typeof FieldTypeIds];
+            dateAndTime?: boolean;
+          })[]
+        >((acc, item) => {
+          const currentFieldMetaData = formFields.find(
+            (fieldData) => fieldData.uniqueId === item.uniqueId,
+          );
+          if (currentFieldMetaData) {
+            const { displayName, typeId, dateAndTime } = currentFieldMetaData;
+            const validTypeId = typeId as FormFieldTypeId;
+            const { value, uniqueId } = item;
+            acc.push({ displayName, value, field_id: uniqueId, dateAndTime, typeId: validTypeId });
+          }
+          return acc;
+        }, []);
+      } else if (element.fieldValues && Array.isArray(element.fieldValues)) {
+        // Old structure: response.fieldValues array
+        fieldValuesWithMetaData = element.fieldValues.reduce<
+          (ResponseFieldValue & {
+            displayName: string;
+            typeId: (typeof FieldTypeIds)[keyof typeof FieldTypeIds];
+            dateAndTime?: boolean;
+          })[]
+        >((acc, field) => {
+          const currentFieldMetaData = formFields.find(
+            (fieldData) => fieldData.uniqueId === field.field_id,
+          );
+          if (currentFieldMetaData) {
+            const { displayName, typeId, dateAndTime } = currentFieldMetaData;
+            const validTypeId = typeId as FormFieldTypeId;
+            const { value, field_id } = field;
+            acc.push({ displayName, value, field_id, dateAndTime, typeId: validTypeId });
+          }
+          return acc;
+        }, []);
+      }
+
+      for (const {
+        displayName,
+        typeId,
+        value,
+        field_id,
+        uniqueId,
+        dateAndTime,
+      } of fieldValuesWithMetaData) {
+        if (formFieldsIds.includes(field_id || uniqueId || "")) {
           let formattedValue: string | { f: string } = "";
           if (typeId === FieldTypeIds.form) {
             // If the field is of type 'form', we skip it as it doesn't have a value in the response
@@ -1038,6 +1071,11 @@ export function generateNewFormFieldData(item: Partial<CustomFormField>) {
   if (item.typeId === FieldTypeIds.options) {
     newField.options = ["", ""];
   }
+
+  if (item.typeId === FieldTypeIds.location) {
+    newField.coordinateType = "UTM";
+  }
+
   return newField;
 }
 
@@ -1104,8 +1142,11 @@ export function validateByRegex(value: string, regex: string) {
   return regexValidator.test(value);
 }
 
-export const preventEnterKeyNavigation = (event: React.KeyboardEvent, allowEnter: boolean = false) => {
-  if (event.key === 'Enter') {
+export const preventEnterKeyNavigation = (
+  event: React.KeyboardEvent,
+  allowEnter: boolean = false,
+) => {
+  if (event.key === "Enter") {
     event.stopPropagation();
     if (!allowEnter) {
       event.preventDefault();

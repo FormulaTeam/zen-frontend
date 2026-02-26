@@ -1,19 +1,40 @@
-import { useState, useEffect } from "react";
-import { TableView, ViewColumn } from "../types/interfaces/tableViews.types";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { ResponsesView, ViewColumn } from "../types/interfaces/tableViews.types";
+import { ViewFormBase, ViewUserBase } from "../types/interfaces/view.types";
 import { getUserName } from "../utils/utils";
 
+/* ------------------------ Utils ------------------------ */
+
+const cloneColumns = (columns: ViewColumn[]): ViewColumn[] =>
+  columns.map((column) => ({ ...column }));
+
+const areColumnsEqual = (firstColumn: ViewColumn[], secondColumn: ViewColumn[]): boolean => {
+  if (firstColumn.length !== secondColumn.length) return false;
+
+  return firstColumn.every((first, index) => {
+    const second = secondColumn[index];
+    return (
+      first.columnId === second.columnId &&
+      first.displayName === second.displayName &&
+      first.visible === second.visible &&
+      first.order === second.order &&
+      first.sortDirection === second.sortDirection &&
+      first.sortOrder === second.sortOrder
+    );
+  });
+};
+
+/* ------------------------ Types ------------------------ */
+
 interface UseViewFormLogicProps {
-  currentView?: TableView;
-  user?: any;
-  form?: {
-    id: string;
-    fields: any[];
-  };
-  onSaveView: (view: TableView) => void;
-  onApplyView?: (viewConfig: ViewColumn[]) => void;
+  currentView?: ResponsesView;
+  user?: ViewUserBase;
+  form?: ViewFormBase;
   columns: ViewColumn[];
   createDefaultColumns: () => ViewColumn[];
-  resetToOriginalColumns: (originalColumns: ViewColumn[]) => void;
+  resetToOriginalColumns: (columns: ViewColumn[]) => void;
+  onSaveView: (view: ResponsesView) => void;
+  onApplyView?: (columns: ViewColumn[]) => void;
   isSaving?: boolean;
 }
 
@@ -24,191 +45,124 @@ interface OriginalState {
   columns: ViewColumn[];
 }
 
-interface UseViewFormLogicReturn {
-  viewName: string;
-  setViewName: (name: string) => void;
-  isPublic: boolean;
-  setIsPublic: (isPublic: boolean) => void;
-  isDefault: boolean;
-  setIsDefault: (isDefault: boolean) => void;
-  isCreatingNew: boolean;
-  setIsCreatingNew: (creating: boolean) => void;
-  originalState: OriginalState;
-  isSaving: boolean;
-  handleCreateNew: () => void;
-  handleCancel: () => void;
-  handleApply: () => void;
-  handleSaveView: () => void;
-  handleSwitchPublic: (isPublic: boolean) => void;
-}
+/* ------------------------ Hook ------------------------ */
 
 export const useViewFormLogic = ({
   currentView,
   user,
   form,
+  columns,
+  resetToOriginalColumns,
   onSaveView,
   onApplyView,
-  columns,
-  createDefaultColumns,
-  resetToOriginalColumns,
   isSaving = false,
-}: UseViewFormLogicProps): UseViewFormLogicReturn => {
-  const [viewName, setViewName] = useState(currentView?.name || "");
-  const [isPublic, setIsPublic] = useState(currentView?.isPublic || false);
-  const [isDefault, setIsDefault] = useState(currentView?.isDefault || false);
+}: UseViewFormLogicProps) => {
+  const [viewName, setViewName] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
+  const [isDefault, setIsDefault] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(!currentView);
+
   const [originalState, setOriginalState] = useState<OriginalState>({
     viewName: "",
     isPublic: false,
     isDefault: false,
-    columns: [],
+    columns: cloneColumns(columns),
   });
 
-  // Update form fields when currentView changes
+  /* ------------------------ Sync ------------------------ */
+
   useEffect(() => {
-    if (currentView) {
-      setViewName(currentView.name);
-      setIsPublic(currentView.isPublic);
-      setIsDefault(currentView.isDefault);
-      setIsCreatingNew(false); // If we have a current view, we're not creating new
+    if (!currentView) return;
 
-      // Update original state
-      setOriginalState({
-        viewName: currentView.name,
-        isPublic: currentView.isPublic,
-        isDefault: currentView.isDefault,
-        columns: currentView.config.columns,
-      });
-    } else {
-      // Clear state when no current view
-      setViewName("");
-      setIsPublic(false);
-      setIsDefault(false);
-      setIsCreatingNew(true);
+    setIsCreatingNew(false);
+    setViewName(currentView.name);
+    setIsPublic(currentView.isPublic);
+    setIsDefault(currentView.isDefault);
 
-      setOriginalState({
-        viewName: "",
-        isPublic: false,
-        isDefault: false,
-        columns: [],
-      });
-    }
+    setOriginalState({
+      viewName: currentView.name,
+      isPublic: currentView.isPublic,
+      isDefault: currentView.isDefault,
+      columns: cloneColumns(currentView.config.columns),
+    });
   }, [currentView]);
 
-  // Handle starting a new view creation
-  const handleCreateNew = () => {
-    setIsCreatingNew(true);
-    setViewName("");
-    setIsPublic(false);
-    setIsDefault(false);
+  /* ------------------------ Derived ------------------------ */
 
-    // Reset columns to default state is handled by the parent component
-    // since it needs access to createDefaultColumns
-  };
+  const hasChanges = useMemo(() => {
+    const columnsChanged = !areColumnsEqual(columns, originalState.columns);
+    return (
+      isPublic !== originalState.isPublic || isDefault !== originalState.isDefault || columnsChanged
+    );
+  }, [isPublic, isDefault, columns, originalState]);
 
-  // Handle cancel - reset to original state
-  const handleCancel = () => {
-    if (isCreatingNew) {
-      setIsCreatingNew(false);
-      setViewName("");
-      setIsPublic(false);
-      setIsDefault(false);
+  const canSave = useMemo(
+    () => !!viewName.trim() && hasChanges && !isSaving,
+    [viewName, hasChanges, isSaving],
+  );
 
-      // If there's a current view, restore it
-      if (currentView) {
-        setViewName(currentView.name);
-        setIsPublic(currentView.isPublic);
-        setIsDefault(currentView.isDefault);
-        resetToOriginalColumns(originalState.columns);
-      }
-    } else if (originalState) {
-      setViewName(originalState.viewName);
-      setIsPublic(originalState.isPublic);
-      setIsDefault(originalState.isDefault);
-      resetToOriginalColumns(originalState.columns);
-    }
-    handleApply(); // Apply original state to the table if needed
-  };
+  /* ------------------------ Actions ------------------------ */
 
-  // Handle apply - apply current column configuration to the table
-  const handleApply = () => {
-    console.log("Applying view configuration:", {
-      name: viewName,
-      isPublic,
-      isDefault,
-      columns,
-    });
+  const handleCancel = useCallback(() => {
+    setViewName(originalState.viewName);
+    setIsPublic(originalState.isPublic);
+    setIsDefault(originalState.isDefault);
 
-    // Apply the current column configuration to the table via callback
-    if (onApplyView && columns.length > 0) {
-      onApplyView(columns);
-    }
-  };
+    const restoredColumns = cloneColumns(originalState.columns);
+    resetToOriginalColumns(restoredColumns);
+    onApplyView?.(restoredColumns);
+  }, [originalState, resetToOriginalColumns, onApplyView]);
 
-  const handleSwitchPublic = (newIsPublic: boolean) => {
-    if (!newIsPublic && isDefault) {
-      setIsDefault(false); // Remove default if switching off public
-    }
-    setIsPublic(newIsPublic);
-  };
+  const handleApply = useCallback(() => {
+    onApplyView?.(columns);
+  }, [columns, onApplyView]);
 
-  const handleSaveView = () => {
-    if (!viewName.trim()) {
-      alert("Please enter a view name");
-      return;
-    }
+  const handleSwitchPublic = useCallback(
+    (next: boolean) => {
+      if (!next && isDefault) setIsDefault(false);
+      setIsPublic(next);
+    },
+    [isDefault],
+  );
 
-    if (!form?.id) {
-      alert("Form is not available");
-      return;
-    }
+  const handleSaveView = useCallback(() => {
+    if (!form || !viewName.trim()) return;
 
-    const view: TableView = {
+    const view: ResponsesView = {
+      ...(currentView?.id && !isCreatingNew ? { id: currentView.id } : {}),
       formId: form.id,
       name: viewName.trim(),
-      createdBy: user?.upn || user?.email || "unknown",
-      createdByName: getUserName(user?.firstName, user?.lastName),
+      createdBy: user?.upn ?? "unknown",
+      createdByName: getUserName(user?.firstName ?? "", user?.lastName ?? ""),
       isPublic,
       isDefault,
-      config: {
-        columns: columns,
-      },
-      createdAt: currentView?.createdAt || new Date(),
+      config: { columns: cloneColumns(columns) },
+      createdAt: currentView?.createdAt ?? new Date(),
       updatedAt: new Date(),
     };
 
-    // If we're editing an existing view (not creating new), include the ID
-    if (!isCreatingNew && currentView) {
-      if (currentView.id) {
-        view.id = currentView.id;
-      }
-    }
     setOriginalState({
       viewName: view.name,
       isPublic: view.isPublic,
       isDefault: view.isDefault,
-      columns: view.config.columns,
+      columns: cloneColumns(view.config.columns),
     });
+
     onSaveView(view);
-    setViewName(view.name);
-    // Reset creation state
-    if (isCreatingNew) {
-      setIsCreatingNew(false);
-    }
-  };
+    setIsCreatingNew(false);
+  }, [form, viewName, user, isPublic, isDefault, columns, currentView, isCreatingNew, onSaveView]);
+
+  /* ------------------------ API ------------------------ */
 
   return {
     viewName,
     setViewName,
     isPublic,
-    setIsPublic,
     isDefault,
     setIsDefault,
     isCreatingNew,
-    setIsCreatingNew,
-    originalState,
     isSaving,
-    handleCreateNew,
+    canSave,
     handleCancel,
     handleApply,
     handleSaveView,

@@ -175,7 +175,7 @@ export interface FormFieldEditableMetaData {
 /**
  * Represents the data required to create a new form.
  */
-export type NewForm = Omit<Form, "id" | "created" | "edited" | "permissions">;
+export type NewForm = Omit<Form, "id" | "created" | "updated" | "permissions">;
 
 export interface UpdateFormPayload {
   id: number;
@@ -198,14 +198,16 @@ export interface Form {
   fields: FormField[];
   description: string;
   created: string;
-  edited: string;
+  updated: string;
   created_by: string;
   created_by_name: string;
-  edited_by: string;
-  edited_by_name: string;
+  updated_by?: string;
+  edited_by?: string;
+  updated_by_name?: string;
+  edited_by_name?: string;
   deleted?: string;
   numberOfResponses: number;
-  lastEditedResponse?: string;
+  lastUpdatedResponse?: string;
   permissions: number[];
   columns?: GridColDef[];
 
@@ -242,27 +244,51 @@ export interface SuperAdmin {
  * Represents a response form with metadata and associated form ID.
  */
 export interface ResponseForm {
-  id: number;
-  created_by: string;
-  edited_by: string;
-  edited_by_name: string;
+  id: string; // Response.id (UUID)
+  index: number; // Response.index
   form_id: number;
-  created: string;
-  edited: string;
-  data: ResponseFieldValue[];
-  created_by_name?: string;
-  deleted?: string;
-  pushed_to_metro?: null | string;
-  parentResponse?: string;
-  deleted_by?: string;
+
+  created_at: Date;
+  updated_at: Date;
+
+  created_by: {
+    id: number; // User.id
+    upn: string; // User.upn
+    name?: string; // User.name
+  };
+
+  updated_by: {
+    id: number;
+    upn: string;
+    name?: string;
+  };
+
+  fieldValues?: ResponseFieldValue[];
+  data?: ResponseFieldValue[];
+  mainResponses?: { id: string; index: number; form_id: number }[];
+  subResponses?: { id: string; index: number; form_id: number }[];
+
+  deleted_at?: string | null;
+  deleted_by?: { id: number; upn: string; name?: string } | null;
+  deleted_with_form?: boolean;
+
+  form_name?: string;
   parentFormStatus?: string | null;
+  edited_by_name?: string;
+  edited_by?: string;
 }
 
 /**
  * Represents the data required to create a new response.
  */
-export type NewResponse = Omit<ResponseForm, "id" | "created" | "edited">;
-
+export type NewResponse = {
+  form_id: number;
+  created_by: string; // UPN
+  updated_by?: string; // UPN
+  edited_by?: string; // UPN
+  data: ResponseFieldValue[];
+  parentResponse?: string; // parent Response.id (UUID) if linked
+};
 /**
  * Represents a filter of a form or a response (the response filter has the form_id in the query).
  */
@@ -348,6 +374,8 @@ export enum NotificationTexts {
   UpdateButSyncFaild = "התגובה עודכנה אך הסנכרון נכשל",
   DeletedSuccessfully = "התגובה נמחקה בהצלחה",
   DeletedFailed = "התגובה לא נמחקה",
+  SuccessfulExportToExcel = "הייצוא לאקסל בוצע בהצלחה",
+  FailedExportToExcel = "הייצוא לאקסל נכשל",
 }
 
 export enum fieldConnectionTooltipTexts {
@@ -388,7 +416,8 @@ export type FieldValue =
 
 export interface ResponseFieldValue {
   value: FieldValue;
-  uniqueId: string;
+  field_id?: string;
+  uniqueId?: string;
 }
 
 export type CustomFormField = Pick<

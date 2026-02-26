@@ -40,11 +40,11 @@ export const getResponses = async (filter?: Filter): Promise<ResponseForm[]> => 
       console.error("Form ID is required to fetch responses.");
       return [];
     }
-    // const response = await apiClient.get<ResponseForm[]>(
-    //   `/responses/get-responses?form_id=${filter?.form_id}`,
-    //   { params },
-    // );
-    return [];
+    const response = await apiClient.get<ResponseForm[]>(
+      `/responses/get-responses?form_id=${filter?.form_id}`,
+      { params },
+    );
+    return response?.data ?? [];
   } catch (error) {
     console.error("Failed to fetch responses:", error);
     throw error;
@@ -101,7 +101,7 @@ export const getResponseWithFlatFields = (
   deletedFiles?: ResponseFieldValue[],
 ): Record<string, FieldValue> => {
   const fieldsNameValueObj = responseData.reduce((acc, field) => {
-    const fieldMetaData = fieldsMetaData.find((metaData) => metaData.uniqueId === field.uniqueId);
+    const fieldMetaData = fieldsMetaData.find((metaData) => metaData.uniqueId === field.field_id);
     if (fieldMetaData && fieldMetaData.name) {
       const fieldName = fieldMetaData.name;
 
@@ -127,7 +127,7 @@ export const getResponseWithFlatFields = (
           break;
         case FieldTypeIds.file:
           const deletedFilesForField = deletedFiles?.filter(
-            (deletedFile) => deletedFile.uniqueId === field.uniqueId,
+            (deletedFile) => deletedFile.field_id === field.field_id,
           );
           if (deletedFilesForField && deletedFilesForField.length > 0) {
             acc[fieldName] = { ...field.value, deletedFiles: deletedFilesForField[0].value };
@@ -198,26 +198,6 @@ export const deleteAllResponses = async (formId: number): Promise<number> => {
   }
 };
 
-export const createResponsesFromFile = async (formId: number, file: File): Promise<any> => {
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await apiClient.post<any>(
-      `/responses/create-from-file?form_id=${formId}`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      },
-    );
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to create responses from file:", error);
-    throw error;
-  }
-};
-
 /**
  * Restore a deleted response.
  *
@@ -243,12 +223,14 @@ export const restoreResponse = async (formId: number, id: number): Promise<Respo
  */
 export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseForm[]> => {
   try {
-    const response = await apiClient.post<ResponseForm[]>("/responses/get-deleted-responses", {
+    const body = {
       pageSize: filter?.pageSize,
       pageNumber: filter?.pageNumber,
       query: filter?.query || {},
-      isDeletedForm: filter?.query?.isDeletedForm || false,
-    });
+      isDeletedForm: Boolean(filter?.query?.isDeletedForm || filter?.isDeletedForm),
+    };
+
+    const response = await apiClient.post<ResponseForm[]>("/responses/get-deleted-responses", body);
 
     return response?.data || [];
   } catch (error) {
@@ -274,7 +256,7 @@ export const useGetResponsesRows = ({ filter }: { filter?: Filter }) => {
     endpoint: `/responses/get-rows`,
     queryKey: () => ["rows", filter],
     params: filter,
-    // queryOptions: { enabled: !!formId },
+    queryOptions: { enabled: !!filter?.form_id },
   });
 };
 
@@ -326,6 +308,25 @@ export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
 
 // Gali's changes
 // ========================
+export const useCreateResponsesFromFile = (formId: string) => {
+  return useCreate<FormData, any>({
+    endpoint: `/responses/create-from-file?form_id=${formId}`,
+    mutationKey: ["create-responses-from-file", formId],
+    axiosConfig: {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+      onError: (error) => {
+        console.error("Failed to create responses from file:", error);
+      },
+    },
+  });
+};
 
 export const useCreateResponse = () => {
   return useCreate<NewResponse | NewResponse[], ResponseForm | ResponseForm[]>({
