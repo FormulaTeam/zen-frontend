@@ -277,8 +277,10 @@ export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
   return useCreate<FormData, ExcelImportResult>({
     endpoint: `/responses/create-from-file?form_id=${formId}`,
     mutationKey: ["import-responses-from-file", formId],
-    headers: {
-      "Content-Type": "multipart/form-data",
+    axiosConfig: {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     },
     mutationOptions: {
       onSuccess: () => {
