@@ -11,6 +11,7 @@ import { MoreOptions } from "./MoreOptions";
 import UserPicker from "../../../components/USerPicker/UserPicker";
 import SyncTypeMenu from "@components/ResponseToolbar/Menus/SyncTypeMenu";
 import { useMetro } from "@hooks/useMetro";
+import MetroSyncingPopup from "@components/ResponseToolbar/Popups/MetroSyncingPopup";
 
 export const SourceOperationStatus = {
   NOT_IN_PROGRESS: 'not_in_progress',
@@ -40,23 +41,9 @@ export const FormActionsToolbar = () => {
   const {
     showMetroPopup,
     setShowMetroPopup,
-    showMetroInputsPopup,
-    setShowMetroInputsPopup,
-    theForm,
     pushToMetro,
     syncSourceToMetro,
     editSource,
-    copied,
-    setCopied,
-    metroInputsPopupLoading,
-    sourceKey,
-    setSourceKey,
-    appKey,
-    setAppKey,
-    clusterURL,
-    setClusterURL,
-    saveMetroData,
-    copySchemaToClipboard
   } = useMetro({
     form,
     loadingIcon: <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -80,7 +67,7 @@ export const FormActionsToolbar = () => {
   };
 
   const handleAutomaticSource = (): void => {
-    if (theForm?.metro_access_url || theForm?.oasisSourceKey) {
+    if (form?.metro_access_url || form?.oasisSourceKey) {
       editSource();
     } else {
       syncSourceToMetro();
@@ -145,6 +132,7 @@ export const FormActionsToolbar = () => {
         handleCloseMoreActions={handleCloseMoreActions}
         handleAutomaticSource={handleAutomaticSource}
       />
+      {showMetroPopup && <MetroSyncingPopup setShowMetroPopup={setShowMetroPopup} />}
     </Box>
   );
 };
