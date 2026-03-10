@@ -18,5 +18,9 @@ module.exports = {
       '@consts': path.resolve(__dirname, 'src/consts'),
       '@theme': path.resolve(__dirname, 'src/theme'),
     },
+    configure: (webpackConfig) => {
+      webpackConfig.ignoreWarnings = [/Failed to parse source map/];
+      return webpackConfig;
+    },
   },
 };

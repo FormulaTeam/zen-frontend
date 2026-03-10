@@ -1,5 +1,4 @@
 import { QueryClient } from "@tanstack/react-query";
-import { deleteCookie } from "./config";
 
 // Create a query client with custom configuration
 export const queryClient = new QueryClient({
@@ -40,9 +39,6 @@ export const queryClient = new QueryClient({
 
         // Handle authentication errors
         if (error?.response?.status === 401) {
-          // Clear tokens and redirect to login
-          deleteCookie("accessToken");
-          deleteCookie("refreshToken");
           window.location.href = "/login";
         }
       },

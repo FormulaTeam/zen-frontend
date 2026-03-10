@@ -9,8 +9,7 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from "../../utils/utils";
-import { sendToMetroFormResponses } from "../../api";
-import { Filter, Form, MetroReturnedData } from "../../utils/interfaces";
+import { FormOverview } from "../../utils/interfaces";
 import formX from "../../images/form_x.png";
 import CardCreationDetails from "./CardCreationDetails";
 import { CustomIcon } from "../../theme/icons";
@@ -35,70 +34,27 @@ import {
 
 const FormCard = ({
   form,
-  roles,
   user,
   isSuperAdmin,
   navigate,
   setShowMetroPopup,
   setFormToEdit,
-  setShowSharePopup,
   resetSearchValue,
+}: {
+  form: FormOverview;
+  user: any;
+  isSuperAdmin: boolean | null;
+  navigate: any;
+  setShowMetroPopup: any;
+  setFormToEdit: any;
+  resetSearchValue: () => void;
 }) => {
   const theme = useTheme();
-  const [showLoadingExportBtn, setShowLoadingExportBtn] = useState<boolean>(false);
-  const [loadingForFormId, setLoadingForFormId] = useState<number>(0);
 
   const renderDynamicIcon = (name: string) => {
     const IconComponent = MuiIcons[name as keyof typeof MuiIcons];
     return IconComponent ? <IconComponent /> : name;
   };
-
-  useEffect(() => {
-    if (showLoadingExportBtn) {
-      exportFileAndSetLoadingToFalse();
-    }
-  }, [showLoadingExportBtn]);
-
-  const exportFileAndSetLoadingToFalse = async () => {
-    let filter: Filter = {
-      form_id: form.id,
-    };
-    await getResponsesAndExportToExcel(form);
-    setShowLoadingExportBtn(false);
-    setLoadingForFormId(0);
-  };
-
-  /** go to Responses Page - called in router */
-  const goToResponsesPage = (event: React.MouseEvent<HTMLSpanElement, MouseEvent>, form: Form) => {
-    resetSearchValue();
-    navigate("/responses/" + form?.id, { replace: true });
-    event.stopPropagation();
-  };
-
-  const pushFormToMetro = async (form: Form) => {
-    setShowMetroPopup(true);
-    try {
-      let ans: MetroReturnedData = await sendToMetroFormResponses(form?.id);
-
-      if (ans?.failedResponsesIds && ans?.failedResponsesIds?.length > 0) {
-        showErrorNotification(ans?.failedResponsesIds?.length + " מהתגובות לא סונכרנו כשורה");
-      }
-      if (ans?.responseIds?.length > 0) {
-        showSuccessNotification(ans?.responseIds?.length + " סונכרנו בהצלחה");
-      } else if (ans?.responseIds?.length === 0) {
-      }
-      setShowMetroPopup(false);
-    } catch (error) {
-      showErrorNotification("הדחיפה למטרו נכשלה"); //Failed to push to metro: " + error);
-    } finally {
-      setShowMetroPopup(false);
-    }
-  };
-  if (!form) {
-    return null;
-  }
-  let userRole = form.users?.find((u) => u.upn?.toLowerCase() === user.upn?.toLowerCase())?.role_id;
-  let permissionTypes = roles.find((r) => r.role_id === userRole)?.permission_types;
 
   const getIcon = (iconName: string | null) => {
     if (!iconName) {
@@ -110,6 +66,16 @@ const FormCard = ({
     return <CustomStyledIcon>{renderDynamicIcon(iconName)}</CustomStyledIcon>;
   };
 
+  const goToResponsesPage = (event: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
+    resetSearchValue();
+    navigate("/responses/" + form?.id, { replace: true });
+    event.stopPropagation();
+  };
+
+  if (!form) {
+    return null;
+  }
+
   return (
     <StyledCard sx={{ backgroundcolor: theme.palette.background.paper }} data-testid={`form-id-${form.id}`} className="form-card">
       <ItemImgAndTitles>
@@ -117,13 +83,13 @@ const FormCard = ({
           <ItemTitleAndNum>
             <Box sx={{ display: "flex", alignItems: "center", overflow: "hidden" }}>
               {getIcon(form?.icon)}
-              <ItemTitle onClick={(event) => goToResponsesPage(event, form)} title={form.name} className="form-title">
+              <ItemTitle onClick={goToResponsesPage} title={form.name} className="form-title">
                 {form.name}
               </ItemTitle>
             </Box>
             <ItemResponsesNum className="form-responses-count">
               <CustomIcon iconName="comments" />
-              {form?.numberOfResponses || 0}
+              {form?.responsesCount ?? 0}
             </ItemResponsesNum>
           </ItemTitleAndNum>
 
@@ -146,7 +112,7 @@ const FormCard = ({
       </ItemImgAndTitles>
 
       <ItemBottomDiv>
-        {(permissionTypes?.includes(PERMISSION_TYPES.EDIT_FORM) || isSuperAdmin) && (
+        {isSuperAdmin && (
           <ItemIconsDiv>
             <Tooltip title="עריכת טופס">
               <div>
@@ -160,113 +126,41 @@ const FormCard = ({
                 />
               </div>
             </Tooltip>
-            {form?.fields?.length > 0 &&
-              (form?.numberOfResponses > 0 &&
-                (permissionTypes?.includes(PERMISSION_TYPES.EXPORT_FORM) || isSuperAdmin) ? (
-                <Tooltip title={"ייצוא נתונים לאקסל"}>
-                  {showLoadingExportBtn && loadingForFormId === form.id ? (
-                    <LoadingSyncIconBox>
-                      <ReactLoading
-                        type="spinningBubbles"
-                        color={theme.palette.primary.main}
-                        width="10px"
-                        height="28px"></ReactLoading>
-                    </LoadingSyncIconBox>
-                  ) : (
-                    <div>
-                      <CustomIcon
-                        iconName={"excelGray"}
-                        style={{ height: "17px" }}
-                        testClassName="form-export-button"
-                        onClick={() => {
-                          setShowLoadingExportBtn(true);
-                          setLoadingForFormId(form.id);
-                        }}
-                      />
-                    </div>
-                  )}
-                </Tooltip>
-              ) : (
-                <Tooltip
-                  title={<span className="tooltip-span">לא ניתן לייצא טופס ללא תגובות</span>}>
-                  <div>
-                    <CustomIcon iconName={"excelGray"} style={{ height: "17px" }} testClassName="form-export-button" />
-                  </div>
-                </Tooltip>
-              ))}
-
-            {(permissionTypes?.includes(PERMISSION_TYPES.SYNC_FORM) || isSuperAdmin) &&
-              form?.numberOfResponses > 0 && (
-                <Tooltip title="סנכרון נתונים">
-                  <div>
-                    <CustomIcon
-                      iconName="syncGray"
-                      testClassName="sync-button"
-                      forcePointer
-                      onClick={() => pushFormToMetro(form)}
-                    />
-                  </div>
-                </Tooltip>
-              )}
-
-            {((form?.fields?.length > 0 &&
-              permissionTypes?.includes(PERMISSION_TYPES.SHARE_FORM)) ||
-              isSuperAdmin) && (
-                <Tooltip title="שיתוף טופס">
-                  <div>
-                    <CustomIcon
-                      forcePointer
-                      iconName="share"
-                      testClassName="form-share-button"
-                      style={{ height: "14px", opacity: "0.5" }}
-                      onClick={() => {
-                        setFormToEdit(form);
-                        setShowSharePopup(true);
-                      }}
-                    />
-                  </div>
-                </Tooltip>
-              )}
           </ItemIconsDiv>
         )}
 
         <ItemBtnsDiv>
-          {form?.fields?.length > 0 &&
-            (permissionTypes?.includes(PERMISSION_TYPES.CREATE_RESPONSE) || isSuperAdmin) && (
-              <ItemButton className="form-add-response-button"
-                onClick={() => navigate(`/response/create/${form.id}`)}
-                sx={{
-                  backgroundColor: theme.palette.primary.main,
-                  color: "white",
-                  borderRadius: "15px",
-                  "&:hover": {
-                    backgroundColor: "white",
-                    color: theme.palette.primary.main,
-                    outline: "1px solid " + theme.palette.primary.main,
-                  },
-                }}>
-                הוספת תגובה
-              </ItemButton>
-            )}
+          <ItemButton
+            className="form-add-response-button"
+            onClick={() => navigate(`/response/create/${form.id}`)}
+            sx={{
+              backgroundColor: theme.palette.primary.main,
+              color: "white",
+              borderRadius: "15px",
+              "&:hover": {
+                backgroundColor: "white",
+                color: theme.palette.primary.main,
+                outline: "1px solid " + theme.palette.primary.main,
+              },
+            }}>
+            הוספת תגובה
+          </ItemButton>
 
-          {(permissionTypes?.includes(PERMISSION_TYPES.VIEW_RESPONSE) ||
-            permissionTypes?.includes(PERMISSION_TYPES.VIEW_YOUR_RESPONSES) ||
-            isSuperAdmin) && (
-              <ItemButton className="form-watch-responses-button"
-                onClick={(event) => goToResponsesPage(event, form)}
-                sx={{
-                  backgroundColor: theme.palette.primary.main,
-                  color: "white",
-                  borderRadius: "15px",
-                  "&:hover": {
-                    backgroundColor: "white",
-                    color: theme.palette.primary.main,
-                    outline: "1px solid " + theme.palette.primary.main,
-                  },
-                }}>
-                צפייה בתגובות
-              </ItemButton>
-            )}
+          <ItemButton
+            className="form-watch-responses-button"
+            onClick={goToResponsesPage}
+            sx={{
+              backgroundColor: theme.palette.primary.main,
+              color: "white",
+              borderRadius: "15px",
+              "&:hover": {
+                backgroundColor: "white",
+                color: theme.palette.primary.main,
+                outline: "1px solid " + theme.palette.primary.main,
+              },
+            }}>
+            צפייה בתגובות
+          </ItemButton>
         </ItemBtnsDiv>
       </ItemBottomDiv>
     </StyledCard>

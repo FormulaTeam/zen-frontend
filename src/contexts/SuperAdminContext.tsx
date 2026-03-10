@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { getIsSuperAdmin, useGetIsSuperAdmin } from "../api/usersApi";
+import { useGetIsSuperAdmin } from "../api/usersApi";
 import { useAuth } from "./AuthContext";
 
 interface SuperAdminContextType {
@@ -18,22 +18,22 @@ export const useSuperAdmin = () => {
 
 interface SuperAdminProviderProps {
   children: React.ReactNode;
-  currentUserEmail?: string;
 }
 
 export const SuperAdminProvider = ({ children }: SuperAdminProviderProps) => {
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
 
   const { user } = useAuth();
-  const { data: getIsSuperAdmin, isSuccess } = useGetIsSuperAdmin({ user });
+  const { data: isSuperAdminData, isSuccess } = useGetIsSuperAdmin({ enabled: !!user });
 
   useEffect(() => {
     if (user && isSuccess) {
-      setIsSuperAdmin(getIsSuperAdmin);
+      setIsSuperAdmin(isSuperAdminData ?? false);
     }
-  }, [user, isSuccess]);
+  }, [user, isSuccess, isSuperAdminData]);
 
   return (
     <SuperAdminContext.Provider value={{ isSuperAdmin }}>{children}</SuperAdminContext.Provider>
   );
 };
+

@@ -1,48 +1,44 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { sortByOptions, SortOption } from "../../utils/utils";
-import { Filter, Form } from "../../utils/interfaces";
 import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
 import { prefixer } from "stylis";
 import rtlPlugin from "stylis-plugin-rtl";
 import { StyledAutocomplete, StyledTextField } from "./styled";
-import { IOrderBy } from "../../types/enums/filtersAndSorts.enum";
+import { formsSortOption, FormsSortOption, sortDirectionOption, SortDirection } from "../../types/enums/filtersAndSorts.enum";
+
+const sortValueToEnums: Record<number, { sortBy: FormsSortOption; sortDirection: SortDirection }> = {
+  1: { sortBy: formsSortOption.Name, sortDirection: sortDirectionOption.Ascending },
+  2: { sortBy: formsSortOption.Name, sortDirection: sortDirectionOption.Descending },
+  5: { sortBy: formsSortOption.CreatedAt, sortDirection: sortDirectionOption.Descending },
+  6: { sortBy: formsSortOption.CreatedAt, sortDirection: sortDirectionOption.Ascending },
+};
 
 interface MainSortSelectProps {
-  setFormsData: React.Dispatch<React.SetStateAction<Form[]>>;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
-  getSortFilter: (newValueInt: number, filter: Filter) => Filter;
-  setCurrentFilter: React.Dispatch<React.SetStateAction<Filter | null>>;
+  onSortChange: (sortBy: FormsSortOption, sortDirection: SortDirection) => void;
   dataTestId?: string;
 }
 
-const MainSortSelect: React.FC<MainSortSelectProps> = ({ setFormsData, setPage, getSortFilter, setCurrentFilter, dataTestId }) => {
-  useEffect(() => { }, []);
+const MainSortSelect: React.FC<MainSortSelectProps> = ({ onSortChange, dataTestId }) => {
   const cacheRtl = createCache({
     key: "muirtl",
     stylisPlugins: [prefixer, rtlPlugin],
   });
-  const [sortByOption, setSortByOption] = useState<any>(null);
+  const [sortByOption, setSortByOption] = useState<SortOption | null>(null);
   const DEFAULT_INPUT_WIDTH = 125;
   const FONT_SIZE = 16;
   const [sortInputWidth, setSortInputWidth] = useState(DEFAULT_INPUT_WIDTH);
 
-  /** set CurrentFilter when pick in sortBy select */
   const handleSortByChange = (event: React.SyntheticEvent, newValue: SortOption | null) => {
-    setFormsData([]);
-    setPage(1);
     setSortByOption(newValue);
-    let filter: Filter = {
-      query: {},
-      sortBy: "endBy",
-      orderBy: IOrderBy.ASC,
-    };
 
-    filter = getSortFilter(newValue?.value || 0, filter);
-    setCurrentFilter(filter);
+    const sortEnums = sortValueToEnums[newValue?.value ?? 0];
+    if (sortEnums) {
+      onSortChange(sortEnums.sortBy, sortEnums.sortDirection);
+    }
 
-    if (newValue && newValue?.label.length !== 1) {
-      setSortInputWidth(Math.max(DEFAULT_INPUT_WIDTH, newValue?.label.length * FONT_SIZE));
+    if (newValue && newValue.label.length !== 1) {
+      setSortInputWidth(Math.max(DEFAULT_INPUT_WIDTH, newValue.label.length * FONT_SIZE));
     } else {
       setSortInputWidth(DEFAULT_INPUT_WIDTH);
     }

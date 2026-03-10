@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from "react";
 import { useTheme, Grow } from "@mui/material";
 import ReactLoading from "react-loading";
-import { useGetFormsData } from "../../hooks/useGetFormsData";
+import { useLegacyFormsData } from "../../hooks/useGetFormsData";
 import DeletedResponseItem from "./DeletedResponseItem";
 import {
   FormsGrid,
@@ -31,7 +31,7 @@ export default function DeletedResponsesTabContent({
 }: DeletedResponsesTabContentProps) {
   const theme = useTheme();
   const listRef = useRef<HTMLDivElement>(null);
-  const { formsData, getData, setFormsData } = useGetFormsData([], 1000);
+  const { formsData, getData, setFormsData } = useLegacyFormsData(1000);
 
   const {
     responses,

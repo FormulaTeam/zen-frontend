@@ -1,11 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
-import { getForms } from "../api/formsApi";
-import { Form } from "../utils/interfaces";
-import { useFetch } from "../utils/useFetch";
+import apiClient from "../api/config";
+import { FormOverview } from "../utils/interfaces";
+import { FormsScopeOption, FormsSortOption, SortDirection } from "../types/enums/filtersAndSorts.enum";
 
-export function useGetFormsQuery() {
-  return useFetch<undefined, Form[]>({
-    queryKey: () => ["forms"],
-    endpoint: "/forms/get-forms",
+export interface FormsQueryParams {
+  scope: FormsScopeOption;
+  searchQuery?: string;
+  sortBy?: FormsSortOption;
+  sortDirection?: SortDirection;
+  enabled?: boolean;
+}
+
+export function useGetFormsQuery({ enabled = true, ...params }: FormsQueryParams) {
+  return useQuery<FormOverview[]>({
+    queryKey: ["forms", params],
+    queryFn: async () => {
+      const response = await apiClient.get<FormOverview[]>("/forms", { params });
+      return response.data;
+    },
+    enabled,
   });
 }

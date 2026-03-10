@@ -1,49 +1,46 @@
 import apiClient from "./config";
-import { SuperAdmin, User } from "../utils/interfaces";
-import { useUpdate } from "../utils/useUpdate";
+import { User } from "../utils/interfaces";
 import { useFetch } from "../utils/useFetch";
 import { UseQueryResult } from "@tanstack/react-query";
+import { z } from "zod";
+import { UserSchema, UserTypeSchema } from "formula-gear";
 
-/**
- * Fetch all forms with optional query parameters.
- *
- * @param filter - Optional filter parameters for querying forms.
- * @returns A promise that resolves to an array of forms.
- */
-export const getUsers = async (filterName?: string): Promise<any[]> => {
+export type UserDto = z.infer<typeof UserSchema>;
+export type UserTypeDto = z.infer<typeof UserTypeSchema>;
+
+export const getUsers = async (filterName?: string): Promise<User[]> => {
   const trimmedName = filterName?.trim();
   if (!trimmedName) {
     return [];
   }
 
-  const params = {
-    name: trimmedName,
-  };
   try {
-    const response = await apiClient.get<User[]>("/users", { params });
-    return response?.data || [];
+    const response = await apiClient.get<UserDto[]>("/users", {
+      params: { searchQuery: trimmedName },
+    });
+    return (response?.data ?? []).map((userDto) => ({
+      id: String(userDto.id),
+      displayName: userDto.name,
+      upn: userDto.upn,
+    }));
   } catch (error) {
     console.error("Failed to fetch users:", error);
     throw error;
   }
 };
 
-export const getIsSuperAdmin = async (user: User | null) => {
-  try {
-    const response = await apiClient.post<boolean>("/users/is-super-admin", { user });
-    return response.data || false;
-  } catch (error) {
-    console.error("Failed to fetch super admins:", error);
-    throw error;
-  }
+export const useGetIsSuperAdmin = ({ enabled }: { enabled: boolean } = { enabled: true }): UseQueryResult<boolean> => {
+  return useFetch<undefined, boolean>({
+    endpoint: "/users/me/type",
+    queryKey: () => ["user-type"],
+    queryOptions: {
+      enabled,
+      select: (data: any) => data?.userType === 1,
+    },
+  });
 };
 
-// Yahels changes
-export const useGetIsSuperAdmin = ({ user }: { user: User | null }): UseQueryResult<boolean> => {
-  return useFetch<User | null, boolean>({
-    endpoint: "/users/super-admin",
-    params: user,
-    queryKey: () => ["super-admin", user],
-    queryOptions: { enabled: !!user },
-  });
+export const getMyProfile = async (): Promise<UserTypeDto> => {
+  const response = await apiClient.get<UserTypeDto>("/users/me/type");
+  return response.data;
 };

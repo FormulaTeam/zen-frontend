@@ -9,10 +9,10 @@ import {
 } from "./styled";
 import moment from "moment";
 import { DEFAULT_DATE_FORMAT } from "../../utils/utils";
-import { Form } from "../../utils/interfaces";
+import { FormOverview } from "../../utils/interfaces";
 
 interface CardCreationDetailsProps {
-  form: Form;
+  form: FormOverview;
 }
 
 const CardCreationDetails: React.FC<CardCreationDetailsProps> = ({ form }) => {
@@ -25,20 +25,20 @@ const CardCreationDetails: React.FC<CardCreationDetailsProps> = ({ form }) => {
 
           <Tooltip
             placement="top-start"
-            title={<span className="tooltip-span">{form.created_by}</span>}>
+            title={<span className="tooltip-span">{form.created_by.upn}</span>}>
             <TextValue className="text-value form-created-by" style={{ color: theme.palette.text.secondary }}>
-              {form?.created_by_name ?? form.created_by}
+              {form.created_by.name}
             </TextValue>
           </Tooltip>
         </TextTitleValueDiv>
 
         <TextTitleValueDiv>
-          {form.lastUpdatedResponse && form.numberOfResponses > 0 && (
+          {form.lastInteractionAt && (form.responsesCount ?? 0) > 0 && (
             <TextTitle style={{ color: theme.palette.text.secondary }}>תגובה אחרונה</TextTitle>
           )}
-          {form.lastUpdatedResponse && form.numberOfResponses > 0 ? (
+          {form.lastInteractionAt && (form.responsesCount ?? 0) > 0 ? (
             <TextValue className="text-value" style={{ color: theme.palette.text.secondary }}>
-              {moment(form.lastUpdatedResponse).format(DEFAULT_DATE_FORMAT)}
+              {moment(form.lastInteractionAt).format(DEFAULT_DATE_FORMAT)}
             </TextValue>
           ) : (
             <TextValue style={{ color: theme.palette.text.secondary }}></TextValue>

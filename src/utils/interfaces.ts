@@ -1,5 +1,9 @@
 import { IOrderBy } from "../types/enums/filtersAndSorts.enum";
 import { formsTabs } from "./utils";
+import { z } from "zod";
+import { FormOverviewSchema } from "formula-gear";
+
+export type FormOverview = z.infer<typeof FormOverviewSchema>;
 
 declare module "@mui/material/styles" {
   interface Theme {
