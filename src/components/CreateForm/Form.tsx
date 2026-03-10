@@ -22,6 +22,7 @@ import FormSectionsList from "./FormSectionsList";
 import FormPropertyRenderer from "./FormPropertyRenderer";
 import { ResponseCount } from "../../types/interfaces/responses.types";
 import { useCreateForm, getResponsesCount, useUpdateForm } from "../../api";
+import { CreateFormDto } from "../../api/formsApi";
 import {
   generateNewFormFieldData,
   getUserName,
@@ -318,10 +319,32 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     let formId = formToEdit?.id || currentFormId;
 
     if (isNewForm) {
-      const newFormStructure = getInitialNewForm(currentUser, title, description);
+      const sectionsPayload = sections
+        .sort((sectionA, sectionB) => sectionA.order - sectionB.order)
+        .map((section) => ({
+          name: section.name,
+          index: section.order,
+          fields: newFormFields
+            .filter((field) => field.sectionId === section.id)
+            .map((field) => ({
+              name: field.name,
+              index: field.index,
+              type_id: field.typeId as number,
+              display_name: field.displayName,
+              required: field.required,
+              extra: {},
+            })),
+        }));
+
+      const createPayload: CreateFormDto = {
+        name: title,
+        description: description,
+        icon: formIconName as CreateFormDto["icon"],
+        sections: sectionsPayload,
+      };
 
       try {
-        const createdForm = await mutateCreateFormAsync(newFormStructure);
+        const createdForm = await mutateCreateFormAsync(createPayload);
         // Update the form ID and formToEdit with the newly created form data
         formId = createdForm.id;
         setCurrentFormId(createdForm.id);
