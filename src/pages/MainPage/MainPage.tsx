@@ -19,7 +19,7 @@ import wavingHand from "../../images/waving_hand.png";
 import "./MainPage.scss";
 import BasePopup from "../../components/BasePopup/BasePopup";
 import { AutoDelete } from "@mui/icons-material";
-import { RowBox, StyledTypography } from "./styled";
+import { RowBox, StyledTypography, GreetingBox, TabsBox, SortControlsBox } from "./styled";
 import MainSortSelect from "../../components/MainSortSelect/MainSortSelect";
 
 function MainPage({
@@ -68,34 +68,36 @@ function MainPage({
     <Box className="main-page-container" style={{ backgroundColor: theme.palette.white }}>
       <Box className="tabs-and-select-div">
         <RowBox>
-          <StyledTypography id="greeting">היי</StyledTypography>
-          <img src={wavingHand} />
+          <GreetingBox>
+            <StyledTypography id="greeting">היי</StyledTypography>
+            <img src={wavingHand} />
+          </GreetingBox>
+
+          <TabsBox>
+            <Tabs
+              className="form-tabs"
+              value={tabValue}
+              onChange={handleTabValueChange}
+              aria-label="tabs for forms"
+              sx={{ borderBottom: `1px solid ${theme.palette.white}` }}>
+              <Tab label="הטפסים שאני יצרתי" sx={{ fontSize: "20px" }} data-testid="my-forms-button" />
+              <Tab label="הטפסים ששותפו איתי" sx={{ fontSize: "20px" }} data-testid="shared-forms-button" />
+              {isSuperAdmin && <Tab label="כל הטפסים" sx={{ fontSize: "20px" }} data-testid="all-forms-button" />}
+            </Tabs>
+          </TabsBox>
+
+          <SortControlsBox>
+            <MainSortSelect onSortChange={handleSortChange} dataTestId="sort-forms" />
+            <Tooltip title="סל המיחזור">
+              <IconButton
+                sx={{ color: theme.palette.primary.main }}
+                onClick={() => navigate("/deleted-forms")}
+                data-testid="recycle-bin-button">
+                <AutoDelete />
+              </IconButton>
+            </Tooltip>
+          </SortControlsBox>
         </RowBox>
-
-        <Box sx={{ borderBottom: `1px solid ${theme.palette.white}` }}>
-          <Tabs
-            className="form-tabs"
-            value={tabValue}
-            onChange={handleTabValueChange}
-            aria-label="tabs for forms"
-            sx={{ borderBottom: `1px solid ${theme.palette.white}`, direction: "rtl" }}>
-            <Tab label="הטפסים שאני יצרתי" sx={{ fontSize: "20px" }} data-testid="my-forms-button" />
-            <Tab label="הטפסים ששותפו איתי" sx={{ fontSize: "20px" }} data-testid="shared-forms-button" />
-            {isSuperAdmin && <Tab label="כל הטפסים" sx={{ fontSize: "20px" }} data-testid="all-forms-button" />}
-          </Tabs>
-        </Box>
-
-        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
-          <MainSortSelect onSortChange={handleSortChange} dataTestId="sort-forms" />
-          <Tooltip title="סל המיחזור">
-            <IconButton
-              sx={{ color: theme.palette.primary.main }}
-              onClick={() => navigate("/deleted-forms")}
-              data-testid="recycle-bin-button">
-              <AutoDelete />
-            </IconButton>
-          </Tooltip>
-        </Box>
       </Box>
 
       {isLoading ? (

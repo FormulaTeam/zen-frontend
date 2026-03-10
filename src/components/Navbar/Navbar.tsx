@@ -1,17 +1,14 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import BarChartIcon from "@mui/icons-material/BarChart";
 import logo from "../../images/zen_logo.png";
 import SearchAndFilter from "../SearchAndFilter/SearchAndFilter";
 import { IOperationEndpoint, IPath } from "../../types/enums/global.enums";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import { NavAppBar, NavToolbar, LogoContainer, ButtonsContainer } from "./styled";
 import NavbarButton from "./NavbarButton";
 
 const Navbar = ({ handleSearch, searchValue }) => {
-  const { isSuperAdmin } = useSuperAdmin();
   const [showMainStuff, setShowMainStuff] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,16 +57,6 @@ const Navbar = ({ handleSearch, searchValue }) => {
             />
           )}
 
-          {showMainStuff && isSuperAdmin && (
-            <NavbarButton
-              onClick={() => navigate(IPath.DASHBOARD)}
-              bgColor={theme.palette.background.paper}
-              hoverColor={theme.palette.background.paper}
-              icon={<BarChartIcon />}
-              title="לוח בקרה"
-              dataTestId="dashboard-button"
-            />
-          )}
         </ButtonsContainer>
       </NavToolbar>
     </NavAppBar>

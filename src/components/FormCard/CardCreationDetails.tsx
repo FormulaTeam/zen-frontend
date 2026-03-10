@@ -1,14 +1,14 @@
 import React from "react";
 import { Tooltip, useTheme } from "@mui/material";
 import {
-  DescriptionDiv,
+  DeatailsDiv,
   ItemCreatedEditedDiv,
   TextTitle,
   TextTitleValueDiv,
   TextValue,
 } from "./styled";
 import moment from "moment";
-import { DEFAULT_DATE_FORMAT } from "../../utils/utils";
+import { DEFAULT_DATE_TIME_FORMAT } from "../../utils/utils";
 import { FormOverview } from "../../utils/interfaces";
 
 interface CardCreationDetailsProps {
@@ -18,10 +18,10 @@ interface CardCreationDetailsProps {
 const CardCreationDetails: React.FC<CardCreationDetailsProps> = ({ form }) => {
   const theme = useTheme();
   return (
-    <DescriptionDiv>
+    <DeatailsDiv>
       <ItemCreatedEditedDiv>
-        <TextTitleValueDiv isFirst>
-          <TextTitle style={{ color: theme.palette.text.secondary }}>נוצר על ידי</TextTitle>
+        <TextTitleValueDiv>
+          <TextTitle style={{ color: theme.palette.text.secondary }}>{`נוצר על ידי \b`}</TextTitle>
 
           <Tooltip
             placement="top-start"
@@ -34,18 +34,18 @@ const CardCreationDetails: React.FC<CardCreationDetailsProps> = ({ form }) => {
 
         <TextTitleValueDiv>
           {form.lastInteractionAt && (form.responsesCount ?? 0) > 0 && (
-            <TextTitle style={{ color: theme.palette.text.secondary }}>תגובה אחרונה</TextTitle>
+            <TextTitle style={{ color: theme.palette.text.secondary }}>פעילות אחרונה ב-</TextTitle>
           )}
           {form.lastInteractionAt && (form.responsesCount ?? 0) > 0 ? (
             <TextValue className="text-value" style={{ color: theme.palette.text.secondary }}>
-              {moment(form.lastInteractionAt).format(DEFAULT_DATE_FORMAT)}
+              {moment(form.lastInteractionAt).format(`${DEFAULT_DATE_TIME_FORMAT}`)}
             </TextValue>
           ) : (
             <TextValue style={{ color: theme.palette.text.secondary }}></TextValue>
           )}
         </TextTitleValueDiv>
       </ItemCreatedEditedDiv>
-    </DescriptionDiv>
+    </DeatailsDiv>
   );
 };
 

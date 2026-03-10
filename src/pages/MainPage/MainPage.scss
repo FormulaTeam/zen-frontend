@@ -29,6 +29,7 @@
     .no-data-img {
       margin-top: 50px;
     }
+
     .no-data-lbl {
       margin-top: 10px;
       font-size: 2rem;
@@ -39,10 +40,6 @@
     width: 94.8%;
     margin-right: 24px;
     margin-left: 24px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
 
     .MuiAutocomplete-root {
       direction: rtl !important;
@@ -61,6 +58,7 @@
     overflow-y: scroll !important;
     position: relative;
     align-content: start;
+
     .bottom-lbl {
       min-height: 50px;
       width: 100%;
