@@ -345,17 +345,15 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
 
       try {
         const createdForm = await mutateCreateFormAsync(createPayload);
-        // Update the form ID and formToEdit with the newly created form data
-        formId = createdForm.id;
         setCurrentFormId(createdForm.id);
-
-        // Update formToEdit with the created form data for the updateForm call
         Object.assign(formToEdit, createdForm);
         setIsFormCreated(true);
       } catch (error) {
         showErrorNotification("יצירת הטופס נכשלה");
-        return;
+      } finally {
+        setLoading(false);
       }
+      return;
     }
 
     const form: Partial<Form> = {
