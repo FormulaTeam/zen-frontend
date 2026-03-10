@@ -16,6 +16,7 @@ import ResponseSection from "../../components/ResponseComponents/ResponseSection
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import AlertMsg from "../../components/AlertMsg/AlertMsg";
 import { useValidationErrors } from "../../hooks/useValidationErrors";
+import { useGetFormRoles } from "../../api/rolesApi";
 
 const PageContainer = styled(Container)`
   height: 100%;
@@ -23,7 +24,7 @@ const PageContainer = styled(Container)`
   flex-direction: column;
 `;
 
-export default function Response({ user, roles, viewMode = false, copyMode = false }) {
+export default function Response({ user, viewMode = false, copyMode = false }) {
   const [permissionTypes, setPermissionTypes] = useState<number[]>([]);
   const [savedResponse, setSavedResponse] = useState<ResponseForm | null>(null);
   const [showLoadingSaveBtn, setShowLoadingSaveBtn] = useState<boolean>(false);
@@ -34,6 +35,12 @@ export default function Response({ user, roles, viewMode = false, copyMode = fal
   const location = useLocation();
   const navigate = useNavigate();
   const { isSuperAdmin } = useSuperAdmin();
+
+  const { data: formRolesData } = useGetFormRoles(formId);
+  // formRolesData contains the new per-form roles shape { roles: [{userId, roleId}], public_role? }
+  // resolveUserPermissions still expects the legacy Role[] shape — that refactor is tracked separately
+  const roles = [] as any[];
+
   const {
     formTitle,
     formFields,

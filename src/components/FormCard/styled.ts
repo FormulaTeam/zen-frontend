@@ -5,27 +5,24 @@ import { styled as muiStyled } from "@mui/material/styles";
 export const ItemCreatedEditedDiv = styled(Box)`
   width: 100%;
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
 `;
 
-export const TextTitleValueDiv = styled(Box).withConfig({
-  shouldForwardProp: (prop) => prop !== "isFirst",
-})<{ isFirst?: boolean }>`
+export const TextTitleValueDiv = styled(Box)`
   width: 100%;
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: ${({ isFirst }) => (isFirst ? "flex-start" : "flex-end")};
-  margin-left: ${({ isFirst }) => (isFirst ? "5%" : "0")};
+  justify-content: flex-start;
+  margin-left: 5%;
 `;
 
 export const TextTitle = styled.span`
   font-weight: 400;
   font-size: 14px !important;
   min-width: max-content;
-  margin-left: 5px;
 `;
 
 export const TextValue = styled.span`
@@ -42,6 +39,18 @@ export const DescriptionDiv = styled(Box)`
   margin-left: 5px;
   min-height: 30px;
   max-height: 30px;
+  overflow-y: auto;
+  width: 100%;
+`;
+
+export const DeatailsDiv = styled(Box)`
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  margin-left: 5px;
+  min-height: 42px;
+  max-height: 42px;
   overflow-y: auto;
   width: 100%;
 `;

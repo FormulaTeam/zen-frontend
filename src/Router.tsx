@@ -22,15 +22,12 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import HelpBtn from "./components/HelpBtn/HelpBtn";
 import HelpDiv from "./components/HelpBtn/HelpDiv";
 import { DashboardStatisticsProvider } from "./contexts/DashboardStatisticsContext";
-import { useFormsSSE } from "./hooks/useFormsSSE";
 
 const AppRouter = () => {
-  const { user, roles } = useAuth();
+  const { user } = useAuth();
   const [searchValue, setSearchValue] = useState("");
   const [showHelpCard, setShowHelpCard] = useState(false);
   const [shouldRefreshPage, setShouldRefreshPage] = useState(false);
-
-  useFormsSSE(user?.upn || "");
 
   function resetSearchValue() {
     setSearchValue("");
@@ -68,7 +65,6 @@ const AppRouter = () => {
                   shouldRefreshPage={shouldRefreshPage}
                   setShouldRefreshPage={setShouldRefreshPage}
                   resetSearchValue={resetSearchValue}
-                  roles={roles}
                 />
               }
             />
@@ -84,19 +80,18 @@ const AppRouter = () => {
                   user={user}
                   shouldRefreshPage={shouldRefreshPage}
                   setShouldRefreshPage={setShouldRefreshPage}
-                  roles={roles}
                 />
               }
             />
-            <Route path={IPath.RESPONSE_CREATE} element={<Response roles={roles} user={user} />} />
+            <Route path={IPath.RESPONSE_CREATE} element={<Response user={user} />} />
             <Route
               path={IPath.RESPONSE_CREATE_COPY}
-              element={<Response roles={roles} user={user} copyMode />}
+              element={<Response user={user} copyMode />}
             />
-            <Route path={IPath.RESPONSE_EDIT} element={<Response roles={roles} user={user} />} />
+            <Route path={IPath.RESPONSE_EDIT} element={<Response user={user} />} />
             <Route
               path={IPath.RESPONSE_VIEW}
-              element={<Response roles={roles} user={user} viewMode />}
+              element={<Response user={user} viewMode />}
             />
             <Route path={IPath.DOWNLOAD_FILE} element={<DownloadPage />} />
             <Route path={IPath.DELETED_FORMS} element={<DeletedForms user={user} />} />

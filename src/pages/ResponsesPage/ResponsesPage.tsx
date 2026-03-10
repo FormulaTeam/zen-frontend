@@ -2,7 +2,7 @@ import { useParams } from "react-router";
 import { useMemo, useState } from "react";
 
 import Loader from "../../components/Responses/Loader";
-import { Role, Row, User } from "../../utils/interfaces";
+import { Row, User } from "../../utils/interfaces";
 import { FormActionsToolbar } from "./components/FormActionsToolbar";
 import { EditResponsesButton } from "./components/EditResponsesButton";
 import AddResponseButton from "./components/AddResponseButton";
@@ -25,14 +25,12 @@ interface ResponsesPageProps {
   user: User | null;
   shouldRefreshPage: boolean;
   setShouldRefreshPage: (shouldRefresh: boolean) => void;
-  roles: Role[];
 }
 
 export default function ResponsesPage({
   user,
   shouldRefreshPage,
   setShouldRefreshPage,
-  roles,
 }: ResponsesPageProps) {
   const { id: formId } = useParams<string>();
   const { isLoading, isError } = useFormLoader(formId || "");
