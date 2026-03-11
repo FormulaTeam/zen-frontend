@@ -3,6 +3,7 @@ import { GridApiPro } from "@mui/x-data-grid-pro/models/gridApiPro";
 import { GridRenderEditCellParams } from "@mui/x-data-grid-pro";
 import { TextField } from "@mui/material";
 import { FormField, FieldTypeIds } from "../../../utils/interfaces";
+import { CellErrorWrapper, CellErrorText, CellValueFlex } from "../styled";
 import {
     TextCellEditor,
     OptionsCellEditor,
@@ -65,7 +66,7 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
         (params: GridRenderEditCellParams): React.ReactElement => {
             const formField = findFormFieldByColumnName(params.field);
 
-            const rowId = Number(params.id);
+            const rowId = params.id;
             const errorMessage = validationErrors?.[rowId]?.[params.field as string];
 
             if (!formField) {
@@ -78,9 +79,11 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
                 updateCellValue<T>(params, newValue, isValid);
             };
 
+            let editor: React.ReactElement;
+
             switch (typeId) {
                 case FieldTypeIds.shortText:
-                    return (
+                    editor = (
                         <TextCellEditor
                             value={params.value as string}
                             onChange={handleChange}
@@ -90,9 +93,10 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
                             multiline={false}
                         />
                     );
+                    break;
 
                 case FieldTypeIds.longText:
-                    return (
+                    editor = (
                         <TextCellEditor
                             value={params.value as string}
                             onChange={handleChange}
@@ -102,9 +106,10 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
                             multiline={true}
                         />
                     );
+                    break;
 
                 case FieldTypeIds.options:
-                    return (
+                    editor = (
                         <OptionsCellEditor
                             value={params.value as string | string[]}
                             onChange={handleChange}
@@ -114,9 +119,10 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
                             errorMessage={errorMessage}
                         />
                     );
+                    break;
 
                 case FieldTypeIds.number:
-                    return (
+                    editor = (
                         <NumberCellEditor
                             value={params.value as number | string}
                             onChange={handleChange}
@@ -127,9 +133,10 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
                             errorMessage={errorMessage}
                         />
                     );
+                    break;
 
                 case FieldTypeIds.date:
-                    return (
+                    editor = (
                         <DateCellEditor
                             value={params.value as string | null}
                             onChange={handleChange}
@@ -138,9 +145,10 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
                             errorMessage={errorMessage}
                         />
                     );
+                    break;
 
                 case FieldTypeIds.time:
-                    return (
+                    editor = (
                         <TimeCellEditor
                             value={params.value as string | null}
                             showSeconds={showSeconds || false}
@@ -149,9 +157,10 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
                             errorMessage={errorMessage}
                         />
                     );
+                    break;
 
                 case FieldTypeIds.checkbox:
-                    return (
+                    editor = (
                         <CheckboxCellEditor
                             value={params.value as boolean}
                             onChange={handleChange}
@@ -160,9 +169,10 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
                             errorMessage={errorMessage}
                         />
                     );
+                    break;
 
                 case FieldTypeIds.list:
-                    return (
+                    editor = (
                         <ListCellEditor
                             value={params.value as string[]}
                             onChange={handleChange}
@@ -170,9 +180,10 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
                             errorMessage={errorMessage}
                         />
                     );
+                    break;
 
                 case FieldTypeIds.link:
-                    return (
+                    editor = (
                         <LinkCellEditor
                             value={params.value}
                             onChange={handleChange}
@@ -180,9 +191,10 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
                             errorMessage={errorMessage}
                         />
                     );
+                    break;
 
                 case FieldTypeIds.location:
-                    return (
+                    editor = (
                         <LocationCellEditor
                             value={params.value}
                             onChange={handleChange}
@@ -191,9 +203,10 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
                             errorMessage={errorMessage}
                         />
                     );
+                    break;
 
                 case FieldTypeIds.file:
-                    return (
+                    editor = (
                         <FileCellEditor
                             value={params.value}
                             onChange={handleChange}
@@ -201,10 +214,22 @@ export const useCellEditors = ({ apiRef, formFields, validationErrors, onLiveCha
                             errorMessage={errorMessage}
                         />
                     );
+                    break;
 
                 default:
                     return renderFallbackTextField(params);
             }
+
+            if (errorMessage) {
+                return (
+                    <CellErrorWrapper>
+                        <CellErrorText>{errorMessage}</CellErrorText>
+                        <CellValueFlex>{editor}</CellValueFlex>
+                    </CellErrorWrapper>
+                );
+            }
+
+            return editor;
         },
         [findFormFieldByColumnName, updateCellValue, renderFallbackTextField, validationErrors],
     );
