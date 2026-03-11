@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
-import ReactLoading from "react-loading";
+import { useState } from "react";
 import React from "react";
-import { Box, Divider, Icon, Tooltip, useTheme } from "@mui/material";
+import { Box, Divider, Tooltip, useTheme } from "@mui/material";
 import {
   formIconsNamesMap,
   PERMISSION_TYPES,
@@ -9,12 +8,14 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from "../../utils/utils";
-import { FormOverview } from "../../utils/interfaces";
+import { Form, FormOverview } from "../../utils/interfaces";
 import formX from "../../images/form_x.png";
 import CardCreationDetails from "./CardCreationDetails";
 import { CustomIcon } from "../../theme/icons";
 import { CustomStyledIcon, LoadingSyncIconBox } from "./styled";
 import * as MuiIcons from "@mui/icons-material";
+import { getFormById } from "../../api/formsApi";
+import UserPicker from "../USerPicker/UserPicker";
 
 import {
   ItemBottomDiv,
@@ -50,6 +51,18 @@ const FormCard = ({
   resetSearchValue: () => void;
 }) => {
   const theme = useTheme();
+  const [showSharePopup, setShowSharePopup] = useState(false);
+  const [fullForm, setFullForm] = useState<Form | null>(null);
+
+  const handleShareClick = async () => {
+    try {
+      const fetchedForm = await getFormById(form.id);
+      setFullForm(fetchedForm);
+      setShowSharePopup(true);
+    } catch {
+      showErrorNotification("טעינת הטופס נכשלה");
+    }
+  };
 
   const renderDynamicIcon = (name: string) => {
     const IconComponent = MuiIcons[name as keyof typeof MuiIcons];
@@ -126,7 +139,25 @@ const FormCard = ({
                 />
               </div>
             </Tooltip>
+            <Tooltip title="שיתוף טופס">
+              <div>
+                <CustomIcon
+                  forcePointer
+                  iconName="share"
+                  style={{ width: 14, height: 14, opacity: 0.3 }}
+                  onClick={handleShareClick}
+                />
+              </div>
+            </Tooltip>
           </ItemIconsDiv>
+        )}
+        {showSharePopup && fullForm && (
+          <UserPicker
+            form={fullForm}
+            closeSharePopupAndRefreshForm={() => {
+              setShowSharePopup(false);
+            }}
+          />
         )}
 
         <ItemBtnsDiv>

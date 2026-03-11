@@ -53,13 +53,16 @@ export const getForms = async (filter?: Filter): Promise<Form[]> => {
 };
 
 export const getFormById = async (formId?: number): Promise<Form | null> => {
-  let filter = {
-    query: {
-      id: formId,
-    },
-  };
-  let forms = await getForms(filter);
-  return forms && forms[0] ? forms[0] : null;
+  if (!formId) {
+    return null;
+  }
+  try {
+    const response = await apiClient.get<Form>(`/forms/${formId}`);
+    return response?.data ?? null;
+  } catch (error) {
+    console.error("getFormById error:", error);
+    return null;
+  }
 };
 
 /**
