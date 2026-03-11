@@ -1214,28 +1214,11 @@ export const getInitialNewForm = (
   title: string = "",
   description: string = "",
 ) => {
-  const currentUserLowerCaseUpn = currentUser?.upn?.toLowerCase();
-  const userName = getUserName(currentUser.firstName, currentUser.lastName);
-
   return {
     name: title,
     description: description,
-    owner_email: currentUserLowerCaseUpn,
-    owner_upn: currentUserLowerCaseUpn,
-    created_by: currentUserLowerCaseUpn,
-    created_by_name: userName,
-    edited_by: currentUserLowerCaseUpn,
-    edited_by_name: userName,
-    users: [
-      {
-        id: currentUser.id,
-        firstName: currentUser.firstName,
-        lastName: currentUser.lastName,
-        upn: currentUserLowerCaseUpn,
-        role_id: 1,
-      },
-    ],
+    icon: "formX",
     fields: [],
-    numberOfResponses: 0,
+    parentFieldId: undefined,
   };
 };

@@ -1,12 +1,13 @@
 import apiClient from "./config";
 import {
-  NewForm,
   Form,
   Filter,
   MetroReturnedData,
   User,
   UpdateFormPayload,
 } from "../utils/interfaces";
+import { z } from "zod";
+import { CreateFormSchema } from "formula-gear";
 import { UserData } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { UseQueryOptions, UseQueryResult, useMutation } from "@tanstack/react-query";
@@ -52,13 +53,16 @@ export const getForms = async (filter?: Filter): Promise<Form[]> => {
 };
 
 export const getFormById = async (formId?: number): Promise<Form | null> => {
-  let filter = {
-    query: {
-      id: formId,
-    },
-  };
-  let forms = await getForms(filter);
-  return forms && forms[0] ? forms[0] : null;
+  if (!formId) {
+    return null;
+  }
+  try {
+    const response = await apiClient.get<Form>(`/forms/${formId}`);
+    return response?.data ?? null;
+  } catch (error) {
+    console.error("getFormById error:", error);
+    return null;
+  }
 };
 
 /**
@@ -182,9 +186,11 @@ export const editSourceToMetro = async (id: number): Promise<any> => {
 // Gali's edits
 // ============================================================
 
+export type CreateFormDto = z.infer<typeof CreateFormSchema>;
+
 export const useCreateForm = () => {
-  return useCreate<NewForm, Form>({
-    endpoint: "/forms/create",
+  return useCreate<CreateFormDto, Form>({
+    endpoint: "/forms",
     mutationKey: ["create-form"],
     mutationOptions: {
       onSuccess: () => {

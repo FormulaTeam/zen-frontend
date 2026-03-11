@@ -22,6 +22,7 @@ import FormSectionsList from "./FormSectionsList";
 import FormPropertyRenderer from "./FormPropertyRenderer";
 import { ResponseCount } from "../../types/interfaces/responses.types";
 import { useCreateForm, getResponsesCount, useUpdateForm } from "../../api";
+import { CreateFormDto } from "../../api/formsApi";
 import {
   generateNewFormFieldData,
   getUserName,
@@ -318,21 +319,39 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     let formId = formToEdit?.id || currentFormId;
 
     if (isNewForm) {
-      const newFormStructure = getInitialNewForm(currentUser, title, description);
+      const sortedSections = [...sections].sort((a, b) => a.order - b.order);
+
+      const createPayload: CreateFormDto = {
+        name: title,
+        description,
+        icon: formIconName as CreateFormDto["icon"],
+        sections: sortedSections.map((section) => ({
+          name: section.name,
+          index: section.order,
+          fields: newFormFields
+            .filter((field) => field.sectionId === section.id)
+            .map(({ name, index, typeId, displayName, required }) => ({
+              name,
+              index,
+              type_id: typeId as number,
+              display_name: displayName,
+              required,
+              extra: {},
+            })),
+        })),
+      };
 
       try {
-        const createdForm = await mutateCreateFormAsync(newFormStructure);
-        // Update the form ID and formToEdit with the newly created form data
-        formId = createdForm.id;
+        const createdForm = await mutateCreateFormAsync(createPayload);
         setCurrentFormId(createdForm.id);
-
-        // Update formToEdit with the created form data for the updateForm call
         Object.assign(formToEdit, createdForm);
         setIsFormCreated(true);
       } catch (error) {
         showErrorNotification("יצירת הטופס נכשלה");
-        return;
+      } finally {
+        setLoading(false);
       }
+      return;
     }
 
     const form: Partial<Form> = {
