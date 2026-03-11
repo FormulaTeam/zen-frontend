@@ -319,28 +319,26 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     let formId = formToEdit?.id || currentFormId;
 
     if (isNewForm) {
-      const sectionsPayload = sections
-        .sort((sectionA, sectionB) => sectionA.order - sectionB.order)
-        .map((section) => ({
+      const sortedSections = [...sections].sort((a, b) => a.order - b.order);
+
+      const createPayload: CreateFormDto = {
+        name: title,
+        description,
+        icon: formIconName as CreateFormDto["icon"],
+        sections: sortedSections.map((section) => ({
           name: section.name,
           index: section.order,
           fields: newFormFields
             .filter((field) => field.sectionId === section.id)
-            .map((field) => ({
-              name: field.name,
-              index: field.index,
-              type_id: field.typeId as number,
-              display_name: field.displayName,
-              required: field.required,
+            .map(({ name, index, typeId, displayName, required }) => ({
+              name,
+              index,
+              type_id: typeId as number,
+              display_name: displayName,
+              required,
               extra: {},
             })),
-        }));
-
-      const createPayload: CreateFormDto = {
-        name: title,
-        description: description,
-        icon: formIconName as CreateFormDto["icon"],
-        sections: sectionsPayload,
+        })),
       };
 
       try {

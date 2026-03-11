@@ -173,6 +173,13 @@ export const LoadingSyncIconBox = styled(Box)`
   padding-bottom: 5px;
 `;
 
+export const GrayShareIcon = styled.img`
+  width: 15px;
+  height: 15px;
+  opacity: 0.3;
+  cursor: pointer;
+`;
+
 export const CustomStyledIcon = muiStyled(Icon)(({ theme }) => ({
   fontSize: 30,
   marginLeft: "10px",

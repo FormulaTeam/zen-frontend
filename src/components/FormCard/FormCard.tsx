@@ -4,15 +4,14 @@ import { Box, Divider, Tooltip, useTheme } from "@mui/material";
 import {
   formIconsNamesMap,
   PERMISSION_TYPES,
-  getResponsesAndExportToExcel,
   showErrorNotification,
-  showSuccessNotification,
 } from "../../utils/utils";
 import { Form, FormOverview } from "../../utils/interfaces";
 import formX from "../../images/form_x.png";
 import CardCreationDetails from "./CardCreationDetails";
 import { CustomIcon } from "../../theme/icons";
-import { CustomStyledIcon, LoadingSyncIconBox } from "./styled";
+import ShareIcon from "../../icons/share.svg";
+import { CustomStyledIcon, GrayShareIcon } from "./styled";
 import * as MuiIcons from "@mui/icons-material";
 import { getFormById } from "../../api/formsApi";
 import UserPicker from "../USerPicker/UserPicker";
@@ -35,19 +34,13 @@ import {
 
 const FormCard = ({
   form,
-  user,
   isSuperAdmin,
   navigate,
-  setShowMetroPopup,
-  setFormToEdit,
   resetSearchValue,
 }: {
   form: FormOverview;
-  user: any;
   isSuperAdmin: boolean | null;
   navigate: any;
-  setShowMetroPopup: any;
-  setFormToEdit: any;
   resetSearchValue: () => void;
 }) => {
   const theme = useTheme();
@@ -141,12 +134,7 @@ const FormCard = ({
             </Tooltip>
             <Tooltip title="שיתוף טופס">
               <div>
-                <CustomIcon
-                  forcePointer
-                  iconName="share"
-                  style={{ width: 14, height: 14, opacity: 0.3 }}
-                  onClick={handleShareClick}
-                />
+                <GrayShareIcon src={ShareIcon} onClick={handleShareClick} />
               </div>
             </Tooltip>
           </ItemIconsDiv>
