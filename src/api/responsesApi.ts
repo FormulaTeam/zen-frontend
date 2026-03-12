@@ -10,12 +10,16 @@ import {
   NewResponse,
   ResponseFieldValue,
   ResponseForm,
+  Row,
 } from "../utils/interfaces";
 import { ResponseCount } from "../types/interfaces/responses.types";
 import { useDelete } from "../utils/useDelete";
 import queryClient from "./queryClient";
 import { useCreate } from "../utils/useCreate";
 import { ExcelImportResult } from "../types/interfaces/forms.types";
+import { useFetch } from "../utils/useFetch";
+import { useMutation } from "@tanstack/react-query";
+import { useUpdate } from "../utils/useUpdate";
 
 /**
  * Fetch all responses with optional query parameters.
@@ -40,7 +44,7 @@ export const getResponses = async (filter?: Filter): Promise<ResponseForm[]> => 
       `/responses/get-responses?form_id=${filter?.form_id}`,
       { params },
     );
-    return response?.data || [];
+    return response?.data ?? [];
   } catch (error) {
     console.error("Failed to fetch responses:", error);
     throw error;
@@ -91,31 +95,13 @@ export const getResponsesCount = async (form_id: number): Promise<ResponseCount>
   }
 };
 
-/**
- * Create a new response.
- *
- * @param responseData - The new response data.
- * @returns A promise that resolves to the created response.
- */
-export const createResponse = async (
-  responseData: NewResponse | NewResponse[],
-): Promise<ResponseForm | ResponseForm[]> => {
-  try {
-    const response = await apiClient.post<ResponseForm>("/responses/create", responseData);
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to create response:", error);
-    throw error;
-  }
-};
-
 export const getResponseWithFlatFields = (
   responseData: ResponseFieldValue[],
   fieldsMetaData: FormField[],
   deletedFiles?: ResponseFieldValue[],
 ): Record<string, FieldValue> => {
   const fieldsNameValueObj = responseData.reduce((acc, field) => {
-    const fieldMetaData = fieldsMetaData.find((metaData) => metaData.uniqueId === field.uniqueId);
+    const fieldMetaData = fieldsMetaData.find((metaData) => metaData.uniqueId === field.field_id);
     if (fieldMetaData && fieldMetaData.name) {
       const fieldName = fieldMetaData.name;
 
@@ -141,7 +127,7 @@ export const getResponseWithFlatFields = (
           break;
         case FieldTypeIds.file:
           const deletedFilesForField = deletedFiles?.filter(
-            (deletedFile) => deletedFile.uniqueId === field.uniqueId,
+            (deletedFile) => deletedFile.field_id === field.field_id,
           );
           if (deletedFilesForField && deletedFilesForField.length > 0) {
             acc[fieldName] = { ...field.value, deletedFiles: deletedFilesForField[0].value };
@@ -156,30 +142,6 @@ export const getResponseWithFlatFields = (
     return acc;
   }, {});
   return fieldsNameValueObj;
-};
-/**
- * Update an existing response.
- *
- * @param formId - The ID of the form associated with the response.
- * @param id - The ID of the response to update.
- * @param responseData - The updated response data.
- * @returns A promise that resolves to the updated response.
- */
-export const updateResponse = async (
-  formId: number,
-  id: number,
-  responseData: Partial<ResponseForm>,
-): Promise<ResponseForm> => {
-  try {
-    const response = await apiClient.put<ResponseForm>(
-      `/responses/edit/${formId}/${id}`,
-      responseData,
-    );
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to update response:", error);
-    throw error;
-  }
 };
 
 /**
@@ -236,26 +198,6 @@ export const deleteAllResponses = async (formId: number): Promise<number> => {
   }
 };
 
-export const createResponsesFromFile = async (formId: number, file: File): Promise<any> => {
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await apiClient.post<any>(
-      `/responses/create-from-file?form_id=${formId}`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      },
-    );
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to create responses from file:", error);
-    throw error;
-  }
-};
-
 /**
  * Restore a deleted response.
  *
@@ -281,12 +223,14 @@ export const restoreResponse = async (formId: number, id: number): Promise<Respo
  */
 export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseForm[]> => {
   try {
-    const response = await apiClient.post<ResponseForm[]>("/responses/get-deleted-responses", {
+    const body = {
       pageSize: filter?.pageSize,
       pageNumber: filter?.pageNumber,
       query: filter?.query || {},
-      isDeletedForm: filter?.query?.isDeletedForm || false,
-    });
+      isDeletedForm: Boolean(filter?.query?.isDeletedForm || filter?.isDeletedForm),
+    };
+
+    const response = await apiClient.post<ResponseForm[]>("/responses/get-deleted-responses", body);
 
     return response?.data || [];
   } catch (error) {
@@ -297,6 +241,24 @@ export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseFo
 
 // Yahel's changes - above is the original file - below are the changes
 // ============================================================
+
+export const useGetResponses = ({ filter }: { filter?: Filter }) => {
+  return useFetch<Filter, ResponseForm[]>({
+    endpoint: `/responses/get-responses`,
+    queryKey: () => ["responses", filter],
+    params: filter,
+    // queryOptions: { enabled: !!filter?.form_id },
+  });
+};
+
+export const useGetResponsesRows = ({ filter }: { filter?: Filter }) => {
+  return useFetch<Filter, Row[]>({
+    endpoint: `/responses/get-rows`,
+    queryKey: () => ["rows", filter],
+    params: filter,
+    queryOptions: { enabled: !!filter?.form_id },
+  });
+};
 
 export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
   return useDelete<{ form_id: string }, void>({
@@ -313,10 +275,12 @@ export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
 
 export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
   return useCreate<FormData, ExcelImportResult>({
-    endpoint: `/responses/create-form-file?form_id=${formId}`,
+    endpoint: `/responses/create-from-file?form_id=${formId}`,
     mutationKey: ["import-responses-from-file", formId],
-    headers: {
-      "Content-Type": "multipart/form-data",
+    axiosConfig: {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     },
     mutationOptions: {
       onSuccess: () => {
@@ -325,4 +289,100 @@ export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
       },
     },
   });
+};
+
+export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
+  return useMutation({
+    mutationFn: async (responses: Array<{ id: number; responseData: Partial<ResponseForm> }>) => {
+      const responsesPromises = responses.map(({ id, responseData }) => {
+        return apiClient.put<ResponseForm>(`/responses/edit/${formId}/${id}`, responseData);
+      });
+      const responsesResults = await Promise.all(responsesPromises);
+      return responsesResults.map(response => response.data);
+    },
+    mutationKey: ["batch-update-responses", formId],
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses"] });
+      queryClient.invalidateQueries({ queryKey: ["rows"] });
+    },
+  });
+};
+
+// Gali's changes
+// ========================
+export const useCreateResponsesFromFile = (formId: string) => {
+  return useCreate<FormData, any>({
+    endpoint: `/responses/create-from-file?form_id=${formId}`,
+    mutationKey: ["create-responses-from-file", formId],
+    axiosConfig: {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+      onError: (error) => {
+        console.error("Failed to create responses from file:", error);
+      },
+    },
+  });
+};
+
+export const useCreateResponse = () => {
+  return useCreate<NewResponse | NewResponse[], ResponseForm | ResponseForm[]>({
+    endpoint: "/responses/create",
+    mutationKey: ["create-response"],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+      onError: (error) => {
+        console.error("Failed to create response:", error);
+      },
+    },
+  });
+};
+
+export const useUpdateResponse = (formId: number, id: number) => {
+  return useUpdate<Partial<ResponseForm>, ResponseForm>({
+    endpoint: `/responses/edit/${formId}/${id}`,
+    mutationKey: ["update-response", formId, id],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+      onError: (error) => {
+        console.error("Failed to update response:", error);
+      },
+    },
+  });
+};
+
+/**
+ * Fetch rows for a form with optional query parameters.
+ *
+ * @param filter - Optional filter parameters for querying rows.
+ * @returns A promise that resolves to an array of rows.
+ */
+export const getResponsesRows = async ({ filter }: { filter?: Filter }): Promise<Row[]> => {
+  try {
+    if (!filter?.form_id) {
+      console.error("Form ID is required to fetch rows.");
+      return [];
+    }
+    const params = {
+      query: filter?.query ? JSON.stringify(filter.query) : undefined,
+      sortBy: filter?.sortBy,
+      orderBy: filter?.orderBy,
+      pageSize: filter?.pageSize,
+      pageNumber: filter?.pageNumber,
+    };
+    const response = await apiClient.get<Row[]>(`/responses/get-rows?form_id=${filter.form_id}`, { params });
+    return response?.data || [];
+  } catch (error) {
+    console.error("Failed to fetch rows:", error);
+    throw error;
+  }
 };

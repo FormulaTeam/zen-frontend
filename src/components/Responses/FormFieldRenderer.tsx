@@ -31,6 +31,7 @@ interface FormFieldRendererProps {
   formFields: FormField[];
   index?: number;
   isTabularEdit?: boolean;
+  formId?: number | string;
 }
 
 const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
@@ -44,6 +45,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   formFields,
   index = 0,
   isTabularEdit = false,
+  formId,
 }) => {
   const isConnectedToForm = (field: any) => {
     return (
@@ -158,8 +160,8 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             parentField?.connectionType === connectionTypes.form || connectedToForm
               ? fieldOptions[formField.parentFieldId]?.map((field) => String(field.value)) // if field or parent is connected to form
               : Array.isArray(parentValue)
-              ? parentValue
-              : [parentValue];
+                ? parentValue
+                : [parentValue];
           const allowedOptions = new Set();
           // Find the parent field to access its options
           if (
@@ -476,6 +478,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           }}
           value={formFieldValue}
           isTabularEdit={isTabularEdit}
+          formId={formId}
         />
       );
       break;

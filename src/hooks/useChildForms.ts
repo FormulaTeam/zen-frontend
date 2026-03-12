@@ -29,6 +29,7 @@ type UseChildFormsParams = {
   user: User;
   isSuperAdmin: boolean | null;
   roles: Role[];
+  copyMode?: boolean;
 };
 
 type UseChildFormsReturn = {
@@ -53,6 +54,7 @@ export const useChildForms = ({
   user,
   roles = [],
   isSuperAdmin = false,
+  copyMode = false,
 }: UseChildFormsParams): UseChildFormsReturn => {
   const [childForms, setChildForms] = useState<ChildFormProps[]>([]);
   const [childFormsSaving, setChildFormsSaving] = useState(false);
@@ -121,13 +123,29 @@ export const useChildForms = ({
         const responses = childrenIds.map(async (childId) => {
           const response = await getResponses({ form_id: childId });
           const children = response
-            .filter((res) => {
-              if (typeof res.parentResponse === "string" && res.parentResponse.includes(";")) {
-                const parentIds = res.parentResponse.split(";");
-                return parentIds[1] === id;
+            .filter((res: any) => {
+              // New structure: parentResponse is a string "formId;responseId"
+              if (res.parentResponse && typeof res.parentResponse === 'string') {
+                const [parentFormId, parentResponseId] = res.parentResponse.split(';');
+                const matchById = parentResponseId === id || parentResponseId === String(id);
+                const matchByFormId = parentFormId === formId || parentFormId === String(formId);
+                return matchByFormId && matchById;
               }
+
+              // Old structure: mainResponses array (keep for backward compatibility)
+              if (Array.isArray(res.mainResponses) && id) {
+                return res.mainResponses.some(
+                  (p: any) => {
+                    const matchById = p?.id === id || p?.id === Number(id);
+                    const matchByIndex = String(p?.index) === String(id);
+                    return matchById || matchByIndex;
+                  }
+                );
+              }
+
               return false;
             })
+
             .map((res) => {
               const childField = formFields.find((field) => field.connectedFormId === childId);
               return { ...childField, id: res.id };
@@ -138,7 +156,7 @@ export const useChildForms = ({
             children,
             saved: [],
             valid: [],
-            shown: true, // Show child form by default if response exists
+            shown: children.length > 0, // Show child form only if it has children
           };
         });
         Promise.all(responses).then((ans) => {

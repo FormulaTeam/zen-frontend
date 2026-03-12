@@ -180,7 +180,14 @@ export interface FormFieldEditableMetaData {
 /**
  * Represents the data required to create a new form.
  */
-export type NewForm = Omit<Form, "id" | "created" | "edited" | "permissions">;
+export type NewForm = Omit<Form, "id" | "created" | "updated" | "permissions">;
+
+export interface UpdateFormPayload {
+  id: number;
+  formData: Partial<Form>;
+
+  isUpdateMetro?: boolean;
+}
 
 export type FormsTab = (typeof formsTabs)[keyof typeof formsTabs];
 
@@ -196,21 +203,28 @@ export interface Form {
   fields: FormField[];
   description: string;
   created: string;
-  edited: string;
+  updated: string;
   created_by: string;
   created_by_name: string;
-  edited_by: string;
-  edited_by_name: string;
+  updated_by?: string;
+  edited_by?: string;
+  updated_by_name?: string;
+  edited_by_name?: string;
   deleted?: string;
   numberOfResponses: number;
-  lastEditedResponse?: string;
+  lastUpdatedResponse?: string;
   permissions: number[];
+  columns?: GridColDef[];
 
   isPublic?: boolean;
   formPermission?: {
     role_id?: number;
     roleName?: string;
   };
+  metro_access_url?: string;
+  metro_access_token?: string;
+  oasisSourceKey?: string;
+  oasisSourceId?: string;
 }
 
 export interface FormUser extends User {
@@ -235,27 +249,51 @@ export interface SuperAdmin {
  * Represents a response form with metadata and associated form ID.
  */
 export interface ResponseForm {
-  id: number;
-  created_by: string;
-  edited_by: string;
-  edited_by_name: string;
+  id: string; // Response.id (UUID)
+  index: number; // Response.index
   form_id: number;
-  created: string;
-  edited: string;
-  data: ResponseFieldValue[];
-  created_by_name?: string;
-  deleted?: string;
-  pushed_to_metro?: null | string;
-  parentResponse?: string;
-  deleted_by?: string;
+
+  created_at: Date;
+  updated_at: Date;
+
+  created_by: {
+    id: number; // User.id
+    upn: string; // User.upn
+    name?: string; // User.name
+  };
+
+  updated_by: {
+    id: number;
+    upn: string;
+    name?: string;
+  };
+
+  fieldValues?: ResponseFieldValue[];
+  data?: ResponseFieldValue[];
+  mainResponses?: { id: string; index: number; form_id: number }[];
+  subResponses?: { id: string; index: number; form_id: number }[];
+
+  deleted_at?: string | null;
+  deleted_by?: { id: number; upn: string; name?: string } | null;
+  deleted_with_form?: boolean;
+
+  form_name?: string;
   parentFormStatus?: string | null;
+  edited_by_name?: string;
+  edited_by?: string;
 }
 
 /**
  * Represents the data required to create a new response.
  */
-export type NewResponse = Omit<ResponseForm, "id" | "created" | "edited">;
-
+export type NewResponse = {
+  form_id: number;
+  created_by: string; // UPN
+  updated_by?: string; // UPN
+  edited_by?: string; // UPN
+  data: ResponseFieldValue[];
+  parentResponse?: string; // parent Response.id (UUID) if linked
+};
 /**
  * Represents a filter of a form or a response (the response filter has the form_id in the query).
  */
@@ -341,6 +379,8 @@ export enum NotificationTexts {
   UpdateButSyncFaild = "התגובה עודכנה אך הסנכרון נכשל",
   DeletedSuccessfully = "התגובה נמחקה בהצלחה",
   DeletedFailed = "התגובה לא נמחקה",
+  SuccessfulExportToExcel = "הייצוא לאקסל בוצע בהצלחה",
+  FailedExportToExcel = "הייצוא לאקסל נכשל",
 }
 
 export enum fieldConnectionTooltipTexts {
@@ -381,7 +421,8 @@ export type FieldValue =
 
 export interface ResponseFieldValue {
   value: FieldValue;
-  uniqueId: string;
+  field_id?: string;
+  uniqueId?: string;
 }
 
 export type CustomFormField = Pick<
@@ -769,6 +810,7 @@ export const DEFAULT_FORM_ICONS: IconNameObj[] = [
 
 // Import condition-related conditionTypes and utilities from conditionUtils
 import type { ConditionOperatorType, LogicalOperatorType } from "./conditionUtils";
+import { GridColDef } from "@mui/x-data-grid";
 
 // Re-export condition utilities for backward compatibility
 export type {
@@ -829,3 +871,25 @@ export const ALLOWED_FIELD_TYPES_FOR_CONDITION: number[] = [
   FieldTypeIds.options,
   FieldTypeIds.checkbox,
 ];
+
+export interface Row {
+  id: number;
+  edited?: string;
+  editedByName?: string;
+  parentResponse?: string;
+  created?: string;
+  createdByName?: string;
+  [key: string]: unknown;
+}
+
+export interface ChildResponseForm {
+  id: number;
+  form_id: number;
+  created: string;
+  created_by_name: string;
+  createdByName: string;
+  editedByName?: string;
+  edited?: string;
+  parentResponse?: string;
+  [key: string]: unknown;
+}

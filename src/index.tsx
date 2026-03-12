@@ -26,30 +26,30 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <ThemeProvider theme={theme}>
     <CacheProvider value={cacheRtl}>
-        <GlobalStyles
-          styles={(theme) => ({
-            "*": {
-              margin: 0,
-              borderRadius: theme.borders.base,
-            },
-            "::-webkit-scrollbar-track": {
-              backgroundColor: theme.palette.background.default,
-            },
+      <GlobalStyles
+        styles={(theme) => ({
+          "*": {
+            margin: 0,
+            borderRadius: theme.borders.base,
+          },
+          "::-webkit-scrollbar-track": {
+            backgroundColor: theme.palette.background.default,
+          },
 
-            "::-webkit-scrollbar": {
-              width: theme.scrollBar.width,
-              height: theme.scrollBar.height,
-              backgroundColor: theme.scrollBar.color,
-            },
+          "::-webkit-scrollbar": {
+            width: theme.scrollBar.width,
+            height: theme.scrollBar.height,
+            backgroundColor: theme.scrollBar.color,
+          },
 
-            "::-webkit-scrollbar-thumb": {
-              backgroundColor: theme.scrollBar.color,
-              borderRadius: theme.scrollBar.borderRadius,
-            },
-          })}
-        />
-        <CssBaseline />
-        <App />
+          "::-webkit-scrollbar-thumb": {
+            backgroundColor: theme.scrollBar.color,
+            borderRadius: theme.scrollBar.borderRadius,
+          },
+        })}
+      />
+      <CssBaseline />
+      <App />
     </CacheProvider>
   </ThemeProvider>,
 );

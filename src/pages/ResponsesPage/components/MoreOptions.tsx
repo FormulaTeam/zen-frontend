@@ -1,7 +1,8 @@
 import { DeleteForever, MoreVert } from "@mui/icons-material";
 import { Button, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
-import { useState } from "react";
+import { useState, useMemo, FC } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { SourceOperationStatus, SourceOperationStatusType } from "@pages/ResponsesPage/components/FormActionsToolbar";
 import { useDeleteAllFormsResponses, useDeleteForm } from "../../../api";
 import deleteResponseImg from "../../../images/delete_response.png";
 import ConfirmPopup from "../../../popups/ConfirmPopup/ConfirmPopup";
@@ -11,19 +12,50 @@ import { useFormStore } from "../stores/form.store";
 import { PermissionGate } from "../PermissionGate";
 import { UploadResponses } from "./UploadResponses";
 
-export const MoreOptions = () => {
+interface MoreOptionsProps {
+  setAnchorElSourceType: React.Dispatch<React.SetStateAction<HTMLElement | null>>;
+  pushToMetro: () => Promise<void>;
+  sourceOperationStatus: SourceOperationStatusType;
+}
+
+export const MoreOptions: FC<MoreOptionsProps> = ({ setAnchorElSourceType, pushToMetro, sourceOperationStatus }: MoreOptionsProps) => {
   const { id: formId } = useParams();
   const navigate = useNavigate();
-  const { permissions, form } = useFormStore();
+  const { permissions, form, rows } = useFormStore();
   const [anchorElMoreActions, setAnchorElMoreActions] = useState<HTMLElement | null>(null);
-  const { mutate: deleteForm } = useDeleteForm({ id: formId || "" });
-  const { mutate: deleteAllResponses } = useDeleteAllFormsResponses({ formId: formId || "" });
+  const { mutate: deleteForm } = useDeleteForm({ id: formId ?? "" });
+  const { mutate: deleteAllResponses } = useDeleteAllFormsResponses({ formId: formId ?? "" });
 
   const [showDeleteFormPopup, setShowDeleteFormPopup] = useState(false);
   const [showDeleteResponsesPopup, setShowDeleteResponsesPopup] = useState(false);
   const [showImportFromExcelPopup, setShowImportFromExcelPopup] = useState(false);
 
   if (!permissions || !form || !formId) return null;
+
+
+  const getSourceOperationTooltip = (): string => {
+    if (sourceOperationStatus === SourceOperationStatus.CREATING) {
+      return "סנכרון נתונים למטרו יתאפשר לאחר סיום יצירת המקור";
+    }
+    if (sourceOperationStatus === SourceOperationStatus.EDITING) {
+      return "סנכרון נתונים למטרו יתאפשר לאחר סיום עריכת המקור";
+    }
+    return "";
+  };
+
+  const syncingDataMenuItem = useMemo(
+    () => (
+      <MenuItem
+        disabled={!rows.length || sourceOperationStatus === SourceOperationStatus.CREATING || sourceOperationStatus === SourceOperationStatus.EDITING || rows.length === 0 || (!form?.metro_access_url && !form?.oasisSourceKey)} //btn enabled only if form has responses and has metro source
+        onClick={pushToMetro}>
+        <ListItemIcon>
+          <CustomIcon iconName={"sync"} style={{ padding: 2 }} />
+        </ListItemIcon>
+        <ListItemText>סנכרון נתונים</ListItemText>
+      </MenuItem>
+    ),
+    [rows.length, sourceOperationStatus, form, pushToMetro],
+  );
 
   return (
     <>
@@ -47,17 +79,20 @@ export const MoreOptions = () => {
           vertical: "top",
           horizontal: "left",
         }}>
-        {/* Metro sync menu items  */}
-        {/* <PermissionGate permissions={[PERMISSION_TYPES.SYNC_FORM]} userPermissions={permissions}>
-          <MenuItem
-            disabled={!responsesCount || responsesCount === 0 || !form?.metro_access_url} //btn enabled only if form has responses and has metro source
-            onClick={pushToMetro}>
-            <ListItemIcon>
-              <CustomIcon iconName={"sync"} style={{ padding: 2 }} />
-            </ListItemIcon>
-            <ListItemText>סנכרון נתונים</ListItemText>
-          </MenuItem>
-          {form?.metro_access_token && form?.metro_access_url ? (
+        <PermissionGate permissions={[PERMISSION_TYPES.SYNC_FORM]} userPermissions={permissions}>
+          {sourceOperationStatus === SourceOperationStatus.NOT_IN_PROGRESS ? syncingDataMenuItem :
+            <Tooltip
+              arrow
+              title={
+                getSourceOperationTooltip()
+              }
+            >
+              <span style={{ display: 'block' }}>
+                {syncingDataMenuItem}
+              </span>
+            </Tooltip>
+          }
+          {((form?.metro_access_token && form?.metro_access_url) || (form?.oasisSourceId && form?.oasisSourceKey)) ? (
             <MenuItem onClick={(e) => setAnchorElSourceType(e.currentTarget)}>
               <ListItemIcon>
                 <CustomIcon iconName={"source"} />
@@ -72,7 +107,7 @@ export const MoreOptions = () => {
               <ListItemText>יצירת מקור</ListItemText>
             </MenuItem>
           )}
-        </PermissionGate> */}
+        </PermissionGate>
 
         <PermissionGate
           permissions={[PERMISSION_TYPES.CREATE_RESPONSE, PERMISSION_TYPES.EDIT_RESPONSE]}

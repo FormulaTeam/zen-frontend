@@ -7,6 +7,7 @@ interface NavbarButtonProps {
   hoverColor: string;
   title: string;
   icon: React.ReactNode;
+  dataTestId?: string;
 }
 
 const NavbarButton: React.FC<NavbarButtonProps> = ({
@@ -15,9 +16,10 @@ const NavbarButton: React.FC<NavbarButtonProps> = ({
   hoverColor,
   title,
   icon,
+  dataTestId,
 }) => {
   return (
-    <NavButton onClick={onClick} $bgColor={bgColor} $hoverColor={hoverColor}>
+    <NavButton data-testid={dataTestId} onClick={onClick} $bgColor={bgColor} $hoverColor={hoverColor}>
       {title}
       {icon}
     </NavButton>

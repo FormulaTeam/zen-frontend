@@ -1,20 +1,16 @@
 import React from "react";
 import { RoleOption, StyledAutocomplete, StyledTextField } from "./styled";
 import { Role, User } from "../../utils/interfaces";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface RolesAutocompleteProps {
-  roles: Role[];
   isDisabled: boolean;
   handleRoleChange: (event: any, newValue: Role | null, user: User | null) => void;
-  user: User | null;
 }
 
-const RolesAutocomplete: React.FC<RolesAutocompleteProps> = ({
-  roles,
-  isDisabled,
-  handleRoleChange,
-  user,
-}) => {
+const RolesAutocomplete: React.FC<RolesAutocompleteProps> = ({ isDisabled, handleRoleChange }) => {
+  const { roles, user } = useAuth();
+
   return (
     <StyledAutocomplete
       isOptionEqualToValue={(option: Role, value: Role) =>

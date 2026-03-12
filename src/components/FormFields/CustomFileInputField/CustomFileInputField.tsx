@@ -18,10 +18,12 @@ import { FileIcon, defaultStyles } from "react-file-icon";
 import { CustomInputFormFieldProps } from "../../../utils/interfaces";
 import UploadIcon from "../../../images/Upload-icon.svg";
 import { decodeFileName } from "../../../utils/utils";
+import { downloadFileFromResponse } from "../../../api/filesApi";
 
 interface CustomFileInputFieldProps extends CustomInputFormFieldProps {
   value: any;
   isTabularEdit?: boolean;
+  formId?: number | string;
 }
 
 const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
@@ -32,6 +34,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   label,
   isRequired,
   isTabularEdit = false,
+  formId,
 }) => {
   const [responseFiles, setResponseFiles] = useState<any>(value || []);
   const [files, setFiles] = useState<File[]>([]);
@@ -93,23 +96,27 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
         <div className={classes["view-only"]}>
           {responseFiles?.files?.length &&
             responseFiles?.files?.map((item, idx) => {
+              const displayName = decodeFileName(item.name || item.fileName || "");
+              const extension = getFileExtension(displayName) || item.fileExtension || "";
               return (
-                <label key={idx} title={item.fileName} className="response-file-view">
+                <div
+                  key={idx}
+                  title={displayName}
+                  style={{ display: "inline-block", width: '40px', flexShrink: 0, cursor: "pointer" }}
+                  onClick={() => downloadFileFromResponse(item, formId ? String(formId) : undefined)}
+                >
                   <FileIcon
-                    extension={item.fileExtension}
-                    {...(defaultStyles[item.fileExtension] || {})}
+                    extension={extension}
+                    {...(defaultStyles[extension] || {})}
                   />
-                  <a href={item.fileUrl} target="_blank" rel="noopener noreferrer">
-                    {item.fileName + item.fileExtension}
-                  </a>
-                </label>
+                </div>
               );
             })}
         </div>
       ) : (
         <>
           <Box
-            sx={{ 
+            sx={{
               backgroundColor: theme.palette.shadow,
               ...(isTabularEdit && {
                 border: 'none',

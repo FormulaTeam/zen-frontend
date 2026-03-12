@@ -43,6 +43,7 @@ interface ResponseSectionProps {
   formFields?: FormField[];
   getFormInFormProperty?: (formField: FormField) => React.ReactNode;
   isLoading?: boolean;
+  formId?: number | string;
 }
 
 const ResponseSection: React.FC<ResponseSectionProps> = ({
@@ -60,6 +61,7 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
   formFields = [],
   getFormInFormProperty,
   isLoading,
+  formId,
 }) => {
   const theme = useTheme();
 
@@ -119,6 +121,7 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
                     fieldOptions={fieldOptions}
                     formFields={formFields}
                     index={index}
+                    formId={formId}
                   />
                 </div>
               );

@@ -4,7 +4,6 @@ import React from "react";
 const SyncTypeMenu = ({
   anchorElSourceType,
   handleCloseMoreActions,
-  handleManualSource,
   handleAutomaticSource,
 }) => {
   return (
@@ -22,9 +21,6 @@ const SyncTypeMenu = ({
         vertical: "top",
         horizontal: "right",
       }}>
-      <MenuItem onClick={handleManualSource}>
-        <ListItemText>ידני</ListItemText>
-      </MenuItem>
       <MenuItem onClick={handleAutomaticSource}>
         <ListItemText>אוטומטי</ListItemText>
       </MenuItem>

@@ -70,7 +70,7 @@ export default function DeletedResponsesTabContent({
     }
 
     if (!mounted) return;
-    getData(1, "load-deleted-meta", { query: {} });
+    getData(1, { query: {} });
   }, [responses, searchValue]);
 
   useEffect(() => {
@@ -142,7 +142,7 @@ export default function DeletedResponsesTabContent({
       ) : (
         <FormsGrid container spacing={3} ref={listRef} onScroll={handleScroll}>
           {responses.map((res) => {
-            const key = getResponseKey(res.form_id, res.id);
+            const key = getResponseKey(res.form_id, res.index);
             return (
               <Grow in timeout={300} key={key}>
                 <FullWidthBox>
@@ -152,8 +152,8 @@ export default function DeletedResponsesTabContent({
                     handleRestoreResponse={restoreResponseById}
                     currentDeletedForm={currentDeletedForm}
                     isSelected={selectedResponseKeys.includes(key)}
-                    onSelect={() => handleSelect(res.form_id, res.id)}
-                    onDeselect={() => handleDeselect(res.form_id, res.id)}
+                    onSelect={() => handleSelect(res.form_id, res.index)}
+                    onDeselect={() => handleDeselect(res.form_id, res.index)}
                   />
                 </FullWidthBox>
               </Grow>

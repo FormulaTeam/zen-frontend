@@ -22,12 +22,16 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import HelpBtn from "./components/HelpBtn/HelpBtn";
 import HelpDiv from "./components/HelpBtn/HelpDiv";
 import { FormEditor } from "./pages/FormEditor";
+import { useFormsSSE } from "./hooks/useFormsSSE";
+import { DashboardStatisticsProvider } from "./contexts/DashboardStatisticsContext";
 
 const AppRouter = () => {
   const { user, roles } = useAuth();
   const [searchValue, setSearchValue] = useState("");
   const [showHelpCard, setShowHelpCard] = useState(false);
   const [shouldRefreshPage, setShouldRefreshPage] = useState(false);
+
+  useFormsSSE(user?.upn || "");
 
   function resetSearchValue() {
     setSearchValue("");
@@ -47,8 +51,14 @@ const AppRouter = () => {
           <Route path={IPath.ERROR} element={<ErrorPage />} />
           <Route path={IPath.LOGIN} element={<Login />} />
           <Route path={IPath.SSO_CALLBACK} element={<SSOCallback />} />
-          <Route path={IPath.DASHBOARD} element={<Dashboard />} />
-
+          <Route
+            path={IPath.DASHBOARD}
+            element={
+              <DashboardStatisticsProvider>
+                <Dashboard />
+              </DashboardStatisticsProvider>
+            }
+          />
           <Route element={<ProtectedRoute />}>
             <Route
               path={IPath.HOME}

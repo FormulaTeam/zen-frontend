@@ -10,7 +10,6 @@ import {
   AffectedTargetRemoveButton,
   AffectedTargetsSelectContainer,
   AffectedTargetsSelect,
-  AffectedTargetsEmptyMessage,
 } from "./styled";
 
 interface AffectedTargetsSectionProps {
@@ -117,7 +116,6 @@ const AffectedTargetsSection: React.FC<AffectedTargetsSectionProps> = ({
             <em>הוסף שדה...</em>
           </MenuItem>
           {ConditionUtils.getAvailableFields(formFields, conditionsRoot, true)
-            .filter((field) => !field.required)
             .filter(
               (field) =>
                 !conditionsRoot.affectedTargets.some(
@@ -131,12 +129,6 @@ const AffectedTargetsSection: React.FC<AffectedTargetsSectionProps> = ({
             ))}
         </AffectedTargetsSelect>
       </AffectedTargetsSelectContainer>
-
-      {conditionsRoot.affectedTargets.length === 0 && (
-        <AffectedTargetsEmptyMessage variant="body2" color="warning.main">
-          לא נבחרו שדות או מקטעים מושפעים (שדות חובה לא יוצגו)
-        </AffectedTargetsEmptyMessage>
-      )}
     </AffectedTargetsContainer>
   );
 };

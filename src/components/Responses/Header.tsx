@@ -10,11 +10,11 @@ const Header = () => {
     <Box>
       <Tooltip title="מזהה הטופס">
         <Typography width={"fit-content"} variant="subtitle2">
-          {form?.id}
+          {form.id}
         </Typography>
       </Tooltip>
-      <Typography variant="h4">{form?.name}</Typography>
-      <Typography variant="subtitle2">{form?.description || "ללא תיאור"}</Typography>
+      <Typography variant="h4">{form.name}</Typography>
+      <Typography variant="subtitle2">{form.description || "ללא תיאור"}</Typography>
       <Typography variant="subtitle1">{`נוצר על ידי ${getCreatorName(form)}`}</Typography>
     </Box>
   );

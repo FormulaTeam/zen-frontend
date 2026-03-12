@@ -35,7 +35,7 @@ const Navbar = ({ handleSearch, searchValue }) => {
   return (
     <NavAppBar $bgColor={theme.palette.primary.main}>
       <NavToolbar>
-        <LogoContainer onClick={navigateToHome} disabled={isLogoDisabled}>
+        <LogoContainer onClick={navigateToHome} disabled={isLogoDisabled} data-testid="navbar-logo">
           <img src={logo} height={40} />
         </LogoContainer>
 
@@ -44,6 +44,7 @@ const Navbar = ({ handleSearch, searchValue }) => {
             searchValue={searchValue}
             handleSearch={handleSearch}
             placeholder="חיפוש טופס"
+            dataTestId="search-form-input"
           />
         )}
 
@@ -54,7 +55,8 @@ const Navbar = ({ handleSearch, searchValue }) => {
               bgColor={theme.palette.background.paper}
               hoverColor={theme.palette.background.paper}
               icon={<AddIcon />}
-              title="יצירת טופס חדש"
+              title="טופס חדש"
+              dataTestId="create-form-button"
             />
           )}
 
@@ -65,6 +67,7 @@ const Navbar = ({ handleSearch, searchValue }) => {
               hoverColor={theme.palette.background.paper}
               icon={<BarChartIcon />}
               title="לוח בקרה"
+              dataTestId="dashboard-button"
             />
           )}
         </ButtonsContainer>

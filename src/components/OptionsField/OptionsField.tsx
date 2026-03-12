@@ -78,7 +78,7 @@ export default function OptionsField({
   getBaseFieldElement,
   isOptionValid,
   onChange,
-  onBlur = () => {},
+  onBlur = () => { },
   onClose,
   onAddOption,
   onChangeDefaultValue,
@@ -178,8 +178,8 @@ export default function OptionsField({
                 responses
                   .map(
                     (response) =>
-                      response.data?.find(
-                        (res) => res.uniqueId === matchedField.connectedFieldId && res.value,
+                      response.fieldValues?.find(
+                        (res) => res.field_id === matchedField.connectedFieldId && res.value,
                       )?.value,
                   )
                   .filter(Boolean),
@@ -383,7 +383,7 @@ export default function OptionsField({
       const responseValues = responses
         .map(
           (response) =>
-            response?.data?.find((item) => item.uniqueId === selectedField.uniqueId)?.value,
+            response?.fieldValues?.find((item) => item.field_id === selectedField.uniqueId)?.value,
         )
         .filter(Boolean);
 
@@ -547,8 +547,8 @@ export default function OptionsField({
     const options = connectedField?.options?.length
       ? connectedField.options
       : defaultValues?.length
-      ? defaultValues
-      : formField.options;
+        ? defaultValues
+        : formField.options;
 
     return Array.from(new Set(options.filter((val) => val !== null && val !== undefined)));
   };
@@ -587,31 +587,31 @@ export default function OptionsField({
         {formField.connectionType === connectionTypes.form
           ? renderFormSelectBlock()
           : formField.options?.map((option, optionIndex) => {
-              // const isValid = isOptionValid(option);
-              return (
-                <Grid
-                  sx={{ flexWrap: "nowrap" }}
-                  container
-                  key={"option_" + optionIndex}
-                  direction="row"
-                  gap={2}
-                  alignItems="center">
-                  <BaseFormInput
-                    className={
-                      isOptionValid(option) ? "formField-textfield" : "formField-textfield-invalid"
-                    }
-                    value={formField.options && formField.options[optionIndex]}
-                    name="title"
-                    placeholder={"הזנת אפשרות " + (optionIndex + 1 || 0)}
-                    onChange={(e) => onChange(e, optionIndex)}
-                    onBlur={onBlur}
-                    InputLabelProps={{ shrink: false }}
-                  />
-                  <Close style={{ cursor: "pointer" }} onClick={(e) => onClose(e, optionIndex)} />
-                  {formField.parentFieldId && renderOptionAccordionBlock(optionIndex)}
-                </Grid>
-              );
-            })}
+            // const isValid = isOptionValid(option);
+            return (
+              <Grid
+                sx={{ flexWrap: "nowrap" }}
+                container
+                key={"option_" + optionIndex}
+                direction="row"
+                gap={2}
+                alignItems="center">
+                <BaseFormInput
+                  className={
+                    isOptionValid(option) ? "formField-textfield" : "formField-textfield-invalid"
+                  }
+                  value={formField.options && formField.options[optionIndex]}
+                  name="title"
+                  placeholder={"הזנת אפשרות " + (optionIndex + 1 || 0)}
+                  onChange={(e) => onChange(e, optionIndex)}
+                  onBlur={onBlur}
+                  InputLabelProps={{ shrink: false }}
+                />
+                <Close style={{ cursor: "pointer" }} onClick={(e) => onClose(e, optionIndex)} />
+                {formField.parentFieldId && renderOptionAccordionBlock(optionIndex)}
+              </Grid>
+            );
+          })}
         {error && <ErrorMessage msg={error} />}
       </Grid>
       {formField.connectionType !== connectionTypes.form && (
@@ -639,7 +639,7 @@ export default function OptionsField({
           <DefaultValueAutocomplete
             options={availableOptions}
             defaultValue={defaultValue ? defaultValue : ""}
-            onChange={onChangeDefaultValue ?? (() => {})}
+            onChange={onChangeDefaultValue ?? (() => { })}
           />
         ))}
 

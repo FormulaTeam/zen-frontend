@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 export interface DateRange {
   from: string | null;
@@ -34,23 +34,18 @@ export const useStatisticsDateFilter = (
     setRange({ from: null, to: null });
   }, []);
 
-  useEffect(() => {
-    const fetch = async () => {
+  const triggerFetch = useCallback(async () => {
+    try {
       setLoading(true);
-      await getMonthlyFormsStats(year, type);
+      if (type === "units") {
+        await getUnitsByRange(range);
+      } else if (getMonthlyFormsStats) {
+        await getMonthlyFormsStats(year, type);
+      }
+    } finally {
       setLoading(false);
-    };
-    fetch();
-  }, [year, getMonthlyFormsStats, type]);
-
-  useEffect(() => {
-    const fetch = async () => {
-      setLoading(true);
-      await getUnitsByRange(range);
-      setLoading(false);
-    };
-    fetch();
-  }, [range, getUnitsByRange]);
+    }
+  }, []);
 
   return {
     range,
@@ -60,5 +55,6 @@ export const useStatisticsDateFilter = (
     prevYear,
     handleDateChange,
     handleClearRange,
+    triggerFetch,
   };
 };

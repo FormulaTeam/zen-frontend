@@ -9,6 +9,8 @@ interface UseCreateOptions<TData = unknown, TResponse = unknown> {
     "mutationFn" | "mutationKey"
   >;
   mutationKey: readonly unknown[];
+  
+  axiosConfig?: Record<string, any>;
 }
 
 // Generic useCreate hook for POST requests
@@ -17,20 +19,11 @@ export function useCreate<TData = unknown, TResponse = unknown>({
   headers,
   mutationOptions,
   mutationKey = [endpoint, "create"],
+  axiosConfig,
 }: UseCreateOptions<TData, TResponse>): UseMutationResult<TResponse, Error, TData, unknown> {
   return useMutation({
     mutationFn: async (data: TData) => {
-      // Check if data is FormData
-      const isFormData = data instanceof FormData;
-
-      // For FormData, don't set Content-Type header (let browser set it with boundary)
-      const requestHeaders = isFormData
-        ? { ...headers }
-        : { "Content-Type": "application/json", ...headers };
-
-      const response = await apiClient.post<TResponse>(endpoint, data, {
-        headers: requestHeaders,
-      });
+      const response = await apiClient.post<TResponse>(endpoint, data, axiosConfig);
       return response.data;
     },
     mutationKey,

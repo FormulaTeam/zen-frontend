@@ -65,8 +65,8 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
           ? condition.value.map((val) => String(val))
           : []
         : Array.isArray(condition.value)
-        ? String(condition.value[0] || "")
-        : String(condition.value || "");
+          ? String(condition.value[0] || "")
+          : String(condition.value || "");
 
       // For connected fields, use fieldOptions, otherwise use formField.options
       let optionsToUse: string[] = [];
