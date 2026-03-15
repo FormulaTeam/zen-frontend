@@ -11,7 +11,6 @@ import Navbar from "./components/Navbar/Navbar";
 import { ToastContainer } from "react-toastify";
 import { SSOCallback } from "./pages/Login/SSOCallback";
 import ErrorPage from "./pages/ErrorPage/ErrorPage";
-import CreateForm from "./pages/CreateForm/CreateForm";
 import EditForm from "./pages/EditForm/EditForm";
 import LocalStorageUpdater from "./components/LocalStorageUpdater";
 import Response from "./pages/Response/Response";
@@ -71,10 +70,6 @@ const AppRouter = () => {
             />
             <Route
               path={IPath.FORM_CREATE}
-              element={<CreateForm currentUser={user} formToEdit={null} />}
-            />
-            <Route
-              path={IPath.FORM_CREATE_NEW}
               element={<FormEditor mode={"create"} />}
             />
             <Route path={IPath.FORM_EDIT} element={<EditForm user={user} />} />
