@@ -100,7 +100,7 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
                         format="DD/MM/YYYY"
                         slotProps={{
                             ...commonSlotProps,
-                            textField: { ...commonSlotProps.textField, error: !!errorMessage, helperText: errorMessage },
+                            textField: { ...commonSlotProps.textField, error: !!errorMessage, helperText: undefined },
                         }}
                     />
                     <TimePickerComponent
@@ -121,7 +121,7 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
                 format="DD/MM/YYYY"
                 slotProps={{
                     ...commonSlotProps,
-                    textField: { ...commonSlotProps.textField, error: !!errorMessage, helperText: errorMessage },
+                    textField: { ...commonSlotProps.textField, error: !!errorMessage, helperText: undefined },
                 }}
             />
         </LocalizationProvider>

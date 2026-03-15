@@ -3,10 +3,10 @@ import Box from "@mui/material/Box";
 import {
   Condition,
   ConditionOperators,
-  FieldTypeIds,
-  FormField,
   ConditionUtils,
   connectionTypes,
+  FieldTypeIds,
+  FormField,
   ResponseFieldValue,
 } from "../../utils/interfaces";
 import FormControlLabel from "@mui/material/FormControlLabel";

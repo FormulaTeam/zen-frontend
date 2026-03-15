@@ -1,5 +1,5 @@
 import moment from "moment";
-import { FieldTypeIds, FormField, ResponseForm } from "./interfaces";
+import { FieldTypeIds, FormField } from "./interfaces";
 import { DEFAULT_DATE_FORMAT, DEFAULT_DATE_TIME_FORMAT } from "./utils";
 
 export function getResponseFieldStringValue(field: FormField, value: any) {

@@ -1,0 +1,99 @@
+.container {
+    display: flex;
+}
+
+.dragHandle {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #e8f1fa;
+    border-radius: 16px;
+    border: 6px solid white;
+    margin-inline-end: 10px;
+    cursor: grab;
+    box-shadow: 0 4px 10px 0 #1976D21A;
+}
+
+.field {
+    flex: 1;
+    background-color: white;
+    /*min-height: 300px;*/
+    border-radius: 10px;
+    box-shadow: 0 4px 10px 0 #1976D21A;
+    padding: 8px 20px 20px 20px;
+    box-sizing: border-box;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #85878D;
+}
+
+.body {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-block-start: 8px;
+    padding: 2px 24px;
+}
+
+.baseData {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 290px);
+    gap: 24px;
+    padding-block-end: 8px;
+    box-sizing: border-box;
+}
+
+.baseData > * {
+    /*max-width: 290px;*/
+}
+
+.extraData {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 290px);
+    gap: 24px;
+}
+
+.input {
+    width: 100%;
+}
+
+.deleteButtonContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-inline-start: 10px;
+    width: 42px;
+}
+
+.deleteButton.deleteButton {
+    color: white;
+    background-color: #bc535f;
+    font-size: 24px;
+    border-radius: 50%;
+    min-width: 0;
+    border: 6px solid white;
+    height: 42px;
+    width: 42px;
+    box-shadow: 0 4px 10px 0 #1976D21A;
+}
+
+.deleteButton.deleteButton:hover {
+    background-color: #d55262;
+}
+
+.deleteButton.deleteButton:disabled {
+    color: white;
+    background-color: #e4e4e4;
+}

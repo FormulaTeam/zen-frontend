@@ -3,10 +3,10 @@ import { User } from "../utils/interfaces";
 import { useFetch } from "../utils/useFetch";
 import { UseQueryResult } from "@tanstack/react-query";
 import { z } from "zod";
-import { UserSchema, UserTypeSchema } from "formula-gear";
+import { UserSchema, userType } from "formula-gear";
 
 export type UserDto = z.infer<typeof UserSchema>;
-export type UserTypeDto = z.infer<typeof UserTypeSchema>;
+export type UserTypeDto = { userType: (typeof userType)[keyof typeof userType] };
 
 export const getUsers = async (filterName?: string): Promise<User[]> => {
   const trimmedName = filterName?.trim();

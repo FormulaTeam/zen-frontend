@@ -62,14 +62,14 @@ const FormCard = ({
     return IconComponent ? <IconComponent /> : name;
   };
 
-  const getIcon = (iconName: string | null) => {
+  const getIcon = (iconName: string | number | null) => {
     if (!iconName) {
       return <Img src={formX} alt="form icon" />;
     }
     if (formIconsNamesMap.get(iconName)) {
-      return <Img src={formIconsNamesMap.get(iconName)} alt={iconName} />;
+      return <Img src={formIconsNamesMap.get(iconName)} alt={String(iconName)} />;
     }
-    return <CustomStyledIcon>{renderDynamicIcon(iconName)}</CustomStyledIcon>;
+    return <CustomStyledIcon>{renderDynamicIcon(String(iconName))}</CustomStyledIcon>;
   };
 
   const goToResponsesPage = (event: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {

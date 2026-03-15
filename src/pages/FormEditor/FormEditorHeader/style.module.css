@@ -1,0 +1,63 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 115px;
+    width: 100%;
+    padding: 16px 0;
+    border-bottom: #1976D21A solid 1px;
+}
+
+.headerStart {
+    display: flex;
+    gap: 26px;
+    flex: 1;
+}
+
+.formIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.formIcon {
+    max-width: 60px;
+    cursor: pointer;
+}
+
+.editingMetadata {
+    display: flex;
+    max-width: 800px;
+    flex: 1;
+    gap: 12px;
+}
+
+.editingMetadataText {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.titleInput{
+    font-size: 25px;
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: fit-content;
+}
+
+.button.button{
+    min-width: 0;
+    height: 100%;
+    width: 60px;
+    color: black;
+}
+
+.headerEnd {
+    display: flex;
+    gap: 16px;
+}

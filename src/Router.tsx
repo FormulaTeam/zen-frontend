@@ -21,6 +21,7 @@ import { IPath } from "./types/enums/global.enums";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import HelpBtn from "./components/HelpBtn/HelpBtn";
 import HelpDiv from "./components/HelpBtn/HelpDiv";
+import { FormEditor } from "./pages/FormEditor";
 import { DashboardStatisticsProvider } from "./contexts/DashboardStatisticsContext";
 
 const AppRouter = () => {
@@ -71,6 +72,10 @@ const AppRouter = () => {
             <Route
               path={IPath.FORM_CREATE}
               element={<CreateForm currentUser={user} formToEdit={null} />}
+            />
+            <Route
+              path={IPath.FORM_CREATE_NEW}
+              element={<FormEditor mode={"create"} />}
             />
             <Route path={IPath.FORM_EDIT} element={<EditForm user={user} />} />
             <Route

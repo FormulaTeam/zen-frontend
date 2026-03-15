@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { getFormFields } from "../../api/customFormFieldsApi";
-import { CustomFormField, DEFAULT_FIELDS } from "../../utils/interfaces";
-import { fieldsIcons } from "../../components/FieldsIcons";
+import { CustomFormField, FORM_ELEMENTS } from "../../utils/interfaces";
+import { FORM_ELEMENT_ICONS } from "../../components/FORM_ELEMENT_ICONS";
 
 export interface CustomFieldMeta {
   id: string;
@@ -27,14 +27,14 @@ export default function useCustomFormFields() {
       const customFormFieldsMetaData = customFormFields.map((formField) => {
         // Find matching default field by typeId
 
-        const defaultField = DEFAULT_FIELDS.find((field) => field.typeId === formField.typeId);
+        const defaultField = FORM_ELEMENTS[formField.typeId];
         return {
           ...formField,
           // Use custom displayName if exists, otherwise use default field's name
           name: formField.displayName || defaultField?.name || "",
           // Use custom icon if it exists AND is valid, otherwise use default field's icon
           icon:
-            formField.icon && fieldsIcons[formField.icon]
+            formField.icon && FORM_ELEMENT_ICONS[formField.icon]
               ? formField.icon
               : defaultField?.icon || "menu",
         };

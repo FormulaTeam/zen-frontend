@@ -3,6 +3,10 @@
   "version": "1.2.1",
   "private": true,
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/modifiers": "^9.0.0",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@hello-pangea/dnd": "^18.0.1",
@@ -25,6 +29,8 @@
     "material-icons": "^1.13.14",
     "material-react-table": "^2.0.2",
     "moment": "^2.30.1",
+    "nanoid": "^5.1.6",
+    "re-resizable": "^6.11.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.3.5",
@@ -41,6 +47,7 @@
     "stylis": "^4.3.6",
     "stylis-plugin-rtl": "^2.1.0",
     "uuid": "^10.0.0",
+    "zod": "^4.1.12",
     "zustand": "^5.0.8"
   },
   "scripts": {
@@ -53,13 +60,15 @@
     "@babel/plugin-proposal-class-properties": "^7.16.7",
     "@babel/plugin-proposal-private-property-in-object": "^7.16.7",
     "@craco/craco": "^7.1.0",
+    "@types/lodash.merge": "^4.6.9",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
+    "@types/react-resizable": "^3.0.8",
     "@types/recharts": "^1.8.29",
     "@types/styled-components": "^5.1.34",
     "@types/stylis": "^4.2.6",
     "@types/uuid": "^10.0.0",
     "sass": "^1.77.8",
-    "typescript": "^4"
+    "typescript": "^5.9.3"
   }
 }

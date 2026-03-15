@@ -157,11 +157,14 @@ export const ResponsesTable = ({
         return "";
       }
 
-      return params.isEditable
+      const hasError = !!(validationErrors?.[params.id]?.[params.field]);
+      const editableClass = params.isEditable
         ? "MuiDataGrid-cell--editable"
         : "MuiDataGrid-cell--non-editable-in-edit-mode";
+
+      return hasError ? `${editableClass} cell--has-error` : editableClass;
     },
-    [isInEditMode],
+    [isInEditMode, validationErrors],
   );
 
   const handleCellDoubleClick = useCallback((params: GridCellParams, event: any) => {
@@ -251,7 +254,7 @@ export const ResponsesTable = ({
               );
             },
             renderCell: (params: GridRenderCellParams) => {
-              const rowId = Number(params.id);
+              const rowId = params.id;
               const cellError = validationErrors?.[rowId]?.[column.field as string];
               let display: React.ReactNode;
               if (isColumnId) {

@@ -206,7 +206,7 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
   };
 
   const getFormInFormProperty = (formField: any) => {
-    if (formField.typeId !== FieldTypeIds.form || !formField.connectedFormId) {
+    if (formField.typeId !== FieldTypeIds.linkedForm || !formField.connectedFormId) {
       return null;
     }
 

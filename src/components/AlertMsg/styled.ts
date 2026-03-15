@@ -4,8 +4,8 @@ import ErrorIcon from "@mui/icons-material/Error";
 
 export const Container = styled.div`
   position: fixed;
-  top: 0%;
-  left: 0%;
+  top: 0;
+  left: 0;
   z-index: 22222;
   width: 100vw;
   height: 100vw;
@@ -19,7 +19,7 @@ export const Popup = styled.div`
   transform: translate(-50%, -50%);
   z-index: 22223;
   width: 30vw;
-  padding: 0 1vw;
+  padding: 2% 5%;
   min-height: 300px;
   max-height: 90vh;
   background-color: #f5f5f5;

@@ -20,6 +20,7 @@ declare module "@mui/material/styles" {
     };
     darkPaper: string;
   }
+
   interface ThemeOptions {
     borders: {
       base: string;
@@ -56,7 +57,7 @@ declare module "@mui/material/Button" {
   }
 }
 
-// types.ts (optional, if you want to separate types)
+// conditionTypes.ts (optional, if you want to separate conditionTypes)
 export interface RouteContextType {
   path: string;
   changePath: (newPath: string) => void;
@@ -68,6 +69,7 @@ export interface RequestConfig {
   RowLimit?: number;
   StartRow?: number;
 }
+
 export const FieldTypeIds = {
   longText: 1,
   shortText: 2,
@@ -80,10 +82,10 @@ export const FieldTypeIds = {
   list: 9,
   number: 10,
   file: 11,
-  form: 12,
-} as const;
+  linkedForm: 12,
+} as const satisfies Record<string, number>;
 
-export const FieldTypes = {
+export const FieldDataTypes = {
   string: "string",
   boolean: "boolean",
   date: "Date",
@@ -106,7 +108,8 @@ export enum IConnectionType {
  */
 
 export type FormFieldTypeId = (typeof FieldTypeIds)[keyof typeof FieldTypeIds];
-export type FormFieldFieldType = (typeof FieldTypes)[keyof typeof FieldTypes];
+export type FormFieldDataType = (typeof FieldDataTypes)[keyof typeof FieldDataTypes];
+
 export interface FormField {
   uniqueId: string;
   uniqId?: string;
@@ -115,7 +118,7 @@ export interface FormField {
   required: boolean;
   index: number;
   typeId: FormFieldTypeId | typeof DRAGGED_ITEM_ID;
-  fieldType: FormFieldFieldType;
+  fieldType: FormFieldDataType;
   options?: string[];
   parentFieldId?: string;
   parentFieldName?: string;
@@ -170,12 +173,14 @@ export type FieldsIconsNames =
 export type FieldsIcons = {
   [key in FieldsIconsNames]: JSX.Element;
 };
+
 export interface FormFieldEditableMetaData {
   typeId: FormFieldTypeId | typeof DRAGGED_ITEM_ID;
   name: string;
   icon: FieldsIconsNames;
-  fieldType: FormFieldFieldType;
+  fieldType: FormFieldDataType;
 }
+
 /**
  * Represents the data required to create a new form.
  */
@@ -449,89 +454,79 @@ export interface CustomInputFormFieldProps {
   onChangeHandler: (value: any, valid: boolean) => void;
   validationRegex?: string;
 }
+
 // Add this type to define the structure of a field blueprint
 export interface DefaultField {
-  typeId: FormFieldTypeId;
   name: string;
   icon: FieldsIconsNames;
-  fieldType: FormFieldFieldType;
+  fieldType: FormFieldDataType;
 }
 
+export type FormElements = Record<FormFieldTypeId, DefaultField>;
+
 // Default field options for the form builder
-export const DEFAULT_FIELDS: DefaultField[] = [
-  {
-    typeId: FieldTypeIds.longText,
+export const FORM_ELEMENTS: FormElements = {
+  [FieldTypeIds.longText]: {
     name: "מס' שורות טקסט",
     icon: "menu",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.shortText,
+  [FieldTypeIds.shortText]: {
     name: "שורה אחת",
     icon: "dragHandle",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.options,
+  [FieldTypeIds.options]: {
     name: "אפשרויות",
     icon: "moreVert",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.link,
+  [FieldTypeIds.link]: {
     name: "היפר-קישור",
     icon: "link",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.date,
+  [FieldTypeIds.date]: {
     name: "תאריך",
     icon: "dateRange",
-    fieldType: FieldTypes.date,
+    fieldType: FieldDataTypes.date,
   },
-  {
-    typeId: FieldTypeIds.time,
+  [FieldTypeIds.time]: {
     name: "שעה",
     icon: "accessTime",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.location,
+  [FieldTypeIds.location]: {
     name: "נקודת ציון",
     icon: "location",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.checkbox,
+  [FieldTypeIds.checkbox]: {
     name: "כן/לא",
     icon: "checkbox",
-    fieldType: FieldTypes.boolean,
+    fieldType: FieldDataTypes.boolean,
   },
-  {
-    typeId: FieldTypeIds.list,
+  [FieldTypeIds.list]: {
     name: "רשימה",
     icon: "list",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-  {
-    typeId: FieldTypeIds.number,
+  [FieldTypeIds.number]: {
     name: "מספר",
     icon: "numbers",
-    fieldType: FieldTypes.number,
+    fieldType: FieldDataTypes.number,
   },
-  {
-    typeId: FieldTypeIds.file,
+  [FieldTypeIds.file]: {
     name: "קובץ",
     icon: "file",
-    fieldType: FieldTypes.file,
+    fieldType: FieldDataTypes.file,
   },
-  {
-    typeId: FieldTypeIds.form,
+  [FieldTypeIds.linkedForm]: {
     name: "טופס בתוך טופס",
     icon: "forms",
-    fieldType: FieldTypes.string,
+    fieldType: FieldDataTypes.string,
   },
-];
+};
 
 export interface Section {
   id: string;
@@ -549,6 +544,7 @@ export interface IResponseSection {
   order: number;
   id?: string;
 }
+
 export const DEFAULT_FORM_ICONS: IconNameObj[] = [
   {
     name: "track_changes",
@@ -816,7 +812,7 @@ export const DEFAULT_FORM_ICONS: IconNameObj[] = [
   },
 ];
 
-// Import condition-related types and utilities from conditionUtils
+// Import condition-related conditionTypes and utilities from conditionUtils
 import type { ConditionOperatorType, LogicalOperatorType } from "./conditionUtils";
 import { GridColDef } from "@mui/x-data-grid";
 
@@ -861,13 +857,13 @@ export interface ConditionsRoot {
   name?: string; // Optional name for the condition set
 }
 
-// Condition value types for better type safety
+// Condition value conditionTypes for better type safety
 export type ConditionValue = string | string[] | boolean | number | null;
 
 export interface Condition {
   field: string; // Unique ID of the field
   operator: ConditionOperatorType; // Single operator, not array
-  value: ConditionValue; // Value to compare against - can be various types
+  value: ConditionValue; // Value to compare against - can be various conditionTypes
   id?: string; // Optional ID for the condition, useful for editing or deleting
 }
 

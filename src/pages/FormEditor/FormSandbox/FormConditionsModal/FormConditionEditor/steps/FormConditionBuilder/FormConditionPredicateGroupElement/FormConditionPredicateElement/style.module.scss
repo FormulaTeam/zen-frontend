@@ -1,0 +1,109 @@
+.conditionContainer {
+  --condition-gap: 19px;
+  display: flex;
+  position: relative;
+}
+
+.conditionFieldsContainer {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--condition-gap);
+  min-height: 98px;
+  background: white;
+  padding: 24px 24px 12px 24px;
+  box-sizing: border-box;
+  border-radius: 16px;
+  border: 3px #d0d6da solid;
+}
+
+.conditionOperationToggleContainer {
+  --button-group-width: 60px;
+  --condition-area-width: 100px;
+  --operator-button-height: 35px;
+}
+
+.conditionOperationToggleWrapper {
+  width: var(--button-group-width);
+  position: absolute;
+  right: calc(-1 * (var(--condition-area-width) + var(--button-group-width)) / 2);
+  top: calc(0px - var(--operator-button-height) - var(--condition-gap) / 2);
+}
+
+.operationToggleConnector {
+  --connector-thickness: 3px;
+  --connector-height: calc(50% - (var(--condition-gap) + var(--operator-button-height)) / 2);
+  --edge-connector-height: calc(50% - var(--condition-gap) - var(--connector-thickness) * 2);
+
+  position: absolute;
+  width: calc(var(--condition-area-width) / 2);
+  border-top: var(--connector-thickness) solid #d0d6da;
+  border-right: var(--connector-thickness) solid #d0d6da;
+  border-top-right-radius: 10px;
+  right: calc((var(--condition-area-width) + var(--connector-thickness)) / -2);
+}
+
+.firstOperationToggleTopConnector {
+  @extend .operationToggleConnector;
+  top: 50%;
+  height: var(--edge-connector-height);
+}
+
+.operationToggleTopConnector {
+  @extend .operationToggleConnector;
+  top: 50%;
+  height: var(--connector-height);
+  border-top: unset;
+  border-top-right-radius: 0;
+}
+
+.operationToggleBottomConnector {
+  @extend .operationToggleConnector;
+  top: calc(50% - var(--connector-height));
+  height: var(--connector-height);
+  border-top-right-radius: 0;
+  transform: scaleY(-1);
+}
+
+.lastOperationToggleBottomConnector {
+  @extend .operationToggleConnector;
+  top: calc(50% - var(--edge-connector-height));
+  height: var(--edge-connector-height);
+  transform: scaleY(-1);
+}
+
+.deleteConditionButtonContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-inline-start: 16px;
+  width: 84px;
+}
+
+.deleteConditionButton.deleteConditionButton {
+  color: white;
+  background-color: #bc535f;
+  font-size: 24px;
+  border-radius: 50%;
+  min-width: 0;
+  border: 6px solid white;
+  height: 42px;
+  width: 42px;
+  box-shadow: 0 4px 10px 0 #1976D21A;
+}
+
+.deleteConditionButton.deleteConditionButton:hover {
+  background-color: #d55262;
+}
+
+.fieldOptionIcon {
+  box-shadow: 0 1px 3px 0 rgba(67, 115, 168, 0.53);
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  margin-left: 10px;
+}

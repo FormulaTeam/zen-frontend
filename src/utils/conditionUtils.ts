@@ -1,13 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
-import { ALLOWED_FIELD_TYPES_FOR_CONDITION, FieldTypeIds, connectionTypes } from "./interfaces";
-import type {
-  ConditionGroup,
-  ConditionsRoot,
-  Condition,
-  AffectedTarget,
-  FormField,
-  FormFieldTypeId,
-} from "./interfaces";
+import type { AffectedTarget, Condition, ConditionGroup, ConditionsRoot, FormField } from "./interfaces";
+import { ALLOWED_FIELD_TYPES_FOR_CONDITION, connectionTypes, FieldTypeIds } from "./interfaces";
 
 // Condition operators enum for better type safety
 export const ConditionOperators = {

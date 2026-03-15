@@ -60,7 +60,7 @@ export const TimePickerComponent: React.FC<TimePickerComponentProps> = ({
                         },
                         sx: compact ? compactInputStyles : standardInputStyles,
                         error: !!errorMessage,
-                        helperText: errorMessage,
+                        helperText: undefined,
                     },
                     popper: {
                         placement: "bottom-start",

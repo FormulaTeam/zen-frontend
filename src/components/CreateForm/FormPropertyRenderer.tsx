@@ -315,7 +315,7 @@ export default function FormPropertyRenderer({
       input = <>{getFormPropertyTitleTextField(formField, index)}</>;
       break;
 
-    case FieldTypeIds.form: //טופס
+    case FieldTypeIds.linkedForm: //טופס
       formField.shouldSyncToMetro = false;
       showRequiredToggle = false;
 

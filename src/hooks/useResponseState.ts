@@ -1,14 +1,15 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  ConditionUtils,
   FieldTypeIds,
   Form,
   FormField,
   ResponseFieldValue,
   ResponseForm,
   Role,
-  ConditionUtils,
+  SearchResponsesFilter,
 } from "../utils/interfaces";
-import { getFormById, getResponses, searchResponses } from "../api";
+import { getFormById, searchResponses } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
 import {
   checkUserAccessForResponse,
@@ -19,6 +20,10 @@ import {
   wktLongitudeRegexX,
 } from "../utils/utils";
 import { NOT_A_SECTION_ID } from "../utils/sections/consts";
+import { useNavigate } from "react-router-dom";
+import { IPath } from "../types/enums/global.enums";
+import { isDifferent } from "../utils/responses";
+import { isEmptyValue } from "../utils/strings";
 
 interface SectionsMap {
   [sectionId: string]: {
@@ -29,10 +34,6 @@ interface SectionsMap {
     id?: string;
   };
 }
-import { useNavigate } from "react-router-dom";
-import { IPath } from "../types/enums/global.enums";
-import { isDifferent } from "../utils/responses";
-import { isEmptyValue } from "../utils/strings";
 
 export const useResponseState = (
   formId: string | undefined,

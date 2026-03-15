@@ -98,7 +98,7 @@ export const NumberCellEditor: React.FC<NumberCellEditorProps> = ({
             onChange={handleChange}
             onKeyDown={(e) => preventEnterKeyNavigation(e)}
             error={!!externalErrorMessage || !!errorMessage}
-            helperText={externalErrorMessage || errorMessage || " "}
+            helperText={errorMessage || " "}
             variant="standard"
             autoFocus
             inputProps={{

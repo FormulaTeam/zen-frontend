@@ -1,13 +1,7 @@
 import apiClient from "./config";
-import {
-  Form,
-  Filter,
-  MetroReturnedData,
-  User,
-  UpdateFormPayload,
-} from "../utils/interfaces";
 import { z } from "zod";
 import { CreateFormSchema } from "formula-gear";
+import { Filter, Form, MetroReturnedData, NewForm, UpdateFormPayload, User } from "../utils/interfaces";
 import { UserData } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { UseQueryOptions, UseQueryResult, useMutation } from "@tanstack/react-query";
@@ -34,11 +28,7 @@ export const getForms = async (filter?: Filter): Promise<Form[]> => {
   };
 
   try {
-    const response = await apiClient.get<Form[]>("/forms/get-forms", {
-      params,
-      signal: filter?.signal,
-    });
-
+    const response = await apiClient.get<Form>("/forms/get-forms", { params, signal: filter?.signal });
     if (!Array.isArray(response?.data)) {
       console.log("response:", response, "type: ", typeof response);
       console.log("response?.data:", response?.data, "type: ", typeof response?.data);

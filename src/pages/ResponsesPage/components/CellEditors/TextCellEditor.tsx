@@ -45,7 +45,6 @@ export const TextCellEditor: React.FC<TextCellEditorProps> = ({
     errorMessage,
 }) => {
     const [localValue, setLocalValue] = useState(value || "");
-    const [error, setError] = useState(false);
 
     useEffect(() => {
         setLocalValue(value || "");
@@ -55,7 +54,6 @@ export const TextCellEditor: React.FC<TextCellEditorProps> = ({
         const newValue = event.target.value;
         setLocalValue(newValue);
 
-        // Validate
         let isValid = true;
         if (isRequired && !newValue) {
             isValid = false;
@@ -64,7 +62,6 @@ export const TextCellEditor: React.FC<TextCellEditorProps> = ({
             isValid = reg.test(newValue);
         }
 
-        setError(!isValid);
         onChange(newValue, isValid);
     };
 
@@ -75,8 +72,7 @@ export const TextCellEditor: React.FC<TextCellEditorProps> = ({
             value={localValue}
             onChange={handleChange}
             onKeyDown={(e) => preventEnterKeyNavigation(e, multiline)}
-            error={!!errorMessage || error}
-            helperText={errorMessage}
+            error={!!errorMessage}
             variant="standard"
             autoFocus
             slotProps={{

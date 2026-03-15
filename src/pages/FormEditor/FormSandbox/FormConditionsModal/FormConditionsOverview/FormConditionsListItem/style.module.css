@@ -1,0 +1,21 @@
+.itemContainer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 24px;
+    border: 2px #d8dfe3 solid;
+    border-radius: 16px;
+    background: white;
+}
+
+.itemActions {
+    display: flex;
+}
+
+.actionButton.actionButton {
+    border-radius: 50%;
+    min-width: 0;
+    height: 45px;
+    width: 45px;
+}

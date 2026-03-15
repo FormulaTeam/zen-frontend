@@ -45,38 +45,36 @@ const MainSortSelect: React.FC<MainSortSelectProps> = ({ onSortChange, dataTestI
   };
 
   return (
-    <CacheProvider value={cacheRtl}>
-      <StyledAutocomplete
-        sortInputWidth={sortInputWidth}
-        isOptionEqualToValue={(option, value) => {
-          return option?.label === value?.label;
-        }}
-        className="sort-by-autocomplete"
-        value={sortByOption}
-        options={sortByOptions}
-        id="sortByAutocomplete"
-        onChange={handleSortByChange}
-        multiple={false}
-        disablePortal //so options dropdown will show in popup
-        getOptionLabel={(option) => option.label}
-        style={{ direction: "rtl" }}
-        renderInput={(params) => (
-          <StyledTextField
-            {...params}
-            label="מיון לפי"
-            variant="outlined"
-            fullWidth
-            size="small"
-            name="placeholder"
-            value={sortByOption || ""}
-            inputProps={{
-              ...params.inputProps,
-              'data-testid': dataTestId,
-            }}
-          />
-        )}
-      />
-    </CacheProvider>
+    <StyledAutocomplete
+      sortInputWidth={sortInputWidth}
+      isOptionEqualToValue={(option, value) => {
+        return option?.label === value?.label;
+      }}
+      className="sort-by-autocomplete"
+      value={sortByOption}
+      options={sortByOptions}
+      id="sortByAutocomplete"
+      onChange={handleSortByChange}
+      multiple={false}
+      disablePortal //so options dropdown will show in popup
+      getOptionLabel={(option) => option.label}
+      style={{ direction: "rtl" }}
+      renderInput={(params) => (
+        <StyledTextField
+          {...params}
+          label="מיון לפי"
+          variant="outlined"
+          fullWidth
+          size="small"
+          name="placeholder"
+          value={sortByOption || ""}
+          inputProps={{
+            ...params.inputProps,
+            'data-testid': dataTestId,
+          }}
+        />
+      )}
+    />
   );
 };
 

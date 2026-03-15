@@ -142,7 +142,7 @@ Add the new field type to the constants:
 
 ```typescript
 // src/utils/interfaces.ts
-export const FieldTypeIds = {
+export const ElementTypeIds = {
   // ... existing types
   newFieldType: 13, // Use next available ID
 } as const;
@@ -155,7 +155,7 @@ export const FieldTypeIds = {
 export const DEFAULT_FIELDS: DefaultField[] = [
   // ... existing fields
   {
-    typeId: FieldTypeIds.newFieldType,
+    typeId: ElementTypeIds.newFieldType,
     name: "שם השדה החדש", // Hebrew name
     icon: "iconName", // Icon from FieldsIcons
     fieldType: FieldTypes.string, // Data type
@@ -229,7 +229,7 @@ export default function FormPropertyRenderer({ ...props }) {
   switch (formField.typeId) {
     // ... existing cases
 
-    case FieldTypeIds.newFieldType:
+    case ElementTypeIds.newFieldType:
       input = (
         <CustomNewField
         // Pass required props
@@ -252,7 +252,7 @@ export default function FormFieldRenderer({ ...props }) {
   switch (formField.typeId) {
     // ... existing cases
 
-    case FieldTypeIds.newFieldType:
+    case ElementTypeIds.newFieldType:
       input = (
         <CustomNewField
         // Configure for response display
@@ -273,7 +273,7 @@ function FormFieldsPreviewRenderer({ formField }) {
   switch (formField.typeId) {
     // ... existing cases
 
-    case FieldTypeIds.newFieldType:
+    case ElementTypeIds.newFieldType:
       return <CustomNewField /* preview props */ />;
   }
 }
@@ -300,7 +300,7 @@ If your field needs special configuration options, add them to the form builder:
 
 ```typescript
 // Add configuration components in FormPropertyRenderer
-case FieldTypeIds.newFieldType:
+case ElementTypeIds.newFieldType:
   input = (
     <>
       {getFormPropertyTitleTextField(formField, index)}
