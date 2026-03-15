@@ -8,8 +8,8 @@ import apiClient from "./config";
  * @param redirectUri - The exact redirect URI used during the authorization request.
  */
 export const loginWithCode = async (
-  code: string,
+  authorizationCode: string,
   redirectUri: string,
 ): Promise<void> => {
-  await apiClient.post("/auth/login", { code, redirectUri });
+  await apiClient.post("/auth/login", { authorizationCode, redirectUri });
 };
