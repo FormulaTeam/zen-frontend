@@ -3,10 +3,9 @@ import { User } from "../utils/interfaces";
 import { useFetch } from "../utils/useFetch";
 import { UseQueryResult } from "@tanstack/react-query";
 import { z } from "zod";
-import { UserSchema, UserTypeSchema } from "formula-gear";
+import { UserSchema, UserType } from "formula-gear";
 
 export type UserDto = z.infer<typeof UserSchema>;
-export type UserTypeDto = z.infer<typeof UserTypeSchema>;
 
 export const getUsers = async (filterName?: string): Promise<User[]> => {
   const trimmedName = filterName?.trim();
@@ -40,7 +39,7 @@ export const useGetIsSuperAdmin = ({ enabled }: { enabled: boolean } = { enabled
   });
 };
 
-export const getMyProfile = async (): Promise<UserTypeDto> => {
-  const response = await apiClient.get<UserTypeDto>("/users/me/type");
+export const getMyProfile = async (): Promise<UserType> => {
+  const response = await apiClient.get<UserType>("/users/me/type");
   return response.data;
 };

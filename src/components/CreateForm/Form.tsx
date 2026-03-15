@@ -333,9 +333,9 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
             .map(({ name, index, typeId, displayName, required }) => ({
               name,
               index,
-              type_id: typeId as number,
-              display_name: displayName,
-              required,
+              fieldType: typeId as number,
+              displayName: displayName,
+              isRequired: required,
               extra: {},
             })),
         })),
