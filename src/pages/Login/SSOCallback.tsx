@@ -4,7 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { loginWithCode } from "../../api/authApi";
 import apiClient from "../../api/config";
 
-export const SSOCallback = () => {
+export const SSOComeback = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { login, user } = useAuth();
@@ -24,7 +24,7 @@ export const SSOCallback = () => {
       return;
     }
 
-    const redirectUri = `${window.location.origin}/callback`;
+    const redirectUri = `${window.location.origin}/comeback`;
 
     loginWithCode(code, redirectUri)
       .then(() => apiClient.get<{ userId: number }>("/users/me/type"))
@@ -40,5 +40,3 @@ export const SSOCallback = () => {
 
   return null;
 };
-
-

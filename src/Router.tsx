@@ -9,7 +9,7 @@ import ResponsesPage from "./pages/ResponsesPage/ResponsesPage";
 import ProtectedRoute from "./components/ProrectedRoute/ProtectedRoute";
 import Navbar from "./components/Navbar/Navbar";
 import { ToastContainer } from "react-toastify";
-import { SSOCallback } from "./pages/Login/SSOCallback";
+import { SSOComeback } from "./pages/Login/SSOCallback";
 import ErrorPage from "./pages/ErrorPage/ErrorPage";
 import CreateForm from "./pages/CreateForm/CreateForm";
 import EditForm from "./pages/EditForm/EditForm";
@@ -46,7 +46,7 @@ const AppRouter = () => {
         <Routes>
           <Route path={IPath.ERROR} element={<ErrorPage />} />
           <Route path={IPath.LOGIN} element={<Login />} />
-          <Route path={IPath.SSO_CALLBACK} element={<SSOCallback />} />
+          <Route path={IPath.COMEBACK} element={<SSOComeback />} />
           <Route
             path={IPath.DASHBOARD}
             element={
@@ -84,15 +84,9 @@ const AppRouter = () => {
               }
             />
             <Route path={IPath.RESPONSE_CREATE} element={<Response user={user} />} />
-            <Route
-              path={IPath.RESPONSE_CREATE_COPY}
-              element={<Response user={user} copyMode />}
-            />
+            <Route path={IPath.RESPONSE_CREATE_COPY} element={<Response user={user} copyMode />} />
             <Route path={IPath.RESPONSE_EDIT} element={<Response user={user} />} />
-            <Route
-              path={IPath.RESPONSE_VIEW}
-              element={<Response user={user} viewMode />}
-            />
+            <Route path={IPath.RESPONSE_VIEW} element={<Response user={user} viewMode />} />
             <Route path={IPath.DOWNLOAD_FILE} element={<DownloadPage />} />
             <Route path={IPath.DELETED_FORMS} element={<DeletedForms user={user} />} />
           </Route>

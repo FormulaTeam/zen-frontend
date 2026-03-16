@@ -16,7 +16,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const isAuthPage =
-      window.location.pathname === "/login" || window.location.pathname === "/callback";
+      window.location.pathname === "/login" || window.location.pathname === "/comeback";
     if (error.response?.status === StatusCodes.UNAUTHORIZED && !isAuthPage) {
       window.location.href = "/login";
     }
@@ -25,4 +25,3 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
-

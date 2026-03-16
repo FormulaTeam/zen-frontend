@@ -1,7 +1,7 @@
 export enum IPath {
   HOME = "/",
   LOGIN = "/login",
-  SSO_CALLBACK = "/callback",
+  COMEBACK = "/comeback",
   DASHBOARD = "/dashboard",
   ERROR = "/error",
 
