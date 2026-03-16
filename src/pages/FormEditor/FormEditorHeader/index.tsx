@@ -1,10 +1,11 @@
 import styles from "./style.module.css";
-import { getFormIconByName, DEFAULT_ICON_NAME } from "@utils/utils";
+import { DEFAULT_ICON_NAME, formIconsNamesMap } from "@utils/utils";
 import { Button, TextField, Tooltip, Typography } from "@mui/material";
 import { FormMetadata, useFormStructureContext } from "../context/FormStructureContext";
 import { Check, Close, DriveFileRenameOutline } from "@mui/icons-material";
 import { useState } from "react";
 import { useFormEditor } from "../hooks/useFormEditor";
+import IconsGrid from "../../../components/IconsGrid/IconsGrid";
 
 function FormEditorHeader() {
   const { formStructure, validateForm, setFormMetadata } = useFormStructureContext();
@@ -12,6 +13,7 @@ function FormEditorHeader() {
 
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
   const [editedMetadata, setEditedMetadata] = useState<FormMetadata>({ title: "" });
+  const [showPickIcon, setShowPickIcon] = useState(false);
 
   const { title, description, iconId, validationErrors } = formStructure.metadata;
 
@@ -20,14 +22,39 @@ function FormEditorHeader() {
     handleSaveForm();
   };
 
+  const onIconChange = (newIcon: string | null): void => {
+    if (newIcon) {
+      setFormMetadata({ iconId: newIcon });
+      if (isEditingMetadata) {
+        setEditedMetadata((prev) => ({ ...prev, iconId: newIcon }));
+      }
+    }
+    setShowPickIcon(false);
+  }
+
   return (
     <div className={styles.header}>
       <div className={styles.headerStart}>
         <div className={styles.formIconWrapper}>
-          <img src={getFormIconByName(DEFAULT_ICON_NAME) ?? iconId}
-            alt={"icon"}
-            className={styles.formIcon}
-            onClick={() => null} />
+          {isEditingMetadata ? (
+            <Tooltip title="לחץ על מנת לשנות אייקון">
+              <img
+                src={formIconsNamesMap.get(editedMetadata.iconId ?? "") || formIconsNamesMap.get(DEFAULT_ICON_NAME)}
+                alt={"icon"}
+                className={styles.formIcon}
+                onClick={() => setShowPickIcon(true)}
+              />
+            </Tooltip>
+          ) : (
+            <Tooltip title="לחץ על מנת לשנות אייקון">
+              <img
+                src={formIconsNamesMap.get(iconId ?? "") || formIconsNamesMap.get(DEFAULT_ICON_NAME)}
+                alt={"icon"}
+                className={styles.formIcon}
+                onClick={() => setShowPickIcon(true)}
+              />
+            </Tooltip>
+          )}
         </div>
         <div className={styles.editingMetadata}>
           {
@@ -80,7 +107,7 @@ function FormEditorHeader() {
                       <Button className={styles.button}
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={(_) => {
-                          setEditedMetadata((prev) => ({ ...prev, title, description }));
+                          setEditedMetadata({ title, description, iconId });
                           setIsEditingMetadata(true);
                         }}>
                         <DriveFileRenameOutline sx={{ fontSize: 25, color: "#506f9e" }} />
@@ -100,6 +127,13 @@ function FormEditorHeader() {
         </Button>
         <Button variant={"outlined"} color={"error"} onClick={handleExit} disabled={isLoading}>יציאה</Button>
       </div>
+
+      {showPickIcon && (
+        <IconsGrid
+          onIconChange={onIconChange}
+          onClosePickIcon={() => setShowPickIcon(false)}
+        />
+      )}
     </div>
   );
 }

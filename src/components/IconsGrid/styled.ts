@@ -1,52 +1,72 @@
 import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid";
-import Icon, { IconProps } from "@mui/material/Icon";
 import { styled } from "@mui/material/styles";
+import { DialogTitle, DialogContent, DialogActions } from "@mui/material";
 
-interface GridIconProps extends IconProps {
+interface GridIconProps {
   selected?: boolean;
   hidePointer?: boolean;
 }
 
-export const IconsGridWrapper = styled(Box)(() => ({
-  minHeight: "50vh",
-  maxHeight: "50vh",
-  position: "relative",
+export const StyledDialogTitle = styled(DialogTitle)(() => ({
+  textAlign: "center",
+  paddingBottom: "8px",
 }));
-export const IconsGridContainer = styled(Grid)(() => ({
+
+export const SearchContainer = styled(Box)(() => ({
+  padding: "0 24px 8px 24px",
+}));
+
+export const StyledDialogContent = styled(DialogContent)(() => ({
+  minHeight: "30vh",
   alignContent: "flex-start",
-  justifyContent: "flex-start",
-  minHeight: "35vh",
-  maxHeight: "35vh",
-  overflowY: "auto",
-  marginBottom: "100px",
 }));
+
+export const StyledDialogActions = styled(DialogActions)(() => ({
+  justifyContent: "center",
+  padding: "16px",
+  gap: "16px",
+  "& .MuiButton-root": {
+    width: "50%",
+  },
+}));
+
+export const GridIconContainer = styled(Box)(() => ({
+  textAlign: "center",
+  padding: "8px",
+}));
+
+export const IconImage = styled("img")(() => ({
+  width: 40,
+  height: 40,
+  objectFit: "contain",
+  transition: "all 0.2s ease-in-out",
+}));
+
 export const loadingContainer = styled(Box)(() => ({
   minHeight: "50vh",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
 }));
-export const GridIcon = styled(Icon)<GridIconProps>(({ theme, selected, hidePointer = false }) => ({
-  fontSize: 40,
+
+export const GridIcon = styled(Box)<GridIconProps>(({ theme, selected, hidePointer = false }) => ({
+  display: "inline-flex",
+  padding: "8px",
+  borderRadius: "8px",
   cursor: hidePointer ? "default" : "pointer",
-  color: selected ? theme.palette.primary.main : theme.palette.text.secondary,
+  backgroundColor: selected ? theme.palette.action.selected : "transparent",
+  border: selected ? `1px solid ${theme.palette.primary.main}` : "1px solid transparent",
+  transition: "all 0.2s ease-in-out",
   "&:hover": {
-    color: "primary.main",
+    backgroundColor: theme.palette.action.hover,
+    border: `1px solid ${theme.palette.primary.light}`,
+    "& img": {
+      filter: "grayscale(0%)",
+      opacity: 1,
+    }
   },
-}));
-
-
-export const DialogActionWrapper = styled(Box)`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  padding: 0;
-  button {
-    width: 50%;
+  "& img": {
+    filter: selected ? "grayscale(0%)" : "grayscale(100%)",
+    opacity: selected ? 1 : 0.6,
   }
-`;
+}));

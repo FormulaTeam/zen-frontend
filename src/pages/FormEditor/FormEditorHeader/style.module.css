@@ -21,7 +21,7 @@
 }
 
 .formIcon {
-    max-width: 60px;
+    max-width: 35px;
     cursor: pointer;
 }
 
@@ -39,7 +39,7 @@
     flex: 1;
 }
 
-.titleInput{
+.titleInput {
     font-size: 25px;
 }
 
@@ -50,7 +50,7 @@
     height: fit-content;
 }
 
-.button.button{
+.button.button {
     min-width: 0;
     height: 100%;
     width: 60px;
