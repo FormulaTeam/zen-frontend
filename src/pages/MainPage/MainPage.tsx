@@ -21,6 +21,7 @@ import BasePopup from "../../components/BasePopup/BasePopup";
 import { AutoDelete } from "@mui/icons-material";
 import { RowBox, StyledTypography, GreetingBox, TabsBox, SortControlsBox } from "./styled";
 import MainSortSelect from "../../components/MainSortSelect/MainSortSelect";
+import { useGetMyPersonal } from "../../api/usersApi";
 
 function MainPage({
   user,
@@ -36,6 +37,8 @@ function MainPage({
   const { isSuperAdmin } = useSuperAdmin();
   const navigate = useNavigate();
   const theme = useTheme();
+
+  const { data: myPersonal } = useGetMyPersonal({ enabled: !!user });
 
   const { getScope } = useActiveTabFilter({ isSuperAdmin: !!isSuperAdmin, tabValue });
 
@@ -69,7 +72,7 @@ function MainPage({
       <Box className="tabs-and-select-div">
         <RowBox>
           <GreetingBox>
-            <StyledTypography id="greeting">היי</StyledTypography>
+            <StyledTypography id="greeting">{myPersonal?.name ? `היי ${myPersonal.name}` : "היי"}</StyledTypography>
             <img src={wavingHand} />
           </GreetingBox>
 
