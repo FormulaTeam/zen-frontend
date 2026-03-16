@@ -1,8 +1,6 @@
+import { DEFAULT_ICON_NAME } from "@utils/utils";
 import { CreateFormDto } from "../../../api/formsApi";
 import { FormStructure } from "../context/FormStructureContext";
-
-// Default icon is "formX" as per the API validation
-const DEFAULT_ICON = "formX";
 
 export function convertFormStructureToCreateDto(formStructure: FormStructure): CreateFormDto {
     const sections = formStructure.orderedSectionIds.map((sectionId, index) => {
@@ -32,7 +30,7 @@ export function convertFormStructureToCreateDto(formStructure: FormStructure): C
     const payload: any = {
         name: formStructure.metadata.title,
         description: formStructure.metadata.description ?? "",
-        icon: DEFAULT_ICON,
+        icon: DEFAULT_ICON_NAME,
         sections,
     };
 

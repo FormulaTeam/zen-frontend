@@ -1,5 +1,5 @@
 import styles from "./style.module.css";
-import { getFormIconByName } from "../../../utils/utils";
+import { getFormIconByName, DEFAULT_ICON_NAME } from "@utils/utils";
 import { Button, TextField, Tooltip, Typography } from "@mui/material";
 import { FormMetadata, useFormStructureContext } from "../context/FormStructureContext";
 import { Check, Close, DriveFileRenameOutline } from "@mui/icons-material";
@@ -24,7 +24,7 @@ function FormEditorHeader() {
     <div className={styles.header}>
       <div className={styles.headerStart}>
         <div className={styles.formIconWrapper}>
-          <img src={getFormIconByName() ?? iconId}
+          <img src={getFormIconByName(DEFAULT_ICON_NAME) ?? iconId}
             alt={"icon"}
             className={styles.formIcon}
             onClick={() => null} />

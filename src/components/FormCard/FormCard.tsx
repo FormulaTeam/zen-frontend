@@ -2,7 +2,7 @@ import { useState } from "react";
 import React from "react";
 import { Box, Divider, Tooltip, useTheme } from "@mui/material";
 import {
-  formIconsNamesMap,
+  getFormIconByName,
   PERMISSION_TYPES,
   showErrorNotification,
 } from "../../utils/utils";
@@ -62,14 +62,18 @@ const FormCard = ({
     return IconComponent ? <IconComponent /> : name;
   };
 
-  const getIcon = (iconName: string | number | null) => {
+  const getIcon = (iconName: string | null) => {
+    const iconSrc = getFormIconByName(iconName ?? undefined);
+
+    if (iconSrc) {
+      return <Img src={iconSrc} alt={iconName ?? "form icon"} />;
+    }
+
     if (!iconName) {
       return <Img src={formX} alt="form icon" />;
     }
-    if (formIconsNamesMap.get(iconName)) {
-      return <Img src={formIconsNamesMap.get(iconName)} alt={String(iconName)} />;
-    }
-    return <CustomStyledIcon>{renderDynamicIcon(String(iconName))}</CustomStyledIcon>;
+
+    return <CustomStyledIcon>{renderDynamicIcon(iconName)}</CustomStyledIcon>;
   };
 
   const goToResponsesPage = (event: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {

@@ -159,7 +159,7 @@ export const permissionsOptions = [
   { value: 3, label: "רק למי שאני שיתפתי את הטופס" },
 ];
 
-const DEFAULT_ICON_NAME = "defaultIcon";
+export const DEFAULT_ICON_NAME = formIcon.FormX;
 
 export const formIconsNamesMap = new Map<string | number, any>([
   [formIcon.FormX, formX],
@@ -190,39 +190,17 @@ export const formIconsNamesMap = new Map<string | number, any>([
   [formIcon.Ppt, ppt],
   [formIcon.Text, txt],
   [formIcon.Excel, xls],
-  // Add string keys for direct string lookups
-  ["formX", formX],
-  ["examDefault", examDefault],
-  ["binoculars", binoculars],
-  ["car", car],
-  ["check", check],
-  ["contract", contract],
-  ["file", file],
-  ["group", group],
-  ["hourGlass", hourGlass],
-  ["idea", idea],
-  ["magnifyingGlass", magnifyingGlass],
-  ["militaryHat", militaryHat],
-  ["pen", pen],
-  ["programmer", programmer],
-  ["searching", searching],
-  ["smile", smile],
-  ["soccerBall", soccerBall],
-  ["soldier", soldier],
-  ["tank", tank],
-  ["target", target],
-  ["user", user],
-  ["document", doc],
-  ["jpeg", jpg],
-  ["pdf", pdf],
-  ["png", png],
-  ["ppt", ppt],
-  ["text", txt],
-  ["excel", xls],
 ]);
 
-export function getFormIconByName(iconName?: string) {
-  return formIconsNamesMap.get(iconName ?? DEFAULT_ICON_NAME);
+export function getFormIconByName(iconName?: string): any {
+  if (!iconName) {
+    return formIconsNamesMap.get(DEFAULT_ICON_NAME);
+  }
+
+  const normalizedIconName = iconName.trim().toLowerCase();
+
+  return formIconsNamesMap.get(normalizedIconName)
+    ?? formIconsNamesMap.get(DEFAULT_ICON_NAME);
 }
 
 export const numberToHebrewLetterMap = new Map<number, string>([
