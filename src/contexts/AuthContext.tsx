@@ -87,6 +87,7 @@ const ROLE_CATALOG: Role[] = [
 
 interface AuthContextType {
   user: User | null;
+  loading: boolean;
   login: ({ user }: { user: User }) => void;
   roles: Role[];
 }
@@ -114,13 +115,29 @@ export const useAuth = () => {
  */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    import("../api/usersApi").then(({ getMyProfile }) => {
+      getMyProfile()
+        .then(() => {
+          setUser({});
+        })
+        .catch(() => {
+          setUser(null);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    });
+  }, []);
 
   const login = useCallback(({ user }: { user: User }) => {
     setUser(user);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, roles: ROLE_CATALOG }}>
+    <AuthContext.Provider value={{ user, loading, login, roles: ROLE_CATALOG }}>
       {children}
     </AuthContext.Provider>
   );

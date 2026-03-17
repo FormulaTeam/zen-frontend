@@ -24,16 +24,17 @@ export const SuperAdminProvider = ({ children }: SuperAdminProviderProps) => {
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
 
   const { user } = useAuth();
-  const { data: isSuperAdminData, isSuccess } = useGetIsSuperAdmin({ enabled: !!user });
+  const { data: isSuperAdminData } = useGetIsSuperAdmin();
 
   useEffect(() => {
-    if (user && isSuccess) {
-      setIsSuperAdmin(isSuperAdminData ?? false);
+    if (user && isSuperAdminData !== undefined) {
+      setIsSuperAdmin(isSuperAdminData);
+    } else if (!user) {
+      setIsSuperAdmin(null);
     }
-  }, [user, isSuccess, isSuperAdminData]);
+  }, [user, isSuperAdminData]);
 
   return (
     <SuperAdminContext.Provider value={{ isSuperAdmin }}>{children}</SuperAdminContext.Provider>
   );
 };
-

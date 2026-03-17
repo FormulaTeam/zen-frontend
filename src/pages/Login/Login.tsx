@@ -11,7 +11,7 @@ const getKeycloakUrl = (): string =>
 
 const buildKeycloakRedirectUrl = (): string => {
   const baseUrl = getKeycloakUrl();
-  const redirectUri = encodeURIComponent(`${window.location.origin}/callback`);
+  const redirectUri = encodeURIComponent(`${window.location.origin}/comeback`);
   return `${baseUrl}&redirect_uri=${redirectUri}`;
 };
 

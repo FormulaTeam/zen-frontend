@@ -17,7 +17,7 @@ function shouldUpdateLastVisitedPath(pathname: string) {
   return (
     !pathname.endsWith("error") &&
     !pathname.includes("accessToken=") &&
-    !pathname.includes("callback")
+    !pathname.includes("comeback")
   );
 }
 

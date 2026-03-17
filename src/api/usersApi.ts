@@ -30,12 +30,11 @@ export const getUsers = async (filterName?: string): Promise<User[]> => {
   }
 };
 
-export const useGetIsSuperAdmin = ({ enabled }: { enabled: boolean } = { enabled: true }): UseQueryResult<boolean> => {
+export const useGetIsSuperAdmin = (): UseQueryResult<boolean> => {
   return useFetch<undefined, boolean>({
     endpoint: "/users/me/type",
     queryKey: () => ["user-type"],
     queryOptions: {
-      enabled,
       select: (data: any) => data === userType.SuperAdmin,
     },
   });
@@ -49,4 +48,9 @@ export const useGetMyPersonal = ({ enabled }: { enabled: boolean } = { enabled: 
       enabled,
     },
   });
+};
+
+export const getMyProfile = async (): Promise<UserPersonalDto> => {
+  const response = await apiClient.get<UserPersonalDto>("/users/me/personal");
+  return response.data;
 };
