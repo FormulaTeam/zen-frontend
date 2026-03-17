@@ -8,15 +8,19 @@ import { IPath } from "../../types/enums/global.enums";
  * If no user is in context, redirects to /login so the user can initiate the Keycloak flow.
  */
 const ProtectedRoute: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
       localStorage.setItem("lastVisitedPath", window.location.pathname);
       navigate(IPath.LOGIN, { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return null; // Or a loading spinner
+  }
 
   if (!user) {
     return null;
@@ -26,4 +30,5 @@ const ProtectedRoute: React.FC = () => {
 };
 
 export default ProtectedRoute;
+
 

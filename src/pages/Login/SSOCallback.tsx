@@ -7,9 +7,13 @@ import apiClient from "../../api/config";
 export const SSOComeback = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { login, user } = useAuth();
+  const { login, user, loading } = useAuth();
 
   useEffect(() => {
+    if (loading) {
+      return;
+    }
+
     if (user) {
       const lastVisitedPath = localStorage.getItem("lastVisitedPath");
       navigate(lastVisitedPath ?? "/", { replace: true });
@@ -36,7 +40,8 @@ export const SSOComeback = () => {
       .catch(() => {
         navigate("/error", { replace: true });
       });
-  }, [location.search]);
+  }, [location.search, loading, user, navigate, login]);
 
   return null;
 };
+
