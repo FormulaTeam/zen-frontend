@@ -11,8 +11,9 @@ export function convertFormStructureToCreateDto(formStructure: FormStructure): C
             .map((field) => {
                 const fieldData = field.data;
                 return {
+                    id: field.id,
                     name: fieldData.name,
-                    index: formStructure.sections[sectionId].fieldIds.indexOf(field.id),
+                    index: formStructure.sections[sectionId].fieldIds.indexOf(field.id) + 1,
                     fieldType: fieldData.typeId as number,
                     displayName: fieldData.displayName,
                     isRequired: fieldData.required,
@@ -21,8 +22,9 @@ export function convertFormStructureToCreateDto(formStructure: FormStructure): C
             });
 
         return {
+            id: sectionId,
             name: section.title,
-            index,
+            index: index + 1,
             fields,
         };
     });

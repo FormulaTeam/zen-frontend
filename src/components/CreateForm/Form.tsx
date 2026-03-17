@@ -320,11 +320,13 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
         description,
         icon: formIconName as CreateFormDto["icon"],
         sections: sortedSections.map((section) => ({
+          id: section.id,
           name: section.name,
           index: section.order,
           fields: newFormFields
             .filter((field) => field.sectionId === section.id)
-            .map(({ name, index, typeId, displayName, required }) => ({
+            .map(({ uniqueId, name, index, typeId, displayName, required }) => ({
+              id: uniqueId,
               name,
               index,
               fieldType: typeId as number,
