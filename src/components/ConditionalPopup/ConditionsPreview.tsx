@@ -1,20 +1,20 @@
 import React from "react";
 import Typography from "@mui/material/Typography";
 import {
-  ConditionsRoot,
-  FormField,
   Condition,
-  ConditionOperators,
   conditionOperatorLabels,
-  logicalOperatorLabels,
+  ConditionOperators,
+  ConditionsRoot,
   DEFAULT_LOGICAL_OPERATOR,
   FieldTypeIds,
+  FormField,
+  logicalOperatorLabels,
 } from "../../utils/interfaces";
 import {
-  ConditionsPreviewContainer,
-  ConditionsPreviewTitle,
-  ConditionsPreviewDescription,
   ConditionsPreviewAffectedTitle,
+  ConditionsPreviewContainer,
+  ConditionsPreviewDescription,
+  ConditionsPreviewTitle,
 } from "./styled";
 
 interface ConditionsPreviewProps {

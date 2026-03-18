@@ -11,7 +11,6 @@ import Navbar from "./components/Navbar/Navbar";
 import { ToastContainer } from "react-toastify";
 import { SSOComeback } from "./pages/Login/SSOCallback";
 import ErrorPage from "./pages/ErrorPage/ErrorPage";
-import CreateForm from "./pages/CreateForm/CreateForm";
 import EditForm from "./pages/EditForm/EditForm";
 import LocalStorageUpdater from "./components/LocalStorageUpdater";
 import Response from "./pages/Response/Response";
@@ -21,6 +20,7 @@ import { IPath } from "./types/enums/global.enums";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import HelpBtn from "./components/HelpBtn/HelpBtn";
 import HelpDiv from "./components/HelpBtn/HelpDiv";
+import { FormEditor } from "./pages/FormEditor";
 import { DashboardStatisticsProvider } from "./contexts/DashboardStatisticsContext";
 
 const AppRouter = () => {
@@ -70,7 +70,7 @@ const AppRouter = () => {
             />
             <Route
               path={IPath.FORM_CREATE}
-              element={<CreateForm currentUser={user} formToEdit={null} />}
+              element={<FormEditor mode={"create"} />}
             />
             <Route path={IPath.FORM_EDIT} element={<EditForm user={user} />} />
             <Route

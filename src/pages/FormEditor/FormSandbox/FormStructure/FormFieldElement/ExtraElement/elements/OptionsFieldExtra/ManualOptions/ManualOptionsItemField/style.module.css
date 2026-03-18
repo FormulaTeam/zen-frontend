@@ -1,0 +1,23 @@
+.itemContainer {
+    display: flex;
+    align-items: center;
+}
+
+.itemTextField {
+    padding-block-start: 14px;
+}
+
+.controllingItemsArrow.controllingItemsArrow {
+    font-size: 30px;
+    margin-inline-end: -12px;
+    margin-inline-start: -12px;
+    transition: color 100ms ease-in-out;
+}
+
+.button.button {
+    border-radius: 50%;
+    min-width: 0;
+    height: 40px;
+    width: 40px;
+    color: black;
+}

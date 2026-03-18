@@ -110,7 +110,7 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                         },
                     }}
                     error={!!errorMessage}
-                    helperText={errorMessage}
+                    helperText={undefined}
                 />
             )}
             renderTags={(tagValue, getTagProps) =>

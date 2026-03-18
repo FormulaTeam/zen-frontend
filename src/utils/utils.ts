@@ -8,11 +8,11 @@ import { formIcon } from "formula-gear";
 import {
   CustomFormField,
   FieldTypeIds,
-  FieldTypes,
+  FieldDataTypes,
   Filter,
   Form,
-  FormField,
   FormFieldTypeId,
+  FormField,
   FormUser,
   LinkValue,
   LocationValue,
@@ -159,7 +159,9 @@ export const permissionsOptions = [
   { value: 3, label: "רק למי שאני שיתפתי את הטופס" },
 ];
 
-export const formIconsNamesMap = new Map<string, any>([
+export const DEFAULT_ICON_NAME = formIcon.FormX;
+
+export const formIconsNamesMap = new Map<string | number, any>([
   [formIcon.FormX, formX],
   [formIcon.ExamDefault, examDefault],
   [formIcon.Binoculars, binoculars],
@@ -189,6 +191,17 @@ export const formIconsNamesMap = new Map<string, any>([
   [formIcon.Text, txt],
   [formIcon.Excel, xls],
 ]);
+
+export function getFormIconByName(iconName?: string): any {
+  if (!iconName) {
+    return formIconsNamesMap.get(DEFAULT_ICON_NAME);
+  }
+
+  const normalizedIconName = iconName.trim().toLowerCase();
+
+  return formIconsNamesMap.get(normalizedIconName)
+    ?? formIconsNamesMap.get(DEFAULT_ICON_NAME);
+}
 
 export const numberToHebrewLetterMap = new Map<number, string>([
   [1, "א"],
@@ -412,13 +425,14 @@ export function createExcelMold(form: Form) {
   //add column for each field and save fields order with arr of names
   let names: string[] = [];
   formFields.forEach((field) => {
-    if (field.typeId !== FieldTypeIds.form) {
-      data[0] = {
-        ...data[0],
-        [field.displayName]: "",
-      };
-      names.push(field.displayName);
+    if (field.typeId === FieldTypeIds.linkedForm) {
+      return;
     }
+    data[0] = {
+      ...data[0],
+      [field.displayName]: "",
+    };
+    names.push(field.displayName);
   });
 
   const fileType =
@@ -510,7 +524,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
     //add column for each field and save fields order with arr of names
     let names: string[] = [];
     formFields.forEach((field, index) => {
-      if (field.typeId === FieldTypeIds.form) {
+      if (field.typeId === FieldTypeIds.linkedForm) {
         delete data[index][field.displayName];
         return;
       }
@@ -532,7 +546,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
 
   formFields.forEach((field, i) => {
     let uniqueId = field?.uniqueId;
-    if (uniqueId && uniqueId === FieldTypeIds.form.toString()) {
+    if (uniqueId && uniqueId === FieldTypeIds.linkedForm.toString()) {
       // If the field is of type 'form', we skip it as it doesn't have a value in the response
       return;
     }
@@ -604,7 +618,7 @@ export function exportToExcel(responsesArr: ResponseForm[], form: Form) {
       } of fieldValuesWithMetaData) {
         if (formFieldsIds.includes(field_id || uniqueId || "")) {
           let formattedValue: string | { f: string } = "";
-          if (typeId === FieldTypeIds.form) {
+          if (typeId === FieldTypeIds.linkedForm) {
             // If the field is of type 'form', we skip it as it doesn't have a value in the response
             continue;
           }
@@ -1054,7 +1068,7 @@ export function generateNewFormFieldData(item: Partial<CustomFormField>) {
     displayName: "",
     typeId: item.typeId as FormFieldTypeId,
     required: false,
-    fieldType: item.fieldType || FieldTypes.string,
+    fieldType: item.fieldType || FieldDataTypes.string,
     index: 0,
     // would have make more sense to use item.displayName over item.name but,
     // for default formfields, name is the only property that avaliable so we use it.

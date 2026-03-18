@@ -43,10 +43,10 @@ export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn
     const [childrenFormsData, setChildrenFormsData] = useState<ChildFormData[]>([]);
     const [loadingChildForms, setLoadingChildForms] = useState(false);
 
-    const hasFormInFormFields = !!form?.fields?.some((field) => field.typeId === FieldTypeIds.form);
+    const hasFormInFormFields = !!form?.fields?.some((field) => field.typeId === FieldTypeIds.linkedForm);
 
     const formInFormFields = form?.fields?.filter((field) =>
-        field.typeId === FieldTypeIds.form && field.connectedFormId
+        field.typeId === FieldTypeIds.linkedForm && field.connectedFormId
     ) || [];
 
     const childFormIds = formInFormFields.map(f => f.connectedFormId).filter((id): id is number => typeof id === "number");

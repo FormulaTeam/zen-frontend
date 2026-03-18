@@ -84,50 +84,36 @@ export const useResponsesEdit = () => {
       const field = form?.fields?.find((f) => f.displayName === columnName || f.name === columnName || f.uniqueId === columnName);
       if (!field) return;
 
-      const keyName = field.uniqueId ?? field.name ?? field.displayName;
+      const errorKey = field.displayName;
       const isString = (v: unknown): v is string => typeof v === "string";
 
       setValidationErrors((prev) => {
         const next = { ...prev };
         const rowErrors = { ...(next[rowId] || {}) };
 
-
-        if (rowErrors[keyName]) {
-          delete rowErrors[keyName];
-        }
-
-
-        if (field.required) {
-          const isEmpty =
-            value === undefined ||
-            value === null ||
-            (isString(value) && value.trim() === "") ||
-            (Array.isArray(value) && (value as unknown[]).length === 0);
-          if (isEmpty) {
-            rowErrors[keyName] = `שדה זה הינו חובה`;
-          }
-        }
+        // Always clear the error for this field when the user interacts with it.
+        // Required-field errors are only set on save, not live.
+        delete rowErrors[errorKey];
 
         if (field.validationRegex && value != null && isString(value) && value !== "") {
           const reg = new RegExp(field.validationRegex);
           if (!reg.test(value)) {
-            rowErrors[keyName] = `${field.displayName} - ערך לא תקין`;
+            rowErrors[errorKey] = `${field.displayName} - ערך לא תקין`;
           }
         }
 
-        // Number validations (min/max/type)
         if (field.typeId === FieldTypeIds.number) {
           const valStr = (typeof value === "number" || isString(value)) ? String(value) : "";
           if (valStr !== "") {
             const parsed = field.numberType === "integer" ? parseInt(valStr, 10) : parseFloat(valStr);
             if (Number.isNaN(parsed)) {
-              rowErrors[keyName] = field.numberType === "integer" ? "חובה להזין מספר שלם" : "חובה להזין מספר עשרוני";
+              rowErrors[errorKey] = field.numberType === "integer" ? "חובה להזין מספר שלם" : "חובה להזין מספר עשרוני";
             } else {
               if (field.minValue !== undefined && parsed < field.minValue) {
-                rowErrors[keyName] = `המספר חייב להיות גדול מ- ${field.minValue}`;
+                rowErrors[errorKey] = `המספר חייב להיות גדול מ- ${field.minValue}`;
               }
               if (field.maxValue !== undefined && parsed > field.maxValue) {
-                rowErrors[keyName] = `המספר חייב להיות קטן מ- ${field.maxValue}`;
+                rowErrors[errorKey] = `המספר חייב להיות קטן מ- ${field.maxValue}`;
               }
             }
           }
@@ -167,30 +153,18 @@ export const useResponsesEdit = () => {
 
     setEditedRows((prevEditedRows: Map<number | string, Row>) => new Map(prevEditedRows).set(newRowId, newRow as Row));
 
-    // Validate the updated row and set validation errors per cell if needed
+    // Validate the updated row and set validation errors per cell if needed.
+    // Required-field errors are only set on save, not live — so only check format/range here.
     try {
       const rowErrors: Record<string, string> = {};
       form?.fields?.forEach((field: any) => {
-        const keyName = field.uniqueId ?? field.name ?? field.displayName;
-        const value = (newRow as any)[keyName] ?? (newRow as any)[field.name] ?? (newRow as any)[field.displayName];
-
-        if (field.required) {
-          const isEmpty =
-            value === undefined ||
-            value === null ||
-            (typeof value === "string" && value.trim() === "") ||
-            (Array.isArray(value) && value.length === 0);
-
-          if (isEmpty) {
-            rowErrors[keyName] = `שדה זה הינו חובה`;
-            return;
-          }
-        }
+        const errorKey = field.displayName;
+        const value = (newRow as any)[field.displayName];
 
         if (field.validationRegex && value) {
           const reg = new RegExp(field.validationRegex);
           if (!reg.test(String(value))) {
-            rowErrors[keyName] = `${field.displayName} - ערך לא תקין`;
+            rowErrors[errorKey] = `${field.displayName} - ערך לא תקין`;
           }
         }
 
@@ -199,13 +173,13 @@ export const useResponsesEdit = () => {
           if (valStr !== "") {
             const parsed = field.numberType === "integer" ? parseInt(valStr, 10) : parseFloat(valStr);
             if (Number.isNaN(parsed)) {
-              rowErrors[keyName] = field.numberType === "integer" ? "חובה להזין מספר שלם" : "חובה להזין מספר עשרוני";
+              rowErrors[errorKey] = field.numberType === "integer" ? "חובה להזין מספר שלם" : "חובה להזין מספר עשרוני";
             } else {
               if (field.minValue !== undefined && parsed < field.minValue) {
-                rowErrors[keyName] = `המספר חייב להיות גדול מ- ${field.minValue}`;
+                rowErrors[errorKey] = `המספר חייב להיות גדול מ- ${field.minValue}`;
               }
               if (field.maxValue !== undefined && parsed > field.maxValue) {
-                rowErrors[keyName] = `המספר חייב להיות קטן מ- ${field.maxValue}`;
+                rowErrors[errorKey] = `המספר חייב להיות קטן מ- ${field.maxValue}`;
               }
             }
           }
@@ -214,10 +188,13 @@ export const useResponsesEdit = () => {
 
       setValidationErrors((prev) => {
         const next = { ...prev };
-        if (Object.keys(rowErrors).length === 0) {
+        // Merge format/range errors in, but preserve any required-field errors already set by saveChanges.
+        const existingRowErrors = prev[newRowId] || {};
+        const merged = { ...existingRowErrors, ...rowErrors };
+        if (Object.keys(merged).length === 0) {
           delete next[newRowId];
         } else {
-          next[newRowId] = rowErrors;
+          next[newRowId] = merged;
         }
         return next;
       });
@@ -365,8 +342,8 @@ export const useResponsesEdit = () => {
         try {
           const rowErrs: Record<string, string> = {};
           form?.fields?.forEach((field: any) => {
-            const keyName = field.uniqueId ?? field.name ?? field.displayName;
-            const value = (editedRow as any)[keyName] ?? (editedRow as any)[field.name] ?? (editedRow as any)[field.displayName];
+            const errorKey = field.displayName;
+            const value = (editedRow as any)[field.displayName];
 
             if (field.required) {
               const isEmpty =
@@ -376,7 +353,7 @@ export const useResponsesEdit = () => {
                 (Array.isArray(value) && value.length === 0);
 
               if (isEmpty) {
-                rowErrs[keyName] = `שדה זה הינו חובה`;
+                rowErrs[errorKey] = `שדה זה הינו חובה`;
                 return;
               }
             }
@@ -384,23 +361,22 @@ export const useResponsesEdit = () => {
             if (field.validationRegex && value) {
               const reg = new RegExp(field.validationRegex);
               if (!reg.test(String(value))) {
-                rowErrs[keyName] = `${field.displayName} - ערך לא תקין`;
+                rowErrs[errorKey] = `${field.displayName} - ערך לא תקין`;
               }
             }
-
 
             if (field.typeId === FieldTypeIds.number) {
               const valStr = value === undefined || value === null ? "" : String(value);
               if (valStr !== "") {
                 const parsed = field.numberType === "integer" ? parseInt(valStr, 10) : parseFloat(valStr);
                 if (Number.isNaN(parsed)) {
-                  rowErrs[keyName] = field.numberType === "integer" ? "חובה להזין מספר שלם" : "חובה להזין מספר עשרוני";
+                  rowErrs[errorKey] = field.numberType === "integer" ? "חובה להזין מספר שלם" : "חובה להזין מספר עשרוני";
                 } else {
                   if (field.minValue !== undefined && parsed < field.minValue) {
-                    rowErrs[keyName] = `המספר חייב להיות גדול מ- ${field.minValue}`;
+                    rowErrs[errorKey] = `המספר חייב להיות גדול מ- ${field.minValue}`;
                   }
                   if (field.maxValue !== undefined && parsed > field.maxValue) {
-                    rowErrs[keyName] = `המספר חייב להיות קטן מ- ${field.maxValue}`;
+                    rowErrs[errorKey] = `המספר חייב להיות קטן מ- ${field.maxValue}`;
                   }
                 }
               }

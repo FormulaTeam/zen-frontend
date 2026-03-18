@@ -1,0 +1,59 @@
+.container {
+    flex: 1;
+    border: 2px solid rgba(84, 119, 152, 0.32);
+    width: 100%;
+    border-radius: 16px !important;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.title{
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: fit-content;
+}
+
+.button.button{
+    border-radius: 50%;
+    min-width: 0;
+    height: 45px;
+    width: 45px;
+    color: black;
+}
+
+.content{
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 20px 12px !important;
+    flex: 1 0 auto;
+    max-height: 100%;
+    overflow-y: scroll;
+    width: 100%;
+}
+
+.emptySectionPlaceholder{
+    display: flex;
+    flex:1;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 12px !important;
+}
+
+.catalogArrowIcon{
+    animation: bounceRight 1s ease-in-out infinite;
+}
+
+@keyframes bounceRight {
+    0%{
+        transform: translateX(0);
+    }
+    50%{
+        transform: translateX(-5px);
+    }
+    100%{
+        transform: translateX(0);
+    }
+}
+

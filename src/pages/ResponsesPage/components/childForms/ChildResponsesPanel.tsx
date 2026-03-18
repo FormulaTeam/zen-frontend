@@ -21,7 +21,7 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
 }) => {
 
     const displayFields = useMemo(() => {
-        return form?.fields?.filter(field => field.typeId !== FieldTypeIds.form) || [];
+        return form?.fields?.filter(field => field.typeId !== FieldTypeIds.linkedForm) || [];
     }, [form?.fields]);
 
     const sortedResponses = useMemo(() => {

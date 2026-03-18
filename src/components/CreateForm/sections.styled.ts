@@ -11,7 +11,7 @@ export const SectionContainer = styled.div<{
   height: ${({ height, expanded, $isDraggingOver }) =>
     height ? `${height}px` : expanded ? "60vh" : $isDraggingOver ? "40vh" : "30vh"};
   min-height: 200px;
-  max-height: 70vh;
+  //max-height: 70vh;
   overflow-y: auto;
   overflow-x: hidden;
   display: ${({ empty }) => (empty ? "grid" : "flex")};

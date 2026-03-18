@@ -1,0 +1,37 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 16px;
+    width: 100%;
+    min-height: 0;
+    height: 100%;
+}
+
+.stepperContainer {
+    /*margin-block-start: -40px;*/
+}
+
+.contentContainer {
+    flex: 1;
+    margin: 24px 0;
+    padding: 24px;
+    box-shadow: 2px 0 10px 4px #1976D21A inset;
+    border-radius: 20px;
+    min-height: 0;
+    height: 100%;
+    overflow-y: scroll;
+    background-color: rgb(240, 244, 246);
+}
+
+.footer {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-direction: row-reverse;
+    margin: 0 32px;
+}
+
+.button.button {
+    width: 160px;
+}

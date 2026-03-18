@@ -74,7 +74,7 @@ export const useDetailPanel = ({
         }
 
         const formInFormFields = form.fields.filter((field) => {
-            if (field.typeId !== FieldTypeIds.form) {
+            if (field.typeId !== FieldTypeIds.linkedForm) {
                 return false;
             }
             if (visibleFormInFormUniqueIds !== null) {

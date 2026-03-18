@@ -209,6 +209,10 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     "& .MuiDataGrid-row--odd:hover": {
       backgroundColor: theme.palette.grid?.rowOdd,
     },
+    "& .cell--has-error": {
+      outline: "2px solid #d32f2f !important",
+      outlineOffset: "-2px",
+    },
   },
   "& .MuiDataGrid-columnHeaders": {
     backgroundColor: theme.palette.grid?.headerBackground,
@@ -547,29 +551,29 @@ export const HeaderFlex = styled("div")({
 });
 
 export const CellErrorWrapper = styled("div")({
-  position: "relative",
+  display: "flex",
+  flexDirection: "column",
   height: "100%",
+  width: "100%",
+  overflow: "hidden",
 });
 
-export const CellErrorText = styled("span")(({ theme }) => ({
+export const CellErrorText = styled("span")({
   color: "#d32f2f",
-  fontSize: "0.9rem",
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  zIndex: 2,
-  background: "rgba(255,255,255,0.95)",
-  padding: "2px 4px",
-  borderRadius: 4,
+  fontSize: "1rem",
+  fontWeight: 500,
+  lineHeight: 1.2,
+  padding: "2px 8px 0",
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
-  maxWidth: "100%",
-}));
+  flexShrink: 0,
+});
 
 export const CellValueFlex = styled("div")({
-  height: "100%",
+  flex: 1,
+  minHeight: 0,
   display: "flex",
   alignItems: "center",
+  overflow: "hidden",
 });

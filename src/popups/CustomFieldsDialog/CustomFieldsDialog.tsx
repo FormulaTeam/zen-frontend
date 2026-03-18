@@ -1,20 +1,10 @@
-import {
-  Box,
-  Dialog,
-  Grid,
-  Icon,
-  InputAdornment,
-  Paper,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Dialog, Grid, InputAdornment, Paper, Tab, Tabs, TextField, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { CustomFormField } from "../../utils/interfaces";
-import { fieldsIcons } from "../../components/FieldsIcons";
+import { FORM_ELEMENT_ICONS } from "../../components/FORM_ELEMENT_ICONS";
 import { Search } from "@mui/icons-material";
 import "./CustomFieldsDialog.scss";
+
 interface CustomFieldsSidebarProps {
   open: boolean;
   items: Partial<CustomFormField>[];
@@ -96,7 +86,7 @@ export const CustomFieldsDialog: React.FC<CustomFieldsSidebarProps> = ({
                     onItemSelect(item, 0);
                     onClose();
                   }}>
-                  {fieldsIcons[item.icon ?? 0]}
+                  {FORM_ELEMENT_ICONS[item.icon ?? 0]}
                   <Typography sx={{ overflow: "auto" }}>{item.name}</Typography>
                 </Paper>
               ))}

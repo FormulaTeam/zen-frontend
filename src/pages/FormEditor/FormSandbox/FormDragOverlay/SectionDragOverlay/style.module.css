@@ -1,0 +1,21 @@
+.dragOverlay {
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    background-color: #fafafa;
+    border: 2px solid rgba(84, 119, 152, 0.32);
+    height: 80px;
+    width: fit-content;
+    cursor: grabbing;
+    box-shadow: 0 4px 10px 0 #1976D21A;
+    overflow: hidden;
+}
+
+.title {
+    padding: 0 30px;
+}
+
+.body {
+    flex:1;
+    background-color: #eef2f4;
+}

@@ -34,6 +34,7 @@ export const StyledTypography = styled(Typography)(({ theme }) => ({
   fontSize: "24px !important",
   fontWeight: 600,
   marginLeft: "10px",
+  marginRight: "5px",
 }));
 
 export const CreateFormButton = styled("button") <{ $bgc?: string }>`

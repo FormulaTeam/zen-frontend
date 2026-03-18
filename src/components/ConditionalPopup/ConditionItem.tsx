@@ -1,11 +1,11 @@
 import React from "react";
 import {
   Condition,
-  FormField,
-  ConditionOperators,
   conditionOperatorLabels,
+  ConditionOperators,
   ConditionOperatorType,
   FieldTypeIds,
+  FormField,
   ResponseFieldValue,
 } from "../../utils/interfaces";
 import ConditionInputRenderer from "./ConditionInputRenderer";

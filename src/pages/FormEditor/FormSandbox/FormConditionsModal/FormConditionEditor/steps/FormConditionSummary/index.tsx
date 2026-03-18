@@ -1,0 +1,87 @@
+import { useFormConditionEditorContext } from "../../context/FormConditionEditorContext";
+import { ConditionEditorStepId, ConditionOperatorLabel } from "../../constants";
+import { useFormStructureContext } from "../../../../../context/FormStructureContext";
+import { ComparatorOptionsProperties } from "../FormConditionBuilder/utils";
+import { TextField, Typography } from "@mui/material";
+import { FormComponentType } from "../../../../../schemas/conditions";
+import styles from "../../../../../FormEditorHeader/style.module.css";
+
+function FormConditionsSummary() {
+  const {
+    conditionData: { groups, dependantComponents, name },
+    setData,
+  } = useFormConditionEditorContext(ConditionEditorStepId.SUMMARY);
+  const { formStructure: { fields, sections } } = useFormStructureContext();
+
+  const conditionsString = groups?.flatMap((group) => {
+    const { predicates, operator = "" } = group ?? {};
+
+    return (
+      `${
+        operator ? `${ConditionOperatorLabel[operator]} \n` : ""
+      }${
+        predicates?.map((predicate) => {
+          const { field, operator = "" } = predicate ?? {};
+
+          return (
+            `${
+              operator ? ConditionOperatorLabel[operator] : ""
+            }\n${
+              fields[field?.id ?? ""]?.data?.displayName ?? "שגיאה - שדה אינו קיים"
+            } ${
+              ComparatorOptionsProperties[field?.typeId ?? -1]?.[field?.comparator].label ?? ""
+            } ${
+              field?.targetValue ?? ""
+            }`
+          );
+        }).join("\n")
+      }\n`
+    );
+  }).join("\n");
+
+  return (
+    <div>
+      <div>
+        <TextField value={name}
+                   slotProps={{
+                     htmlInput: {
+                       className: styles.titleInput,
+                     },
+                   }}
+                   size={"medium"}
+                   placeholder={"שם ההתנייה"}
+          // error={!!validationErrors?.title}
+          // helperText={validationErrors?.title?.[0]}
+                   variant={"standard"}
+                   onChange={(e) => setData(!!e.target.value ? e.target.value : undefined)} />
+      </div>
+      <div>
+        <div>
+          התנאים שהוגדרו:
+          <Typography sx={{ whiteSpace: "pre-line" }}>
+            {conditionsString}
+          </Typography>
+        </div>
+        <br />
+        <br />
+        <div>
+          במידה ויתקיימו יוצגו:
+          <div>
+            מקטעים:
+            <div>
+              {dependantComponents[FormComponentType.SECTION]?.map((componentId) => sections[componentId ?? ""]?.title).join(", ")}
+            </div>
+          </div>
+          <div>
+            שדות:
+            <div>
+              {dependantComponents[FormComponentType.FIELD]?.map((componentId) => fields[componentId ?? ""]?.data?.displayName).join(", ")}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export { FormConditionsSummary };

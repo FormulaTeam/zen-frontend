@@ -1,14 +1,12 @@
 import { Box, Button, ClickAwayListener, IconButton, Tooltip, Typography } from "@mui/material";
-import { memo, useState } from "react";
-import * as MuiIcons from "@mui/icons-material";
+import { useState } from "react";
 import BaseFormInput from "../BaseFormInput/BaseFormInput";
 import IconsGrid from "../IconsGrid/IconsGrid";
-import { formIconsNamesMap } from "../../utils/utils";
-import { GridIcon } from "../IconsGrid/styled";
+import { formIconsNamesMap, DEFAULT_ICON_NAME } from "@utils/utils";
 import { CaptionError, DisplayRow, EditDetailsBox, InputRow, ToolbarContainer } from "./styled";
 import { ErrorMessageType } from "../../types/interfaces/forms.types";
 import { Img } from "../FormCard/styled";
-import { CustomIcon } from "../../theme/icons";
+import { CustomIcon } from "@theme/icons";
 
 type Props = {
   exit: () => void;
@@ -38,12 +36,12 @@ export default function TopToolbar({
   formIconName,
   onTitleChange,
   validateTitle,
-  onTitleBlur = () => {},
+  onTitleBlur = () => { },
   onDescriptionChange,
-  onDescriptionBlur = () => {},
+  onDescriptionBlur = () => { },
   onIconChange,
   hasUnsavedChanges = false,
-  announceUnsavedChanges = () => {},
+  announceUnsavedChanges = () => { },
   errorMessage,
   saveForm,
   setShowTitleRedText,
@@ -51,11 +49,6 @@ export default function TopToolbar({
 }: Props) {
   const [editDetails, setEditDetails] = useState(false);
   const [showPickIcon, setShowPickIcon] = useState(false);
-
-  const renderDynamicIcon = (name: string) => {
-    const IconComponent = MuiIcons[name as keyof typeof MuiIcons];
-    return IconComponent ? <IconComponent /> : name;
-  };
 
   /**
    * Handles paste events for an input field.
@@ -87,24 +80,13 @@ export default function TopToolbar({
             {editDetails ? (
               <InputRow sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <div>
-                  {formIconName && !formIconsNamesMap.get(formIconName) ? (
-                    <Tooltip title="לחץ על מנת לשנות אייקון">
-                      <GridIcon
-                        selected
-                        style={{ cursor: "pointer" }}
-                        onClick={() => setShowPickIcon(true)}>
-                        {renderDynamicIcon(formIconName)}
-                      </GridIcon>
-                    </Tooltip>
-                  ) : (
-                    <Img
-                      src={
-                        formIconsNamesMap.get(formIconName) || formIconsNamesMap.get("defaultIcon")
-                      }
-                      style={{ maxWidth: "60px", cursor: "pointer" }}
-                      onClick={() => setShowPickIcon(true)}
-                    />
-                  )}
+                  <Img
+                    src={
+                      formIconsNamesMap.get(formIconName) || formIconsNamesMap.get(DEFAULT_ICON_NAME)
+                    }
+                    style={{ maxWidth: "60px", cursor: "pointer" }}
+                    onClick={() => setShowPickIcon(true)}
+                  />
                 </div>
                 <Box>
                   <BaseFormInput
@@ -120,7 +102,7 @@ export default function TopToolbar({
                       showTitleError
                         ? "ניתן להזין רק אותיות בעברית!"
                         : errorMessage?.message ||
-                          (!title?.trim() && "יש להזין שם עם לפחות חמש אותיות בעברית")
+                        (!title?.trim() && "יש להזין שם עם לפחות חמש אותיות בעברית")
                     }
                     autoFocus
                     sx={{ mb: 1 }}
@@ -137,22 +119,13 @@ export default function TopToolbar({
               </InputRow>
             ) : (
               <DisplayRow>
-                {formIconName && !formIconsNamesMap.get(formIconName) ? (
-                  <Tooltip title="לחץ על מנת לשנות אייקון">
-                    <GridIcon
-                      selected
-                      style={{ cursor: "pointer" }}
-                      onClick={() => setShowPickIcon(true)}>
-                      {renderDynamicIcon(formIconName)}
-                    </GridIcon>
-                  </Tooltip>
-                ) : (
-                  <Img
-                    src={
-                      formIconsNamesMap.get(formIconName) || formIconsNamesMap.get("defaultIcon")
-                    }
-                  />
-                )}
+                <Img
+                  src={
+                    formIconsNamesMap.get(formIconName) || formIconsNamesMap.get(DEFAULT_ICON_NAME)
+                  }
+                  style={{ maxWidth: "60px", cursor: "pointer" }}
+                  onClick={() => setShowPickIcon(true)}
+                />
                 <Box>
                   <Typography variant="h5">
                     {title || "שם הטופס"}

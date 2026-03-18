@@ -1,0 +1,33 @@
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+}
+
+.header.header {
+    height: 64px;
+    margin: 12px 0;
+}
+
+.listContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    padding: 20px;
+    box-shadow: 2px 0 10px 4px rgba(107, 157, 207, 0.1) inset;
+    border-radius: 20px;
+    overflow-y: scroll;
+    background-color: rgb(240, 244, 246);
+    width: 100%;
+}
+
+.noConditionsTextContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}

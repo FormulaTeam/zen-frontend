@@ -6,6 +6,7 @@ export enum IPath {
   ERROR = "/error",
 
   FORM_CREATE = "/form/create",
+  FORM_CREATE_NEW = "/form/create-new",
   FORM_EDIT = "/form/edit/:id",
   DELETED_FORMS = "/deleted-forms",
 

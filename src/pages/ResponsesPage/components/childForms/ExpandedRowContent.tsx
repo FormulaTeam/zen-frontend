@@ -27,7 +27,7 @@ export const ExpandedRowContent: React.FC<ExpandedRowContentProps> = ({
 
     const formInFormFields: FormField[] = useMemo(() => {
         return parentFormFields.filter(
-            (field: FormField) => field.typeId === FieldTypeIds.form && field.connectedFormId
+            (field: FormField) => field.typeId === FieldTypeIds.linkedForm && field.connectedFormId
         );
     }, [parentFormFields]);
 

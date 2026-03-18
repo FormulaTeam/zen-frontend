@@ -3,25 +3,15 @@ import {
   Draggable,
   DraggableProvided,
   DraggableProvidedDragHandleProps,
-  DraggableStateSnapshot,
   Droppable,
   DroppableProvided,
 } from "@hello-pangea/dnd";
-import {
-  EmptyMessageWrapper,
-  FieldsColumn,
-  ResizeHandle,
-  SectionContainer,
-} from "./sections.styled";
-import { Box, Typography, useTheme, Tooltip } from "@mui/material";
+import { EmptyMessageWrapper, FieldsColumn, ResizeHandle, SectionContainer } from "./sections.styled";
+import { Box, Tooltip, Typography, useTheme } from "@mui/material";
 import { Add, DragHandle } from "@mui/icons-material";
 import { texts } from "../../utils/texts";
 import { FormField, Section } from "../../utils/interfaces";
-import {
-  FORM_FIELD_PREFIX,
-  FORM_FIELDS_PREFIX,
-  NOT_A_SECTION_ID,
-} from "../../utils/sections/consts";
+import { FORM_FIELD_PREFIX, FORM_FIELDS_PREFIX, NOT_A_SECTION_ID } from "../../utils/sections/consts";
 
 interface FormFieldsListProps {
   formFields: FormField[];
@@ -43,6 +33,8 @@ export default function FormFieldsList({
 }: FormFieldsListProps) {
   const theme = useTheme();
   const lastFieldRef = useRef<HTMLDivElement | null>(null);
+  const lastFieldId = useRef<string | null>(null);
+  const previousLastFieldId = useRef<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isResizing = useRef(false);
 
@@ -66,8 +58,8 @@ export default function FormFieldsList({
   }, [section.expanded]);
 
   useEffect(() => {
-    if (lastFieldRef.current) {
-      lastFieldRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (lastFieldRef.current && previousLastFieldId.current !== lastFieldId.current) {
+      lastFieldRef.current.scrollIntoView({ behavior: "smooth", block: "center"});
     }
   }, [filteredFields.length]);
 
@@ -145,14 +137,17 @@ export default function FormFieldsList({
 
                       return (
                         <Draggable draggableId={FORM_FIELD_PREFIX + idx} key={idx} index={idx}>
-                          {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => {
+                          {(provided: DraggableProvided) => {
                             const id = "formField-div-" + idx;
                             return (
                               <Box
                                 key={field.index}
                                 ref={(el) => {
-                                  if (isLastField)
+                                  if (isLastField) {
+                                    previousLastFieldId.current = lastFieldId.current;
+                                    lastFieldId.current = field.uniqueId;
                                     lastFieldRef.current = el as HTMLDivElement | null;
+                                  }
                                   provided.innerRef(el as HTMLDivElement | null);
                                 }}
                                 {...provided.draggableProps}

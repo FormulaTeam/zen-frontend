@@ -11,6 +11,7 @@ import {
   FormGroup,
   Grid,
   InputLabel,
+  LinearProgress,
   MenuItem,
   Radio,
   RadioGroup,
@@ -19,15 +20,14 @@ import {
   Tooltip,
   Typography,
   useTheme,
-  LinearProgress,
 } from "@mui/material";
 
 import { Close, Info } from "@mui/icons-material";
 import {
   connectionTypes,
   DRAGGED_ITEM_ID,
-  fieldConnectionTooltipTexts,
   FieldTypeIds,
+  fieldConnectionTooltipTexts,
   Form,
   FormField,
 } from "../../utils/interfaces";
@@ -39,7 +39,6 @@ import Loading from "react-loading";
 import BaseFormInput from "../BaseFormInput/BaseFormInput";
 import DefaultValueAutocomplete from "./DefaultValueAutocomplete";
 import ErrorMessage from "../CreateForm/ErrorMessage";
-import { isOnlyBlankStrings } from "../../utils/utils";
 
 export interface ParentField {
   parentFieldId?: string;

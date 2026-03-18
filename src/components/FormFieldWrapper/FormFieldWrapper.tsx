@@ -1,20 +1,9 @@
 import React, { ReactNode } from "react";
-import { FormField, DEFAULT_FIELDS } from "../../utils/interfaces";
-import { DeleteOutline, DragIndicator } from "@mui/icons-material";
-import {
-  Box,
-  Checkbox,
-  FormControlLabel,
-  Grid,
-  IconButton,
-  Switch,
-  Tooltip,
-  Typography,
-  useTheme,
-} from "@mui/material";
-import Card from "../Card";
-import { fieldsIcons } from "../FieldsIcons";
-import { fieldIcons, CustomIcon, icons } from "../../theme/icons";
+import { FORM_ELEMENTS, FormField } from "../../utils/interfaces";
+import { DragIndicator } from "@mui/icons-material";
+import { Box, FormControlLabel, Grid, IconButton, Switch, Tooltip, Typography, useTheme } from "@mui/material";
+import { FORM_ELEMENT_ICONS } from "../FORM_ELEMENT_ICONS";
+import { CustomIcon } from "../../theme/icons";
 import { DraggableProvidedDragHandleProps } from "@hello-pangea/dnd";
 
 type Props = {
@@ -39,13 +28,13 @@ export default function FormFieldWrapper({
   const theme = useTheme();
 
   // Find the default field using the typeId
-  const defaultField = DEFAULT_FIELDS.find((field) => field.typeId === formField.typeId);
+  const defaultField = FORM_ELEMENTS[formField.typeId];
 
   // Get default icon if current icon is invalid or not set
   const fieldIcon =
-    formField.fieldIcon && fieldsIcons[formField.fieldIcon]
+    formField.fieldIcon && FORM_ELEMENT_ICONS[formField.fieldIcon]
       ? formField.fieldIcon
-      : defaultField?.icon || Object.keys(fieldsIcons)[0];
+      : defaultField?.icon || Object.keys(FORM_ELEMENT_ICONS)[0];
 
   // Get default field name if not set
   const fieldName = formField.fieldName || defaultField?.name || "";
@@ -92,7 +81,7 @@ export default function FormFieldWrapper({
           gap={2}
           color={theme.palette.text.disabled}>
           <Grid container direction="row" gap={0.5} alignItems="center" width="fit-content">
-            {fieldsIcons[fieldIcon]}
+            {FORM_ELEMENT_ICONS[fieldIcon]}
             {fieldName}
           </Grid>
           <Grid>

@@ -1,0 +1,74 @@
+.modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    width: 80vw;
+    max-width: 1600px;
+    height: 90vh;
+    background-color: white;
+    border-radius: 16px;
+    padding: 32px 40px;
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    position: relative;
+}
+
+.headerButton.headerButton {
+    border-radius: 50%;
+    min-width: 0;
+    height: 45px;
+    width: 45px;
+    display: flex !important;
+    align-items: center;
+}
+
+.closeButtonContainer {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.conditionsListButtonContainer {
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+.editorContainer {
+    width: 100%;
+    flex: 1;
+    /*overflow: hidden;*/
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.overviewContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+}
+
+.overviewWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    flex: 1;
+    padding-bottom: 24px;
+    min-height: 0;
+}
