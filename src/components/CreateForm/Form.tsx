@@ -43,6 +43,7 @@ import ConditionalPopup from "../ConditionalPopup/ConditionalPopup";
 import { handleFieldAddedToSection, handleFieldMovedBetweenSections } from "../../utils/sectionConditionUtils";
 import { RESERVED_FIELD_NAMES } from "../../consts/form";
 import queryClient from "../../api/queryClient";
+import { FieldType } from "formula-gear";
 
 interface FormProps {
   formToEdit: any;
@@ -329,7 +330,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
               id: uniqueId,
               name,
               index,
-              fieldType: typeId as number,
+              fieldType: typeId as FieldType,
               displayName,
               isRequired: required,
               extra: {},
