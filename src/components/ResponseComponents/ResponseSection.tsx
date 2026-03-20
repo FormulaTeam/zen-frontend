@@ -1,17 +1,15 @@
 import React from "react";
-import { Collapse, IconButton, Typography, useTheme, Box, CircularProgress } from "@mui/material";
-import FormFieldRenderer from "../Responses/FormFieldRenderer";
-import { FieldsWrapper } from "../../pages/Response/styled";
+
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
-import {
-  FormField,
-  ResponseFieldValue,
-  IResponseSection,
-  FieldTypeIds,
-} from "../../utils/interfaces";
+import { Box, CircularProgress, Collapse, IconButton, Typography, useTheme } from "@mui/material";
+import styled from "styled-components";
+
+import { fieldType } from "formula-gear";
+import type { FormFieldDto } from "../../types/shared";
+import { FieldsWrapper } from "../../pages/Response/styled";
 import { NOT_A_SECTION_ID } from "../../utils/sections/consts";
 import { texts } from "../../utils/texts";
-import styled from "styled-components";
+import FormFieldRenderer from "../Responses/FormFieldRenderer";
 import { LoadingContainer } from "../FormInFormField/styled";
 
 const GridContainer = styled.div`
@@ -28,20 +26,37 @@ const GridItemFull = styled.div`
   grid-column: 1 / -1;
 `;
 
+type SectionField = FormFieldDto & {
+  sectionId?: string;
+  sectionOrder?: number;
+};
+
+type ResponseSectionDto = {
+  id?: string;
+  name?: string;
+  description?: string;
+  fields: SectionField[];
+  order: number;
+};
+
+type FieldOptionValue = {
+  value?: unknown;
+};
+
 interface ResponseSectionProps {
-  section: IResponseSection;
+  section: ResponseSectionDto;
   sectionId: string;
   sectionIdx: number;
   collapsedSections: Record<string, boolean>;
   toggleSectionCollapse: (sectionId: string) => void;
-  formFieldsByIdMap: Map<string, FormField & ResponseFieldValue>;
+  formFieldsByIdMap: Map<string, SectionField>;
   formFieldsValuesMap: Map<string, any>;
   formFieldsValidMap: Map<string, any>;
-  onChangeHandler: (value: any, uniqueId: any, inputValueValid: any) => void;
+  onChangeHandler: (value: any, fieldId: string, inputValueValid: any) => void;
   viewMode?: boolean;
-  fieldOptions?: Record<string, ResponseFieldValue[]>;
-  formFields?: FormField[];
-  getFormInFormProperty?: (formField: FormField) => React.ReactNode;
+  fieldOptions?: Record<string, FieldOptionValue[]>;
+  formFields?: SectionField[];
+  getFormInFormProperty?: (formField: SectionField) => React.ReactNode;
   isLoading?: boolean;
   formId?: number | string;
 }
@@ -64,53 +79,47 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
   formId,
 }) => {
   const theme = useTheme();
-
-  if (!section.id) {
-    section.id = NOT_A_SECTION_ID;
-  }
+  const resolvedSectionId = section.id || NOT_A_SECTION_ID;
 
   return (
     <FieldsWrapper key={sectionId || sectionIdx}>
-      {/* Header */}
       <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
         <Box>
           <Typography variant="h6">
-            {section.id !== NOT_A_SECTION_ID && !section.name
+            {resolvedSectionId !== NOT_A_SECTION_ID && !section.name
               ? texts.heb.undefinedSection
               : section.name}
           </Typography>
+
           {section.description && (
             <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
               {section.description}
             </Typography>
           )}
         </Box>
+
         <IconButton onClick={() => toggleSectionCollapse(sectionId)} size="small">
           {collapsedSections[sectionId] ? <ExpandMore /> : <ExpandLess />}
         </IconButton>
       </Box>
 
-      {/* Content */}
       <Collapse in={!collapsedSections[sectionId]} timeout="auto" unmountOnExit>
         <GridContainer>
           {section.fields
-            .sort((a, b) => a.index - b.index)
+            .sort((firstField, secondField) => firstField.index - secondField.index)
             .map((formField, index) => {
-              // getFormInFormProperty – full width
-              if (formField.typeId === FieldTypeIds.linkedForm && getFormInFormProperty) {
+              if (formField.fieldType === fieldType.Form && getFormInFormProperty) {
                 return (
-                  <GridItemFull
-                    key={formField.uniqueId || formField.uniqId || `${sectionId}-${index}`}>
+                  <GridItemFull key={formField.id || `${sectionId}-${index}`}>
                     {getFormInFormProperty(formField)}
                   </GridItemFull>
                 );
               }
-              if (isLoading) {
-                return null;
-              }
-              // Regular field
+
+              if (isLoading) return null;
+
               return (
-                <div key={formField.uniqueId || formField.uniqId || `${sectionId}-${index}`}>
+                <div key={formField.id || `${sectionId}-${index}`}>
                   <FormFieldRenderer
                     formField={formField}
                     formFieldsByIdMap={formFieldsByIdMap}
