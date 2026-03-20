@@ -7,7 +7,6 @@ import {
   ResponseFieldValue,
   ResponseForm,
   Role,
-  SearchResponsesFilter,
 } from "../utils/interfaces";
 import { getFormById, searchResponses } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
@@ -46,7 +45,7 @@ export const useResponseState = (
   setHasUnsavedChanges?: (hasUnsavedChanges: boolean) => void,
 ) => {
   const [formTitle, setFormTitle] = useState("");
-  const [formFields, setFormFields]: any[] = useState([]);
+  const [formFields, setFormFields] = useState<FormField[]>([]);
   const [formFieldsByIdMap, setFormFieldsByIdsMap] = useState<
     Map<string, FormField & ResponseFieldValue>
   >(new Map());
@@ -58,6 +57,8 @@ export const useResponseState = (
   const [loading, setLoading] = useState(true);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
+  const navigate = useNavigate();
+
   const { fieldOptions, isLoading: loadingConnections } = useConnectedFormOptions({
     formFields: form?.fields || [],
   });
@@ -68,34 +69,52 @@ export const useResponseState = (
       [sectionId]: !prev[sectionId],
     }));
   };
-  const navigate = useNavigate();
+
   useEffect(() => {
-    if (formId) {
-      getFormById(Number(formId)).then((form) => {
-        if (form) {
-          setForm(form);
-        }
-      });
-    }
-    if (responseId) {
-      searchResponses({
-        form_id: Number(formId),
-        searchFilters: [{ searchText: Number(responseId), searchField: "id" }],
-      }).then((res: any) => {
-        const found = res?.responses?.[0] ?? null;
-        if (found) {
-          if (copyMode) {
-            setResponse({ ...found, id: null as any });
-          } else {
-            setResponse(found);
+    let isMounted = true;
+
+    const loadData = async () => {
+      setLoading(true);
+
+      try {
+        if (formId) {
+          const fetchedForm = await getFormById(Number(formId));
+          if (isMounted && fetchedForm) {
+            setForm(fetchedForm);
           }
         }
-      });
-    }
-  }, []);
+
+        if (responseId) {
+          const res: any = await searchResponses({
+            form_id: Number(formId),
+            searchFilters: [{ searchText: Number(responseId), searchField: "id" }],
+          });
+
+          const found = res?.responses?.[0] ?? null;
+
+          if (isMounted && found) {
+            if (copyMode) {
+              setResponse({ ...found, id: null as any });
+            } else {
+              setResponse(found);
+            }
+          }
+        }
+      } finally {
+        // keep true until form initialization effect completes
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [formId, responseId, copyMode]);
 
   useEffect(() => {
     if (!form) return;
+
     if (roles && roles.length > 0) {
       const hasPermissions = checkUserAccessForResponse(
         roles,
@@ -105,134 +124,238 @@ export const useResponseState = (
         user,
         isSuperAdmin,
       );
+
       if (!hasPermissions) {
         navigate(IPath.ERROR, { replace: true });
         return;
       }
     }
 
-    if (form?.fields) {
-      setFormFields(form.fields);
-      form.fields.forEach((field: any) => {
-        const uniqueId = (field?.uniqueId || field?.uniqId) + "";
-        formFieldsByIdMap.set(uniqueId, field);
-        // Handle different field types for default values
-        let defaultValue = field?.value;
-        if (field.typeId === FieldTypeIds.number && field?.initialNumberValue !== undefined) {
-          defaultValue = field.initialNumberValue;
-        } else if (field.typeId === FieldTypeIds.checkbox && field?.defaultValue !== undefined) {
-          defaultValue = field.defaultValue;
+    if (!form.fields) return;
+
+    const nextFormFields = [...form.fields];
+    const nextFieldsByIdMap = new Map<string, FormField & ResponseFieldValue>();
+    const nextValuesMap = new Map<string, any>();
+    const nextValidMap = new Map<string, any>();
+
+    nextFormFields.forEach((field: any) => {
+      const uniqueId = String(field?.uniqueId || field?.uniqId);
+
+      nextFieldsByIdMap.set(uniqueId, field);
+
+      let defaultValue = field?.value;
+
+      if (field.typeId === FieldTypeIds.number && field?.initialNumberValue !== undefined) {
+        defaultValue = field.initialNumberValue;
+      } else if (field.typeId === FieldTypeIds.checkbox && field?.defaultValue !== undefined) {
+        defaultValue = field.defaultValue;
+      }
+
+      nextValuesMap.set(uniqueId, defaultValue);
+
+      if (field.typeId === FieldTypeIds.link) {
+        nextValidMap.set(uniqueId, { link: true, linkTxt: true });
+      } else if (field.typeId === FieldTypeIds.location) {
+        nextValidMap.set(uniqueId, { x: true, y: true });
+      } else {
+        nextValidMap.set(uniqueId, true);
+      }
+    });
+
+    if (responseId) {
+      if (!response) return;
+
+      setFormTitle((copyMode ? "יצירת תגובה - " : "עריכת תגובה - ") + form.name);
+
+      const fieldValuesArray = response.fieldValues ?? response.data ?? [];
+      const fieldDefsMap = new Map<string, any>();
+
+      nextFormFields.forEach((f: any) => {
+        const uid = String(f?.uniqueId || f?.uniqId);
+        fieldDefsMap.set(uid, f);
+      });
+
+      fieldValuesArray.forEach((res: ResponseFieldValue) => {
+        const uid = String(res.uniqueId || (res as any).field_id);
+        const fieldDef = fieldDefsMap.get(uid);
+        let value: any = res?.value;
+
+        if (fieldDef) {
+          switch (fieldDef.typeId) {
+            case FieldTypeIds.checkbox:
+              if (typeof value === "string") {
+                value = value === "true";
+              } else if (value === null || value === undefined) {
+                value = false;
+              }
+              break;
+
+            case FieldTypeIds.options:
+              if (fieldDef.multiSelect && value && !Array.isArray(value)) {
+                value = [value];
+              } else if (!fieldDef.multiSelect && Array.isArray(value)) {
+                value = value[0] ?? "";
+              }
+              break;
+
+            case FieldTypeIds.list:
+              if (value && !Array.isArray(value)) {
+                value = [value];
+              }
+              break;
+
+            default:
+              break;
+          }
         }
 
-        formFieldsValuesMap.set(uniqueId, defaultValue);
+        nextValuesMap.set(uid, value);
+      });
+    } else {
+      setFormTitle("יצירת תגובה - " + form.name);
+    }
 
-        if (field.typeId === FieldTypeIds.link) {
-          formFieldsValidMap.set(uniqueId, { link: true, linkTxt: true });
-        } else if (field.typeId === FieldTypeIds.location) {
-          formFieldsValidMap.set(uniqueId, { x: true, y: true });
-        } else {
-          formFieldsValidMap.set(uniqueId, true);
+    if (viewMode) {
+      setFormTitle("צפייה בתגובה - " + form.name);
+    }
+
+    setFormFields(nextFormFields);
+    setFormFieldsByIdsMap(nextFieldsByIdMap);
+    setFormFieldsValuesMap(nextValuesMap);
+    setFormFieldsValidMap(nextValidMap);
+    setLoading(false);
+  }, [form, response, responseId, viewMode, copyMode, roles, user, isSuperAdmin, navigate]);
+
+  const evaluateFieldVisibility = (
+    field: FormField,
+    fields: FormField[],
+    valuesMap: Map<string, any>,
+  ): boolean => {
+    if (!field.conditions || field.conditions.length === 0) {
+      return true;
+    }
+
+    const dataObject: any = {};
+    valuesMap.forEach((value, fieldId) => {
+      dataObject[fieldId] = value;
+    });
+
+    const conditionsRoot = {
+      groups: field.conditions,
+      affectedTargets: [],
+    };
+
+    try {
+      return ConditionUtils.evaluateConditionsRoot(conditionsRoot, dataObject, fields);
+    } catch (error) {
+      console.error("Error evaluating conditions for field:", field.displayName, error);
+      return true;
+    }
+  };
+
+  const visibleFormFields = useMemo(() => {
+    return formFields.filter((field) =>
+      evaluateFieldVisibility(field, formFields, formFieldsValuesMap),
+    );
+  }, [formFields, formFieldsValuesMap]);
+
+  useEffect(() => {
+    if (formFields.length === 0) return;
+
+    const visibleIds = new Set(visibleFormFields.map((field) => String(field?.uniqueId)));
+
+    setFormFieldsValuesMap((prev) => {
+      let changed = false;
+      const next = new Map(prev);
+
+      formFields.forEach((field) => {
+        const uniqueId = String(field?.uniqueId);
+
+        if (visibleIds.has(uniqueId)) return;
+
+        const currentValue = next.get(uniqueId);
+        const emptyValue = field.typeId === FieldTypeIds.checkbox ? false : "";
+
+        if (currentValue !== undefined && isDifferent(currentValue, emptyValue)) {
+          next.set(uniqueId, emptyValue);
+          changed = true;
         }
       });
 
-      if (responseId) {
-        if (!response) return; // will keep loading untill response is fetched
-        setFormTitle((copyMode ? "יצירת תגובה - " : "עריכת תגובה - ") + form.name);
-        const fieldValuesArray = response.fieldValues ?? response.data ?? [];
-        const newValuesMap = new Map(formFieldsValuesMap);
-        // Build a lookup map from uniqueId → field definition for type coercion
-        const fieldDefsMap = new Map<string, any>();
-        form.fields.forEach((f: any) => {
-          const uid = (f?.uniqueId || f?.uniqId) + "";
-          fieldDefsMap.set(uid, f);
-        });
-        fieldValuesArray.forEach((res: ResponseFieldValue) => {
-          const uid = (res.uniqueId || res.field_id) + "";
-          const fieldDef = fieldDefsMap.get(uid);
-          let value: any = res?.value;
-          if (fieldDef) {
-            switch (fieldDef.typeId) {
-              case FieldTypeIds.checkbox:
-                if (typeof value === "string") {
-                  value = value === "true";
-                } else if (value === null || value === undefined) {
-                  value = false;
-                }
-                break;
-              case FieldTypeIds.options:
-                if (fieldDef.multiSelect && value && !Array.isArray(value)) {
-                  value = [value];
-                } else if (!fieldDef.multiSelect && Array.isArray(value)) {
-                  value = value[0] ?? "";
-                }
-                break;
-              case FieldTypeIds.list:
-                if (value && !Array.isArray(value)) {
-                  value = [value];
-                }
-                break;
-              default:
-                break;
-            }
-          }
-          newValuesMap.set(uid, value);
-        });
-        setFormFieldsValuesMap(newValuesMap);
-      } else {
-        setFormTitle("יצירת תגובה - " + form.name);
-      }
-      if (viewMode) {
-        setFormTitle("צפייה בתגובה - " + form.name);
-      }
-      setLoading(false);
-    }
-  }, [form, response, viewMode, copyMode]);
+      return changed ? next : prev;
+    });
+
+    setFormFieldsValidMap((prev) => {
+      let changed = false;
+      const next = new Map(prev);
+
+      formFields.forEach((field) => {
+        const uniqueId = String(field?.uniqueId);
+
+        if (visibleIds.has(uniqueId)) return;
+
+        const currentValid = next.get(uniqueId);
+        const resetValid =
+          field.typeId === FieldTypeIds.link
+            ? { link: true, linkTxt: true }
+            : field.typeId === FieldTypeIds.location
+              ? { x: true, y: true }
+              : true;
+
+        if (JSON.stringify(currentValid) !== JSON.stringify(resetValid)) {
+          next.set(uniqueId, resetValid);
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [formFields, visibleFormFields]);
 
   const onChangeHandler = (value: any, uniqueId: any, inputValueValid: any) => {
+    const normalizedUniqueId = String(uniqueId);
+
     setFormFieldsValuesMap((prevFormFieldsValuesMap) => {
       const newFormFieldsValuesMap = new Map(prevFormFieldsValuesMap);
-      const prevValue = prevFormFieldsValuesMap.get(uniqueId);
+      const prevValue = prevFormFieldsValuesMap.get(normalizedUniqueId);
+
       if (isDifferent(prevValue, value)) {
         setHasUnsavedChanges?.(true);
       }
-      newFormFieldsValuesMap.set(uniqueId, value);
 
-      // Check if this field is a parent of other fields and handle child fields accordingly
+      newFormFieldsValuesMap.set(normalizedUniqueId, value);
+
       if (formFields && formFields.length > 0) {
-        // Find all child fields that depend on this field
-        const childFields = formFields.filter((field) => field.parentFieldId === uniqueId);
+        const childFields = formFields.filter(
+          (field) => String(field.parentFieldId) === normalizedUniqueId,
+        );
 
         if (childFields.length > 0) {
           childFields.forEach((childField) => {
-            // Skip if not options field (type 3)
-            if (childField.typeId !== 3 || !childField.parentDependencies) return;
+            if (childField.typeId !== FieldTypeIds.options || !childField.parentDependencies)
+              return;
 
-            const childUniqueId = childField.uniqueId;
+            const childUniqueId = String(childField.uniqueId);
             const currentChildValue = newFormFieldsValuesMap.get(childUniqueId);
 
-            // Find the parent field to access its options
             const parentField = formFields.find(
-              (field) => field.uniqueId === childField.parentFieldId,
+              (field) => String(field.uniqueId) === String(childField.parentFieldId),
             );
 
             if (!parentField || !parentField.options) return;
 
-            // Collect all allowed options based on the parent's selection
             const parentValues = Array.isArray(value) ? value : [value];
-            const allowedOptions = new Set();
+            const allowedOptions = new Set<any>();
 
             parentValues.forEach((parentValue) => {
-              // Convert parent value to its index
-              const parentOptionIndex = parentField.options.indexOf(parentValue);
+              const parentOptionIndex = parentField.options?.indexOf(parentValue);
 
               if (parentOptionIndex !== -1) {
-                // Find dependency that matches this parent option index
-                const dependency = childField.parentDependencies.find(
+                const dependency = childField.parentDependencies?.find(
                   (dep) => dep.parentOptionIndex === parentOptionIndex,
                 );
 
                 if (dependency) {
-                  // For each allowed child option index, get the actual option value
                   dependency.childOptionIndices.forEach((childOptionIndex) => {
                     if (childField.options && childOptionIndex < childField.options.length) {
                       allowedOptions.add(childField.options[childOptionIndex]);
@@ -242,12 +365,12 @@ export const useResponseState = (
               }
             });
 
-            // Check if current values are still valid with the new parent selection
             if (allowedOptions.size > 0) {
               if (currentChildValue) {
                 const childValues = Array.isArray(currentChildValue)
                   ? currentChildValue
                   : [currentChildValue];
+
                 const validValues = childValues.filter((val) => allowedOptions.has(val));
 
                 if (validValues.length !== childValues.length) {
@@ -259,29 +382,28 @@ export const useResponseState = (
 
                   newFormFieldsValuesMap.set(childUniqueId, newValue);
 
-                  // Also mark child field as interacted with
-                  const newInteractedFields = new Set(interactedFields);
-                  newInteractedFields.add(childUniqueId);
-                  setInteractedFields(newInteractedFields);
+                  setInteractedFields((prev) => {
+                    const next = new Set(prev);
+                    next.add(childUniqueId);
+                    return next;
+                  });
 
-                  // Update validation status
-                  const newFormFieldsValidMap = new Map(formFieldsValidMap);
-                  newFormFieldsValidMap.set(
-                    childUniqueId,
-                    validValues.length > 0 || !childField.required,
-                  );
-                  setFormFieldsValidMap(newFormFieldsValidMap);
+                  setFormFieldsValidMap((prev) => {
+                    const next = new Map(prev);
+                    next.set(childUniqueId, validValues.length > 0 || !childField.required);
+                    return next;
+                  });
                 }
               }
             } else if (parentValues.length > 0) {
-              // If parent has selection but no options are allowed, clear child value
               const emptyValue = childField.multiSelect ? [] : "";
               newFormFieldsValuesMap.set(childUniqueId, emptyValue);
 
-              // Also update validation
-              const newFormFieldsValidMap = new Map(formFieldsValidMap);
-              newFormFieldsValidMap.set(childUniqueId, !childField.required);
-              setFormFieldsValidMap(newFormFieldsValidMap);
+              setFormFieldsValidMap((prev) => {
+                const next = new Map(prev);
+                next.set(childUniqueId, !childField.required);
+                return next;
+              });
             }
           });
         }
@@ -290,49 +412,45 @@ export const useResponseState = (
       return newFormFieldsValuesMap;
     });
 
-    // Mark field as interacted with
-    const newInteractedFields = new Set(interactedFields);
-    newInteractedFields.add(uniqueId);
-    setInteractedFields(newInteractedFields);
+    setInteractedFields((prev) => {
+      const next = new Set(prev);
+      next.add(normalizedUniqueId);
+      return next;
+    });
 
-    // Only set validation if we've interacted with the field
-    if (interactedFields.has(uniqueId)) {
-      const newFormFieldsValidMap = new Map(formFieldsValidMap);
-      newFormFieldsValidMap.set(uniqueId, inputValueValid);
-      setFormFieldsValidMap(newFormFieldsValidMap);
-    }
+    setFormFieldsValidMap((prev) => {
+      if (!interactedFields.has(normalizedUniqueId)) {
+        return prev;
+      }
+
+      const next = new Map(prev);
+      next.set(normalizedUniqueId, inputValueValid);
+      return next;
+    });
   };
 
-  /** validate that required fields are not empty
-   * if link check both link text and link url
-   * if options - check all options texts
-   */
   const validateRequiredFields = () => {
     let ans = true;
-    let newFormFieldsValidMap = new Map();
+    const newFormFieldsValidMap = new Map();
 
     visibleFormFields.forEach((field) => {
-      // skip fields that are not visible due to conditions
-      let uniqueId = field?.uniqueId + "";
-      let isRequired = field.required;
-      let val = formFieldsValuesMap.get(uniqueId);
-      // If there is a regex validation rule
+      const uniqueId = String(field?.uniqueId);
+      const isRequired = field.required;
+      const val = formFieldsValuesMap.get(uniqueId);
+
       if (!!field.validationRegex) {
-        // If the field is empty check if it's not required
         if (val === "" || val === null || val === undefined) {
-          // If the field is not required, it's valid
           if (!field.required) {
             newFormFieldsValidMap.set(uniqueId, true);
           } else {
-            // If the field is empty and required, it's invalid
             newFormFieldsValidMap.set(uniqueId, false);
             ans = false;
           }
-          // If the field is not empty, check if it matches the regex
-        } else if (validateByRegex(val, field.validationRegex) == false) {
-          // If the field does not match the regex, it's invalid
+        } else if (validateByRegex(val, field.validationRegex) === false) {
           newFormFieldsValidMap.set(uniqueId, false);
           ans = false;
+        } else {
+          newFormFieldsValidMap.set(uniqueId, true);
         }
       } else {
         const excludedTypeIds: number[] = [
@@ -345,8 +463,8 @@ export const useResponseState = (
           FieldTypeIds.file,
           FieldTypeIds.list,
         ];
+
         if (isRequired && !excludedTypeIds.includes(field.typeId)) {
-          //אפשרויות
           if (field.typeId === FieldTypeIds.options) {
             if ((val && Array.isArray(val) && val.length === 0) || !val) {
               newFormFieldsValidMap.set(uniqueId, false);
@@ -354,9 +472,7 @@ export const useResponseState = (
             } else {
               newFormFieldsValidMap.set(uniqueId, true);
             }
-          }
-          //שאר השדות שלא ברשימה
-          else {
+          } else {
             if (!val) {
               newFormFieldsValidMap.set(uniqueId, false);
               ans = false;
@@ -364,20 +480,16 @@ export const useResponseState = (
               newFormFieldsValidMap.set(uniqueId, true);
             }
           }
-        }
-
-        //היפר-קישור
-        else if (field.typeId === FieldTypeIds.link) {
+        } else if (field.typeId === FieldTypeIds.link) {
           const urlRegex = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,6})([/\w .-]*)*\/?$/i;
 
-          let validObj = { link: true, linkTxt: true };
-          //if no value
+          const validObj = { link: true, linkTxt: true };
+
           if (!val?.link || !val.linkTxt) {
-            //if no value and not required - true in both
             if (!field.required) {
               newFormFieldsValidMap.set(uniqueId, validObj);
             }
-            //if no value and is required - false in both
+
             if (field.required) {
               newFormFieldsValidMap.set(uniqueId, {
                 link: false,
@@ -385,57 +497,38 @@ export const useResponseState = (
               });
               ans = false;
             }
-          }
-          //if has value
-          else {
-            //if has value in link or linkTxt
+          } else {
             if (val && (val.link || val.linkTxt)) {
-              //no value in linkTxt
               if (val.link && !val.linkTxt) {
                 validObj.linkTxt = false;
                 ans = false;
-              }
-              //no value in link
-              else if (!val.link && val.linkTxt) {
+              } else if (!val.link && val.linkTxt) {
                 validObj.link = false;
                 ans = false;
               } else if (!urlRegex.test(val.link)) {
                 validObj.link = false;
                 ans = false;
               }
+
               newFormFieldsValidMap.set(uniqueId, validObj);
             }
           }
-        }
-
-        //תאריך
-        else if (field.typeId === FieldTypeIds.date) {
-          //if no value and not required - is valid
+        } else if (field.typeId === FieldTypeIds.date) {
           if (!val && !field.required) {
             newFormFieldsValidMap.set(uniqueId, true);
-          }
-          // //if no value and is required - not valid
-          else if (!val && field.required) {
+          } else if (!val && field.required) {
             newFormFieldsValidMap.set(uniqueId, false);
             ans = false;
           } else {
             newFormFieldsValidMap.set(uniqueId, true);
           }
-        }
-
-        //שעה
-        else if (field.typeId === FieldTypeIds.time) {
-          //if no value and not required - is valid
+        } else if (field.typeId === FieldTypeIds.time) {
           if (!val && !field.required) {
             newFormFieldsValidMap.set(uniqueId, true);
-          }
-          //if no value and is required - not valid
-          else if (!val && field.required) {
+          } else if (!val && field.required) {
             newFormFieldsValidMap.set(uniqueId, false);
             ans = false;
-          }
-          //if has value - validate time string format
-          else if (val) {
+          } else if (val) {
             if (timeRegex.test(val)) {
               newFormFieldsValidMap.set(uniqueId, true);
             } else {
@@ -457,32 +550,23 @@ export const useResponseState = (
             ans = false;
             return;
           }
+
           newFormFieldsValidMap.set(uniqueId, true);
-        }
+        } else if (field.typeId === FieldTypeIds.location) {
+          const validObj = { x: true, y: true };
 
-        //נקודת ציון - if not empty check 6 digits for x and y
-        else if (field.typeId === FieldTypeIds.location) {
-          // let val = formFieldsValuesMap.get(uniqueId);
-          let validObj = { x: true, y: true };
-
-          //if no value
           if (!val || (!val.x && !val.y)) {
-            //if no value and not required - true in both
             if (!field.required) {
               newFormFieldsValidMap.set(uniqueId, validObj);
             }
-            //if no value and is required - false in both
+
             if (field.required) {
               newFormFieldsValidMap.set(uniqueId, { x: false, y: false });
               ans = false;
               return;
             }
-          }
-          //if has value
-          else {
-            //if has value in x or y
+          } else {
             if (val && (val.x || val.y)) {
-              //no value in y
               if (!field.coordinateType || field.coordinateType === "UTM") {
                 if (!utmRegex.test(val.x)) {
                   validObj.x = false;
@@ -502,6 +586,7 @@ export const useResponseState = (
                   ans = false;
                 }
               }
+
               newFormFieldsValidMap.set(uniqueId, validObj);
               return;
             }
@@ -518,11 +603,10 @@ export const useResponseState = (
           } else {
             newFormFieldsValidMap.set(uniqueId, true);
           }
-        }
-        //מספר
-        else if (field.typeId === FieldTypeIds.number) {
+        } else if (field.typeId === FieldTypeIds.number) {
           const { minValue, maxValue, numberType, required } = field;
           const isEmpty = isEmptyValue(val);
+
           if (isEmpty) {
             if (required) {
               newFormFieldsValidMap.set(uniqueId, false);
@@ -552,6 +636,7 @@ export const useResponseState = (
             ans = false;
             return;
           }
+
           if ((maxValue || maxValue === 0) && numericValue > maxValue) {
             newFormFieldsValidMap.set(uniqueId, false);
             ans = false;
@@ -560,70 +645,16 @@ export const useResponseState = (
 
           newFormFieldsValidMap.set(uniqueId, true);
         } else if (field.typeId === FieldTypeIds.checkbox) {
-          return true;
-        }
-        //all other fields
-        else if (isRequired === false) {
+          newFormFieldsValidMap.set(uniqueId, true);
+        } else if (isRequired === false) {
           newFormFieldsValidMap.set(uniqueId, true);
         }
-      } //end if no regex
+      }
     });
 
     setFormFieldsValidMap(newFormFieldsValidMap);
     return ans;
   };
-
-  // Memoized evaluation of field visibility based on conditions and current values
-  const visibleFormFields = useMemo(() => {
-    // Function to evaluate if a field should be visible based on its conditions
-    const evaluateFieldVisibility = (field: FormField): boolean => {
-      // If the field has no conditions, it's always visible
-      if (!field.conditions || field.conditions.length === 0) {
-        return true;
-      }
-
-      // Create a data object from current form field values
-      const dataObject: any = {};
-      formFieldsValuesMap.forEach((value, fieldId) => {
-        dataObject[fieldId] = value;
-      });
-
-      // Create a conditions root structure from the field's conditions
-      const conditionsRoot = {
-        groups: field.conditions,
-        affectedTargets: [], // Not needed for evaluation
-      };
-
-      try {
-        // Evaluate the conditions against the current data
-        return ConditionUtils.evaluateConditionsRoot(conditionsRoot, dataObject, formFields);
-      } catch (error) {
-        console.error("Error evaluating conditions for field:", field.displayName, error);
-        // If there's an error evaluating conditions, default to showing the field
-        return true;
-      }
-    };
-    // clear hidden fields value
-    formFields.forEach((field: FormField) => {
-      const isVisible = evaluateFieldVisibility(field);
-      if (!isVisible) {
-        const uniqueId = field?.uniqueId + "";
-        // Clear value
-        if (formFieldsValuesMap.get(uniqueId)) {
-          formFieldsValuesMap.set(uniqueId, field.typeId === FieldTypeIds.checkbox ? false : "");
-          setFormFieldsValuesMap(new Map(formFieldsValuesMap));
-        }
-        // Clear validation
-        if (formFieldsValidMap.get(uniqueId)) {
-          formFieldsValidMap.set(uniqueId, true);
-          setFormFieldsValidMap(new Map(formFieldsValidMap));
-        }
-      }
-    });
-
-    // Filter form fields based on condition evaluation
-    return formFields.filter(evaluateFieldVisibility);
-  }, [formFields, formFieldsValuesMap]); // Re-evaluate when fields or values change
 
   const responsSections: SectionsMap = useMemo(() => {
     return visibleFormFields.reduce((acc: SectionsMap, field: FormField) => {
@@ -642,10 +673,11 @@ export const useResponseState = (
       acc[sectionId].fields.push(field);
       return acc;
     }, {});
-  }, [visibleFormFields]); // Re-calculate sections when visible fields change
+  }, [visibleFormFields]);
+
   return {
     formTitle,
-    formFields: visibleFormFields, // Return filtered fields instead of all fields
+    formFields: visibleFormFields,
     formFieldsByIdMap,
     formFieldsValuesMap,
     formFieldsValidMap,
