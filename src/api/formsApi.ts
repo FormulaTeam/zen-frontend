@@ -8,6 +8,7 @@ import { UseQueryOptions, UseQueryResult, useMutation } from "@tanstack/react-qu
 import { useDelete } from "../utils/useDelete";
 import { useCreate } from "../utils/useCreate";
 import queryClient from "./queryClient";
+import { FormDto } from "../types/shared";
 
 /**
  * Fetch all forms with optional query parameters.
@@ -42,12 +43,12 @@ export const getForms = async (filter?: Filter): Promise<Form[]> => {
   }
 };
 
-export const getFormById = async (formId?: number): Promise<Form | null> => {
+export const getFormById = async (formId?: number): Promise<FormDto | null> => {
   if (!formId) {
     return null;
   }
   try {
-    const response = await apiClient.get<Form>(`/forms/${formId}`);
+    const response = await apiClient.get<FormDto>(`/forms/${formId}`);
     return response?.data ?? null;
   } catch (error) {
     console.error("getFormById error:", error);

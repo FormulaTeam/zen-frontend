@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FieldTypeIds, ResponseForm } from "../../utils/interfaces";
+import type { FormRoleDto, ResponseDto } from "../../types/shared";
+import { fieldType } from "formula-gear";
 import { Box, Button, Container, Tooltip, Typography } from "@mui/material";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useResponseSave } from "../../hooks/useResponseSave";
@@ -24,9 +25,15 @@ const PageContainer = styled(Container)`
   flex-direction: column;
 `;
 
-export default function Response({ user, viewMode = false, copyMode = false }) {
+interface ResponseProps {
+  user: any;
+  viewMode?: boolean;
+  copyMode?: boolean;
+}
+
+export default function Response({ user, viewMode = false, copyMode = false }: ResponseProps) {
   const [permissionTypes, setPermissionTypes] = useState<number[]>([]);
-  const [savedResponse, setSavedResponse] = useState<ResponseForm | null>(null);
+  const [savedResponse, setSavedResponse] = useState<ResponseDto | null>(null);
   const [showLoadingSaveBtn, setShowLoadingSaveBtn] = useState<boolean>(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showValidationPopup, setShowValidationPopup] = useState<boolean>(false);
@@ -36,8 +43,8 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
   const navigate = useNavigate();
   const { isSuperAdmin } = useSuperAdmin();
 
-  useGetFormRoles(formId);
-  const roles = useMemo(() => [] as any[], []);
+  const { data: formRoles } = useGetFormRoles(formId);
+  const roles = useMemo(() => (formRoles as FormRoleDto | undefined)?.userRoles ?? [], [formRoles]);
 
   const {
     formTitle,
@@ -55,7 +62,7 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
     responsSections,
     collapsedSections,
     toggleSectionCollapse,
-  } = useResponseState(formId, id, viewMode, copyMode);
+  } = useResponseState(formId, id, viewMode, copyMode, roles, user, isSuperAdmin ?? undefined);
 
   const { saveResponse, isSaving } = useResponseSave(form, response, user, undefined, copyMode);
 
@@ -209,17 +216,18 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
 
   const getChildFormTitle = (childFormId: number) => {
     return (
-      formFields.find((field: any) => field.connectedFormId === childFormId)?.displayName || ""
+      formFields.find((field: any) => field.extra?.connectedFormId === childFormId)?.displayName ||
+      ""
     );
   };
 
   const getFormInFormProperty = (formField: any) => {
-    if (formField.typeId !== FieldTypeIds.linkedForm || !formField.connectedFormId) {
+    if (formField.fieldType !== fieldType.Form || !formField.extra?.connectedFormId) {
       return null;
     }
 
     const childFormIndex = childForms.findIndex(
-      (childForm) => childForm.formId === formField.connectedFormId,
+      (childForm) => childForm.formId === formField.extra.connectedFormId,
     );
 
     const childFormData = childForms[childFormIndex];
@@ -228,16 +236,16 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
       return null;
     }
 
-    const CHILD_FORM_TITLE = getChildFormTitle(childFormData.formId);
-    const ADD_RESPONSE_TITLE = `הוספת תגובה${CHILD_FORM_TITLE ? ` - ${CHILD_FORM_TITLE}` : ""}`;
+    const childFormTitle = getChildFormTitle(childFormData.formId);
+    const addResponseTitle = `הוספת תגובה${childFormTitle ? ` - ${childFormTitle}` : ""}`;
 
     return (
-      <Box key={`child-form-${formField.connectedFormId}`}>
+      <Box key={`child-form-${formField.extra.connectedFormId}`}>
         {childFormData.children.map(
           (child, index) =>
             childFormData.shown && (
               <ConnectedFormSection
-                key={child.id || child.uniqueId || `child-${formField.connectedFormId}-${index}`}
+                key={child.id || `child-${formField.extra.connectedFormId}-${index}`}
                 handleRemoveChildForm={() => {
                   handleRemoveChildForm(childFormIndex, index);
                 }}
@@ -265,9 +273,9 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
             startIcon={<Add />}
             sx={{ minWidth: "auto", padding: "8px" }}
             onClick={() => handleAddChildForm(childFormIndex)}>
-            <Tooltip title={ADD_RESPONSE_TITLE}>
+            <Tooltip title={addResponseTitle}>
               <Typography variant="subtitle2" fontWeight={600}>
-                {ADD_RESPONSE_TITLE}
+                {addResponseTitle}
               </Typography>
             </Tooltip>
           </Button>
@@ -279,8 +287,8 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
   const sortedSections = useMemo(
     () =>
       Object.entries(responsSections).sort(([idA, a], [idB, b]) => {
-        const orderA = a.fields[0]?.sectionOrder ?? 0;
-        const orderB = b.fields[0]?.sectionOrder ?? 0;
+        const orderA = a.order ?? 0;
+        const orderB = b.order ?? 0;
 
         return orderA === orderB ? idA.localeCompare(idB) : orderA - orderB;
       }),
