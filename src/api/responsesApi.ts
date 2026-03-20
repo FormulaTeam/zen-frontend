@@ -20,6 +20,7 @@ import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { useMutation } from "@tanstack/react-query";
 import { useUpdate } from "../utils/useUpdate";
+import { ResponseDto } from "../types/shared";
 
 /**
  * Fetch all responses with optional query parameters.
@@ -27,7 +28,7 @@ import { useUpdate } from "../utils/useUpdate";
  * @param filter - Optional filter parameters for querying responses.
  * @returns A promise that resolves to an array of responses.
  */
-export const getResponses = async (filter?: Filter): Promise<ResponseForm[]> => {
+export const getResponses = async (filter?: Filter): Promise<ResponseDto[]> => {
   const params = {
     query: filter?.query ? JSON.stringify(filter.query) : undefined,
     sortBy: filter?.sortBy,
@@ -40,7 +41,7 @@ export const getResponses = async (filter?: Filter): Promise<ResponseForm[]> => 
       console.error("Form ID is required to fetch responses.");
       return [];
     }
-    const response = await apiClient.get<ResponseForm[]>(
+    const response = await apiClient.get<ResponseDto[]>(
       `/responses/get-responses?form_id=${filter?.form_id}`,
       { params },
     );
@@ -150,9 +151,9 @@ export const getResponseWithFlatFields = (
  * @param id - The ID of the response to delete.
  * @returns A promise that resolves to the deleted response.
  */
-export const deleteResponse = async (formId: number, id: number): Promise<ResponseForm> => {
+export const deleteResponse = async (formId: number, id: string): Promise<ResponseDto> => {
   try {
-    const response = await apiClient.delete<ResponseForm>(`/responses/delete/${formId}/${id}`);
+    const response = await apiClient.delete<ResponseDto>(`/responses/delete/${formId}/${id}`);
     return response?.data;
   } catch (error) {
     console.error("Failed to delete response:", error);

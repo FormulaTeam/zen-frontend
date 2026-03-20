@@ -16,7 +16,7 @@ import { FormDto } from "../types/shared";
  * @param filter - Optional filter parameters for querying forms.
  * @returns A promise that resolves to an array of forms.
  */
-export const getForms = async (filter?: Filter): Promise<Form[]> => {
+export const getForms = async (filter?: Filter): Promise<FormDto[]> => {
   const params = {
     query:
       filter?.query && typeof filter.query !== "string"
