@@ -245,7 +245,11 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
           (child, index) =>
             childFormData.shown && (
               <ConnectedFormSection
-                key={child.id || `child-${formField.extra.connectedFormId}-${index}`}
+                key={
+                  child.responseId ||
+                  child.instanceKey ||
+                  `child-${formField.extra.connectedFormId}-${index}`
+                }
                 handleRemoveChildForm={() => {
                   handleRemoveChildForm(childFormIndex, index);
                 }}
@@ -261,7 +265,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
                 childSaved={(success: boolean) => handleChildSaved(childFormIndex, success)}
                 shouldValidate={childFormsValidate}
                 childValid={(success: boolean) => handleChildValid(childFormIndex, success)}
-                id={child.id}
+                id={child.responseId}
                 shouldLoad={isSaving}
               />
             ),
