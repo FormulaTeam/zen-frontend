@@ -23,7 +23,6 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "@components/formInForm/ZoomCell";
 import { Box, Menu, MenuItem, ListItemIcon, ListItemText } from "@mui/material";
-import { Row } from "@utils/interfaces";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
 import { downloadFileFromResponse } from "@api/filesApi";
@@ -51,6 +50,15 @@ const VIEW_COLUMN_ID_TO_GRID_FIELD: Record<string, string> = {
   pushed_to_metro: "sync",
   updated_by_name: "editedByName",
   updated: "edited",
+};
+
+type Row = GridRowModel & {
+  id: string | number;
+  parentResponse?: string | null;
+  pushed_to_metro?: string | null;
+  editedByName?: string;
+  edited?: string;
+  [key: string]: unknown;
 };
 
 interface ResponsesTableProps {
@@ -205,7 +213,7 @@ export const ResponsesTable = ({
   const navigateToCreateResponseCopy = useCallback(
     (rowData: Row): void => {
       if (rowData && form?.id) {
-        navigate(`/response/create/${form.id}/${rowData.id}`);
+        navigate(`/response/create/${form.id}/${String(rowData.id)}`);
       }
     },
     [form?.id, navigate],

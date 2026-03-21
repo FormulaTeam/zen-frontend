@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { ResponsesView, ViewColumn } from "../types/interfaces/tableViews.types";
-import { ViewFormBase, ViewUserBase } from "../types/interfaces/view.types";
+import { ViewUserBase } from "../types/interfaces/view.types";
+import { FormFieldDto, UserPersonalDto } from "../types/shared";
 import { getUserName } from "../utils/utils";
 
 /* ------------------------ Utils ------------------------ */
@@ -24,12 +25,33 @@ const areColumnsEqual = (firstColumn: ViewColumn[], secondColumn: ViewColumn[]):
   });
 };
 
+const getViewUserDisplayName = (user?: ViewUserBase | UserPersonalDto): string => {
+  if (!user) {
+    return "";
+  }
+
+  if ("name" in user && typeof user.name === "string" && user.name.trim()) {
+    return user.name;
+  }
+
+  const firstName = "firstName" in user && typeof user.firstName === "string" ? user.firstName : "";
+  const lastName = "lastName" in user && typeof user.lastName === "string" ? user.lastName : "";
+
+  return getUserName(firstName, lastName) || user.upn || "";
+};
+
 /* ------------------------ Types ------------------------ */
+
+type ViewLogicForm = {
+  id: string | number;
+  name: string;
+  fields: FormFieldDto[];
+};
 
 interface UseViewFormLogicProps {
   currentView?: ResponsesView;
-  user?: ViewUserBase;
-  form?: ViewFormBase;
+  user?: ViewUserBase | UserPersonalDto;
+  form?: ViewLogicForm;
   columns: ViewColumn[];
   createDefaultColumns: () => ViewColumn[];
   resetToOriginalColumns: (columns: ViewColumn[]) => void;
@@ -69,15 +91,12 @@ export const useViewFormLogic = ({
     columns: cloneColumns(columns),
   });
 
-  // Track the last view ID we synced from to avoid re-syncing on every re-render
-  // when the parent passes a new currentView object with the same ID.
   const lastSyncedViewId = useRef<number | undefined>(undefined);
 
   /* ------------------------ Sync ------------------------ */
 
   useEffect(() => {
     if (!currentView) return;
-    // Only sync when switching to a genuinely different saved view.
     if (currentView.id === lastSyncedViewId.current) return;
     lastSyncedViewId.current = currentView.id;
 
@@ -137,10 +156,10 @@ export const useViewFormLogic = ({
 
     const view: ResponsesView = {
       ...(currentView?.id && !isCreatingNew ? { id: currentView.id } : {}),
-      formId: form.id,
+      formId: String(form.id),
       name: viewName.trim(),
       createdBy: user?.upn ?? "unknown",
-      createdByName: getUserName(user?.firstName ?? "", user?.lastName ?? ""),
+      createdByName: getViewUserDisplayName(user),
       isPublic,
       isDefault,
       config: { columns: cloneColumns(columns) },

@@ -1,7 +1,6 @@
 import { useEffect } from "react";
-import { useGetForm, useGetResponses, useGetResponsesRows } from "../../../api";
+import { useGetForm, useGetResponsesRows } from "../../../api";
 import { useInitiateFormStore } from "../stores/form.store";
-import { FieldTypeIds } from "../../../utils/interfaces";
 
 export function useFormLoader(formId: string) {
   const { form, setForm, setPermissions, setRows, filter } = useInitiateFormStore();
@@ -17,7 +16,7 @@ export function useFormLoader(formId: string) {
   });
 
   const { data: responsesRowsData } = useGetResponsesRows({
-    filter: { ...filter, form_id: parseInt(formId) },
+    filter: { ...filter, form_id: Number(formId) },
   });
 
   useEffect(() => {
@@ -30,12 +29,18 @@ export function useFormLoader(formId: string) {
   useEffect(() => {
     if (formData && isSuccess) {
       setForm(formData);
-      setPermissions([...(formData?.permissions || [])]);
+
+      const permissions =
+        "permissions" in formData && Array.isArray(formData.permissions)
+          ? formData.permissions
+          : [];
+
+      setPermissions(permissions as Parameters<typeof setPermissions>[0]);
     }
   }, [formData, setForm, setPermissions, isSuccess]);
 
   return {
-    isLoading: isLoading || (!form && !isError), // Loading if query is loading OR form not in store yet
+    isLoading: isLoading || (!form && !isError),
     isError,
     form,
   };

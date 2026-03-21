@@ -1,9 +1,10 @@
 import { memo, useCallback } from "react";
 import styled from "styled-components";
-import { Form } from "../../../utils/interfaces";
-import { createExcelMold } from "../../../utils/utils";
+
 import BasePopup from "../../BasePopup/BasePopup";
+import { createExcelMold } from "../../../utils/utils";
 import ExcelImportContent from "../ExcelImportContent";
+import { StoreForm } from "../../../pages/ResponsesPage/stores/form.store";
 import { ErrorItem, ErrorList, StatusTitle, StatusWrapper } from "./styled";
 import Loader from "./Loader";
 
@@ -29,7 +30,7 @@ const PopupContentWrapper = styled.div`
  */
 export interface ImportFromExcelPopupProps {
   /** The form definition — used to decide whether actions are enabled and to build a template */
-  form: Form;
+  form: StoreForm;
 
   /** Controls whether the popup is visible. Parent owns open state. */
   isOpen: boolean;
@@ -44,7 +45,7 @@ export interface ImportFromExcelPopupProps {
   onImport?: () => void;
 
   /** Called when user requests to download a template. Defaults to createExcelMold(form) */
-  onDownloadTemplate?: (form: Form) => void;
+  onDownloadTemplate?: (form: StoreForm) => void;
 
   /** Whether the error/status view is currently loading */
   isLoading?: boolean;
@@ -60,8 +61,8 @@ export interface ImportFromExcelPopupProps {
   downloadButtonLabel?: string;
 }
 
-function hasFormFields(form?: Form) {
-  return Boolean(form?.fields && form.fields.length > 0);
+function hasFormFields(form?: StoreForm) {
+  return Boolean(form?.sections?.some((section) => (section.fields?.length ?? 0) > 0));
 }
 
 const DEFAULT_MAIN_LABEL = "ייבוא נתונים";
@@ -84,46 +85,46 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
 
   const resetUploadRefValue = useCallback(() => {
     if (!uploadRef) return;
+
     const ref = uploadRef as React.RefObject<HTMLInputElement>;
+
     if (ref.current) ref.current.value = "";
   }, [uploadRef]);
 
   const handleClose = useCallback(() => {
-    // Prefer parent-controlled cleanup, but try to help by clearing any file input value.
     resetUploadRefValue();
     onClose();
   }, [onClose, resetUploadRefValue]);
 
   const triggerUpload = useCallback(() => {
-    // If parent provided an onImport callback, call it. Otherwise attempt to open the native file input.
     if (onImport) {
       onImport();
+
       return;
     }
 
-    if (uploadRef && "current" in uploadRef && uploadRef.current) {
-      uploadRef.current.click();
-    }
+    if (uploadRef && "current" in uploadRef && uploadRef.current) uploadRef.current.click();
   }, [onImport, uploadRef]);
 
   const handleDownload = useCallback(() => {
     if (onDownloadTemplate) {
       onDownloadTemplate(form);
-    } else {
-      createExcelMold(form);
+
+      return;
     }
+
+    createExcelMold(form as Parameters<typeof createExcelMold>[0]);
   }, [onDownloadTemplate, form]);
 
-  // Decide what the base popup buttons should be — keep the same UX as the original but use props
   const hasErrors = errors.length > 0;
   const isPostImportState = isLoading || hasErrors;
 
   const mainButton = isPostImportState
-    ? { text: mainButtonLabel, onClick: () => { }, disabled: true }
+    ? { text: mainButtonLabel, onClick: () => {}, disabled: true }
     : { text: mainButtonLabel, onClick: triggerUpload, disabled: !canPerformActions };
 
   const cancelButton = isPostImportState
-    ? { text: downloadButtonLabel, onClick: () => { }, disabled: true }
+    ? { text: downloadButtonLabel, onClick: () => {}, disabled: true }
     : { text: downloadButtonLabel, onClick: handleDownload, disabled: !canPerformActions };
 
   const popupContent = isLoading ? (
@@ -149,21 +150,13 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
       minHeight="500px"
       minWidth="600px"
       maxWidth="600px"
-      content={
-        <PopupContentWrapper>
-          {popupContent}
-        </PopupContentWrapper>
-      }
+      content={<PopupContentWrapper>{popupContent}</PopupContentWrapper>}
       mainButton={mainButton}
       cancelButton={cancelButton}
     />
   );
 };
 
-/**
- * Export a memoized component so parent re-renders are cheap.
- * The component is intentionally NOT a forwardRef — the parent should own the file input ref and pass it via `uploadRef`.
- */
 const ImportFromExcelPopup = memo(ImportFromExcelPopupInner);
 
 export default ImportFromExcelPopup;

@@ -5,14 +5,23 @@ import { ResponsesView, ViewColumn } from "../../../types/interfaces/tableViews.
 import { useViewColumnConfiguration } from "../../../hooks/useViewColumnConfiguration";
 import { useViewFormLogic } from "../../../hooks/useViewFormLogic";
 import { useViewPermissions } from "../../../hooks/useViewPermissions";
-import { ViewFormBase, ViewUserBase } from "../../../types/interfaces/view.types";
+import { ViewUserBase } from "../../../types/interfaces/view.types";
 import { ResponsesViewSettings } from "./ResponsesViewSettings";
 import { ResponsesViewColumns } from "./ResponsesViewColumns";
 import { ResponsesViewFormActions } from "./ResponsesViewActions";
+import { FormFieldDto, UserPersonalDto } from "../../../types/shared";
+
+type ResponsesViewForm = {
+  id: string | number;
+  name: string;
+  fields: FormFieldDto[];
+};
+
+type ResponsesViewUser = ViewUserBase | UserPersonalDto;
 
 interface ResponsesViewPageProps {
-  form?: ViewFormBase;
-  user?: ViewUserBase;
+  form?: ResponsesViewForm;
+  user?: ResponsesViewUser;
   currentView?: ResponsesView;
   permissionTypes?: number[];
   isSaving?: boolean;
@@ -74,7 +83,7 @@ export function ResponsesViewPage({
       <Box overflow="auto" pb={`${ACTIONS_HEIGHT}px`}>
         <Box width="97%">
           <ResponsesViewSettings
-            formId={+(form?.id ?? 0)}
+            formId={Number(form?.id ?? 0)}
             formName={form?.name ?? HEBREW_FORM}
             columns={columns}
             hasFullAccess={hasFullAccess}

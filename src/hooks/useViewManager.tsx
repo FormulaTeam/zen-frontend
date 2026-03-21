@@ -8,11 +8,20 @@ import {
 import { ResponsesView, ViewColumn } from "../types/interfaces/tableViews.types";
 import { showErrorNotification, showSuccessNotification, getUserName } from "../utils/utils";
 import { applyViewSorting } from "../utils/viewSortingUtils";
-import { ViewFormBase, ViewUserBase } from "../types/interfaces/view.types";
+import { ViewUserBase } from "../types/interfaces/view.types";
+import { FormFieldDto, UserPersonalDto } from "../types/shared";
+
+type ViewManagerFormBase = {
+  id: string | number;
+  name: string;
+  fields: FormFieldDto[];
+};
+
+type ViewManagerUserBase = ViewUserBase | UserPersonalDto;
 
 interface UseViewManagerProps {
-  form?: ViewFormBase;
-  user?: ViewUserBase;
+  form?: ViewManagerFormBase;
+  user?: ViewManagerUserBase;
   onViewConfigChange?: (viewConfig?: ViewColumn[]) => void;
   setSorting?: (sorting: any[]) => void;
   tableColumns?: any[];
@@ -27,6 +36,21 @@ enum HebrewMessages {
   DeleteViewError = "נכשל במחיקת התצוגה",
 }
 
+const getViewUserDisplayName = (user?: ViewManagerUserBase) => {
+  if (!user) {
+    return "";
+  }
+
+  if ("name" in user && typeof user.name === "string" && user.name.trim()) {
+    return user.name;
+  }
+
+  const firstName = "firstName" in user && typeof user.firstName === "string" ? user.firstName : "";
+  const lastName = "lastName" in user && typeof user.lastName === "string" ? user.lastName : "";
+
+  return getUserName(firstName, lastName) || user.upn || "";
+};
+
 export const useViewManager = ({
   form,
   user,
@@ -39,7 +63,11 @@ export const useViewManager = ({
   const [selectedViewId, setSelectedViewId] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
 
-  const { data: formViews = [], error, refetch } = useGetResponsesViews(form?.id ?? "");
+  const {
+    data: formViews = [],
+    error,
+    refetch,
+  } = useGetResponsesViews(form ? String(form.id) : "");
 
   /** --------------------------------
    * Error handling
@@ -90,9 +118,9 @@ export const useViewManager = ({
       try {
         const payload: ResponsesView = {
           ...view,
-          formId: form.id,
+          formId: String(form.id),
           createdBy: user?.upn ?? "unknown",
-          createdByName: getUserName(user?.firstName ?? "", user?.lastName ?? ""),
+          createdByName: getViewUserDisplayName(user),
         };
 
         const saved = payload.id
@@ -104,7 +132,7 @@ export const useViewManager = ({
         );
 
         setCurrentView(saved);
-        setSelectedViewId(saved.id?.toString() ?? "");
+        setSelectedViewId(saved.id ? String(saved.id) : "");
         setCurrentViewConfig(saved.config.columns);
 
         if (saved.isDefault) await refetch();
@@ -125,7 +153,7 @@ export const useViewManager = ({
     (view: ResponsesView) => {
       setCurrentView(view);
       setCurrentViewConfig(view.config.columns);
-      setSelectedViewId(view.id?.toString() ?? "");
+      setSelectedViewId(view.id ? String(view.id) : "");
 
       if (setSorting && tableColumns?.length) {
         applyViewSorting(setSorting, view.config.columns, tableColumns);
@@ -148,7 +176,7 @@ export const useViewManager = ({
         return;
       }
 
-      const view = availableViews.find((v) => v.id?.toString() === viewId);
+      const view = availableViews.find((v) => (v.id ? String(v.id) : "") === viewId);
       if (view) handleLoadView(view);
     },
     [availableViews, handleLoadView, setSorting],

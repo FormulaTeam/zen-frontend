@@ -365,14 +365,6 @@ export interface IconNameObj {
   searchKeywords: string[];
 }
 
-/**
- * Represents the data required to delete multiple responses.
- */
-export interface DeleteMultipleResponsesRequest {
-  form_id: number;
-  response_ids: number[];
-}
-
 export enum NotificationTexts {
   CreateFormFailed = "יצירת הטופס נכשלה",
   OptionsMinAmount = "לא ניתן להכין אפשרויות עם פחות מ-2 אפשרויות",
@@ -877,7 +869,7 @@ export const ALLOWED_FIELD_TYPES_FOR_CONDITION: number[] = [
 ];
 
 export interface Row {
-  id: number;
+  id: string;
   edited?: string;
   editedByName?: string;
   parentResponse?: string;

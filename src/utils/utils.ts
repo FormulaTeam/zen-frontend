@@ -414,21 +414,25 @@ export const getResponsesAndExportToExcel = async (form: FormDto) => {
 };
 
 /** create excel file with only titles based on the form fields */
-export function createExcelMold(form: Form) {
-  let formFields = form.fields;
-  let formFieldsIds: string[] = [];
-  let data: any[] = [];
-  formFields.forEach((field, i) => {
-    let uniqueId = field?.uniqueId;
-    formFieldsIds.push(uniqueId);
+export function createExcelMold(form: FormDto) {
+  const formFields = form.sections
+    .flatMap((section) => section.fields)
+    .sort((a, b) => a.index - b.index);
+
+  const formFieldsIds: string[] = [];
+  const data: any[] = [];
+
+  formFields.forEach((field) => {
+    formFieldsIds.push(field.id);
   });
 
-  //add column for each field and save fields order with arr of names
-  let names: string[] = [];
+  // add column for each field and save fields order with arr of names
+  const names: string[] = [];
   formFields.forEach((field) => {
-    if (field.typeId === FieldTypeIds.linkedForm) {
+    if (field.fieldType === fieldType.Form) {
       return;
     }
+
     data[0] = {
       ...data[0],
       [field.displayName]: "",
@@ -450,39 +454,39 @@ export function createExcelMold(form: Form) {
     },
   };
 
-  var sheet = wb.Sheets[wb.SheetNames[0]]; // get the first worksheet
-  var range = XLSX.utils.decode_range(sheet["!ref"]); // get the range
-  for (var R = range.s.r; R <= range.e.r; ++R) {
-    for (var C = range.s.c; C <= range.e.c; ++C) {
-      /* find the cell object */
-      var cellref = XLSX.utils.encode_cell({ c: C, r: R }); // construct A1 reference for cell
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const range = XLSX.utils.decode_range(sheet["!ref"]);
+
+  for (let R = range.s.r; R <= range.e.r; ++R) {
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cellref = XLSX.utils.encode_cell({ c: C, r: R });
+
       if (ws[cellref]) {
         if (R === 0) {
-          //first row set titles style
           ws[cellref].s = titleBgStyle;
         } else {
           if (ws[cellref] && ws[cellref].f && ws[cellref].f?.includes("=HYPERLINK(")) {
-            //היפר-קישור
             ws[cellref].s = cellLinkStyle;
           } else {
-            //other rows set cell style
             ws[cellref].s = cellBorderStyle;
           }
         }
       }
-      var cell = sheet[cellref];
+
+      const cell = sheet[cellref];
       if (cell && !cell.v && !cell.f) {
-        //empty cell (no value and no function) set cell style or it will be without border
         ws[cellref].s = cellBorderStyle;
       }
     }
   }
+
   const excelBuffer = XLSX.write(wb, {
     bookType: fileExtension,
     type: "array",
   });
+
   const finalData = new Blob([excelBuffer], { type: fileType });
-  let name = `${form.name}.${fileExtension}`;
+  const name = `${form.name}.${fileExtension}`;
   FileSaver.saveAs(finalData, name);
 }
 

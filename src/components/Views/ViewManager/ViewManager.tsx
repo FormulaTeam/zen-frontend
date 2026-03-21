@@ -1,14 +1,23 @@
 import { ResponsesView, ViewColumn } from "../../../types/interfaces/tableViews.types";
-import { ViewFormBase, ViewUserBase } from "../../../types/interfaces/view.types";
+import { ViewUserBase } from "../../../types/interfaces/view.types";
 import { ViewManagerContainer } from "./styled";
 import { SavedViewsList } from "../SavedViews/SavedViewsList";
 import { ResponsesViewPage } from "../ResponsesView/ResponsesViewPage";
 import { ViewModeHeader } from "../ViewModeHeader/ViewModeHeader";
 import { useViewMode } from "../../../hooks/useViewMode";
+import { FormFieldDto, UserPersonalDto } from "../../../types/shared";
+
+type ViewManagerForm = {
+  id: string | number;
+  name: string;
+  fields: FormFieldDto[];
+};
+
+type ViewManagerUser = ViewUserBase | UserPersonalDto;
 
 interface ViewManagerProps {
-  form?: ViewFormBase;
-  user?: ViewUserBase;
+  form?: ViewManagerForm;
+  user?: ViewManagerUser;
   onSaveView: (view: ResponsesView) => void;
   onLoadView: (view: ResponsesView) => void;
   onDeleteView?: (view: ResponsesView) => void;

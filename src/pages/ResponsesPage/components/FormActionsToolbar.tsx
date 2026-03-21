@@ -1,18 +1,17 @@
-import { Box, Button, Tooltip } from "@mui/material";
 import SyncIcon from "@mui/icons-material/Sync";
-
+import { Box, Button, Tooltip } from "@mui/material";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
+import MetroSyncingPopup from "@components/ResponseToolbar/Popups/MetroSyncingPopup";
+import SyncTypeMenu from "@components/ResponseToolbar/Menus/SyncTypeMenu";
+import UserPicker from "../../../components/USerPicker/UserPicker";
+import { useMetro } from "@hooks/useMetro";
 import { CustomIcon } from "../../../theme/icons";
 import { PERMISSION_TYPES } from "../../../utils/utils";
-import { useFormStore } from "../stores/form.store";
 import { PermissionGate } from "../PermissionGate";
+import { useFormStore } from "../stores/form.store";
 import { MoreOptions } from "./MoreOptions";
-import UserPicker from "../../../components/USerPicker/UserPicker";
-import SyncTypeMenu from "@components/ResponseToolbar/Menus/SyncTypeMenu";
-import { useMetro } from "@hooks/useMetro";
-import MetroSyncingPopup from "@components/ResponseToolbar/Popups/MetroSyncingPopup";
-import type { FormDto } from "../../../types/shared";
 
 export const SourceOperationStatus = {
   NOT_IN_PROGRESS: "not_in_progress",
@@ -36,10 +35,7 @@ export const FormActionsToolbar = () => {
 
   if (!permissions || !form || !formId) return null;
 
-  const formDto = form as unknown as FormDto;
-  const hasFormFields = (formDto.sections ?? []).some(
-    (section) => (section.fields?.length ?? 0) > 0,
-  );
+  const hasFormFields = (form.sections ?? []).some((section) => (section.fields?.length ?? 0) > 0);
 
   const { showMetroPopup, setShowMetroPopup, pushToMetro, syncSourceToMetro, editSource } =
     useMetro({
@@ -67,11 +63,9 @@ export const FormActionsToolbar = () => {
   };
 
   const handleAutomaticSource = (): void => {
-    if (form?.metro_access_url || form?.oasisSourceKey) {
-      editSource();
-    } else {
-      syncSourceToMetro();
-    }
+    if (form?.metro_access_url || form?.oasisSourceKey) editSource();
+    else syncSourceToMetro();
+
     handleCloseMoreActions();
   };
 
@@ -108,10 +102,11 @@ export const FormActionsToolbar = () => {
         </Tooltip>
         {showSharePopup && (
           <UserPicker
-            form={formDto}
+            form={form}
             closeSharePopupAndRefreshForm={(users, updatedForm) => {
-              const formToUpdate = updatedForm || formDto;
-              setForm(formToUpdate as any);
+              const formToUpdate = updatedForm || form;
+
+              setForm(formToUpdate as typeof form);
               setShowSharePopup(false);
             }}
           />

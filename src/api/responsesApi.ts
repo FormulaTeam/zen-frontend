@@ -1,6 +1,5 @@
 import apiClient from "./config";
 import {
-  DeleteMultipleResponsesRequest,
   FieldTypeIds,
   FieldValue,
   Filter,
@@ -167,6 +166,11 @@ export const deleteResponse = async (formId: number, id: string): Promise<Respon
  * @param deleteData - Data for the responses to delete.
  * @returns A promise that resolves to the number of deleted responses.
  */
+export interface DeleteMultipleResponsesRequest {
+  form_id: number;
+  response_ids: string[];
+}
+
 export const deleteMultipleResponses = async (
   deleteData: DeleteMultipleResponsesRequest,
 ): Promise<number> => {
@@ -299,7 +303,7 @@ export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
         return apiClient.put<ResponseForm>(`/responses/edit/${formId}/${id}`, responseData);
       });
       const responsesResults = await Promise.all(responsesPromises);
-      return responsesResults.map(response => response.data);
+      return responsesResults.map((response) => response.data);
     },
     mutationKey: ["batch-update-responses", formId],
     onSuccess: () => {
@@ -380,7 +384,9 @@ export const getResponsesRows = async ({ filter }: { filter?: Filter }): Promise
       pageSize: filter?.pageSize,
       pageNumber: filter?.pageNumber,
     };
-    const response = await apiClient.get<Row[]>(`/responses/get-rows?form_id=${filter.form_id}`, { params });
+    const response = await apiClient.get<Row[]>(`/responses/get-rows?form_id=${filter.form_id}`, {
+      params,
+    });
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch rows:", error);

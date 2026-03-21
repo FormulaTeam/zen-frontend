@@ -220,11 +220,11 @@ export const useGetForm = ({
 }: {
   formId?: string;
   config?: Omit<
-    UseQueryOptions<Form | null, Error, Form | null, readonly unknown[]>,
+    UseQueryOptions<FormDto | null, Error, FormDto | null, readonly unknown[]>,
     "queryKey" | "queryFn"
   >;
-}): UseQueryResult<Form | null> => {
-  return useFetch<undefined, Form | null>({
+}): UseQueryResult<FormDto | null> => {
+  return useFetch<undefined, FormDto | null>({
     endpoint: `/forms/${formId}`,
     queryKey: () => [formId],
     queryOptions: {

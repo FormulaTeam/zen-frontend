@@ -1,4 +1,3 @@
-// useDetailPanel.tsx
 import { useCallback, useMemo } from "react";
 import { Box, IconButton, Tooltip } from "@mui/material";
 import { GridColDef, GridRowId, GridRowParams } from "@mui/x-data-grid-pro";

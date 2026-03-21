@@ -1,11 +1,14 @@
+import { GridColDef } from "@mui/x-data-grid-pro";
 import { create } from "zustand";
+
+import { FormDto } from "../../../types/shared";
 import { Filter, ResponseForm, Row } from "../../../utils/interfaces";
 import { LegacyPermission } from "../../../utils/utils";
-import { FormDto } from "../../../types/shared";
-import { GridColDef } from "@mui/x-data-grid-pro";
 
 export type StoreForm = FormDto & {
   columns?: GridColDef[];
+  metro_access_url?: string | null;
+  oasisSourceKey?: string | null;
 };
 
 interface FormsState {
@@ -38,9 +41,7 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
 export function useFormStore() {
   const store = useInitiateFormStore();
 
-  if (!store.form || !store.permissions) {
-    throw new Error("form has not been loaded.");
-  }
+  if (!store.form || !store.permissions) throw new Error("form has not been loaded.");
 
   return {
     form: store.form,
