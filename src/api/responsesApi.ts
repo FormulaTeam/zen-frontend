@@ -19,7 +19,7 @@ import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { useMutation } from "@tanstack/react-query";
 import { useUpdate } from "../utils/useUpdate";
-import { ResponseDto } from "../types/shared";
+import { CreateResponseDto, ResponseDto } from "../types/shared";
 
 /**
  * Fetch all responses with optional query parameters.
@@ -336,7 +336,7 @@ export const useCreateResponsesFromFile = (formId: string) => {
 };
 
 export const useCreateResponse = () => {
-  return useCreate<NewResponse | NewResponse[], ResponseForm | ResponseForm[]>({
+  return useCreate<CreateResponseDto | CreateResponseDto[], ResponseDto | ResponseDto[]>({
     endpoint: "/responses/create",
     mutationKey: ["create-response"],
     mutationOptions: {
@@ -350,8 +350,8 @@ export const useCreateResponse = () => {
   });
 };
 
-export const useUpdateResponse = (formId: number, id: number) => {
-  return useUpdate<Partial<ResponseForm>, ResponseForm>({
+export const useUpdateResponse = (formId?: number, id?: string) => {
+  return useUpdate<Partial<ResponseDto>, ResponseDto>({
     endpoint: `/responses/edit/${formId}/${id}`,
     mutationKey: ["update-response", formId, id],
     mutationOptions: {
