@@ -1,5 +1,5 @@
 import MenuItem from "@mui/material/MenuItem";
-import { ConditionsRoot, FormField, ConditionUtils, AffectedTarget } from "../../utils/interfaces";
+import { ConditionsRoot, ConditionUtils, AffectedTarget } from "../../utils/interfaces";
 import {
   AffectedTargetsContainer,
   AffectedTargetsListContainer,
@@ -11,10 +11,12 @@ import {
   AffectedTargetsSelectContainer,
   AffectedTargetsSelect,
 } from "./styled";
+import { FormFieldDto } from "../../types/shared";
+import type { ConditionalFormField } from "../../utils/conditionUtils";
 
 interface AffectedTargetsSectionProps {
   conditionsRoot: ConditionsRoot;
-  formFields: FormField[];
+  formFields: ConditionalFormField[];
   onAddAffectedTarget: (target: AffectedTarget) => void;
   onRemoveAffectedTarget: (targetType: "section" | "field", targetId: string) => void;
 }
@@ -27,7 +29,6 @@ const AffectedTargetsSection: React.FC<AffectedTargetsSectionProps> = ({
 }: AffectedTargetsSectionProps) => {
   return (
     <AffectedTargetsContainer elevation={2}>
-      {/* Current affected targets */}
       {conditionsRoot.affectedTargets.length > 0 && (
         <AffectedTargetsListContainer>
           <AffectedTargetsListTitle variant="subtitle2">מה יוצג:</AffectedTargetsListTitle>
@@ -51,9 +52,7 @@ const AffectedTargetsSection: React.FC<AffectedTargetsSectionProps> = ({
         </AffectedTargetsListContainer>
       )}
 
-      {/* Add new affected targets */}
       <AffectedTargetsSelectContainer>
-        {/* Add Section */}
         {ConditionUtils.getAvailableSections(formFields, conditionsRoot).length > 0 && (
           <AffectedTargetsSelect
             displayEmpty
@@ -70,7 +69,6 @@ const AffectedTargetsSection: React.FC<AffectedTargetsSectionProps> = ({
                     name: section.name,
                   });
                 }
-                // Reset the select value
                 (e.target as HTMLSelectElement).value = "";
               }
             }}
@@ -93,18 +91,17 @@ const AffectedTargetsSection: React.FC<AffectedTargetsSectionProps> = ({
           </AffectedTargetsSelect>
         )}
 
-        {/* Add Field */}
         <AffectedTargetsSelect
           displayEmpty
           size="small"
           onChange={(e) => {
             const fieldId = e.target.value as string;
             if (fieldId) {
-              const field = formFields.find((f) => f.uniqueId === fieldId);
+              const field = formFields.find((f) => f.id === fieldId);
               if (field) {
                 onAddAffectedTarget({
                   type: "field",
-                  id: field.uniqueId,
+                  id: field.id,
                   name: field.displayName,
                 });
               }
@@ -119,11 +116,11 @@ const AffectedTargetsSection: React.FC<AffectedTargetsSectionProps> = ({
             .filter(
               (field) =>
                 !conditionsRoot.affectedTargets.some(
-                  (target) => target.type === "field" && target.id === field.uniqueId,
+                  (target) => target.type === "field" && target.id === field.id,
                 ),
             )
             .map((field) => (
-              <MenuItem key={field.uniqueId} value={field.uniqueId}>
+              <MenuItem key={field.id} value={field.id}>
                 שדה: {field.displayName}
               </MenuItem>
             ))}

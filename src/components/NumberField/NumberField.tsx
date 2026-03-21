@@ -10,14 +10,21 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { FormField } from "../../utils/interfaces";
 import { useState } from "react";
+import { FormFieldDto } from "../../types/shared";
+
+type NumberFieldExtra = {
+  numberType?: string;
+  minValue?: number;
+  maxValue?: number;
+  initialNumberValue?: number;
+};
 
 type Props = {
-  formField: FormField;
-  setFormFields: (newFormFields: FormField[]) => void;
+  formField: FormFieldDto;
+  setFormFields: React.Dispatch<React.SetStateAction<FormFieldDto[]>>;
   index: number;
-  formFields: FormField[];
+  formFields: FormFieldDto[];
 };
 
 interface Errors {
@@ -25,12 +32,18 @@ interface Errors {
   initialNumberValue: boolean;
 }
 
-export default function NumberField({
-  formField,
-  setFormFields,
-  index,
-  formFields,
-}: Props) {
+const getFieldExtra = (field: FormFieldDto): NumberFieldExtra =>
+  (field.extra as NumberFieldExtra | undefined) ?? {};
+
+const updateFieldExtra = (field: FormFieldDto, patch: Partial<NumberFieldExtra>): FormFieldDto => ({
+  ...field,
+  extra: {
+    ...getFieldExtra(field),
+    ...patch,
+  },
+});
+
+export default function NumberField({ formField, setFormFields, index, formFields }: Props) {
   const theme = useTheme();
   const [errors, setErrors] = useState<Errors>({
     range: false,
@@ -38,41 +51,71 @@ export default function NumberField({
   });
 
   function handleValChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const newFormFields = [...formFields];
+    const fieldName = event.target.name as keyof Pick<
+      NumberFieldExtra,
+      "minValue" | "maxValue" | "initialNumberValue"
+    >;
+
+    const newFormFields = formFields.map((field) => {
+      if (field.index !== index) return field;
+
+      const extra = getFieldExtra(field);
+      const parsedValue =
+        extra.numberType === "double"
+          ? parseFloat(event.target.value)
+          : parseInt(event.target.value, 10);
+
+      const nextValue = isNaN(parsedValue) ? undefined : parsedValue;
+
+      return updateFieldExtra(field, {
+        [fieldName]: nextValue,
+      });
+    });
+
+    setFormFields(newFormFields);
+
     const currentField = newFormFields.find((i) => i.index === index);
     if (currentField) {
-      const parsedValue =
-        currentField.numberType === "double"
-          ? parseFloat(event.target.value)
-          : parseInt(event.target.value);
-
-      currentField[event.target.name] = isNaN(parsedValue) ? undefined : parsedValue;
-      setFormFields(newFormFields);
       validateNumberField(currentField);
     }
   }
 
   function handleTypeChange(event: SelectChangeEvent) {
-    const newFormFields = [...formFields];
+    const nextType = event.target.value;
+
+    const newFormFields = formFields.map((field) => {
+      if (field.index !== index) return field;
+
+      const extra = getFieldExtra(field);
+      let minValue = extra.minValue;
+      let maxValue = extra.maxValue;
+      let initialNumberValue = extra.initialNumberValue;
+
+      if (nextType === "integer") {
+        if (minValue !== undefined) minValue = Math.floor(minValue);
+        if (maxValue !== undefined) maxValue = Math.floor(maxValue);
+        if (initialNumberValue !== undefined) initialNumberValue = Math.floor(initialNumberValue);
+      }
+
+      return updateFieldExtra(field, {
+        numberType: nextType,
+        minValue,
+        maxValue,
+        initialNumberValue,
+      });
+    });
+
+    setFormFields(newFormFields);
+
     const currentField = newFormFields.find((i) => i.index === index);
     if (currentField) {
-      if (event.target.value === "integer") {
-        if (currentField.minValue !== undefined)
-          currentField.minValue = Math.floor(currentField.minValue);
-        if (currentField.maxValue !== undefined)
-          currentField.maxValue = Math.floor(currentField.maxValue);
-        if (currentField.initialNumberValue !== undefined)
-          currentField.initialNumberValue = Math.floor(currentField.initialNumberValue);
-      }
-      currentField.numberType = event.target.value;
-      setFormFields(newFormFields);
       validateNumberField(currentField);
     }
   }
 
-  function validateNumberField(field: FormField) {
+  function validateNumberField(field: FormFieldDto) {
     const newErrors = { ...errors };
-    const { minValue, maxValue, initialNumberValue } = field;
+    const { minValue, maxValue, initialNumberValue } = getFieldExtra(field);
 
     newErrors.range = minValue !== undefined && maxValue !== undefined && minValue > maxValue;
 
@@ -83,8 +126,11 @@ export default function NumberField({
     } else {
       newErrors.initialNumberValue = false;
     }
+
     setErrors(newErrors);
   }
+
+  const extra = getFieldExtra(formField);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, marginTop: "10px" }}>
@@ -93,7 +139,7 @@ export default function NumberField({
           <FormControl>
             <FormLabel>סוג מספר</FormLabel>
             <Select
-              value={formField.numberType ?? "integer"}
+              value={extra.numberType ?? "integer"}
               className="number-type-select"
               type="number"
               name="numberType"
@@ -108,7 +154,7 @@ export default function NumberField({
         <Grid alignItems="center">
           <TextField
             className="formField-textfield"
-            value={formField.initialNumberValue ?? ""}
+            value={extra.initialNumberValue ?? ""}
             type="number"
             name="initialNumberValue"
             size="small"
@@ -130,7 +176,7 @@ export default function NumberField({
           <Grid container gap={1}>
             <TextField
               className="formField-range"
-              value={formField.minValue ?? ""}
+              value={extra.minValue ?? ""}
               name="minValue"
               size="small"
               placeholder="מינימום"
@@ -139,7 +185,7 @@ export default function NumberField({
             />
             <TextField
               className="formField-range"
-              value={formField.maxValue ?? ""}
+              value={extra.maxValue ?? ""}
               name="maxValue"
               size="small"
               placeholder="מקסימום"

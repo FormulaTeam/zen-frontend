@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react";
-import { Filter, Form, ResponseForm } from "../utils/interfaces";
+import { Filter, ResponseForm } from "../utils/interfaces";
+import type { FormDto } from "../types/shared";
 import { getAllDeletedResponses, restoreResponse } from "../api";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
 import { useSuperAdmin } from "../contexts/SuperAdminContext";
@@ -35,9 +36,9 @@ const sortResponses = (responses: ResponseForm[], sortValue: number): ResponseFo
 
 export const useDeletedResponses = (
   user: any,
-  formsData: Form[],
+  formsData: FormDto[],
   getData: IGetFormsData,
-  currentDeletedForm: Form | null,
+  currentDeletedForm: FormDto | null,
 ) => {
   const [selectedResponseKeys, setSelectedResponseKeys] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);

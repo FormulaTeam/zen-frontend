@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { FieldTypeIds, ResponseForm } from "../../utils/interfaces";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { FormRoleDto, ResponseDto } from "../../types/shared";
+import { fieldType } from "formula-gear";
 import { Box, Button, Container, Tooltip, Typography } from "@mui/material";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useResponseSave } from "../../hooks/useResponseSave";
@@ -24,9 +25,15 @@ const PageContainer = styled(Container)`
   flex-direction: column;
 `;
 
-export default function Response({ user, viewMode = false, copyMode = false }) {
+interface ResponseProps {
+  user: any;
+  viewMode?: boolean;
+  copyMode?: boolean;
+}
+
+export default function Response({ user, viewMode = false, copyMode = false }: ResponseProps) {
   const [permissionTypes, setPermissionTypes] = useState<number[]>([]);
-  const [savedResponse, setSavedResponse] = useState<ResponseForm | null>(null);
+  const [savedResponse, setSavedResponse] = useState<ResponseDto | null>(null);
   const [showLoadingSaveBtn, setShowLoadingSaveBtn] = useState<boolean>(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showValidationPopup, setShowValidationPopup] = useState<boolean>(false);
@@ -36,10 +43,8 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
   const navigate = useNavigate();
   const { isSuperAdmin } = useSuperAdmin();
 
-  const { data: formRolesData } = useGetFormRoles(formId);
-  // formRolesData contains the new per-form roles shape { roles: [{userId, roleId}], public_role? }
-  // resolveUserPermissions still expects the legacy Role[] shape — that refactor is tracked separately
-  const roles = [] as any[];
+  const { data: formRoles } = useGetFormRoles(formId);
+  const roles = useMemo(() => (formRoles as FormRoleDto | undefined)?.userRoles ?? [], [formRoles]);
 
   const {
     formTitle,
@@ -57,26 +62,26 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
     responsSections,
     collapsedSections,
     toggleSectionCollapse,
-  } = useResponseState(formId, id, viewMode, copyMode);
+  } = useResponseState(formId, id, viewMode, copyMode, undefined, user, isSuperAdmin ?? undefined);
 
-  const saveAll = async () => {
+  const { saveResponse, isSaving } = useResponseSave(form, response, user, undefined, copyMode);
+
+  const parentCreatePromiseRef = useRef<Promise<any> | null>(null);
+  const generateValidationErrorMessagesRef = useRef<() => string[]>(() => []);
+
+  const saveAll = useCallback(async () => {
     if (validateRequiredFields() && form) {
       try {
-        let result;
+        let result: any;
 
         if (copyMode) {
-          // store a component-scoped promise to dedupe parent creation
-          if (!(saveAll as any)._parentCreatePromise) {
-            (saveAll as any)._parentCreatePromise = saveResponse(
-              formFieldsByIdMap,
-              formFieldsValuesMap,
-            );
+          if (!parentCreatePromiseRef.current) {
+            parentCreatePromiseRef.current = saveResponse(formFieldsByIdMap, formFieldsValuesMap);
           }
-          // use the stored promise
-          result = await (saveAll as any)._parentCreatePromise;
+
+          result = await parentCreatePromiseRef.current;
         } else {
-          // non-copy mode saves normally
-          result = await saveResponse(formFieldsByIdMap, formFieldsValuesMap) as any;
+          result = await saveResponse(formFieldsByIdMap, formFieldsValuesMap);
         }
 
         if (!Array.isArray(result)) {
@@ -85,6 +90,10 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
 
         setChildFormsSaving(true);
       } catch (error: any) {
+        if (copyMode) {
+          parentCreatePromiseRef.current = null;
+        }
+
         if (error?.response?.data?.error?.includes("Metro")) {
           navigate(`/responses/${form.id}`);
         } else {
@@ -93,18 +102,24 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
         }
       }
     } else {
-      const errorMessages = generateValidationErrorMessages();
+      const errorMessages = generateValidationErrorMessagesRef.current?.() || [];
 
-      if (errorMessages) {
+      if (errorMessages.length > 0) {
         setValidationErrors(errorMessages);
         setShowValidationPopup(true);
       }
 
       setShowLoadingSaveBtn(false);
     }
-  };
-
-  const { saveResponse, isSaving } = useResponseSave(form, response, user, undefined, copyMode);
+  }, [
+    copyMode,
+    form,
+    formFieldsByIdMap,
+    formFieldsValuesMap,
+    navigate,
+    saveResponse,
+    validateRequiredFields,
+  ]);
 
   const {
     childForms,
@@ -136,20 +151,22 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
     childFormsValidate,
   });
 
+  useEffect(() => {
+    generateValidationErrorMessagesRef.current = generateValidationErrorMessages;
+  }, [generateValidationErrorMessages]);
+
   const isLoading = useMemo(() => {
     return isSaving || childFormsSaving || loading || loadingConnections;
   }, [isSaving, childFormsSaving, loading, loadingConnections]);
 
   useEffect(() => {
     resolveUserPermissions(form, user, roles, viewMode, setPermissionTypes);
-  }, [roles, form]);
+  }, [form, user, roles, viewMode]);
 
-  // Handle child form validation results
   useEffect(() => {
     if (childFormsValidate) {
       const shownForms = childForms.filter((childForm) => childForm.shown);
 
-      // Check if all child forms have been validated
       const allValidated = shownForms.every(
         (childForm) => childForm.children?.length === childForm.valid?.length,
       );
@@ -160,19 +177,19 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
         if (!isValid) {
           const errorMessages = generateValidationErrorMessages();
 
-          if (errorMessages) {
+          if (errorMessages.length > 0) {
             setValidationErrors(errorMessages);
             setShowValidationPopup(true);
           }
         }
       }
     }
-  }, [childForms, childFormsValidate]);
+  }, [childForms, childFormsValidate, generateValidationErrorMessages]);
 
   const onBack = () => {
-    location.state?.parentFormId ?
-      navigate(`/responses/${location.state.parentFormId}`, {}) :
-      (form && navigate(`/responses/${form.id}`));
+    location.state?.parentFormId
+      ? navigate(`/responses/${location.state.parentFormId}`, {})
+      : form && navigate(`/responses/${form.id}`);
   };
 
   const onEdit = () => navigate(`/response/edit/${formId}/${id}`);
@@ -185,33 +202,32 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
     setShowValidationPopup(false);
     setValidationErrors([]);
 
-    // Reset child form validation arrays so subsequent validations work
-    setChildForms((prev) => {
-      const newChildForms = [...prev];
-
-      newChildForms.forEach((childForm) => {
-        if (childForm.shown) {
-          childForm.valid = [];
-        }
-      });
-
-      return newChildForms;
-    });
+    setChildForms((prev) =>
+      prev.map((childForm) =>
+        childForm.shown
+          ? {
+              ...childForm,
+              valid: [],
+            }
+          : childForm,
+      ),
+    );
   };
 
   const getChildFormTitle = (childFormId: number) => {
     return (
-      formFields.find((field: any) => field.connectedFormId === childFormId)?.displayName || ""
+      formFields.find((field: any) => field.extra?.connectedFormId === childFormId)?.displayName ||
+      ""
     );
   };
 
   const getFormInFormProperty = (formField: any) => {
-    if (formField.typeId !== FieldTypeIds.linkedForm || !formField.connectedFormId) {
+    if (formField.fieldType !== fieldType.Form || !formField.extra?.connectedFormId) {
       return null;
     }
 
     const childFormIndex = childForms.findIndex(
-      (childForm) => childForm.formId === formField.connectedFormId,
+      (childForm) => childForm.formId === formField.extra.connectedFormId,
     );
 
     const childFormData = childForms[childFormIndex];
@@ -220,38 +236,40 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
       return null;
     }
 
-    const CHILD_FORM_TITLE = getChildFormTitle(childFormData.formId);
-    const ADD_RESPONSE_TITLE = `הוספת תגובה${CHILD_FORM_TITLE ? ` - ${CHILD_FORM_TITLE}` : ""}`;
+    const childFormTitle = getChildFormTitle(childFormData.formId);
+    const addResponseTitle = `הוספת תגובה${childFormTitle ? ` - ${childFormTitle}` : ""}`;
 
     return (
-      <Box key={`child-form-${formField.connectedFormId}`}>
-        {
-          childFormData.children.map(
-            (child, index) =>
-              childFormData.shown && (
-                <ConnectedFormSection
-                  key={child.id || child.uniqueId || `child-${formField.connectedFormId}-${index}`}
-                  handleRemoveChildForm={() => {
-                    handleRemoveChildForm(childFormIndex, index);
-                  }}
-                  formsLength={childFormData.children.length}
-                  shouldSave={childFormsSaving}
-                  user={user}
-                  viewMode={viewMode}
-                  copyMode={copyMode}
-                  formId={formId!}
-                  field={child}
-                  parentResponse={savedResponse?.id}
-                  index={index}
-                  childSaved={(success: boolean) => handleChildSaved(childFormIndex, success)}
-                  shouldValidate={childFormsValidate}
-                  childValid={(success: boolean) => handleChildValid(childFormIndex, success)}
-                  id={child.id}
-                  shouldLoad={isSaving}
-                />
-              ),
-          )
-        }
+      <Box key={`child-form-${formField.extra.connectedFormId}`}>
+        {childFormData.children.map(
+          (child, index) =>
+            childFormData.shown && (
+              <ConnectedFormSection
+                key={
+                  child.responseId ||
+                  child.instanceKey ||
+                  `child-${formField.extra.connectedFormId}-${index}`
+                }
+                handleRemoveChildForm={() => {
+                  handleRemoveChildForm(childFormIndex, index);
+                }}
+                formsLength={childFormData.children.length}
+                shouldSave={childFormsSaving}
+                user={user}
+                viewMode={viewMode}
+                copyMode={copyMode}
+                formId={formId!}
+                field={child}
+                parentResponse={savedResponse?.id}
+                index={index}
+                childSaved={(success: boolean) => handleChildSaved(childFormIndex, success)}
+                shouldValidate={childFormsValidate}
+                childValid={(success: boolean) => handleChildValid(childFormIndex, success)}
+                id={child.responseId}
+                shouldLoad={isSaving}
+              />
+            ),
+        )}
         {!isLoading && !viewMode && (
           <Button
             variant="text"
@@ -259,9 +277,9 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
             startIcon={<Add />}
             sx={{ minWidth: "auto", padding: "8px" }}
             onClick={() => handleAddChildForm(childFormIndex)}>
-            <Tooltip title={ADD_RESPONSE_TITLE}>
+            <Tooltip title={addResponseTitle}>
               <Typography variant="subtitle2" fontWeight={600}>
-                {ADD_RESPONSE_TITLE}
+                {addResponseTitle}
               </Typography>
             </Tooltip>
           </Button>
@@ -270,14 +288,16 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
     );
   };
 
-  const sortedSections = useMemo(() =>
-    Object.entries(responsSections).sort(([idA, a], [idB, b]) => {
-      const orderA = a.fields[0]?.sectionOrder ?? 0;
-      const orderB = b.fields[0]?.sectionOrder ?? 0;
+  const sortedSections = useMemo(
+    () =>
+      Object.entries(responsSections).sort(([idA, a], [idB, b]) => {
+        const orderA = a.order ?? 0;
+        const orderB = b.order ?? 0;
 
-      return orderA === orderB ? idA.localeCompare(idB) : orderA - orderB;
-    }
-    ), [responsSections]);
+        return orderA === orderB ? idA.localeCompare(idB) : orderA - orderB;
+      }),
+    [responsSections],
+  );
 
   return (
     <div className="response-page">
@@ -289,7 +309,7 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
           onEdit={onEdit}
           onBack={onBack}
           onSaveAndClose={onSaveAndClose}
-          saveDisabled={isSaving || childFormsSaving}
+          saveDisabled={isSaving || childFormsSaving || showLoadingSaveBtn}
         />
         <FormSectionsContainer>
           {sortedSections.map(([sectionId, section], sectionIdx) => (
@@ -314,6 +334,7 @@ export default function Response({ user, viewMode = false, copyMode = false }) {
           ))}
         </FormSectionsContainer>
       </PageContainer>
+
       {showValidationPopup && (
         <AlertMsg msg={validationErrors} closePopup={closeValidationPopup} isSuccess={false} />
       )}

@@ -1,11 +1,19 @@
-import { useState, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { GridRowModel } from "@mui/x-data-grid-pro";
-import { showSuccessNotification, showErrorNotification } from "@utils/utils";
-import { useBatchUpdateResponses, useGetResponses, getResponseWithFlatFields, useCreateResponse } from "@api/responsesApi";
+import { showSuccessNotification, showErrorNotification, DEFAULT_DATE_FORMAT } from "@utils/utils";
+import { useBatchUpdateResponses, useGetResponses, useCreateResponse } from "@api/responsesApi";
 import { uploadFilesToS3 } from "@api/filesApi";
 import { useFormStore } from "../stores/form.store";
 import { useAuth } from "@contexts/AuthContext";
-import { FieldTypeIds, FormField, NewResponse, ResponseFieldValue, Row } from "@utils/interfaces";
+import {
+  CreateResponseDto,
+  FormDto,
+  FormFieldDto,
+  ResponseDto,
+  ResponseFieldValueDto,
+  UserPersonalDto,
+} from "src/types/shared";
+import { fieldType } from "formula-gear";
 import {
   CustomError,
   NoUnsavedChangesError,
@@ -15,43 +23,148 @@ import {
   SaveFailedError,
 } from "../../../errors";
 import moment from "moment";
-import { DEFAULT_DATE_FORMAT } from "@utils/utils";
+
+type RowId = string | number;
+
+type Row = GridRowModel & {
+  id: RowId;
+  created?: string;
+  createdByName?: string;
+  edited?: string;
+  editedByName?: string;
+  [key: string]: unknown;
+};
+
+type EditorFieldExtra = {
+  validationRegex?: string;
+  minValue?: number;
+  maxValue?: number;
+  numberType?: string;
+};
+
+type ResponseUpdatePayload = {
+  id: string;
+  responseData: ResponseDto;
+};
+
+type CreateResponseMutationPayload = CreateResponseDto & {
+  formId: number;
+};
+
+const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
+  (field.extra as EditorFieldExtra | undefined) ?? {};
+
+const isTempRowId = (rowId: RowId): boolean => String(rowId).startsWith("new_");
+
+const getAuthPersonalUser = (user: unknown): UserPersonalDto | undefined => {
+  if (!user || typeof user !== "object") {
+    return undefined;
+  }
+
+  const safeUpn = "upn" in user && typeof user.upn === "string" ? user.upn : "";
+
+  if ("name" in user && typeof user.name === "string") {
+    return {
+      name: user.name || safeUpn,
+      upn: safeUpn,
+    };
+  }
+
+  const firstName = "firstName" in user && typeof user.firstName === "string" ? user.firstName : "";
+  const lastName = "lastName" in user && typeof user.lastName === "string" ? user.lastName : "";
+  const displayName =
+    "displayName" in user && typeof user.displayName === "string" ? user.displayName : "";
+
+  const fullName = `${firstName} ${lastName}`.trim() || displayName || safeUpn;
+
+  return {
+    name: fullName,
+    upn: safeUpn,
+  };
+};
+
+const getAuthDisplayName = (user: unknown): string => {
+  const personalUser = getAuthPersonalUser(user);
+  return personalUser?.name ?? "";
+};
+
+const normalizeUploadedFile = (fileItem: any) => ({
+  name: fileItem?.name || fileItem?.fileName || "",
+  url: fileItem?.url || fileItem?.fileUrl || fileItem?.downloadUrl || "",
+});
+
+const getEditedFileValueParts = (editedValue: unknown) => {
+  let newFilesToUpload: File[] = [];
+  let attachedFiles: any[] = [];
+
+  if (Array.isArray(editedValue)) {
+    attachedFiles = editedValue;
+  } else if (editedValue && typeof editedValue === "object") {
+    const typedValue = editedValue as {
+      files?: any;
+      deletedFiles?: any[];
+    };
+
+    if (
+      typedValue.files &&
+      typeof typedValue.files === "object" &&
+      !Array.isArray(typedValue.files)
+    ) {
+      newFilesToUpload = typedValue.files.newFiles || [];
+      attachedFiles = typedValue.files.attachedFiles || [];
+    } else if (Array.isArray(typedValue.files)) {
+      attachedFiles = typedValue.files;
+    }
+  }
+
+  return { newFilesToUpload, attachedFiles };
+};
 
 export const useResponsesEdit = () => {
   const { form, rows, setRows, filter } = useFormStore();
   const { user } = useAuth();
 
   const [isInEditMode, setIsInEditMode] = useState(false);
-
-  const [editedRows, setEditedRows] = useState<Map<number | string, Row>>(new Map());
+  const [editedRows, setEditedRows] = useState<Map<RowId, Row>>(new Map());
   const [localRows, setLocalRows] = useState<Row[]>([]);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<number | string, Record<string, string>>>({});
+  const [validationErrors, setValidationErrors] = useState<Record<RowId, Record<string, string>>>(
+    {},
+  );
 
   const newRowCounterRef = useRef(0);
+
+  const dtoForm = form as FormDto | null | undefined;
+
+  const formFields = useMemo<FormFieldDto[]>(() => {
+    return (dtoForm?.sections ?? [])
+      .flatMap((section) => section.fields ?? [])
+      .sort((a, b) => a.index - b.index);
+  }, [dtoForm]);
+
   const { data: fullResponses } = useGetResponses({
-    filter: { ...filter, form_id: form?.id },
+    filter: { ...filter, form_id: dtoForm?.id },
   });
 
   const { mutateAsync: batchUpdateResponses, isPending: isUpdating } = useBatchUpdateResponses({
-    formId: form?.id || 0,
+    formId: dtoForm?.id || 0,
   });
 
   const { mutateAsync: createResponse } = useCreateResponse();
 
-  const responseRows: Row[] = rows?.filter((row) => row != null) || [];
-  const hasUnsavedChanges: boolean = editedRows.size > 0;
+  const responseRows: Row[] = (rows?.filter((row) => row != null) as Row[]) || [];
+  const hasUnsavedChanges = editedRows.size > 0;
 
   const toggleEditMode = (): void => {
     if (isInEditMode && hasUnsavedChanges) {
       setShowCancelDialog(true);
-
     } else {
-      const nextEditMode: boolean = !isInEditMode;
+      const nextEditMode = !isInEditMode;
 
       setIsInEditMode(nextEditMode);
       setEditedRows(new Map());
       setLocalRows(nextEditMode ? [...responseRows] : responseRows);
+
       if (!nextEditMode) {
         setValidationErrors({});
         newRowCounterRef.current = 0;
@@ -79,11 +192,19 @@ export const useResponsesEdit = () => {
     }
   };
 
-  const handleCellLiveChange = <T,>(rowId: number | string, columnName: string, value: T, isValid?: boolean): void => {
+  const handleCellLiveChange = <T>(
+    rowId: RowId,
+    columnName: string,
+    value: T,
+    isValid?: boolean,
+  ): void => {
     try {
-      const field = form?.fields?.find((f) => f.displayName === columnName || f.name === columnName || f.uniqueId === columnName);
+      const field = formFields.find(
+        (f) => f.displayName === columnName || f.name === columnName || f.id === columnName,
+      );
       if (!field) return;
 
+      const fieldExtra = getFieldExtra(field);
       const errorKey = field.displayName;
       const isString = (v: unknown): v is string => typeof v === "string";
 
@@ -91,29 +212,33 @@ export const useResponsesEdit = () => {
         const next = { ...prev };
         const rowErrors = { ...(next[rowId] || {}) };
 
-        // Always clear the error for this field when the user interacts with it.
-        // Required-field errors are only set on save, not live.
         delete rowErrors[errorKey];
 
-        if (field.validationRegex && value != null && isString(value) && value !== "") {
-          const reg = new RegExp(field.validationRegex);
+        if (fieldExtra.validationRegex && value != null && isString(value) && value !== "") {
+          const reg = new RegExp(fieldExtra.validationRegex);
           if (!reg.test(value)) {
             rowErrors[errorKey] = `${field.displayName} - ערך לא תקין`;
           }
         }
 
-        if (field.typeId === FieldTypeIds.number) {
-          const valStr = (typeof value === "number" || isString(value)) ? String(value) : "";
+        if (field.fieldType === fieldType.Number) {
+          const valStr = typeof value === "number" || isString(value) ? String(value) : "";
+
           if (valStr !== "") {
-            const parsed = field.numberType === "integer" ? parseInt(valStr, 10) : parseFloat(valStr);
+            const parsed =
+              fieldExtra.numberType === "integer" ? parseInt(valStr, 10) : parseFloat(valStr);
+
             if (Number.isNaN(parsed)) {
-              rowErrors[errorKey] = field.numberType === "integer" ? "חובה להזין מספר שלם" : "חובה להזין מספר עשרוני";
+              rowErrors[errorKey] =
+                fieldExtra.numberType === "integer"
+                  ? "חובה להזין מספר שלם"
+                  : "חובה להזין מספר עשרוני";
             } else {
-              if (field.minValue !== undefined && parsed < field.minValue) {
-                rowErrors[errorKey] = `המספר חייב להיות גדול מ- ${field.minValue}`;
+              if (fieldExtra.minValue !== undefined && parsed < fieldExtra.minValue) {
+                rowErrors[errorKey] = `המספר חייב להיות גדול מ- ${fieldExtra.minValue}`;
               }
-              if (field.maxValue !== undefined && parsed > field.maxValue) {
-                rowErrors[errorKey] = `המספר חייב להיות קטן מ- ${field.maxValue}`;
+              if (fieldExtra.maxValue !== undefined && parsed > fieldExtra.maxValue) {
+                rowErrors[errorKey] = `המספר חייב להיות קטן מ- ${fieldExtra.maxValue}`;
               }
             }
           }
@@ -134,52 +259,54 @@ export const useResponsesEdit = () => {
         next.set(rowId, { ...existing, [field.displayName]: value } as Row);
         return next;
       });
-    } catch (e) {
+    } catch {
       // ignore
     }
   };
 
   const processRowUpdate = (newRow: GridRowModel, oldRow: GridRowModel): GridRowModel => {
-    const newRowId: number | string = newRow.id;
-    const numericId = Number(newRowId);
+    const newRowId = newRow.id as RowId;
 
-    if (typeof newRowId === "number" && Number.isNaN(numericId)) {
-      return newRow;
-    }
-
-    setLocalRows((prevRows: Row[]) =>
-      prevRows.map((row: Row) => String(row?.id) === String(newRowId) ? ({ ...row, ...newRow }) : row)
+    setLocalRows((prevRows) =>
+      prevRows.map((row) =>
+        String(row?.id) === String(newRowId) ? ({ ...row, ...newRow } as Row) : row,
+      ),
     );
 
-    setEditedRows((prevEditedRows: Map<number | string, Row>) => new Map(prevEditedRows).set(newRowId, newRow as Row));
+    setEditedRows((prevEditedRows) => new Map(prevEditedRows).set(newRowId, newRow as Row));
 
-    // Validate the updated row and set validation errors per cell if needed.
-    // Required-field errors are only set on save, not live — so only check format/range here.
     try {
       const rowErrors: Record<string, string> = {};
-      form?.fields?.forEach((field: any) => {
-        const errorKey = field.displayName;
-        const value = (newRow as any)[field.displayName];
 
-        if (field.validationRegex && value) {
-          const reg = new RegExp(field.validationRegex);
+      formFields.forEach((field) => {
+        const fieldExtra = getFieldExtra(field);
+        const errorKey = field.displayName;
+        const value = (newRow as Record<string, unknown>)[field.displayName];
+
+        if (fieldExtra.validationRegex && value) {
+          const reg = new RegExp(fieldExtra.validationRegex);
           if (!reg.test(String(value))) {
             rowErrors[errorKey] = `${field.displayName} - ערך לא תקין`;
           }
         }
 
-        if (field.typeId === FieldTypeIds.number) {
+        if (field.fieldType === fieldType.Number) {
           const valStr = value === undefined || value === null ? "" : String(value);
           if (valStr !== "") {
-            const parsed = field.numberType === "integer" ? parseInt(valStr, 10) : parseFloat(valStr);
+            const parsed =
+              fieldExtra.numberType === "integer" ? parseInt(valStr, 10) : parseFloat(valStr);
+
             if (Number.isNaN(parsed)) {
-              rowErrors[errorKey] = field.numberType === "integer" ? "חובה להזין מספר שלם" : "חובה להזין מספר עשרוני";
+              rowErrors[errorKey] =
+                fieldExtra.numberType === "integer"
+                  ? "חובה להזין מספר שלם"
+                  : "חובה להזין מספר עשרוני";
             } else {
-              if (field.minValue !== undefined && parsed < field.minValue) {
-                rowErrors[errorKey] = `המספר חייב להיות גדול מ- ${field.minValue}`;
+              if (fieldExtra.minValue !== undefined && parsed < fieldExtra.minValue) {
+                rowErrors[errorKey] = `המספר חייב להיות גדול מ- ${fieldExtra.minValue}`;
               }
-              if (field.maxValue !== undefined && parsed > field.maxValue) {
-                rowErrors[errorKey] = `המספר חייב להיות קטן מ- ${field.maxValue}`;
+              if (fieldExtra.maxValue !== undefined && parsed > fieldExtra.maxValue) {
+                rowErrors[errorKey] = `המספר חייב להיות קטן מ- ${fieldExtra.maxValue}`;
               }
             }
           }
@@ -188,141 +315,120 @@ export const useResponsesEdit = () => {
 
       setValidationErrors((prev) => {
         const next = { ...prev };
-        // Merge format/range errors in, but preserve any required-field errors already set by saveChanges.
         const existingRowErrors = prev[newRowId] || {};
         const merged = { ...existingRowErrors, ...rowErrors };
+
         if (Object.keys(merged).length === 0) {
           delete next[newRowId];
         } else {
           next[newRowId] = merged;
         }
+
         return next;
       });
-    } catch (e) {
+    } catch {
       // ignore validation errors
     }
 
     return newRow;
   };
 
+  const buildResponseUpdatePayload = async (
+    rowId: string,
+    editedRow: Partial<Row>,
+  ): Promise<ResponseUpdatePayload | null> => {
+    const original = (fullResponses as ResponseDto[] | undefined)?.find(
+      (response) => String(response?.id) === String(rowId),
+    );
 
-  const buildResponseUpdatePayload = async (rowId: number, editedRow: Partial<Row>) => {
-    const original = fullResponses?.find((r) => Number(r?.id) === rowId);
     if (!original) {
       return null;
     }
 
-    const columnToUniqueId = new Map<string, string>();
-    form?.columns?.forEach((col: any) => {
-      const matchingField = form.fields?.find(
-        (field) => field.displayName === col.field || field.name === col.field
-      );
-      if (matchingField?.uniqueId) {
-        columnToUniqueId.set(col.field, matchingField.uniqueId);
-      }
-    });
+    const updatedFieldValues: ResponseFieldValueDto[] = await Promise.all(
+      formFields.map(async (formField) => {
+        const existingFieldValue = original.fieldValues?.find(
+          (fieldValue) => fieldValue.fieldId === formField.id,
+        );
 
-    const updatedData: ResponseFieldValue[] = await Promise.all(
-      (form?.fields || []).map(async (formField) => {
-        const existingFieldData = (original as any).data?.find((d: any) => d.uniqueId === formField.uniqueId);
+        const hasEditedValue = Object.prototype.hasOwnProperty.call(
+          editedRow,
+          formField.displayName,
+        );
 
-        const columnField = Array.from(columnToUniqueId.entries()).find(
-          ([_, uid]) => uid === formField.uniqueId
-        )?.[0];
-
-        if (columnField && editedRow.hasOwnProperty(columnField)) {
-          const baseData = existingFieldData || {
-            uniqueId: formField.uniqueId,
-            name: formField.name,
-            typeId: formField.typeId,
-            value: null,
-          };
-
-          // Handle file fields: upload new files and normalize attached files
-          if (formField.fieldType === 'file' || formField.typeId === FieldTypeIds.file) {
-            try {
-              // Try to locate edited value using multiple possible keys (column field, displayName, name, uniqueId)
-              const editedValue = ((): any => {
-                if (columnField && editedRow.hasOwnProperty(columnField)) {
-                  return editedRow[columnField];
-                }
-
-                return undefined;
-              })();
-              let newFilesToUpload: File[] = [];
-              let attachedFilesFromValue: any[] = [];
-              let deletedFilesFromValue: any[] = [];
-
-              if (Array.isArray(editedValue)) {
-                attachedFilesFromValue = editedValue;
-              } else if (editedValue && typeof editedValue === 'object') {
-                if (editedValue.files) {
-                  newFilesToUpload = editedValue.files.newFiles || [];
-                  attachedFilesFromValue = editedValue.files.attachedFiles || [];
-                } else if (Array.isArray(editedValue.files)) {
-                  attachedFilesFromValue = editedValue.files;
-                }
-                deletedFilesFromValue = editedValue.deletedFiles || [];
-              }
-
-              const uploadResponse = newFilesToUpload.length > 0 ? await uploadFilesToS3({ newFiles: newFilesToUpload }, form.id) : [];
-
-              const normalizeAttached = (fileItem: any) => {
-                const name = fileItem.name || fileItem.fileName || "";
-                const url = fileItem.url || fileItem.fileUrl || fileItem.downloadUrl || "";
-                return { name, url };
-              };
-
-              const normalizedAttachedFiles = attachedFilesFromValue.map(normalizeAttached);
-              const combinedFiles = [...uploadResponse, ...normalizedAttachedFiles];
-
-              return { uniqueId: formField.uniqueId, value: { files: combinedFiles } };
-            } catch (error) {
-              return { ...baseData, value: editedRow[columnField] };
+        if (!hasEditedValue) {
+          return (
+            existingFieldValue || {
+              fieldId: formField.id,
+              value: null,
             }
-          }
-
-          return { uniqueId: formField.uniqueId, value: editedRow[columnField] };
+          );
         }
 
-        return existingFieldData || {
-          uniqueId: formField.uniqueId,
-          value: null,
+        const rawValue = editedRow[formField.displayName];
+
+        if (formField.fieldType === fieldType.File) {
+          try {
+            const { newFilesToUpload, attachedFiles } = getEditedFileValueParts(rawValue);
+
+            const uploadedFiles =
+              newFilesToUpload.length > 0
+                ? await uploadFilesToS3({ newFiles: newFilesToUpload }, dtoForm?.id || 0)
+                : [];
+
+            const normalizedAttachedFiles = attachedFiles.map(normalizeUploadedFile);
+            const combinedFiles = [...uploadedFiles, ...normalizedAttachedFiles];
+
+            return {
+              fieldId: formField.id,
+              value: combinedFiles.length > 0 ? { files: combinedFiles } : null,
+            };
+          } catch {
+            return {
+              fieldId: formField.id,
+              value: rawValue ?? existingFieldValue?.value ?? null,
+            };
+          }
+        }
+
+        return {
+          fieldId: formField.id,
+          value: rawValue ?? null,
         };
       }),
     );
 
-    const fieldsNameValueObj = getResponseWithFlatFields(updatedData, form.fields, []);
+    const personalUser = getAuthPersonalUser(user);
 
     return {
-      id: rowId,
+      id: String(rowId),
       responseData: {
         ...original,
-        data: updatedData,
-        edited_by: user?.upn?.toLowerCase() || original.edited_by,
-        edited_by_name: user?.displayName || original.edited_by_name,
-        ...fieldsNameValueObj,
+        updatedBy: personalUser ?? original.updatedBy,
+        fieldValues: updatedFieldValues,
       },
     };
   };
 
   const addNewResponse = (): void => {
-    if (!isInEditMode || !form?.fields) return;
+    if (!isInEditMode || !dtoForm || formFields.length === 0) return;
 
     newRowCounterRef.current += 1;
     const tempId = `new_${newRowCounterRef.current}`;
 
     const now = moment().format(DEFAULT_DATE_FORMAT);
+    const displayName = getAuthDisplayName(user);
+
     const newRow: Row = {
-      id: tempId as unknown as number,
+      id: tempId,
       created: now,
-      createdByName: user?.displayName || "",
+      createdByName: displayName,
       edited: now,
-      editedByName: user?.displayName || "",
+      editedByName: displayName,
     };
 
-    form.fields.forEach((field) => {
-      if (field.typeId === FieldTypeIds.link || field.typeId === FieldTypeIds.file) {
+    formFields.forEach((field) => {
+      if (field.fieldType === fieldType.Link || field.fieldType === fieldType.File) {
         newRow[field.displayName] = null;
       } else {
         newRow[field.displayName] = "";
@@ -333,19 +439,20 @@ export const useResponsesEdit = () => {
     setEditedRows((prev) => new Map(prev).set(tempId, newRow));
   };
 
-
   const saveChanges = async (): Promise<void> => {
     try {
-      // Validate edited rows before attempting to save
-      const newValidationErrors: Record<number | string, Record<string, string>> = {};
+      const newValidationErrors: Record<RowId, Record<string, string>> = {};
+
       editedRows.forEach((editedRow, rowId) => {
         try {
           const rowErrs: Record<string, string> = {};
-          form?.fields?.forEach((field: any) => {
-            const errorKey = field.displayName;
-            const value = (editedRow as any)[field.displayName];
 
-            if (field.required) {
+          formFields.forEach((field) => {
+            const fieldExtra = getFieldExtra(field);
+            const errorKey = field.displayName;
+            const value = editedRow[field.displayName];
+
+            if (field.isRequired) {
               const isEmpty =
                 value === undefined ||
                 value === null ||
@@ -353,39 +460,45 @@ export const useResponsesEdit = () => {
                 (Array.isArray(value) && value.length === 0);
 
               if (isEmpty) {
-                rowErrs[errorKey] = `שדה זה הינו חובה`;
+                rowErrs[errorKey] = "שדה זה הינו חובה";
                 return;
               }
             }
 
-            if (field.validationRegex && value) {
-              const reg = new RegExp(field.validationRegex);
+            if (fieldExtra.validationRegex && value) {
+              const reg = new RegExp(fieldExtra.validationRegex);
               if (!reg.test(String(value))) {
                 rowErrs[errorKey] = `${field.displayName} - ערך לא תקין`;
               }
             }
 
-            if (field.typeId === FieldTypeIds.number) {
+            if (field.fieldType === fieldType.Number) {
               const valStr = value === undefined || value === null ? "" : String(value);
               if (valStr !== "") {
-                const parsed = field.numberType === "integer" ? parseInt(valStr, 10) : parseFloat(valStr);
+                const parsed =
+                  fieldExtra.numberType === "integer" ? parseInt(valStr, 10) : parseFloat(valStr);
+
                 if (Number.isNaN(parsed)) {
-                  rowErrs[errorKey] = field.numberType === "integer" ? "חובה להזין מספר שלם" : "חובה להזין מספר עשרוני";
+                  rowErrs[errorKey] =
+                    fieldExtra.numberType === "integer"
+                      ? "חובה להזין מספר שלם"
+                      : "חובה להזין מספר עשרוני";
                 } else {
-                  if (field.minValue !== undefined && parsed < field.minValue) {
-                    rowErrs[errorKey] = `המספר חייב להיות גדול מ- ${field.minValue}`;
+                  if (fieldExtra.minValue !== undefined && parsed < fieldExtra.minValue) {
+                    rowErrs[errorKey] = `המספר חייב להיות גדול מ- ${fieldExtra.minValue}`;
                   }
-                  if (field.maxValue !== undefined && parsed > field.maxValue) {
-                    rowErrs[errorKey] = `המספר חייב להיות קטן מ- ${field.maxValue}`;
+                  if (fieldExtra.maxValue !== undefined && parsed > fieldExtra.maxValue) {
+                    rowErrs[errorKey] = `המספר חייב להיות קטן מ- ${fieldExtra.maxValue}`;
                   }
                 }
               }
             }
           });
+
           if (Object.keys(rowErrs).length > 0) {
             newValidationErrors[rowId] = rowErrs;
           }
-        } catch (e) {
+        } catch {
           // ignore
         }
       });
@@ -395,28 +508,33 @@ export const useResponsesEdit = () => {
         showErrorNotification("יש לתקן את השגיאות לפני השמירה");
         return;
       }
+
       if (!hasUnsavedChanges) {
         throw new NoUnsavedChangesError();
       }
-      if (!form) {
+
+      if (!dtoForm) {
         throw new FormNotLoadedError();
       }
 
-      const newRowEntries = Array.from(editedRows.entries()).filter(([rowId]) => typeof rowId === "string");
-      const existingRowEntries = Array.from(editedRows.entries()).filter(([rowId]) => typeof rowId === "number");
+      const editedEntries = Array.from(editedRows.entries());
+      const newRowEntries = editedEntries.filter(([rowId]) => isTempRowId(rowId));
+      const existingRowEntries = editedEntries.filter(([rowId]) => !isTempRowId(rowId));
 
-      if (existingRowEntries.length > 0 && !fullResponses?.length) {
+      if (existingRowEntries.length > 0 && !(fullResponses as ResponseDto[] | undefined)?.length) {
         throw new NoResponsesFoundError();
       }
 
-      const updatesToSendPromises = existingRowEntries.map(async ([rowId, editedRow]) =>
-        await buildResponseUpdatePayload(rowId as number, editedRow),
+      const updatesToSendResults = await Promise.all(
+        existingRowEntries.map(async ([rowId, editedRow]) =>
+          buildResponseUpdatePayload(String(rowId), editedRow),
+        ),
       );
 
-      const updatesToSendResults = await Promise.all(updatesToSendPromises);
-      const updatesToSend = updatesToSendResults.filter((updatedRow) => updatedRow !== null);
+      const updatesToSend = updatesToSendResults.filter(
+        (updatedRow): updatedRow is ResponseUpdatePayload => updatedRow !== null,
+      );
 
-      // Sort new rows in ascending insertion order so the first added (top of list) is saved first
       const sortedNewRowEntries = [...newRowEntries].sort(([idA], [idB]) => {
         const numA = parseInt(String(idA).replace("new_", ""), 10);
         const numB = parseInt(String(idB).replace("new_", ""), 10);
@@ -431,69 +549,60 @@ export const useResponsesEdit = () => {
         try {
           await batchUpdateResponses(updatesToSend as any);
         } catch (batchError) {
-          console.error('batchUpdateResponses failed:', batchError);
+          console.error("batchUpdateResponses failed:", batchError);
           throw batchError;
         }
       }
 
       for (const [, editedRow] of sortedNewRowEntries) {
-        const data: ResponseFieldValue[] = await Promise.all(
-          form.fields.map(async (field: FormField) => {
-            const rawValue: any = (editedRow as any)[field.displayName];
+        const fieldValues: ResponseFieldValueDto[] = await Promise.all(
+          formFields.map(async (field) => {
+            const rawValue = editedRow[field.displayName];
 
-            if (field.typeId === FieldTypeIds.file) {
+            if (field.fieldType === fieldType.File) {
               try {
-                let newFilesToUpload: File[] = [];
-                let attachedFiles: any[] = [];
+                const { newFilesToUpload, attachedFiles } = getEditedFileValueParts(rawValue);
 
-                if (rawValue && typeof rawValue === "object") {
-                  if (rawValue.files && typeof rawValue.files === "object" && !Array.isArray(rawValue.files)) {
-                    newFilesToUpload = rawValue.files.newFiles || [];
-                    attachedFiles = rawValue.files.attachedFiles || [];
-                  } else if (Array.isArray(rawValue.files)) {
-                    attachedFiles = rawValue.files;
-                  } else if (Array.isArray(rawValue)) {
-                    attachedFiles = rawValue;
-                  }
-                }
+                const uploadedFiles =
+                  newFilesToUpload.length > 0
+                    ? await uploadFilesToS3({ newFiles: newFilesToUpload }, dtoForm.id)
+                    : [];
 
-                const uploadedFiles = newFilesToUpload.length > 0
-                  ? await uploadFilesToS3({ newFiles: newFilesToUpload }, form.id)
-                  : [];
-
-                const normalizedAttached = attachedFiles.map((f: any) => ({
-                  name: f.name || f.fileName || "",
-                  url: f.url || f.fileUrl || f.downloadUrl || "",
-                }));
-
+                const normalizedAttached = attachedFiles.map(normalizeUploadedFile);
                 const allFiles = [...uploadedFiles, ...normalizedAttached];
-                return { uniqueId: field.uniqueId, value: allFiles.length > 0 ? { files: allFiles } : null };
+
+                return {
+                  fieldId: field.id,
+                  value: allFiles.length > 0 ? { files: allFiles } : null,
+                };
               } catch {
-                return { uniqueId: field.uniqueId, value: null };
+                return {
+                  fieldId: field.id,
+                  value: null,
+                };
               }
             }
 
             return {
-              uniqueId: field.uniqueId,
-              value: (rawValue !== undefined && rawValue !== null) ? rawValue : "",
+              fieldId: field.id,
+              value: rawValue !== undefined && rawValue !== null ? rawValue : "",
             };
           }),
         );
 
-        const newResponsePayload = {
-          form_id: form.id,
-          created_by: user?.upn?.toLowerCase() as string,
-          created_by_name: user?.displayName || "",
-          updated_by: user?.upn?.toLowerCase(),
-          edited_by: user?.upn?.toLowerCase(),
-          edited_by_name: user?.displayName || "",
-          data,
+        const newResponsePayload: CreateResponseMutationPayload = {
+          formId: dtoForm.id,
+          fieldValues,
         };
-        await createResponse(newResponsePayload as NewResponse);
+
+        await createResponse(newResponsePayload as any);
       }
 
       newRowCounterRef.current = 0;
-      setRows(localRows);
+
+      const persistedLocalRows = localRows.filter((row) => !isTempRowId(row.id));
+      setRows(persistedLocalRows as unknown as Parameters<typeof setRows>[0]);
+
       setEditedRows(new Map());
       setIsInEditMode(false);
       setValidationErrors({});

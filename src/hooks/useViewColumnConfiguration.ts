@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { DropResult } from "@hello-pangea/dnd";
-import { ViewColumn, FormField, ResponsesView } from "../types/interfaces/tableViews.types";
+import { ViewColumn, ResponsesView } from "../types/interfaces/tableViews.types";
+import { FormFieldDto } from "../types/shared";
 
 /* ------------------------------------------------------------------ */
 /* System Columns                                                      */
@@ -26,7 +27,7 @@ const POST_SYSTEM_VIEW_COLUMNS: SystemViewColumn[] = [
 /* ------------------------------------------------------------------ */
 
 interface UseViewColumnConfigurationProps {
-  form?: { fields: FormField[] };
+  form?: { fields: FormFieldDto[] };
   currentView?: ResponsesView;
 }
 
@@ -59,52 +60,53 @@ export function useViewColumnConfiguration({
 }: UseViewColumnConfigurationProps): UseViewColumnConfigurationReturn {
   const [columns, setColumns] = useState<ViewColumn[]>([]);
 
-  // Track which view ID and form fields we last initialized from, so we only
-  // re-initialize when the view or form genuinely changes — not on every render.
   const lastInitViewId = useRef<number | string | undefined>(undefined);
-  const lastInitFormFields = useRef<FormField[] | undefined>(undefined);
+  const lastInitFormFields = useRef<FormFieldDto[] | undefined>(undefined);
 
   /* -------------------------- Initialization ------------------------ */
 
-  const initialize = useCallback((viewToLoad?: ResponsesView) => {
-    if (!form?.fields) return;
+  const initialize = useCallback(
+    (viewToLoad?: ResponsesView) => {
+      if (!form?.fields) return;
 
-    let order = 0;
+      let order = 0;
 
-    const existing = viewToLoad?.config.columns ?? [];
+      const existing = viewToLoad?.config.columns ?? [];
 
-    const getExisting = (id: string) => existing.find((c) => c.columnId === id);
+      const getExisting = (id: string) => existing.find((c) => c.columnId === id);
 
-    const buildColumn = (base: {
-      columnId: string;
-      displayName: string;
-      defaultVisible: boolean;
-    }): ViewColumn => {
-      const prev = getExisting(base.columnId);
-      return {
-        columnId: base.columnId,
-        displayName: base.displayName,
-        visible: prev?.visible ?? base.defaultVisible,
-        order: prev?.order ?? order++,
-        sortDirection: prev?.sortDirection,
-        sortOrder: prev?.sortOrder,
+      const buildColumn = (base: {
+        columnId: string;
+        displayName: string;
+        defaultVisible: boolean;
+      }): ViewColumn => {
+        const prev = getExisting(base.columnId);
+        return {
+          columnId: base.columnId,
+          displayName: base.displayName,
+          visible: prev?.visible ?? base.defaultVisible,
+          order: prev?.order ?? order++,
+          sortDirection: prev?.sortDirection,
+          sortOrder: prev?.sortOrder,
+        };
       };
-    };
 
-    const merged = [
-      ...PRE_SYSTEM_COLUMNS.map(buildColumn),
-      ...form.fields.map((f) =>
-        buildColumn({
-          columnId: f.uniqueId,
-          displayName: f.displayName,
-          defaultVisible: true,
-        }),
-      ),
-      ...POST_SYSTEM_VIEW_COLUMNS.map(buildColumn),
-    ].sort((a, b) => a.order - b.order);
+      const merged = [
+        ...PRE_SYSTEM_COLUMNS.map(buildColumn),
+        ...form.fields.map((f) =>
+          buildColumn({
+            columnId: f.id,
+            displayName: f.displayName,
+            defaultVisible: true,
+          }),
+        ),
+        ...POST_SYSTEM_VIEW_COLUMNS.map(buildColumn),
+      ].sort((a, b) => a.order - b.order);
 
-    setColumns(merged);
-  }, [form]);
+      setColumns(merged);
+    },
+    [form],
+  );
 
   useEffect(() => {
     const formFieldsChanged = form?.fields !== lastInitFormFields.current;
@@ -181,7 +183,7 @@ export function useViewColumnConfiguration({
         order: order++,
       })),
       ...form.fields.map((f) => ({
-        columnId: f.uniqueId,
+        columnId: f.id,
         displayName: f.displayName,
         visible: true,
         order: order++,

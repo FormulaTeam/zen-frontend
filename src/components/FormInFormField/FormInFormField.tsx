@@ -1,18 +1,28 @@
 import Autocomplete from "@mui/material/Autocomplete";
 import React from "react";
-import { Form, FormField } from "../../utils/interfaces";
-import { FormFieldsPreview } from "../FormFieldsPreview/FormFieldsPreview";
 import CircularProgress from "@mui/material/CircularProgress";
+import Typography from "@mui/material/Typography";
+import { FormFieldsPreview } from "../FormFieldsPreview/FormFieldsPreview";
 import { FieldWrapper, FormSelectInput, LoadingContainer } from "./styled";
 import { useFormInFormSearch } from "../../hooks/useFormInFormSearch";
-import Typography from "@mui/material/Typography";
+import { FormDto, FormFieldDto } from "../../types/shared";
+
+type FormInFormFieldExtra = {
+  connectedFormId?: number;
+};
 
 type Props = {
-  formField: FormField;
-  onChangeConnectedForm: (value: Form | undefined) => void;
+  formField: FormFieldDto;
+  onChangeConnectedForm: (value: Partial<FormDto> | undefined) => void;
   error?: string;
 };
+
+const getFieldExtra = (field: FormFieldDto): FormInFormFieldExtra =>
+  (field.extra as FormInFormFieldExtra | undefined) ?? {};
+
 function FormInFormField({ formField, onChangeConnectedForm, error }: Props) {
+  const fieldExtra = getFieldExtra(formField);
+
   const {
     forms,
     loadingForms,
@@ -21,19 +31,20 @@ function FormInFormField({ formField, onChangeConnectedForm, error }: Props) {
     loading,
     handleSearchForm,
     handleSelectForm,
-  } = useFormInFormSearch({ connectedFormId: formField.connectedFormId });
+  } = useFormInFormSearch({ connectedFormId: fieldExtra.connectedFormId });
 
-  const onFormSelect = (event: React.SyntheticEvent, value: Form | null) => {
+  const onFormSelect = (event: React.SyntheticEvent, value: FormDto | null) => {
     handleSelectForm(event, value);
     onChangeConnectedForm(value ?? undefined);
   };
 
-  if (loading)
+  if (loading) {
     return (
       <LoadingContainer>
         <CircularProgress />
       </LoadingContainer>
     );
+  }
 
   return (
     <FieldWrapper>

@@ -1,26 +1,26 @@
+import SyncIcon from "@mui/icons-material/Sync";
 import { Box, Button, Tooltip } from "@mui/material";
-import SyncIcon from '@mui/icons-material/Sync';
-
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
+import MetroSyncingPopup from "@components/ResponseToolbar/Popups/MetroSyncingPopup";
+import SyncTypeMenu from "@components/ResponseToolbar/Menus/SyncTypeMenu";
+import UserPicker from "../../../components/USerPicker/UserPicker";
+import { useMetro } from "@hooks/useMetro";
 import { CustomIcon } from "../../../theme/icons";
 import { PERMISSION_TYPES } from "../../../utils/utils";
-import { useFormStore } from "../stores/form.store";
 import { PermissionGate } from "../PermissionGate";
+import { useFormStore } from "../stores/form.store";
 import { MoreOptions } from "./MoreOptions";
-import UserPicker from "../../../components/USerPicker/UserPicker";
-import SyncTypeMenu from "@components/ResponseToolbar/Menus/SyncTypeMenu";
-import { useMetro } from "@hooks/useMetro";
-import MetroSyncingPopup from "@components/ResponseToolbar/Popups/MetroSyncingPopup";
 
 export const SourceOperationStatus = {
-  NOT_IN_PROGRESS: 'not_in_progress',
-  CREATING: 'creating',
-  EDITING: 'editing',
+  NOT_IN_PROGRESS: "not_in_progress",
+  CREATING: "creating",
+  EDITING: "editing",
 } as const;
 
 export type SourceOperationStatusType =
-  typeof SourceOperationStatus[keyof typeof SourceOperationStatus];
+  (typeof SourceOperationStatus)[keyof typeof SourceOperationStatus];
 
 export const FormActionsToolbar = () => {
   const { permissions, form, setForm } = useFormStore();
@@ -29,37 +29,33 @@ export const FormActionsToolbar = () => {
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [anchorElMoreActions, setAnchorElMoreActions] = useState<null | HTMLElement>(null);
   const [anchorElSourceType, setAnchorElSourceType] = useState<null | HTMLElement>(null);
-  const [sourceOperationStatus, setSourceOperationStatus] =
-    useState<SourceOperationStatusType>(
-      SourceOperationStatus.NOT_IN_PROGRESS
-    );
-
+  const [sourceOperationStatus, setSourceOperationStatus] = useState<SourceOperationStatusType>(
+    SourceOperationStatus.NOT_IN_PROGRESS,
+  );
 
   if (!permissions || !form || !formId) return null;
 
+  const hasFormFields = (form.sections ?? []).some((section) => (section.fields?.length ?? 0) > 0);
 
-  const {
-    showMetroPopup,
-    setShowMetroPopup,
-    pushToMetro,
-    syncSourceToMetro,
-    editSource,
-  } = useMetro({
-    form,
-    loadingIcon: <div style={{ display: 'flex', alignItems: 'center' }}>
-      <SyncIcon
-        sx={{
-          fontSize: 30,
-          '@keyframes spin': {
-            from: { transform: 'rotate(360deg)' },
-            to: { transform: 'rotate(0deg)' },
-          },
-          animation: 'spin 1.2s linear infinite',
-        }}
-      />
-    </div >,
-    setSourceOperationStatus
-  });
+  const { showMetroPopup, setShowMetroPopup, pushToMetro, syncSourceToMetro, editSource } =
+    useMetro({
+      form,
+      loadingIcon: (
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <SyncIcon
+            sx={{
+              fontSize: 30,
+              "@keyframes spin": {
+                from: { transform: "rotate(360deg)" },
+                to: { transform: "rotate(0deg)" },
+              },
+              animation: "spin 1.2s linear infinite",
+            }}
+          />
+        </div>
+      ),
+      setSourceOperationStatus,
+    });
 
   const handleCloseMoreActions = (): void => {
     setAnchorElMoreActions(null);
@@ -67,11 +63,9 @@ export const FormActionsToolbar = () => {
   };
 
   const handleAutomaticSource = (): void => {
-    if (form?.metro_access_url || form?.oasisSourceKey) {
-      editSource();
-    } else {
-      syncSourceToMetro();
-    }
+    if (form?.metro_access_url || form?.oasisSourceKey) editSource();
+    else syncSourceToMetro();
+
     handleCloseMoreActions();
   };
 
@@ -101,20 +95,18 @@ export const FormActionsToolbar = () => {
         <Tooltip title="שיתוף הטופס">
           <Button
             variant="customIcon"
-            disabled={!(form?.fields?.length > 0)}
+            disabled={!hasFormFields}
             onClick={() => setShowSharePopup(true)}>
             <CustomIcon forcePointer iconName="share" style={{ width: 23 }} />
           </Button>
         </Tooltip>
         {showSharePopup && (
-          // Massive refactor needed - dogshit component
           <UserPicker
             form={form}
             closeSharePopupAndRefreshForm={(users, updatedForm) => {
-              // if we got updated form from UserPicker, use it to update the form state, otherwise use existing form and just update users
-              const formToUpdate = updatedForm || { ...form, users };
+              const formToUpdate = updatedForm || form;
 
-              setForm(formToUpdate);
+              setForm(formToUpdate as typeof form);
               setShowSharePopup(false);
             }}
           />

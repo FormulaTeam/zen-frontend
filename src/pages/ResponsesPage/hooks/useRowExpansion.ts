@@ -1,73 +1,80 @@
 import { useCallback, useMemo, useState } from "react";
-import { Row } from "../../../utils/interfaces";
+
+type ExpandableRow = {
+  id: string | number;
+};
 
 interface UseRowExpansionProps {
-    rows: Row[];
-    canRowExpand: (rowId: number) => boolean;
+  rows: ExpandableRow[];
+  canRowExpand: (rowId: string | number) => boolean;
 }
 
 interface UseRowExpansionReturn {
-    expandedRowIds: Set<string>;
-    toggleRowExpanded: (rowId: string) => void;
-    toggleAllExpanded: () => void;
-    isRowExpanded: (rowId: string) => boolean;
-    allExpanded: boolean;
+  expandedRowIds: Set<string>;
+  toggleRowExpanded: (rowId: string) => void;
+  toggleAllExpanded: () => void;
+  isRowExpanded: (rowId: string) => boolean;
+  allExpanded: boolean;
 }
 
 export const useRowExpansion = ({
-    rows,
-    canRowExpand,
+  rows,
+  canRowExpand,
 }: UseRowExpansionProps): UseRowExpansionReturn => {
-    const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
+  const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
 
-    const toggleRowExpanded = useCallback((rowId: string): void => {
-        setExpandedRowIds((currentExpandedIds: Set<string>) => {
-            const updatedExpandedIds = new Set(currentExpandedIds);
-            if (updatedExpandedIds.has(rowId)) {
-                updatedExpandedIds.delete(rowId);
-            } else {
-                updatedExpandedIds.add(rowId);
-            }
-            return updatedExpandedIds;
-        });
-    }, []);
+  const toggleRowExpanded = useCallback((rowId: string): void => {
+    setExpandedRowIds((currentExpandedIds: Set<string>) => {
+      const updatedExpandedIds = new Set(currentExpandedIds);
 
-    const toggleAllExpanded = useCallback((): void => {
-        const expandableRows = rows.filter((row) => canRowExpand(row.id));
+      if (updatedExpandedIds.has(rowId)) {
+        updatedExpandedIds.delete(rowId);
+      } else {
+        updatedExpandedIds.add(rowId);
+      }
 
-        setExpandedRowIds((currentExpandedIds) => {
-            const allExpandableExpanded = expandableRows.every((row) =>
-                currentExpandedIds.has(String(row.id))
-            );
+      return updatedExpandedIds;
+    });
+  }, []);
 
-            if (allExpandableExpanded) {
-                return new Set();
-            }
+  const toggleAllExpanded = useCallback((): void => {
+    const expandableRows = rows.filter((row) => canRowExpand(row.id));
 
-            return new Set(expandableRows.map((row) => String(row.id)));
-        });
-    }, [rows, canRowExpand]);
+    setExpandedRowIds((currentExpandedIds) => {
+      const allExpandableExpanded = expandableRows.every((row) =>
+        currentExpandedIds.has(String(row.id)),
+      );
 
-    const isRowExpanded = useCallback(
-        (rowId: string): boolean => {
-            return expandedRowIds.has(rowId);
-        },
-        [expandedRowIds]
-    );
+      if (allExpandableExpanded) {
+        return new Set();
+      }
 
-    const allExpanded = useMemo(() => {
-        const expandableRows = rows.filter((row) => canRowExpand(row.id));
-        if (expandableRows.length === 0) {
-            return false;
-        }
-        return expandableRows.every((row) => expandedRowIds.has(String(row.id)));
-    }, [rows, expandedRowIds, canRowExpand]);
+      return new Set(expandableRows.map((row) => String(row.id)));
+    });
+  }, [rows, canRowExpand]);
 
-    return {
-        expandedRowIds,
-        toggleRowExpanded,
-        toggleAllExpanded,
-        isRowExpanded,
-        allExpanded,
-    };
+  const isRowExpanded = useCallback(
+    (rowId: string): boolean => {
+      return expandedRowIds.has(rowId);
+    },
+    [expandedRowIds],
+  );
+
+  const allExpanded = useMemo(() => {
+    const expandableRows = rows.filter((row) => canRowExpand(row.id));
+
+    if (expandableRows.length === 0) {
+      return false;
+    }
+
+    return expandableRows.every((row) => expandedRowIds.has(String(row.id)));
+  }, [rows, expandedRowIds, canRowExpand]);
+
+  return {
+    expandedRowIds,
+    toggleRowExpanded,
+    toggleAllExpanded,
+    isRowExpanded,
+    allExpanded,
+  };
 };

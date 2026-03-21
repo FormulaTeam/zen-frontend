@@ -11,7 +11,8 @@ import {
   FullWidthBox,
 } from "../../pages/DeletedForms/styled";
 import { useDeletedResponses, getResponseKey } from "../../hooks/useDeletedResponses";
-import { Form, User } from "../../utils/interfaces";
+import { User } from "../../utils/interfaces";
+import type { FormDto } from "../../types/shared";
 import DeletedFormHeader from "./DeletedFormHeader";
 import DeletedFormsToolbar from "./DeletedFormsToolbar";
 import DeletedSelection from "./DeletedSelection";
@@ -20,7 +21,7 @@ import { useDeletedForms } from "../../hooks/useDeletedForms";
 
 interface DeletedResponsesTabContentProps {
   user: User;
-  currentDeletedForm: Form | null;
+  currentDeletedForm: FormDto | null;
   handleRestoreForm: (formId: number) => Promise<void>;
 }
 
@@ -84,7 +85,7 @@ export default function DeletedResponsesTabContent({
    */
   const formMap = useMemo(() => {
     const combinedForms = [...formsData, ...forms];
-    const uniqueForms = new Map<number, Form>();
+    const uniqueForms = new Map<number, FormDto>();
 
     combinedForms.forEach((form) => {
       if (!uniqueForms.has(form.id)) {
@@ -105,7 +106,11 @@ export default function DeletedResponsesTabContent({
   return (
     <>
       {currentDeletedForm ? (
-        <DeletedFormHeader form={currentDeletedForm} handleRestoreForm={handleRestoreForm} responses={responses} />
+        <DeletedFormHeader
+          form={currentDeletedForm}
+          handleRestoreForm={handleRestoreForm}
+          responses={responses}
+        />
       ) : (
         <DeletedFormsToolbar
           sortValue={sortValue}

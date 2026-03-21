@@ -7,7 +7,6 @@ import {
   ConditionsRoot,
   DEFAULT_LOGICAL_OPERATOR,
   FieldTypeIds,
-  FormField,
   logicalOperatorLabels,
 } from "../../utils/interfaces";
 import {
@@ -16,14 +15,18 @@ import {
   ConditionsPreviewDescription,
   ConditionsPreviewTitle,
 } from "./styled";
+import type { ConditionalFormField } from "../../utils/conditionUtils";
 
 interface ConditionsPreviewProps {
   conditionsRoot: ConditionsRoot;
-  formFields: FormField[];
+  formFields: ConditionalFormField[];
 }
 
 const ConditionsPreview: React.FC<ConditionsPreviewProps> = ({ conditionsRoot, formFields }) => {
-  const getConditionDescription = (condition: Condition, formField?: FormField): string => {
+  const getConditionDescription = (
+    condition: Condition,
+    formField?: ConditionalFormField,
+  ): string => {
     if (!formField) return "שדה לא נבחר";
 
     const operatorLabel = conditionOperatorLabels[condition.operator];
@@ -37,9 +40,9 @@ const ConditionsPreview: React.FC<ConditionsPreviewProps> = ({ conditionsRoot, f
     }
 
     let valueDisplay = "";
-    if (formField.typeId === FieldTypeIds.date && typeof condition.value === "string") {
+    if (formField.fieldType === FieldTypeIds.date && typeof condition.value === "string") {
       valueDisplay = condition.value ? new Date(condition.value).toLocaleDateString("he-IL") : "";
-    } else if (formField.typeId === FieldTypeIds.checkbox) {
+    } else if (formField.fieldType === FieldTypeIds.checkbox) {
       valueDisplay = condition.value === "true" ? "כן" : "לא";
     } else if (Array.isArray(condition.value)) {
       valueDisplay = condition.value.join(", ");
@@ -65,7 +68,7 @@ const ConditionsPreview: React.FC<ConditionsPreviewProps> = ({ conditionsRoot, f
               .map((c) =>
                 getConditionDescription(
                   c,
-                  formFields.find((f) => f.uniqueId === c.field),
+                  formFields.find((f) => f.id === c.field),
                 ),
               )
               .join(` ${logicalOperatorLabels[group.logicalOperator]} `);
@@ -84,7 +87,6 @@ const ConditionsPreview: React.FC<ConditionsPreviewProps> = ({ conditionsRoot, f
           .join("")}
       </ConditionsPreviewDescription>
 
-      {/* Show affected targets in preview */}
       {conditionsRoot.affectedTargets.length > 0 && (
         <>
           <ConditionsPreviewAffectedTitle variant="subtitle2">

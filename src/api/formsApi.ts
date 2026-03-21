@@ -8,6 +8,7 @@ import { UseQueryOptions, UseQueryResult, useMutation } from "@tanstack/react-qu
 import { useDelete } from "../utils/useDelete";
 import { useCreate } from "../utils/useCreate";
 import queryClient from "./queryClient";
+import { FormDto } from "../types/shared";
 
 /**
  * Fetch all forms with optional query parameters.
@@ -15,7 +16,7 @@ import queryClient from "./queryClient";
  * @param filter - Optional filter parameters for querying forms.
  * @returns A promise that resolves to an array of forms.
  */
-export const getForms = async (filter?: Filter): Promise<Form[]> => {
+export const getForms = async (filter?: Filter): Promise<FormDto[]> => {
   const params = {
     query:
       filter?.query && typeof filter.query !== "string"
@@ -42,12 +43,12 @@ export const getForms = async (filter?: Filter): Promise<Form[]> => {
   }
 };
 
-export const getFormById = async (formId?: number): Promise<Form | null> => {
+export const getFormById = async (formId?: number): Promise<FormDto | null> => {
   if (!formId) {
     return null;
   }
   try {
-    const response = await apiClient.get<Form>(`/forms/${formId}`);
+    const response = await apiClient.get<FormDto>(`/forms/${formId}`);
     return response?.data ?? null;
   } catch (error) {
     console.error("getFormById error:", error);
@@ -196,11 +197,11 @@ export const useCreateForm = () => {
 export const useUpdateForm = () => {
   return useMutation({
     mutationFn: async (data: UpdateFormPayload) => {
-      const response = await apiClient.put<Form>(`/forms/edit/${data.id}`, data);
+      const response = await apiClient.put<FormDto>(`/forms/edit/${data.id}`, data);
       return response.data;
     },
     mutationKey: ["update-form"],
-    onSuccess: (data: Form) => {
+    onSuccess: (data: FormDto) => {
       queryClient.invalidateQueries({ queryKey: [data.id] });
       queryClient.invalidateQueries({ queryKey: ["forms"] });
     },
@@ -219,11 +220,11 @@ export const useGetForm = ({
 }: {
   formId?: string;
   config?: Omit<
-    UseQueryOptions<Form | null, Error, Form | null, readonly unknown[]>,
+    UseQueryOptions<FormDto | null, Error, FormDto | null, readonly unknown[]>,
     "queryKey" | "queryFn"
   >;
-}): UseQueryResult<Form | null> => {
-  return useFetch<undefined, Form | null>({
+}): UseQueryResult<FormDto | null> => {
+  return useFetch<undefined, FormDto | null>({
     endpoint: `/forms/${formId}`,
     queryKey: () => [formId],
     queryOptions: {

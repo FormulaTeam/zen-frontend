@@ -1,88 +1,100 @@
 import React, { useMemo } from "react";
 import { Box } from "@mui/material";
-import { Form, Row, FieldTypeIds, FormField } from "@utils/interfaces";
+
+import { Row } from "@utils/interfaces";
+
+import { FormDto, FormFieldDto } from "../../../../types/shared";
+import { fieldType } from "formula-gear";
 import { ChildResponsesPanel } from "./ChildResponsesPanel";
 import { DetailsContainer } from "../../styled";
 
+type EditorFieldExtra = {
+  connectedFormId?: number;
+};
+
 interface ChildFormData {
-    form: Form;
-    rows: Row[];
+  form: FormDto;
+  rows: Row[];
 }
 
 interface ExpandedRowContentProps {
-    parentRowId: number;
-    parentFormId: number;
-    parentFormFields: FormField[];
-    childrenFormsData: ChildFormData[];
-    isInEditMode?: boolean;
+  parentRowId: number | string;
+  parentFormId: number;
+  parentFormFields: FormFieldDto[];
+  childrenFormsData: ChildFormData[];
+  isInEditMode?: boolean;
 }
 
+const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
+  (field.extra as EditorFieldExtra | undefined) ?? {};
+
 export const ExpandedRowContent: React.FC<ExpandedRowContentProps> = ({
-    parentRowId,
-    parentFormId,
-    parentFormFields,
-    childrenFormsData,
-    isInEditMode = false,
+  parentRowId,
+  parentFormId,
+  parentFormFields,
+  childrenFormsData,
+  isInEditMode = false,
 }) => {
+  const formInFormFields: FormFieldDto[] = useMemo(
+    () =>
+      parentFormFields.filter((field) => {
+        const fieldExtra = getFieldExtra(field);
 
-    const formInFormFields: FormField[] = useMemo(() => {
-        return parentFormFields.filter(
-            (field: FormField) => field.typeId === FieldTypeIds.linkedForm && field.connectedFormId
-        );
-    }, [parentFormFields]);
+        return field.fieldType === fieldType.Form && !!fieldExtra.connectedFormId;
+      }),
+    [parentFormFields],
+  );
 
-    const childResponsesByForm = useMemo(() => {
-        return formInFormFields.map((field) => {
-            const childFormData = childrenFormsData.find(
-                (data) => data.form.id === field.connectedFormId
-            );
+  const childResponsesByForm = useMemo(
+    () =>
+      formInFormFields.map((field) => {
+        const fieldExtra = getFieldExtra(field);
+        const connectedFormId = fieldExtra.connectedFormId;
 
-            if (!childFormData) {
-                return {
-                    field,
-                    form: null,
-                    responses: [],
-                };
-            }
+        const childFormData = childrenFormsData.find((data) => data.form.id === connectedFormId);
 
-            const responses: Row[] = childFormData.rows
-                .filter((row) => {
-                    const [, parentResId] = row.parentResponse?.split(";") || [];
-                    return parentResId === String(parentRowId);
-                });
+        if (!childFormData)
+          return {
+            field,
+            form: null,
+            responses: [],
+          };
 
-            return {
-                field,
-                form: childFormData.form,
-                responses,
-            };
+        const responses: Row[] = childFormData.rows.filter((row) => {
+          const [, parentResponseId] = row.parentResponse?.split(";") || [];
+
+          return parentResponseId === String(parentRowId);
         });
-    }, [formInFormFields, childrenFormsData, parentRowId]);
 
-    const hasChildResponses = childResponsesByForm.some((item) => item.responses.length > 0);
+        return {
+          field,
+          form: childFormData.form,
+          responses,
+        };
+      }),
+    [formInFormFields, childrenFormsData, parentRowId],
+  );
 
-    if (!hasChildResponses) {
-        return <Box />;
-    }
+  const hasChildResponses = childResponsesByForm.some((item) => item.responses.length > 0);
 
-    return (
-        <DetailsContainer>
-            {childResponsesByForm.map((item, index) => {
-                if (!item.form || item.responses.length === 0) {
-                    return null;
-                }
+  if (!hasChildResponses) return <Box />;
 
-                return (
-                    <ChildResponsesPanel
-                        key={`${item.form.id}-${index}`}
-                        responses={item.responses}
-                        form={item.form}
-                        title={item.field.displayName}
-                        parentFormId={parentFormId}
-                        isInEditMode={isInEditMode}
-                    />
-                );
-            })}
-        </DetailsContainer>
-    );
+  return (
+    <DetailsContainer>
+      {childResponsesByForm.map((item, index) => {
+        if (!item.form || item.responses.length === 0) return null;
+
+        return (
+          <ChildResponsesPanel
+            key={`${item.form.id}-${index}`}
+            responses={item.responses}
+            form={item.form}
+            title={item.field.displayName}
+            parentFormId={parentFormId}
+            isInEditMode={isInEditMode}
+          />
+        );
+      })}
+    </DetailsContainer>
+  );
 };

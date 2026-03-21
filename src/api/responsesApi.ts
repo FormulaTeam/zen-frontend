@@ -1,6 +1,5 @@
 import apiClient from "./config";
 import {
-  DeleteMultipleResponsesRequest,
   FieldTypeIds,
   FieldValue,
   Filter,
@@ -20,6 +19,7 @@ import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { useMutation } from "@tanstack/react-query";
 import { useUpdate } from "../utils/useUpdate";
+import { CreateResponseDto, ResponseDto } from "../types/shared";
 
 /**
  * Fetch all responses with optional query parameters.
@@ -27,7 +27,7 @@ import { useUpdate } from "../utils/useUpdate";
  * @param filter - Optional filter parameters for querying responses.
  * @returns A promise that resolves to an array of responses.
  */
-export const getResponses = async (filter?: Filter): Promise<ResponseForm[]> => {
+export const getResponses = async (filter?: Filter): Promise<ResponseDto[]> => {
   const params = {
     query: filter?.query ? JSON.stringify(filter.query) : undefined,
     sortBy: filter?.sortBy,
@@ -40,7 +40,7 @@ export const getResponses = async (filter?: Filter): Promise<ResponseForm[]> => 
       console.error("Form ID is required to fetch responses.");
       return [];
     }
-    const response = await apiClient.get<ResponseForm[]>(
+    const response = await apiClient.get<ResponseDto[]>(
       `/responses/get-responses?form_id=${filter?.form_id}`,
       { params },
     );
@@ -150,9 +150,9 @@ export const getResponseWithFlatFields = (
  * @param id - The ID of the response to delete.
  * @returns A promise that resolves to the deleted response.
  */
-export const deleteResponse = async (formId: number, id: number): Promise<ResponseForm> => {
+export const deleteResponse = async (formId: number, id: string): Promise<ResponseDto> => {
   try {
-    const response = await apiClient.delete<ResponseForm>(`/responses/delete/${formId}/${id}`);
+    const response = await apiClient.delete<ResponseDto>(`/responses/delete/${formId}/${id}`);
     return response?.data;
   } catch (error) {
     console.error("Failed to delete response:", error);
@@ -166,6 +166,11 @@ export const deleteResponse = async (formId: number, id: number): Promise<Respon
  * @param deleteData - Data for the responses to delete.
  * @returns A promise that resolves to the number of deleted responses.
  */
+export interface DeleteMultipleResponsesRequest {
+  form_id: number;
+  response_ids: string[];
+}
+
 export const deleteMultipleResponses = async (
   deleteData: DeleteMultipleResponsesRequest,
 ): Promise<number> => {
@@ -298,7 +303,7 @@ export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
         return apiClient.put<ResponseForm>(`/responses/edit/${formId}/${id}`, responseData);
       });
       const responsesResults = await Promise.all(responsesPromises);
-      return responsesResults.map(response => response.data);
+      return responsesResults.map((response) => response.data);
     },
     mutationKey: ["batch-update-responses", formId],
     onSuccess: () => {
@@ -331,7 +336,7 @@ export const useCreateResponsesFromFile = (formId: string) => {
 };
 
 export const useCreateResponse = () => {
-  return useCreate<NewResponse | NewResponse[], ResponseForm | ResponseForm[]>({
+  return useCreate<CreateResponseDto | CreateResponseDto[], ResponseDto | ResponseDto[]>({
     endpoint: "/responses/create",
     mutationKey: ["create-response"],
     mutationOptions: {
@@ -345,8 +350,8 @@ export const useCreateResponse = () => {
   });
 };
 
-export const useUpdateResponse = (formId: number, id: number) => {
-  return useUpdate<Partial<ResponseForm>, ResponseForm>({
+export const useUpdateResponse = (formId?: number, id?: string) => {
+  return useUpdate<Partial<ResponseDto>, ResponseDto>({
     endpoint: `/responses/edit/${formId}/${id}`,
     mutationKey: ["update-response", formId, id],
     mutationOptions: {
@@ -379,7 +384,9 @@ export const getResponsesRows = async ({ filter }: { filter?: Filter }): Promise
       pageSize: filter?.pageSize,
       pageNumber: filter?.pageNumber,
     };
-    const response = await apiClient.get<Row[]>(`/responses/get-rows?form_id=${filter.form_id}`, { params });
+    const response = await apiClient.get<Row[]>(`/responses/get-rows?form_id=${filter.form_id}`, {
+      params,
+    });
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch rows:", error);

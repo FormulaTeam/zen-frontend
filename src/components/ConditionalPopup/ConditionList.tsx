@@ -9,15 +9,28 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import { Add, Delete, Edit } from "@mui/icons-material";
 import Button from "@mui/material/Button";
-import { FormField, ConditionGroup } from "../../utils/interfaces";
+import { ConditionGroup } from "../../utils/interfaces";
 import { useConditionList } from "../../hooks/useConditionList";
 import Box from "@mui/material/Box";
 import ConfirmationPopover from "./ConfirmationPopover";
+import { FormFieldDto } from "../../types/shared";
+
+type ConditionalFieldExtra = {
+  conditions?: ConditionGroup[];
+  sectionId?: string;
+  sectionOrder?: number;
+  sectionName?: string;
+  sectionDescription?: string;
+};
+
+type ConditionalFormField = FormFieldDto & {
+  extra?: ConditionalFieldExtra;
+};
 
 interface ConditionListProps {
   onSelect: () => void;
-  formFields: FormField[];
-  onEditCondition?: (conditions: ConditionGroup[], affectedFields: FormField[]) => void;
+  formFields: ConditionalFormField[];
+  onEditCondition?: (conditions: ConditionGroup[], affectedFields: ConditionalFormField[]) => void;
   onDeleteCondition?: (conditionId: string) => void;
 }
 
@@ -90,7 +103,6 @@ const ConditionList: React.FC<ConditionListProps> = ({
         <Add />
       </Button>
 
-      {/* Delete Confirmation Popover */}
       <ConfirmationPopover
         open={deletePopoverOpen}
         anchorEl={deleteAnchorEl}
@@ -105,4 +117,5 @@ const ConditionList: React.FC<ConditionListProps> = ({
     </ContentWrapper>
   );
 };
+
 export default ConditionList;

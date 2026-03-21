@@ -1,6 +1,23 @@
 import { v4 as uuidv4 } from "uuid";
-import type { AffectedTarget, Condition, ConditionGroup, ConditionsRoot, FormField } from "./interfaces";
+import type { AffectedTarget, Condition, ConditionGroup, ConditionsRoot } from "./interfaces";
 import { ALLOWED_FIELD_TYPES_FOR_CONDITION, connectionTypes, FieldTypeIds } from "./interfaces";
+import { FormFieldDto } from "../types/shared";
+
+type ConditionFieldExtra = {
+  connectionType?: string | number;
+  conditions?: ConditionGroup[];
+  sectionId?: string;
+  sectionOrder?: number;
+  sectionName?: string;
+  sectionDescription?: string;
+};
+
+export type ConditionalFormField = FormFieldDto & {
+  extra?: ConditionFieldExtra;
+};
+
+const getFieldExtra = (field: ConditionalFormField): ConditionFieldExtra =>
+  (field.extra as ConditionFieldExtra | undefined) ?? {};
 
 // Condition operators enum for better type safety
 export const ConditionOperators = {
@@ -64,10 +81,9 @@ export const ConditionUtils = {
   /**
    * Check if a condition is valid
    */
-  isConditionValid: (condition: Condition, formField?: FormField): boolean => {
+  isConditionValid: (condition: Condition, formField?: ConditionalFormField): boolean => {
     if (!condition.field || !condition.operator) return false;
 
-    // Empty and not_empty operators don't need values
     if (
       condition.operator === ConditionOperators.empty ||
       condition.operator === ConditionOperators.not_empty
@@ -75,7 +91,6 @@ export const ConditionUtils = {
       return true;
     }
 
-    // All other operators need values
     if (!condition.value || (Array.isArray(condition.value) && condition.value.length === 0)) {
       return false;
     }
@@ -105,12 +120,10 @@ export const ConditionUtils = {
     operator: ConditionOperatorType,
     fieldType: number,
   ): string | string[] => {
-    // For multi-value operators, ensure we have an array
     if (ConditionUtils.isMultiValueOperator(operator)) {
       return Array.isArray(value) ? value : value ? [value] : [];
     }
 
-    // For single-value operators, ensure we have a string
     return Array.isArray(value) ? value[0] || "" : value || "";
   },
 
@@ -181,14 +194,17 @@ export const ConditionUtils = {
   /**
    * Validate an entire conditions root structure
    */
-  validateConditionsRoot: (conditionsRoot: ConditionsRoot, formFields: FormField[]): boolean => {
+  validateConditionsRoot: (
+    conditionsRoot: ConditionsRoot,
+    formFields: ConditionalFormField[],
+  ): boolean => {
     if (!conditionsRoot.groups.length) return false;
 
     return conditionsRoot.groups.every(
       (group) =>
         group.conditions.length > 0 &&
         group.conditions.every((condition) => {
-          const formField = formFields.find((f) => f.uniqueId === condition.field);
+          const formField = formFields.find((f) => f.id === condition.field);
           return ConditionUtils.isConditionValid(condition, formField);
         }),
     );
@@ -198,52 +214,42 @@ export const ConditionUtils = {
    * Evaluate a single condition against a data object
    * This is a utility function for testing/debugging purposes
    */
-  evaluateCondition: (condition: Condition, dataObject: any, formField?: FormField): boolean => {
+  evaluateCondition: (
+    condition: Condition,
+    dataObject: any,
+    formField?: ConditionalFormField,
+  ): boolean => {
     if (!condition.field || !condition.operator) return false;
 
     let fieldValue = dataObject[condition.field];
     let conditionValue = condition.value;
 
-    // Handle special field types
     if (formField) {
-      // Handle checkbox (yes/no) fields - boolean values stored as strings in conditions
-      if (formField.typeId === FieldTypeIds.checkbox) {
-        // Convert boolean field values to string for comparison
+      const extra = getFieldExtra(formField);
+
+      if (formField.fieldType === FieldTypeIds.checkbox) {
         if (typeof fieldValue === "boolean") {
           fieldValue = fieldValue.toString();
         }
-        // Ensure condition value is string
         if (typeof conditionValue === "boolean") {
           conditionValue = conditionValue.toString();
         }
-      }
-
-      // Handle options fields - can be stored as array or string
-      else if (formField.typeId === FieldTypeIds.options) {
-        // For connected form fields, handle the special case where values might be from connected forms
-        if (formField.connectionType === connectionTypes.form) {
-          // For connected form fields, the field value should be the actual value from the connected form
-          // Normalize field value to array for consistent handling
+      } else if (formField.fieldType === FieldTypeIds.options) {
+        if (extra.connectionType === connectionTypes.form) {
           const normalizedFieldValue = Array.isArray(fieldValue) ? fieldValue : [fieldValue];
 
-          // For equals/not_equals operations with connected form options
           if (
             condition.operator === ConditionOperators.equals ||
             condition.operator === ConditionOperators.not_equals
           ) {
-            // If condition value is array, check if field value contains any of those values
             if (Array.isArray(conditionValue)) {
               const hasMatch = conditionValue.some((cv) => normalizedFieldValue.includes(cv));
               return condition.operator === ConditionOperators.equals ? hasMatch : !hasMatch;
             } else {
-              // Single condition value - check if it's in the field value array
               const hasMatch = normalizedFieldValue.includes(conditionValue);
               return condition.operator === ConditionOperators.equals ? hasMatch : !hasMatch;
             }
-          }
-
-          // For contains/not_contains operations with connected form options
-          else if (
+          } else if (
             condition.operator === ConditionOperators.contains ||
             condition.operator === ConditionOperators.not_contains
           ) {
@@ -260,28 +266,20 @@ export const ConditionUtils = {
             }
           }
         } else {
-          // Regular options field (not connected to another form)
-          // Normalize field value to array for consistent handling
           const normalizedFieldValue = Array.isArray(fieldValue) ? fieldValue : [fieldValue];
 
-          // For equals/not_equals operations with options fields
           if (
             condition.operator === ConditionOperators.equals ||
             condition.operator === ConditionOperators.not_equals
           ) {
-            // If condition value is array, check if field value contains any of those values
             if (Array.isArray(conditionValue)) {
               const hasMatch = conditionValue.some((cv) => normalizedFieldValue.includes(cv));
               return condition.operator === ConditionOperators.equals ? hasMatch : !hasMatch;
             } else {
-              // Single condition value - check if it's in the field value array
               const hasMatch = normalizedFieldValue.includes(conditionValue);
               return condition.operator === ConditionOperators.equals ? hasMatch : !hasMatch;
             }
-          }
-
-          // For contains/not_contains operations with options fields
-          else if (
+          } else if (
             condition.operator === ConditionOperators.contains ||
             condition.operator === ConditionOperators.not_contains
           ) {
@@ -331,17 +329,15 @@ export const ConditionUtils = {
         return !String(fieldValue).includes(String(conditionValue));
 
       case ConditionOperators.greater_than:
-        // Handle numeric comparison
-        if (formField?.typeId === FieldTypeIds.number) {
+        if (formField?.fieldType === FieldTypeIds.number) {
           const numFieldValue = Number(fieldValue);
           const numConditionValue = Number(conditionValue);
           return (
             !isNaN(numFieldValue) && !isNaN(numConditionValue) && numFieldValue > numConditionValue
           );
         }
-        // Handle date comparison
         if (
-          formField?.typeId === FieldTypeIds.date &&
+          formField?.fieldType === FieldTypeIds.date &&
           conditionValue &&
           (typeof conditionValue === "string" || typeof conditionValue === "number")
         ) {
@@ -356,17 +352,15 @@ export const ConditionUtils = {
         return false;
 
       case ConditionOperators.less_than:
-        // Handle numeric comparison
-        if (formField?.typeId === FieldTypeIds.number) {
+        if (formField?.fieldType === FieldTypeIds.number) {
           const numFieldValue = Number(fieldValue);
           const numConditionValue = Number(conditionValue);
           return (
             !isNaN(numFieldValue) && !isNaN(numConditionValue) && numFieldValue < numConditionValue
           );
         }
-        // Handle date comparison
         if (
-          formField?.typeId === FieldTypeIds.date &&
+          formField?.fieldType === FieldTypeIds.date &&
           conditionValue &&
           (typeof conditionValue === "string" || typeof conditionValue === "number")
         ) {
@@ -381,17 +375,15 @@ export const ConditionUtils = {
         return false;
 
       case ConditionOperators.greater_than_or_equal:
-        // Handle numeric comparison
-        if (formField?.typeId === FieldTypeIds.number) {
+        if (formField?.fieldType === FieldTypeIds.number) {
           const numFieldValue = Number(fieldValue);
           const numConditionValue = Number(conditionValue);
           return (
             !isNaN(numFieldValue) && !isNaN(numConditionValue) && numFieldValue >= numConditionValue
           );
         }
-        // Handle date comparison
         if (
-          formField?.typeId === FieldTypeIds.date &&
+          formField?.fieldType === FieldTypeIds.date &&
           conditionValue &&
           (typeof conditionValue === "string" || typeof conditionValue === "number")
         ) {
@@ -406,17 +398,15 @@ export const ConditionUtils = {
         return false;
 
       case ConditionOperators.less_than_or_equal:
-        // Handle numeric comparison
-        if (formField?.typeId === FieldTypeIds.number) {
+        if (formField?.fieldType === FieldTypeIds.number) {
           const numFieldValue = Number(fieldValue);
           const numConditionValue = Number(conditionValue);
           return (
             !isNaN(numFieldValue) && !isNaN(numConditionValue) && numFieldValue <= numConditionValue
           );
         }
-        // Handle date comparison
         if (
-          formField?.typeId === FieldTypeIds.date &&
+          formField?.fieldType === FieldTypeIds.date &&
           conditionValue &&
           (typeof conditionValue === "string" || typeof conditionValue === "number")
         ) {
@@ -441,12 +431,12 @@ export const ConditionUtils = {
   evaluateConditionGroup: (
     group: ConditionGroup,
     dataObject: any,
-    formFields: FormField[],
+    formFields: ConditionalFormField[],
   ): boolean => {
     if (group.conditions.length === 0) return true;
 
     const results = group.conditions.map((condition) => {
-      const formField = formFields.find((f) => f.uniqueId === condition.field);
+      const formField = formFields.find((f) => f.id === condition.field);
       return ConditionUtils.evaluateCondition(condition, dataObject, formField);
     });
 
@@ -463,7 +453,7 @@ export const ConditionUtils = {
   evaluateConditionsRoot: (
     conditionsRoot: ConditionsRoot,
     dataObject: any,
-    formFields: FormField[],
+    formFields: ConditionalFormField[],
   ): boolean => {
     if (conditionsRoot.groups.length === 0) return true;
 
@@ -491,7 +481,6 @@ export const ConditionUtils = {
    * Add an affected target to the conditions root
    */
   addAffectedTarget: (conditionsRoot: ConditionsRoot, target: AffectedTarget): ConditionsRoot => {
-    // Check if target already exists
     const exists = conditionsRoot.affectedTargets.some(
       (t) => t.type === target.type && t.id === target.id,
     );
@@ -524,17 +513,15 @@ export const ConditionUtils = {
    * Get available sections from form fields (excluding sections that contain fields used in conditions)
    */
   getAvailableSections: (
-    formFields: FormField[],
+    formFields: ConditionalFormField[],
     conditionsRoot?: ConditionsRoot,
   ): { id: string; name: string }[] => {
     const sectionsMap = new Map<string, string>();
     const excludedSectionIds = new Set<string>();
 
-    // If conditionsRoot is provided, collect sections that contain fields used in conditions
     if (conditionsRoot) {
       const fieldsUsedInConditions = new Set<string>();
 
-      // Collect field IDs used in conditions
       conditionsRoot.groups.forEach((group) => {
         group.conditions.forEach((condition) => {
           if (condition.field) {
@@ -543,23 +530,24 @@ export const ConditionUtils = {
         });
       });
 
-      // Find sections that contain fields used in conditions
       formFields.forEach((field) => {
-        if ((fieldsUsedInConditions.has(field.uniqueId) && field.sectionId) || field.required) {
-          const cleanSectionId = field.sectionId.replace("formFields_", "");
-          excludedSectionIds.add(cleanSectionId);
+        const extra = getFieldExtra(field);
+        if ((fieldsUsedInConditions.has(field.id) && extra.sectionId) || field.isRequired) {
+          const cleanSectionId = extra.sectionId?.replace("formFields_", "");
+          if (cleanSectionId) {
+            excludedSectionIds.add(cleanSectionId);
+          }
         }
       });
     }
 
     formFields.forEach((field) => {
-      if (field.sectionId && field.sectionName) {
-        // Clean the section ID by removing the formFields_ prefix for display/storage
-        const cleanSectionId = field.sectionId.replace("formFields_", "");
+      const extra = getFieldExtra(field);
+      if (extra.sectionId && extra.sectionName) {
+        const cleanSectionId = extra.sectionId.replace("formFields_", "");
 
-        // Only add section if it's not excluded
         if (!excludedSectionIds.has(cleanSectionId)) {
-          sectionsMap.set(cleanSectionId, field.sectionName);
+          sectionsMap.set(cleanSectionId, extra.sectionName);
         }
       }
     });
@@ -571,13 +559,12 @@ export const ConditionUtils = {
    * Get available fields (excluding those already used in conditions and affected by current condition set)
    */
   getAvailableFields: (
-    formFields: FormField[],
+    formFields: ConditionalFormField[],
     conditionsRoot: ConditionsRoot,
     isFromAffected?: boolean,
-  ): FormField[] => {
+  ): ConditionalFormField[] => {
     const excludedFieldIds = new Set<string>();
 
-    // Collect field IDs used in conditions
     conditionsRoot.groups.forEach((group) => {
       group.conditions.forEach((condition) => {
         if (condition.field) {
@@ -586,33 +573,31 @@ export const ConditionUtils = {
       });
     });
 
-    // Collect field IDs that are affected by the current condition set
     conditionsRoot.affectedTargets.forEach((target) => {
       if (target.type === "field") {
         excludedFieldIds.add(target.id);
       } else if (target.type === "section") {
-        // Add all fields from affected sections
         formFields.forEach((field) => {
+          const extra = getFieldExtra(field);
           if (
-            field.sectionId === target.id ||
-            field.sectionId === `formFields_${target.id}` ||
-            field.sectionId?.replace("formFields_", "") === target.id
+            extra.sectionId === target.id ||
+            extra.sectionId === `formFields_${target.id}` ||
+            extra.sectionId?.replace("formFields_", "") === target.id
           ) {
-            excludedFieldIds.add(field.uniqueId);
+            excludedFieldIds.add(field.id);
           }
         });
       }
     });
 
     if (isFromAffected) {
-      return formFields.filter((field) => !excludedFieldIds.has(field.uniqueId));
+      return formFields.filter((field) => !excludedFieldIds.has(field.id));
     }
 
-    // Return fields not used in conditions or affected by conditions
     return formFields.filter(
       (field) =>
-        !excludedFieldIds.has(field.uniqueId) &&
-        ALLOWED_FIELD_TYPES_FOR_CONDITION.includes(field.typeId),
+        !excludedFieldIds.has(field.id) &&
+        ALLOWED_FIELD_TYPES_FOR_CONDITION.includes(field.fieldType),
     );
   },
 };

@@ -6,20 +6,47 @@ import {
   Droppable,
   DroppableProvided,
 } from "@hello-pangea/dnd";
-import { EmptyMessageWrapper, FieldsColumn, ResizeHandle, SectionContainer } from "./sections.styled";
+import {
+  EmptyMessageWrapper,
+  FieldsColumn,
+  ResizeHandle,
+  SectionContainer,
+} from "./sections.styled";
 import { Box, Tooltip, Typography, useTheme } from "@mui/material";
 import { Add, DragHandle } from "@mui/icons-material";
 import { texts } from "../../utils/texts";
-import { FormField, Section } from "../../utils/interfaces";
-import { FORM_FIELD_PREFIX, FORM_FIELDS_PREFIX, NOT_A_SECTION_ID } from "../../utils/sections/consts";
+import { Section } from "../../utils/interfaces";
+import {
+  FORM_FIELD_PREFIX,
+  FORM_FIELDS_PREFIX,
+  NOT_A_SECTION_ID,
+} from "../../utils/sections/consts";
+import { FormFieldDto } from "../../types/shared";
+
+type EditorFieldExtra = {
+  sectionId?: string;
+  sectionOrder?: number;
+  sectionName?: string;
+  sectionDescription?: string;
+};
+
+type EditorFormField = FormFieldDto & {
+  extra?: EditorFieldExtra;
+};
 
 interface FormFieldsListProps {
-  formFields: FormField[];
-  getFormProperty: (formField: FormField, dragHandleProps: DraggableProvidedDragHandleProps) => any;
+  formFields: EditorFormField[];
+  getFormProperty: (
+    formField: EditorFormField,
+    dragHandleProps: DraggableProvidedDragHandleProps,
+  ) => React.ReactNode;
   section: Section;
 }
 
-const replaceSectionIdPrefix = (sectionId: string) => {
+const getFieldExtra = (field: EditorFormField): EditorFieldExtra =>
+  (field.extra as EditorFieldExtra | undefined) ?? {};
+
+const replaceSectionIdPrefix = (sectionId?: string) => {
   if (!sectionId) {
     return NOT_A_SECTION_ID;
   }
@@ -40,12 +67,17 @@ export default function FormFieldsList({
 
   const [sectionHeight, setSectionHeight] = useState<number | null>(null);
 
-  const filteredFields = formFields.filter(
-    (field) =>
-      replaceSectionIdPrefix(field.sectionId) === section.id ||
-      (replaceSectionIdPrefix(section.id) === NOT_A_SECTION_ID &&
-        replaceSectionIdPrefix(field.sectionId) === NOT_A_SECTION_ID),
-  );
+  const filteredFields = formFields
+    .filter((field) => {
+      const fieldSectionId = replaceSectionIdPrefix(getFieldExtra(field).sectionId);
+      return (
+        fieldSectionId === section.id ||
+        (replaceSectionIdPrefix(section.id) === NOT_A_SECTION_ID &&
+          fieldSectionId === NOT_A_SECTION_ID)
+      );
+    })
+    .sort((a, b) => a.index - b.index);
+
   const isEmpty = filteredFields.length === 0;
   const dropId = section.id.includes(FORM_FIELDS_PREFIX)
     ? section.id
@@ -59,7 +91,7 @@ export default function FormFieldsList({
 
   useEffect(() => {
     if (lastFieldRef.current && previousLastFieldId.current !== lastFieldId.current) {
-      lastFieldRef.current.scrollIntoView({ behavior: "smooth", block: "center"});
+      lastFieldRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [filteredFields.length]);
 
@@ -91,7 +123,7 @@ export default function FormFieldsList({
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, []);
+  }, [sectionHeight]);
 
   return (
     <Droppable droppableId={dropId} key={dropId}>
@@ -118,51 +150,41 @@ export default function FormFieldsList({
                 </EmptyMessageWrapper>
               ) : (
                 <>
-                  {formFields
-                    .slice()
-                    .sort((a, b) => a.index - b.index)
-                    .map((field, idx) => {
-                      if (field?.sectionId && field.sectionId.includes(FORM_FIELDS_PREFIX)) {
-                        field.sectionId = replaceSectionIdPrefix(field.sectionId);
-                      }
+                  {filteredFields.map((field, idx) => {
+                    const isLastField = idx === filteredFields.length - 1;
 
-                      const belongsToCurrentSection =
-                        section.id === NOT_A_SECTION_ID
-                          ? field.sectionId === NOT_A_SECTION_ID
-                          : field.sectionId === section.id;
+                    return (
+                      <Draggable
+                        draggableId={FORM_FIELD_PREFIX + field.id}
+                        key={field.id}
+                        index={idx}>
+                        {(provided: DraggableProvided) => {
+                          const id = "formField-div-" + field.id;
 
-                      if (!belongsToCurrentSection) return null;
-
-                      const isLastField = idx === formFields.length - 1;
-
-                      return (
-                        <Draggable draggableId={FORM_FIELD_PREFIX + idx} key={idx} index={idx}>
-                          {(provided: DraggableProvided) => {
-                            const id = "formField-div-" + idx;
-                            return (
-                              <Box
-                                key={field.index}
-                                ref={(el) => {
-                                  if (isLastField) {
-                                    previousLastFieldId.current = lastFieldId.current;
-                                    lastFieldId.current = field.uniqueId;
-                                    lastFieldRef.current = el as HTMLDivElement | null;
-                                  }
-                                  provided.innerRef(el as HTMLDivElement | null);
-                                }}
-                                {...provided.draggableProps}
-                                className="formField-div"
-                                id={id}
-                                sx={{ width: "100%" }}
-                                style={{ ...provided.draggableProps.style }}>
-                                {provided.dragHandleProps &&
-                                  getFormProperty(field, provided.dragHandleProps)}
-                              </Box>
-                            );
-                          }}
-                        </Draggable>
-                      );
-                    })}
+                          return (
+                            <Box
+                              key={field.id}
+                              ref={(el) => {
+                                if (isLastField) {
+                                  previousLastFieldId.current = lastFieldId.current;
+                                  lastFieldId.current = field.id;
+                                  lastFieldRef.current = el as HTMLDivElement | null;
+                                }
+                                provided.innerRef(el as HTMLDivElement | null);
+                              }}
+                              {...provided.draggableProps}
+                              className="formField-div"
+                              id={id}
+                              sx={{ width: "100%" }}
+                              style={{ ...provided.draggableProps.style }}>
+                              {provided.dragHandleProps &&
+                                getFormProperty(field, provided.dragHandleProps)}
+                            </Box>
+                          );
+                        }}
+                      </Draggable>
+                    );
+                  })}
                   {provided.placeholder}
                 </>
               )}

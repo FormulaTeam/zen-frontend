@@ -2,11 +2,11 @@ import { useParams } from "react-router-dom";
 import CreateForm from "../CreateForm/CreateForm";
 import { useEffect, useState } from "react";
 import { getFormById } from "../../api";
-import { Form } from "../../utils/interfaces";
+import type { FormDto } from "../../types/shared";
 
 export default function EditForm({ user }) {
   const { id } = useParams();
-  const [formToEdit, setFormToEdit] = useState<Form | null>(null);
+  const [formToEdit, setFormToEdit] = useState<FormDto | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -16,7 +16,7 @@ export default function EditForm({ user }) {
         }
       });
     }
-  }, []);
+  }, [id]);
 
   return <>{formToEdit && <CreateForm currentUser={user} formToEdit={formToEdit} />}</>;
 }

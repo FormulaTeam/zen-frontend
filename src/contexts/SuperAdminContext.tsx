@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { userType } from "formula-gear";
 import { useGetIsSuperAdmin } from "../api/usersApi";
 import { useAuth } from "./AuthContext";
 
@@ -28,7 +29,7 @@ export const SuperAdminProvider = ({ children }: SuperAdminProviderProps) => {
 
   useEffect(() => {
     if (user && isSuperAdminData !== undefined) {
-      setIsSuperAdmin(isSuperAdminData);
+      setIsSuperAdmin(isSuperAdminData.userType === userType.SuperAdmin);
     } else if (!user) {
       setIsSuperAdmin(null);
     }

@@ -1,130 +1,166 @@
-import { useState } from "react";
-import { getResponseWithFlatFields, useCreateResponse, useUpdateResponse } from "../api";
+import { useCreateResponse, useUpdateResponse } from "../api";
 import { getUserName, showErrorNotification } from "../utils/utils";
 import { uploadFilesToS3 } from "../api/filesApi";
-import { FieldTypeIds, NotificationTexts, ResponseFieldValue } from "../utils/interfaces";
+import { NotificationTexts } from "../utils/interfaces";
 import moment from "moment";
+import {
+  CreateResponseDto,
+  FormDto,
+  FormFieldDto,
+  ResponseDto,
+  ResponseFieldValueDto,
+} from "../types/shared";
+import { fieldType } from "formula-gear";
 
 // Cache to deduplicate create requests during a save operation
 const createRequestCache: Map<string, Promise<any>> = new Map();
 
+type EditorFieldExtra = {
+  showSeconds?: boolean;
+};
 
-export const useResponseSave = (form: any, response: any, user: any, parentResponse?: string, copyMode?: boolean) => {
+type SaveField = FormFieldDto & {
+  value?: unknown;
+  uniqueId?: string;
+  typeId?: number | string;
+  showSeconds?: boolean;
+};
+
+type ExistingResponseLike = Partial<ResponseDto> & {
+  parentResponse?: string;
+};
+
+type CreateResponsePayload = CreateResponseDto & {
+  parentResponse?: string;
+};
+
+type UpdateResponsePayload = Partial<ResponseDto> & {
+  parentResponse?: string;
+};
+
+const getFieldExtra = (field: SaveField): EditorFieldExtra =>
+  (field.extra as EditorFieldExtra | undefined) ?? {};
+
+const getFieldId = (field: SaveField, fallbackKey: string): string =>
+  field.id ?? field.uniqueId ?? fallbackKey;
+
+const getFieldTypeValue = (field: SaveField): number | string | undefined =>
+  field.fieldType ?? field.typeId;
+
+const isFileField = (field: SaveField): boolean =>
+  getFieldTypeValue(field) === fieldType.File || getFieldTypeValue(field) === "file";
+
+const isTimeField = (field: SaveField): boolean => getFieldTypeValue(field) === fieldType.Time;
+
+export const useResponseSave = (
+  form: FormDto | null,
+  response: ExistingResponseLike | null | undefined,
+  user: any,
+  parentResponse?: string,
+  copyMode?: boolean,
+) => {
+  const formId = form?.id;
+
   const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } =
     useCreateResponse();
   const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } =
-    useUpdateResponse(form?.id, response?.id);
+    useUpdateResponse(formId, response?.id);
 
   const saveResponse = async (
-    formFieldsByIdMap: Map<string, any>,
+    formFieldsByIdMap: Map<string, SaveField>,
     formFieldsValuesMap: Map<string, any>,
   ) => {
-    const dataArr: ResponseFieldValue[] = [];
-    const deletedFiles: ResponseFieldValue[] = [];
+    if (!formId) {
+      throw new Error("Form is not loaded");
+    }
+
+    const fieldValues: ResponseFieldValueDto[] = [];
 
     for (const [key, field] of formFieldsByIdMap) {
+      const fieldId = getFieldId(field, key);
       let value = formFieldsValuesMap.get(key) ?? field.value;
-      if (field.fieldType === "file") {
+
+      if (isFileField(field)) {
         try {
-          const uploadResponse = await uploadFilesToS3(value.files, form.id);
-          const responsesToCombinedSave = {
-            files: [...uploadResponse, ...value.files?.attachedFiles],
-          };
+          const filesValue = value ?? {};
+          const newFiles = filesValue?.files?.newFiles ?? [];
+          const attachedFiles = filesValue?.files?.attachedFiles ?? [];
 
-          const fieldToSave: ResponseFieldValue = {
-            uniqueId: field.uniqueId,
-            value: responsesToCombinedSave,
-          };
-          if (response) {
-            // if response exists, it means files can be deleted
-            const currentDeletedFiles = response[field.name]?.deletedFiles || [];
-            const newDeletedFiles = value?.deletedFiles || [];
-            const deletedFilesToSave: ResponseFieldValue = {
-              uniqueId: field.uniqueId,
-              value: currentDeletedFiles.concat(newDeletedFiles),
-            };
-            deletedFiles.push(deletedFilesToSave);
-          }
+          const uploadResponse =
+            newFiles.length > 0 ? await uploadFilesToS3({ newFiles }, formId) : [];
 
-          dataArr.push(fieldToSave);
+          value = {
+            files: [...uploadResponse, ...attachedFiles],
+          };
         } catch (error) {
           console.log(error);
         }
-        continue; // Skip the rest of the loop for file fields
+
+        fieldValues.push({
+          fieldId,
+          value,
+        });
+        continue;
       }
 
-      // Check if the value is a valid time string for hour fields
-      if (field.typeId === FieldTypeIds.time && value) {
+      if (isTimeField(field) && value) {
+        const fieldExtra = getFieldExtra(field);
+        const showSeconds = fieldExtra.showSeconds ?? field.showSeconds ?? false;
+
         const isValidTimeValue =
-          /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(value) ||
+          /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(String(value)) ||
           (value instanceof Date && moment(value).isValid());
 
         if (isValidTimeValue && value instanceof Date) {
           const time = moment(value);
-          value = field.showSeconds ? time.format("HH:mm:ss") : time.format("HH:mm");
+          value = showSeconds ? time.format("HH:mm:ss") : time.format("HH:mm");
         }
-        // If it's already a string, it's already in the correct format
       }
-      const fieldToSave: ResponseFieldValue = {
-        uniqueId: field.uniqueId,
+
+      fieldValues.push({
+        fieldId,
         value,
-      };
-      dataArr.push(fieldToSave);
+      });
     }
 
-    const userName = getUserName(user?.firstName, user?.lastName);
-    const fieldsNameValueObj = getResponseWithFlatFields(dataArr, form.fields, deletedFiles);
+    const userName = getUserName(user?.firstName, user?.lastName) || user?.name || "";
+    const normalizedUpn = user?.upn?.toLowerCase?.() ?? user?.upn ?? "unknown";
 
     try {
-      // If updating an existing response (and not in copy mode)
       if (response && response.id && !copyMode) {
-        // Update existing response (only if not in copy mode)
-        const updatedResponse = {
-          edited_by: user.upn?.toLowerCase(),
-          edited_by_name: userName,
-          data: dataArr,
-          parentResponse: parentResponse,
-          ...fieldsNameValueObj,
+        const updatedResponse: UpdateResponsePayload = {
+          ...response,
+          updatedBy: response.updatedBy,
+          fieldValues,
+          ...(parentResponse ? { parentResponse } : {}),
         };
 
-        const updated = await mutateUpdateResponseAsync(updatedResponse);
+        const updated = await mutateUpdateResponseAsync(updatedResponse as any);
         return updated;
-      } else {
-        // Create new response
-        const newResponse = {
-          form_id: form.id,
-          created_by_name: userName,
-          created_by: user.upn?.toLowerCase(),
-          edited_by: user.upn?.toLowerCase(),
-          edited_by_name: userName,
-          data: dataArr,
-          parentResponse: parentResponse,
-          ...fieldsNameValueObj,
-        };
-
-
-        // Deduplicate identical create requests within the same client session/save cycle.
-        // Key is based on form id + parentResponse + stable payload (fieldsNameValueObj)
-        const createKey = `${form.id}::${parentResponse ?? ""}::${JSON.stringify(fieldsNameValueObj)}`;
-
-        // Use a module-scoped cache to avoid duplicate create calls
-        if (!createRequestCache.has(createKey)) {
-          const p = mutateCreateResponseAsync(newResponse)
-            .then((res) => {
-              createRequestCache.delete(createKey);
-              return res;
-            })
-            .catch((err) => {
-              createRequestCache.delete(createKey);
-              throw err;
-            });
-          createRequestCache.set(createKey, p);
-        } else {
-
-        }
-
-        return await createRequestCache.get(createKey)!;
       }
+
+      const newResponse: CreateResponsePayload = {
+        fieldValues,
+        ...(parentResponse ? { parentResponse } : {}),
+      };
+
+      const createKey = `${formId}::${parentResponse ?? ""}::${JSON.stringify(fieldValues)}`;
+
+      if (!createRequestCache.has(createKey)) {
+        const p = mutateCreateResponseAsync(newResponse)
+          .then((res) => {
+            createRequestCache.delete(createKey);
+            return res;
+          })
+          .catch((err) => {
+            createRequestCache.delete(createKey);
+            throw err;
+          });
+
+        createRequestCache.set(createKey, p);
+      }
+
+      return await createRequestCache.get(createKey)!;
     } catch (error: any) {
       if (error?.response?.data?.error?.includes("Metro")) {
         showErrorNotification(

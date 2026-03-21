@@ -7,146 +7,137 @@ import { EditButtonWrapper } from "../styled";
 import { useFormStore } from "../stores/form.store";
 import { PERMISSION_TYPES } from "../../../utils/utils";
 import { useSuperAdmin } from "../../../contexts/SuperAdminContext";
-import {
-    deleteMultipleResponses,
-} from "../../../api";
+import { deleteMultipleResponses } from "../../../api";
 import { queryClient } from "../../../api/queryClient";
 import { showSuccessNotification, showErrorNotification } from "../../../utils/utils";
 
 interface RowActionsButtonsProps {
-    rowSelectionModel: GridRowSelectionModel;
-    onDeleted: () => void;
+  rowSelectionModel: GridRowSelectionModel;
+  onDeleted: () => void;
 }
 
-export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({ rowSelectionModel, onDeleted }) => {
-    const navigate = useNavigate();
-    const { form, permissions, rows } = useFormStore();
-    const { isSuperAdmin } = useSuperAdmin();
+export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
+  rowSelectionModel,
+  onDeleted,
+}) => {
+  const navigate = useNavigate();
+  const { form, permissions, rows } = useFormStore();
+  const { isSuperAdmin } = useSuperAdmin();
 
-    // "exclude" type means select-all: every row except those in the ids Set
-    const isExcludeAll = rowSelectionModel.type === "exclude";
-    const excludedIds = new Set(Array.from(rowSelectionModel.ids).map((id) => Number(id)));
-    const selectedIds: GridRowId[] = isExcludeAll
-        ? rows.filter((row) => !excludedIds.has(row.id)).map((row) => row.id)
-        : Array.from(rowSelectionModel.ids);
+  const isExcludeAll = rowSelectionModel.type === "exclude";
+  const excludedIds = new Set(Array.from(rowSelectionModel.ids).map((id) => String(id)));
 
-    const isSingleSelection = selectedIds.length === 1;
-    const hasSelection = selectedIds.length > 0;
+  const selectedIds: GridRowId[] = isExcludeAll
+    ? rows.filter((row) => !excludedIds.has(String(row.id))).map((row) => row.id)
+    : Array.from(rowSelectionModel.ids);
 
-    const canView =
-        permissions.includes(PERMISSION_TYPES.VIEW_RESPONSE) ||
-        permissions.includes(PERMISSION_TYPES.VIEW_YOUR_RESPONSES) ||
-        !!isSuperAdmin;
+  const isSingleSelection = selectedIds.length === 1;
+  const hasSelection = selectedIds.length > 0;
 
-    const canEdit =
-        permissions.includes(PERMISSION_TYPES.EDIT_RESPONSE) || !!isSuperAdmin;
+  const canView =
+    permissions.includes(PERMISSION_TYPES.VIEW_RESPONSE) ||
+    permissions.includes(PERMISSION_TYPES.VIEW_YOUR_RESPONSES) ||
+    !!isSuperAdmin;
 
-    const canDelete =
-        permissions.includes(PERMISSION_TYPES.DELETE_RESPONSE) || !!isSuperAdmin;
+  const canEdit = permissions.includes(PERMISSION_TYPES.EDIT_RESPONSE) || !!isSuperAdmin;
 
-    const handleView = () => {
-        if (!isSingleSelection) return;
-        const rowId = Number(selectedIds[0]);
-        const response = rows.find((row) => row?.id === rowId);
-        if (response) {
-            navigate(`/response/view/${form.id}/${response.id}`);
-        }
-    };
+  const canDelete = permissions.includes(PERMISSION_TYPES.DELETE_RESPONSE) || !!isSuperAdmin;
 
-    const handleEdit = () => {
-        if (!isSingleSelection) return;
-        const rowId = Number(selectedIds[0]);
-        const response = rows.find((row) => row?.id === rowId);
-        if (response) {
-            navigate(`/response/edit/${form.id}/${response.id}`);
-        }
-    };
+  const handleView = () => {
+    if (!isSingleSelection) return;
 
-    const handleDelete = async () => {
-        if (!hasSelection) return;
-        try {
-            const responseIds = selectedIds
-                .map((id) => Number.parseInt(String(id), 10))
-                .filter((number) => Number.isFinite(number));
+    const rowId = String(selectedIds[0]);
+    const response = rows.find((row) => String(row?.id) === rowId);
 
-            if (responseIds.length === 0) return;
+    if (response) {
+      navigate(`/response/view/${form.id}/${response.id}`);
+    }
+  };
 
-            await deleteMultipleResponses({
-                form_id: Number(form.id),
-                response_ids: responseIds,
-            });
-            queryClient.invalidateQueries({ queryKey: ["rows"] });
-            showSuccessNotification("מחיקת התגובות בוצעה בהצלחה");
-            onDeleted();
-        } catch {
-            showErrorNotification("מחיקת התגובות נכשלה");
-        }
-    };
+  const handleEdit = () => {
+    if (!isSingleSelection) return;
 
-    return (
-        <EditButtonWrapper>
-            <Tooltip
-                title={
-                    !canView
-                        ? "אין הרשאה לצפייה"
-                        : !isSingleSelection
-                            ? "בחר תגובה אחת כדי לצפות בה"
-                            : "צפייה בתגובה"
-                }
-            >
-                <span>
-                    <IconButton
-                        size="small"
-                        onClick={handleView}
-                        disabled={!canView || !isSingleSelection}
-                    >
-                        <Visibility />
-                    </IconButton>
-                </span>
-            </Tooltip>
+    const rowId = String(selectedIds[0]);
+    const response = rows.find((row) => String(row?.id) === rowId);
 
-            <Tooltip
-                title={
-                    !canEdit
-                        ? "אין הרשאה לעריכה"
-                        : !isSingleSelection
-                            ? "בחר תגובה אחת כדי לערוך"
-                            : "עריכת תגובה"
-                }
-            >
-                <span>
-                    <IconButton
-                        size="small"
-                        onClick={handleEdit}
-                        disabled={!canEdit || !isSingleSelection}
-                    >
-                        <Edit />
-                    </IconButton>
-                </span>
-            </Tooltip>
+    if (response) {
+      navigate(`/response/edit/${form.id}/${response.id}`);
+    }
+  };
 
-            <Tooltip
-                title={
-                    !canDelete
-                        ? "אין הרשאה למחיקה"
-                        : !hasSelection
-                            ? "בחר תגובות למחיקה"
-                            : `מחיקת ${selectedIds.length} תגובות נבחרות`
-                }
-            >
-                <span>
-                    <IconButton
-                        size="small"
-                        onClick={handleDelete}
-                        disabled={!canDelete || !hasSelection}
-                        color="error"
-                    >
-                        <Delete />
-                    </IconButton>
-                </span>
-            </Tooltip>
-        </EditButtonWrapper>
-    );
+  const handleDelete = async () => {
+    if (!hasSelection) return;
+
+    try {
+      const responseIds = selectedIds.map((id) => String(id)).filter((id) => id.trim().length > 0);
+
+      if (responseIds.length === 0) return;
+
+      await deleteMultipleResponses({
+        form_id: Number(form.id),
+        response_ids: responseIds,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["rows"] });
+      showSuccessNotification("מחיקת התגובות בוצעה בהצלחה");
+      onDeleted();
+    } catch {
+      showErrorNotification("מחיקת התגובות נכשלה");
+    }
+  };
+
+  return (
+    <EditButtonWrapper>
+      <Tooltip
+        title={
+          !canView
+            ? "אין הרשאה לצפייה"
+            : !isSingleSelection
+              ? "בחר תגובה אחת כדי לצפות בה"
+              : "צפייה בתגובה"
+        }>
+        <span>
+          <IconButton size="small" onClick={handleView} disabled={!canView || !isSingleSelection}>
+            <Visibility />
+          </IconButton>
+        </span>
+      </Tooltip>
+
+      <Tooltip
+        title={
+          !canEdit
+            ? "אין הרשאה לעריכה"
+            : !isSingleSelection
+              ? "בחר תגובה אחת כדי לערוך"
+              : "עריכת תגובה"
+        }>
+        <span>
+          <IconButton size="small" onClick={handleEdit} disabled={!canEdit || !isSingleSelection}>
+            <Edit />
+          </IconButton>
+        </span>
+      </Tooltip>
+
+      <Tooltip
+        title={
+          !canDelete
+            ? "אין הרשאה למחיקה"
+            : !hasSelection
+              ? "בחר תגובות למחיקה"
+              : `מחיקת ${selectedIds.length} תגובות נבחרות`
+        }>
+        <span>
+          <IconButton
+            size="small"
+            onClick={handleDelete}
+            disabled={!canDelete || !hasSelection}
+            color="error">
+            <Delete />
+          </IconButton>
+        </span>
+      </Tooltip>
+    </EditButtonWrapper>
+  );
 };
 
 export default RowActionsButtons;

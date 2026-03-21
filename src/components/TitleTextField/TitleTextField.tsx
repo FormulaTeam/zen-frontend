@@ -1,12 +1,19 @@
 import { Info } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
-import { CustomFormField, FormField } from "../../utils/interfaces";
-import BaseFormInput from "../BaseFormInput/BaseFormInput";
 import { useEffect } from "react";
+import BaseFormInput from "../BaseFormInput/BaseFormInput";
 import ErrorMessage from "../CreateForm/ErrorMessage";
+import { FormFieldDto } from "../../types/shared";
+
+type TitleTextFieldExtra = {
+  validationRegex?: string;
+  shouldSyncToMetro?: boolean;
+  fieldName?: string;
+  fieldIcon?: string;
+};
 
 type Props = {
-  formField: Partial<FormField & CustomFormField>;
+  formField: FormFieldDto;
   index: number;
   isNameValid: boolean;
   isDisplayNameValid: boolean;
@@ -28,6 +35,9 @@ type Props = {
   innerErrorMessages: string[];
 };
 
+const getFieldExtra = (field: FormFieldDto): TitleTextFieldExtra =>
+  (field.extra as TitleTextFieldExtra | undefined) ?? {};
+
 export default function TitleTextField({
   formField,
   index,
@@ -42,6 +52,8 @@ export default function TitleTextField({
   displayErrorMessages,
   innerErrorMessages,
 }: Props) {
+  const fieldExtra = getFieldExtra(formField);
+
   useEffect(() => {
     handleErrorMessage(
       fieldNameError
@@ -50,13 +62,13 @@ export default function TitleTextField({
           : "ניתן להזין רק אותיות באנגלית!"
         : "",
       "general",
-      formField.uniqueId || "",
+      formField.id || "",
     );
-  }, [fieldNameError, formField.name]);
+  }, [fieldNameError, formField.name, formField.id, handleErrorMessage]);
 
   return (
     <>
-      {formField.shouldSyncToMetro !== false && (
+      {fieldExtra.shouldSyncToMetro !== false && (
         <>
           <BaseFormInput
             value={formField.name}
@@ -85,6 +97,7 @@ export default function TitleTextField({
           ))}
         </>
       )}
+
       <BaseFormInput
         className={isDisplayNameValid ? "formField-textfield" : "formField-textfield-invalid"}
         value={formField.displayName}

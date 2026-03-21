@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, Grid, Stack, Tab, Tabs, Tooltip, Typography, useTheme } from "@mui/material";
+import { Box, Button, Stack, Tabs, Tooltip, Typography, useTheme } from "@mui/material";
 import { CustomIcon } from "../../theme/icons";
 import { CustomTab, Header, PageContainer } from "./styled";
 import { useDeletedForms, DeletedFormsFilters } from "../../hooks/useDeletedForms";
 import DeletedResponsesTabContent from "../../components/DeletedForms/DeletedResponsesTabContent";
 import DeletedFormsTabContent from "../../components/DeletedForms/DeletedFormsTabContent";
-import { Form } from "../../utils/interfaces";
+import type { FormDto } from "../../types/shared";
 import { DELETED_TABS } from "../../utils/recycleBin";
 import { useDebounce } from "../../hooks/utilsHooks/useDebounce";
 import { Info } from "@mui/icons-material";
@@ -15,7 +15,7 @@ function DeletedForms({ user }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(DELETED_TABS.FORMS);
-  const [currentDeletedForm, setCurrentDeletedForm] = useState<Form | null>(null);
+  const [currentDeletedForm, setCurrentDeletedForm] = useState<FormDto | null>(null);
 
   const [filters, setFilters] = useState<DeletedFormsFilters>({
     deletedBy: "",

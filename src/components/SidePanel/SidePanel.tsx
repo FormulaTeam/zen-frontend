@@ -4,15 +4,24 @@ import CloseIcon from "@mui/icons-material/Close";
 import { SidePanelContainer, SidePanelHeader, SidePanelContent } from "./styled";
 import { ViewManager } from "../Views/ViewManager/ViewManager";
 import { ResponsesView, ViewColumn } from "../../types/interfaces/tableViews.types";
-import { ViewFormBase, ViewUserBase } from "../../types/interfaces/view.types";
+import { ViewUserBase } from "../../types/interfaces/view.types";
+import { FormFieldDto, UserPersonalDto } from "../../types/shared";
+
+type SidePanelForm = {
+  id: string | number;
+  name: string;
+  fields: FormFieldDto[];
+};
+
+type SidePanelUser = ViewUserBase | UserPersonalDto;
 
 interface SidePanelProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
   children?: React.ReactNode;
-  form?: ViewFormBase;
-  user?: ViewUserBase;
+  form?: SidePanelForm;
+  user?: SidePanelUser;
   onSaveView?: (view: ResponsesView) => void;
   onLoadView?: (view: ResponsesView) => void;
   onDeleteView?: (view: ResponsesView) => void;
@@ -54,8 +63,8 @@ const SidePanel: React.FC<SidePanelProps> = ({
           <ViewManager
             form={form}
             user={user}
-            onSaveView={onSaveView || (() => { })}
-            onLoadView={onLoadView || (() => { })}
+            onSaveView={onSaveView || (() => {})}
+            onLoadView={onLoadView || (() => {})}
             onDeleteView={onDeleteView}
             onApplyView={onApplyView}
             currentView={currentView}

@@ -1,28 +1,37 @@
-import { useParams } from "react-router";
+import { GridRowId, GridRowModel, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { useMemo, useState } from "react";
+import { useParams } from "react-router";
 
-import Loader from "../../components/Responses/Loader";
-import { Row, User } from "../../utils/interfaces";
-import { FormActionsToolbar } from "./components/FormActionsToolbar";
-import { EditResponsesButton } from "./components/EditResponsesButton";
-import AddResponseButton from "./components/AddResponseButton";
-import { RowActionsButtons } from "./components/RowActionsButtons";
+import SidePanel from "../../components/SidePanel/SidePanel";
+import SearchInfo from "../../components/Responses/SearchInfo";
+import { useAuth } from "../../contexts/AuthContext";
+import { AddResponseButton } from "./components/AddResponseButton";
 import { CancelEditDialog } from "./components/CancelEditDialog";
+import { EditResponsesButton } from "./components/EditResponsesButton";
+import { FormActionsToolbar } from "./components/FormActionsToolbar";
+import Header from "./components/Header";
+import Loader from "../../components/Responses/Loader";
+import { ResponsesTable } from "./components/ResponsesTable";
+import { RowActionsButtons } from "./components/RowActionsButtons";
+import { ViewsButton } from "./components/ViewsButton";
 import { useFormLoader } from "./hooks/useFormLoader";
 import { useResponsesEdit } from "./hooks/useResponsesEdit";
-import { useFormStore } from "./stores/form.store";
-import { MainContentWrapper, PageWrapper, TopSection, ActionsRow, CenteredBox } from "./styled";
-import SearchInfo from "../../components/Responses/SearchInfo";
-import { ResponsesTable } from "./components/ResponsesTable";
-import Header from "./components/Header";
-import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { useResponsesViews } from "./hooks/useResponsesViews";
-import { ViewsButton } from "./components/ViewsButton";
-import SidePanel from "../../components/SidePanel/SidePanel";
-import { useAuth } from "../../contexts/AuthContext";
+import { useFormStore } from "./stores/form.store";
+import { ActionsRow, CenteredBox, MainContentWrapper, PageWrapper, TopSection } from "./styled";
+import { FormDto, FormFieldDto, UserPersonalDto } from "../../types/shared";
+
+type ResponsePageRow = GridRowModel & {
+  id: string | number;
+  [key: string]: unknown;
+};
+
+type SidePanelForm = Pick<FormDto, "id" | "name"> & {
+  fields: FormFieldDto[];
+};
 
 interface ResponsesPageProps {
-  user: User | null;
+  user: unknown | null;
   shouldRefreshPage: boolean;
   setShouldRefreshPage: (shouldRefresh: boolean) => void;
 }
@@ -32,6 +41,10 @@ export default function ResponsesPage({
   shouldRefreshPage,
   setShouldRefreshPage,
 }: ResponsesPageProps) {
+  void user;
+  void shouldRefreshPage;
+  void setShouldRefreshPage;
+
   const { id: formId } = useParams<string>();
   const { isLoading, isError } = useFormLoader(formId || "");
 
@@ -43,9 +56,7 @@ export default function ResponsesPage({
     );
   }
 
-  if (isError) {
-    return <div>Error loading form data.</div>;
-  }
+  if (isError) return <div>Error loading form data.</div>;
 
   return <ResponsesPageContent />;
 }
@@ -56,9 +67,9 @@ const ResponsesPageContent = (): JSX.Element => {
     ids: new Set<GridRowId>(),
   });
 
-  // TEMPORARY: client-side search filter — remove once backend search is wired through SearchInfo.
   const [search, setSearch] = useState<string>("");
-  const { rows: storeRows } = useFormStore();
+  const { rows: storeRows, form, permissions } = useFormStore();
+  const { user } = useAuth();
 
   const {
     isInEditMode,
@@ -90,60 +101,69 @@ const ResponsesPageContent = (): JSX.Element => {
     handleApplyView,
   } = useResponsesViews();
 
-  const displayedRows = useMemo<Row[]>(() => {
-    const trimmed = search.trim().toLowerCase();
-    if (!trimmed) {
-      return isInEditMode ? localRows : storeRows;
+  const displayedRows = useMemo<ResponsePageRow[]>(() => {
+    const trimmedSearch = search.trim().toLowerCase();
+    const sourceRows = (isInEditMode ? localRows : storeRows) as ResponsePageRow[];
+
+    if (!trimmedSearch) {
+      return sourceRows;
     }
-    const sourceRows = isInEditMode ? localRows : storeRows;
+
     return sourceRows.filter((row) =>
-      Object.values(row).some((val) => {
-        if (val == null) {
-          return false;
-        }
-        return String(val).toLowerCase().includes(trimmed);
+      Object.values(row).some((value) => {
+        if (value == null) return false;
+        return String(value).toLowerCase().includes(trimmedSearch);
       }),
     );
   }, [storeRows, localRows, isInEditMode, search]);
 
   const selectedIds: GridRowId[] = Array.from(rowSelectionModel.ids);
-  const hasSelection = rowSelectionModel.type === "include"
-    ? selectedIds.length > 0
-    : true;
+  const hasSelection = rowSelectionModel.type === "include" ? selectedIds.length > 0 : true;
 
   const handleRowDeleted = () => {
     setRowSelectionModel({ type: "include", ids: new Set<GridRowId>() });
   };
 
-  const { form, permissions } = useFormStore();
-  const { user } = useAuth();
+  const sidePanelForm = useMemo<SidePanelForm | undefined>(() => {
+    if (!form) {
+      return undefined;
+    }
 
-  const sidePanelForm = useMemo(
-    () =>
-      form
-        ? {
-          id: String(form.id),
-          name: form.name ?? "",
-          fields: (form.fields ?? []).map((f) => ({
-            uniqueId: String(f.uniqueId ?? f.name),
-            name: f.name ?? "",
-            displayName: f.displayName ?? f.name ?? "",
-            required: !!f.required,
-            index: f.index ?? 0,
-            fieldType: String(f.typeId ?? ""),
-          })),
-        }
-        : undefined,
-    [form?.id, form?.fields],
-  );
+    const flattenedFields = (form.sections ?? [])
+      .flatMap((section) => section.fields ?? [])
+      .sort((a, b) => a.index - b.index);
 
-  const sidePanelUser = useMemo(
-    () =>
-      user
-        ? { upn: user.upn, firstName: user.firstName, lastName: user.lastName }
-        : undefined,
-    [user?.upn, user?.firstName, user?.lastName],
-  );
+    return {
+      id: form.id,
+      name: form.name ?? "",
+      fields: flattenedFields,
+    };
+  }, [form]);
+
+  const sidePanelUser = useMemo<UserPersonalDto | undefined>(() => {
+    if (!user) {
+      return undefined;
+    }
+
+    const safeUpn = "upn" in user && typeof user.upn === "string" ? user.upn : "";
+
+    if ("name" in user && typeof user.name === "string") {
+      return {
+        name: user.name || safeUpn,
+        upn: safeUpn,
+      };
+    }
+
+    const firstName =
+      "firstName" in user && typeof user.firstName === "string" ? user.firstName : "";
+    const lastName = "lastName" in user && typeof user.lastName === "string" ? user.lastName : "";
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    return {
+      name: fullName || safeUpn,
+      upn: safeUpn,
+    };
+  }, [user]);
 
   return (
     <PageWrapper>
@@ -174,10 +194,7 @@ const ResponsesPageContent = (): JSX.Element => {
             )}
           </ActionsRow>
           <SearchInfo search={search} setSearch={setSearch} />
-          <ViewsButton
-            isSidePanelOpen={isSidePanelOpen}
-            setIsSidePanelOpen={setIsSidePanelOpen}
-          />
+          <ViewsButton isSidePanelOpen={isSidePanelOpen} setIsSidePanelOpen={setIsSidePanelOpen} />
         </TopSection>
         <ResponsesTable
           isInEditMode={isInEditMode}
