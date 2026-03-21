@@ -62,7 +62,7 @@ export const useResponseSave = (
   const formId = form?.id;
 
   const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } =
-    useCreateResponse();
+    useCreateResponse(formId!);
   const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } =
     useUpdateResponse(formId, response?.id);
 
@@ -147,6 +147,7 @@ export const useResponseSave = (
       const createKey = `${formId}::${parentResponse ?? ""}::${JSON.stringify(fieldValues)}`;
 
       if (!createRequestCache.has(createKey)) {
+        console.log("====NEW RESPONSE: ", newResponse);
         const p = mutateCreateResponseAsync(newResponse)
           .then((res) => {
             createRequestCache.delete(createKey);
