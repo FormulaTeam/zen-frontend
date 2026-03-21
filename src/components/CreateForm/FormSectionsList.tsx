@@ -2,15 +2,26 @@ import React, { useEffect } from "react";
 import { Droppable, Draggable, DraggableProvidedDragHandleProps } from "@hello-pangea/dnd";
 import { Box } from "@mui/material";
 import FormSection from "./FormSection";
-import { FormField, Section } from "../../utils/interfaces";
+import { Section } from "../../utils/interfaces";
+import { FormFieldDto } from "../../types/shared";
+
+type EditorFormField = FormFieldDto & {
+  extra?: {
+    sectionId?: string;
+    sectionOrder?: number;
+    sectionName?: string;
+    sectionDescription?: string;
+    [key: string]: unknown;
+  };
+};
 
 interface Props {
   sections: Section[];
   getFormProperty: (
-    formField: FormField,
-    dragHandleProps: DraggableProvidedDragHandleProps,
+    formField: EditorFormField,
+    dragHandleProps: DraggableProvidedDragHandleProps | null | undefined,
   ) => JSX.Element;
-  formFields: FormField[];
+  formFields: EditorFormField[];
   anounceRemoveSection: (sectionId: string) => void;
   renameSection: (sectionId: string, newName: string) => boolean;
   toggleCollapse: (sectionId: string) => void;
@@ -30,17 +41,17 @@ export default function FormSectionsList({
 }: Props) {
   useEffect(() => {
     handleScrollToLastSection();
-  }, [sections.length]);
+  }, [sections.length, handleScrollToLastSection]);
 
   return (
     <Box>
       <Droppable droppableId="SECTIONS" type="SECTION">
         {(provided) => (
           <Box ref={provided.innerRef} {...provided.droppableProps}>
-            {sections
+            {[...sections]
               .sort((a, b) => a.order - b.order)
               .map((sec, idx) => (
-                <Draggable key={sec?.id} draggableId={sec.id} index={idx}>
+                <Draggable key={sec.id} draggableId={sec.id} index={idx}>
                   {(prov) => (
                     <Box ref={prov.innerRef} {...prov.draggableProps} mb={3} id={sec.id}>
                       <FormSection

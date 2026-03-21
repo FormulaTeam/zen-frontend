@@ -5,8 +5,6 @@ import {
   ConditionOperators,
   ConditionOperatorType,
   FieldTypeIds,
-  FormField,
-  ResponseFieldValue,
 } from "../../utils/interfaces";
 import ConditionInputRenderer from "./ConditionInputRenderer";
 import CustomDropDownAutocomplete from "../FormFields/CustomDropDownAutocomplete/CustomDropDownAutocomplete";
@@ -17,14 +15,35 @@ import {
   ConditionItemRemoveButton,
   ConditionPreviewText,
 } from "./styled";
+import { FormFieldDto } from "../../types/shared";
+
+type ConditionFieldExtra = {
+  connectionType?: string | number;
+  connectedFormId?: number;
+  connectedFieldId?: string;
+  conditions?: Condition[];
+  sectionId?: string;
+  sectionOrder?: number;
+  sectionName?: string;
+  sectionDescription?: string;
+};
+
+type ConditionalFormField = FormFieldDto & {
+  extra?: ConditionFieldExtra;
+};
+
+type FieldOptionValue = {
+  value?: unknown;
+  fieldId: string;
+};
 
 interface ConditionItemProps {
   condition: Condition;
-  formFields: FormField[]; // Full form fields for metadata lookup
-  availableFields?: FormField[]; // Filtered fields for selection (optional, defaults to formFields)
+  formFields: ConditionalFormField[];
+  availableFields?: ConditionalFormField[];
   onConditionChange: (field: string, value: any) => void;
   onRemove: () => void;
-  fieldOptions?: Record<string, ResponseFieldValue[]>; // Connected field options
+  fieldOptions?: Record<string, FieldOptionValue[]>;
 }
 
 const ConditionItem: React.FC<ConditionItemProps> = ({
@@ -35,7 +54,6 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
   onRemove,
   fieldOptions,
 }) => {
-  // Use availableFields for selection, fallback to formFields if not provided
   const fieldsForSelection = availableFields || formFields;
 
   const handleFieldChange = (value: string | string[], isValid: boolean) => {
@@ -43,15 +61,14 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
     if (selectedValue === "" || selectedValue === "בחר שדה...") {
       onConditionChange("field", "");
     } else {
-      // Find the field by displayName and get its uniqueId
       const selectedField = fieldsForSelection.find((field) => field.displayName === selectedValue);
-      onConditionChange("field", selectedField?.uniqueId || "");
+      onConditionChange("field", selectedField?.id || "");
     }
   };
 
   const getFieldDisplayValue = () => {
     if (!condition.field) return "";
-    const field = formFields.find((f) => f.uniqueId === condition.field);
+    const field = formFields.find((f) => f.id === condition.field);
     return field?.displayName || "";
   };
 
@@ -60,7 +77,6 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
     if (selectedValue === "" || selectedValue === "סוג התנאי...") {
       onConditionChange("operator", "");
     } else {
-      // Find the operator by its label and get its value
       const operatorEntry = Object.entries(conditionOperatorLabels).find(
         ([key, label]) => label === selectedValue,
       );
@@ -72,10 +88,11 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
     if (!condition.operator) return "";
     return conditionOperatorLabels[condition.operator] || "";
   };
-  const getAvailableOperators = (field: FormField): ConditionOperatorType[] => {
+
+  const getAvailableOperators = (field?: ConditionalFormField): ConditionOperatorType[] => {
     if (!field) return [];
 
-    switch (field.typeId) {
+    switch (field.fieldType) {
       case FieldTypeIds.shortText:
       case FieldTypeIds.longText:
         return [
@@ -123,7 +140,10 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
     }
   };
 
-  const getConditionDescription = (condition: Condition, formField?: FormField): string => {
+  const getConditionDescription = (
+    condition: Condition,
+    formField?: ConditionalFormField,
+  ): string => {
     if (!formField) return "שדה לא נבחר";
 
     const operatorLabel = conditionOperatorLabels[condition.operator];
@@ -137,7 +157,7 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
     }
 
     let valueDisplay = "";
-    if (formField.typeId === FieldTypeIds.date && typeof condition.value === "string") {
+    if (formField.fieldType === FieldTypeIds.date && typeof condition.value === "string") {
       valueDisplay = condition.value ? new Date(condition.value).toLocaleDateString("he-IL") : "";
     } else if (Array.isArray(condition.value)) {
       valueDisplay = condition.value.join(", ");
@@ -150,9 +170,10 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
     return `${fieldName} ${operatorLabel} "${valueDisplay}"`;
   };
 
+  const selectedField = formFields.find((field) => field.id === condition.field);
+
   return (
     <ConditionItemContainer>
-      {/* Condition row */}
       <ConditionItemFieldsContainer>
         <FormFieldWrapper style={{ width: "100%" }}>
           <CustomDropDownAutocomplete
@@ -172,9 +193,9 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
             value={getOperatorDisplayValue()}
             options={[
               "סוג התנאי...",
-              ...getAvailableOperators(
-                formFields.find((field) => field.uniqueId === condition.field) || ({} as FormField),
-              ).map((operator) => conditionOperatorLabels[operator]),
+              ...getAvailableOperators(selectedField).map(
+                (operator) => conditionOperatorLabels[operator],
+              ),
             ]}
             onChangeHandler={handleOperatorChange}
             isValid={true}
@@ -184,27 +205,24 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
             multipleOptions={false}
           />
         </FormFieldWrapper>
+
         <FormFieldWrapper style={{ width: "100%" }}>
           <ConditionInputRenderer
-            formField={formFields.find((f) => f.uniqueId === condition.field) || ({} as FormField)}
+            formField={selectedField}
             condition={condition}
             handleConditionChange={onConditionChange}
             fieldOptions={fieldOptions}
           />
         </FormFieldWrapper>
-        {/* Remove condition button */}
+
         <ConditionItemRemoveButton color="error" size="small" onClick={onRemove}>
           ✕
         </ConditionItemRemoveButton>
       </ConditionItemFieldsContainer>
 
-      {/* Condition preview */}
       {condition.field && (
         <ConditionPreviewText>
-          {getConditionDescription(
-            condition,
-            formFields.find((f) => f.uniqueId === condition.field),
-          )}
+          {getConditionDescription(condition, selectedField)}
         </ConditionPreviewText>
       )}
     </ConditionItemContainer>

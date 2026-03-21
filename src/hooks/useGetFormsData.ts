@@ -1,5 +1,6 @@
 import { useGetFormsQuery, FormsQueryParams } from "./useFormsQuery";
-import { Filter, Form } from "../utils/interfaces";
+import { Filter } from "../utils/interfaces";
+import type { FormDto } from "../types/shared";
 import { getForms } from "../api/formsApi";
 import { useState, useCallback } from "react";
 import { IOrderBy } from "../types/enums/filtersAndSorts.enum";
@@ -13,7 +14,7 @@ export type IGetFormsData = (
   currentFilter: Filter,
   additionalFilter?: Filter,
   deleted?: boolean,
-) => Promise<Form[] | undefined>;
+) => Promise<FormDto[] | undefined>;
 
 /**
  * Hook for the main forms list page.
@@ -32,7 +33,7 @@ export function useGetFormsData(params: FormsQueryParams) {
  * (e.g. DeletedResponsesTabContent, useDeletedResponses).
  */
 export function useLegacyFormsData(maxInPage = 1000) {
-  const [formsData, setFormsData] = useState<Form[]>([]);
+  const [formsData, setFormsData] = useState<FormDto[]>([]);
 
   const getData: IGetFormsData = useCallback(
     async (nextPage, currentFilter = {}, additionalFilter = {}, deleted = false) => {
@@ -67,4 +68,3 @@ export function useLegacyFormsData(maxInPage = 1000) {
     getData,
   };
 }
-

@@ -1,14 +1,15 @@
 import React, { useEffect } from "react";
-import "./UserPicker.scss";
-import BasePopup from "../BasePopup/BasePopup";
-import UserPickerContent from "./UserPickerContent";
-import { useUserPicker } from "../../hooks/useUserPicker";
-import { Form, Role, User } from "../../utils/interfaces";
 import { Divider } from "@mui/material";
-import { useAuth } from "../../contexts/AuthContext";
-import PublicFormSection from "./PublicFormSection";
-import { useFormPermissions } from "../../hooks/useFormPermissions";
 import styled from "styled-components";
+
+import type { FormDto } from "../../types/shared";
+import { useAuth } from "../../contexts/AuthContext";
+import { useFormPermissions } from "../../hooks/useFormPermissions";
+import { useUserPicker } from "../../hooks/useUserPicker";
+import BasePopup from "../BasePopup/BasePopup";
+import PublicFormSection from "./PublicFormSection";
+import UserPickerContent from "./UserPickerContent";
+import "./UserPicker.scss";
 
 const ContentWrapper = styled.div`
   display: flex;
@@ -17,12 +18,13 @@ const ContentWrapper = styled.div`
 `;
 
 interface UserPickerProps {
-  form: Form;
-  closeSharePopupAndRefreshForm: (users: any[], updatedForm?: Form) => void;
+  form: FormDto;
+  closeSharePopupAndRefreshForm: (users: any[], updatedForm?: FormDto) => void;
 }
 
 const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) => {
   const { user, roles } = useAuth();
+
   const {
     loading,
     shareWithOptionsUsers,
@@ -55,21 +57,18 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
     handleClose,
   });
 
-  // update local state when form changes
   useEffect(() => {
-    // update checkbox state
-    const newIsPublic = !!form.isPublic;
+    const newIsPublic = !!form.publicRole;
     setIsPublic(newIsPublic);
 
-    // update form permission state
-    const newFormPermission = form.formPermission || null;
+    const newFormPermission = form.publicRole || null;
     setFormPermission(newFormPermission);
-  }, [form.isPublic, form.formPermission, form.id]); // also listen to form.id to reset when switching forms
+  }, [form.publicRole, form.id, setFormPermission, setIsPublic]);
 
   return (
     <BasePopup
       open={true}
-      onClose={() => closeSharePopupAndRefreshForm(form?.users || [])}
+      onClose={() => closeSharePopupAndRefreshForm([], form)}
       title="ניהול הרשאות לטופס"
       content={
         <ContentWrapper>

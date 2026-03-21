@@ -6,8 +6,6 @@ import {
   ConditionUtils,
   connectionTypes,
   FieldTypeIds,
-  FormField,
-  ResponseFieldValue,
 } from "../../utils/interfaces";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import RadioGroup from "@mui/material/RadioGroup";
@@ -18,13 +16,34 @@ import CustomDateTime from "../FormFields/CustomDateTime/CustomDateTime";
 import CustomDropDownAutocomplete from "../FormFields/CustomDropDownAutocomplete/CustomDropDownAutocomplete";
 import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
+import { FormFieldDto } from "../../types/shared";
+
+type ConditionFieldExtra = {
+  connectionType?: string | number;
+  options?: string[];
+  numberType?: string;
+  minValue?: number;
+  maxValue?: number;
+};
+
+type ConditionalFormField = FormFieldDto & {
+  extra?: ConditionFieldExtra;
+};
+
+type FieldOptionValue = {
+  value?: unknown;
+  fieldId: string;
+};
 
 interface ConditionInputRendererProps {
-  formField: FormField;
+  formField?: ConditionalFormField;
   condition: Condition;
   handleConditionChange: (field: string, value: any) => void;
-  fieldOptions?: Record<string, ResponseFieldValue[]>;
+  fieldOptions?: Record<string, FieldOptionValue[]>;
 }
+
+const getFieldExtra = (field?: ConditionalFormField): ConditionFieldExtra =>
+  (field?.extra as ConditionFieldExtra | undefined) ?? {};
 
 const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
   formField,
@@ -36,7 +55,6 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
     return <Box>לא נבחר שדה</Box>;
   }
 
-  // Don't show value input for empty/not_empty operators
   if (
     condition.operator === ConditionOperators.empty ||
     condition.operator === ConditionOperators.not_empty
@@ -44,7 +62,9 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
     return <></>;
   }
 
-  switch (formField.typeId) {
+  const fieldExtra = getFieldExtra(formField);
+
+  switch (formField.fieldType) {
     case FieldTypeIds.longText:
     case FieldTypeIds.shortText:
       return (
@@ -58,7 +78,7 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
         />
       );
 
-    case FieldTypeIds.options:
+    case FieldTypeIds.options: {
       const isMultiSelect = ConditionUtils.isMultiValueOperator(condition.operator);
       const selectValue = isMultiSelect
         ? Array.isArray(condition.value)
@@ -68,17 +88,15 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
           ? String(condition.value[0] || "")
           : String(condition.value || "");
 
-      // For connected fields, use fieldOptions, otherwise use formField.options
       let optionsToUse: string[] = [];
-      if (formField.connectionType === connectionTypes.form && fieldOptions?.[formField.uniqueId]) {
-        // Use connected form options and remove duplicates
-        const connectedOptions = fieldOptions[formField.uniqueId].map((option) =>
+
+      if (fieldExtra.connectionType === connectionTypes.form && fieldOptions?.[formField.id]) {
+        const connectedOptions = fieldOptions[formField.id].map((option) =>
           String(option.value || ""),
         );
-        optionsToUse = [...new Set(connectedOptions)]; // Remove duplicates
+        optionsToUse = [...new Set(connectedOptions)];
       } else {
-        // Use regular field options
-        optionsToUse = formField.options || [];
+        optionsToUse = fieldExtra.options || [];
       }
 
       return (
@@ -90,7 +108,7 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
             const newValue = ConditionUtils.normalizeConditionValue(
               value,
               condition.operator,
-              formField.typeId === 100 ? 1 : formField.typeId, // Handle DRAGGED_ITEM_ID
+              formField.fieldType,
             );
             handleConditionChange("value", newValue);
           }}
@@ -100,6 +118,7 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
           isDisabled={false}
         />
       );
+    }
 
     case FieldTypeIds.checkbox:
       if (!condition.value) condition.value = "false";
@@ -131,9 +150,9 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
           isDisabled={false}
           isValid={true}
           isRequired={false}
-          numberType={formField.numberType}
-          minValue={formField.minValue}
-          maxValue={formField.maxValue}
+          numberType={fieldExtra.numberType}
+          minValue={fieldExtra.minValue}
+          maxValue={fieldExtra.maxValue}
         />
       );
 

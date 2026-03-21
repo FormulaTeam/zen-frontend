@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
-import { Form } from "../utils/interfaces";
 import { getForms } from "../api";
 import { useAuth } from "../contexts/AuthContext";
+import { FormDto } from "../types/shared";
 
 interface UseFormInFormSearchProps {
   connectedFormId?: number;
 }
 
 export const useFormInFormSearch = ({ connectedFormId }: UseFormInFormSearchProps) => {
-  const [forms, setForms] = useState<Form[]>([]);
+  const [forms, setForms] = useState<FormDto[]>([]);
   const [loadingForms, setLoadingForms] = useState<boolean>(false);
-  const [selectedForm, setSelectedForm] = useState<Form | null>(null);
+  const [selectedForm, setSelectedForm] = useState<FormDto | null>(null);
   const [formSearchText, setFormSearchText] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -77,7 +77,7 @@ export const useFormInFormSearch = ({ connectedFormId }: UseFormInFormSearchProp
     setFormSearchText(value);
   };
 
-  const handleSelectForm = (event: React.SyntheticEvent, value: Form | null) => {
+  const handleSelectForm = (event: React.SyntheticEvent, value: FormDto | null) => {
     setSelectedForm(value);
   };
 

@@ -1,16 +1,33 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getFormById, getResponses } from "../api";
-import { FieldTypeIds, Form, ResponseForm, Role } from "../utils/interfaces";
+import type { FormDto, FormFieldDto, ResponseDto } from "../types/shared";
+import { fieldType } from "formula-gear";
+import { Role } from "../utils/interfaces";
 import { getUserRole, PERMISSION_TYPES } from "../utils/utils";
 import { prioritizePermissions } from "../utils/formFieldsResponses";
 import { IPath } from "../types/enums/global.enums";
 import { hasPermissionToSeeForm } from "../utils/forms";
 
+type ConnectedFieldExtra = {
+  connectedFormId?: number;
+};
+
+const getFieldExtra = (field: FormFieldDto): ConnectedFieldExtra => {
+  return ((field.extra ?? {}) as ConnectedFieldExtra) || {};
+};
+
+const getFormFields = (form: FormDto): FormFieldDto[] => {
+  return (form.sections ?? [])
+    .slice()
+    .sort((a, b) => a.index - b.index)
+    .flatMap((section) => (section.fields ?? []).slice().sort((a, b) => a.index - b.index));
+};
+
 export const useInitializeFormData = () => {
   const [responsesHaveParents, setResponsesHaveParents] = useState(false);
-  const [responsesWithChildren, setResponsesWithChildren] = useState<ResponseForm[]>([]);
-  const [childrenForms, setChildrenForms] = useState<Form[]>([]);
+  const [responsesWithChildren, setResponsesWithChildren] = useState<ResponseDto[]>([]);
+  const [childrenForms, setChildrenForms] = useState<FormDto[]>([]);
   const navigate = useNavigate();
 
   const initializeFormData = async (
@@ -40,13 +57,15 @@ export const useInitializeFormData = () => {
     console.log("[INIT FORM DATA] Parsed formId:", formId);
 
     try {
-      const form = await getFormById(formId);
+      const form = (await getFormById(formId)) as FormDto | null;
       console.log("[INIT FORM DATA] getFormById result:", form);
 
       if (!form) {
         console.error("[INIT FORM DATA] Form not found, navigating to ERROR");
         throw new Error("Form not found");
       }
+
+      const formFields = getFormFields(form);
 
       if (isSuperAdmin) {
         console.log("[INIT FORM DATA] User is SUPER ADMIN, setting full permissions");
@@ -57,21 +76,23 @@ export const useInitializeFormData = () => {
         setCurrentFilter({ form_id: form.id });
         getResponsesForCurrentPage(form, allPermissions);
 
-        if (form.fields.some((f) => f.typeId === FieldTypeIds.linkedForm)) {
-          console.log("[INIT FORM DATA] Form has fields with typeId FORM");
+        if (formFields.some((f) => f.fieldType === fieldType.Form)) {
+          console.log("[INIT FORM DATA] Form has fields with type FORM");
           setResponsesWithChildren([]);
-          form.fields.forEach((field) => {
-            if (field.typeId === FieldTypeIds.linkedForm) {
+          formFields.forEach((field) => {
+            const extra = getFieldExtra(field);
+
+            if (field.fieldType === fieldType.Form && extra.connectedFormId) {
               console.log("[INIT FORM DATA] Processing child form field:", field);
               getResponses({
-                form_id: field.connectedFormId,
+                form_id: extra.connectedFormId,
                 query: {
                   parentResponse: { $regex: `${form.id};` },
                 },
               })
                 .then((res) => {
                   console.log(
-                    `[INIT FORM DATA] getResponses for child formId ${field.connectedFormId} result:`,
+                    `[INIT FORM DATA] getResponses for child formId ${extra.connectedFormId} result:`,
                     res,
                   );
                   if (res) {
@@ -82,7 +103,7 @@ export const useInitializeFormData = () => {
                   console.error("[INIT FORM DATA] Error fetching responses for child form:", error);
                 });
 
-              getFormById(field.connectedFormId)
+              getFormById(extra.connectedFormId)
                 .then((childForm) => {
                   console.log("[INIT FORM DATA] getFormById for child form result:", childForm);
                   if (childForm) {
@@ -118,9 +139,13 @@ export const useInitializeFormData = () => {
       let userRole: number | undefined | null = null;
       let userSpecificPermissions: number[] = [];
 
-      // Try to get user role, but don't fail if user is not assigned to form
       try {
-        userRole = getUserRole(form.users, user, isSuperAdmin, fullAccessRole?.role_id ?? null);
+        userRole = getUserRole(
+          (form as any).users,
+          user,
+          isSuperAdmin,
+          fullAccessRole?.role_id ?? null,
+        );
         console.log("[INIT FORM DATA] userRole:", userRole);
 
         const roleObj = roles.find((r) => r.role_id === userRole);
@@ -128,7 +153,6 @@ export const useInitializeFormData = () => {
         userSpecificPermissions = roleObj?.permission_types || [];
       } catch (error) {
         console.log("[INIT FORM DATA] User not assigned to form:", error);
-        // User is not assigned to form, but might still have access if form is public
         userSpecificPermissions = [];
       }
 
@@ -136,9 +160,8 @@ export const useInitializeFormData = () => {
 
       console.log("[INIT FORM DATA] user specific permissions:", userSpecificPermissions);
 
-      // בדיקה אם הטופס פומבי ויש הרשאות פומביות
-      if (form?.isPublic && form?.formPermission?.role_id) {
-        const publicRole = roles.find((r) => r.role_id === form.formPermission?.role_id);
+      if (form.publicRole) {
+        const publicRole = roles.find((r) => r.role_id === form.publicRole);
         console.log("[INIT FORM DATA] publicRole found:", publicRole);
 
         if (publicRole) {
@@ -159,21 +182,23 @@ export const useInitializeFormData = () => {
         console.log("[INIT FORM DATA] User has permission to see form");
         setForm(form);
 
-        if (form.fields.some((f) => f.typeId === FieldTypeIds.linkedForm)) {
-          console.log("[INIT FORM DATA] Form has fields with typeId FORM");
+        if (formFields.some((f) => f.fieldType === fieldType.Form)) {
+          console.log("[INIT FORM DATA] Form has fields with type FORM");
           setResponsesWithChildren([]);
-          form.fields.forEach((field) => {
-            if (field.typeId === FieldTypeIds.linkedForm) {
+          formFields.forEach((field) => {
+            const extra = getFieldExtra(field);
+
+            if (field.fieldType === fieldType.Form && extra.connectedFormId) {
               console.log("[INIT FORM DATA] Processing child form field:", field);
               getResponses({
-                form_id: field.connectedFormId,
+                form_id: extra.connectedFormId,
                 query: {
                   parentResponse: { $regex: `${form.id};` },
                 },
               })
                 .then((res) => {
                   console.log(
-                    `[INIT FORM DATA] getResponses for child formId ${field.connectedFormId} result:`,
+                    `[INIT FORM DATA] getResponses for child formId ${extra.connectedFormId} result:`,
                     res,
                   );
                   if (res) {
@@ -184,7 +209,7 @@ export const useInitializeFormData = () => {
                   console.error("[INIT FORM DATA] Error fetching responses for child form:", error);
                 });
 
-              getFormById(field.connectedFormId)
+              getFormById(extra.connectedFormId)
                 .then((childForm) => {
                   console.log("[INIT FORM DATA] getFormById for child form result:", childForm);
                   if (childForm) {

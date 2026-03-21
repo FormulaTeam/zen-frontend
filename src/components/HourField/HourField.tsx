@@ -1,5 +1,4 @@
 import React from "react";
-import { FormField } from "../../utils/interfaces";
 import {
   Box,
   Checkbox,
@@ -11,13 +10,22 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
+import { FormFieldDto } from "../../types/shared";
+
+type HourFieldExtra = {
+  showSeconds?: boolean;
+  initialValType?: unknown;
+};
 
 type Props = {
   getBaseFieldElement: () => JSX.Element;
-  formField: FormField;
+  formField: FormFieldDto;
   onSetDefaultTime: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onTimeChange: (e: SelectChangeEvent) => void;
 };
+
+const getFieldExtra = (field: FormFieldDto): HourFieldExtra =>
+  (field.extra as HourFieldExtra | undefined) ?? {};
 
 export default function HourField({
   getBaseFieldElement,
@@ -26,6 +34,8 @@ export default function HourField({
   onTimeChange,
 }: Props) {
   const theme = useTheme();
+  const extra = getFieldExtra(formField);
+  const initialValType = typeof extra.initialValType === "string" ? extra.initialValType : "";
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -34,7 +44,7 @@ export default function HourField({
         label="הצגת שניות"
         control={
           <Checkbox
-            checked={formField.showSeconds || false}
+            checked={Boolean(extra.showSeconds)}
             style={{
               color: theme.palette.primary.dark,
             }}
@@ -46,30 +56,27 @@ export default function HourField({
         <Select
           id="initial-val-type-simple-select"
           className="initial-val-type-simple-select"
-          value={formField.initialValType || ""}
+          value={initialValType}
           label=""
           displayEmpty
-          renderValue={(value: any) => {
-            if (!value) {
+          renderValue={(value: unknown) => {
+            if (!value || typeof value !== "string") {
               return <Typography color="gray">ערך ברירת המחדל</Typography>;
-            } else {
-              return (
-                <Typography color="black">{value === "empty" ? "ריק" : "שעה נוכחית"}</Typography>
-              );
             }
+
+            return (
+              <Typography color="black">{value === "empty" ? "ריק" : "שעה נוכחית"}</Typography>
+            );
           }}
           onChange={onTimeChange}>
           <MenuItem
-            value={"currentTime"}
+            value="currentTime"
             className="initial-val-type-menu-item"
             key="initialValType_currentTime">
             שעה נוכחית
           </MenuItem>
 
-          <MenuItem
-            value={"empty"}
-            className="initial-val-type-menu-item"
-            key="initialValType_empty">
+          <MenuItem value="empty" className="initial-val-type-menu-item" key="initialValType_empty">
             ריק
           </MenuItem>
         </Select>

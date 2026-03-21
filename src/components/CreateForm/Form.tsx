@@ -6,8 +6,6 @@ import {
   connectionTypes,
   CustomFormField,
   DRAGGED_ITEM_ID,
-  FieldTypeIds,
-  Form,
   FORM_ELEMENTS,
   FormElements,
   FormField,
@@ -27,7 +25,6 @@ import { CreateFormDto } from "../../api/formsApi";
 import {
   generateNewFormFieldData,
   getInitialNewForm,
-  getUserName,
   showErrorNotification,
   showSuccessNotification,
 } from "../../utils/utils";
@@ -35,40 +32,264 @@ import { ABC_AND_DASH_REGEX, HEBREW_REGEX } from "../../utils/formRegex";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorMessageType, ReservedFieldName } from "../../types/interfaces/forms.types";
 import { useSectionManagement } from "../../hooks/Forms/useSectionManagement";
-import { FORM_FIELD_PREFIX, FORM_FIELDS_PREFIX, NOT_A_SECTION_ID } from "../../utils/sections/consts";
+import {
+  FORM_FIELD_PREFIX,
+  FORM_FIELDS_PREFIX,
+  NOT_A_SECTION_ID,
+} from "../../utils/sections/consts";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 import { IPath } from "../../types/enums/global.enums";
 import { texts } from "../../utils/texts";
 import ConditionalPopup from "../ConditionalPopup/ConditionalPopup";
-import { handleFieldAddedToSection, handleFieldMovedBetweenSections } from "../../utils/sectionConditionUtils";
+import {
+  handleFieldAddedToSection,
+  handleFieldMovedBetweenSections,
+} from "../../utils/sectionConditionUtils";
 import { RESERVED_FIELD_NAMES } from "../../consts/form";
-import queryClient from "../../api/queryClient";
-import { FieldType } from "formula-gear";
+import { FormDto, FormFieldDto, FormSectionDto } from "../../types/shared";
+import { fieldType } from "formula-gear";
+
+type EditorFieldExtra = {
+  options?: string[];
+  multiSelect?: boolean;
+  defaultValue?: unknown;
+  validationRegex?: string;
+  connectedFormId?: number;
+  connectedFieldId?: string;
+  parentFieldId?: string;
+  parentFieldName?: string;
+  parentDependencies?: Array<{
+    parentOptionIndex: number;
+    childOptionIndices: number[];
+  }>;
+  coordinateType?: string;
+  minValue?: number;
+  maxValue?: number;
+  numberType?: string;
+  initialNumberValue?: number;
+  conditions?: unknown[];
+  sectionDescription?: string;
+  dateAndTime?: boolean;
+  initialValType?: unknown;
+  showSeconds?: boolean;
+  connectionType?: string | number;
+  shouldSyncToMetro?: boolean;
+  fieldIcon?: string;
+  fieldName?: string;
+  sectionId?: string;
+  sectionOrder?: number;
+};
+
+type EditorFormField = FormFieldDto & {
+  extra?: EditorFieldExtra;
+};
 
 interface FormProps {
-  formToEdit: any;
+  formToEdit: Partial<FormDto> | null;
   currentUser: any;
 }
+
+const getFieldExtra = (field?: EditorFormField | null): EditorFieldExtra =>
+  (field?.extra as EditorFieldExtra | undefined) ?? {};
+
+const updateFieldExtra = (
+  field: EditorFormField,
+  patch: Partial<EditorFieldExtra>,
+): EditorFormField => ({
+  ...field,
+  extra: {
+    ...getFieldExtra(field),
+    ...patch,
+  },
+});
+
+const getSectionId = (field: EditorFormField) => getFieldExtra(field).sectionId ?? NOT_A_SECTION_ID;
+
+const getFieldOptions = (field: EditorFormField) => getFieldExtra(field).options ?? [];
+
+const isEditorFormField = (field: unknown): field is EditorFormField => {
+  return !!field && typeof field === "object" && "id" in field && "fieldType" in field;
+};
+
+const legacyTypeToDtoFieldType = (typeId: number): FormFieldDto["fieldType"] => {
+  switch (typeId) {
+    case 1:
+      return fieldType.LongText;
+    case 2:
+      return fieldType.ShortText;
+    case 3:
+      return fieldType.Options;
+    case 4:
+      return fieldType.Link;
+    case 5:
+      return fieldType.Date;
+    case 6:
+      return fieldType.Time;
+    case 7:
+      return fieldType.Location;
+    case 8:
+      return fieldType.Boolean;
+    case 9:
+      return fieldType.List;
+    case 10:
+      return fieldType.Number;
+    case 11:
+      return fieldType.File;
+    case 12:
+      return fieldType.Form;
+    default:
+      return fieldType.ShortText;
+  }
+};
+
+const coerceToEditorField = (field: EditorFormField | FormField): EditorFormField => {
+  if (isEditorFormField(field)) {
+    return field;
+  }
+
+  return {
+    id: field.uniqueId,
+    index: field.index,
+    name: field.name,
+    fieldType: legacyTypeToDtoFieldType(field.typeId),
+    displayName: field.displayName,
+    isRequired: Boolean(field.required),
+    extra: {
+      options: field.options,
+      multiSelect: field.multiSelect,
+      defaultValue: field.defaultValue,
+      validationRegex: field.validationRegex,
+      connectedFormId: field.connectedFormId,
+      connectedFieldId: field.connectedFieldId,
+      parentFieldId: field.parentFieldId,
+      parentFieldName: (field as any).parentFieldName,
+      parentDependencies: field.parentDependencies,
+      coordinateType: field.coordinateType,
+      minValue: field.minValue,
+      maxValue: field.maxValue,
+      numberType: field.numberType,
+      initialNumberValue: field.initialNumberValue,
+      conditions: field.conditions,
+      sectionDescription: field.sectionDescription,
+      dateAndTime: field.dateAndTime,
+      initialValType: field.initialValType,
+      showSeconds: field.showSeconds,
+      connectionType: field.connectionType,
+      shouldSyncToMetro: field.shouldSyncToMetro,
+      fieldIcon: (field as any).fieldIcon,
+      fieldName: (field as any).fieldName,
+      sectionId: field.sectionId,
+      sectionOrder: field.sectionOrder,
+    },
+  };
+};
+
+const flattenFormFields = (form: Partial<FormDto> | null | undefined): EditorFormField[] => {
+  const sections = [...(form?.sections ?? [])].sort((a, b) => a.index - b.index);
+
+  return sections.flatMap((section) =>
+    [...(section.fields ?? [])]
+      .sort((a, b) => a.index - b.index)
+      .map((field) =>
+        updateFieldExtra(field as EditorFormField, {
+          sectionId: section.id,
+          sectionOrder: section.index,
+        }),
+      ),
+  );
+};
+
+const buildSectionsFromFields = (
+  fields: EditorFormField[],
+  sections: Array<{ id: string; name: string; order: number }>,
+): FormSectionDto[] => {
+  const sortedSections = [...sections].sort((a, b) => a.order - b.order);
+
+  return sortedSections.map((section) => ({
+    id: section.id,
+    name: section.name,
+    index: section.order,
+    fields: fields
+      .filter((field) => getSectionId(field) === section.id)
+      .sort((a, b) => a.index - b.index)
+      .map((field, fieldIndex) => ({
+        id: field.id,
+        name: field.name,
+        index: fieldIndex,
+        fieldType: field.fieldType,
+        displayName: field.displayName,
+        isRequired: field.isRequired,
+        extra: (() => {
+          const extra = { ...getFieldExtra(field) };
+          delete extra.sectionId;
+          delete extra.sectionOrder;
+          return extra;
+        })(),
+      })),
+  }));
+};
+
+const mapGeneratedFieldToDto = (
+  generatedField: any,
+  fallbackSectionId: string,
+  fallbackSectionOrder: number,
+): EditorFormField => ({
+  id: generatedField.uniqueId,
+  index: generatedField.index ?? 0,
+  name: generatedField.name ?? "",
+  fieldType: legacyTypeToDtoFieldType(generatedField.typeId),
+  displayName: generatedField.displayName ?? "",
+  isRequired: Boolean(generatedField.required),
+  extra: {
+    options: generatedField.options,
+    multiSelect: generatedField.multiSelect,
+    defaultValue: generatedField.defaultValue,
+    validationRegex: generatedField.validationRegex,
+    connectedFormId: generatedField.connectedFormId,
+    connectedFieldId: generatedField.connectedFieldId,
+    parentFieldId: generatedField.parentFieldId,
+    parentFieldName: generatedField.parentFieldName,
+    parentDependencies: generatedField.parentDependencies,
+    coordinateType: generatedField.coordinateType,
+    minValue: generatedField.minValue,
+    maxValue: generatedField.maxValue,
+    numberType: generatedField.numberType,
+    initialNumberValue: generatedField.initialNumberValue,
+    conditions: generatedField.conditions,
+    sectionDescription: generatedField.sectionDescription,
+    dateAndTime: generatedField.dateAndTime,
+    initialValType: generatedField.initialValType,
+    showSeconds: generatedField.showSeconds,
+    connectionType: generatedField.connectionType,
+    shouldSyncToMetro: generatedField.shouldSyncToMetro,
+    fieldIcon: generatedField.fieldIcon,
+    fieldName: generatedField.fieldName,
+    sectionId: generatedField.sectionId ?? fallbackSectionId,
+    sectionOrder: generatedField.sectionOrder ?? fallbackSectionOrder,
+  },
+});
 
 const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { initCustomFields, customFields } = useCustomFormFields();
 
+  const initialForm = getInitialNewForm(currentUser);
+
   const [loading, setLoading] = useState<boolean>(false);
-  const [currentFormId, setCurrentFormId] = useState<number>(formToEdit.id);
-  const [isFormCreated, setIsFormCreated] = useState(!!formToEdit?.id);
+  const [currentFormId, setCurrentFormId] = useState<number>(formToEdit?.id ?? 0);
+  const [isFormCreated, setIsFormCreated] = useState(Boolean(formToEdit?.id));
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
   const [title, setTitle] = useState("");
   const [showTitleRedText, setShowTitleRedText] = useState(false);
   const [titleInvalid, setTitleInvalid] = useState(false);
   const [description, setDescription] = useState("");
-  const [formFields, setFormFields] = useState<FormField[]>([] as FormField[]);
+  const [formFields, setFormFields] = useState<EditorFormField[]>([]);
   const [showCustomFieldsDialog, setShowCustomFieldsDialog] = useState<boolean>(false);
   const [confirmBtnText, setConfirmBtnText] = useState<string>("מחק עמודה");
   const [items, setItems] = useState<Partial<FormElements>>({ ...FORM_ELEMENTS });
-  const [formIconName, setFormIconName] = useState<any>(formToEdit.icon);
-  const [parentFieldId, setParentFieldId] = useState<any>("");
+  const [formIconName, setFormIconName] = useState<any>(formToEdit?.icon ?? initialForm.icon);
+  const [parentFieldId, setParentFieldId] = useState<string | undefined>(undefined);
   const [showConditionsPopup, setShowConditionsPopup] = useState(false);
   const [formFieldsInnerErrors, setFormFieldsInnerErrors] = useState<Map<string, string[]>>(
     new Map(),
@@ -83,8 +304,8 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   const [originalTitle, setOriginalTitle] = useState("");
   const [originalDescription, setOriginalDescription] = useState("");
   const [originalIcon, setOriginalIcon] = useState("");
-  const [originalFormFields, setOriginalFormFields] = useState<FormField[]>([]);
-  const [originalParentFieldId, setOriginalParentFieldId] = useState("");
+  const [originalFormFields, setOriginalFormFields] = useState<EditorFormField[]>([]);
+  const [originalParentFieldId, setOriginalParentFieldId] = useState<string | undefined>(undefined);
   const [formFieldsNamesValidMap, setFormFieldsNamesValidMap] = useState<Map<number, boolean>>(
     new Map(),
   );
@@ -110,6 +331,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   const [errors, setErrors] = useState<ErrorMessageType[]>([]);
   const [currentSectionId, setCurrentSectionId] = useState<string>("");
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
+
   const validateUnsavedChanges = () => {
     const hasChanges = checkHasUnsavedChanges();
     setHasUnsavedChanges(hasChanges);
@@ -146,14 +368,15 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     if (savedSuccess) {
       return false;
     }
+
     const isTitleSame = title === originalTitle;
     const isDescriptionSame = description === originalDescription;
     const isIconSame = formIconName === originalIcon;
     const sortedCurrent = [...formFields].sort((a, b) => a.index - b.index);
     const sortedOriginal = [...originalFormFields].sort((a, b) => a.index - b.index);
     const isParentFieldIdSame = parentFieldId === originalParentFieldId;
-
     const isFieldsSame = JSON.stringify(sortedCurrent) === JSON.stringify(sortedOriginal);
+
     return !(isTitleSame && isDescriptionSame && isFieldsSame && isIconSame && isParentFieldIdSame);
   };
 
@@ -174,11 +397,10 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
       setShowTitleRedText(false);
     }
   };
-  /** when formToEdit changes - set popup title, form title and description, original form
-   *  and maps of fields valid */
+
   useEffect(() => {
     initCustomFields();
-    getNumOfResponses(formToEdit.id);
+    getNumOfResponses(formToEdit?.id);
     populateFormData();
     return () => {
       setSavedSuccess(false);
@@ -187,81 +409,85 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
 
   const populateFormData = () => {
     setLoading(true);
-    setTitle(formToEdit.name);
-    setDescription(formToEdit.description);
-    setFormFields(formToEdit.fields);
-    const hasSectionIds = formToEdit.fields?.some((f) => !!f.sectionId);
-    const isNewForm = formToEdit.fields?.length === 0;
+
+    const nextTitle = formToEdit?.name ?? "";
+    const nextDescription = formToEdit?.description ?? "";
+    const nextFields = flattenFormFields(formToEdit);
+    const nextSections = formToEdit?.sections ?? [];
+
+    setTitle(nextTitle);
+    setDescription(nextDescription);
+    setFormFields(nextFields);
+
+    const isNewForm = nextFields.length === 0;
+
     if (isNewForm) {
       setSections([
         { id: NOT_A_SECTION_ID, name: texts.heb.mainSection, collapsed: false, order: 0 },
       ]);
-    } else if (!hasSectionIds) {
+    } else if (nextSections.length === 0) {
       setSections([]);
     } else {
-      orderSections(formToEdit.fields);
+      orderSections(nextFields);
     }
-    setCurrentFormId(formToEdit.id);
-    setParentFieldId(formToEdit.parentFieldId);
-    if (formToEdit.fields) {
-      formToEdit.fields.forEach((field) => {
-        formFieldsNamesValidMap.set(field.name, true);
-        formFieldsDisplayNamesValidMap.set(field.displayName, true);
-        if (!field.sectionId) {
-          field.sectionId = NOT_A_SECTION_ID;
-        }
-      });
-      orderSections(formToEdit.fields);
-    }
-    setOriginalTitle(formToEdit.name);
-    setOriginalDescription(formToEdit.description);
-    setOriginalIcon(formToEdit.icon);
-    setOriginalFormFields(JSON.parse(JSON.stringify(formToEdit.fields)));
-    setOriginalParentFieldId(formToEdit.parentFieldId);
+
+    setCurrentFormId(formToEdit?.id ?? 0);
+    setParentFieldId(undefined);
+
+    nextFields.forEach((field) => {
+      formFieldsNamesValidMap.set(field.index, true);
+      formFieldsDisplayNamesValidMap.set(field.index, true);
+    });
+
+    setOriginalTitle(nextTitle);
+    setOriginalDescription(nextDescription);
+    setOriginalIcon(formToEdit?.icon ?? "");
+    setOriginalFormFields(JSON.parse(JSON.stringify(nextFields)));
+    setOriginalParentFieldId(undefined);
     setLoading(false);
   };
 
-  const getNumOfResponses = async (formId) => {
+  const getNumOfResponses = async (formId?: number) => {
     try {
       if (!formId) return;
       const ans: ResponseCount = await getResponsesCount(formId);
-      const responsesCount: number = ans?.count || 0;
-      setResponsesCount(responsesCount);
-    } catch (error) {
+      const nextResponsesCount: number = ans?.count || 0;
+      setResponsesCount(nextResponsesCount);
+    } catch {
       showErrorNotification("שליפת כמות התגובות נכשלה");
     }
   };
 
-  const revalidateFormFieldsNames = (newFormFields: FormField[]) => {
-    let newFormFieldsNamesValidMap = new Map();
-    let newFormFieldsDisplayNamesValidMap = new Map();
+  const revalidateFormFieldsNames = (newFormFields: EditorFormField[]) => {
+    const newFormFieldsNamesValidMap = new Map<number, boolean>();
+    const newFormFieldsDisplayNamesValidMap = new Map<number, boolean>();
+
     newFormFields.forEach((field) => {
       newFormFieldsNamesValidMap.set(field.index, true);
       newFormFieldsDisplayNamesValidMap.set(field.index, true);
     });
+
     setFormFieldsNamesValidMap(newFormFieldsNamesValidMap);
     setFormFieldsDisplayNamesValidMap(newFormFieldsDisplayNamesValidMap);
   };
 
-  const deleteField = (formField: FormField) => {
-    let newFormFields = [...formFields];
-    let indexToRemove = formField.index;
-    newFormFields.splice(indexToRemove, 1);
-    newFormFields.forEach((element, i) => {
-      element.index = i;
-    });
+  const deleteField = (formField: EditorFormField) => {
+    const newFormFields = formFields
+      .filter((field) => field.id !== formField.id)
+      .map((field, i) => ({ ...field, index: i }));
+
     revalidateFormFieldsNames(newFormFields);
     setFormFields(newFormFields);
   };
 
-  const handleErrorMessage = (message: string, fieldType: string, fieldId: string) => {
+  const handleErrorMessage = (message: string, fieldTypeKey: string, fieldId: string) => {
     if (!message) return;
 
     setErrors((prevErrors) => {
       const filteredErrors = prevErrors.filter(
-        (e) => !(e.key === fieldType && e.fieldId === fieldId),
+        (e) => !(e.key === fieldTypeKey && e.fieldId === fieldId),
       );
-      return [...filteredErrors, { key: fieldType, message, fieldId }];
+      return [...filteredErrors, { key: fieldTypeKey, message, fieldId }];
     });
 
     setAlertMsgs((prev) => [...prev, message]);
@@ -278,116 +504,108 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     setHasUnsavedChanges(false);
     setShowAlertMsg(false);
     setAlertMsgs([]);
+
     if (validateRequiredFields()) {
       try {
         await saveFormToDb(formFields);
         setSavedSuccess(true);
         showSuccessNotification("הטופס נשמר בהצלחה!");
         setShowButtonsOnPopup(false);
+
         if (exit) {
           const from = location.state?.from || IPath.HOME;
           navigate(currentFormId && formFields.length > 0 ? `/responses/${currentFormId}` : from);
           setSavedSuccess(false);
         }
-      } catch (error) {
+      } catch {
         showErrorNotification("שמירת הטופס נכשלה");
       }
     }
+
     setLoading(false);
     setShowButtonsOnPopup(false);
   };
 
-  /** save updated form to db */
   const saveFormToDb = async (
-    newFormFields: FormField[],
+    newFormFields: EditorFormField[],
     options?: { isUpdateMetro?: boolean; formIcon?: string },
   ) => {
     setLoading(true);
+
     const defaultOptions = { formIcon: formIconName, isUpdateMetro: false };
-    const mergedOptions = { ...defaultOptions, ...(options && options) };
+    const mergedOptions = { ...defaultOptions, ...(options ?? {}) };
     const { isUpdateMetro, formIcon } = mergedOptions;
-    const currentUserLowerCaseUpn = currentUser?.upn?.toLowerCase();
-    const userName = getUserName(currentUser.firstName, currentUser.lastName);
+    const builtSections = buildSectionsFromFields(newFormFields, sections);
 
-    // Check if this is a new form (no ID or no fields initially)
-    const isNewForm = !isFormCreated;
-    let formId = formToEdit?.id || currentFormId;
-
-    if (isNewForm) {
-      const sortedSections = [...sections].sort((a, b) => a.order - b.order);
-
+    if (!isFormCreated) {
       const createPayload: CreateFormDto = {
         name: title,
         description,
         icon: formIconName as CreateFormDto["icon"],
-        sections: sortedSections.map((section) => ({
-          id: section.id,
-          name: section.name,
-          index: section.order,
-          fields: newFormFields
-            .filter((field) => field.sectionId === section.id)
-            .map(({ uniqueId, name, index, typeId, displayName, required }) => ({
-              id: uniqueId,
-              name,
-              index,
-              fieldType: typeId as FieldType,
-              displayName,
-              isRequired: required,
-              extra: {},
-            })),
-        })),
+        sections: builtSections,
       };
 
       try {
         const createdForm = await mutateCreateFormAsync(createPayload);
         setCurrentFormId(createdForm.id);
-        Object.assign(formToEdit, createdForm);
         setIsFormCreated(true);
-      } catch (error) {
+      } catch {
         showErrorNotification("יצירת הטופס נכשלה");
       } finally {
         setLoading(false);
       }
+
       return;
     }
 
-    const form: Partial<Form> = {
-      ...formToEdit,
-      fields: newFormFields,
+    const updateId = formToEdit?.id ?? currentFormId;
+
+    if (!updateId) {
+      showErrorNotification("עידכון הטופס נכשל");
+      setLoading(false);
+      return;
+    }
+
+    const payload: Partial<FormDto> = {
+      id: updateId,
       name: title,
       description,
       icon: formIcon,
-      updated_by: currentUserLowerCaseUpn,
-      updated_by_name: userName,
+      sections: builtSections,
     };
 
     try {
-      await mutateUpdateFormAsync({ id: formId, formData: form, isUpdateMetro });
-    } catch (error) {
+      await mutateUpdateFormAsync({
+        id: updateId,
+        formData: payload,
+        isUpdateMetro,
+      });
+    } catch {
       showErrorNotification("עידכון הטופס נכשל");
     } finally {
       setLoading(false);
     }
   };
 
-  const getFormPropertyTitleTextField = (formField: FormField, index: number) => {
+  const getFormPropertyTitleTextField = (formField: EditorFormField, index: number) => {
     const isNameValid =
       formFieldsNamesValidMap.get(index) !== undefined &&
-        formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
-        ? formFieldsNamesValidMap.get(index) && !formFieldsUniqueNamesValidMap.get(formField.name)
+      formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
+        ? Boolean(formFieldsNamesValidMap.get(index)) &&
+          !formFieldsUniqueNamesValidMap.get(formField.name)
         : formFieldsNamesValidMap.get(index) !== undefined
-          ? formFieldsNamesValidMap.get(index)
+          ? Boolean(formFieldsNamesValidMap.get(index))
           : formFieldsUniqueNamesValidMap.get(formField.name) !== undefined
             ? !formFieldsUniqueNamesValidMap.get(formField.name)
             : true;
 
     const isDisplayNameValid =
       formFieldsDisplayNamesValidMap.get(index) !== undefined &&
-        formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
-        ? formFieldsDisplayNamesValidMap.get(index) &&
-        !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
+      formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
+        ? Boolean(formFieldsDisplayNamesValidMap.get(index)) &&
+          !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
         : formFieldsDisplayNamesValidMap.get(index) !== undefined
-          ? formFieldsDisplayNamesValidMap.get(index)
+          ? Boolean(formFieldsDisplayNamesValidMap.get(index))
           : formFieldsUniqueDisplayNamesValidMap.get(formField.displayName) !== undefined
             ? !formFieldsUniqueDisplayNamesValidMap.get(formField.displayName)
             : true;
@@ -395,15 +613,15 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     const showNameError = !isNameValid;
     const showDisplayNameError = !isDisplayNameValid;
 
-    const innerErrorMessages: string[] = formFieldsInnerErrors.get(formField.uniqueId) || [];
-    const displayErrorMessages: string[] = formFieldsDisplayErrors.get(formField.uniqueId) || [];
+    const innerErrorMessages: string[] = formFieldsInnerErrors.get(formField.id) || [];
+    const displayErrorMessages: string[] = formFieldsDisplayErrors.get(formField.id) || [];
 
     if (showNameError && innerErrorMessages.length === 0) {
       if (!formField.name) {
         innerErrorMessages.push("יש להזין שם פנימי");
       } else if (!/^[a-zA-Z_]+$/.test(formField.name)) {
         innerErrorMessages.push("שם פנימי חייב להכיל רק אותיות באנגלית ו־_");
-      } else if (formField.name && RESERVED_FIELD_NAMES.includes(formField.name.toLowerCase())) {
+      } else if (RESERVED_FIELD_NAMES.includes(formField.name.toLowerCase())) {
         innerErrorMessages.push(`אסור להשתמש בשם פנימי "${formField.name}"`);
       } else if (formFieldsUniqueNamesValidMap.get(formField.name)) {
         innerErrorMessages.push("שם פנימי כבר קיים");
@@ -429,21 +647,21 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
         formField={formField}
         handleNameChange={changeFormPropertyName}
         handleDisplayNameChange={changeFormPropertyDisplayName}
-        fieldNameError={!!formFieldsNamesRedTextMap.get(formField?.uniqueId)}
+        fieldNameError={!!formFieldsNamesRedTextMap.get(formField.id)}
         handleNameKeyDown={(event) => {
           if (event.ctrlKey || event.metaKey) {
-            // Allow shortcuts like Ctrl+V, Ctrl+C, etc.
             return;
           }
 
-          let newMap = new Map(formFieldsNamesRedTextMap);
+          const newMap = new Map(formFieldsNamesRedTextMap);
 
           if (!ABC_AND_DASH_REGEX.test(event.key)) {
             event.preventDefault();
-            newMap.set(formField?.uniqueId, true);
+            newMap.set(formField.id, true);
           } else {
-            newMap.set(formField?.uniqueId, false);
+            newMap.set(formField.id, false);
           }
+
           setFormFieldsNamesRedTextMap(newMap);
         }}
       />
@@ -453,11 +671,11 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   const addErrorIf = (
     condition: boolean,
     message: string,
-    fieldType: string = "general",
-    uniqueId: string = "",
+    fieldTypeKey: string = "general",
+    fieldId: string = "",
   ): boolean => {
     if (condition) {
-      handleErrorMessage(message, fieldType, uniqueId);
+      handleErrorMessage(message, fieldTypeKey, fieldId);
       setShowAlertMsg(true);
       return true;
     }
@@ -481,7 +699,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
       }
     }
 
-    if (!title || title === "") {
+    if (!title) {
       setTitleInvalid(true);
       if (addErrorIf(true, "שם הטופס ריק", "title")) {
         hasError = true;
@@ -506,7 +724,6 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     let hasEmptyFormInFormConnection = false;
     let hasInvalidNumberField = false;
 
-    // reserved names map
     const reservedFlags = new Map<ReservedFieldName, boolean>();
     RESERVED_FIELD_NAMES.forEach((name) => reservedFlags.set(name, false));
 
@@ -515,43 +732,42 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     const nameValidMap = new Map<number, boolean>();
     const displayNameValidMap = new Map<number, boolean>();
     const redTextMap = new Map<string, boolean>();
-    const optionsValidMap = new Map<string, boolean>();
 
     const nameCount = new Map<string, number>();
     const displayNameCount = new Map<string, number>();
 
     for (const field of formFields) {
-      if (!field) continue;
-      redTextMap.set(field.uniqueId, false);
+      const extra = getFieldExtra(field);
+      redTextMap.set(field.id, false);
 
-      if (field.name && field.shouldSyncToMetro !== false) {
+      if (field.name && extra.shouldSyncToMetro !== false) {
         nameCount.set(field.name, (nameCount.get(field.name) || 0) + 1);
       }
+
       if (field.displayName) {
         displayNameCount.set(field.displayName, (displayNameCount.get(field.displayName) || 0) + 1);
       }
 
-      if (field.shouldSyncToMetro === false) {
+      if (extra.shouldSyncToMetro === false) {
         nameValidMap.set(field.index, true);
-      } else if (!field.name || field.name === "") {
+      } else if (!field.name) {
         nameValidMap.set(field.index, false);
         hasEmptyColumnName = false;
       } else if (!field.name.match(ABC_AND_DASH_REGEX)) {
         nameValidMap.set(field.index, false);
         hasEmptyColumnName = false;
-        addErrorIf(true, "השם הפנימי לא עומד בתקן", "general", field.uniqueId);
+        addErrorIf(true, "השם הפנימי לא עומד בתקן", "general", field.id);
       } else {
         nameValidMap.set(field.index, true);
       }
 
-      if (!field.displayName || field.displayName === "") {
+      if (!field.displayName) {
         displayNameValidMap.set(field.index, false);
         hasEmptyColumnDisplayName = false;
       } else {
         displayNameValidMap.set(field.index, true);
       }
 
-      // reserved names check
       if (
         field.name &&
         RESERVED_FIELD_NAMES.includes(field.name.toLowerCase() as ReservedFieldName)
@@ -559,40 +775,36 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
         const lower = field.name.toLowerCase() as ReservedFieldName;
         nameValidMap.set(field.index, false);
         reservedFlags.set(lower, true);
-        addErrorIf(true, `אסור לקרוא לשדה בשם "${field.name}"`, "general", field.uniqueId);
+        addErrorIf(true, `אסור לקרוא לשדה בשם "${field.name}"`, "general", field.id);
       }
 
-      if (field.connectionType === connectionTypes.form) {
-        if (!field.connectedFormId) {
+      if (extra.connectionType === connectionTypes.form) {
+        if (!extra.connectedFormId) {
           hasEmptyFormConnection = true;
-          addErrorIf(true, "שדה לא מחובר לטופס", "options", field.uniqueId);
+          addErrorIf(true, "שדה לא מחובר לטופס", "options", field.id);
         }
-        if (!field.connectedFieldId) {
+
+        if (!extra.connectedFieldId) {
           hasEmptyFieldConnection = true;
-          addErrorIf(true, "שדה לא מחובר לשדה בטופס היעד", "options", field.uniqueId);
+          addErrorIf(true, "שדה לא מחובר לשדה בטופס היעד", "options", field.id);
         }
       }
 
-      if (field.typeId === FieldTypeIds.linkedForm && !field.connectedFormId) {
+      if (field.fieldType === fieldType.Form && !extra.connectedFormId) {
         hasEmptyFormInFormConnection = true;
-        addErrorIf(true, "שדה לא מחובר לטופס", "form", field.uniqueId);
+        addErrorIf(true, "שדה לא מחובר לטופס", "form", field.id);
       }
 
-      if ((field.options ?? []).length > 0 && field.connectionType !== connectionTypes.form) {
-        for (const option of field.options ?? []) {
+      if (getFieldOptions(field).length > 0 && extra.connectionType !== connectionTypes.form) {
+        for (const option of getFieldOptions(field)) {
           if (!option) {
-            optionsValidMap.set(option, false);
             hasEmptyOptionName = false;
-            // addErrorIf(true, "לא ניתן להשאיר אפשרות ריקה", "options", field.uniqueId);
-          } else {
-            optionsValidMap.set(option, true);
           }
         }
       }
 
-      // בדיקת שדות מספר
-      if (field.typeId === FieldTypeIds.number) {
-        const { minValue, maxValue, initialNumberValue } = field;
+      if (field.fieldType === fieldType.Number) {
+        const { minValue, maxValue, initialNumberValue } = extra;
         const hasInvalidRange =
           minValue !== undefined && maxValue !== undefined && minValue > maxValue;
         const defaultOutOfRange =
@@ -601,11 +813,13 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
             (maxValue !== undefined && initialNumberValue > maxValue));
 
         if (hasInvalidRange) {
-          addErrorIf(true, "טווח ערכים לא תקין", "number", field.uniqueId);
+          addErrorIf(true, "טווח ערכים לא תקין", "number", field.id);
         }
+
         if (defaultOutOfRange) {
-          addErrorIf(true, "ערך ברירת המחדל חייב להיות בתוך טווח הערכים", "number", field.uniqueId);
+          addErrorIf(true, "ערך ברירת המחדל חייב להיות בתוך טווח הערכים", "number", field.id);
         }
+
         if (hasInvalidRange || defaultOutOfRange) {
           nameValidMap.set(field.index, false);
           hasInvalidNumberField = true;
@@ -677,7 +891,6 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
       setShowAlertMsg(true);
     }
 
-    // מעבר על כל השדות השמורים
     for (const [name, found] of fieldErrors.reservedFlags.entries()) {
       if (found) {
         addErrorIf(true, `יש עמודה עם שם פנימי שמור "${name}"`, "general");
@@ -727,27 +940,30 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     prevName: string,
   ) => {
     const val = e.target.value;
-    const item = formFields[index];
 
+    setFormFields((prev) =>
+      prev.map((field) => (field.index === index ? { ...field, name: val } : field)),
+    );
+
+    const item = formFields.find((f) => f.index === index);
     if (item) {
-      item.name = val;
-      setFormFields((prev) => [...prev]);
       const newMap = new Map(formFieldsInnerErrors);
-      const errors: string[] = [];
+      const nextErrors: string[] = [];
 
       if (!val) {
-        errors.push("יש להזין שם פנימי");
+        nextErrors.push("יש להזין שם פנימי");
       } else if (!/^[a-zA-Z_]+$/.test(val)) {
-        errors.push("שם פנימי חייב להכיל רק אותיות באנגלית ו־_");
+        nextErrors.push("שם פנימי חייב להכיל רק אותיות באנגלית ו־_");
       } else if (RESERVED_FIELD_NAMES.includes(val.toLowerCase())) {
-        errors.push(`אסור להשתמש בשם פנימי "${val}"`);
+        nextErrors.push(`אסור להשתמש בשם פנימי "${val}"`);
       }
 
-      if (errors.length > 0) {
-        newMap.set(item.uniqueId, errors);
+      if (nextErrors.length > 0) {
+        newMap.set(item.id, nextErrors);
       } else {
-        newMap.delete(item.uniqueId);
+        newMap.delete(item.id);
       }
+
       setFormFieldsInnerErrors(newMap);
     }
   };
@@ -758,24 +974,27 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     prevName: string,
   ) => {
     const val = e.target.value;
-    const arr = [...formFields];
-    const item = arr.find((i) => i.index === index);
+
+    setFormFields((prev) =>
+      prev.map((field) => (field.index === index ? { ...field, displayName: val } : field)),
+    );
+
+    const item = formFields.find((f) => f.index === index);
 
     if (item) {
-      item.displayName = val;
-      setFormFields(arr);
       const newMap = new Map(formFieldsDisplayErrors);
-      const errors: string[] = [];
+      const nextErrors: string[] = [];
 
       if (!val) {
-        errors.push("יש להזין שם תצוגה");
+        nextErrors.push("יש להזין שם תצוגה");
       }
 
-      if (errors.length > 0) {
-        newMap.set(item.uniqueId, errors);
+      if (nextErrors.length > 0) {
+        newMap.set(item.id, nextErrors);
       } else {
-        newMap.delete(item.uniqueId);
+        newMap.delete(item.id);
       }
+
       setFormFieldsDisplayErrors(newMap);
 
       if (val) {
@@ -787,24 +1006,32 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
   };
 
   const addItemToFormFields = (item: Partial<CustomFormField>, destinationIndex: number) => {
-    if (!item.sectionId || !item.sectionId.includes(FORM_FIELDS_PREFIX)) {
-      item.sectionId = "formFields_section_0";
-    }
+    const nextSectionId =
+      item.sectionId && item.sectionId.includes(FORM_FIELDS_PREFIX)
+        ? item.sectionId
+        : `${FORM_FIELDS_PREFIX}${NOT_A_SECTION_ID}`;
 
-    const sectionIdNoPrefix = item.sectionId.replace(FORM_FIELDS_PREFIX, "");
-    item.sectionOrder = sections.find((s) => s.id === sectionIdNoPrefix)?.order || 0;
+    const sectionIdNoPrefix = nextSectionId.replace(FORM_FIELDS_PREFIX, "");
+    const sectionOrder = sections.find((s) => s.id === sectionIdNoPrefix)?.order || 0;
 
-    const newFormField = generateNewFormFieldData(item);
+    const generatedField = generateNewFormFieldData({
+      ...item,
+      sectionId: nextSectionId,
+      sectionOrder,
+    });
 
-    // Apply section-wide conditions if they exist
-    const fieldWithConditions = handleFieldAddedToSection(formFields, newFormField, item.sectionId);
+    const newFormField = mapGeneratedFieldToDto(generatedField, nextSectionId, sectionOrder);
+
+    const fieldWithConditions = coerceToEditorField(
+      handleFieldAddedToSection(formFields, newFormField as any, nextSectionId),
+    );
 
     setFormFields((prevFormFields) => {
       const updated = [...prevFormFields];
       updated.splice(destinationIndex, 0, fieldWithConditions);
-      updated.forEach((f, i) => (f.index = i));
-      revalidateFormFieldsNames(updated);
-      return updated;
+      const reindexed = updated.map((field, i) => ({ ...field, index: i }));
+      revalidateFormFieldsNames(reindexed);
+      return reindexed;
     });
 
     validateUnsavedChanges();
@@ -826,42 +1053,45 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
     const updated = [...formFields];
     const [moved] = updated.splice(source.index, 1);
 
-    // Get the source section ID for condition management
-    const sourceSectionId = moved.sectionId;
-
-    // Extract section ID without prefix and find the section order
+    const sourceSectionId = getSectionId(moved);
     const sectionIdNoPrefix = destination.droppableId.replace(FORM_FIELDS_PREFIX, "");
     const targetSection = sections.find((s) => s.id === sectionIdNoPrefix);
 
-    // Handle condition inheritance and removal when moving between sections
-    const fieldWithManagedConditions = handleFieldMovedBetweenSections(
-      updated, // Use updated array without the moved field for accurate condition checking
-      moved,
-      sourceSectionId,
-      destination.droppableId,
+    const fieldWithManagedConditions = coerceToEditorField(
+      handleFieldMovedBetweenSections(
+        updated as any,
+        moved as any,
+        sourceSectionId,
+        destination.droppableId,
+      ),
     );
 
-    // Update both sectionId and sectionOrder
-    fieldWithManagedConditions.sectionId = destination.droppableId;
-    fieldWithManagedConditions.sectionOrder = targetSection?.order || 0;
+    const movedWithSection = updateFieldExtra(fieldWithManagedConditions, {
+      sectionId: destination.droppableId,
+      sectionOrder: targetSection?.order || 0,
+    });
 
-    updated.splice(destination.index, 0, fieldWithManagedConditions);
-    updated.forEach((f, i) => (f.index = i));
-    revalidateFormFieldsNames(updated);
-    setFormFields(updated);
+    updated.splice(destination.index, 0, movedWithSection);
+
+    const reindexed = updated.map((field, i) => ({ ...field, index: i }));
+    revalidateFormFieldsNames(reindexed);
+    setFormFields(reindexed);
     validateUnsavedChanges();
   };
 
-  const addNewFieldToForm = (source, destination) => {
-    const draggedItemTypeId = source.droppableId === "items" ? Object.keys(items)[source.index] : null;
+  const addNewFieldToForm = (source: DraggableLocation, destination: DraggableLocation) => {
+    const draggedItemTypeId =
+      source.droppableId === "items" ? Object.keys(items)[source.index] : null;
+
     const draggedItem =
-      source.droppableId === "items" && draggedItemTypeId !== null ? items[draggedItemTypeId] : customFields[source.index];
+      source.droppableId === "items" && draggedItemTypeId !== null
+        ? items[draggedItemTypeId]
+        : customFields[source.index];
+
     if (draggedItem) {
-      // Extract section ID without prefix and find the section order
       const sectionIdNoPrefix = destination.droppableId.replace(FORM_FIELDS_PREFIX, "");
       const targetSection = sections.find((s) => s.id === sectionIdNoPrefix);
 
-      // Create the item with section information
       const itemWithSection = {
         ...draggedItem,
         ...(draggedItemTypeId && { typeId: +draggedItemTypeId }),
@@ -872,6 +1102,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
       addItemToFormFields(itemWithSection, destination.index);
     }
   };
+
   const onDragEnd = (result: DropResult) => {
     const { source, destination, draggableId } = result;
 
@@ -914,23 +1145,31 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
               toggleCollapse={toggleCollapse}
               formFields={formFields}
               sections={sections}
-              getFormProperty={(formField, dragHandleProps) => (
-                <FormPropertyRenderer
-                  errors={errors}
-                  formField={formFields.find((f) => f.uniqueId === formField.uniqueId) ?? formField}
-                  formFields={formFields}
-                  setFormFields={setFormFields}
-                  setParentFieldId={setParentFieldId}
-                  getFormPropertyTitleTextField={getFormPropertyTitleTextField}
-                  dragHandleProps={dragHandleProps}
-                  responsesCount={responsesCount}
-                  deleteField={deleteField}
-                  setConfirmMsg={setConfirmMsg}
-                  setConfirmOkFunc={setConfirmOkFunc}
-                  setConfirmBtnText={setConfirmBtnText}
-                  setShowConfirmMsg={setShowConfirmMsg}
-                />
-              )}
+              getFormProperty={(incomingFormField, dragHandleProps) => {
+                const normalizedIncoming = coerceToEditorField(
+                  incomingFormField as FormField | EditorFormField,
+                );
+                const currentField =
+                  formFields.find((f) => f.id === normalizedIncoming.id) ?? normalizedIncoming;
+
+                return (
+                  <FormPropertyRenderer
+                    errors={errors}
+                    formField={currentField}
+                    formFields={formFields}
+                    setFormFields={setFormFields}
+                    setParentFieldId={setParentFieldId}
+                    getFormPropertyTitleTextField={getFormPropertyTitleTextField}
+                    dragHandleProps={dragHandleProps}
+                    responsesCount={responsesCount}
+                    deleteField={deleteField}
+                    setConfirmMsg={setConfirmMsg}
+                    setConfirmOkFunc={setConfirmOkFunc}
+                    setConfirmBtnText={setConfirmBtnText}
+                    setShowConfirmMsg={setShowConfirmMsg}
+                  />
+                );
+              }}
             />
           }
           sidebar={
@@ -955,7 +1194,6 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
               formIconName={formIconName}
               validateTitle={(event) => {
                 if (event.ctrlKey || event.metaKey) {
-                  // Allow shortcuts like Ctrl+V, Ctrl+C, etc.
                   return;
                 }
 
@@ -975,7 +1213,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
               onTitleChange={(e) => {
                 clearErrors("title", "");
                 const val = e.target.value;
-                if (val && val !== "") {
+                if (val) {
                   setTitleInvalid(false);
                 }
                 handleTitleChange(val);
@@ -1035,7 +1273,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
           onClose={() => setShowConditionsPopup(false)}
           formFields={formFields}
           onSave={(updatedFields) => {
-            setFormFields(updatedFields);
+            setFormFields(updatedFields.map((field: any) => coerceToEditorField(field)));
           }}
         />
       )}

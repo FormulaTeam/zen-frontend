@@ -1,18 +1,13 @@
 import React from "react";
 import Button from "@mui/material/Button";
-import {
-  ConditionsRoot,
-  FormField,
-  LogicalOperators,
-  ConditionUtils,
-} from "../../utils/interfaces";
+import { ConditionsRoot, LogicalOperators, ConditionUtils } from "../../utils/interfaces";
 import { ConditionControlsContainer, ConditionControlsButtonGroup } from "./styled";
 import Tooltip from "@mui/material/Tooltip";
-import { Info } from "@mui/icons-material";
+import type { ConditionalFormField } from "../../utils/conditionUtils";
 
 interface ConditionControlsProps {
   conditionsRoot: ConditionsRoot;
-  formFields: FormField[];
+  formFields: ConditionalFormField[];
   onAddConditionGroup: (logicalOperator?: any) => void;
   onSave: () => void;
 }

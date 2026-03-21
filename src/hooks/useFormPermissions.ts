@@ -1,21 +1,43 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+
+import type { FormDto } from "../types/shared";
 import { useAuth } from "../contexts/AuthContext";
 import { useSuperAdmin } from "../contexts/SuperAdminContext";
-import { Role, RoleId, Form, User } from "../utils/interfaces";
-import { PERMISSION_TYPES } from "../utils/utils";
+import { Role, User } from "../utils/interfaces";
 import { prioritizePermissions } from "../utils/formFieldsResponses";
+import { PERMISSION_TYPES } from "../utils/utils";
+
+type PublicRole = FormDto["publicRole"];
 
 interface UseFormPermissionsParams {
-  form: Form;
+  form: FormDto;
   roles: Role[];
   selectedShareWith: User[];
-  saveSharedWith: (updatedFormData?: Partial<Form>) => Promise<void>;
-  handleFormPermissionChange: (
-    isPublic: boolean,
-    permission?: { role_id: number; roleName: string },
-  ) => void;
+  saveSharedWith: (updatedFormData?: Record<string, unknown>) => Promise<void>;
+  handleFormPermissionChange: (isPublic: boolean, permission?: PublicRole) => void;
   handleClose: () => void;
 }
+
+const getCatalogPermissionTypes = (
+  roles: Role[],
+  role: PublicRole | null | undefined,
+): number[] => {
+  const matchingRole = roles.find((roleItem) => roleItem.role_id === role);
+
+  return matchingRole?.permission_types ?? [];
+};
+
+const getUserId = (user: User | null | undefined): number | undefined => {
+  if (!user) return undefined;
+
+  const directUserId = (user as User & { id?: unknown }).id;
+  if (typeof directUserId === "number") return directUserId;
+
+  const fallbackUserId = (user as User & { userId?: unknown }).userId;
+  if (typeof fallbackUserId === "number") return fallbackUserId;
+
+  return undefined;
+};
 
 export const useFormPermissions = ({
   form,
@@ -28,82 +50,71 @@ export const useFormPermissions = ({
   const { user } = useAuth();
   const { isSuperAdmin } = useSuperAdmin();
 
-  // local state for public form and its permissions
-  const [isPublic, setIsPublic] = useState<boolean>(!!form.isPublic);
-  const [formPermission, setFormPermission] = useState<any>(form.formPermission || null);
+  const [isPublic, setIsPublic] = useState<boolean>(!!form.publicRole);
+  const [formPermission, setFormPermission] = useState<PublicRole | null>(form.publicRole ?? null);
 
-  // compute user-specific role
-  const userRole: RoleId | undefined = form?.users?.find(
-    (u) => u.upn?.toLowerCase() === user?.upn?.toLowerCase(),
-  )?.role_id;
+  const currentUserId = getUserId(user);
 
-  // calculate user-specific permissions
-  const userSpecificPermissions = roles.find((r) => r.role_id === userRole)?.permission_types || [];
+  const userSpecificPermissions = useMemo(() => {
+    if (typeof currentUserId !== "number") return [];
 
-  // calculate public form permissions
-  const publicFormPermissions = useMemo(() => {
-    if (form.isPublic && form.formPermission?.role_id) {
-      const publicRole = roles.find((r) => r.role_id === form.formPermission?.role_id);
-      return publicRole ? publicRole.permission_types || [] : [];
-    }
     return [];
-  }, [form.isPublic, form.formPermission, roles]);
+  }, [currentUserId]);
 
-  // merge permissions intelligently
-  const permissionTypes = useMemo(
-    () => prioritizePermissions(userSpecificPermissions, publicFormPermissions),
-    [userSpecificPermissions, publicFormPermissions],
+  const publicFormPermissions = useMemo(
+    () => (isPublic ? getCatalogPermissionTypes(roles, formPermission) : []),
+    [formPermission, isPublic, roles],
   );
 
-  const hasPermission = isSuperAdmin || permissionTypes?.includes(PERMISSION_TYPES.EDIT_FORM);
+  const permissionTypes = useMemo(
+    () => prioritizePermissions(userSpecificPermissions, publicFormPermissions),
+    [publicFormPermissions, userSpecificPermissions],
+  );
 
-  // toggle public/private state
+  const hasPermission = !!isSuperAdmin || permissionTypes.includes(PERMISSION_TYPES.EDIT_FORM);
+
   const togglePublicForm = () => {
-    const newIsPublic = !isPublic;
-    setIsPublic(newIsPublic);
-    if (!newIsPublic) {
+    const nextIsPublic = !isPublic;
+
+    setIsPublic(nextIsPublic);
+
+    if (!nextIsPublic) {
       setFormPermission(null);
-      handleFormPermissionChange(newIsPublic, undefined);
-    } else {
-      handleFormPermissionChange(newIsPublic, formPermission);
+      handleFormPermissionChange(false, undefined);
+
+      return;
     }
+
+    handleFormPermissionChange(true, formPermission ?? undefined);
   };
 
-  // handle dropdown/local form permission change
-  const handleLocalFormPermissionChange = (_: any, newValue: any) => {
-    if (newValue) {
-      const newPermission = {
-        role_id: newValue.role_id,
-        roleName: newValue.roleName,
-      };
-      setFormPermission(newPermission);
-      handleFormPermissionChange(isPublic, newPermission);
-    }
+  const handleLocalFormPermissionChange = (_: any, newValue: PublicRole) => {
+    if (!newValue) return;
+
+    setFormPermission(newValue);
+    handleFormPermissionChange(isPublic, newValue);
   };
 
-  // save logic including form permissions and users
   const handleSave = async () => {
-    const updatedFormData = {
-      isPublic,
-      formPermission,
+    const updatedFormData: Record<string, unknown> = {
+      publicRole: isPublic ? (formPermission ?? undefined) : undefined,
     };
 
     const hasFormPermissionUpdates =
-      form.isPublic !== isPublic ||
-      form.formPermission?.role_id !== formPermission?.role_id ||
-      (!form.formPermission && formPermission) ||
-      (form.formPermission && !formPermission);
+      form.publicRole !== (isPublic ? (formPermission ?? undefined) : undefined);
 
     const hasUserRoleAssignments = selectedShareWith.some(
-      (user) => user.role_id && user.role_id !== -1,
+      (selectedUser) => selectedUser.role_id && selectedUser.role_id !== -1,
     );
 
     try {
       if (hasUserRoleAssignments || hasFormPermissionUpdates) {
         await saveSharedWith(updatedFormData);
-      } else {
-        handleClose();
+
+        return;
       }
+
+      handleClose();
     } catch (error) {
       console.error("Error saving form:", error);
     }

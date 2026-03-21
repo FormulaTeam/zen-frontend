@@ -197,11 +197,11 @@ export const useCreateForm = () => {
 export const useUpdateForm = () => {
   return useMutation({
     mutationFn: async (data: UpdateFormPayload) => {
-      const response = await apiClient.put<Form>(`/forms/edit/${data.id}`, data);
+      const response = await apiClient.put<FormDto>(`/forms/edit/${data.id}`, data);
       return response.data;
     },
     mutationKey: ["update-form"],
-    onSuccess: (data: Form) => {
+    onSuccess: (data: FormDto) => {
       queryClient.invalidateQueries({ queryKey: [data.id] });
       queryClient.invalidateQueries({ queryKey: ["forms"] });
     },

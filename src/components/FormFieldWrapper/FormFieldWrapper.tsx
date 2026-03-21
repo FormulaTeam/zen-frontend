@@ -1,20 +1,39 @@
 import React, { ReactNode } from "react";
-import { FORM_ELEMENTS, FormField } from "../../utils/interfaces";
+import { FORM_ELEMENTS } from "../../utils/interfaces";
 import { DragIndicator } from "@mui/icons-material";
-import { Box, FormControlLabel, Grid, IconButton, Switch, Tooltip, Typography, useTheme } from "@mui/material";
+import {
+  Box,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  Switch,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import { FORM_ELEMENT_ICONS } from "../FORM_ELEMENT_ICONS";
 import { CustomIcon } from "../../theme/icons";
 import { DraggableProvidedDragHandleProps } from "@hello-pangea/dnd";
+import { FormFieldDto } from "../../types/shared";
+
+type FormFieldWrapperExtra = {
+  parentFieldId?: string;
+  fieldIcon?: string;
+  fieldName?: string;
+};
 
 type Props = {
-  formField: FormField;
-  allFormFields: FormField[];
+  formField: FormFieldDto;
+  allFormFields: FormFieldDto[];
   showRequiredToggle?: boolean;
   onFieldDelete: () => void;
   onToggleRequired: (e: React.ChangeEvent<HTMLInputElement>) => void;
   children: ReactNode;
   dragHandleProps?: DraggableProvidedDragHandleProps | null;
 };
+
+const getFieldExtra = (field: FormFieldDto): FormFieldWrapperExtra =>
+  (field.extra as FormFieldWrapperExtra | undefined) ?? {};
 
 export default function FormFieldWrapper({
   formField,
@@ -26,38 +45,38 @@ export default function FormFieldWrapper({
   dragHandleProps,
 }: Props) {
   const theme = useTheme();
+  const formFieldExtra = getFieldExtra(formField);
 
-  // Find the default field using the typeId
-  const defaultField = FORM_ELEMENTS[formField.typeId];
+  const defaultField = FORM_ELEMENTS[formField.fieldType];
 
-  // Get default icon if current icon is invalid or not set
   const fieldIcon =
-    formField.fieldIcon && FORM_ELEMENT_ICONS[formField.fieldIcon]
-      ? formField.fieldIcon
+    formFieldExtra.fieldIcon && FORM_ELEMENT_ICONS[formFieldExtra.fieldIcon]
+      ? formFieldExtra.fieldIcon
       : defaultField?.icon || Object.keys(FORM_ELEMENT_ICONS)[0];
 
-  // Get default field name if not set
-  const fieldName = formField.fieldName || defaultField?.name || "";
+  const fieldName = formFieldExtra.fieldName || defaultField?.name || "";
 
   function isParentOfChildren() {
-    return allFormFields.some((field) => field.parentFieldId === formField.uniqueId);
+    return allFormFields.some((field) => getFieldExtra(field).parentFieldId === formField.id);
   }
 
   function getTooltipForConnectedFields() {
     const connectedField = "שדה זה מקושר לשדות הבאים:";
     const fields = allFormFields
-      .filter((field) => field.parentFieldId === formField.uniqueId)
+      .filter((field) => getFieldExtra(field).parentFieldId === formField.id)
       .map((field) => field.displayName)
       .join(", ");
 
     return `${connectedField} ${fields}`;
   }
+
   const style = {
     backgroundColor: theme.palette.background.paper,
     boxShadow: `0px 4px 20.4px 0px ${theme.palette.shadow}`,
     borderRadius: "8px",
     p: 1,
   };
+
   return (
     <Box
       sx={{
@@ -103,7 +122,7 @@ export default function FormFieldWrapper({
           <FormControlLabel
             label={<Typography variant="subtitle1">שדה חובה</Typography>}
             sx={{ alignSelf: "flex-end", color: theme.palette.text.secondary, mt: 1 }}
-            control={<Switch checked={formField.required} onChange={onToggleRequired} />}
+            control={<Switch checked={formField.isRequired} onChange={onToggleRequired} />}
           />
         )}
       </Box>

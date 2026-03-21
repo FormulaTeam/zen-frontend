@@ -1,23 +1,22 @@
-import { useState } from "react";
-import React from "react";
-import { Box, Divider, Tooltip, useTheme } from "@mui/material";
-import {
-  getFormIconByName,
-  PERMISSION_TYPES,
-  showErrorNotification,
-} from "../../utils/utils";
-import { Form, FormOverview } from "../../utils/interfaces";
-import formX from "../../images/form_x.png";
-import CardCreationDetails from "./CardCreationDetails";
-import { CustomIcon } from "../../theme/icons";
-import ShareIcon from "../../icons/share.svg";
-import { CustomStyledIcon, GrayShareIcon } from "./styled";
+import React, { useState } from "react";
+
 import * as MuiIcons from "@mui/icons-material";
+import { Box, Divider, Tooltip, useTheme } from "@mui/material";
+
+import type { FormDto } from "../../types/shared";
 import { getFormById } from "../../api/formsApi";
 import UserPicker from "../USerPicker/UserPicker";
-
+import ShareIcon from "../../icons/share.svg";
+import formX from "../../images/form_x.png";
+import { FormOverview } from "../../utils/interfaces";
+import { CustomIcon } from "../../theme/icons";
+import { getFormIconByName, showErrorNotification } from "../../utils/utils";
+import CardCreationDetails from "./CardCreationDetails";
 import {
+  DescriptionDiv,
+  Img,
   ItemBottomDiv,
+  ItemBtnsDiv,
   ItemButton,
   ItemDescription,
   ItemIconsDiv,
@@ -26,11 +25,9 @@ import {
   ItemTitle,
   ItemTitleAndNum,
   ItemTitles,
-  Img,
   StyledCard,
-  DescriptionDiv,
-  ItemBtnsDiv,
 } from "./styled";
+import { CustomStyledIcon, GrayShareIcon } from "./styled";
 
 const FormCard = ({
   form,
@@ -45,7 +42,7 @@ const FormCard = ({
 }) => {
   const theme = useTheme();
   const [showSharePopup, setShowSharePopup] = useState(false);
-  const [fullForm, setFullForm] = useState<Form | null>(null);
+  const [fullForm, setFullForm] = useState<FormDto | null>(null);
 
   const handleShareClick = async () => {
     try {
@@ -59,52 +56,53 @@ const FormCard = ({
 
   const renderDynamicIcon = (name: string) => {
     const IconComponent = MuiIcons[name as keyof typeof MuiIcons];
+
     return IconComponent ? <IconComponent /> : name;
   };
 
   const getIcon = (iconName: string | null) => {
     const iconSrc = getFormIconByName(iconName ?? undefined);
 
-    if (iconSrc) {
-      return <Img src={iconSrc} alt={iconName ?? "form icon"} />;
-    }
+    if (iconSrc) return <Img src={iconSrc} alt={iconName ?? "form icon"} />;
 
-    if (!iconName) {
-      return <Img src={formX} alt="form icon" />;
-    }
+    if (!iconName) return <Img src={formX} alt="form icon" />;
 
     return <CustomStyledIcon>{renderDynamicIcon(iconName)}</CustomStyledIcon>;
   };
 
-  const goToResponsesPage = (event: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
+  const goToResponsesPage = (event: React.MouseEvent<HTMLElement>) => {
     resetSearchValue();
-    navigate("/responses/" + form?.id, { replace: true });
+    navigate(`/responses/${form.id}`, { replace: true });
     event.stopPropagation();
   };
 
-  if (!form) {
-    return null;
-  }
+  if (!form) return null;
 
   return (
-    <StyledCard sx={{ backgroundcolor: theme.palette.background.paper }} data-testid={`form-id-${form.id}`} className="form-card">
+    <StyledCard
+      sx={{ backgroundcolor: theme.palette.background.paper }}
+      data-testid={`form-id-${form.id}`}
+      className="form-card">
       <ItemImgAndTitles>
         <ItemTitles>
           <ItemTitleAndNum>
             <Box sx={{ display: "flex", alignItems: "center", overflow: "hidden" }}>
-              {getIcon(form?.icon)}
+              {getIcon(form.icon)}
               <ItemTitle onClick={goToResponsesPage} title={form.name} className="form-title">
                 {form.name}
               </ItemTitle>
             </Box>
+
             <ItemResponsesNum className="form-responses-count">
               <CustomIcon iconName="comments" />
-              {form?.responsesCount ?? 0}
+              {form.responsesCount ?? 0}
             </ItemResponsesNum>
           </ItemTitleAndNum>
 
           <DescriptionDiv>
-            <ItemDescription className="form-description">{form.description ? form.description : "-"}</ItemDescription>
+            <ItemDescription className="form-description">
+              {form.description ? form.description : "-"}
+            </ItemDescription>
           </DescriptionDiv>
 
           <CardCreationDetails form={form} />
@@ -136,6 +134,7 @@ const FormCard = ({
                 />
               </div>
             </Tooltip>
+
             <Tooltip title="שיתוף טופס">
               <div>
                 <GrayShareIcon src={ShareIcon} onClick={handleShareClick} />
@@ -143,6 +142,7 @@ const FormCard = ({
             </Tooltip>
           </ItemIconsDiv>
         )}
+
         {showSharePopup && fullForm && (
           <UserPicker
             form={fullForm}
@@ -163,7 +163,7 @@ const FormCard = ({
               "&:hover": {
                 backgroundColor: "white",
                 color: theme.palette.primary.main,
-                outline: "1px solid " + theme.palette.primary.main,
+                outline: `1px solid ${theme.palette.primary.main}`,
               },
             }}>
             הוספת תגובה
@@ -179,7 +179,7 @@ const FormCard = ({
               "&:hover": {
                 backgroundColor: "white",
                 color: theme.palette.primary.main,
-                outline: "1px solid " + theme.palette.primary.main,
+                outline: `1px solid ${theme.palette.primary.main}`,
               },
             }}>
             צפייה בתגובות

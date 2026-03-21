@@ -21,15 +21,11 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-
 import { Close, Info } from "@mui/icons-material";
 import {
   connectionTypes,
   DRAGGED_ITEM_ID,
-  FieldTypeIds,
   fieldConnectionTooltipTexts,
-  Form,
-  FormField,
 } from "../../utils/interfaces";
 import React, { useEffect, useRef } from "react";
 import { ArrowDropDownIcon } from "@mui/x-date-pickers/icons";
@@ -39,6 +35,8 @@ import Loading from "react-loading";
 import BaseFormInput from "../BaseFormInput/BaseFormInput";
 import DefaultValueAutocomplete from "./DefaultValueAutocomplete";
 import ErrorMessage from "../CreateForm/ErrorMessage";
+import { FormDto, FormFieldDto } from "../../types/shared";
+import { fieldType } from "formula-gear";
 
 export interface ParentField {
   parentFieldId?: string;
@@ -52,14 +50,29 @@ export interface CheckboxData {
   enabled: boolean;
 }
 
+type ParentDependency = {
+  parentOptionIndex: number;
+  childOptionIndices: number[];
+};
+
+type OptionsFieldExtra = {
+  options?: string[];
+  multiSelect?: boolean;
+  connectedFormId?: number;
+  connectedFieldId?: string;
+  parentFieldId?: string;
+  parentDependencies?: ParentDependency[];
+  connectionType?: string | number;
+};
+
 type Props = {
-  formField: FormField;
-  allFormFields: FormField[];
+  formField: FormFieldDto;
+  allFormFields: FormFieldDto[];
   getBaseFieldElement: () => JSX.Element;
   isOptionValid: (option: string) => boolean | undefined;
-  onChange: (e, optionIndex: number) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>, optionIndex: number) => void;
   onBlur?: () => void;
-  onClose: (e, optionIndex: number) => void;
+  onClose: (e: React.MouseEvent<SVGSVGElement>, optionIndex: number) => void;
   onAddOption: () => void;
   onToggleIsMultiSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFieldConnected: (selectedFieldData: ParentField) => void;
@@ -72,13 +85,24 @@ type Props = {
   error?: string;
 };
 
+const getFieldExtra = (field?: FormFieldDto | null): OptionsFieldExtra =>
+  (field?.extra as OptionsFieldExtra | undefined) ?? {};
+
+const getFormFields = (form?: FormDto | null): FormFieldDto[] =>
+  [...(form?.sections ?? [])]
+    .sort((a, b) => a.index - b.index)
+    .flatMap((section) => [...section.fields].sort((a, b) => a.index - b.index));
+
+const toStringArray = (values: unknown[]): string[] =>
+  values.filter((value): value is string => typeof value === "string");
+
 export default function OptionsField({
   formField,
   allFormFields,
   getBaseFieldElement,
   isOptionValid,
   onChange,
-  onBlur = () => { },
+  onBlur = () => {},
   onClose,
   onAddOption,
   onChangeDefaultValue,
@@ -91,152 +115,167 @@ export default function OptionsField({
   onChangeConnectedFormField,
   onChangeConnectedForm,
 }: Props) {
-  const responsesCache = useRef<Record<number, string[]>>({});
+  const responsesCache = useRef<Record<string, string[]>>({});
   const [defaultValues, setDefaultValues] = React.useState<string[]>([]);
   const theme = useTheme();
   const isConnected = isConnectedToAnotherField();
-  const [forms, setForms] = React.useState<Form[]>([]);
+  const [forms, setForms] = React.useState<FormDto[]>([]);
   const [loadingForms, setLoadingForms] = React.useState<boolean>(false);
-  const [selectedForm, setSelectedForm] = React.useState<Form | null>(null);
+  const [selectedForm, setSelectedForm] = React.useState<FormDto | null>(null);
   const [formText, setFormText] = React.useState<string>("");
   const [fieldText, setFieldText] = React.useState<string>("");
   const [parentFieldOptions, setParentFieldOptions] = React.useState<string[] | undefined>([]);
   const [loadingOptions, setLoadingOptions] = React.useState<boolean>(false);
   const { user } = useAuth();
 
-  // using useMemo to keep options updated and avoid unnecessary rendering :)
-  const matchedField = React.useMemo(() => {
-    if (!formField.parentFieldId) return undefined;
-    return allFormFields.find((field) => field.uniqueId === formField.parentFieldId);
-  }, [formField.parentFieldId, allFormFields]);
+  const formFieldExtra = getFieldExtra(formField);
+  const selectedFormFields = React.useMemo(() => getFormFields(selectedForm), [selectedForm]);
 
-  // getting the selected form by id and at least view permission
+  const matchedField = React.useMemo(() => {
+    if (!formFieldExtra.parentFieldId) return undefined;
+    return allFormFields.find((field) => field.id === formFieldExtra.parentFieldId);
+  }, [formFieldExtra.parentFieldId, allFormFields]);
+
   useEffect(() => {
-    if (formField.connectedFormId) {
+    if (formFieldExtra.connectedFormId) {
       const filter = {
         query: {
           $or: [{ name: { $regex: formText } }, { description: { $regex: formText } }],
           users: { $elemMatch: { upn: user?.upn?.toLowerCase() } },
-          id: formField.connectedFormId,
+          id: formFieldExtra.connectedFormId,
         },
       };
+
       getForms(filter)
-        .then((response) => {
+        .then((response: FormDto[]) => {
           setSelectedForm(response[0] ?? null);
         })
-        .catch((error) => {
+        .catch(() => {
           setSelectedForm(null);
         });
     } else {
       setSelectedForm(null);
     }
-  }, [formField.connectedFormId]);
+  }, [formFieldExtra.connectedFormId, formText, user?.upn]);
 
-  // searching forms by name or description and at least view permission
   useEffect(() => {
-    // Create abort controller for this request
     setLoadingForms(true);
     const abortController = new AbortController();
+
     if (formText.length > 2) {
       const filter = {
         query: {
           $or: [{ name: { $regex: formText } }, { description: { $regex: formText } }],
           users: { $elemMatch: { upn: user?.upn?.toLowerCase() } },
         },
-        signal: abortController.signal, // Attach the signal
+        signal: abortController.signal,
       };
+
       getForms(filter)
-        .then((response) => {
+        .then((response: FormDto[]) => {
           setForms(response);
           setLoadingForms(false);
         })
-        .catch((error) => {
+        .catch(() => {
           setForms([]);
+          setLoadingForms(false);
         });
     } else {
       setForms([]);
       setLoadingForms(false);
     }
-    return () => abortController.abort(); // cancels the request when deps change
-  }, [formText]);
 
-  // keeps the options updated when the parent changes
+    return () => abortController.abort();
+  }, [formText, user?.upn]);
+
   useEffect(() => {
+    const matchedFieldExtra = getFieldExtra(matchedField);
+
     if (matchedField) {
-      if (matchedField.connectionType === connectionTypes.form) {
+      if (matchedFieldExtra.connectionType === connectionTypes.form) {
         setLoadingOptions(true);
+
         getResponses({
-          form_id: matchedField.connectedFormId,
+          form_id: matchedFieldExtra.connectedFormId,
         })
           .then((responses) => {
             if (responses.length === 0) {
               setParentFieldOptions([]);
               return;
             }
-            const parentOptions = [
+
+            const parentOptions = toStringArray([
               ...new Set(
                 responses
                   .map(
                     (response) =>
                       response.fieldValues?.find(
-                        (res) => res.field_id === matchedField.connectedFieldId && res.value,
+                        (res) =>
+                          res.fieldId === matchedFieldExtra.connectedFieldId &&
+                          typeof res.value === "string" &&
+                          res.value,
                       )?.value,
                   )
                   .filter(Boolean),
               ),
-            ];
-            if (parentOptions) setParentFieldOptions(parentOptions);
+            ] as unknown[]);
+
+            setParentFieldOptions(parentOptions);
           })
           .catch((err) => console.error(err))
           .finally(() => {
             setLoadingOptions(false);
           });
       } else {
-        setParentFieldOptions(matchedField?.options ?? undefined);
+        setParentFieldOptions(matchedFieldExtra.options ?? undefined);
       }
     }
-  }, [formField.parentFieldId, matchedField?.connectedFieldId, matchedField?.options]);
+  }, [
+    formFieldExtra.parentFieldId,
+    matchedField,
+    getFieldExtra(matchedField).connectedFieldId,
+    getFieldExtra(matchedField).options,
+  ]);
 
   function getFilteredOptionsForSelection() {
-    // if the field is connected to another field, we only show options that are not already connected
-    const baseFilter = (item: FormField) =>
-      item.uniqueId !== formField.uniqueId && item.typeId === FieldTypeIds.options;
+    const baseFilter = (item: FormFieldDto) =>
+      item.id !== formField.id && item.fieldType === fieldType.Options;
 
-    // form connection type
-    const formConnectionFilter = (item: FormField) =>
-      item.connectionType === connectionTypes.form &&
-      formField.connectedFormId === item.connectedFormId;
+    const formConnectionFilter = (item: FormFieldDto) => {
+      const itemExtra = getFieldExtra(item);
+      return (
+        itemExtra.connectionType === connectionTypes.form &&
+        formFieldExtra.connectedFormId === itemExtra.connectedFormId
+      );
+    };
 
-    // filter for available parent fields
-    const availableParentFilter = (item: FormField) => item.parentFieldId === undefined;
+    const availableParentFilter = (item: FormFieldDto) =>
+      getFieldExtra(item).parentFieldId === undefined;
 
-    // filters based on connection scenario
-    if (formField.connectionType === connectionTypes.form) {
+    if (formFieldExtra.connectionType === connectionTypes.form) {
       return allFormFields.filter((item) => baseFilter(item) && formConnectionFilter(item));
     }
 
     const eligibleOptions = allFormFields.filter(baseFilter);
-
-    // if current field is already connected to others, only show available parent fields
     return isConnected ? eligibleOptions.filter(availableParentFilter) : eligibleOptions;
   }
 
   function getConnectedFieldNames() {
     return allFormFields
-      .filter((field) => field.parentFieldId === formField.uniqueId)
+      .filter((field) => getFieldExtra(field).parentFieldId === formField.id)
       .map((field) => field.displayName)
       .join(", ");
   }
 
   function handleFieldConnected(event: SelectChangeEvent) {
     const selectedParentId = event.target.value !== "" ? event.target.value : undefined;
-    const matchedField = allFormFields.find((field) => field.uniqueId === selectedParentId);
-    const parentFieldName = matchedField?.name ?? undefined;
+    const selectedParentField = allFormFields.find((field) => field.id === selectedParentId);
+    const parentFieldName = selectedParentField?.name ?? undefined;
 
     onFieldConnected({
       parentFieldId: selectedParentId,
-      parentFieldOptions: parentFieldOptions,
-      parentFieldName: parentFieldName,
+      parentFieldOptions,
+      parentFieldName,
     });
   }
 
@@ -246,8 +285,8 @@ export default function OptionsField({
     childOptionIndex: number,
   ) {
     onCheckboxChange({
-      parentOptionIndex: parentOptionIndex,
-      childOptionIndex: childOptionIndex,
+      parentOptionIndex,
+      childOptionIndex,
       enabled: event.target.checked,
     });
   }
@@ -258,13 +297,11 @@ export default function OptionsField({
   ) {
     const isChecked = event.target.checked;
 
-    // When "בחר הכל" is clicked, we need to toggle each parent option individually
-    // to ensure all parent dependencies are properly created/updated
     if (parentFieldOptions) {
       parentFieldOptions.forEach((_, parentOptionIndex) => {
         onCheckboxChange({
-          parentOptionIndex: parentOptionIndex,
-          childOptionIndex: childOptionIndex,
+          parentOptionIndex,
+          childOptionIndex,
           enabled: isChecked,
         });
       });
@@ -272,7 +309,7 @@ export default function OptionsField({
   }
 
   function isCheckboxChecked(parentOptionIndex: number, childOptionIndex: number) {
-    const dependency = formField.parentDependencies?.find(
+    const dependency = formFieldExtra.parentDependencies?.find(
       (dep) => dep.parentOptionIndex === parentOptionIndex,
     );
     return dependency?.childOptionIndices.includes(childOptionIndex) ?? false;
@@ -281,28 +318,26 @@ export default function OptionsField({
   function isSelectionIndeterminate(childOptionIndex: number) {
     const allItemsLength = parentFieldOptions?.length ?? 0;
     const selectedItemsLength =
-      formField.parentDependencies?.filter((dep) =>
+      formFieldExtra.parentDependencies?.filter((dep) =>
         dep.childOptionIndices.includes(childOptionIndex),
       ).length ?? 0;
+
     return selectedItemsLength > 0 && selectedItemsLength < allItemsLength;
   }
 
   function isEverythingSelected(childOptionIndex: number) {
     const allItemsLength = parentFieldOptions?.length ?? 0;
 
-    // If no parent options exist, nothing can be selected
     if (allItemsLength === 0) {
       return false;
     }
 
-    // If no dependencies exist, nothing is selected
-    if (!formField.parentDependencies || formField.parentDependencies.length === 0) {
+    if (!formFieldExtra.parentDependencies || formFieldExtra.parentDependencies.length === 0) {
       return false;
     }
 
-    // Check if all parent options are connected to this child option
     const selectedItemsLength =
-      formField.parentDependencies?.filter((dep) =>
+      formFieldExtra.parentDependencies.filter((dep) =>
         dep.childOptionIndices.includes(childOptionIndex),
       ).length ?? 0;
 
@@ -310,8 +345,7 @@ export default function OptionsField({
   }
 
   function isConnectedToAnotherField() {
-    const uniqueId = formField.uniqueId;
-    return allFormFields.some((field) => field.parentFieldId === uniqueId);
+    return allFormFields.some((field) => getFieldExtra(field).parentFieldId === formField.id);
   }
 
   function renderSelectBlock() {
@@ -321,10 +355,10 @@ export default function OptionsField({
         <Select
           label="חבר עם אפשרות"
           onChange={handleFieldConnected}
-          value={formField.parentFieldId ?? ""}>
+          value={formFieldExtra.parentFieldId ?? ""}>
           <MenuItem value="">אין חיבור</MenuItem>
           {getFilteredOptionsForSelection().map((option, optionIndex) => (
-            <MenuItem key={"option_" + optionIndex} value={option.uniqueId}>
+            <MenuItem key={`option_${optionIndex}`} value={option.id}>
               {option.displayName}
             </MenuItem>
           ))}
@@ -334,31 +368,33 @@ export default function OptionsField({
   }
 
   function handleSearchForm(event: React.ChangeEvent<HTMLInputElement>) {
-    const value = event.target.value;
-    setFormText(value);
+    setFormText(event.target.value);
   }
+
   function handleSearchField(event: React.ChangeEvent<HTMLInputElement>) {
-    const value = event.target.value;
-    setFieldText(value);
+    setFieldText(event.target.value);
   }
-  function handleSelectForm(event: React.SyntheticEvent, value: Form | null) {
+
+  function handleSelectForm(_event: React.SyntheticEvent, value: FormDto | null) {
     setSelectedForm(value);
     onChangeConnectedForm(value?.id ?? undefined);
     resetDefaultValues();
   }
-  function handleSelectField(event: React.SyntheticEvent, value: FormField | null) {
-    onChangeConnectedFormField(value?.uniqueId ?? "");
+
+  function handleSelectField(_event: React.SyntheticEvent, value: FormFieldDto | null) {
+    onChangeConnectedFormField(value?.id ?? "");
     resetDefaultValues();
   }
 
   const resetDefaultValues = () => {
     setDefaultValues([]);
-    onChangeDefaultValue?.(""); // Reset default value when form changes
+    onChangeDefaultValue?.("");
   };
 
   const handleResponsesChange = async () => {
     const formId = selectedForm?.id;
-    const connectedFieldId = formField.connectedFieldId;
+    const connectedFieldId = formFieldExtra.connectedFieldId;
+
     setLoadingOptions(true);
 
     if (!formId || !connectedFieldId) {
@@ -366,31 +402,31 @@ export default function OptionsField({
       return;
     }
 
-    // ✅ Use cached if available
     if (responsesCache.current[connectedFieldId]) {
-      setDefaultValues(responsesCache.current[formId]);
+      setDefaultValues(responsesCache.current[connectedFieldId]);
       setLoadingOptions(false);
       return;
     }
+
     try {
       const responses = await getResponses({ form_id: formId });
-      const selectedField = selectedForm?.fields.find(
-        (field) => field.uniqueId === connectedFieldId,
-      );
+      const selectedField =
+        selectedFormFields.find((field) => field.id === connectedFieldId) ?? null;
 
       if (!selectedField) return;
 
-      const responseValues = responses
-        .map(
-          (response) =>
-            response?.fieldValues?.find((item) => item.field_id === selectedField.uniqueId)?.value,
-        )
-        .filter(Boolean);
+      const responseValues = toStringArray(
+        responses
+          .map(
+            (response) =>
+              response?.fieldValues?.find((item) => item.fieldId === selectedField.id)?.value,
+          )
+          .filter(Boolean),
+      );
 
       const uniqueValues = Array.from(new Set(responseValues));
       responsesCache.current[connectedFieldId] = uniqueValues;
       setDefaultValues(uniqueValues);
-      selectedField.options = uniqueValues;
     } catch (err) {
       console.error(err);
     } finally {
@@ -399,10 +435,10 @@ export default function OptionsField({
   };
 
   useEffect(() => {
-    if (selectedForm && formField.connectedFieldId) {
+    if (selectedForm && formFieldExtra.connectedFieldId) {
       handleResponsesChange();
     }
-  }, [selectedForm?.id, formField.connectedFieldId]);
+  }, [selectedForm?.id, formFieldExtra.connectedFieldId]);
 
   function renderFormSelectBlock() {
     return (
@@ -431,28 +467,25 @@ export default function OptionsField({
             />
           )}
         />
+
         <Box sx={{ display: "flex", flexDirection: "row", gap: 1, alignItems: "center" }}>
           <Autocomplete
             disablePortal
             onChange={handleSelectField}
-            options={selectedForm?.fields ?? []}
+            options={selectedFormFields}
             value={
-              selectedForm?.fields.find((field) => field.uniqueId === formField.connectedFieldId) ??
+              selectedFormFields.find((field) => field.id === formFieldExtra.connectedFieldId) ??
               null
             }
-            filterOptions={(options, params) => {
-              // DRAGGED_ITEM_ID - without it the filter will not work because of type (typeId: FormFieldTypeId | typeof DRAGGED_ITEM_ID;) error
-              // It won't affect the functionality since it is not used as a real typeId
-              const filtered = options.filter((option) => {
-                return [
-                  FieldTypeIds.shortText,
-                  FieldTypeIds.longText,
-                  FieldTypeIds.number,
+            filterOptions={(options) => {
+              return options.filter((option) =>
+                [
+                  fieldType.ShortText,
+                  fieldType.LongText,
+                  fieldType.Number,
                   DRAGGED_ITEM_ID,
-                ].includes(option.typeId);
-              });
-
-              return filtered;
+                ].includes(option.fieldType as typeof option.fieldType | typeof DRAGGED_ITEM_ID),
+              );
             }}
             sx={{ width: 300 }}
             getOptionLabel={(option) => option.displayName}
@@ -536,37 +569,48 @@ export default function OptionsField({
     );
   }
 
-  const getAvailableOptions = (formField, selectedForm, defaultValues) => {
-    if (formField.options?.length === 1 && formField.options[0] === "") {
-      formField.options = [];
-    }
+  const getAvailableOptions = (
+    currentField: FormFieldDto,
+    currentSelectedForm: FormDto | null,
+    currentDefaultValues: string[],
+  ) => {
+    const currentFieldExtra = getFieldExtra(currentField);
+    const currentOptions =
+      currentFieldExtra.options?.length === 1 && currentFieldExtra.options[0] === ""
+        ? []
+        : (currentFieldExtra.options ?? []);
 
     const connectedField =
-      selectedForm?.fields.find((field) => field.uniqueId === formField.connectedFieldId) ?? null;
+      getFormFields(currentSelectedForm).find(
+        (field) => field.id === currentFieldExtra.connectedFieldId,
+      ) ?? null;
 
-    const options = connectedField?.options?.length
-      ? connectedField.options
-      : defaultValues?.length
-        ? defaultValues
-        : formField.options;
+    const connectedFieldOptions = getFieldExtra(connectedField).options ?? [];
 
-    return Array.from(new Set(options.filter((val) => val !== null && val !== undefined)));
+    const options = connectedFieldOptions.length
+      ? connectedFieldOptions
+      : currentDefaultValues.length
+        ? currentDefaultValues
+        : currentOptions;
+
+    return Array.from(new Set(options.filter((val): val is string => typeof val === "string")));
   };
 
-  const availableOptions = getAvailableOptions(formField, selectedForm, defaultValues) as string[];
+  const availableOptions = getAvailableOptions(formField, selectedForm, defaultValues);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {getBaseFieldElement()}
       {renderSelectBlock()}
       {isConnected && renderConnectedFieldBlock()}
+
       <Grid container direction="column" gap={1}>
         <label className="options-title">אפשרויות</label>
 
         <RadioGroup
           row={true}
           onChange={onChangeFieldConnectionType}
-          value={formField.connectionType ?? connectionTypes.manual}>
+          value={formFieldExtra.connectionType ?? connectionTypes.manual}>
           <FormControlLabel value={connectionTypes.manual} control={<Radio />} label="ידני" />
           <Box>
             <FormControlLabel
@@ -584,37 +628,38 @@ export default function OptionsField({
           </Box>
         </RadioGroup>
 
-        {formField.connectionType === connectionTypes.form
+        {formFieldExtra.connectionType === connectionTypes.form
           ? renderFormSelectBlock()
-          : formField.options?.map((option, optionIndex) => {
-            // const isValid = isOptionValid(option);
-            return (
-              <Grid
-                sx={{ flexWrap: "nowrap" }}
-                container
-                key={"option_" + optionIndex}
-                direction="row"
-                gap={2}
-                alignItems="center">
-                <BaseFormInput
-                  className={
-                    isOptionValid(option) ? "formField-textfield" : "formField-textfield-invalid"
-                  }
-                  value={formField.options && formField.options[optionIndex]}
-                  name="title"
-                  placeholder={"הזנת אפשרות " + (optionIndex + 1 || 0)}
-                  onChange={(e) => onChange(e, optionIndex)}
-                  onBlur={onBlur}
-                  InputLabelProps={{ shrink: false }}
-                />
-                <Close style={{ cursor: "pointer" }} onClick={(e) => onClose(e, optionIndex)} />
-                {formField.parentFieldId && renderOptionAccordionBlock(optionIndex)}
-              </Grid>
-            );
-          })}
+          : (formFieldExtra.options ?? []).map((option, optionIndex) => {
+              return (
+                <Grid
+                  sx={{ flexWrap: "nowrap" }}
+                  container
+                  key={`option_${optionIndex}`}
+                  direction="row"
+                  gap={2}
+                  alignItems="center">
+                  <BaseFormInput
+                    className={
+                      isOptionValid(option) ? "formField-textfield" : "formField-textfield-invalid"
+                    }
+                    value={(formFieldExtra.options ?? [])[optionIndex] ?? ""}
+                    name="title"
+                    placeholder={`הזנת אפשרות ${optionIndex + 1 || 0}`}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e, optionIndex)}
+                    onBlur={onBlur}
+                    InputLabelProps={{ shrink: false }}
+                  />
+                  <Close style={{ cursor: "pointer" }} onClick={(e) => onClose(e, optionIndex)} />
+                  {formFieldExtra.parentFieldId && renderOptionAccordionBlock(optionIndex)}
+                </Grid>
+              );
+            })}
+
         {error && <ErrorMessage msg={error} />}
       </Grid>
-      {formField.connectionType !== connectionTypes.form && (
+
+      {formFieldExtra.connectionType !== connectionTypes.form && (
         <Button
           variant="text"
           onClick={onAddOption}
@@ -627,8 +672,7 @@ export default function OptionsField({
         </Button>
       )}
 
-      {Array.isArray(formField.options) &&
-        formField.options.length > 0 &&
+      {availableOptions.length > 0 &&
         (loadingOptions ? (
           <Tooltip title={"טוען אפשרויות"}>
             <Box sx={{ width: "200px", padding: "10px 0", mt: 2 }}>
@@ -639,7 +683,7 @@ export default function OptionsField({
           <DefaultValueAutocomplete
             options={availableOptions}
             defaultValue={defaultValue ? defaultValue : ""}
-            onChange={onChangeDefaultValue ?? (() => { })}
+            onChange={onChangeDefaultValue ?? (() => {})}
           />
         ))}
 
@@ -647,7 +691,7 @@ export default function OptionsField({
         label="בחירה מרובה"
         control={
           <Checkbox
-            checked={formField.multiSelect}
+            checked={Boolean(formFieldExtra.multiSelect)}
             style={{
               color: theme.palette.primary.dark,
             }}

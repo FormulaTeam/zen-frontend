@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Box,
   FormControl,
@@ -9,15 +10,22 @@ import {
   IconButton,
 } from "@mui/material";
 import { Info } from "@mui/icons-material";
-import { FormField } from "../../utils/interfaces";
 import { CheckboxInitialValType } from "../../types/enums/formFields.enums";
+import { FormFieldDto } from "../../types/shared";
+
+type CheckBoxFieldExtra = {
+  initialValType?: unknown;
+};
 
 interface CheckBoxSelectProps {
-  formField: FormField;
-  setFormFields: (newFormFields: FormField[]) => void;
+  formField: FormFieldDto;
+  setFormFields: React.Dispatch<React.SetStateAction<FormFieldDto[]>>;
   index: number;
-  formFields: FormField[];
+  formFields: FormFieldDto[];
 }
+
+const getFieldExtra = (field: FormFieldDto): CheckBoxFieldExtra =>
+  (field.extra as CheckBoxFieldExtra | undefined) ?? {};
 
 const CheckBoxSelect: React.FC<CheckBoxSelectProps> = ({
   formField,
@@ -26,12 +34,26 @@ const CheckBoxSelect: React.FC<CheckBoxSelectProps> = ({
   formFields,
 }: CheckBoxSelectProps) => {
   const handleChange = (event: SelectChangeEvent) => {
-    const val = event.target?.value ?? "";
-    const newFormFields = [...formFields];
-    const item = newFormFields.find((i) => i.index === index);
-    if (item) item.initialValType = val;
+    const val = event.target.value ?? "";
+
+    const newFormFields = formFields.map((field) =>
+      field.index === index
+        ? {
+            ...field,
+            extra: {
+              ...getFieldExtra(field),
+              initialValType: val,
+            },
+          }
+        : field,
+    );
+
     setFormFields(newFormFields);
   };
+
+  const initialValType = getFieldExtra(formField).initialValType;
+  const selectedValue =
+    typeof initialValType === "string" ? initialValType : CheckboxInitialValType.EMPTY;
 
   return (
     <FormControl sx={{ width: 180 }} margin="normal">
@@ -45,10 +67,7 @@ const CheckBoxSelect: React.FC<CheckBoxSelectProps> = ({
           </IconButton>
         </Tooltip>
       </Box>
-      <Select
-        size="small"
-        value={formField.initialValType || CheckboxInitialValType.EMPTY}
-        onChange={handleChange}>
+      <Select size="small" value={selectedValue} onChange={handleChange}>
         <MenuItem value={CheckboxInitialValType.CHECKED}>כן</MenuItem>
         <MenuItem value={CheckboxInitialValType.EMPTY}>לא</MenuItem>
       </Select>

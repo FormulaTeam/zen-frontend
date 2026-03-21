@@ -1,5 +1,15 @@
-import { FormField, ConditionGroup } from "../utils/interfaces";
+import { ConditionGroup } from "../utils/interfaces";
 import moment from "moment";
+import { FormFieldDto } from "../types/shared";
+
+type SectionConditionFieldExtra = {
+  sectionId?: string;
+  conditions?: ConditionGroup[];
+};
+
+type EditorFormField = FormFieldDto & {
+  extra?: SectionConditionFieldExtra;
+};
 
 /**
  * Utility functions for managing automatic condition inheritance in form sections
@@ -8,6 +18,20 @@ import moment from "moment";
 // ————————————————————————————————————————————————————————————
 // Helpers
 // ————————————————————————————————————————————————————————————
+
+const getFieldExtra = (field: EditorFormField): SectionConditionFieldExtra =>
+  (field.extra as SectionConditionFieldExtra | undefined) ?? {};
+
+const updateFieldExtra = (
+  field: EditorFormField,
+  patch: Partial<SectionConditionFieldExtra>,
+): EditorFormField => ({
+  ...field,
+  extra: {
+    ...getFieldExtra(field),
+    ...patch,
+  },
+});
 
 // Normalize a section id by stripping a known prefix, if present
 const normalizeSectionId = (id?: string): string | undefined => id?.replace(/^formFields_/, "");
@@ -34,7 +58,6 @@ const stableValueString = (value: unknown): string => {
     const entries = keys.map((key) => `${JSON.stringify(key)}:${stableValueString(obj[key])}`);
     return `{${entries.join(",")}}`;
   }
-  // Functions/undefined/symbols etc - fallback
   try {
     return JSON.stringify(value) ?? String(value);
   } catch {
@@ -126,14 +149,12 @@ const areGroupArraysEqual = (groupsA: ConditionGroup[], groupsB: ConditionGroup[
   const mappedGroupsA = mapById(groupsA);
   const mappedGroupsB = mapById(groupsB);
 
-  // Compare by ids first
   if (mappedGroupsA.idMap.size !== mappedGroupsB.idMap.size) return false;
   for (const [id, groupA] of mappedGroupsA.idMap) {
     const groupB = mappedGroupsB.idMap.get(id);
     if (!groupB || !areConditionGroupsEqual(groupA, groupB)) return false;
   }
 
-  // Compare no-id groups by multiset of canonical signatures
   const groupSignature = (group: ConditionGroup) => {
     const normalized = normalizeGroupForCompare(group);
     const formattedConditions = normalized.conditions
@@ -150,7 +171,9 @@ const areGroupArraysEqual = (groupsA: ConditionGroup[], groupsB: ConditionGroup[
   const aSignatures = mappedGroupsA.noId.map(groupSignature).sort();
   const bSignatures = mappedGroupsB.noId.map(groupSignature).sort();
   if (aSignatures.length !== bSignatures.length) return false;
-  for (let i = 0; i < aSignatures.length; i++) if (aSignatures[i] !== bSignatures[i]) return false;
+  for (let i = 0; i < aSignatures.length; i++) {
+    if (aSignatures[i] !== bSignatures[i]) return false;
+  }
   return true;
 };
 
@@ -177,6 +200,7 @@ const mergeConditionGroupsDedup = (
 ): ConditionGroup[] => {
   const processedSignatures = new Set<string>();
   const merged: ConditionGroup[] = [];
+
   const signatureOfGroup = (group: ConditionGroup) => {
     const normalized = normalizeGroupForCompare(group);
     const conditionsSignature = normalized.conditions
@@ -191,12 +215,14 @@ const mergeConditionGroupsDedup = (
       normalized.parentLogicalOperator ?? "_"
     }|${conditionsSignature}`;
   };
+
   const addIfNotSeen = (group: ConditionGroup) => {
     const signature = signatureOfGroup(group);
     if (processedSignatures.has(signature)) return;
     processedSignatures.add(signature);
     merged.push(group);
   };
+
   existing.forEach(addIfNotSeen);
   incoming.forEach(addIfNotSeen);
   return merged;
@@ -204,16 +230,13 @@ const mergeConditionGroupsDedup = (
 
 /**
  * Checks if all fields in a section have the same conditions
- * @param fields - Array of form fields
- * @param sectionId - Section ID to check
- * @returns The common conditions if all fields have the same conditions, null otherwise
  */
 export const getSectionWideConditions = (
-  fields: FormField[],
+  fields: EditorFormField[],
   sectionId: string,
 ): ConditionGroup[] | null => {
   const fieldsInSection = fields.filter((field) => {
-    const fieldSectionId = normalizeSectionId(field.sectionId);
+    const fieldSectionId = normalizeSectionId(getFieldExtra(field).sectionId);
     const targetSectionId = normalizeSectionId(sectionId);
     return fieldSectionId === targetSectionId;
   });
@@ -222,16 +245,14 @@ export const getSectionWideConditions = (
     return null;
   }
 
-  // Get conditions from the first field
-  const firstFieldConditions = fieldsInSection[0]?.conditions;
+  const firstFieldConditions = getFieldExtra(fieldsInSection[0]).conditions;
 
   if (!firstFieldConditions || firstFieldConditions.length === 0) {
     return null;
   }
 
-  // Check if all other fields have the same conditions (order-insensitive, deep compare)
   const allFieldsHaveSameConditions = fieldsInSection.slice(1).every((field) => {
-    const fieldConditions = field.conditions ?? [];
+    const fieldConditions = getFieldExtra(field).conditions ?? [];
     return areGroupArraysEqual(firstFieldConditions, fieldConditions);
   });
 
@@ -240,110 +261,93 @@ export const getSectionWideConditions = (
 
 /**
  * Applies conditions to a field
- * @param field - The field to apply conditions to
- * @param conditions - The conditions to apply
- * @returns Updated field with conditions applied
  */
 export const applyConditionsToField = (
-  field: FormField,
+  field: EditorFormField,
   conditions: ConditionGroup[],
-): FormField => {
-  return {
-    ...field,
+): EditorFormField => {
+  return updateFieldExtra(field, {
     conditions: conditions.length > 0 ? deepCloneConditionGroups(conditions) : undefined,
-  };
+  });
 };
 
 /**
  * Removes specific conditions from a field based on condition set ID
- * @param field - The field to remove conditions from
- * @param conditionSetId - The condition set ID to remove
- * @returns Updated field with specified conditions removed
  */
-export const removeConditionsFromField = (field: FormField, conditionSetId: string): FormField => {
-  if (!field.conditions) {
+export const removeConditionsFromField = (
+  field: EditorFormField,
+  conditionSetId: string,
+): EditorFormField => {
+  const currentConditions = getFieldExtra(field).conditions;
+
+  if (!currentConditions) {
     return field;
   }
 
-  const remainingConditions = field.conditions.filter(
+  const remainingConditions = currentConditions.filter(
     (group) => group.conditionSetId !== conditionSetId,
   );
 
-  return {
-    ...field,
+  return updateFieldExtra(field, {
     conditions: remainingConditions.length > 0 ? remainingConditions : undefined,
-  };
+  });
 };
 
 /**
  * Checks if a field should inherit section conditions when added/moved to a section
- * @param formFields - All form fields
- * @param targetSectionId - The section the field is being added/moved to
- * @param fieldToCheck - The field being added/moved
- * @returns Conditions to apply if section has uniform conditions, null otherwise
  */
 export const shouldInheritSectionConditions = (
-  formFields: FormField[],
+  formFields: EditorFormField[],
   targetSectionId: string,
-  fieldToCheck: FormField,
+  fieldToCheck: EditorFormField,
 ): ConditionGroup[] | null => {
-  // Get all fields in the target section except the field being moved/added
   const otherFieldsInSection = formFields.filter((field) => {
-    const fieldSectionId = normalizeSectionId(field.sectionId);
+    const fieldSectionId = normalizeSectionId(getFieldExtra(field).sectionId);
     const cleanTargetSectionId = normalizeSectionId(targetSectionId);
-    return fieldSectionId === cleanTargetSectionId && field.uniqueId !== fieldToCheck.uniqueId;
+    return fieldSectionId === cleanTargetSectionId && field.id !== fieldToCheck.id;
   });
 
   if (otherFieldsInSection.length === 0) {
     return null;
   }
 
-  // Check if all existing fields in the section have the same conditions
   return getSectionWideConditions(otherFieldsInSection, targetSectionId);
 };
 
 /**
  * Checks if a field should have its conditions removed when moved from a section
- * @param formFields - All form fields
- * @param sourceSectionId - The section the field is being moved from
- * @param fieldToCheck - The field being moved
- * @returns Array of condition set IDs to remove, empty array if no removal needed
  */
 export const shouldRemoveConditionsFromField = (
-  formFields: FormField[],
+  formFields: EditorFormField[],
   sourceSectionId: string,
-  fieldToCheck: FormField,
+  fieldToCheck: EditorFormField,
 ): string[] => {
-  if (!fieldToCheck.conditions || fieldToCheck.conditions.length === 0) {
+  const fieldConditions = getFieldExtra(fieldToCheck).conditions;
+
+  if (!fieldConditions || fieldConditions.length === 0) {
     return [];
   }
 
-  // Get all OTHER fields that remain in the source section
   const remainingFieldsInSection = formFields.filter((field) => {
-    const fieldSectionId = normalizeSectionId(field.sectionId);
+    const fieldSectionId = normalizeSectionId(getFieldExtra(field).sectionId);
     const cleanSourceSectionId = normalizeSectionId(sourceSectionId);
-    return fieldSectionId === cleanSourceSectionId && field.uniqueId !== fieldToCheck.uniqueId;
+    return fieldSectionId === cleanSourceSectionId && field.id !== fieldToCheck.id;
   });
 
-  // If no other fields remain in the section, don't remove conditions
   if (remainingFieldsInSection.length === 0) {
     return [];
   }
 
-  // Check if all remaining fields have the same conditions as the field being moved
   const sectionConditions = getSectionWideConditions(remainingFieldsInSection, sourceSectionId);
 
   if (!sectionConditions) {
     return [];
   }
 
-  // Find which condition sets from the field match the section-wide conditions
   const conditionSetsToRemove: string[] = [];
 
-  fieldToCheck.conditions.forEach((fieldConditionGroup) => {
+  fieldConditions.forEach((fieldConditionGroup) => {
     const matchingGroup = sectionConditions.find((sectionGroup) => {
-      // Require the same conditionSetId (preserves current semantics),
-      // but compare contents order-insensitively
       if (fieldConditionGroup.conditionSetId !== sectionGroup.conditionSetId) return false;
       return areConditionGroupsEqual(fieldConditionGroup, sectionGroup);
     });
@@ -358,16 +362,12 @@ export const shouldRemoveConditionsFromField = (
 
 /**
  * Handles automatic condition management when a field is added to a section
- * @param formFields - All form fields
- * @param newField - The field being added
- * @param targetSectionId - The section the field is being added to
- * @returns Updated field with conditions applied if needed
  */
 export const handleFieldAddedToSection = (
-  formFields: FormField[],
-  newField: FormField,
+  formFields: EditorFormField[],
+  newField: EditorFormField,
   targetSectionId: string,
-): FormField => {
+): EditorFormField => {
   const conditionsToInherit = shouldInheritSectionConditions(formFields, targetSectionId, newField);
 
   if (conditionsToInherit) {
@@ -379,21 +379,15 @@ export const handleFieldAddedToSection = (
 
 /**
  * Handles automatic condition management when a field is moved between sections
- * @param formFields - All form fields
- * @param fieldToMove - The field being moved
- * @param sourceSectionId - The section the field is being moved from
- * @param targetSectionId - The section the field is being moved to
- * @returns Updated field with conditions managed appropriately
  */
 export const handleFieldMovedBetweenSections = (
-  formFields: FormField[],
-  fieldToMove: FormField,
+  formFields: EditorFormField[],
+  fieldToMove: EditorFormField,
   sourceSectionId: string,
   targetSectionId: string,
-): FormField => {
+): EditorFormField => {
   let updatedField = { ...fieldToMove };
 
-  // Remove section-wide conditions from source section if applicable
   const conditionSetsToRemove = shouldRemoveConditionsFromField(
     formFields,
     sourceSectionId,
@@ -404,7 +398,6 @@ export const handleFieldMovedBetweenSections = (
     updatedField = removeConditionsFromField(updatedField, conditionSetId);
   });
 
-  // Apply section-wide conditions from target section if applicable
   const conditionsToInherit = shouldInheritSectionConditions(
     formFields,
     targetSectionId,
@@ -412,7 +405,7 @@ export const handleFieldMovedBetweenSections = (
   );
 
   if (conditionsToInherit) {
-    const existingConditions = updatedField.conditions || [];
+    const existingConditions = getFieldExtra(updatedField).conditions || [];
     const merged = mergeConditionGroupsDedup(existingConditions, conditionsToInherit);
     updatedField = applyConditionsToField(updatedField, merged);
   }

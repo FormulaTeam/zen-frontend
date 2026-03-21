@@ -62,7 +62,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     responsSections,
     collapsedSections,
     toggleSectionCollapse,
-  } = useResponseState(formId, id, viewMode, copyMode, roles, user, isSuperAdmin ?? undefined);
+  } = useResponseState(formId, id, viewMode, copyMode, undefined, user, isSuperAdmin ?? undefined);
 
   const { saveResponse, isSaving } = useResponseSave(form, response, user, undefined, copyMode);
 

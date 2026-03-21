@@ -1,15 +1,28 @@
-import { conditionDisplayModes, FormField } from "../../utils/interfaces";
+import { conditionDisplayModes } from "../../utils/interfaces";
 import { texts } from "../../utils/texts";
 import { Close } from "@mui/icons-material";
 import ConditionList from "./ConditionList";
 import EditCondition from "./EditCondition";
 import { useConditionalPopup } from "../../hooks/useConditionalPopup";
 import { StyledDialog, StyledDialogTitle, CloseButton, StyledDialogContent } from "./styled";
+import { FormFieldDto } from "../../types/shared";
+
+type ConditionalFieldExtra = {
+  conditions?: any[];
+  sectionId?: string;
+  sectionOrder?: number;
+  sectionName?: string;
+  sectionDescription?: string;
+};
+
+type ConditionalFormField = FormFieldDto & {
+  extra?: ConditionalFieldExtra;
+};
 
 interface ConditionalPopupProps {
-  formFields: FormField[];
+  formFields: ConditionalFormField[];
   onClose?: () => void;
-  onSave?: (updatedFields: FormField[]) => void;
+  onSave?: (updatedFields: ConditionalFormField[]) => void;
 }
 
 const ConditionalPopup: React.FC<ConditionalPopupProps> = ({
@@ -56,4 +69,5 @@ const ConditionalPopup: React.FC<ConditionalPopupProps> = ({
     </StyledDialog>
   );
 };
+
 export default ConditionalPopup;

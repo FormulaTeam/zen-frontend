@@ -6,32 +6,40 @@ import {
   Radio,
   SelectChangeEvent,
   Tooltip,
-  useTheme,
 } from "@mui/material";
-import { FormField } from "../../utils/interfaces";
 import { Info } from "@mui/icons-material";
+import { FormFieldDto } from "../../types/shared";
 
-type Props = {
-  formField: FormField;
-  setFormFields: (newFormFields: FormField[]) => void;
-  index: number;
-  formFields: FormField[];
+type CoordinateFieldExtra = {
+  coordinateType?: string;
 };
 
-export default function CoordinateField({
-  formField,
-  setFormFields,
-  index,
-  formFields,
-}: Props) {
-  const theme = useTheme();
+type Props = {
+  formField: FormFieldDto;
+  setFormFields: React.Dispatch<React.SetStateAction<FormFieldDto[]>>;
+  index: number;
+  formFields: FormFieldDto[];
+};
 
+const getFieldExtra = (field: FormFieldDto): CoordinateFieldExtra =>
+  (field.extra as CoordinateFieldExtra | undefined) ?? {};
+
+export default function CoordinateField({ formField, setFormFields, index, formFields }: Props) {
   function handleTypeChange(event: SelectChangeEvent) {
-    const newFormFields = [...formFields];
-    const currentField = newFormFields.find((i) => i.index === index);
-    if (currentField) {
-      currentField.coordinateType = event.target.value;
-    }
+    const value = event.target.value;
+
+    const newFormFields = formFields.map((field) =>
+      field.index === index
+        ? {
+            ...field,
+            extra: {
+              ...getFieldExtra(field),
+              coordinateType: value,
+            },
+          }
+        : field,
+    );
+
     setFormFields(newFormFields);
   }
 
@@ -42,9 +50,9 @@ export default function CoordinateField({
           <RadioGroup
             row={true}
             onChange={handleTypeChange}
-            value={formField.coordinateType ?? "UTM"}>
+            value={getFieldExtra(formField).coordinateType ?? "UTM"}>
             <FormControlLabel
-              value={"UTM"}
+              value="UTM"
               control={<Radio />}
               label={
                 <>
@@ -57,7 +65,7 @@ export default function CoordinateField({
             />
             <Box>
               <FormControlLabel
-                value={"WKT"}
+                value="WKT"
                 control={<Radio />}
                 label={
                   <>

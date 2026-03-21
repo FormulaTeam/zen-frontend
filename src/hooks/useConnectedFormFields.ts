@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { FormField, connectionTypes, ResponseFieldValue, ResponseForm } from "../utils/interfaces";
 import { getResponses } from "../api";
 import { v4 as uuidv4 } from "uuid";
+import { ResponseDto, ResponseFieldValueDto } from "../types/shared";
 
 interface UseConnectedFormOptionsProps {
   formFields: FormField[];
@@ -77,7 +78,7 @@ export const useConnectedFormFields = ({
    * Processes responses and updates field options
    */
   const processResponses = (
-    responses: ResponseForm[][],
+    responses: ResponseDto[][],
     connectedFields: FormField[],
   ): Record<string, ResponseFieldValue[]> => {
     const newFieldOptions: Record<string, ResponseFieldValue[]> = {};
@@ -87,7 +88,7 @@ export const useConnectedFormFields = ({
         loadedFieldsRef.current.add(field.uniqueId);
 
         const options = response
-          .map((res: ResponseForm) => res.fieldValues?.find((res: ResponseFieldValue) => res.field_id === field.connectedFieldId))
+          .map((res: ResponseDto) => res.fieldValues?.find((res: ResponseFieldValueDto) => res.fieldId === field.connectedFieldId))
           .filter(Boolean);
 
         if (options && options.length > 0) {

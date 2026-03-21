@@ -2,10 +2,10 @@ import React from "react";
 import { Typography, useTheme, Button } from "@mui/material";
 import { StyledListHeader, FormInfo, FormTitleBox, Img, StrongText, HeaderWrapper } from "./styled";
 import formX from "../../images/form_x.png";
-import { Form } from "../../utils/interfaces";
+import { FormDto } from "../../types/shared";
 
 interface DeletedFormHeaderProps {
-  form: Form;
+  form: FormDto;
   handleRestoreForm: (formId: number) => Promise<void>;
   responses?: any[];
 }

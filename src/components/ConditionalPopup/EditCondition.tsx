@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ConditionGroup, FormField, ConditionUtils } from "../../utils/interfaces";
+import { ConditionGroup, ConditionUtils } from "../../utils/interfaces";
 import AffectedTargetsSection from "./AffectedTargetsSection";
 import ConditionGroupComponent from "./ConditionGroup";
 import ConditionsPreview from "./ConditionsPreview";
@@ -25,14 +25,27 @@ import Tooltip from "@mui/material/Tooltip";
 import AffectedTargetsDescription from "./AffectedTargetsDescription";
 import { Typography, IconButton, ClickAwayListener, Box } from "@mui/material";
 import BaseFormInput from "../BaseFormInput/BaseFormInput";
+import { FormFieldDto } from "../../types/shared";
+
+type ConditionalFieldExtra = {
+  conditions?: ConditionGroup[];
+  sectionId?: string;
+  sectionOrder?: number;
+  sectionName?: string;
+  sectionDescription?: string;
+};
+
+type ConditionalFormField = FormFieldDto & {
+  extra?: ConditionalFieldExtra;
+};
 
 interface EditConditionProps {
-  formFields: FormField[];
+  formFields: ConditionalFormField[];
   onClose: () => void;
-  onSave?: (updatedFields: FormField[]) => void;
+  onSave?: (updatedFields: ConditionalFormField[]) => void;
   existingConditions?: {
     conditions: ConditionGroup[];
-    affectedFields: FormField[];
+    affectedFields: ConditionalFormField[];
   } | null;
   index?: number;
 }
@@ -68,7 +81,6 @@ const EditCondition: React.FC<EditConditionProps> = ({
     onClose,
   });
 
-  // Initialize draft name when conditionsRoot changes
   useEffect(() => {
     setDraftName(conditionsRoot.name || "");
   }, [conditionsRoot.name]);
@@ -99,7 +111,6 @@ const EditCondition: React.FC<EditConditionProps> = ({
     return "התנייה חדשה";
   };
 
-  // Get available fields for condition selection (excluding affected fields)
   const availableFieldsForConditions = ConditionUtils.getAvailableFields(
     formFields,
     conditionsRoot,
@@ -108,7 +119,6 @@ const EditCondition: React.FC<EditConditionProps> = ({
   return (
     <EditConditionContainer>
       <EditConditionTitle variant="h6">
-        {/* Inline Editable Condition Name */}
         <ClickAwayListener onClickAway={handleClickAway}>
           <Box sx={{ display: "inline-flex", alignItems: "center", mb: 2, gap: 1 }}>
             {isEditingName ? (
@@ -147,11 +157,8 @@ const EditCondition: React.FC<EditConditionProps> = ({
       </EditConditionTitle>
 
       <MainEditConditionContainer>
-        {/* Main Content Area - Two Column Layout */}
         <EditConditionMainLayout>
-          {/* Left Side - Conditions Builder */}
           <EditConditionLeftPanel>
-            {/* Conditions Groups Container with Scroll */}
             <EditConditionLeftScrollContainer>
               <SectionTitle variant="subtitle1">תנאים להצגה</SectionTitle>
               {conditionsRoot.groups.map((group, groupIndex) => (
@@ -172,10 +179,8 @@ const EditCondition: React.FC<EditConditionProps> = ({
                 />
               ))}
             </EditConditionLeftScrollContainer>
-
-            {/* Main controls */}
           </EditConditionLeftPanel>
-          {/* Right Side - Affected Targets */}
+
           <EditConditionRightPanel>
             <EditConditionScrollContainer>
               <SectionTitle variant="subtitle1">
@@ -194,7 +199,6 @@ const EditCondition: React.FC<EditConditionProps> = ({
           </EditConditionRightPanel>
         </EditConditionMainLayout>
 
-        {/* Preview Section - Bottom */}
         <EditConditionPreviewContainer>
           <ConditionsPreview conditionsRoot={conditionsRoot} formFields={formFields} />
         </EditConditionPreviewContainer>

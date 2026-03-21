@@ -1,12 +1,24 @@
 import { useCallback, useState } from "react";
-import { FormField, Section } from "../../utils/interfaces";
+import { Section } from "../../utils/interfaces";
 import { texts } from "../../utils/texts";
 import { DraggableLocation } from "@hello-pangea/dnd";
+import { FormFieldDto } from "../../types/shared";
+
+type SectionFieldExtra = {
+  sectionId?: string;
+  sectionOrder?: number;
+  sectionName?: string;
+  sectionDescription?: string;
+};
+
+type EditorFormField = FormFieldDto & {
+  extra?: SectionFieldExtra;
+};
 
 interface UseSectionManagementProps {
   initialSections?: Section[];
-  formFields: FormField[];
-  setFormFields: React.Dispatch<React.SetStateAction<FormField[]>>;
+  formFields: EditorFormField[];
+  setFormFields: React.Dispatch<React.SetStateAction<EditorFormField[]>>;
   validateUnsavedChanges: () => void;
   setAlertMsgs: React.Dispatch<React.SetStateAction<string[]>>;
   setShowAlertMsg: (show: boolean) => void;
@@ -14,15 +26,29 @@ interface UseSectionManagementProps {
   setShowButtonsOnPopup: (show: boolean) => void;
 }
 
+const getFieldExtra = (field: EditorFormField): SectionFieldExtra =>
+  (field.extra as SectionFieldExtra | undefined) ?? {};
+
+const updateFieldExtra = (
+  field: EditorFormField,
+  patch: Partial<SectionFieldExtra>,
+): EditorFormField => ({
+  ...field,
+  extra: {
+    ...getFieldExtra(field),
+    ...patch,
+  },
+});
+
 export function useSectionManagement({
-                                       formFields,
-                                       setFormFields,
-                                       validateUnsavedChanges,
-                                       setAlertMsgs,
-                                       setShowAlertMsg,
-                                       setCurrentSectionId,
-                                       setShowButtonsOnPopup,
-                                     }: UseSectionManagementProps) {
+  formFields,
+  setFormFields,
+  validateUnsavedChanges,
+  setAlertMsgs,
+  setShowAlertMsg,
+  setCurrentSectionId,
+  setShowButtonsOnPopup,
+}: UseSectionManagementProps) {
   const [sections, setSections] = useState<Section[]>([]);
 
   const upsertSection = (newSection: Section, prevSections: Section[]) => {
@@ -48,7 +74,7 @@ export function useSectionManagement({
       setSections((prev) => prev.filter((s) => s.id !== id));
 
       setFormFields((prev) => {
-        const updatedFields = prev.filter((field) => field.sectionId !== id);
+        const updatedFields = prev.filter((field) => getFieldExtra(field).sectionId !== id);
         validateUnsavedChanges();
         return updatedFields;
       });
@@ -57,7 +83,7 @@ export function useSectionManagement({
       setShowAlertMsg(false);
       setCurrentSectionId("");
     },
-    [setFormFields, setAlertMsgs, setShowAlertMsg, setCurrentSectionId],
+    [setFormFields, validateUnsavedChanges, setAlertMsgs, setShowAlertMsg, setCurrentSectionId],
   );
 
   const renameSection = useCallback(
@@ -77,7 +103,9 @@ export function useSectionManagement({
 
       setFormFields((prev) => {
         const updatedFields = prev.map((field) =>
-          field.sectionId === id ? { ...field, sectionName: trimmedName } : field,
+          getFieldExtra(field).sectionId === id
+            ? updateFieldExtra(field, { sectionName: trimmedName })
+            : field,
         );
         validateUnsavedChanges();
         return updatedFields;
@@ -99,13 +127,15 @@ export function useSectionManagement({
 
       setFormFields((prev) => {
         const updatedFields = prev.map((field) =>
-          field.sectionId === id ? { ...field, sectionDescription: desc } : field,
+          getFieldExtra(field).sectionId === id
+            ? updateFieldExtra(field, { sectionDescription: desc })
+            : field,
         );
         validateUnsavedChanges();
         return updatedFields;
       });
     },
-    [setFormFields],
+    [setFormFields, validateUnsavedChanges],
   );
 
   const toggleCollapse = useCallback((id: string) => {
@@ -115,18 +145,19 @@ export function useSectionManagement({
     });
   }, []);
 
-  const orderSections = (fields: FormField[]) => {
+  const orderSections = (fields: EditorFormField[]) => {
     const sectionOrderMap = new Map<string, number>();
+
     fields.forEach((field) => {
-      if (field.sectionId && !sectionOrderMap.has(field.sectionId)) {
-        sectionOrderMap.set(field.sectionId, field.sectionOrder || 0);
+      const extra = getFieldExtra(field);
+      if (extra.sectionId && !sectionOrderMap.has(extra.sectionId)) {
+        sectionOrderMap.set(extra.sectionId, extra.sectionOrder || 0);
       }
     });
 
     setSections((prev) => {
-      let sectionMap = new Map<string, Section>();
+      const sectionMap = new Map<string, Section>();
 
-      // Start from current sections
       prev.forEach((section) => {
         sectionMap.set(section.id, {
           ...section,
@@ -134,15 +165,17 @@ export function useSectionManagement({
         });
       });
 
-      // Add or update from fields (overwrite if already exists)
       fields.forEach((field) => {
-        if (!field.sectionId) return;
-        sectionMap.set(field.sectionId, {
-          id: field.sectionId,
-          name: field.sectionName || texts.heb.undefinedSection,
-          collapsed: sectionMap.get(field.sectionId)?.collapsed ?? false,
-          order: sectionOrderMap.get(field.sectionId) ?? 0,
-          description: sectionMap.get(field.sectionId)?.description ?? "",
+        const extra = getFieldExtra(field);
+        if (!extra.sectionId) return;
+
+        sectionMap.set(extra.sectionId, {
+          id: extra.sectionId,
+          name: extra.sectionName || texts.heb.undefinedSection,
+          collapsed: sectionMap.get(extra.sectionId)?.collapsed ?? false,
+          order: sectionOrderMap.get(extra.sectionId) ?? 0,
+          description:
+            sectionMap.get(extra.sectionId)?.description ?? extra.sectionDescription ?? "",
         });
       });
 
@@ -153,11 +186,16 @@ export function useSectionManagement({
   const anounceRemoveSection = useCallback(
     (sectionId: string) => {
       setShowAlertMsg(true);
+
       if (sections.length === 1) {
         setAlertMsgs((prev) => [...prev, texts.heb.cantRemoveLastSection]);
         return;
       }
-      const relatedFieldsCount = formFields.filter((field) => field.sectionId === sectionId).length;
+
+      const relatedFieldsCount = formFields.filter(
+        (field) => getFieldExtra(field).sectionId === sectionId,
+      ).length;
+
       if (relatedFieldsCount > 0) {
         setAlertMsgs((prev) => [...prev, texts.heb.removeSectionAlert]);
         setCurrentSectionId(sectionId);
@@ -165,25 +203,35 @@ export function useSectionManagement({
         removeSection(sectionId);
       }
     },
-    [sections.length, formFields, setAlertMsgs, setShowAlertMsg, setCurrentSectionId],
+    [
+      sections.length,
+      formFields,
+      setAlertMsgs,
+      setShowAlertMsg,
+      setCurrentSectionId,
+      removeSection,
+    ],
   );
 
   const moveSection = (source: DraggableLocation, destination: DraggableLocation) => {
     const sourceIndex = source.index;
     const destinationIndex = destination.index;
 
-    const uniqueSectionOrders = [...new Set(formFields.map((f) => f.sectionOrder ?? 0))].sort(
-      (a, b) => a - b,
-    );
+    const uniqueSectionOrders = [
+      ...new Set(formFields.map((f) => getFieldExtra(f).sectionOrder ?? 0)),
+    ].sort((a, b) => a - b);
 
     const updatedSectionOrders = [...uniqueSectionOrders];
     const [moved] = updatedSectionOrders.splice(sourceIndex, 1);
     updatedSectionOrders.splice(destinationIndex, 0, moved);
 
     const updatedFormFields = formFields.map((field) => {
-      const currentOrder = field.sectionOrder ?? 0;
+      const currentOrder = getFieldExtra(field).sectionOrder ?? 0;
       const newOrder = updatedSectionOrders.indexOf(currentOrder);
-      return { ...field, sectionOrder: newOrder };
+
+      return updateFieldExtra(field, {
+        sectionOrder: newOrder,
+      });
     });
 
     setFormFields(updatedFormFields);

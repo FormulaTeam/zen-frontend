@@ -1,46 +1,52 @@
-import apiClient from "./config";
-import { User } from "../utils/interfaces";
-import { useFetch } from "../utils/useFetch";
 import { UseQueryResult } from "@tanstack/react-query";
-import { z } from "zod";
-import { UserPersonalSchema, UserSchema, userType } from "formula-gear";
+import { userType } from "formula-gear";
 
-export type UserDto = z.infer<typeof UserSchema>;
-export type UserTypeDto = { userType: (typeof userType)[keyof typeof userType] };
-export type UserPersonalDto = z.infer<typeof UserPersonalSchema>;
+import type { UserDto, UserPersonalDto } from "../types/shared";
+import { useFetch } from "../utils/useFetch";
+import apiClient from "./config";
 
-export const getUsers = async (filterName?: string): Promise<User[]> => {
+type UserSearchResult = {
+  id: string;
+  displayName: string;
+  upn: string;
+};
+
+export type UserTypeDto = {
+  userType: (typeof userType)[keyof typeof userType];
+};
+
+export const getUsers = async (filterName?: string): Promise<UserSearchResult[]> => {
   const trimmedName = filterName?.trim();
-  if (!trimmedName) {
-    return [];
-  }
+
+  if (!trimmedName) return [];
 
   try {
     const response = await apiClient.get<UserDto[]>("/users", {
       params: { searchQuery: trimmedName },
     });
-    return (response?.data ?? []).map((userDto) => ({
+
+    return (response.data ?? []).map((userDto) => ({
       id: String(userDto.id),
       displayName: userDto.name,
       upn: userDto.upn,
     }));
   } catch (error) {
     console.error("Failed to fetch users:", error);
+
     throw error;
   }
 };
 
-export const useGetIsSuperAdmin = (): UseQueryResult<boolean> => {
-  return useFetch<undefined, boolean>({
+export const useGetIsSuperAdmin = (): UseQueryResult<UserTypeDto> => {
+  return useFetch<undefined, UserTypeDto>({
     endpoint: "/users/me/type",
     queryKey: () => ["user-type"],
-    queryOptions: {
-      select: (data: any) => data === userType.SuperAdmin,
-    },
   });
 };
 
-export const useGetMyPersonal = ({ enabled }: { enabled: boolean } = { enabled: true }): UseQueryResult<UserPersonalDto> => {
+export const useGetMyPersonal = (
+  { enabled }: { enabled: boolean } = { enabled: true },
+): UseQueryResult<UserPersonalDto> => {
   return useFetch<undefined, UserPersonalDto>({
     endpoint: "/users/me/personal",
     queryKey: () => ["user-personal"],
@@ -50,7 +56,26 @@ export const useGetMyPersonal = ({ enabled }: { enabled: boolean } = { enabled: 
   });
 };
 
-export const getMyProfile = async (): Promise<UserPersonalDto> => {
+export const useGetMyProfile = (
+  { enabled }: { enabled: boolean } = { enabled: true },
+): UseQueryResult<UserDto> => {
+  return useFetch<undefined, UserDto>({
+    endpoint: "/users/me",
+    queryKey: () => ["user-profile"],
+    queryOptions: {
+      enabled,
+    },
+  });
+};
+
+export const getMyProfile = async (): Promise<UserDto> => {
+  const response = await apiClient.get<UserDto>("/users/me");
+
+  return response.data;
+};
+
+export const getMyPersonal = async (): Promise<UserPersonalDto> => {
   const response = await apiClient.get<UserPersonalDto>("/users/me/personal");
+
   return response.data;
 };

@@ -1,10 +1,16 @@
 import { create } from "zustand";
-import { Filter, Form, ResponseForm, Row } from "../../../utils/interfaces";
+import { Filter, ResponseForm, Row } from "../../../utils/interfaces";
 import { LegacyPermission } from "../../../utils/utils";
+import { FormDto } from "../../../types/shared";
+import { GridColDef } from "@mui/x-data-grid-pro";
+
+export type StoreForm = FormDto & {
+  columns?: GridColDef[];
+};
 
 interface FormsState {
-  form: Form | null;
-  setForm: (form: Form | null) => void;
+  form: StoreForm | null;
+  setForm: (form: StoreForm | null) => void;
   permissions?: LegacyPermission[];
   setPermissions: (permissions: number[]) => void;
   responses: ResponseForm[] | null;
@@ -18,7 +24,7 @@ interface FormsState {
 
 export const useInitiateFormStore = create<FormsState>((set) => ({
   form: null,
-  setForm: (form: Form | null) => set({ form }),
+  setForm: (form: StoreForm | null) => set({ form }),
   permissions: [],
   setPermissions: (permissions: number[]) => set({ permissions }),
   responses: null,

@@ -2,11 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import type {
   FormDto,
   FormFieldDto,
-  FormRoleDto,
   FormSectionDto,
   ResponseDto,
   ResponseFieldValueDto,
-  UserRoleDto,
 } from "../types/shared";
 import { fieldType, FieldType } from "formula-gear";
 import { getFormById, searchResponses } from "../api";
@@ -125,7 +123,7 @@ export const useResponseState = (
   responseId: string | undefined,
   viewMode: boolean,
   copyMode: boolean,
-  roles?: UserRoleDto[] | FormRoleDto["userRoles"],
+  roles?: Parameters<typeof checkUserAccessForResponse>[0],
   user?: any,
   isSuperAdmin?: boolean,
   setHasUnsavedChanges?: (hasUnsavedChanges: boolean) => void,
@@ -208,8 +206,8 @@ export const useResponseState = (
       const hasPermissions = checkUserAccessForResponse(
         roles,
         viewMode,
-        response,
-        form,
+        response as any,
+        form as any,
         user,
         isSuperAdmin,
       );

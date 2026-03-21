@@ -1,87 +1,131 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getFormById } from "../../../api/formsApi";
 import { getResponsesRows } from "../../../api/responsesApi";
-import { FieldTypeIds, Form, Row } from "../../../utils/interfaces";
+import type { FormDto, FormFieldDto } from "../../../types/shared";
+import { fieldType } from "formula-gear";
+import { Row } from "../../../utils/interfaces";
+
+type FieldExtra = {
+  connectedFormId?: number;
+};
 
 interface UseChildFormsProps {
-    form: Form | null;
+  form: FormDto | null;
 }
 
 interface ChildFormData {
-    form: Form;
-    rows: Row[];
+  form: FormDto;
+  rows: Row[];
 }
 
 interface UseChildFormsReturn {
-    childrenFormsData: ChildFormData[];
-    hasFormInFormFields: boolean;
-    loadingChildForms: boolean;
-    getChildFormData: (connectedFormId: number) => ChildFormData | undefined;
+  childrenFormsData: ChildFormData[];
+  hasFormInFormFields: boolean;
+  loadingChildForms: boolean;
+  getChildFormData: (connectedFormId: number) => ChildFormData | undefined;
 }
 
-const fetchChildFormData = async (connectedFormId: number, parentFormId: number): Promise<ChildFormData | null> => {
-    try {
-        const formData = await getFormById(connectedFormId);
-        const rowsData = await getResponsesRows({
-            filter: {
-                form_id: connectedFormId,
-                query: {
-                    parentResponse: { $regex: `${parentFormId};` },
-                },
-            }
-        });
-        if (formData && rowsData) {
-            return { form: formData, rows: rowsData };
-        }
-        return null;
-    } catch {
-        return null;
+const getFieldExtra = (field: FormFieldDto): FieldExtra => {
+  return ((field.extra ?? {}) as FieldExtra) || {};
+};
+
+const getFormFields = (form: FormDto | null): FormFieldDto[] => {
+  if (!form) return [];
+
+  return (form.sections ?? [])
+    .slice()
+    .sort((a, b) => a.index - b.index)
+    .flatMap((section) => (section.fields ?? []).slice().sort((a, b) => a.index - b.index));
+};
+
+const fetchChildFormData = async (
+  connectedFormId: number,
+  parentFormId: number,
+): Promise<ChildFormData | null> => {
+  try {
+    const formData = await getFormById(connectedFormId);
+    const rowsData = await getResponsesRows({
+      filter: {
+        form_id: connectedFormId,
+        query: {
+          parentResponse: { $regex: `${parentFormId};` },
+        },
+      },
+    });
+
+    if (formData && rowsData) {
+      return { form: formData, rows: rowsData };
     }
+
+    return null;
+  } catch {
+    return null;
+  }
 };
 
 export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn => {
-    const [childrenFormsData, setChildrenFormsData] = useState<ChildFormData[]>([]);
-    const [loadingChildForms, setLoadingChildForms] = useState(false);
+  const [childrenFormsData, setChildrenFormsData] = useState<ChildFormData[]>([]);
+  const [loadingChildForms, setLoadingChildForms] = useState(false);
 
-    const hasFormInFormFields = !!form?.fields?.some((field) => field.typeId === FieldTypeIds.linkedForm);
+  const formFields = useMemo(() => getFormFields(form), [form]);
 
-    const formInFormFields = form?.fields?.filter((field) =>
-        field.typeId === FieldTypeIds.linkedForm && field.connectedFormId
-    ) || [];
+  const formInFormFields = useMemo(
+    () =>
+      formFields.filter((field) => {
+        const extra = getFieldExtra(field);
+        return field.fieldType === fieldType.Form && !!extra.connectedFormId;
+      }),
+    [formFields],
+  );
 
-    const childFormIds = formInFormFields.map(f => f.connectedFormId).filter((id): id is number => typeof id === "number");
+  const hasFormInFormFields = formInFormFields.length > 0;
 
-    useEffect(() => {
-        let isMounted = true;
-        if (!hasFormInFormFields || !form?.id || childFormIds.length === 0) {
-            setChildrenFormsData([]);
-            setLoadingChildForms(false);
-            return;
+  const childFormIds = useMemo(
+    () =>
+      formInFormFields
+        .map((field) => getFieldExtra(field).connectedFormId)
+        .filter((id): id is number => typeof id === "number"),
+    [formInFormFields],
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!hasFormInFormFields || !form?.id || childFormIds.length === 0) {
+      setChildrenFormsData([]);
+      setLoadingChildForms(false);
+      return;
+    }
+
+    setLoadingChildForms(true);
+
+    Promise.all(childFormIds.map((connectedFormId) => fetchChildFormData(connectedFormId, form.id)))
+      .then((results) => {
+        if (isMounted) {
+          setChildrenFormsData(results.filter(Boolean) as ChildFormData[]);
+          setLoadingChildForms(false);
         }
-        setLoadingChildForms(true);
-        Promise.all(
-            childFormIds.map((connectedFormId) =>
-                fetchChildFormData(connectedFormId, form.id)
-            )
-        ).then((results) => {
-            if (isMounted) {
-                setChildrenFormsData(results.filter(Boolean) as ChildFormData[]);
-                setLoadingChildForms(false);
-            }
-        });
-        return () => {
-            isMounted = false;
-        };
-    }, [hasFormInFormFields, form?.id, childFormIds.join(",")]);
+      })
+      .catch(() => {
+        if (isMounted) {
+          setChildrenFormsData([]);
+          setLoadingChildForms(false);
+        }
+      });
 
-    const getChildFormData = (connectedFormId: number): ChildFormData | undefined => {
-        return childrenFormsData.find((data) => data.form.id === connectedFormId);
+    return () => {
+      isMounted = false;
     };
+  }, [hasFormInFormFields, form?.id, childFormIds.join(",")]);
 
-    return {
-        childrenFormsData,
-        hasFormInFormFields,
-        loadingChildForms,
-        getChildFormData,
-    };
+  const getChildFormData = (connectedFormId: number): ChildFormData | undefined => {
+    return childrenFormsData.find((data) => data.form.id === connectedFormId);
+  };
+
+  return {
+    childrenFormsData,
+    hasFormInFormFields,
+    loadingChildForms,
+    getChildFormData,
+  };
 };

@@ -4,12 +4,10 @@ import MenuItem from "@mui/material/MenuItem";
 import Typography from "@mui/material/Typography";
 import {
   ConditionGroup as ConditionGroupType,
-  FormField,
   LogicalOperators,
   logicalOperatorLabels,
   LogicalOperatorType,
   DEFAULT_LOGICAL_OPERATOR,
-  ResponseFieldValue,
 } from "../../utils/interfaces";
 import ConditionItem from "./ConditionItem";
 import {
@@ -22,12 +20,31 @@ import {
   ConditionOperatorDividerContainer,
   ConditionDivider,
 } from "./styled";
+import { FormFieldDto } from "../../types/shared";
+
+type ConditionFieldExtra = {
+  connectionType?: string | number;
+  conditions?: ConditionGroupType[];
+  sectionId?: string;
+  sectionOrder?: number;
+  sectionName?: string;
+  sectionDescription?: string;
+};
+
+type ConditionalFormField = FormFieldDto & {
+  extra?: ConditionFieldExtra;
+};
+
+type FieldOptionValue = {
+  value?: unknown;
+  fieldId: string;
+};
 
 interface ConditionGroupProps {
   group: ConditionGroupType;
   groupIndex: number;
-  formFields: FormField[]; // Full form fields for metadata
-  availableFields?: FormField[]; // Filtered fields for selection (optional)
+  formFields: ConditionalFormField[];
+  availableFields?: ConditionalFormField[];
   onConditionChange: (groupId: string, conditionId: string, field: string, value: any) => void;
   onRemoveCondition: (groupId: string, conditionId: string) => void;
   onGroupLogicalOperatorChange: (groupId: string, operator: LogicalOperatorType) => void;
@@ -35,7 +52,7 @@ interface ConditionGroupProps {
   onAddCondition: (groupId: string) => void;
   onRemoveGroup: (groupId: string) => void;
   showRemoveGroup: boolean;
-  fieldOptions?: Record<string, ResponseFieldValue[]>; // Connected field options
+  fieldOptions?: Record<string, FieldOptionValue[]>;
 }
 
 const ConditionGroup: React.FC<ConditionGroupProps> = ({
@@ -54,7 +71,6 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
 }) => {
   return (
     <ConditionGroupContainer key={group.id} elevation={1}>
-      {/* Group header with logical operator to previous group */}
       {groupIndex > 0 && (
         <ConditionGroupHeader>
           <ConditionGroupOperatorSelect
@@ -78,10 +94,8 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
 
       <ConditionGroupTitle variant="subtitle2">קבוצת תנאים {groupIndex + 1}</ConditionGroupTitle>
 
-      {/* Group conditions */}
       {group.conditions.map((condition, conditionIndex) => (
         <ConditionInGroupContainer key={condition.id || conditionIndex}>
-          {/* Show logical operator between conditions within the group */}
           {conditionIndex > 0 && (
             <ConditionOperatorDividerContainer>
               <ConditionDivider />
@@ -115,7 +129,6 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
         </ConditionInGroupContainer>
       ))}
 
-      {/* Group controls */}
       <ConditionGroupButtonsContainer>
         <Button variant="outlined" size="small" onClick={() => onAddCondition(group.id)}>
           + הוסף תנאי

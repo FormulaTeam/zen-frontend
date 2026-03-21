@@ -10,20 +10,19 @@ import {
   CheckboxWrapper,
   FlexRowItem,
 } from "./styled";
-import { formIconsNamesMap, PERMISSION_TYPES } from "../../utils/utils";
+import { formIconsNamesMap } from "../../utils/utils";
 import formX from "../../images/form_x.png";
-import { Form, RoleId } from "../../utils/interfaces";
-import { useAuth } from "../../contexts/AuthContext";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
+import { FormDto } from "../../types/shared";
 
 interface DeletedResponseItemProps {
-  form: any;
+  form?: FormDto;
   response: any;
-  handleRestoreResponse: (formId: number, responseId: number) => Promise<void>;
-  currentDeletedForm?: Form | null;
+  handleRestoreResponse: (formId: number, responseIndex: number) => Promise<void>;
+  currentDeletedForm?: FormDto | null;
   isSelected?: boolean;
-  onSelect?: (responseId: number) => void;
-  onDeselect?: (responseId: number) => void;
+  onSelect?: (responseIndex: number) => void;
+  onDeselect?: (responseIndex: number) => void;
 }
 
 const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
@@ -38,18 +37,12 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
   if (!response) return null;
 
   const theme = useTheme();
-  const { user, roles } = useAuth();
   const { isSuperAdmin } = useSuperAdmin();
 
-  const userRole: RoleId | undefined = form?.users?.find(
-    (u) => u.upn?.toLowerCase() === user?.upn?.toLowerCase(),
-  )?.role_id;
+  const hasPermission = !!isSuperAdmin;
 
-  const permissionTypes = roles.find((r) => r.role_id === userRole)?.permission_types;
-
-  const hasPermission = isSuperAdmin || permissionTypes?.includes(PERMISSION_TYPES.EDIT_FORM);
-
-  const deletedDateObj = new Date(response.deleted);
+  const deletedAt = response.deleted_at ?? response.deleted;
+  const deletedDateObj = new Date(deletedAt);
   const isValidDate = !isNaN(deletedDateObj.getTime());
   const deletedDate = isValidDate ? deletedDateObj.toLocaleDateString("he-IL") : "לא ידוע";
   const deletedTime = isValidDate ? deletedDateObj.toLocaleTimeString("he-IL") : "";
@@ -58,18 +51,24 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
     return form?.icon ? formIconsNamesMap.get(form.icon) : formX;
   }, [form?.icon]);
 
+  const responseIndex = response.index;
+  const responseFormId = response.form_id ?? response.formId;
+
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (typeof responseIndex !== "number") return;
+
     if (e.target.checked) {
-      onSelect?.(response.id);
+      onSelect?.(responseIndex);
     } else {
-      onDeselect?.(response.id);
+      onDeselect?.(responseIndex);
     }
   };
 
   const formName = form?.name || response.form_name;
-  const formId = form?.id || response.form_id;
+  const formId = form?.id || responseFormId;
 
-  const isRestoreDisabled = response.parentFormStatus !== "active" || !!currentDeletedForm && response.deleted;
+  const isRestoreDisabled =
+    response.parentFormStatus !== "active" || (!!currentDeletedForm && response.deleted);
 
   if (!response.deleted && !currentDeletedForm) {
     return null;
@@ -98,7 +97,7 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
               />
             )}
             <Typography variant="h6">
-              תגובה מספר <StrongText color={theme.palette.primary.main}>{response.id}</StrongText>{" "}
+              תגובה מספר <StrongText color={theme.palette.primary.main}>{responseIndex}</StrongText>{" "}
               שנמחקה מטופס מזהה <StrongText color={theme.palette.primary.main}>{formId}</StrongText>{" "}
               {formName ? (
                 <>
@@ -124,7 +123,8 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
             </Typography>
           ) : currentDeletedForm ? (
             <Typography variant="subtitle2" color="error">
-              התגובה נמחקה לפני שהטופס נמחק. לכן במידה והטופס ישוחזר תגובה זאת לא תשוחזר עם הטופס.{" "}
+              התגובה נמחקה לפני שהטופס נמחק. לכן במידה והטופס ישוחזר תגובה זאת לא תשוחזר עם
+              הטופס.{" "}
             </Typography>
           ) : null}
         </FormInfo>
@@ -138,7 +138,11 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
           }>
           <span>
             <Button
-              onClick={() => handleRestoreResponse(response.form_id, response.id)}
+              onClick={() => {
+                if (typeof responseFormId === "number" && typeof responseIndex === "number") {
+                  handleRestoreResponse(responseFormId, responseIndex);
+                }
+              }}
               variant="contained"
               color="primary"
               disabled={isRestoreDisabled && hasPermission}>

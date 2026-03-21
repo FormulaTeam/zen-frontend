@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Condition,
   ConditionsRoot,
@@ -6,21 +6,47 @@ import {
   LogicalOperatorType,
   DEFAULT_OPERATOR,
   DEFAULT_LOGICAL_OPERATOR,
-  FormField,
   ConditionUtils,
   AffectedTarget,
 } from "../utils/interfaces";
 import { v4 as uuidv4 } from "uuid";
+import { FormFieldDto } from "../types/shared";
+
+type ConditionFieldExtra = {
+  conditions?: ConditionGroup[];
+  sectionId?: string;
+  sectionOrder?: number;
+  sectionName?: string;
+  sectionDescription?: string;
+};
+
+type ConditionalFormField = FormFieldDto & {
+  extra?: ConditionFieldExtra;
+};
 
 interface UseConditionsProps {
-  formFields: FormField[];
+  formFields: ConditionalFormField[];
   existingConditions?: {
     conditions: ConditionGroup[];
-    affectedFields: FormField[];
+    affectedFields: ConditionalFormField[];
   } | null;
-  onSave?: (updatedFields: FormField[]) => void;
+  onSave?: (updatedFields: ConditionalFormField[]) => void;
   onClose: () => void;
 }
+
+const getFieldExtra = (field: ConditionalFormField): ConditionFieldExtra =>
+  (field.extra as ConditionFieldExtra | undefined) ?? {};
+
+const updateFieldExtra = (
+  field: ConditionalFormField,
+  patch: Partial<ConditionFieldExtra>,
+): ConditionalFormField => ({
+  ...field,
+  extra: {
+    ...getFieldExtra(field),
+    ...patch,
+  },
+});
 
 export const useConditions = ({
   formFields,
@@ -28,32 +54,30 @@ export const useConditions = ({
   onSave,
   onClose,
 }: UseConditionsProps) => {
-  // Generate or extract conditionSetId for this editing session
   const conditionSetId = useMemo(() => {
     if (existingConditions && existingConditions.conditions.length > 0) {
-      // If editing existing conditions, use the existing conditionSetId or generate one for legacy conditions
       const existingSetId = existingConditions.conditions[0].conditionSetId;
       if (existingSetId) {
         return existingSetId;
       }
     }
-    // For new conditions, generate a new conditionSetId
+
     return `conditionSet_${uuidv4()}`;
   }, [existingConditions]);
 
   const [conditionsRoot, setConditionsRoot] = useState<ConditionsRoot>(() => {
     if (existingConditions) {
-      // Create affected targets from existing conditions
-      // Group fields by section to see if entire sections are affected
-      const sectionGroups = new Map<string, FormField[]>();
-      const individualFields: FormField[] = [];
+      const sectionGroups = new Map<string, ConditionalFormField[]>();
+      const individualFields: ConditionalFormField[] = [];
 
       existingConditions.affectedFields.forEach((field) => {
-        if (field.sectionId && field.sectionName) {
-          if (!sectionGroups.has(field.sectionId)) {
-            sectionGroups.set(field.sectionId, []);
+        const extra = getFieldExtra(field);
+
+        if (extra.sectionId && extra.sectionName) {
+          if (!sectionGroups.has(extra.sectionId)) {
+            sectionGroups.set(extra.sectionId, []);
           }
-          sectionGroups.get(field.sectionId)!.push(field);
+          sectionGroups.get(extra.sectionId)!.push(field);
         } else {
           individualFields.push(field);
         }
@@ -61,43 +85,39 @@ export const useConditions = ({
 
       const affectedTargets: AffectedTarget[] = [];
 
-      // Check if entire sections are affected
       for (const [sectionId, fieldsInSection] of sectionGroups) {
-        // Get all fields that belong to this section in the entire form
-        const allFieldsInSection = formFields.filter((f) => f.sectionId === sectionId);
+        const allFieldsInSection = formFields.filter(
+          (f) => getFieldExtra(f).sectionId === sectionId,
+        );
 
-        // If the number of affected fields equals the total fields in section, treat as section target
         if (fieldsInSection.length === allFieldsInSection.length) {
-          const sectionName = fieldsInSection[0].sectionName || `מקטע ${sectionId}`;
-          // Use section ID without prefix for target
+          const sectionName = getFieldExtra(fieldsInSection[0]).sectionName || `מקטע ${sectionId}`;
           const cleanSectionId = sectionId.replace("formFields_", "");
+
           affectedTargets.push({
             type: "section",
             id: cleanSectionId,
             name: sectionName,
           });
         } else {
-          // Otherwise treat as individual field targets
           fieldsInSection.forEach((field) => {
             affectedTargets.push({
               type: "field",
-              id: field.uniqueId,
+              id: field.id,
               name: field.displayName,
             });
           });
         }
       }
 
-      // Add individual fields (not in any section)
       individualFields.forEach((field) => {
         affectedTargets.push({
           type: "field",
-          id: field.uniqueId,
+          id: field.id,
           name: field.displayName,
         });
       });
 
-      // Ensure all existing condition groups have the conditionSetId
       const groupsWithConditionSetId = existingConditions.conditions.map((group) => ({
         ...group,
         conditionSetId: group.conditionSetId || conditionSetId,
@@ -106,9 +126,10 @@ export const useConditions = ({
       return {
         groups: groupsWithConditionSetId,
         affectedTargets,
-        name: existingConditions.conditions[0]?.name, // Extract name from first condition group
+        name: existingConditions.conditions[0]?.name,
       };
     }
+
     return ConditionUtils.createConditionsRoot(conditionSetId);
   });
 
@@ -131,7 +152,6 @@ export const useConditions = ({
     );
   };
 
-  // Helper function to update a specific condition within a group
   const updateConditionInGroup = (
     groups: ConditionGroup[],
     groupId: string,
@@ -167,7 +187,6 @@ export const useConditions = ({
     }));
   };
 
-  // Unified function to handle both logical operator changes
   const handleGroupOperatorChange = (
     groupId: string,
     operator: LogicalOperatorType,
@@ -187,7 +206,6 @@ export const useConditions = ({
     }));
   };
 
-  // Wrapper functions for backward compatibility and cleaner API
   const handleGroupLogicalOperatorChange = (groupId: string, operator: LogicalOperatorType) => {
     handleGroupOperatorChange(groupId, operator, "logicalOperator");
   };
@@ -237,28 +255,25 @@ export const useConditions = ({
   };
 
   const handleSave = () => {
-    // Assign conditionSetId to all condition groups in the current editing session
     const conditionGroupsWithSetId = conditionsRoot.groups.map((group, index) => ({
       ...group,
       conditionSetId,
-      // Store the name in the first condition group for persistence
       name: index === 0 ? conditionsRoot.name : undefined,
     }));
 
-    // Apply conditions to affected targets only
     const updatedFields = formFields.map((field) => {
-      // Check if this field is an affected target for the current conditions
+      const extra = getFieldExtra(field);
+
       const isDirectlyAffectedField = conditionsRoot.affectedTargets.some(
-        (target) => target.type === "field" && target.id === field.uniqueId,
+        (target) => target.type === "field" && target.id === field.id,
       );
 
       const isInAffectedSection = conditionsRoot.affectedTargets.some((target) => {
         if (target.type === "section") {
-          // Handle both with and without prefix
           return (
-            field.sectionId === target.id ||
-            field.sectionId === `formFields_${target.id}` ||
-            field.sectionId?.replace("formFields_", "") === target.id
+            extra.sectionId === target.id ||
+            extra.sectionId === `formFields_${target.id}` ||
+            extra.sectionId?.replace("formFields_", "") === target.id
           );
         }
         return false;
@@ -267,44 +282,36 @@ export const useConditions = ({
       const isAffectedField = isDirectlyAffectedField || isInAffectedSection;
 
       if (isAffectedField) {
-        // Get existing conditions that are not part of the current condition set
-        const existingConditions = field.conditions || [];
-        const otherConditionSets = existingConditions.filter(
+        const existingFieldConditions = extra.conditions ?? [];
+        const otherConditionSets = existingFieldConditions.filter(
           (group) => group.conditionSetId !== conditionSetId,
         );
 
-        // Combine other condition sets with the current one
-        return {
-          ...field,
+        return updateFieldExtra(field, {
           conditions: [...otherConditionSets, ...conditionGroupsWithSetId],
-        };
+        });
       }
 
-      // For fields not affected by current conditions, check if they were part of the original editing group
       if (existingConditions) {
         const wasInEditingGroup = existingConditions.affectedFields.some(
-          (affectedField) => affectedField.uniqueId === field.uniqueId,
+          (affectedField) => affectedField.id === field.id,
         );
 
         if (wasInEditingGroup) {
-          if (field.conditions) {
-            const remainingConditions = field.conditions.filter(
-              (group) => group.conditionSetId !== conditionSetId,
-            );
+          const existingFieldConditions = extra.conditions ?? [];
+          const remainingConditions = existingFieldConditions.filter(
+            (group) => group.conditionSetId !== conditionSetId,
+          );
 
-            return {
-              ...field,
-              conditions: remainingConditions.length > 0 ? remainingConditions : undefined,
-            };
-          }
+          return updateFieldExtra(field, {
+            conditions: remainingConditions.length > 0 ? remainingConditions : undefined,
+          });
         }
       }
 
-      // Return field unchanged if it has other conditions or no conditions
       return field;
     });
 
-    // Call the parent's save handler if provided
     if (onSave) {
       onSave(updatedFields);
     }

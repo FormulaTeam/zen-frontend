@@ -1,47 +1,72 @@
 import { useState } from "react";
-import {
-  FormField,
-  ConditionGroup,
-  ConditionDisplayMode,
-  conditionDisplayModes,
-} from "../utils/interfaces";
+import { ConditionGroup, ConditionDisplayMode, conditionDisplayModes } from "../utils/interfaces";
+import { FormFieldDto } from "../types/shared";
+
+type ConditionalFieldExtra = {
+  conditions?: ConditionGroup[];
+  sectionId?: string;
+  sectionOrder?: number;
+  sectionName?: string;
+  sectionDescription?: string;
+};
+
+type ConditionalFormField = FormFieldDto & {
+  extra?: ConditionalFieldExtra;
+};
 
 interface UseConditionalPopupProps {
-  formFields: FormField[];
-  onSave?: (updatedFields: FormField[]) => void;
+  formFields: ConditionalFormField[];
+  onSave?: (updatedFields: ConditionalFormField[]) => void;
 }
+
+const getFieldExtra = (field: ConditionalFormField): ConditionalFieldExtra =>
+  (field.extra as ConditionalFieldExtra | undefined) ?? {};
+
+const updateFieldExtra = (
+  field: ConditionalFormField,
+  patch: Partial<ConditionalFieldExtra>,
+): ConditionalFormField => ({
+  ...field,
+  extra: {
+    ...getFieldExtra(field),
+    ...patch,
+  },
+});
 
 export const useConditionalPopup = ({ formFields, onSave }: UseConditionalPopupProps) => {
   const [displayMode, setDisplayMode] = useState<ConditionDisplayMode>(conditionDisplayModes.list);
   const [editingConditions, setEditingConditions] = useState<{
     conditions: ConditionGroup[];
-    affectedFields: FormField[];
+    affectedFields: ConditionalFormField[];
     index?: number;
   } | null>(null);
 
-  const handleEditCondition = (conditions: ConditionGroup[], affectedFields: FormField[]) => {
+  const handleEditCondition = (
+    conditions: ConditionGroup[],
+    affectedFields: ConditionalFormField[],
+  ) => {
     setEditingConditions({ conditions, affectedFields, index: affectedFields[0]?.index });
     setDisplayMode(conditionDisplayModes.edit);
   };
 
   const handleDeleteCondition = (conditionId: string) => {
-    // conditionId is now the conditionSetId from useConditionList
     const conditionSetIdToDelete = conditionId;
 
-    // Remove condition groups with the specified conditionSetId from all fields
     const updatedFields = formFields.map((field) => {
-      if (field.conditions && field.conditions.length > 0) {
-        // Filter out condition groups that belong to the condition set being deleted
-        const remainingConditions = field.conditions.filter(
-          (group) => group.conditionSetId !== conditionSetIdToDelete,
-        );
+      const extra = getFieldExtra(field);
+      const fieldConditions = extra.conditions ?? [];
 
-        return {
-          ...field,
-          conditions: remainingConditions.length > 0 ? remainingConditions : undefined,
-        };
+      if (fieldConditions.length === 0) {
+        return field;
       }
-      return field;
+
+      const remainingConditions = fieldConditions.filter(
+        (group) => group.conditionSetId !== conditionSetIdToDelete,
+      );
+
+      return updateFieldExtra(field, {
+        conditions: remainingConditions.length > 0 ? remainingConditions : undefined,
+      });
     });
 
     if (onSave) {
