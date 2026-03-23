@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { userType } from "formula-gear";
 import { useGetIsSuperAdmin } from "../api/usersApi";
 import { useAuth } from "./AuthContext";
@@ -18,18 +18,18 @@ export const useSuperAdmin = () => {
 };
 
 interface SuperAdminProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export const SuperAdminProvider = ({ children }: SuperAdminProviderProps) => {
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
 
   const { user } = useAuth();
-  const { data: isSuperAdminData } = useGetIsSuperAdmin();
+  const { data: isSuperAdminData } = useGetIsSuperAdmin({ enabled: !!user });
 
   useEffect(() => {
     if (user && isSuperAdminData !== undefined) {
-      setIsSuperAdmin(isSuperAdminData.userType === userType.SuperAdmin);
+      setIsSuperAdmin(isSuperAdminData === userType.SuperAdmin);
     } else if (!user) {
       setIsSuperAdmin(null);
     }

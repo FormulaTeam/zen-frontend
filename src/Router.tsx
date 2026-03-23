@@ -21,6 +21,7 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import HelpBtn from "./components/HelpBtn/HelpBtn";
 import HelpDiv from "./components/HelpBtn/HelpDiv";
 import { FormEditor } from "./pages/FormEditor";
+import { FORM_EDITOR_MODE } from "./pages/FormEditor/context/FormEditorContext";
 import { DashboardStatisticsProvider } from "./contexts/DashboardStatisticsContext";
 
 const AppRouter = () => {
@@ -70,9 +71,9 @@ const AppRouter = () => {
             />
             <Route
               path={IPath.FORM_CREATE}
-              element={<FormEditor mode={"create"} />}
+              element={<FormEditor mode={FORM_EDITOR_MODE.CREATE} />}
             />
-            <Route path={IPath.FORM_EDIT} element={<EditForm user={user} />} />
+            <Route path={IPath.FORM_EDIT} element={<EditForm />} />
             <Route
               path={IPath.RESPONSES}
               element={

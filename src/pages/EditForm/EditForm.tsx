@@ -1,22 +1,23 @@
 import { useParams } from "react-router-dom";
-import CreateForm from "../CreateForm/CreateForm";
-import { useEffect, useState } from "react";
-import { getFormById } from "../../api";
-import type { FormDto } from "../../types/shared";
+import { FormEditor } from "../FormEditor";
+import { useGetForm } from "../../api";
+import { FORM_EDITOR_MODE } from "../FormEditor/context/FormEditorContext";
 
-export default function EditForm({ user }) {
+export default function EditForm({ }) {
   const { id } = useParams();
-  const [formToEdit, setFormToEdit] = useState<FormDto | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      getFormById(Number(id)).then((form) => {
-        if (form) {
-          setFormToEdit(form);
-        }
-      });
-    }
-  }, [id]);
+  const { data: formToEdit, isLoading } = useGetForm({
+    formId: id,
+    config: {
+      enabled: !!id,
+    },
+  });
 
-  return <>{formToEdit && <CreateForm currentUser={user} formToEdit={formToEdit} />}</>;
+  if (isLoading) {
+    return null;
+  }
+
+  return <>
+    {formToEdit && <FormEditor mode={FORM_EDITOR_MODE.EDIT} editedForm={formToEdit} />}
+  </>;
 }

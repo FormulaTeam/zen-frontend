@@ -1,12 +1,13 @@
-import { useCallback, useState } from "react";
-import { FormField, FormMetadata, FormStructure, Section } from "../context/FormStructureContext";
-import { getEmptyForm } from "../context/utils";
-import { texts } from "../../../utils/texts";
-import { FormFieldTypeId } from "../../../utils/interfaces";
-import { generateFieldId, generateFieldName, generateSectionId } from "../utils";
-import { FormFieldData, FormFieldSchema } from "../schemas/fields";
+import { useCallback, useState, useEffect } from "react";
 import { z } from "zod";
 import { $ZodErrorTree } from "zod/v4/core";
+
+import { FormField, FormMetadata, FormStructure, Section } from "../context/FormStructureContext";
+import { getEmptyForm } from "../context/utils";
+import { texts } from "@utils/texts";
+import { FormFieldTypeId } from "@utils/interfaces";
+import { generateFieldId, generateFieldName, generateSectionId } from "../utils";
+import { FormFieldData, FormFieldSchema } from "../schemas/fields";
 import { FormMetadataSchema } from "../schemas/metadata";
 import {
   conditionDependantComponentsSchema,
@@ -20,9 +21,66 @@ import {
   predicateGroupsSchema,
 } from "../schemas/conditions";
 import { ValueOf } from "../../../types/utils";
+import type { FormDto, FormSectionDto } from "../../../types/shared";
 
-function yieldFormStructure(form: object) {
-  return form as FormStructure; // TODO change to actual logic that translates form json to form structure
+type ExtendedFormDto = Partial<Omit<FormDto, 'sections'>> & {
+  conditions?: FormConditions;
+  sections?: Partial<FormSectionDto>[];
+};
+
+function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
+  const metadata = {
+    id: form?.id,
+    title: form?.name || "",
+    description: form?.description || undefined,
+    iconId: typeof form?.icon === "string" ? form.icon : undefined,
+    validationErrors: null,
+  };
+
+  const sections: Record<string, Section> = {};
+  const orderedSectionIds: string[] = [];
+  const fields: Record<string, FormField> = {};
+
+  const sortedSections = [...(form?.sections || [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+
+  sortedSections.forEach((sectionData) => {
+    const sectionId = sectionData.id?.toString() || generateSectionId();
+    orderedSectionIds.push(sectionId);
+
+    const sortedFields = [...(sectionData.fields || [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+    const fieldIds = sortedFields.map((fieldData) => {
+      const fieldId = fieldData.id?.toString() || generateFieldId();
+
+      fields[fieldId] = {
+        id: fieldId,
+        parentSectionId: sectionId,
+        data: {
+          typeId: fieldData.fieldType,
+          name: fieldData.name || "",
+          displayName: fieldData.displayName || "",
+          required: fieldData.isRequired || false,
+          extra: fieldData.extra || {},
+        },
+        validationErrors: null,
+      };
+
+      return fieldId;
+    });
+
+    sections[sectionId] = {
+      title: sectionData.name || "",
+      expanded: true,
+      fieldIds,
+    };
+  });
+
+  return {
+    metadata,
+    sections,
+    orderedSectionIds,
+    fields,
+    conditions: form?.conditions || [],
+  };
 }
 
 function pickSharedKeysDeep<T extends object>(
@@ -209,8 +267,15 @@ function applyComponentDeletionToConditions(componentType: ValueOf<typeof FormCo
   return modifiedConditions;
 }
 
-function useFormStructure(editedForm?: object) {
-  const [formStructure, setFormStructure] = useState<FormStructure>(editedForm ? yieldFormStructure(editedForm) : { ...getEmptyForm() });
+function useFormStructure(editedForm?: ExtendedFormDto) {
+  const [formStructure, setFormStructure] = useState<FormStructure>(() => editedForm ? yieldFormStructure(editedForm) : { ...getEmptyForm() });
+
+  // When editedForm updates from external fetching properly sync the visual state
+  useEffect(() => {
+    if (editedForm) {
+      setFormStructure(yieldFormStructure(editedForm));
+    }
+  }, [editedForm]);
 
   const appendSection = useCallback(() => {
     setFormStructure((prev) => {

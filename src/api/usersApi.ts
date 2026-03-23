@@ -1,5 +1,5 @@
 import { UseQueryResult } from "@tanstack/react-query";
-import { userType } from "formula-gear";
+import { UserType, userType } from "formula-gear";
 
 import type { UserDto, UserPersonalDto } from "../types/shared";
 import { useFetch } from "../utils/useFetch";
@@ -37,10 +37,15 @@ export const getUsers = async (filterName?: string): Promise<UserSearchResult[]>
   }
 };
 
-export const useGetIsSuperAdmin = (): UseQueryResult<UserTypeDto> => {
-  return useFetch<undefined, UserTypeDto>({
+export const useGetIsSuperAdmin = (
+  { enabled }: { enabled: boolean } = { enabled: true },
+): UseQueryResult<UserType> => {
+  return useFetch<undefined, UserType>({
     endpoint: "/users/me/type",
     queryKey: () => ["user-type"],
+    queryOptions: {
+      enabled,
+    },
   });
 };
 
@@ -54,28 +59,4 @@ export const useGetMyPersonal = (
       enabled,
     },
   });
-};
-
-export const useGetMyProfile = (
-  { enabled }: { enabled: boolean } = { enabled: true },
-): UseQueryResult<UserDto> => {
-  return useFetch<undefined, UserDto>({
-    endpoint: "/users/me",
-    queryKey: () => ["user-profile"],
-    queryOptions: {
-      enabled,
-    },
-  });
-};
-
-export const getMyProfile = async (): Promise<UserDto> => {
-  const response = await apiClient.get<UserDto>("/users/me");
-
-  return response.data;
-};
-
-export const getMyPersonal = async (): Promise<UserPersonalDto> => {
-  const response = await apiClient.get<UserPersonalDto>("/users/me/personal");
-
-  return response.data;
 };
