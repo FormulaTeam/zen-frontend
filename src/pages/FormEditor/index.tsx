@@ -1,22 +1,23 @@
 import styles from "./style.module.css";
 import { FormEditorHeader } from "./FormEditorHeader";
 import { FormSandbox } from "./FormSandbox";
-import { FormEditorContext, FormEditorMode } from "./context/FormEditorContext";
+import { FormEditorContext, FormEditorMode, FORM_EDITOR_MODE } from "./context/FormEditorContext";
 import { useFormStructure } from "./hooks/useFormStructure";
 import { FormStructureContext } from "./context/FormStructureContext";
+import type { FormDto } from "../../types/shared";
 
 interface EditorProps {
   mode: FormEditorMode;
-  editedForm?: object;
+  editedForm?: FormDto;
 }
 
 interface EditModeProps extends EditorProps {
-  mode: "edit";
-  editedForm: object;
+  mode: typeof FORM_EDITOR_MODE.EDIT;
+  editedForm: FormDto;
 }
 
 interface CreateModeProps extends EditorProps {
-  mode: "create";
+  mode: typeof FORM_EDITOR_MODE.CREATE;
   editedForm?: never;
 }
 

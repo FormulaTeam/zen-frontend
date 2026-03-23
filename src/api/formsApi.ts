@@ -196,13 +196,14 @@ export const useCreateForm = () => {
 
 export const useUpdateForm = () => {
   return useMutation({
-    mutationFn: async (data: UpdateFormPayload) => {
-      const response = await apiClient.put<FormDto>(`/forms/edit/${data.id}`, data);
+    mutationFn: async ({ id, formData, payload, isUpdateMetro }: { id: number; formData?: Record<string, unknown>; payload?: Partial<CreateFormDto>; isUpdateMetro?: boolean }) => {
+      const body = { ...(payload || formData), isUpdateMetro };
+      const response = await apiClient.patch<FormDto>(`/forms/${id}`, body);
       return response.data;
     },
     mutationKey: ["update-form"],
     onSuccess: (data: FormDto) => {
-      queryClient.invalidateQueries({ queryKey: [data.id] });
+      queryClient.invalidateQueries({ queryKey: [data.id.toString()] });
       queryClient.invalidateQueries({ queryKey: ["forms"] });
     },
     onError: (error) => {
