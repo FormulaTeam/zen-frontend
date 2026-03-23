@@ -1,9 +1,11 @@
-import React, {
+import {
   createContext,
   useContext,
   useState,
   ReactNode,
   useCallback,
+  useEffect,
+  FC
 } from "react";
 import { Role } from "../utils/interfaces";
 import { PERMISSION_TYPES } from "../utils/utils";
@@ -113,23 +115,12 @@ export const useAuth = () => {
  * AuthProvider: Provides authentication state and methods across the app.
  * roles is a static catalog derived from formula-gear's roleId constants.
  */
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
-    import("../api/usersApi").then(({ getMyProfile }) => {
-      getMyProfile()
-        .then(() => {
-          setUser({});
-        })
-        .catch(() => {
-          setUser(null);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    });
+  useEffect(() => {
+    setLoading(false);
   }, []);
 
   const login = useCallback(({ user }: { user: User }) => {
