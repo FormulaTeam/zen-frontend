@@ -117,18 +117,15 @@ export const useAuth = () => {
  */
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setLoading(false);
-  }, []);
+
 
   const login = useCallback(({ user }: { user: User }) => {
     setUser(user);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, roles: ROLE_CATALOG }}>
+    <AuthContext.Provider value={{ user, loading: false, login, roles: ROLE_CATALOG }}>
       {children}
     </AuthContext.Provider>
   );

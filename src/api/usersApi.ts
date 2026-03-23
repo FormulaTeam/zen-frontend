@@ -37,10 +37,15 @@ export const getUsers = async (filterName?: string): Promise<UserSearchResult[]>
   }
 };
 
-export const useGetIsSuperAdmin = (): UseQueryResult<UserType> => {
+export const useGetIsSuperAdmin = (
+  { enabled }: { enabled: boolean } = { enabled: true },
+): UseQueryResult<UserType> => {
   return useFetch<undefined, UserType>({
     endpoint: "/users/me/type",
     queryKey: () => ["user-type"],
+    queryOptions: {
+      enabled,
+    },
   });
 };
 

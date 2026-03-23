@@ -25,7 +25,7 @@ export const SuperAdminProvider = ({ children }: SuperAdminProviderProps) => {
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
 
   const { user } = useAuth();
-  const { data: isSuperAdminData } = useGetIsSuperAdmin();
+  const { data: isSuperAdminData } = useGetIsSuperAdmin({ enabled: !!user });
 
   useEffect(() => {
     if (user && isSuperAdminData !== undefined) {

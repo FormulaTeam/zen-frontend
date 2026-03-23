@@ -10,7 +10,6 @@ import { validateCondition } from "../hooks/useFormStructure";
 
 interface Section {
   title: string;
-  description?: string;
   expanded: boolean;
   fieldIds: string[];
 }
