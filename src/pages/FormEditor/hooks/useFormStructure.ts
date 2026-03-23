@@ -69,9 +69,6 @@ function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
 
     sections[sectionId] = {
       title: sectionData.name || "",
-      // @ts-expect-error description does not currently exist on FormSectionDto in the API gear types, 
-      // but it exists natively in FormStructure.Section and local code dependencies.
-      description: sectionData.description,
       expanded: true,
       fieldIds,
     };
@@ -84,7 +81,9 @@ function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
     fields,
     conditions: form?.conditions || [],
   };
-} function pickSharedKeysDeep<T extends object>(
+}
+
+function pickSharedKeysDeep<T extends object>(
   source: T,
   reference: T,
 ): $ZodErrorTree<FormFieldData>["properties"] {
