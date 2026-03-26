@@ -1,6 +1,8 @@
 import { FieldTypeIds, FormFieldTypeId } from "../../../utils/interfaces";
-import {customAlphabet} from "nanoid";
-import {v4 as uuid4} from "uuid";
+import { FormFieldData } from "../schemas/fields";
+import { customAlphabet } from "nanoid";
+import { v4 as uuid4 } from "uuid";
+import { LocationFormat } from "../schemas/fields/locationSchema";
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const nanoid5 = customAlphabet(alphabet, 5);
@@ -28,8 +30,23 @@ const FormElementTypeIdToKey = {
   [FieldTypeIds.linkedForm]: 'linked_form',
 } as const satisfies Record<FormFieldTypeId, string>;
 
-function generateFieldName(elementTypeId: FormFieldTypeId){
+function generateFieldName(elementTypeId: FormFieldTypeId) {
   return `${FormElementTypeIdToKey[elementTypeId]}_${nanoid5()}`;
+}
+
+function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
+  const data: FormFieldData = {
+    typeId: elementTypeId,
+    name: generateFieldName(elementTypeId),
+    displayName: "",
+    required: false,
+  };
+
+  if (elementTypeId === FieldTypeIds.location) {
+    data.extra = { format: LocationFormat.UTM };
+  }
+
+  return data;
 }
 
 function generateOptionItemId() {
@@ -40,4 +57,4 @@ function generateConditionId() {
   return nanoid5();
 }
 
-export { generateSectionId, generateFieldId, generateFieldName, generateOptionItemId, generateConditionId };
+export { generateSectionId, generateFieldId, generateFieldName, generateNewFieldData, generateOptionItemId, generateConditionId };

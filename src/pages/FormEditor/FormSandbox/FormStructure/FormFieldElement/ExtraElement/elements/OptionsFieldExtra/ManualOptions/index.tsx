@@ -65,52 +65,52 @@ function ManualOptions(props: Props) {
 
   useEffect(() => {
     (controllingOptionsFieldId && !otherManualOptionsFieldsIds.includes(controllingOptionsFieldId)) &&
-    onChange({ options: { ...options, controllingOptionsFieldId: undefined } });
+      onChange({ options: { ...options, controllingOptionsFieldId: undefined } });
   }, [otherManualOptionsFieldsIds.length]);
 
   useEffect(() => {
     controllingOptionsFieldId &&
-    setSelectedControlledItemIndex(0);
+      setSelectedControlledItemIndex(0);
   }, [controllingOptionsFieldId]);
 
   useEffect(() => {
     selectedControlledItemIndex >= items.length &&
-    setSelectedControlledItemIndex(items.length - 1);
+      setSelectedControlledItemIndex(items.length - 1);
   }, [items.length]);
 
   const itemFields = useMemo(() => (
     items.map((item, index) => (
       <ManualOptionsItemField index={index}
-                              item={item}
-                              validationErrors={validationErrors?.properties?.items?.items?.[index]?.properties?.text}
-                              isDeletable={items.length > 2}
-                              onChange={(e) => onChange({
-                                options: {
-                                  ...options,
-                                  items: items.toSpliced(index, 1, { ...item, text: e.target.value }),
-                                },
-                              })}
-                              onFocus={() => {
-                                setSelectedControlledItemIndex(index);
-                              }}
-                              onDelete={() => {
-                                items.length > 2 &&
-                                onChange({
-                                  options: {
-                                    ...options,
-                                    items: items.toSpliced(index, 1),
-                                    defaultOptionId: item.id === defaultOptionId ? undefined : defaultOptionId,
-                                  },
-                                });
-                              }}
-                              isSelectedControlledItem={
-                                !!controllingOptionsFieldId ?
-                                  selectedControlledItemIndex === index :
-                                  undefined
-                              }
-                              onSelectControlledItem={() => {
-                                setSelectedControlledItemIndex(index);
-                              }} />
+        item={item}
+        validationErrors={validationErrors?.properties?.items?.items?.[index]?.properties?.text}
+        isDeletable={items.length > 2}
+        onChange={(e) => onChange({
+          options: {
+            ...options,
+            items: items.toSpliced(index, 1, { ...item, text: e.target.value }),
+          },
+        })}
+        onFocus={() => {
+          setSelectedControlledItemIndex(index);
+        }}
+        onDelete={() => {
+          items.length > 2 &&
+            onChange({
+              options: {
+                ...options,
+                items: items.toSpliced(index, 1),
+                defaultOptionId: item.id === defaultOptionId ? undefined : defaultOptionId,
+              },
+            });
+        }}
+        isSelectedControlledItem={
+          !!controllingOptionsFieldId ?
+            selectedControlledItemIndex === index :
+            undefined
+        }
+        onSelectControlledItem={() => {
+          setSelectedControlledItemIndex(index);
+        }} />
     ))
   ), [items, validationErrors?.properties?.items?.items, onChange, options, selectedControlledItemIndex]);
 
@@ -125,7 +125,7 @@ function ManualOptions(props: Props) {
   }, [controllingOptionsFieldId, formStructure.fields[controllingOptionsFieldId ?? ""]?.data?.extra]);
 
   useEffect(() => {
-    if (!controllingFieldItems?.length) {
+    if (controllingOptionsFieldId && !controllingFieldItems?.length && items[selectedControlledItemIndex]) {
       const updatedItems = items.toSpliced(selectedControlledItemIndex, 1, {
         ...items[selectedControlledItemIndex],
         controllingItemsIds: [],
@@ -138,38 +138,38 @@ function ManualOptions(props: Props) {
         },
       });
     }
-  }, [controllingFieldItems]);
+  }, [controllingFieldItems, controllingOptionsFieldId]);
 
   return (
     <>
       <div className={styles.controllingFieldContainer}>
         <div className={styles.controllingFieldWrapper}
-             style={{ borderColor: controllingOptionsFieldId ? "#e1e7ec" : "transparent" }}>
+          style={{ borderColor: controllingOptionsFieldId ? "#e1e7ec" : "transparent" }}>
           <FormControl className={styles.controllingFieldFormControl}
-                       disabled={!otherManualOptionsFieldsIds.length}
-                       error={!!validationErrors?.properties?.controllingOptionsFieldId}>
+            disabled={!otherManualOptionsFieldsIds.length}
+            error={!!validationErrors?.properties?.controllingOptionsFieldId}>
             <InputLabel id="controlling-options-label">שדה אפשרויות מוביל</InputLabel>
             <Select labelId="controlling-options-label"
-                    variant={"standard"}
-                    fullWidth
-                    aria-describedby={"controlling-options-helper-text"}
-                    value={controllingOptionsFieldId ?? ""}
-                    label={"שדה אפשרויות מוביל"}
-                    onChange={(e) => {
-                      const newItems = [...items];
+              variant={"standard"}
+              fullWidth
+              aria-describedby={"controlling-options-helper-text"}
+              value={controllingOptionsFieldId ?? ""}
+              label={"שדה אפשרויות מוביל"}
+              onChange={(e) => {
+                const newItems = [...items];
 
-                      newItems.forEach((item) => {
-                        delete item.controllingItemsIds;
-                      });
+                newItems.forEach((item) => {
+                  delete item.controllingItemsIds;
+                });
 
-                      onChange({
-                        options: {
-                          ...options,
-                          controllingOptionsFieldId: e.target.value,
-                          items: newItems,
-                        },
-                      });
-                    }}>
+                onChange({
+                  options: {
+                    ...options,
+                    controllingOptionsFieldId: e.target.value,
+                    items: newItems,
+                  },
+                });
+              }}>
               {
                 otherManualOptionsFieldsIds.map((manualOptionsFieldId) => (
                   <MenuItem key={manualOptionsFieldId} value={manualOptionsFieldId}>
@@ -185,9 +185,13 @@ function ManualOptions(props: Props) {
           {
             controllingOptionsFieldId &&
             <Button className={styles.button}
-                    onClick={(_) => {
-                      onChange({ options: { ...options, controllingOptionsFieldId: undefined } });
-                    }}>
+              onClick={(_) => {
+                const newItems = [...items];
+                newItems.forEach((item) => {
+                  delete item.controllingItemsIds;
+                });
+                onChange({ options: { ...options, controllingOptionsFieldId: undefined, items: newItems } });
+              }}>
               <Close sx={{ fontSize: 20, color: "#a54160" }} />
             </Button>
           }
@@ -204,72 +208,72 @@ function ManualOptions(props: Props) {
           </div>
           <div className={styles.appendItemButtonWrapper}>
             <Button size={"large"}
-                    variant={"outlined"}
-                    className={styles.appendItemButton}
-                    onClick={(_) => {
-                      onChange({ options: { ...options, items: [...items, generateEmptyItem()] } });
-                    }}>
+              variant={"outlined"}
+              className={styles.appendItemButton}
+              onClick={(_) => {
+                onChange({ options: { ...options, items: [...items, generateEmptyItem()] } });
+              }}>
               + הוסף אפשרות
             </Button>
           </div>
         </div>
         {
-          !!controllingFieldItems &&
+          !!controllingFieldItems && !!items[selectedControlledItemIndex] &&
           <ManualOptionsControllingItemsList item={items[selectedControlledItemIndex]}
-                                             controllingFieldItems={controllingFieldItems}
-                                             onCheckChange={(e, controllingItem: ArrayElement<ManualItems>) => {
-                                               const controllingItemsIds = [...items[selectedControlledItemIndex].controllingItemsIds ?? []];
+            controllingFieldItems={controllingFieldItems}
+            onCheckChange={(e, controllingItem: ArrayElement<ManualItems>) => {
+              const controllingItemsIds = [...items[selectedControlledItemIndex].controllingItemsIds ?? []];
 
-                                               if (e.target.checked) {
-                                                 controllingItemsIds.push(controllingItem.id);
-                                               } else {
-                                                 controllingItemsIds.splice(controllingItemsIds.indexOf(controllingItem.id), 1);
-                                               }
+              if (e.target.checked) {
+                controllingItemsIds.push(controllingItem.id);
+              } else {
+                controllingItemsIds.splice(controllingItemsIds.indexOf(controllingItem.id), 1);
+              }
 
-                                               const updatedItems = [...items];
-                                               updatedItems[selectedControlledItemIndex] = {
-                                                 ...updatedItems[selectedControlledItemIndex],
-                                                 controllingItemsIds,
-                                               };
+              const updatedItems = [...items];
+              updatedItems[selectedControlledItemIndex] = {
+                ...updatedItems[selectedControlledItemIndex],
+                controllingItemsIds,
+              };
 
-                                               onChange({
-                                                 options: {
-                                                   ...options,
-                                                   items: updatedItems,
-                                                 },
-                                               });
-                                             }}
-                                             onCheckAllChange={(e) => {
-                                               const updatedItems = items.toSpliced(selectedControlledItemIndex, 1, {
-                                                 ...items[selectedControlledItemIndex],
-                                                 controllingItemsIds: e.target.checked ?
-                                                   controllingFieldItems?.map((fieldItems) => fieldItems.id) :
-                                                   [],
-                                               });
+              onChange({
+                options: {
+                  ...options,
+                  items: updatedItems,
+                },
+              });
+            }}
+            onCheckAllChange={(e) => {
+              const updatedItems = items.toSpliced(selectedControlledItemIndex, 1, {
+                ...items[selectedControlledItemIndex],
+                controllingItemsIds: e.target.checked ?
+                  controllingFieldItems?.map((fieldItems) => fieldItems.id) :
+                  [],
+              });
 
-                                               onChange({
-                                                 options: {
-                                                   ...options,
-                                                   items: updatedItems,
-                                                 },
-                                               });
-                                             }} />
+              onChange({
+                options: {
+                  ...options,
+                  items: updatedItems,
+                },
+              });
+            }} />
         }
       </div>
 
       <div className={styles.defaultFieldContainer}>
         <FormControl disabled={!definedItems.length}
-                     className={styles.defaultFieldWrapper}
-                     error={!!validationErrors?.properties?.defaultOptionId}>
+          className={styles.defaultFieldWrapper}
+          error={!!validationErrors?.properties?.defaultOptionId}>
           <InputLabel id="default-option-label">ברירת מחדל</InputLabel>
           <Select labelId="default-option-label"
-                  variant={"standard"}
-                  aria-describedby={"default-option-helper-text"}
-                  value={defaultOptionId ?? ""}
-                  label={"ברירת מחדל"}
-                  onChange={(e) => {
-                    onChange({ options: { ...options, defaultOptionId: e.target.value } });
-                  }}>
+            variant={"standard"}
+            aria-describedby={"default-option-helper-text"}
+            value={defaultOptionId ?? ""}
+            label={"ברירת מחדל"}
+            onChange={(e) => {
+              onChange({ options: { ...options, defaultOptionId: e.target.value } });
+            }}>
             {
               definedItems.map((item) => (
                 <MenuItem key={item.id} value={item.id}>{item.text}</MenuItem>
@@ -283,9 +287,9 @@ function ManualOptions(props: Props) {
         {
           defaultOptionId &&
           <Button className={styles.button}
-                  onClick={(_) => {
-                    onChange({ options: { ...options, defaultOptionId: undefined } });
-                  }}>
+            onClick={(_) => {
+              onChange({ options: { ...options, defaultOptionId: undefined } });
+            }}>
             <Close sx={{ fontSize: 20, color: "#a54160" }} />
           </Button>
         }

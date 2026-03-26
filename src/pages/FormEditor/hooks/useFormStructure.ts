@@ -6,7 +6,7 @@ import { FormField, FormMetadata, FormStructure, Section } from "../context/Form
 import { getEmptyForm } from "../context/utils";
 import { texts } from "@utils/texts";
 import { FormFieldTypeId } from "@utils/interfaces";
-import { generateFieldId, generateFieldName, generateSectionId } from "../utils";
+import { generateFieldId, generateNewFieldData, generateSectionId } from "../utils";
 import { FormFieldData, FormFieldSchema } from "../schemas/fields";
 import { FormMetadataSchema } from "../schemas/metadata";
 import {
@@ -368,12 +368,7 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
       const newField: FormField = {
         id: generateFieldId(),
         parentSectionId: changedSectionId,
-        data: {
-          typeId: elementTypeId,
-          name: generateFieldName(elementTypeId),
-          displayName: "",
-          required: false,
-        },
+        data: generateNewFieldData(elementTypeId),
       };
 
       const fieldIds = [...changedSection.fieldIds, newField.id];
