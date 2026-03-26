@@ -9,7 +9,7 @@ const literalTypeId = union(
 
 const baseFormFieldSchema = strictObject({
   name: string().min(1, EMPTY_FIELD_ERROR_MESSAGE).regex(/^[a-zA-Z_]*$/, "שם פנימי יכול להכיל רק אותיות באנגלית וקו תחתון (_)"),
-  displayName: string().min(1, EMPTY_FIELD_ERROR_MESSAGE),
+  displayName: string().min(1, EMPTY_FIELD_ERROR_MESSAGE).max(255, "סך התווים המקסימלי הוא 255"),
   required: boolean().default(false),
 
   typeId: literalTypeId,

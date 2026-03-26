@@ -15,12 +15,12 @@ interface Props {
 }
 
 function FormItemList({
-                        items,
-                        addItemToFormFields,
-                        customFields,
-                        addSection,
-                        openConditionsPopup,
-                      }: Props) {
+  items,
+  addItemToFormFields,
+  customFields,
+  addSection,
+  openConditionsPopup,
+}: Props) {
   const theme = useTheme();
 
   const [categories, setCategories] = useState<string[]>([]);
@@ -63,7 +63,7 @@ function FormItemList({
           />{" "}
           {texts.heb.manageConditions}
         </Button>
-        <Tooltip title="ניהול תנאים לשדות ומקטעים - קבע מתי שדות יופיעו או יוסתרו בהתבסס על תשובות של שדות אחרים">
+        <Tooltip title={texts.heb.createConditionsAnnounce}>
           <Info color="disabled" sx={{ cursor: "pointer" }} />
         </Tooltip>
       </Box>
@@ -152,50 +152,50 @@ function FormItemList({
                       }}
                       ref={provided.innerRef}>
                       {customFields
-                      .filter((item) => item.category === category)
-                      .map((item, index) => (
-                        <Draggable
-                          draggableId={`c1_item_${customFields.indexOf(item)}`}
-                          key={`item_${customFields.indexOf(item)}`}
-                          index={customFields.indexOf(item)}
-                          isDragDisabled={false}>
-                          {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
-                            <Stack
-                              alignItems={"center"}
-                              justifyContent={"center"}
-                              textAlign={"center"}
-                              component={Paper}
-                              key={index}
-                              sx={{
-                                "&:hover": {
-                                  backgroundColor: theme.palette.background.default,
-                                },
-                                width: "31%",
-                                height: "95px",
-                                fontSize: "14px",
-                                padding: "0.5rem",
-                                boxShadow: `0px 4px 20.4px 0px ${theme.palette.shadow}`,
-                              }}
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              id={"item-div-" + index}
-                              style={{
-                                ...provided.draggableProps.style,
-                              }}
-                              onClick={() => {
-                                if (!snapshot.isDragging) {
-                                  addItemToFormFields(item, 1000);
-                                }
-                              }}>
-                              <Typography>{FORM_ELEMENT_ICONS[item.icon]}</Typography>
-                              <Typography variant="subtitle2" sx={{ overflowY: "auto" }}>
-                                {item.name}
-                              </Typography>
-                            </Stack>
-                          )}
-                        </Draggable>
-                      ))}
+                        .filter((item) => item.category === category)
+                        .map((item, index) => (
+                          <Draggable
+                            draggableId={`c1_item_${customFields.indexOf(item)}`}
+                            key={`item_${customFields.indexOf(item)}`}
+                            index={customFields.indexOf(item)}
+                            isDragDisabled={false}>
+                            {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
+                              <Stack
+                                alignItems={"center"}
+                                justifyContent={"center"}
+                                textAlign={"center"}
+                                component={Paper}
+                                key={index}
+                                sx={{
+                                  "&:hover": {
+                                    backgroundColor: theme.palette.background.default,
+                                  },
+                                  width: "31%",
+                                  height: "95px",
+                                  fontSize: "14px",
+                                  padding: "0.5rem",
+                                  boxShadow: `0px 4px 20.4px 0px ${theme.palette.shadow}`,
+                                }}
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                id={"item-div-" + index}
+                                style={{
+                                  ...provided.draggableProps.style,
+                                }}
+                                onClick={() => {
+                                  if (!snapshot.isDragging) {
+                                    addItemToFormFields(item, 1000);
+                                  }
+                                }}>
+                                <Typography>{FORM_ELEMENT_ICONS[item.icon]}</Typography>
+                                <Typography variant="subtitle2" sx={{ overflowY: "auto" }}>
+                                  {item.name}
+                                </Typography>
+                              </Stack>
+                            )}
+                          </Draggable>
+                        ))}
                       {provided.placeholder}
                     </Box>
                   )}

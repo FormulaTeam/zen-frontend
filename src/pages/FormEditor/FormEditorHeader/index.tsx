@@ -1,11 +1,13 @@
 import styles from "./style.module.css";
 import { DEFAULT_ICON_NAME, formIconsNamesMap } from "@utils/utils";
-import { Button, TextField, Tooltip, Typography } from "@mui/material";
+import { Button, TextField, Tooltip } from "@mui/material";
 import { FormMetadata, useFormStructureContext } from "../context/FormStructureContext";
 import { Check, Close, DriveFileRenameOutline } from "@mui/icons-material";
 import { useState } from "react";
 import { useFormEditor } from "../hooks/useFormEditor";
 import IconsGrid from "../../../components/IconsGrid/IconsGrid";
+import { OverflowTooltip } from "../../../components/OverflowTooltip";
+import { MetadataContainer, StyledDescriptionText, StyledTitleText } from "./styled";
 
 function FormEditorHeader() {
   const { formStructure, validateForm, setFormMetadata } = useFormStructureContext();
@@ -18,8 +20,10 @@ function FormEditorHeader() {
   const { title, description, iconId, validationErrors } = formStructure.metadata;
 
   const onSaveClick = () => {
-    validateForm();
-    handleSaveForm();
+    const isValid = validateForm();
+    if (isValid) {
+      handleSaveForm();
+    }
   };
 
   const onIconChange = (newIcon: string | null): void => {
@@ -32,100 +36,127 @@ function FormEditorHeader() {
     setShowPickIcon(false);
   }
 
+  const handleSaveMetadata = (e: React.MouseEvent<HTMLButtonElement>): void => {
+    if (setFormMetadata(editedMetadata)) {
+      setIsEditingMetadata(false);
+    }
+  };
+
+  const handleCancelMetadataEdit = (e: React.MouseEvent<HTMLButtonElement>): void => {
+    setFormMetadata({ title, description, iconId });
+    setIsEditingMetadata(false);
+  };
+
+  const formIcon: JSX.Element = (
+    <div className={styles.formIconWrapper}>
+      {isEditingMetadata ? (
+        <Tooltip title="לחץ על מנת לשנות אייקון">
+          <img
+            src={formIconsNamesMap.get(editedMetadata.iconId ?? "") || formIconsNamesMap.get(DEFAULT_ICON_NAME)}
+            alt={"icon"}
+            className={styles.formIcon}
+            onClick={() => setShowPickIcon(true)}
+          />
+        </Tooltip>
+      ) : (
+        <Tooltip title="לחץ על מנת לשנות אייקון">
+          <img
+            src={formIconsNamesMap.get(iconId ?? "") || formIconsNamesMap.get(DEFAULT_ICON_NAME)}
+            alt={"icon"}
+            className={styles.formIcon}
+            onClick={() => setShowPickIcon(true)}
+          />
+        </Tooltip>
+      )}
+    </div>
+  );
+
+  const formMetadata: JSX.Element = isEditingMetadata ? (
+    <>
+      <div className={styles.editingMetadataText}>
+        <TextField value={editedMetadata.title}
+          slotProps={{
+            htmlInput: {
+              className: styles.titleInput,
+              maxLength: 60,
+            },
+          }}
+          size={"medium"}
+          placeholder={"שם הטופס"}
+          error={!!validationErrors?.title}
+          helperText={validationErrors?.title?.[0]}
+          variant={"standard"}
+          onChange={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value }))} />
+        <TextField value={editedMetadata.description}
+          slotProps={{
+            htmlInput: {
+              maxLength: 255,
+            },
+          }}
+          placeholder={"תיאור"}
+          error={!!validationErrors?.description}
+          helperText={validationErrors?.description?.[0]}
+          variant={"standard"}
+          onChange={(e) => setEditedMetadata((prev) => ({
+            ...prev,
+            description: e.target.value,
+          }))} />
+      </div>
+      <div>
+        <Button className={styles.button}
+          onClick={handleSaveMetadata}>
+          <Check sx={{ fontSize: 20, color: "#308e63" }} />
+        </Button>
+        <Button className={styles.button}
+          onClick={handleCancelMetadataEdit}>
+          <Close sx={{ fontSize: 20, color: "#a54160" }} />
+        </Button>
+      </div>
+    </>
+  ) : (
+    <MetadataContainer>
+      <div className={styles.title}>
+        <>
+          <OverflowTooltip title={title || "שם הטופס"} placement="top">
+            <StyledTitleText variant={"h5"}>{title || "שם הטופס"}</StyledTitleText>
+          </OverflowTooltip>
+          <Tooltip title="עריכת פרטי הטופס">
+            <Button className={styles.button}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(_) => {
+                setEditedMetadata({ title, description, iconId });
+                setIsEditingMetadata(true);
+              }}>
+              <DriveFileRenameOutline sx={{ fontSize: 25, color: "#506f9e" }} />
+            </Button>
+          </Tooltip>
+        </>
+      </div>
+      <OverflowTooltip title={description || "ללא תיאור"} placement="bottom">
+        <StyledDescriptionText variant="subtitle1">{description ?? "ללא תיאור"}</StyledDescriptionText>
+      </OverflowTooltip>
+    </MetadataContainer>
+  );
+
+  const headerActionButtons: JSX.Element = (
+    <>
+      <Button variant={"contained"} color={"primary"} onClick={onSaveClick} disabled={isLoading}>
+        {isLoading ? "שוומר..." : "שמירה"}
+      </Button>
+      <Button variant={"outlined"} color={"error"} onClick={handleExit} disabled={isLoading}>יציאה</Button>
+    </>
+  );
+
   return (
     <div className={styles.header}>
       <div className={styles.headerStart}>
-        <div className={styles.formIconWrapper}>
-          {isEditingMetadata ? (
-            <Tooltip title="לחץ על מנת לשנות אייקון">
-              <img
-                src={formIconsNamesMap.get(editedMetadata.iconId ?? "") || formIconsNamesMap.get(DEFAULT_ICON_NAME)}
-                alt={"icon"}
-                className={styles.formIcon}
-                onClick={() => setShowPickIcon(true)}
-              />
-            </Tooltip>
-          ) : (
-            <Tooltip title="לחץ על מנת לשנות אייקון">
-              <img
-                src={formIconsNamesMap.get(iconId ?? "") || formIconsNamesMap.get(DEFAULT_ICON_NAME)}
-                alt={"icon"}
-                className={styles.formIcon}
-                onClick={() => setShowPickIcon(true)}
-              />
-            </Tooltip>
-          )}
-        </div>
+        {formIcon}
         <div className={styles.editingMetadata}>
-          {
-            isEditingMetadata ? (
-              <>
-                <div className={styles.editingMetadataText}>
-                  <TextField value={editedMetadata.title}
-                    slotProps={{
-                      htmlInput: {
-                        className: styles.titleInput,
-                      },
-                    }}
-                    size={"medium"}
-                    placeholder={"שם הטופס"}
-                    error={!!validationErrors?.title}
-                    helperText={validationErrors?.title?.[0]}
-                    variant={"standard"}
-                    onChange={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value }))} />
-                  <TextField value={editedMetadata.description}
-                    placeholder={"תיאור"}
-                    error={!!validationErrors?.description}
-                    helperText={validationErrors?.description?.[0]}
-                    variant={"standard"}
-                    onChange={(e) => setEditedMetadata((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))} />
-                </div>
-                <div>
-                  <Button className={styles.button}
-                    onClick={(_) => {
-                      setIsEditingMetadata(!setFormMetadata(editedMetadata));
-                    }}>
-                    <Check sx={{ fontSize: 20, color: "#308e63" }} />
-                  </Button>
-                  <Button className={styles.button}
-                    onClick={(_) => {
-                      setIsEditingMetadata(false);
-                    }}>
-                    <Close sx={{ fontSize: 20, color: "#a54160" }} />
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div>
-                <div className={styles.title}>
-                  <>
-                    <Typography variant={"h5"}>{title || "שם הטופס"}</Typography>
-                    <Tooltip title="עריכת פרטי הטופס">
-                      <Button className={styles.button}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(_) => {
-                          setEditedMetadata({ title, description, iconId });
-                          setIsEditingMetadata(true);
-                        }}>
-                        <DriveFileRenameOutline sx={{ fontSize: 25, color: "#506f9e" }} />
-                      </Button>
-                    </Tooltip>
-                  </>
-                </div>
-                <Typography variant="subtitle1">{description ?? "ללא תיאור"}</Typography>
-              </div>
-            )
-          }
+          {formMetadata}
         </div>
       </div>
       <div className={styles.headerEnd}>
-        <Button variant={"contained"} color={"primary"} onClick={onSaveClick} disabled={isLoading}>
-          {isLoading ? "שוומר..." : "שמירה"}
-        </Button>
-        <Button variant={"outlined"} color={"error"} onClick={handleExit} disabled={isLoading}>יציאה</Button>
+        {headerActionButtons}
       </div>
 
       {showPickIcon && (

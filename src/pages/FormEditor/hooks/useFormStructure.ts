@@ -465,25 +465,35 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     }, []);
 
   const setFormMetadata = useCallback((metadata: Partial<FormMetadata>) => {
-    let validationErrors: FormStructure["metadata"]["validationErrors"] = {};
+    let isValid = true;
 
     setFormStructure((prev) => {
       const { validationErrors: _, ...prevMetadata } = prev.metadata;
 
       const combinedMetadata = { ...prevMetadata, ...metadata };
 
-      validationErrors = validateMetadata(combinedMetadata);
+      const validationErrors = validateMetadata(combinedMetadata);
+      if (validationErrors && Object.keys(validationErrors).length > 0) {
+        isValid = false;
+        return {
+          ...prev,
+          metadata: {
+            ...prevMetadata,
+            validationErrors,
+          },
+        };
+      }
 
       return {
         ...prev,
         metadata: {
           ...combinedMetadata,
-          validationErrors,
+          validationErrors: {},
         },
       };
     });
 
-    return !validationErrors;
+    return isValid;
   }, []);
 
   const appendCondition = useCallback((condition: FormCondition) => {
@@ -530,27 +540,42 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
   }, []);
 
   const validateForm = useCallback(() => {
-    setFormStructure((prev) => {
-      const fields = { ...prev.fields };
-      const { validationErrors: _, ...metadata } = { ...prev.metadata };
+    let isValid = true;
 
-      Object.keys(fields).forEach((fieldId) => {
-        fields[fieldId] = {
-          ...fields[fieldId],
+    const fields = { ...formStructure.fields };
+    const { validationErrors: _, ...metadata } = { ...formStructure.metadata };
+
+    Object.keys(fields).forEach((fieldId) => {
+      const fieldValidationErrors = validateField(formStructure, fieldId);
+      if (Object.keys(fieldValidationErrors).length > 0) isValid = false;
+    });
+
+    const metadataValidationErrors = validateMetadata(metadata);
+    if (metadataValidationErrors && Object.keys(metadataValidationErrors).length > 0) isValid = false;
+
+    setFormStructure((prev) => {
+      const updatedFields = { ...prev.fields };
+      const { validationErrors: __, ...prevMetadata } = { ...prev.metadata };
+
+      Object.keys(updatedFields).forEach((fieldId) => {
+        updatedFields[fieldId] = {
+          ...updatedFields[fieldId],
           validationErrors: validateField(prev, fieldId),
         };
       });
 
       return {
         ...prev,
-        fields,
+        fields: updatedFields,
         metadata: {
-          ...metadata,
-          validationErrors: validateMetadata(metadata),
+          ...prevMetadata,
+          validationErrors: validateMetadata(prevMetadata),
         },
       };
     });
-  }, []);
+
+    return isValid;
+  }, [formStructure]);
 
   return {
     formStructure,

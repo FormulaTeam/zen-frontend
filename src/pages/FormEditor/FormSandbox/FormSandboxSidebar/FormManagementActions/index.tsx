@@ -13,9 +13,9 @@ function FormManagementActions() {
     <div className={styles.managementButtonsContainer}>
       <>
         <Button startIcon={<Add />}
-                variant={"contained"}
-                size={"medium"}
-                onClick={appendSection}>
+          variant={"contained"}
+          size={"medium"}
+          onClick={appendSection}>
           יצירת מקטע
         </Button>
         <Tooltip title={texts.heb.createSectionAnnounce}>
@@ -24,11 +24,11 @@ function FormManagementActions() {
       </>
       <>
         <Button startIcon={<Settings sx={{ marginLeft: "4px" }} />}
-                variant={"contained"}
-                onClick={() => setIsConditionsDialogOpen(true)}>
+          variant={"contained"}
+          onClick={() => setIsConditionsDialogOpen(true)}>
           ניהול התניות
         </Button>
-        <Tooltip title={texts.heb.createSectionAnnounce}>
+        <Tooltip title={texts.heb.createConditionsAnnounce}>
           <Info color="disabled" sx={{ cursor: "pointer" }} />
         </Tooltip>
       </>

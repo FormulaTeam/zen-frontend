@@ -47,6 +47,8 @@ export const texts = {
     expandView: "תצוגה מוגדלת",
     createSectionAnnounce:
       "ניתן לחלק ולסדר את הטופס למקטעי שדות שונים, עם מאפיינים וכותרת ייעודית לכל מקטע",
+    createConditionsAnnounce:
+      "ניהול תנאים לשדות ומקטעים - קבע מתי שדות יופיעו או יוסתרו בהתבסס על תשובות של שדות אחרים",
     createSection: "יצירת מקטע",
     mainSection: "מקטע ראשי",
     manageConditions: "ניהול התניות",
