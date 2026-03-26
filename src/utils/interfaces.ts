@@ -5,6 +5,11 @@ import { FormOverviewSchema } from "formula-gear";
 
 export type FormOverview = z.infer<typeof FormOverviewSchema>;
 
+export interface FormOption {
+  id: string;
+  name: string;
+}
+
 declare module "@mui/material/styles" {
   interface Theme {
     borders: {

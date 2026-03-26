@@ -1,17 +1,19 @@
-import { OptionsSource } from "../../../../../../../schemas/fields/optionsSchema";
-import { FormControl, FormHelperText, InputLabel, MenuItem, Select } from "@mui/material";
+import { OptionsSource } from "@pages/FormEditor/schemas/fields/optionsSchema";
+import React, { useEffect, useState, useMemo } from "react";
+import { FormControl, FormHelperText, InputLabel, MenuItem, Select, Box, CircularProgress, styled, Autocomplete, TextField } from "@mui/material";
 import { ExtraElementProps } from "../../../index";
 import { OptionsFieldTypeId, SpecificOptions, SpecificOptionsErrors } from "../index";
-import { useEffect } from "react";
+import { useGetForm } from "@api/formsApi";
+import { useGetFormsData } from "@hooks/useGetFormsData";
+import { formsScopeOption } from "@src/types/enums/filtersAndSorts.enum";
+import { FormSectionDto, FormFieldDto } from "@src/types/shared";
+import { useFormStructureContext } from "@pages/FormEditor/context/FormStructureContext";
+import { FormOption } from "@utils/interfaces";
+import { LoaderContainer, Container, FieldControl } from "./styled";
 
 interface Props extends Omit<ExtraElementProps<OptionsFieldTypeId>, "extra" | "validationErrors" | "disabled"> {
   options: SpecificOptions<OptionsSource.FORM_FIELD_RESPONSES>;
   validationErrors: SpecificOptionsErrors<OptionsSource.FORM_FIELD_RESPONSES> | undefined;
-}
-
-interface ValidForm {
-  id: string;
-  title: string;
 }
 
 interface ValidField {
@@ -26,66 +28,114 @@ function FormFieldResponsesOptions(props: Props) {
     onChange,
   } = props;
 
+  const { formStructure } = useFormStructureContext();
+  const [searchText, setSearchText] = useState("");
+
+  const { formsData: allForms, isLoading: isLoadingForms } = useGetFormsData({
+    searchQuery: searchText.length >= 2 ? searchText : undefined,
+    scope: formsScopeOption.AllForms,
+    enabled: searchText.length >= 2,
+  });
+
+  const availableForms = useMemo<FormOption[]>(() => {
+    const list = formStructure?.metadata?.id
+      ? allForms.filter((form) => form.id !== formStructure.metadata.id)
+      : allForms;
+
+    return list.map((form) => ({ id: form.id.toString(), name: form.name }));
+  }, [allForms, formStructure?.metadata?.id]);
+
+  const { data: initialForm, isLoading: isInitializing } = useGetForm({
+    formId: options?.formId ? options.formId : undefined,
+  });
+
+  const selectedFormOption = useMemo<FormOption | null>(() => {
+    if (!initialForm) return null;
+    return { id: initialForm.id.toString(), name: initialForm.name };
+  }, [initialForm]);
+
+  const availableFields = useMemo<ValidField[]>(() => {
+    if (!initialForm) return [];
+
+    const fields = (initialForm?.sections || []).reduce((acc: FormFieldDto[], section: FormSectionDto) => {
+      return [...acc, ...(section.fields || [])];
+    }, []);
+
+    return fields.map((f: FormFieldDto) => ({
+      id: f.id.toString(),
+      displayName: f.displayName || f.name || f.id.toString()
+    }));
+  }, [initialForm]);
+
   useEffect(() => {
     onChange({ source: OptionsSource.FORM_FIELD_RESPONSES, options });
   }, []);
 
-  const availableForms: ValidForm[] = [
-    {
-      id: "2342342",
-      title: "cshshvjhv",
-    },
-    {
-      id: "234346657",
-      title: "tyklkjklyly",
-    },
-  ]; //TODO populate with actual forms
-
-  const availableFields: ValidField[] = [
-    {
-      id: "2342342",
-      displayName: "235rt564",
-    },
-    {
-      id: "234346657",
-      displayName: "546tyhgju",
-    },
-  ]; //TODO populate with actual fields
+  if (isInitializing) {
+    return (
+      <LoaderContainer>
+        <CircularProgress size={24} />
+      </LoaderContainer>
+    );
+  }
 
   return (
     <>
-      <FormControl style={{gridColumn: "span 4", width: "40%" }}>
+      <Container>
         <FormControl error={!!validationErrors?.properties?.formId}>
-          <InputLabel id="source-form-label">{availableForms.length ? "בחירת טופס" : "אין טפסים זמינים"}</InputLabel>
-          <Select labelId="source-form-label"
-                  variant={"standard"}
-                  aria-describedby={"source-form-helper-text"}
-                  value={options?.formId}
-                  label={"בחירת טופס"}
-                  onChange={(e) => {
-                    onChange({ options: { ...options, formId: e.target.value } });
-                  }}>
-            {
-              availableForms.map((availableForm) => (
-                <MenuItem key={availableForm.id} value={availableForm.id}>{availableForm.title}</MenuItem>
-              ))
-            }
-          </Select>
-          <FormHelperText id="source-form-helper-text">
-            {validationErrors?.properties?.formId?.errors[0]}
-          </FormHelperText>
+          <Autocomplete
+            options={availableForms}
+            getOptionLabel={(option) => {
+              return option?.name || "";
+            }}
+            value={selectedFormOption}
+            loading={isLoadingForms}
+            loadingText="מחפש..."
+            noOptionsText={searchText.length < 2 ? "יש להזין לפחות 2 תווים" : "לא נמצאו תוצאות"}
+            onInputChange={(_, newInputValue) => {
+              setSearchText(newInputValue);
+            }}
+            onChange={(_, newValue) => {
+              onChange({
+                source: OptionsSource.FORM_FIELD_RESPONSES,
+                options: { ...options, formId: newValue ? newValue.id.toString() : "", fieldId: "" }
+              });
+            }}
+            isOptionEqualToValue={(option, value) => option?.id === value?.id}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="בחירת טופס"
+                variant="standard"
+                error={!!validationErrors?.properties?.formId}
+                helperText={validationErrors?.properties?.formId?.errors?.[0]}
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <React.Fragment>
+                      {isLoadingForms ? <CircularProgress color="inherit" size={20} /> : null}
+                      {params.InputProps.endAdornment}
+                    </React.Fragment>
+                  ),
+                }}
+              />
+            )}
+          />
         </FormControl>
 
-        <FormControl error={!!validationErrors?.properties?.fieldId} style={{ marginTop:8 }}>
+        <FieldControl error={!!validationErrors?.properties?.fieldId}>
           <InputLabel id="source-field-label">{availableForms.length ? "בחירת שדה" : "אין שדות זמינים"}</InputLabel>
           <Select labelId="source-field-label"
-                  variant={"standard"}
-                  aria-describedby={"source-field-helper-text"}
-                  value={options?.fieldId}
-                  label={"בחירת שדה"}
-                  onChange={(e) => {
-                    onChange({ options: { ...options, fieldId: e.target.value } });
-                  }}>
+            variant={"standard"}
+            aria-describedby={"source-field-helper-text"}
+            value={options?.fieldId || ""}
+            label={"בחירת שדה"}
+            onChange={(e) => {
+              onChange({
+                source: OptionsSource.FORM_FIELD_RESPONSES,
+                options: { ...options, fieldId: e.target.value }
+              });
+            }}>
             {
               availableFields.map((availableField) => (
                 <MenuItem key={availableField.id} value={availableField.id}>{availableField.displayName}</MenuItem>
@@ -93,10 +143,10 @@ function FormFieldResponsesOptions(props: Props) {
             }
           </Select>
           <FormHelperText id="source-field-helper-text">
-            {validationErrors?.properties?.fieldId?.errors[0]}
+            {validationErrors?.properties?.fieldId?.errors?.[0]}
           </FormHelperText>
-        </FormControl>
-      </FormControl>
+        </FieldControl>
+      </Container>
     </>
   );
 }

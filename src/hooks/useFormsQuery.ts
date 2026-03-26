@@ -11,11 +11,16 @@ export interface FormsQueryParams {
   enabled?: boolean;
 }
 
-export function useGetFormsQuery({ enabled = true, ...params }: FormsQueryParams) {
+export function useGetFormsQuery({ enabled = true, searchQuery, ...rest }: FormsQueryParams) {
+  const queryParams = {
+    ...rest,
+    ...(searchQuery ? { search: searchQuery } : {}),
+  };
+
   return useQuery<FormOverview[]>({
-    queryKey: ["forms", params],
+    queryKey: ["forms", queryParams],
     queryFn: async () => {
-      const response = await apiClient.get<FormOverview[]>("/forms", { params });
+      const response = await apiClient.get<FormOverview[]>("/forms", { params: queryParams });
       return response.data;
     },
     enabled,
