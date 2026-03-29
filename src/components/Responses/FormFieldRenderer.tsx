@@ -16,8 +16,18 @@ import LinkTextField from "../FormFields/LinkTextField/LinkTextField";
 import { FormFieldWrapper, StyledBox } from "./FormFieldRenderer.styled";
 import { texts } from "../../utils/texts";
 
+type OptionItem = {
+  id: string;
+  text: string;
+  controllingItemsIds?: string[];
+};
+
 type FormFieldExtra = {
-  options?: any[];
+  options?:
+    | {
+        items?: OptionItem[];
+      }
+    | any[];
   value?: any;
   validationRegex?: string;
   connectedFormId?: number;
@@ -37,6 +47,8 @@ type FormFieldExtra = {
   initialValType?: any;
   showSeconds?: boolean;
   multiSelect?: boolean;
+  multiple?: boolean;
+  source?: number;
 };
 
 type FieldOptionValue = {
@@ -64,7 +76,6 @@ interface FormFieldRendererProps {
 
 const getFieldExtra = (field: FormFieldDto): FormFieldExtra => {
   if (!field.extra || typeof field.extra !== "object") return {};
-
   return field.extra as FormFieldExtra;
 };
 
@@ -78,15 +89,51 @@ const isConnectedToForm = (field: FormFieldDto) => {
   );
 };
 
-const getFieldOptions = (field: FormFieldDto): any[] => {
+const getFieldOptionItems = (field: FormFieldDto): OptionItem[] => {
   const extra = getFieldExtra(field);
 
-  return Array.isArray(extra.options) ? extra.options : [];
+  if (
+    extra.options &&
+    typeof extra.options === "object" &&
+    !Array.isArray(extra.options) &&
+    Array.isArray((extra.options as { items?: OptionItem[] }).items)
+  ) {
+    return (extra.options as { items: OptionItem[] }).items
+      .filter(
+        (item) =>
+          item &&
+          typeof item.id === "string" &&
+          item.id.length > 0 &&
+          typeof item.text === "string",
+      )
+      .map((item) => ({
+        id: item.id,
+        text: item.text,
+        controllingItemsIds: Array.isArray(item.controllingItemsIds)
+          ? item.controllingItemsIds
+          : [],
+      }));
+  }
+
+  if (Array.isArray(extra.options)) {
+    return extra.options.map((option) => ({
+      id: String(option),
+      text: String(option),
+      controllingItemsIds: [],
+    }));
+  }
+
+  return [];
 };
+
+const getFieldOptions = (field: FormFieldDto): string[] =>
+  getFieldOptionItems(field).map((item) => item.id);
+
+const getFieldOptionLabelMap = (field: FormFieldDto): Record<string, string> =>
+  Object.fromEntries(getFieldOptionItems(field).map((item) => [item.id, item.text]));
 
 const getParentDependencies = (field: FormFieldDto): any[] => {
   const extra = getFieldExtra(field);
-
   return Array.isArray(extra.parentDependencies) ? extra.parentDependencies : [];
 };
 
@@ -118,7 +165,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       legacyFieldTypeIds.Time,
       legacyFieldTypeIds.Boolean,
       legacyFieldTypeIds.Number,
-    ].includes(field.fieldType as never) &&
+    ].includes(formField.fieldType as never) &&
     !formFieldValue
   ) {
     formFieldValue = "";
@@ -166,14 +213,22 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       break;
 
     case legacyFieldTypeIds.Options: {
-      const multiSelect = !!formFieldExtra.multiSelect;
+      const multiSelect = Boolean(formFieldExtra.multiSelect ?? formFieldExtra.multiple);
 
-      if (multiSelect && formFieldValue && Array.isArray(formFieldValue) === false)
-        formFieldValue = [formFieldValue];
-      else if (!multiSelect && Array.isArray(formFieldValue) === true)
-        formFieldValue = formFieldValue[0];
+      if (multiSelect) {
+        if (!Array.isArray(formFieldValue)) {
+          formFieldValue =
+            typeof formFieldValue === "string" && formFieldValue !== "" ? [formFieldValue] : [];
+        }
+      } else {
+        if (Array.isArray(formFieldValue)) {
+          formFieldValue = formFieldValue[0] ?? "";
+        } else if (typeof formFieldValue !== "string") {
+          formFieldValue = "";
+        }
+      }
 
-      let availableOptions: any[] = [];
+      let availableOptions: string[] = [];
       const connectedToForm = isConnectedToForm(formField);
 
       if (connectedToForm) {
@@ -185,13 +240,12 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             (candidateField) => getFieldExtra(candidateField).parentFieldId === fieldId,
           )
         ) {
-          const uniqueOptions = new Set();
+          const uniqueOptions = new Set<string>();
           const filteredOptions = fieldOptions[fieldId]
             ?.map((optionField) => String(optionField.value))
             .filter((value) => {
               if (!uniqueOptions.has(value)) {
                 uniqueOptions.add(value);
-
                 return true;
               }
 
@@ -206,6 +260,8 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         availableOptions = getFieldOptions(formField);
       }
 
+      const optionLabels = connectedToForm ? {} : getFieldOptionLabelMap(formField);
+
       const parentFieldId = formFieldExtra.parentFieldId;
       const parentDependencies = getParentDependencies(formField);
 
@@ -215,22 +271,26 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         );
         const parentFieldExtra = parentField ? getFieldExtra(parentField) : {};
         const parentValueFromMap = formFieldsValuesMap.get(parentFieldId);
-        const parentValue = parentValueFromMap?.length
-          ? parentValueFromMap
-          : getFieldOptions(parentField ?? formField);
 
-        const hasParentValue =
-          parentValue && (Array.isArray(parentValue) ? parentValue.length > 0 : parentValue !== "");
+        const normalizedParentValue = Array.isArray(parentValueFromMap)
+          ? parentValueFromMap
+          : typeof parentValueFromMap === "string" && parentValueFromMap !== ""
+            ? [parentValueFromMap]
+            : [];
+
+        const fallbackParentOptions = getFieldOptions(parentField ?? formField);
+        const parentValuesForDependency =
+          normalizedParentValue.length > 0 ? normalizedParentValue : fallbackParentOptions;
+
+        const hasParentValue = parentValuesForDependency.length > 0;
 
         if (hasParentValue) {
           const parentValues =
             parentField && (isConnectedToForm(parentField) || connectedToForm)
-              ? fieldOptions[parentFieldId]?.map((optionField) => String(optionField.value))
-              : Array.isArray(parentValue)
-                ? parentValue
-                : [parentValue];
+              ? fieldOptions[parentFieldId]?.map((optionField) => String(optionField.value)) || []
+              : parentValuesForDependency;
 
-          const allowedOptions = new Set<any>();
+          const allowedOptions = new Set<string>();
 
           if (
             formFieldExtra.connectionType === connectionTypes.form &&
@@ -241,15 +301,15 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
               fieldOptions[fieldId]
                 ?.filter((optionField, optionIndex) => {
                   return (
-                    parentValue.includes(
+                    parentValuesForDependency.includes(
                       String(fieldOptions[parentFieldId]?.[optionIndex]?.value),
                     ) && !!optionField.value
                   );
                 })
                 .map((optionField) => {
-                  allowedOptions.add(String(optionField.value));
-
-                  return String(optionField.value);
+                  const value = String(optionField.value);
+                  allowedOptions.add(value);
+                  return value;
                 }) || [];
 
             availableOptions = Array.from(new Set(filteredOptions));
@@ -260,7 +320,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
               ),
             ];
 
-            parentValue.forEach((parentValueItem: any) => {
+            parentValues.forEach((parentValueItem: string) => {
               const parentOptionIndex = parentOptionsSet.indexOf(parentValueItem);
               const dependency = parentDependencies.find(
                 (candidateDependency) =>
@@ -270,18 +330,20 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
               if (dependency) {
                 dependency.childOptionIndices.forEach((childIndex: number) => {
                   const formOptions = getFieldOptions(formField);
-
-                  if (childIndex < formOptions.length) allowedOptions.add(formOptions[childIndex]);
+                  if (childIndex < formOptions.length) {
+                    allowedOptions.add(formOptions[childIndex]);
+                  }
                 });
               }
             });
 
-            availableOptions =
-              getFieldOptions(formField).filter((option) => allowedOptions.has(option)) || [];
+            availableOptions = getFieldOptions(formField).filter((option) =>
+              allowedOptions.has(option),
+            );
           } else if (parentField) {
             const parentOptions = getFieldOptions(parentField);
 
-            parentValues.forEach((parentValueItem: any) => {
+            parentValues.forEach((parentValueItem: string) => {
               const parentOptionIndex = parentOptions.indexOf(parentValueItem);
 
               if (parentOptionIndex !== -1) {
@@ -293,9 +355,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
                 if (dependency) {
                   dependency.childOptionIndices.forEach((childIndex: number) => {
                     const formOptions = getFieldOptions(formField);
-
-                    if (childIndex < formOptions.length)
+                    if (childIndex < formOptions.length) {
                       allowedOptions.add(formOptions[childIndex]);
+                    }
                   });
                 }
               }
@@ -303,27 +365,33 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           }
 
           if (allowedOptions.size > 0) {
-            if (formFieldExtra.connectionType !== connectionTypes.form)
+            if (formFieldExtra.connectionType !== connectionTypes.form) {
               availableOptions = getFieldOptions(formField).filter((option) =>
                 allowedOptions.has(option),
               );
+            }
 
-            if (formFieldValue) {
-              if (Array.isArray(formFieldValue)) {
-                const validValues = formFieldValue.filter((value) => allowedOptions.has(value));
+            if (multiSelect) {
+              const currentValues = Array.isArray(formFieldValue) ? formFieldValue : [];
+              const validValues = currentValues.filter((value: string) =>
+                allowedOptions.has(value),
+              );
 
-                if (validValues.length !== formFieldValue.length) {
-                  formFieldValue = validValues.length > 0 ? validValues : [];
+              if (validValues.length !== currentValues.length) {
+                formFieldValue = validValues;
 
-                  setTimeout(() => {
-                    onChangeHandler(
-                      formFieldValue,
-                      fieldId,
-                      validValues.length > 0 || !formField.isRequired,
-                    );
-                  }, 0);
-                }
-              } else if (!allowedOptions.has(formFieldValue)) {
+                setTimeout(() => {
+                  onChangeHandler(
+                    validValues,
+                    fieldId,
+                    validValues.length > 0 || !formField.isRequired,
+                  );
+                }, 0);
+              }
+            } else {
+              const currentValue = typeof formFieldValue === "string" ? formFieldValue : "";
+
+              if (currentValue && !allowedOptions.has(currentValue)) {
                 formFieldValue = "";
 
                 setTimeout(() => {
@@ -341,7 +409,8 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           }
         } else {
           if (connectedToForm) {
-            availableOptions = fieldOptions[fieldId]?.map((optionField) => optionField.value) || [];
+            availableOptions =
+              fieldOptions[fieldId]?.map((optionField) => String(optionField.value)) || [];
             availableOptions = Array.from(new Set(availableOptions));
           } else {
             availableOptions = getFieldOptions(formField);
@@ -350,23 +419,32 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       }
 
       if (!formField.isRequired && !multiSelect) {
-        if (!availableOptions.includes(texts.heb.emptyValue))
+        if (!availableOptions.includes(texts.heb.emptyValue)) {
           availableOptions = [texts.heb.emptyValue, ...availableOptions];
+        }
 
-        if (formFieldValue === texts.heb.emptyValue) formFieldValue = "";
+        if (formFieldValue === texts.heb.emptyValue) {
+          formFieldValue = "";
+        }
       }
 
       const defaultValue = formFieldExtra.defaultValue;
-      const fieldValues = Array.isArray(formFieldValue) ? formFieldValue : [];
-      const value = multiSelect ? fieldValues : formFieldValue;
+      const value = multiSelect
+        ? Array.isArray(formFieldValue)
+          ? formFieldValue
+          : []
+        : typeof formFieldValue === "string"
+          ? formFieldValue
+          : "";
 
       availableOptions = availableOptions.filter((option) => !!option);
 
-      if (connectedToForm)
+      if (connectedToForm) {
         field.extra = {
           ...fieldExtra,
           options: availableOptions,
         };
+      }
 
       input = (
         <CustomDropDownAutocomplete
@@ -376,14 +454,13 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           isRequired={formField.isRequired}
           isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(values: string[] | string, nextValid: boolean | null) => {
-            if (values[0] === texts.heb.emptyValue)
-              onChangeHandler("", fieldId, !formField.isRequired);
-            else onChangeHandler(values, fieldId, nextValid);
+          onChangeHandler={(nextValue: string[] | string, nextValid: boolean | null) => {
+            onChangeHandler(nextValue, fieldId, nextValid);
           }}
           value={value}
           multipleOptions={multiSelect}
           options={availableOptions}
+          optionLabels={optionLabels}
           isTabularEdit={isTabularEdit}
         />
       );
