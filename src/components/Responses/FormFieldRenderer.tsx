@@ -43,9 +43,9 @@ type FormFieldExtra = {
   defaultValue?: any;
   conditions?: any[];
   sectionDescription?: string;
-  dateAndTime?: boolean;
+  includeTime?: boolean;
   initialValType?: any;
-  showSeconds?: boolean;
+  includeSeconds?: boolean;
   multiSelect?: boolean;
   multiple?: boolean;
   source?: number;
@@ -165,6 +165,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       legacyFieldTypeIds.Time,
       legacyFieldTypeIds.Boolean,
       legacyFieldTypeIds.Number,
+      legacyFieldTypeIds.File,
     ].includes(formField.fieldType as never) &&
     !formFieldValue
   ) {
@@ -499,7 +500,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             onChangeHandler(value, fieldId, nextValid);
           }}
           value={formFieldValue}
-          dateAndTime={formFieldExtra.dateAndTime}
+          dateAndTime={formFieldExtra.includeTime}
           defaultValue={formFieldExtra.initialValType}
           isTabularEdit={isTabularEdit}
         />
@@ -518,7 +519,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             onChangeHandler(value, fieldId, nextValid);
           }}
           value={formFieldValue}
-          showSeconds={formFieldExtra.showSeconds}
+          showSeconds={formFieldExtra.includeSeconds}
           defaultValue={formFieldExtra.initialValType}
           isTabularEdit={isTabularEdit}
         />

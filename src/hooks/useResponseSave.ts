@@ -17,6 +17,7 @@ const createRequestCache: Map<string, Promise<any>> = new Map();
 
 type EditorFieldExtra = {
   showSeconds?: boolean;
+  includeSeconds?: boolean;
 };
 
 type SaveField = FormFieldDto & {
@@ -24,6 +25,7 @@ type SaveField = FormFieldDto & {
   uniqueId?: string;
   typeId?: number | string;
   showSeconds?: boolean;
+  includeSeconds?: boolean;
 };
 
 type ExistingResponseLike = Partial<ResponseDto> & {
@@ -36,6 +38,15 @@ type CreateResponsePayload = CreateResponseDto & {
 
 type UpdateResponsePayload = Partial<ResponseDto> & {
   parentResponse?: string;
+};
+
+type FileValueItem = {
+  name?: string;
+  path?: string;
+  url?: string;
+  fileName?: string;
+  relativePath?: string;
+  [key: string]: any;
 };
 
 const getFieldExtra = (field: SaveField): EditorFieldExtra =>
@@ -51,6 +62,23 @@ const isFileField = (field: SaveField): boolean =>
   getFieldTypeValue(field) === fieldType.File || getFieldTypeValue(field) === "file";
 
 const isTimeField = (field: SaveField): boolean => getFieldTypeValue(field) === fieldType.Time;
+
+const normalizeFileValue = (value: any): { files: FileValueItem[] } => {
+  if (!Array.isArray(value?.files)) {
+    return { files: [] };
+  }
+
+  return {
+    files: value.files.filter(
+      (file: FileValueItem) =>
+        file &&
+        typeof file.name === "string" &&
+        file.name.trim().length > 0 &&
+        typeof file.path === "string" &&
+        file.path.trim().length > 0,
+    ),
+  };
+};
 
 export const useResponseSave = (
   form: FormDto | null,
@@ -81,20 +109,7 @@ export const useResponseSave = (
       let value = formFieldsValuesMap.get(key) ?? field.value;
 
       if (isFileField(field)) {
-        try {
-          const filesValue = value ?? {};
-          const newFiles = filesValue?.files?.newFiles ?? [];
-          const attachedFiles = filesValue?.files?.attachedFiles ?? [];
-
-          const uploadResponse =
-            newFiles.length > 0 ? await uploadFilesToS3({ newFiles }, formId) : [];
-
-          value = {
-            files: [...uploadResponse, ...attachedFiles],
-          };
-        } catch (error) {
-          console.log(error);
-        }
+        value = normalizeFileValue(value);
 
         fieldValues.push({
           fieldId,
@@ -105,7 +120,12 @@ export const useResponseSave = (
 
       if (isTimeField(field) && value) {
         const fieldExtra = getFieldExtra(field);
-        const showSeconds = fieldExtra.showSeconds ?? field.showSeconds ?? false;
+        const showSeconds =
+          fieldExtra.includeSeconds ??
+          field.includeSeconds ??
+          fieldExtra.showSeconds ??
+          field.showSeconds ??
+          false;
 
         const isValidTimeValue =
           /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(String(value)) ||
@@ -147,7 +167,6 @@ export const useResponseSave = (
       const createKey = `${formId}::${parentResponse ?? ""}::${JSON.stringify(fieldValues)}`;
 
       if (!createRequestCache.has(createKey)) {
-        console.log("====NEW RESPONSE: ", newResponse);
         const p = mutateCreateResponseAsync(newResponse)
           .then((res) => {
             createRequestCache.delete(createKey);
