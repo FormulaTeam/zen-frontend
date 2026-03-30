@@ -1,8 +1,17 @@
+.formErrorContainer {
+    min-height: 32px;
+    margin-top: 8px;
+}
+
+.titleWithMargin {
+    margin-top: 16px;
+}
+
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 115px;
+    height: 130px;
     width: 100%;
     padding: 16px 0;
     border-bottom: #1976D21A solid 1px;

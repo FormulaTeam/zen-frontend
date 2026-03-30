@@ -82,11 +82,15 @@ export const ExpandIcon = styled(ExpandMore)<{ expanded?: number }>(({ expanded 
   transition: "transform 0.3s ease",
 }));
 
-export const DeleteIcon = styled(DeleteOutlined)<{ islastsection?: number }>(({ islastsection }) => ({
-  fontSize: 25,
-  color: islastsection ? "#85878D" : "#b53442",
+export const DeleteIcon = styled(DeleteOutlined, {
+  shouldForwardProp: (prop) => prop !== 'ownerState',
+})<{
+  ownerState?: { isLastSection?: boolean }
+}>(({ ownerState }) => ({
+  fontSize: 28,
+  transition: "color 0.2s",
+  color: ownerState?.isLastSection ? "#85878D" : "#b53442",
 }));
-
 export const CatalogArrowIcon = styled(KeyboardDoubleArrowRight)({
   fontSize: 35,
   marginTop: 4,

@@ -1,28 +1,34 @@
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { AccordionDetails, Button, TextField, Typography } from "@mui/material";
-import { useFormStructureContext } from "../../../context/FormStructureContext";
+import { AccordionDetails, Button, TextField } from "@mui/material";
+import { FormField, useFormStructureContext } from "../../../context/FormStructureContext";
 import styles from "./style.module.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import AlertMsg from '@components/AlertMsg/AlertMsg';
+
+import { texts } from '@utils/texts';
+import { useContext } from "react";
+import { FormEditorContext } from "@src/pages/FormEditor/context/FormEditorContext";
+import { useConfirmDeleteExistingField } from "@src/pages/FormEditor/hooks/useConfirmDeleteExistingField";
 import { FormFieldElement } from "../FormFieldElement";
 import { DraggableElementData } from "../../context/FormSandboxContext";
 import { useDndContext } from "@dnd-kit/core";
 import { FormFieldData } from "../../../schemas/fields";
 import { OverflowTooltip } from "@components/OverflowTooltip";
-import { 
-  SectionTitleText, 
-  StyledAccordion, 
-  StyledAccordionSummary, 
-  ResizeHandleWrapper, 
-  ResizeHandleBar, 
-  EmptyPlaceholderText, 
-  StyledResizable, 
-  SaveButtonIcon, 
-  CancelButtonIcon, 
-  EditButtonIcon, 
-  ExpandIcon, 
-  DeleteIcon, 
-  CatalogArrowIcon 
+import {
+  SectionTitleText,
+  StyledAccordion,
+  StyledAccordionSummary,
+  ResizeHandleWrapper,
+  ResizeHandleBar,
+  EmptyPlaceholderText,
+  StyledResizable,
+  SaveButtonIcon,
+  CancelButtonIcon,
+  EditButtonIcon,
+  ExpandIcon,
+  DeleteIcon,
+  CatalogArrowIcon
 } from "./styled";
 
 interface Props {
@@ -51,8 +57,12 @@ function FormSectionElement({ id }: Props) {
   } = useFormStructureContext();
   const { active: draggingElement } = useDndContext();
 
+  const { originalFieldIds } = useContext(FormEditorContext) || {};
+  const { requestConfirm, ConfirmDialog } = useConfirmDeleteExistingField();
+
   const isLastSection = Object.keys(formStructure.sections).length <= 1;
 
+  const [showAlertMsg, setShowAlertMsg] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
 
@@ -151,11 +161,25 @@ function FormSectionElement({ id }: Props) {
       color={'error'}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => {
-        deleteSection(id);
+        setShowAlertMsg(true);
         e.stopPropagation();
       }}>
-      <DeleteIcon islastsection={isLastSection ? 1 : 0} />
+      <DeleteIcon ownerState={{ isLastSection }} />
     </Button>
+  );
+
+  const alertMsgDialog = (
+    showAlertMsg && (
+      <AlertMsg
+        msg={[texts.heb.removeSectionAlert]}
+        closePopup={() => setShowAlertMsg(false)}
+        onOk={() => {
+          deleteSection(id);
+          setShowAlertMsg(false);
+        }}
+        sectionId={id}
+      />
+    )
   );
 
   const resizeHandle: JSX.Element = (
@@ -165,10 +189,25 @@ function FormSectionElement({ id }: Props) {
   const fieldsList: JSX.Element = (
     <AccordionDetails className={styles.content}>
       {
-        self.fieldIds.map((fieldId) => <FormFieldElement key={fieldId}
-          field={formStructure.fields[fieldId]}
-          onDataChange={handleFieldDataChange(fieldId)}
-          onDelete={() => deleteField(fieldId)} />)
+        self.fieldIds.map((fieldId: string) => {
+          const field: FormField = formStructure.fields[fieldId];
+          const isExistingField: boolean = !!originalFieldIds && originalFieldIds.has(field?.id);
+
+          return (
+            <FormFieldElement
+              key={fieldId}
+              field={field}
+              onDataChange={handleFieldDataChange(fieldId)}
+              onDelete={() => {
+                if (isExistingField) {
+                  requestConfirm(() => deleteField(fieldId));
+                } else {
+                  deleteField(fieldId);
+                }
+              }}
+            />
+          );
+        })
       }
     </AccordionDetails>
   );
@@ -183,29 +222,33 @@ function FormSectionElement({ id }: Props) {
   );
 
   return (
-    <StyledAccordion className={styles.container} expanded={self.expanded}
-      ref={containerRef}
-      style={style}
-      {...attributes}>
-      <StyledAccordionSummary ref={setActivatorNodeRef} onClick={(e) => e.preventDefault()} {...listeners}>
-        <div className={styles.title}>
-          {sectionTitle}
-        </div>
-        {toggleExpandButton}
-        {deleteSectionButton}
-      </StyledAccordionSummary>
-      <SortableContext items={formStructure.sections[id].fieldIds}
-        strategy={verticalListSortingStrategy}
-        disabled={(draggingElement?.data.current as DraggableElementData)?.elementType === "section"}>
-        <StyledResizable minHeight={200}
-          enable={{ bottom: true }}
-          handleComponent={{
-            bottom: resizeHandle,
-          }}>
-          {self.fieldIds.length ? fieldsList : emptyPlaceholder}
-        </StyledResizable>
-      </SortableContext>
-    </StyledAccordion>
+    <>
+      {ConfirmDialog}
+      {alertMsgDialog}
+      <StyledAccordion className={styles.container} expanded={self.expanded}
+        ref={containerRef}
+        style={style}
+        {...attributes}>
+        <StyledAccordionSummary ref={setActivatorNodeRef} onClick={(e) => e.preventDefault()} {...listeners}>
+          <div className={styles.title}>
+            {sectionTitle}
+          </div>
+          {toggleExpandButton}
+          {deleteSectionButton}
+        </StyledAccordionSummary>
+        <SortableContext items={formStructure.sections[id].fieldIds}
+          strategy={verticalListSortingStrategy}
+          disabled={(draggingElement?.data.current as DraggableElementData)?.elementType === "section"}>
+          <StyledResizable minHeight={200}
+            enable={{ bottom: true }}
+            handleComponent={{
+              bottom: resizeHandle,
+            }}>
+            {self.fieldIds.length ? fieldsList : emptyPlaceholder}
+          </StyledResizable>
+        </SortableContext>
+      </StyledAccordion>
+    </>
   );
 }
 

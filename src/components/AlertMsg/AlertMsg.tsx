@@ -14,14 +14,14 @@ interface AlertMsgProps {
 }
 
 const AlertMsg: React.FC<AlertMsgProps> = ({
-                                             msg,
-                                             closePopup,
-                                             onOk,
-                                             onClose,
-                                             isSuccess = false,
-                                             sectionId = "",
-                                             isTabularEdit = false,
-                                           }) => {
+  msg,
+  closePopup,
+  onOk,
+  onClose,
+  isSuccess = false,
+  sectionId = "",
+  isTabularEdit = false,
+}) => {
   return (
     <Container style={{ padding: "5px 20px" }}>
       <Popup>
@@ -37,10 +37,10 @@ const AlertMsg: React.FC<AlertMsgProps> = ({
             </Button>
             {
               onClose ? (
-                  <Button variant="outlined" onClick={onClose}>
-                    יציאה ללא שמירה
-                  </Button>
-                ) :
+                <Button variant="outlined" onClick={onClose}>
+                  יציאה ללא שמירה
+                </Button>
+              ) :
                 (
                   <Button variant="outlined" onClick={closePopup}>
                     ביטול
