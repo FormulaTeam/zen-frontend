@@ -6,9 +6,6 @@ import {
   FormControl,
   FormLabel,
   IconButton,
-  InputBase,
-  InputLabel,
-  SvgIcon,
   Tooltip,
   Typography,
   useTheme,
@@ -17,7 +14,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import { FileIcon, defaultStyles } from "react-file-icon";
 import { CustomInputFormFieldProps } from "../../../utils/interfaces";
 import UploadIcon from "../../../images/Upload-icon.svg";
-import { decodeFileName } from "../../../utils/utils";
 import { downloadFileFromResponse } from "../../../api/filesApi";
 
 interface CustomFileInputFieldProps extends CustomInputFormFieldProps {
@@ -25,6 +21,42 @@ interface CustomFileInputFieldProps extends CustomInputFormFieldProps {
   isTabularEdit?: boolean;
   formId?: number | string;
 }
+
+type FileItem = {
+  name: string;
+  path: string;
+  url?: string;
+  fileName?: string;
+  relativePath?: string;
+  [key: string]: any;
+};
+
+const normalizeIncomingValue = (value: any): FileItem[] => {
+  if (!Array.isArray(value?.files)) {
+    return [];
+  }
+
+  return value.files
+    .map((file: any) => {
+      const rawName = file?.name || file?.fileName || "";
+      const name = typeof rawName === "string" ? rawName : "";
+      const path =
+        typeof file?.path === "string" && file.path.trim().length > 0
+          ? file.path
+          : typeof file?.relativePath === "string" && file.relativePath.trim().length > 0
+            ? file.relativePath
+            : name
+              ? `./${name}`
+              : "";
+
+      return {
+        ...file,
+        name,
+        path,
+      };
+    })
+    .filter((file: FileItem) => file.name.trim().length > 0 && file.path.trim().length > 0);
+};
 
 const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   value,
@@ -36,54 +68,53 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   isTabularEdit = false,
   formId,
 }) => {
-  const [responseFiles, setResponseFiles] = useState<any>(value || []);
-  const [files, setFiles] = useState<File[]>([]);
-  const [combinedFiles, setCombinedFiles] = useState<any>({
-    newFiles: [],
-    attachedFiles: responseFiles?.files || [],
-  });
-  const [deletedFiles, setDeletedFiles] = useState<File[]>([]);
   const theme = useTheme();
-  const getFileExtension = (filename: string) => {
-    return filename.split(".").pop()?.toLowerCase() || "file"; // Default to "file" if no extension
-  };
-
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    setFiles((prev) => [...prev, ...acceptedFiles]);
-  }, []);
-
-  const onDeleteFileItem = (event, file, index) => {
-    event.stopPropagation();
-    setDeletedFiles((prevFiles) => [...prevFiles, file]);
-  };
-
-  const deleteFileBeforeUpload = (event, file, index) => {
-    event.stopPropagation();
-    setFiles((prevFiles) => prevFiles.filter((_, idx) => idx !== index));
-  };
-
-  const onDeleteAttachedFileItem = (event, file, index) => {
-    event.stopPropagation();
-    setResponseFiles((prevFiles) => ({
-      ...prevFiles,
-      files: prevFiles.files.filter((_, idx) => idx !== index),
-    }));
-    file.name = decodeFileName(file.name); // decode the file name for better readability, url stays the same
-    setDeletedFiles((prevFiles) => [...prevFiles, file]);
-  };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+  const [files, setFiles] = useState<FileItem[]>(() => normalizeIncomingValue(value));
 
   useEffect(() => {
-    setCombinedFiles({
-      newFiles: files,
-      attachedFiles: responseFiles?.files || [],
-    });
-  }, [responseFiles, files]);
+    const normalized = normalizeIncomingValue(value);
+    setFiles(normalized);
+  }, [value]);
 
-  useEffect(() => {
-    onChangeHandler({ files: combinedFiles, deletedFiles }, true);
-  }, [combinedFiles]);
+  const getFileExtension = (filename: string) => filename.split(".").pop()?.toLowerCase() || "file";
+
+  const emitChange = useCallback(
+    (nextFiles: FileItem[]) => {
+      setFiles(nextFiles);
+      onChangeHandler({ files: nextFiles }, true);
+    },
+    [onChangeHandler],
+  );
+
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      const droppedFiles: FileItem[] = acceptedFiles.map((file) => {
+        const relativePath =
+          (file as File & { webkitRelativePath?: string }).webkitRelativePath || "";
+
+        return {
+          name: file.name,
+          path: relativePath || `./${file.name}`,
+        };
+      });
+
+      emitChange([...files, ...droppedFiles]);
+    },
+    [files, emitChange],
+  );
+
+  const deleteFile = useCallback(
+    (event: React.MouseEvent, index: number) => {
+      event.stopPropagation();
+      emitChange(files.filter((_, idx) => idx !== index));
+    },
+    [files, emitChange],
+  );
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    disabled: isDisabled,
+  });
 
   return (
     <FormControl className={!isValid ? classes.invalid : ""}>
@@ -92,26 +123,28 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
           {label}
         </FormLabel>
       )}
+
       {isDisabled ? (
         <div className={classes["view-only"]}>
-          {responseFiles?.files?.length &&
-            responseFiles?.files?.map((item, idx) => {
-              const displayName = decodeFileName(item.name || item.fileName || "");
-              const extension = getFileExtension(displayName) || item.fileExtension || "";
-              return (
-                <div
-                  key={idx}
-                  title={displayName}
-                  style={{ display: "inline-block", width: '40px', flexShrink: 0, cursor: "pointer" }}
-                  onClick={() => downloadFileFromResponse(item, formId ? String(formId) : undefined)}
-                >
-                  <FileIcon
-                    extension={extension}
-                    {...(defaultStyles[extension] || {})}
-                  />
-                </div>
-              );
-            })}
+          {files.map((item, idx) => {
+            const displayName = item.name || item.fileName || "";
+            const extension = getFileExtension(displayName) || item.fileExtension || "";
+
+            return (
+              <div
+                key={`${displayName}-${idx}`}
+                title={displayName}
+                style={{
+                  display: "inline-block",
+                  width: "40px",
+                  flexShrink: 0,
+                  cursor: "pointer",
+                }}
+                onClick={() => downloadFileFromResponse(item, formId ? String(formId) : undefined)}>
+                <FileIcon extension={extension} {...(defaultStyles[extension] || {})} />
+              </div>
+            );
+          })}
         </div>
       ) : (
         <>
@@ -119,9 +152,9 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
             sx={{
               backgroundColor: theme.palette.shadow,
               ...(isTabularEdit && {
-                border: 'none',
-                minHeight: '32px',
-              })
+                border: "none",
+                minHeight: "32px",
+              }),
             }}
             {...getRootProps()}
             className={classes["file-input-container"]}>
@@ -139,59 +172,31 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
               )}
             </section>
           </Box>
+
           <section className={classes["items-preview"]}>
-            {files?.map((file, index) => {
-              const fileExtension = getFileExtension(file.name);
+            {files.map((file, index) => {
+              const displayName = file.name || file.fileName || "";
+              const fileExtension = getFileExtension(displayName);
+
               return (
-                <Tooltip title={<p style={{ fontSize: 12 }}>{file.name}</p>} key={index}>
-                  <>
-                    <div className={classes["file-item"]} key={index}>
-                      <div className={classes["file-info"]}>
-                        <FileIcon
-                          extension={fileExtension}
-                          {...(defaultStyles[fileExtension] || {})}
-                        />
-                        <p>{file.name}</p>
-                      </div>
-                      <IconButton onClick={(event) => deleteFileBeforeUpload(event, file, index)}>
-                        <CloseIcon color="error" sx={{ fontSize: 14 }} />
-                      </IconButton>
+                <Tooltip
+                  title={<p style={{ fontSize: 12 }}>{displayName}</p>}
+                  key={`${displayName}-${index}`}>
+                  <div className={classes["file-item"]}>
+                    <div className={classes["file-info"]}>
+                      <FileIcon
+                        extension={fileExtension}
+                        {...(defaultStyles[fileExtension] || {})}
+                      />
+                      <p>{displayName}</p>
                     </div>
-                  </>
+                    <IconButton onClick={(event) => deleteFile(event, index)}>
+                      <CloseIcon color="error" sx={{ fontSize: 14 }} />
+                    </IconButton>
+                  </div>
                 </Tooltip>
               );
             })}
-          </section>
-          <section
-            className={`${classes["items-preview"]} attached-files`}
-            style={{ flexDirection: "row" }}>
-            {responseFiles?.files?.length &&
-              responseFiles?.files?.map((file, index) => {
-                const fileExtension = getFileExtension(decodeFileName(file.name));
-
-                return (
-                  <Tooltip
-                    title={<p style={{ fontSize: 12 }}>{decodeFileName(file.name)}</p>}
-                    key={index}>
-                    <>
-                      <div className={classes["file-item"]} key={index}>
-                        <div className={classes["file-info"]}>
-                          <FileIcon
-                            extension={fileExtension}
-                            {...(defaultStyles[fileExtension] || {})}
-                          />
-                          <p>{decodeFileName(file.name)}</p>
-                        </div>
-                        <IconButton
-                          sx={{ p: 0.2 }}
-                          onClick={(event) => onDeleteAttachedFileItem(event, file, index)}>
-                          <CloseIcon color="error" sx={{ fontSize: 14 }} />
-                        </IconButton>
-                      </div>
-                    </>
-                  </Tooltip>
-                );
-              })}
           </section>
         </>
       )}

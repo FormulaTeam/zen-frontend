@@ -347,7 +347,13 @@ export const useResponseState = (
         if (visibleIds.has(currentFieldId)) return;
 
         const currentValue = next.get(currentFieldId);
-        const emptyValue = getFieldType(field) === fieldType.Boolean ? false : "";
+        const currentFieldType = getFieldType(field);
+        const emptyValue =
+          currentFieldType === fieldType.Boolean
+            ? false
+            : currentFieldType === fieldType.File
+              ? { files: [] }
+              : "";
 
         if (currentValue !== undefined && isDifferent(currentValue, emptyValue)) {
           next.set(currentFieldId, emptyValue);
@@ -634,12 +640,9 @@ export const useResponseState = (
       }
 
       if (currentFieldType === fieldType.File) {
-        if (
-          (!value?.files && isRequired) ||
-          (value?.files?.newFiles?.length === 0 &&
-            value?.files?.attachedFiles?.length === 0 &&
-            isRequired)
-        ) {
+        const hasFiles = Array.isArray(value?.files) && value.files.length > 0;
+
+        if (isRequired && !hasFiles) {
           nextValidMap.set(currentFieldId, false);
           isValidForm = false;
           return;
