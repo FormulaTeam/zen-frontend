@@ -73,8 +73,8 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
           onChangeHandler={(value) => handleConditionChange("value", value)}
           label="הזן טקסט"
           isDisabled={false}
-          isValid={true}
           isRequired={false}
+          validationMessage={null}
         />
       );
 
@@ -104,7 +104,7 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
           value={selectValue}
           multipleOptions={isMultiSelect}
           options={isMultiSelect ? optionsToUse : [...optionsToUse]}
-          onChangeHandler={(value, isValid) => {
+          onChangeHandler={(value) => {
             const newValue = ConditionUtils.normalizeConditionValue(
               value,
               condition.operator,
@@ -112,10 +112,10 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
             );
             handleConditionChange("value", newValue);
           }}
-          isValid={true}
           label={isMultiSelect ? "בחר אפשרויות..." : "בחר אפשרות..."}
           isRequired={false}
           isDisabled={false}
+          validationMessage={null}
         />
       );
     }
@@ -137,7 +137,7 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
             row>
             <FormControlLabel value="true" control={<Radio />} label="כן" />
             <FormControlLabel value="false" control={<Radio />} label="לא" />
-          </RadioGroup>{" "}
+          </RadioGroup>
         </FormControl>
       );
 
@@ -148,11 +148,11 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
           onChangeHandler={(value) => handleConditionChange("value", value)}
           label="הכנס מספר"
           isDisabled={false}
-          isValid={true}
           isRequired={false}
           numberType={fieldExtra.numberType}
           minValue={fieldExtra.minValue}
           maxValue={fieldExtra.maxValue}
+          validationMessage={null}
         />
       );
 
@@ -163,8 +163,8 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
           onChangeHandler={(value) => handleConditionChange("value", value)}
           label="בחר תאריך"
           isDisabled={false}
-          isValid={true}
           isRequired={false}
+          validationMessage={null}
         />
       );
 

@@ -1,88 +1,71 @@
 import { DatePicker, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import React, { useEffect, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import classes from "./CustomDateTime.module.scss";
-import { CustomInputFormFieldProps } from "../../../utils/interfaces";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
-import { useTheme } from "@mui/material/styles";
-import InputLabel from "@mui/material/InputLabel";
 import { Chrome90RTLFixContainer } from "../Chrome90RTLFix/Chrome90RTLFix";
 import "dayjs/locale/he";
 
 dayjs.extend(utc);
 
-interface CustomDateTimeProps extends CustomInputFormFieldProps {
-  value: string | null; // Expecting an ISO string
+interface CustomDateTimeProps {
+  value: string | null;
   defaultValue?: string;
   dateAndTime?: boolean;
   isTabularEdit?: boolean;
+  label: string;
+  isRequired: boolean;
+  isDisabled?: boolean;
+  onChangeHandler: (value: string) => void;
+  validationMessage?: string | null;
 }
 
 const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   value,
   isDisabled = false,
-  isValid,
   onChangeHandler,
   isRequired,
   label,
   defaultValue,
   dateAndTime = false,
   isTabularEdit = false,
+  validationMessage,
 }) => {
   const [dateValue, setDateValue] = useState<Dayjs | null>(value ? dayjs(value) : null);
-  const theme = useTheme();
-  useEffect(() => {
-    if (value && dayjs(value).isValid()) {
-      setDateValue(dayjs(value));
-    } else if (defaultValue === "currentTime") {
-      // If the value is an empty string, it means the field has been edited before
-      // Can occur on edit the value like deleting it or when editing an empty value
-      if (value === "") {
-        setDateValue(null);
-      } else {
-        let initDate = dayjs();
-        if (!dateAndTime) initDate = initDate.startOf("day");
-        setDateValue(initDate);
-        onChangeHandler(initDate.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
-      }
-    } else {
-      setDateValue(null);
-    }
-  }, []);
 
   useEffect(() => {
     if (value && dayjs(value).isValid()) {
       setDateValue(dayjs(value));
-    } else if (defaultValue === "currentTime") {
-      // If the value is an empty string, it means the field has been edited before
-      // Can occur on edit the value like deleting it or when editing an empty value
-      if (value === "") {
-        setDateValue(null);
-      } else {
-        let initDate = dayjs();
-        if (!dateAndTime) initDate = initDate.startOf("day");
-        setDateValue(initDate);
-        onChangeHandler(initDate.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
-      }
-    } else {
-      setDateValue(null);
+      return;
     }
-  }, [value, defaultValue]); // Watch for changes in `value` or `defaultValue`
+
+    if (defaultValue === "currentTime" && value !== "") {
+      let initDate = dayjs();
+      if (!dateAndTime) {
+        initDate = initDate.startOf("day");
+      }
+      setDateValue(initDate);
+      onChangeHandler(initDate.format("YYYY-MM-DD[T]HH:mm:ss.000"));
+      return;
+    }
+
+    setDateValue(null);
+  }, [value, defaultValue, dateAndTime, onChangeHandler]);
 
   useEffect(() => {
-    // Ensure both date and time are valid before merging
+    if (!dateValue?.isValid()) {
+      return;
+    }
 
     if (dateAndTime) {
-      if (dateValue?.isValid()) {
-        onChangeHandler(dateValue.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
-      }
-    } else if (dateValue?.isValid()) {
-      onChangeHandler(dateValue.startOf("day").format("YYYY-MM-DD[T]00:00:00.000"), true);
+      onChangeHandler(dateValue.format("YYYY-MM-DD[T]HH:mm:ss.000"));
+      return;
     }
-  }, [dateValue]);
+
+    onChangeHandler(dateValue.startOf("day").format("YYYY-MM-DD[T]00:00:00.000"));
+  }, [dateValue, dateAndTime, onChangeHandler]);
 
   return (
     <Chrome90RTLFixContainer className={classes["custom-date-time-container"]}>
@@ -95,20 +78,19 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
           onChange={(newValue) => {
             if (newValue?.isValid()) {
               if (dateAndTime) {
-                const newTime = newValue
+                const newDateTime = newValue
                   .hour(newValue.hour())
                   .minute(newValue.minute())
                   .second(newValue.second());
-                setDateValue(newTime);
-
-                onChangeHandler(newValue.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
+                setDateValue(newDateTime);
+                onChangeHandler(newDateTime.format("YYYY-MM-DD[T]HH:mm:ss.000"));
               } else {
                 setDateValue(newValue);
-                onChangeHandler(newValue.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
+                onChangeHandler(newValue.startOf("day").format("YYYY-MM-DD[T]00:00:00.000"));
               }
             } else {
               setDateValue(null);
-              onChangeHandler("", !isRequired);
+              onChangeHandler("");
             }
           }}
           format="DD/MM/YYYY"
@@ -119,8 +101,8 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
             textField: {
               isTabularEdit,
               required: isRequired,
-              error: !isValid, // Show error style if there's an error
-              helperText: (!isValid && "יש להזין תאריך בפורמט תקין") || " ", // Display error message
+              error: Boolean(validationMessage),
+              helperText: validationMessage || " ",
               size: isTabularEdit ? "medium" : undefined,
             } as any,
             inputAdornment: {
@@ -151,25 +133,25 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
             value={dateValue}
             onChange={(newValue) => {
               if (newValue?.isValid()) {
-                const newTime = newValue
+                const newDateTime = newValue
                   .hour(newValue.hour())
                   .minute(newValue.minute())
                   .second(newValue.second());
-                setDateValue(newTime);
-                onChangeHandler(newTime.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
+                setDateValue(newDateTime);
+                onChangeHandler(newDateTime.format("YYYY-MM-DD[T]HH:mm:ss.000"));
               } else {
-                const resetTime = dateValue?.startOf("day");
-                setDateValue(resetTime || null);
-                onChangeHandler(resetTime || "", !isRequired);
+                const resetTime = dateValue?.startOf("day") ?? null;
+                setDateValue(resetTime);
+                onChangeHandler(resetTime ? resetTime.format("YYYY-MM-DD[T]00:00:00.000") : "");
               }
             }}
             slotProps={{
               textField: {
                 required: isRequired,
-                error: !isValid, // Show error style if there's an error
-                helperText: (!isValid && "יש להזין שעה בפורמט תקין") || " ", // Display error message
+                error: Boolean(validationMessage),
+                helperText: validationMessage || " ",
                 size: isTabularEdit ? "medium" : undefined,
-              },
+              } as any,
               inputAdornment: {
                 sx: {
                   ".MuiIconButton-root": {

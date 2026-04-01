@@ -6,22 +6,14 @@ import type {
   ResponseDto,
   ResponseFieldValueDto,
 } from "../types/shared";
-import { fieldType, FieldType } from "formula-gear";
+import { fieldType, FieldType, validateFormFieldValue, type FormFieldLike } from "formula-gear";
 import { getFormById, searchResponses } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
-import {
-  checkUserAccessForResponse,
-  timeRegex,
-  utmRegex,
-  validateByRegex,
-  wktLatitudeRegexY,
-  wktLongitudeRegexX,
-} from "../utils/utils";
+import { checkUserAccessForResponse } from "../utils/utils";
 import { NOT_A_SECTION_ID } from "../utils/sections/consts";
 import { useNavigate } from "react-router-dom";
 import { IPath } from "../types/enums/global.enums";
 import { isDifferent } from "../utils/responses";
-import { isEmptyValue } from "../utils/strings";
 import { ConditionUtils } from "../utils/interfaces";
 
 type FieldExtra = {
@@ -59,6 +51,11 @@ interface SectionsMap {
     id?: string;
   };
 }
+
+export type FieldValidationError = {
+  messages: string[];
+  pathMessages: Record<string, string[]>;
+};
 
 const getFieldExtra = (field: FormFieldDto): FieldExtra => {
   return ((field.extra ?? {}) as FieldExtra) || {};
@@ -104,18 +101,31 @@ const getDefaultFieldValue = (field: FormFieldWithSectionDto) => {
   return extra.value;
 };
 
-const getInitialFieldValidity = (field: FormFieldWithSectionDto) => {
-  const currentFieldType = getFieldType(field);
+const toValidatorField = (field: FormFieldDto): FormFieldLike => ({
+  typeId: field.fieldType,
+  required: field.isRequired,
+  extra: field.extra,
+});
 
-  if (currentFieldType === fieldType.Link) {
-    return { link: true, linkTxt: true };
-  }
+const toFieldValidationError = (
+  issues: readonly { path: readonly PropertyKey[]; message: string }[],
+) => {
+  const pathMessages: Record<string, string[]> = {};
 
-  if (currentFieldType === fieldType.Location) {
-    return { x: true, y: true };
-  }
+  issues.forEach((issue) => {
+    const key = issue.path.length > 0 ? String(issue.path[0]) : "_root";
 
-  return true;
+    if (!pathMessages[key]) {
+      pathMessages[key] = [];
+    }
+
+    pathMessages[key].push(issue.message);
+  });
+
+  return {
+    messages: issues.map((issue) => issue.message),
+    pathMessages,
+  };
 };
 
 export const useResponseState = (
@@ -134,8 +144,9 @@ export const useResponseState = (
     new Map(),
   );
   const [formFieldsValuesMap, setFormFieldsValuesMap] = useState<Map<string, any>>(new Map());
-  const [formFieldsValidMap, setFormFieldsValidMap] = useState<Map<string, any>>(new Map());
-  const [interactedFields, setInteractedFields] = useState<Set<string>>(new Set());
+  const [formFieldsValidMap, setFormFieldsValidMap] = useState<
+    Map<string, FieldValidationError | null>
+  >(new Map());
   const [form, setForm] = useState<FormDto | null>(null);
   const [response, setResponse] = useState<ResponseDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -221,14 +232,14 @@ export const useResponseState = (
     const nextFormFields = flattenFields(form);
     const nextFieldsByIdMap = new Map<string, FormFieldWithSectionDto>();
     const nextValuesMap = new Map<string, any>();
-    const nextValidMap = new Map<string, any>();
+    const nextValidMap = new Map<string, FieldValidationError | null>();
 
     nextFormFields.forEach((field) => {
       const currentFieldId = String(field.id);
 
       nextFieldsByIdMap.set(currentFieldId, field);
       nextValuesMap.set(currentFieldId, getDefaultFieldValue(field));
-      nextValidMap.set(currentFieldId, getInitialFieldValidity(field));
+      nextValidMap.set(currentFieldId, null);
     });
 
     if (responseId) {
@@ -373,18 +384,8 @@ export const useResponseState = (
 
         if (visibleIds.has(currentFieldId)) return;
 
-        const currentValid = next.get(currentFieldId);
-        const currentFieldType = getFieldType(field);
-
-        const resetValid =
-          currentFieldType === fieldType.Link
-            ? { link: true, linkTxt: true }
-            : currentFieldType === fieldType.Location
-              ? { x: true, y: true }
-              : true;
-
-        if (JSON.stringify(currentValid) !== JSON.stringify(resetValid)) {
-          next.set(currentFieldId, resetValid);
+        if (next.get(currentFieldId) !== null) {
+          next.set(currentFieldId, null);
           changed = true;
         }
       });
@@ -393,7 +394,7 @@ export const useResponseState = (
     });
   }, [formFields, visibleFormFields]);
 
-  const onChangeHandler = (value: any, fieldId: string, inputValueValid: any) => {
+  const onChangeHandler = (value: any, fieldId: string, _inputValueValid?: any) => {
     const normalizedFieldId = String(fieldId);
 
     setFormFieldsValuesMap((prevFormFieldsValuesMap) => {
@@ -469,15 +470,9 @@ export const useResponseState = (
 
                   newFormFieldsValuesMap.set(childFieldId, newValue);
 
-                  setInteractedFields((prev) => {
-                    const next = new Set(prev);
-                    next.add(childFieldId);
-                    return next;
-                  });
-
                   setFormFieldsValidMap((prev) => {
                     const next = new Map(prev);
-                    next.set(childFieldId, validValues.length > 0 || !childField.isRequired);
+                    next.set(childFieldId, null);
                     return next;
                   });
                 }
@@ -488,7 +483,7 @@ export const useResponseState = (
 
               setFormFieldsValidMap((prev) => {
                 const next = new Map(prev);
-                next.set(childFieldId, !childField.isRequired);
+                next.set(childFieldId, null);
                 return next;
               });
             }
@@ -499,268 +494,51 @@ export const useResponseState = (
       return newFormFieldsValuesMap;
     });
 
-    setInteractedFields((prev) => {
-      const next = new Set(prev);
-      next.add(normalizedFieldId);
-      return next;
-    });
-
     setFormFieldsValidMap((prev) => {
-      if (!interactedFields.has(normalizedFieldId)) {
-        return prev;
-      }
-
       const next = new Map(prev);
-      next.set(normalizedFieldId, inputValueValid);
+      next.set(normalizedFieldId, null);
       return next;
     });
   };
 
-  const validateRequiredFields = () => {
+  const validateAllFieldsBeforeSubmit = () => {
     let isValidForm = true;
-    const nextValidMap = new Map<string, any>();
+    const nextValidMap = new Map<string, FieldValidationError | null>();
+    const nextParsedValuesMap = new Map(formFieldsValuesMap);
+    const visibleFieldIds = new Set(visibleFormFields.map((field) => String(field.id)));
 
-    visibleFormFields.forEach((field) => {
+    formFields.forEach((field) => {
       const currentFieldId = String(field.id);
-      const value = formFieldsValuesMap.get(currentFieldId);
-      const extra = getFieldExtra(field);
-      const currentFieldType = getFieldType(field);
-      const isRequired = field.isRequired;
 
-      if (extra.validationRegex) {
-        if (value === "" || value === null || value === undefined) {
-          if (!isRequired) {
-            nextValidMap.set(currentFieldId, true);
-          } else {
-            nextValidMap.set(currentFieldId, false);
-            isValidForm = false;
-          }
-        } else if (validateByRegex(value, extra.validationRegex) === false) {
-          nextValidMap.set(currentFieldId, false);
-          isValidForm = false;
-        } else {
-          nextValidMap.set(currentFieldId, true);
-        }
-
+      if (!visibleFieldIds.has(currentFieldId)) {
+        nextValidMap.set(currentFieldId, null);
         return;
       }
 
-      const excludedRequiredTypes: FieldType[] = [
-        fieldType.Link,
-        fieldType.Date,
-        fieldType.Time,
-        fieldType.Location,
-        fieldType.Boolean,
-        fieldType.Number,
-        fieldType.File,
-        fieldType.List,
-      ];
+      const rawValue = nextParsedValuesMap.get(currentFieldId);
+      const result = validateFormFieldValue(toValidatorField(field), rawValue);
 
-      if (isRequired && !excludedRequiredTypes.includes(currentFieldType)) {
-        if (currentFieldType === fieldType.Options) {
-          if ((value && Array.isArray(value) && value.length === 0) || !value) {
-            nextValidMap.set(currentFieldId, false);
-            isValidForm = false;
-          } else {
-            nextValidMap.set(currentFieldId, true);
-          }
-        } else {
-          if (!value) {
-            nextValidMap.set(currentFieldId, false);
-            isValidForm = false;
-          } else {
-            nextValidMap.set(currentFieldId, true);
-          }
-        }
-
+      if (result.success) {
+        nextParsedValuesMap.set(currentFieldId, result.data);
+        nextValidMap.set(currentFieldId, null);
         return;
       }
 
-      if (currentFieldType === fieldType.Link) {
-        const urlRegex = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,6})([/\w .-]*)*\/?$/i;
-        const validObj = { link: true, linkTxt: true };
-
-        if (!value?.link || !value?.linkTxt) {
-          if (!isRequired) {
-            nextValidMap.set(currentFieldId, validObj);
-          } else {
-            nextValidMap.set(currentFieldId, { link: false, linkTxt: false });
-            isValidForm = false;
-          }
-        } else if (value?.link || value?.linkTxt) {
-          if (value.link && !value.linkTxt) {
-            validObj.linkTxt = false;
-            isValidForm = false;
-          } else if (!value.link && value.linkTxt) {
-            validObj.link = false;
-            isValidForm = false;
-          } else if (!urlRegex.test(value.link)) {
-            validObj.link = false;
-            isValidForm = false;
-          }
-
-          nextValidMap.set(currentFieldId, validObj);
-        }
-
-        return;
-      }
-
-      if (currentFieldType === fieldType.Date) {
-        if (!value && !isRequired) {
-          nextValidMap.set(currentFieldId, true);
-        } else if (!value && isRequired) {
-          nextValidMap.set(currentFieldId, false);
-          isValidForm = false;
-        } else {
-          nextValidMap.set(currentFieldId, true);
-        }
-
-        return;
-      }
-
-      if (currentFieldType === fieldType.Time) {
-        if (!value && !isRequired) {
-          nextValidMap.set(currentFieldId, true);
-        } else if (!value && isRequired) {
-          nextValidMap.set(currentFieldId, false);
-          isValidForm = false;
-        } else if (value) {
-          if (timeRegex.test(value)) {
-            nextValidMap.set(currentFieldId, true);
-          } else {
-            nextValidMap.set(currentFieldId, false);
-            isValidForm = false;
-          }
-        } else {
-          nextValidMap.set(currentFieldId, false);
-          isValidForm = false;
-        }
-
-        return;
-      }
-
-      if (currentFieldType === fieldType.File) {
-        const hasFiles = Array.isArray(value?.files) && value.files.length > 0;
-
-        if (isRequired && !hasFiles) {
-          nextValidMap.set(currentFieldId, false);
-          isValidForm = false;
-          return;
-        }
-
-        nextValidMap.set(currentFieldId, true);
-        return;
-      }
-
-      if (currentFieldType === fieldType.Location) {
-        const validObj = { x: true, y: true };
-
-        if (!value || (!value.x && !value.y)) {
-          if (!isRequired) {
-            nextValidMap.set(currentFieldId, validObj);
-          } else {
-            nextValidMap.set(currentFieldId, { x: false, y: false });
-            isValidForm = false;
-          }
-
-          return;
-        }
-
-        if (!extra.coordinateType || extra.coordinateType === "UTM") {
-          if (!utmRegex.test(value.x)) {
-            validObj.x = false;
-            isValidForm = false;
-          }
-          if (!utmRegex.test(value.y)) {
-            validObj.y = false;
-            isValidForm = false;
-          }
-        } else {
-          if (!wktLongitudeRegexX.test(value.x)) {
-            validObj.x = false;
-            isValidForm = false;
-          }
-          if (!wktLatitudeRegexY.test(value.y)) {
-            validObj.y = false;
-            isValidForm = false;
-          }
-        }
-
-        nextValidMap.set(currentFieldId, validObj);
-        return;
-      }
-
-      if (currentFieldType === fieldType.List) {
-        if (isRequired) {
-          if (!value || value.length === 0) {
-            nextValidMap.set(currentFieldId, false);
-            isValidForm = false;
-          } else {
-            nextValidMap.set(currentFieldId, true);
-          }
-        } else {
-          nextValidMap.set(currentFieldId, true);
-        }
-
-        return;
-      }
-
-      if (currentFieldType === fieldType.Number) {
-        const { minValue, maxValue, numberType } = extra;
-        const isEmpty = isEmptyValue(value);
-
-        if (isEmpty) {
-          if (isRequired) {
-            nextValidMap.set(currentFieldId, false);
-            isValidForm = false;
-          } else {
-            nextValidMap.set(currentFieldId, true);
-          }
-          return;
-        }
-
-        const numericValue = Number(value);
-
-        if (isNaN(numericValue)) {
-          nextValidMap.set(currentFieldId, false);
-          isValidForm = false;
-          return;
-        }
-
-        if (numberType === "integer" && !Number.isInteger(numericValue)) {
-          nextValidMap.set(currentFieldId, false);
-          isValidForm = false;
-          return;
-        }
-
-        if ((minValue || minValue === 0) && numericValue < minValue) {
-          nextValidMap.set(currentFieldId, false);
-          isValidForm = false;
-          return;
-        }
-
-        if ((maxValue || maxValue === 0) && numericValue > maxValue) {
-          nextValidMap.set(currentFieldId, false);
-          isValidForm = false;
-          return;
-        }
-
-        nextValidMap.set(currentFieldId, true);
-        return;
-      }
-
-      if (currentFieldType === fieldType.Boolean) {
-        nextValidMap.set(currentFieldId, true);
-        return;
-      }
-
-      if (!isRequired) {
-        nextValidMap.set(currentFieldId, true);
-      }
+      isValidForm = false;
+      nextValidMap.set(currentFieldId, toFieldValidationError(result.error.issues));
     });
 
     setFormFieldsValidMap(nextValidMap);
-    return isValidForm;
+
+    if (isValidForm) {
+      setFormFieldsValuesMap(nextParsedValuesMap);
+    }
+
+    return {
+      isValid: isValidForm,
+      parsedValuesMap: nextParsedValuesMap,
+      validationMap: nextValidMap,
+    };
   };
 
   const responsSections: SectionsMap = useMemo(() => {
@@ -789,7 +567,7 @@ export const useResponseState = (
     formFieldsValuesMap,
     formFieldsValidMap,
     onChangeHandler,
-    validateRequiredFields,
+    validateAllFieldsBeforeSubmit,
     loading,
     form,
     response,

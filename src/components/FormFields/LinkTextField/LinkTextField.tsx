@@ -6,8 +6,8 @@ import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
 type LinkTextFieldProps = {
   value: LinkValue | null;
   isDisabled: boolean;
-  onChangeHandler: (value: LinkValue, valid: { link: boolean; linkTxt: boolean } | null) => void;
-  isValid: LinkValueError;
+  onChangeHandler: (value: LinkValue) => void;
+  errors?: LinkValueError | null;
   isRequired: boolean;
   label: string;
   isTabularEdit?: boolean;
@@ -17,43 +17,36 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
   value,
   isDisabled,
   onChangeHandler,
-  isValid = { link: true, linkTxt: true },
+  errors,
   label,
   isRequired,
   isTabularEdit = false,
 }) => {
   const [url, setUrl] = useState(value?.link || "");
   const [previewText, setPreviewText] = useState(value?.linkTxt || "");
-  const [urlIsValid, setUrlIsValid] = useState(true);
-  const [previewIsValid, setPreviewIsValid] = useState(true);
-
-  const urlRegex = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,6})([/\w .-]*)*\/?$/i;
-
-  const onChangeUrlInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setUrl(event?.target.value);
-    if (event?.target.value !== "" && !urlRegex.test(event?.target.value)) {
-      setUrlIsValid(false);
-      return;
-    }
-    setUrlIsValid(true);
-  };
-
-  const onChangePreviewTextInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPreviewText(event?.target.value);
-    setPreviewIsValid(true);
-  };
 
   useEffect(() => {
-    setUrlIsValid(isValid.link);
-    setPreviewIsValid(isValid.linkTxt);
-  }, [isValid]);
+    setUrl(value?.link || "");
+    setPreviewText(value?.linkTxt || "");
+  }, [value?.link, value?.linkTxt]);
 
-  useEffect(() => {
-    onChangeHandler(
-      { link: url, linkTxt: previewText },
-      { link: urlIsValid, linkTxt: previewIsValid },
-    );
-  }, [url, previewText]);
+  const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextUrl = event.target.value;
+    setUrl(nextUrl);
+    onChangeHandler({
+      link: nextUrl,
+      linkTxt: previewText,
+    });
+  };
+
+  const handlePreviewTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextPreviewText = event.target.value;
+    setPreviewText(nextPreviewText);
+    onChangeHandler({
+      link: url,
+      linkTxt: nextPreviewText,
+    });
+  };
 
   return (
     <div className={classes["link-text-field-container"]}>
@@ -65,9 +58,9 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
         placeholder="https://example.co.il"
         required={isRequired}
         value={url}
-        onChange={onChangeUrlInputHandler}
-        error={!urlIsValid}
-        helperText={(!urlIsValid && "היפר-קישור לא תקין") || " "}
+        onChange={handleUrlChange}
+        error={Boolean(errors?.link || errors?.general)}
+        helperText={errors?.link || errors?.general || " "}
         disabled={isDisabled}
         size={isTabularEdit ? "medium" : undefined}
       />
@@ -78,9 +71,9 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
         label={isTabularEdit ? "" : "טקסט להיפר-קישור"}
         required={isRequired}
         value={previewText}
-        onChange={onChangePreviewTextInputHandler}
-        error={!previewIsValid}
-        helperText={(!previewIsValid && "שדה זה הינו חובה") || " "}
+        onChange={handlePreviewTextChange}
+        error={Boolean(errors?.linkTxt || errors?.general)}
+        helperText={errors?.linkTxt || errors?.general || " "}
         disabled={isDisabled}
         size={isTabularEdit ? "medium" : undefined}
       />

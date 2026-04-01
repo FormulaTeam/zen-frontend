@@ -53,7 +53,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     formFieldsValuesMap,
     formFieldsValidMap,
     onChangeHandler,
-    validateRequiredFields,
+    validateAllFieldsBeforeSubmit,
     loading,
     form,
     response,
@@ -70,38 +70,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   const generateValidationErrorMessagesRef = useRef<() => string[]>(() => []);
 
   const saveAll = useCallback(async () => {
-    if (validateRequiredFields() && form) {
-      try {
-        let result: any;
+    const validationResult = validateAllFieldsBeforeSubmit();
 
-        if (copyMode) {
-          if (!parentCreatePromiseRef.current) {
-            parentCreatePromiseRef.current = saveResponse(formFieldsByIdMap, formFieldsValuesMap);
-          }
-
-          result = await parentCreatePromiseRef.current;
-        } else {
-          result = await saveResponse(formFieldsByIdMap, formFieldsValuesMap);
-        }
-
-        if (!Array.isArray(result)) {
-          setSavedResponse(result);
-        }
-
-        setChildFormsSaving(true);
-      } catch (error: any) {
-        if (copyMode) {
-          parentCreatePromiseRef.current = null;
-        }
-
-        if (error?.response?.data?.error?.includes("Metro")) {
-          navigate(`/responses/${form.id}`);
-        } else {
-          showErrorNotification("משהו השתבש");
-          setShowLoadingSaveBtn(false);
-        }
-      }
-    } else {
+    if (!validationResult.isValid || !form) {
       const errorMessages = generateValidationErrorMessagesRef.current?.() || [];
 
       if (errorMessages.length > 0) {
@@ -110,16 +81,43 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       }
 
       setShowLoadingSaveBtn(false);
+      return;
     }
-  }, [
-    copyMode,
-    form,
-    formFieldsByIdMap,
-    formFieldsValuesMap,
-    navigate,
-    saveResponse,
-    validateRequiredFields,
-  ]);
+
+    try {
+      let result: any;
+
+      if (copyMode) {
+        if (!parentCreatePromiseRef.current) {
+          parentCreatePromiseRef.current = saveResponse(
+            formFieldsByIdMap,
+            validationResult.parsedValuesMap,
+          );
+        }
+
+        result = await parentCreatePromiseRef.current;
+      } else {
+        result = await saveResponse(formFieldsByIdMap, validationResult.parsedValuesMap);
+      }
+
+      if (!Array.isArray(result)) {
+        setSavedResponse(result);
+      }
+
+      setChildFormsSaving(true);
+    } catch (error: any) {
+      if (copyMode) {
+        parentCreatePromiseRef.current = null;
+      }
+
+      if (error?.response?.data?.error?.includes("Metro")) {
+        navigate(`/responses/${form.id}`);
+      } else {
+        showErrorNotification("משהו השתבש");
+        setShowLoadingSaveBtn(false);
+      }
+    }
+  }, [copyMode, form, formFieldsByIdMap, navigate, saveResponse, validateAllFieldsBeforeSubmit]);
 
   const {
     childForms,

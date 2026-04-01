@@ -1,7 +1,12 @@
 import React from "react";
 
 import type { FormFieldDto } from "../../types/shared";
-import { connectionTypes, LinkValue, LocationValueError } from "../../utils/interfaces";
+import {
+  connectionTypes,
+  LinkValue,
+  LocationValueError,
+  LinkValueError,
+} from "../../utils/interfaces";
 import { fieldType as legacyFieldTypeIds } from "formula-gear";
 import CustomDateTime from "../FormFields/CustomDateTime/CustomDateTime";
 import CustomDropDownAutocomplete from "../FormFields/CustomDropDownAutocomplete/CustomDropDownAutocomplete";
@@ -60,12 +65,17 @@ type FormFieldRendererField = FormFieldDto & {
   sectionOrder?: number;
 };
 
+type FieldValidationError = {
+  messages: string[];
+  pathMessages: Record<string, string[]>;
+};
+
 interface FormFieldRendererProps {
   formField: FormFieldRendererField;
   formFieldsByIdMap: Map<string, FormFieldRendererField>;
   formFieldsValuesMap: Map<string, any>;
-  formFieldsValidMap: Map<string, any>;
-  onChangeHandler: (value: any, fieldId: string, valid: any) => void;
+  formFieldsValidMap: Map<string, FieldValidationError | null>;
+  onChangeHandler: (value: any, fieldId: string, valid?: any) => void;
   viewMode: boolean;
   fieldOptions: Record<string, FieldOptionValue[]>;
   formFields: FormFieldRendererField[];
@@ -137,6 +147,33 @@ const getParentDependencies = (field: FormFieldDto): any[] => {
   return Array.isArray(extra.parentDependencies) ? extra.parentDependencies : [];
 };
 
+const getValidationMessage = (validation: FieldValidationError | null | undefined): string | null =>
+  validation?.messages?.[0] ?? null;
+
+const getLocationErrors = (
+  validation: FieldValidationError | null | undefined,
+): LocationValueError | null => {
+  if (!validation) return null;
+
+  return {
+    x: validation.pathMessages?.x?.[0],
+    y: validation.pathMessages?.y?.[0],
+    general: validation.pathMessages?._root?.[0] ?? validation.messages?.[0],
+  };
+};
+
+const getLinkErrors = (
+  validation: FieldValidationError | null | undefined,
+): LinkValueError | null => {
+  if (!validation) return null;
+
+  return {
+    link: validation.pathMessages?.link?.[0],
+    linkTxt: validation.pathMessages?.linkTxt?.[0],
+    general: validation.pathMessages?._root?.[0] ?? validation.messages?.[0],
+  };
+};
+
 const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   formField,
   formFieldsByIdMap,
@@ -172,7 +209,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
     formFieldValue = "";
   }
 
-  const valid: any = formFieldsValidMap.get(fieldId);
+  const validation = formFieldsValidMap.get(fieldId);
+  const validationMessage = getValidationMessage(validation);
+
   let input: any = null;
 
   switch (formField.fieldType) {
@@ -182,13 +221,12 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           key={index}
           label={formField.displayName}
           isRequired={formField.isRequired}
-          isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, nextValid: boolean | null) => {
-            onChangeHandler(value, fieldId, nextValid);
+          onChangeHandler={(value: string) => {
+            onChangeHandler(value, fieldId);
           }}
           value={formFieldValue}
-          validationRegex={formFieldExtra.validationRegex}
+          validationMessage={validationMessage}
           multiline
           isTabularEdit={isTabularEdit}
         />
@@ -201,13 +239,12 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           key={index}
           label={formField.displayName}
           isRequired={formField.isRequired}
-          isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, nextValid: boolean | null) => {
-            onChangeHandler(value, fieldId, nextValid);
+          onChangeHandler={(value: string) => {
+            onChangeHandler(value, fieldId);
           }}
           value={formFieldValue}
-          validationRegex={formFieldExtra.validationRegex}
+          validationMessage={validationMessage}
           isTabularEdit={isTabularEdit}
         />
       );
@@ -382,11 +419,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
                 formFieldValue = validValues;
 
                 setTimeout(() => {
-                  onChangeHandler(
-                    validValues,
-                    fieldId,
-                    validValues.length > 0 || !formField.isRequired,
-                  );
+                  onChangeHandler(validValues, fieldId);
                 }, 0);
               }
             } else {
@@ -396,7 +429,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
                 formFieldValue = "";
 
                 setTimeout(() => {
-                  onChangeHandler("", fieldId, !formField.isRequired);
+                  onChangeHandler("", fieldId);
                 }, 0);
               }
             }
@@ -405,7 +438,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             formFieldValue = multiSelect ? [] : "";
 
             setTimeout(() => {
-              onChangeHandler(formFieldValue, fieldId, !formField.isRequired);
+              onChangeHandler(formFieldValue, fieldId);
             }, 0);
           }
         } else {
@@ -453,15 +486,15 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           defaultValue={defaultValue}
           label={formField.displayName}
           isRequired={formField.isRequired}
-          isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(nextValue: string[] | string, nextValid: boolean | null) => {
-            onChangeHandler(nextValue, fieldId, nextValid);
+          onChangeHandler={(nextValue: string[] | string) => {
+            onChangeHandler(nextValue, fieldId);
           }}
           value={value}
           multipleOptions={multiSelect}
           options={availableOptions}
           optionLabels={optionLabels}
+          validationMessage={validationMessage}
           isTabularEdit={isTabularEdit}
         />
       );
@@ -474,13 +507,10 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           key={index}
           label={formField.displayName}
           isRequired={formField.isRequired}
-          isValid={valid}
+          errors={getLinkErrors(validation)}
           isDisabled={viewMode}
-          onChangeHandler={(
-            value: LinkValue,
-            nextValid: { link: boolean; linkTxt: boolean } | null,
-          ) => {
-            onChangeHandler(value, fieldId, nextValid);
+          onChangeHandler={(value: LinkValue) => {
+            onChangeHandler(value, fieldId);
           }}
           value={formFieldValue || null}
           isTabularEdit={isTabularEdit}
@@ -494,14 +524,14 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           key={index}
           label={formField.displayName}
           isRequired={formField.isRequired}
-          isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, nextValid: boolean | null) => {
-            onChangeHandler(value, fieldId, nextValid);
+          onChangeHandler={(value: string) => {
+            onChangeHandler(value, fieldId);
           }}
           value={formFieldValue}
           dateAndTime={formFieldExtra.includeTime}
           defaultValue={formFieldExtra.initialValType}
+          validationMessage={validationMessage}
           isTabularEdit={isTabularEdit}
         />
       );
@@ -513,14 +543,14 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           key={index}
           label={formField.displayName}
           isRequired={formField.isRequired}
-          isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, nextValid: boolean | null) => {
-            onChangeHandler(value, fieldId, nextValid);
+          onChangeHandler={(value: string) => {
+            onChangeHandler(value, fieldId);
           }}
           value={formFieldValue}
           showSeconds={formFieldExtra.includeSeconds}
           defaultValue={formFieldExtra.initialValType}
+          validationMessage={validationMessage}
           isTabularEdit={isTabularEdit}
         />
       );
@@ -532,13 +562,13 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           key={index}
           label={formField.displayName}
           isRequired={formField.isRequired}
-          isValid={valid}
+          errors={getLocationErrors(validation)}
           isDisabled={viewMode}
           coordinateType={formFieldExtra.coordinateType}
-          onChangeHandler={(value: any, nextValid: LocationValueError | null) => {
-            onChangeHandler(value, fieldId, nextValid);
+          onChangeHandler={(value: any) => {
+            onChangeHandler(value, fieldId);
           }}
-          value={formFieldValue}
+          value={formFieldValue || { x: "", y: "" }}
           isTabularEdit={isTabularEdit}
         />
       );
@@ -551,7 +581,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           label={formField.displayName}
           isDisabled={viewMode}
           onChangeHandler={(value: boolean) => {
-            onChangeHandler(value, fieldId, true);
+            onChangeHandler(value, fieldId);
           }}
           value={formFieldValue}
           defaultValue={formFieldExtra.defaultValue}
@@ -566,12 +596,12 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           key={index}
           label={formField.displayName}
           isRequired={formField.isRequired}
-          isValid={valid}
           isDisabled={viewMode}
           onChangeHandler={(value: any[]) => {
-            onChangeHandler(value, fieldId, true);
+            onChangeHandler(value, fieldId);
           }}
           value={formFieldValue}
+          validationMessage={validationMessage}
           isTabularEdit={isTabularEdit}
         />
       );
@@ -583,15 +613,15 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           key={index}
           label={formField.displayName}
           isRequired={formField.isRequired}
-          isValid={valid}
           isDisabled={viewMode}
-          onChangeHandler={(value: any, nextValid: boolean) => {
-            onChangeHandler(value, fieldId, nextValid);
+          onChangeHandler={(value: string) => {
+            onChangeHandler(value, fieldId);
           }}
           value={formFieldValue ?? formFieldExtra.initialNumberValue ?? ""}
           numberType={formFieldExtra.numberType}
           minValue={formFieldExtra.minValue}
           maxValue={formFieldExtra.maxValue}
+          validationMessage={validationMessage}
           isTabularEdit={isTabularEdit}
         />
       );
@@ -603,12 +633,12 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           key={index}
           label={formField.displayName}
           isRequired={formField.isRequired}
-          isValid={valid}
           isDisabled={viewMode}
           onChangeHandler={(value: any) => {
-            onChangeHandler(value, fieldId, true);
+            onChangeHandler(value, fieldId);
           }}
           value={formFieldValue}
+          validationMessage={validationMessage}
           isTabularEdit={isTabularEdit}
           formId={formId}
         />

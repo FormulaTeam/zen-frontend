@@ -9,17 +9,23 @@ import {
   Tooltip,
   Typography,
   useTheme,
+  FormHelperText,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { FileIcon, defaultStyles } from "react-file-icon";
-import { CustomInputFormFieldProps } from "../../../utils/interfaces";
 import UploadIcon from "../../../images/Upload-icon.svg";
 import { downloadFileFromResponse } from "../../../api/filesApi";
 
-interface CustomFileInputFieldProps extends CustomInputFormFieldProps {
+interface CustomFileInputFieldProps {
   value: any;
+  isDisabled: boolean;
+  onChangeHandler: (value: any) => void;
+  isValid?: boolean;
+  label: string;
+  isRequired: boolean;
   isTabularEdit?: boolean;
   formId?: number | string;
+  validationMessage?: string | null;
 }
 
 type FileItem = {
@@ -62,11 +68,11 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   value,
   isDisabled,
   onChangeHandler,
-  isValid,
   label,
   isRequired,
   isTabularEdit = false,
   formId,
+  validationMessage,
 }) => {
   const theme = useTheme();
   const [files, setFiles] = useState<FileItem[]>(() => normalizeIncomingValue(value));
@@ -81,7 +87,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   const emitChange = useCallback(
     (nextFiles: FileItem[]) => {
       setFiles(nextFiles);
-      onChangeHandler({ files: nextFiles }, true);
+      onChangeHandler({ files: nextFiles });
     },
     [onChangeHandler],
   );
@@ -117,9 +123,14 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   });
 
   return (
-    <FormControl className={!isValid ? classes.invalid : ""}>
+    <FormControl
+      error={Boolean(validationMessage)}
+      className={validationMessage ? classes.invalid : ""}>
       {!isTabularEdit && (
-        <FormLabel style={{ fontSize: 14 }} error={!isValid} required={isRequired}>
+        <FormLabel
+          style={{ fontSize: 14 }}
+          error={Boolean(validationMessage)}
+          required={isRequired}>
           {label}
         </FormLabel>
       )}
@@ -200,6 +211,8 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
           </section>
         </>
       )}
+
+      <FormHelperText>{validationMessage || " "}</FormHelperText>
     </FormControl>
   );
 };
