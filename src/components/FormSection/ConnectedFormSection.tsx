@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Masonry } from "@mui/lab";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
-import { useTheme } from "@mui/material/styles";
 
 import type { FormFieldDto } from "../../types/shared";
 import { useFormInFormResponseSave } from "../../hooks/useFormInFormResponseSave";
@@ -46,7 +45,6 @@ const getConnectedFormId = (field: FormFieldDto): number | undefined => {
   if (!field.extra || typeof field.extra !== "object") return undefined;
 
   const connectedFormId = (field.extra as { connectedFormId?: unknown }).connectedFormId;
-
   return typeof connectedFormId === "number" ? connectedFormId : undefined;
 };
 
@@ -67,7 +65,6 @@ function ConnectedFormSection({
   formsLength,
   handleRemoveChildForm,
 }: Props) {
-  const theme = useTheme();
   const connectedFormId = getConnectedFormId(field);
 
   const {
@@ -76,7 +73,7 @@ function ConnectedFormSection({
     formFieldsValuesMap,
     formFieldsValidMap,
     onChangeHandler,
-    validateRequiredFields,
+    validateAllFieldsBeforeSubmit,
     loading,
     form,
     response,
@@ -96,6 +93,8 @@ function ConnectedFormSection({
     computedParentResponse,
     copyMode,
   );
+
+  const validateRequiredFields = () => validateAllFieldsBeforeSubmit().isValid;
 
   const { saved, error, valid } = useFormInFormResponseSave({
     shouldSave: shouldSave && !!parentResponse,
@@ -117,7 +116,6 @@ function ConnectedFormSection({
   }, [isSaving, shouldSave, shouldValidate, shouldLoad]);
 
   if (!connectedFormId) return null;
-
   if (isLoading || shouldLoad) return null;
 
   return (

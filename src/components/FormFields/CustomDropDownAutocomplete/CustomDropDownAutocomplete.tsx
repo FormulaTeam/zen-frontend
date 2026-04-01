@@ -1,6 +1,5 @@
 import { Chip, FormControl } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { CustomInputFormFieldProps } from "../../../utils/interfaces";
 import { texts } from "../../../utils/texts";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -11,13 +10,18 @@ import {
   StyledAutocomplete,
 } from "./styled";
 
-interface CustomDropDownAutocompleteProps extends CustomInputFormFieldProps {
+interface CustomDropDownAutocompleteProps {
   value: string | string[];
   multipleOptions?: boolean;
   options: string[];
   optionLabels?: Record<string, string>;
   defaultValue?: string | string[];
   isTabularEdit?: boolean;
+  label: string;
+  isRequired: boolean;
+  isDisabled: boolean;
+  onChangeHandler: (value: string | string[]) => void;
+  validationMessage?: string | null;
 }
 
 const normalizeToArray = (value: string | string[] | null | undefined): string[] => {
@@ -33,11 +37,11 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   options,
   optionLabels = {},
   onChangeHandler,
-  isValid,
   label,
   isRequired,
   defaultValue,
   isTabularEdit = false,
+  validationMessage,
 }) => {
   const [selectedValues, setSelectedValues] = useState<string[]>(normalizeToArray(value));
 
@@ -47,12 +51,12 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
       setSelectedValues(initialValues);
 
       if (multipleOptions) {
-        onChangeHandler(initialValues, isValid);
+        onChangeHandler(initialValues);
       } else {
-        onChangeHandler(initialValues[0] ?? "", isValid);
+        onChangeHandler(initialValues[0] ?? "");
       }
     }
-  }, []);
+  }, [defaultValue, multipleOptions, onChangeHandler]);
 
   useEffect(() => {
     setSelectedValues(normalizeToArray(value));
@@ -64,9 +68,9 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
     setSelectedValues(normalized);
 
     if (multipleOptions) {
-      onChangeHandler(normalized, !isRequired || normalized.length > 0);
+      onChangeHandler(normalized);
     } else {
-      onChangeHandler(normalized[0] ?? "", !isRequired || normalized.length > 0);
+      onChangeHandler(normalized[0] ?? "");
     }
   };
 
@@ -85,7 +89,6 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   };
 
   const displayedValue = selectedValues.map((val) => (val === "" ? texts.heb.emptyValue : val));
-
   const autocompleteValue = multipleOptions ? displayedValue : (displayedValue[0] ?? null);
 
   const getLabel = (option: string) => {
@@ -109,12 +112,13 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
       {!isTabularEdit && (
         <StyledInputLabel
           shrink
-          error={!isValid}
+          error={Boolean(validationMessage)}
           required={isRequired}
           id={`select-helper-label-${label}`}>
           {label}
         </StyledInputLabel>
       )}
+
       <StyledAutocomplete
         slotProps={{
           listbox: { component: StyledListbox },
@@ -142,7 +146,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
           <StyledTextField
             {...params}
             required={isRequired}
-            error={!isValid}
+            error={Boolean(validationMessage)}
             variant="standard"
             size={isTabularEdit ? "medium" : undefined}
             sx={{
@@ -200,9 +204,8 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
           />
         )}
       />
-      <StyledFormHelperText>
-        {(!isValid && texts.heb.listChooseRequired) || " "}
-      </StyledFormHelperText>
+
+      <StyledFormHelperText>{validationMessage || " "}</StyledFormHelperText>
     </FormControl>
   );
 };

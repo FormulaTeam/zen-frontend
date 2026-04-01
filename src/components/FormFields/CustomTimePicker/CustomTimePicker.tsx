@@ -3,36 +3,36 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import React, { useEffect, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { CustomInputFormFieldProps } from "../../../utils/interfaces";
-import { useTheme } from "@mui/material/styles";
-import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
 import { Chrome90RTLFixContainer } from "../Chrome90RTLFix/Chrome90RTLFix";
+import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
 import "dayjs/locale/he";
 
 dayjs.extend(utc);
 
-interface CustomTimePickerProps extends CustomInputFormFieldProps {
+interface CustomTimePickerProps {
   value: any;
   defaultValue?: string;
   showSeconds?: boolean;
   isTabularEdit?: boolean;
+  label: string;
+  isRequired: boolean;
+  isDisabled?: boolean;
+  onChangeHandler: (value: string) => void;
+  validationMessage?: string | null;
 }
 
 const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
   value,
   isDisabled = false,
-  isValid,
   onChangeHandler,
   isRequired,
   label,
   defaultValue,
   showSeconds = false,
   isTabularEdit = false,
+  validationMessage,
 }) => {
   const [timeValue, setTimeValue] = useState<Dayjs | null>(() => {
-    if (value instanceof Date) {
-      return dayjs(value);
-    }
     if (typeof value === "string" && value.includes(":")) {
       const [hours, minutes, seconds] = value.split(":").map(Number);
       const date = new Date();
@@ -43,10 +43,36 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
       }
       return dayjs(date);
     }
-    if (defaultValue === "currentTime") return dayjs();
+
+    if (defaultValue === "currentTime") {
+      return dayjs();
+    }
+
     return null;
   });
-  const theme = useTheme();
+
+  useEffect(() => {
+    if (typeof value === "string" && value.includes(":")) {
+      const [hours, minutes, seconds] = value.split(":").map(Number);
+      const date = new Date();
+      date.setHours(hours);
+      date.setMinutes(minutes);
+      if (seconds !== undefined) {
+        date.setSeconds(seconds);
+      }
+      setTimeValue(dayjs(date));
+      return;
+    }
+
+    if (!value && defaultValue === "currentTime") {
+      setTimeValue(dayjs());
+      return;
+    }
+
+    if (!value) {
+      setTimeValue(null);
+    }
+  }, [value, defaultValue]);
 
   useEffect(() => {
     if (timeValue && timeValue.isValid()) {
@@ -59,11 +85,11 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
         timeString = `${timeString}:${seconds}`;
       }
 
-      onChangeHandler(timeString, true);
-    } else {
-      onChangeHandler("", !isRequired);
+      onChangeHandler(timeString);
+    } else if (!isRequired) {
+      onChangeHandler("");
     }
-  }, [timeValue, isRequired]);
+  }, [timeValue, isRequired, showSeconds, onChangeHandler]);
 
   return (
     <Chrome90RTLFixContainer>
@@ -82,17 +108,16 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
               setTimeValue(newValue);
             } else {
               setTimeValue(null);
+              onChangeHandler("");
             }
           }}
-          // Using the component directly prevents recreation each render and keeps a stable anchor element
           slots={{ textField: BaseFieldInput }}
           slotProps={{
-            // Cast to any so we can pass custom prop isTabularEdit to our wrapped component
             textField: {
               isTabularEdit,
               required: isRequired,
-              error: !isValid,
-              helperText: (!isValid && "יש להזין שעה בפורמט תקין") || " ",
+              error: Boolean(validationMessage),
+              helperText: validationMessage || " ",
               size: isTabularEdit ? "medium" : undefined,
             } as any,
             inputAdornment: {
