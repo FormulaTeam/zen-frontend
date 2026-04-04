@@ -3,16 +3,20 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import React, { useEffect, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import classes from "./CustomDateTime.module.scss";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
 import { Chrome90RTLFixContainer } from "../Chrome90RTLFix/Chrome90RTLFix";
 import "dayjs/locale/he";
 
 dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const ISRAEL_TZ = "Asia/Jerusalem";
 
 interface CustomDateTimeProps {
   value: string | null;
-  defaultValue?: string;
+  defaultValue?: number;
   dateAndTime?: boolean;
   isTabularEdit?: boolean;
   label: string;
@@ -21,6 +25,26 @@ interface CustomDateTimeProps {
   onChangeHandler: (value: string) => void;
   validationMessage?: string | null;
 }
+
+const isCurrentDateDefault = (defaultValue?: number) =>
+  defaultValue === 2;
+
+const toIsraelDayjs = (value: string): Dayjs | null => {
+  if (!value) return null;
+
+  const parsed = dayjs.utc(value);
+  if (!parsed.isValid()) return null;
+
+  return parsed.tz(ISRAEL_TZ);
+};
+
+const toStoredUtcIso = (value: Dayjs, dateAndTime: boolean): string => {
+  if (dateAndTime) {
+    return value.tz(ISRAEL_TZ, true).utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
+  }
+
+  return value.tz(ISRAEL_TZ, true).startOf("day").utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
+};
 
 const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   value,
@@ -33,39 +57,26 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   isTabularEdit = false,
   validationMessage,
 }) => {
-  const [dateValue, setDateValue] = useState<Dayjs | null>(value ? dayjs(value) : null);
+  const [dateValue, setDateValue] = useState<Dayjs | null>(null);
 
   useEffect(() => {
-    if (value && dayjs(value).isValid()) {
-      setDateValue(dayjs(value));
+    if (value) {
+      const parsed = toIsraelDayjs(value);
+      setDateValue(parsed);
       return;
     }
 
-    if (defaultValue === "currentTime" && value !== "") {
-      let initDate = dayjs();
-      if (!dateAndTime) {
-        initDate = initDate.startOf("day");
-      }
-      setDateValue(initDate);
-      onChangeHandler(initDate.format("YYYY-MM-DD[T]HH:mm:ss.000"));
+    if (isCurrentDateDefault(defaultValue)) {
+      const initDate = dayjs().tz(ISRAEL_TZ);
+      const normalized = dateAndTime ? initDate : initDate.startOf("day");
+
+      setDateValue(normalized);
+      onChangeHandler(toStoredUtcIso(normalized, dateAndTime));
       return;
     }
 
     setDateValue(null);
   }, [value, defaultValue, dateAndTime, onChangeHandler]);
-
-  useEffect(() => {
-    if (!dateValue?.isValid()) {
-      return;
-    }
-
-    if (dateAndTime) {
-      onChangeHandler(dateValue.format("YYYY-MM-DD[T]HH:mm:ss.000"));
-      return;
-    }
-
-    onChangeHandler(dateValue.startOf("day").format("YYYY-MM-DD[T]00:00:00.000"));
-  }, [dateValue, dateAndTime, onChangeHandler]);
 
   return (
     <Chrome90RTLFixContainer className={classes["custom-date-time-container"]}>
@@ -77,17 +88,10 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
           value={dateValue}
           onChange={(newValue) => {
             if (newValue?.isValid()) {
-              if (dateAndTime) {
-                const newDateTime = newValue
-                  .hour(newValue.hour())
-                  .minute(newValue.minute())
-                  .second(newValue.second());
-                setDateValue(newDateTime);
-                onChangeHandler(newDateTime.format("YYYY-MM-DD[T]HH:mm:ss.000"));
-              } else {
-                setDateValue(newValue);
-                onChangeHandler(newValue.startOf("day").format("YYYY-MM-DD[T]00:00:00.000"));
-              }
+              const nextValue = dateAndTime ? newValue : newValue.startOf("day");
+
+              setDateValue(nextValue);
+              onChangeHandler(toStoredUtcIso(nextValue, dateAndTime));
             } else {
               setDateValue(null);
               onChangeHandler("");
@@ -133,16 +137,13 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
             value={dateValue}
             onChange={(newValue) => {
               if (newValue?.isValid()) {
-                const newDateTime = newValue
-                  .hour(newValue.hour())
-                  .minute(newValue.minute())
-                  .second(newValue.second());
-                setDateValue(newDateTime);
-                onChangeHandler(newDateTime.format("YYYY-MM-DD[T]HH:mm:ss.000"));
+                const nextValue = newValue;
+                setDateValue(nextValue);
+                onChangeHandler(toStoredUtcIso(nextValue, true));
               } else {
                 const resetTime = dateValue?.startOf("day") ?? null;
                 setDateValue(resetTime);
-                onChangeHandler(resetTime ? resetTime.format("YYYY-MM-DD[T]00:00:00.000") : "");
+                onChangeHandler(resetTime ? toStoredUtcIso(resetTime, true) : "");
               }
             }}
             slotProps={{

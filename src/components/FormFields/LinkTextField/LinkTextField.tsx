@@ -59,8 +59,8 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
         required={isRequired}
         value={url}
         onChange={handleUrlChange}
-        error={Boolean(errors?.link || errors?.general)}
-        helperText={errors?.link || errors?.general || " "}
+        error={Boolean(errors?.link)}
+        helperText={errors?.link || " "}
         disabled={isDisabled}
         size={isTabularEdit ? "medium" : undefined}
       />
@@ -72,11 +72,13 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
         required={isRequired}
         value={previewText}
         onChange={handlePreviewTextChange}
-        error={Boolean(errors?.linkTxt || errors?.general)}
-        helperText={errors?.linkTxt || errors?.general || " "}
+        error={Boolean(errors?.linkTxt)}
+        helperText={errors?.linkTxt || " "}
         disabled={isDisabled}
         size={isTabularEdit ? "medium" : undefined}
       />
+
+      {errors?.general ? <div className={classes["general-error"]}>{errors.general}</div> : null}
     </div>
   );
 };

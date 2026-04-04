@@ -24,10 +24,10 @@ type FieldExtra = {
   connectedFormId?: number;
   parentFieldId?: string;
   parentDependencies?: any[];
-  coordinateType?: string;
-  minValue?: number;
-  maxValue?: number;
-  numberType?: string;
+  locationFormat?: string;
+  min?: number;
+  max?: number;
+  numberFormat?: string;
   initialNumberValue?: number;
   defaultValue?: boolean;
   conditions?: any[];
