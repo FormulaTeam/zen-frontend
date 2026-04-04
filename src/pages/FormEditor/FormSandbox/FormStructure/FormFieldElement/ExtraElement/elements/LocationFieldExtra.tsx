@@ -8,9 +8,7 @@ import { LabelWithIcon, IconWrapper } from "./styled";
 type Props = ExtraElementProps<typeof FieldTypeIds.location>;
 
 function LocationFieldExtra({ extra, onChange, disabled }: Props) {
-  const {
-    format = LocationFormat.UTM,
-  } = extra;
+  const { locationFormat: format = LocationFormat.UTM } = extra;
 
   return (
     <>

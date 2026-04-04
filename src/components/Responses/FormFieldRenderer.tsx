@@ -170,7 +170,7 @@ const getLinkErrors = (
   return {
     link: validation.pathMessages?.link?.[0],
     linkTxt: validation.pathMessages?.linkTxt?.[0],
-    general: validation.pathMessages?._root?.[0] ?? validation.messages?.[0],
+    general: validation.pathMessages?._root?.[0],
   };
 };
 
@@ -530,7 +530,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           }}
           value={formFieldValue}
           dateAndTime={formFieldExtra.includeTime}
-          defaultValue={formFieldExtra.initialValType}
+          defaultValue={formFieldExtra.defaultValue}
           validationMessage={validationMessage}
           isTabularEdit={isTabularEdit}
         />
