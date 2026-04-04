@@ -90,12 +90,12 @@ const getDefaultFieldValue = (field: FormFieldWithSectionDto) => {
   const extra = getFieldExtra(field);
   const currentFieldType = getFieldType(field);
 
-  if (currentFieldType === fieldType.Number && extra.initialNumberValue !== undefined) {
-    return extra.initialNumberValue;
+  if (currentFieldType === fieldType.Number && extra.defaultValue !== undefined) {
+    return extra.defaultValue;
   }
 
-  if (currentFieldType === fieldType.Boolean && extra.defaultValue !== undefined) {
-    return extra.defaultValue;
+  if (currentFieldType === fieldType.Boolean) {
+    return extra.defaultValue !== undefined ? extra.defaultValue : false;
   }
 
   return extra.value;

@@ -104,7 +104,7 @@ function FormFieldsPreviewRenderer({ formField }) {
           isRequired={formField.required}
           errors={null}
           isDisabled={viewMode}
-          coordinateType={formField.coordinateType}
+          locationFormat={formField.locationFormat}
           onChangeHandler={() => {}}
           value={{ x: "", y: "" }}
         />
@@ -140,10 +140,10 @@ function FormFieldsPreviewRenderer({ formField }) {
           isRequired={formField.required}
           isDisabled={viewMode}
           onChangeHandler={() => {}}
-          value={formFieldValue ?? formField?.initialNumberValue ?? ""}
-          numberType={formField?.numberType}
-          minValue={formField?.minValue}
-          maxValue={formField?.maxValue}
+          defaultValue={formFieldValue ?? formField?.initialNumberValue ?? ""}
+          numberFormat={formField?.numberType}
+          min={formField?.minValue}
+          max={formField?.maxValue}
           validationMessage={null}
         />
       );

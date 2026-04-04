@@ -11,7 +11,7 @@ type CustomLatitudeLongitudeFieldProps = {
   errors?: LocationValueError | null;
   isRequired: boolean;
   label: string;
-  coordinateType?: string;
+  locationFormat?: number;
   isTabularEdit?: boolean;
 };
 
