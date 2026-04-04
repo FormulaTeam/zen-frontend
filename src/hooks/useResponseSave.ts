@@ -1,6 +1,5 @@
 import { useCreateResponse, useUpdateResponse } from "../api";
-import { getUserName, showErrorNotification } from "../utils/utils";
-import { uploadFilesToS3 } from "../api/filesApi";
+import { showErrorNotification } from "../utils/utils";
 import { NotificationTexts } from "../utils/interfaces";
 import moment from "moment";
 import {
@@ -12,8 +11,7 @@ import {
 } from "../types/shared";
 import { fieldType } from "formula-gear";
 
-// Cache to deduplicate create requests during a save operation
-const createRequestCache: Map<string, Promise<any>> = new Map();
+const createRequestCache: Map<string, Promise<ResponseDto>> = new Map();
 
 type EditorFieldExtra = {
   showSeconds?: boolean;
@@ -63,6 +61,9 @@ const isFileField = (field: SaveField): boolean =>
 
 const isTimeField = (field: SaveField): boolean => getFieldTypeValue(field) === fieldType.Time;
 
+const isFormField = (field: SaveField): boolean =>
+  getFieldTypeValue(field) === fieldType.Form || getFieldTypeValue(field) === "form";
+
 const normalizeFileValue = (value: any): { files: FileValueItem[] } => {
   if (!Array.isArray(value?.files)) {
     return { files: [] };
@@ -97,7 +98,7 @@ export const useResponseSave = (
   const saveResponse = async (
     formFieldsByIdMap: Map<string, SaveField>,
     formFieldsValuesMap: Map<string, any>,
-  ) => {
+  ): Promise<ResponseDto> => {
     if (!formId) {
       throw new Error("Form is not loaded");
     }
@@ -105,15 +106,17 @@ export const useResponseSave = (
     const fieldValues: ResponseFieldValueDto[] = [];
 
     for (const [key, field] of formFieldsByIdMap) {
+      if (isFormField(field)) {
+        continue;
+      }
+
       const fieldId = getFieldId(field, key);
       let value = formFieldsValuesMap.get(key) ?? field.value;
 
       if (isFileField(field)) {
-        value = normalizeFileValue(value);
-
         fieldValues.push({
           fieldId,
-          value,
+          value: normalizeFileValue(value),
         });
         continue;
       }
@@ -143,9 +146,6 @@ export const useResponseSave = (
       });
     }
 
-    const userName = getUserName(user?.firstName, user?.lastName) || user?.name || "";
-    const normalizedUpn = user?.upn?.toLowerCase?.() ?? user?.upn ?? "unknown";
-
     try {
       if (response && response.id && !copyMode) {
         const updatedResponse: UpdateResponsePayload = {
@@ -155,8 +155,7 @@ export const useResponseSave = (
           ...(parentResponse ? { parentResponse } : {}),
         };
 
-        const updated = await mutateUpdateResponseAsync(updatedResponse as any);
-        return updated;
+        return (await mutateUpdateResponseAsync(updatedResponse as any)) as ResponseDto;
       }
 
       const newResponse: CreateResponsePayload = {
@@ -164,10 +163,14 @@ export const useResponseSave = (
         ...(parentResponse ? { parentResponse } : {}),
       };
 
-      const createKey = `${formId}::${parentResponse ?? ""}::${JSON.stringify(fieldValues)}`;
+      if (parentResponse) {
+        return (await mutateCreateResponseAsync(newResponse)) as ResponseDto;
+      }
+
+      const createKey = `${formId}::${JSON.stringify(fieldValues)}`;
 
       if (!createRequestCache.has(createKey)) {
-        const p = mutateCreateResponseAsync(newResponse)
+        const requestPromise = (mutateCreateResponseAsync(newResponse) as Promise<ResponseDto>)
           .then((res) => {
             createRequestCache.delete(createKey);
             return res;
@@ -177,7 +180,7 @@ export const useResponseSave = (
             throw err;
           });
 
-        createRequestCache.set(createKey, p);
+        createRequestCache.set(createKey, requestPromise);
       }
 
       return await createRequestCache.get(createKey)!;
@@ -193,6 +196,7 @@ export const useResponseSave = (
             : NotificationTexts.CreateResponseFailed,
         );
       }
+
       throw error;
     }
   };

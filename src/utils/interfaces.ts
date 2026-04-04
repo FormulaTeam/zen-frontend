@@ -124,7 +124,7 @@ export interface FormField {
   parentFieldName?: string;
   parentDependencies?: ParentDependencies[];
   connectionType?: (typeof connectionTypes)[keyof typeof connectionTypes];
-  connectedFormId?: number;
+  linkedFormId?: number;
   connectedFieldId?: string;
   childFieldId?: string;
   childFieldName?: string;

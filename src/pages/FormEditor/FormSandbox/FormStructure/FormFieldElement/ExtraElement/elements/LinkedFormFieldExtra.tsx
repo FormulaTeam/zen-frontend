@@ -5,7 +5,7 @@ import { ExtraElementProps } from "../index";
 type Props = ExtraElementProps<typeof FieldTypeIds.linkedForm>;
 
 interface ValidForm {
-  id: string;
+  id: number;
   title: string;
 }
 
@@ -16,11 +16,11 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
 
   const availableForms: ValidForm[] = [
     {
-      id: "16",
+      id: 16,
       title: "cshshvjhv",
     },
     {
-      id: "234346657",
+      id: 234346657,
       title: "tyklkjklyly",
     },
   ]; //TODO populate with actual forms

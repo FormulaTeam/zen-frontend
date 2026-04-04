@@ -25,7 +25,7 @@ type FieldExtra = {
   multiSelect?: boolean;
   defaultValue?: string | string[];
   connectionType?: string | number;
-  connectedFormId?: number;
+  linkedFormId?: number;
   connectedFieldId?: string;
   parentFieldId?: string;
   parentFieldName?: string;
@@ -205,7 +205,7 @@ export default function FormPropertyRenderer({
             setFormFields((prev) =>
               updateFieldByIndex(prev, index, (field) =>
                 updateFieldExtra(field, {
-                  connectedFormId: val,
+                  linkedFormId: val,
                 }),
               ),
             );
@@ -428,7 +428,7 @@ export default function FormPropertyRenderer({
               setFormFields((prev) =>
                 updateFieldByIndex(prev, index, (field) => ({
                   ...updateFieldExtra(field, {
-                    connectedFormId: value.id,
+                    linkedFormId: value.id,
                     shouldSyncToMetro: false,
                   }),
                   displayName: value.name || field.displayName,

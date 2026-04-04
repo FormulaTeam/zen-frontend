@@ -40,8 +40,8 @@ export const useValidationErrors = ({
         if (childForm.shown && childForm.children && childForm.children.length > 0) {
           const childFormField = formFields.find(
             (f) =>
-              f.extra?.connectedFormId === childForm.formId ||
-              f.connectedFormId === childForm.formId,
+              f.extra?.linkedFormId === childForm.formId ||
+              f.linkedFormId === childForm.formId,
           );
 
           const childFormName =

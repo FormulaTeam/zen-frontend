@@ -54,7 +54,7 @@ type EditorFieldExtra = {
   multiSelect?: boolean;
   defaultValue?: unknown;
   validationRegex?: string;
-  connectedFormId?: number;
+  linkedFormId?: number;
   connectedFieldId?: string;
   parentFieldId?: string;
   parentFieldName?: string;
@@ -159,7 +159,7 @@ const coerceToEditorField = (field: EditorFormField | FormField): EditorFormFiel
       multiSelect: field.multiSelect,
       defaultValue: field.defaultValue,
       validationRegex: field.validationRegex,
-      connectedFormId: field.connectedFormId,
+      linkedFormId: field.linkedFormId,
       connectedFieldId: field.connectedFieldId,
       parentFieldId: field.parentFieldId,
       parentFieldName: (field as any).parentFieldName,
@@ -245,7 +245,7 @@ const mapGeneratedFieldToDto = (
     multiSelect: generatedField.multiSelect,
     defaultValue: generatedField.defaultValue,
     validationRegex: generatedField.validationRegex,
-    connectedFormId: generatedField.connectedFormId,
+    linkedFormId: generatedField.linkedFormId,
     connectedFieldId: generatedField.connectedFieldId,
     parentFieldId: generatedField.parentFieldId,
     parentFieldName: generatedField.parentFieldName,
@@ -779,7 +779,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
       }
 
       if (extra.connectionType === connectionTypes.form) {
-        if (!extra.connectedFormId) {
+        if (!extra.linkedFormId) {
           hasEmptyFormConnection = true;
           addErrorIf(true, "שדה לא מחובר לטופס", "options", field.id);
         }
@@ -790,7 +790,7 @@ const FieldsVisual: React.FC<FormProps> = ({ formToEdit, currentUser }) => {
         }
       }
 
-      if (field.fieldType === fieldType.Form && !extra.connectedFormId) {
+      if (field.fieldType === fieldType.Form && !extra.linkedFormId) {
         hasEmptyFormInFormConnection = true;
         addErrorIf(true, "שדה לא מחובר לטופס", "form", field.id);
       }

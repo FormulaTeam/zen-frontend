@@ -8,7 +8,7 @@ import { useFormInFormSearch } from "../../hooks/useFormInFormSearch";
 import { FormDto, FormFieldDto } from "../../types/shared";
 
 type FormInFormFieldExtra = {
-  connectedFormId?: number;
+  linkedFormId?: number;
 };
 
 type Props = {
@@ -31,7 +31,7 @@ function FormInFormField({ formField, onChangeConnectedForm, error }: Props) {
     loading,
     handleSearchForm,
     handleSelectForm,
-  } = useFormInFormSearch({ connectedFormId: fieldExtra.connectedFormId });
+  } = useFormInFormSearch({ linkedFormId: fieldExtra.linkedFormId });
 
   const onFormSelect = (event: React.SyntheticEvent, value: FormDto | null) => {
     handleSelectForm(event, value);

@@ -58,7 +58,7 @@ type ParentDependency = {
 type OptionsFieldExtra = {
   options?: string[];
   multiSelect?: boolean;
-  connectedFormId?: number;
+  linkedFormId?: number;
   connectedFieldId?: string;
   parentFieldId?: string;
   parentDependencies?: ParentDependency[];
@@ -137,12 +137,12 @@ export default function OptionsField({
   }, [formFieldExtra.parentFieldId, allFormFields]);
 
   useEffect(() => {
-    if (formFieldExtra.connectedFormId) {
+    if (formFieldExtra.linkedFormId) {
       const filter = {
         query: {
           $or: [{ name: { $regex: formText } }, { description: { $regex: formText } }],
           users: { $elemMatch: { upn: user?.upn?.toLowerCase() } },
-          id: formFieldExtra.connectedFormId,
+          id: formFieldExtra.linkedFormId,
         },
       };
 
@@ -156,7 +156,7 @@ export default function OptionsField({
     } else {
       setSelectedForm(null);
     }
-  }, [formFieldExtra.connectedFormId, formText, user?.upn]);
+  }, [formFieldExtra.linkedFormId, formText, user?.upn]);
 
   useEffect(() => {
     setLoadingForms(true);
@@ -196,7 +196,7 @@ export default function OptionsField({
         setLoadingOptions(true);
 
         getResponses({
-          form_id: matchedFieldExtra.connectedFormId,
+          form_id: matchedFieldExtra.linkedFormId,
         })
           .then((responses) => {
             if (responses.length === 0) {
@@ -245,7 +245,7 @@ export default function OptionsField({
       const itemExtra = getFieldExtra(item);
       return (
         itemExtra.connectionType === connectionTypes.form &&
-        formFieldExtra.connectedFormId === itemExtra.connectedFormId
+        formFieldExtra.linkedFormId === itemExtra.linkedFormId
       );
     };
 

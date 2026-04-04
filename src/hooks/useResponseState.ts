@@ -21,7 +21,7 @@ type FieldExtra = {
   multiSelect?: boolean;
   value?: any;
   validationRegex?: string;
-  connectedFormId?: number;
+  linkedFormId?: number;
   parentFieldId?: string;
   parentDependencies?: any[];
   locationFormat?: string;

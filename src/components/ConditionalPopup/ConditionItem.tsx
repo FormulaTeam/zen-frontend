@@ -19,7 +19,7 @@ import { FormFieldDto } from "../../types/shared";
 
 type ConditionFieldExtra = {
   connectionType?: string | number;
-  connectedFormId?: number;
+  linkedFormId?: number;
   connectedFieldId?: string;
   conditions?: Condition[];
   sectionId?: string;

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-
 import { Masonry } from "@mui/lab";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
@@ -42,10 +41,12 @@ type Props = {
 };
 
 const getConnectedFormId = (field: FormFieldDto): number | undefined => {
-  if (!field.extra || typeof field.extra !== "object") return undefined;
+  if (!field.extra || typeof field.extra !== "object") {
+    return undefined;
+  }
 
-  const connectedFormId = (field.extra as { connectedFormId?: unknown }).connectedFormId;
-  return typeof connectedFormId === "number" ? connectedFormId : undefined;
+  const linkedFormId = (field.extra as { linkedFormId?: unknown }).linkedFormId;
+  return typeof linkedFormId === "number" ? linkedFormId : undefined;
 };
 
 function ConnectedFormSection({
@@ -65,7 +66,7 @@ function ConnectedFormSection({
   formsLength,
   handleRemoveChildForm,
 }: Props) {
-  const connectedFormId = getConnectedFormId(field);
+  const linkedFormId = getConnectedFormId(field);
 
   const {
     formFields,
@@ -79,7 +80,7 @@ function ConnectedFormSection({
     response,
     fieldOptions,
     loadingConnections,
-  } = useResponseState(connectedFormId?.toString() ?? "", id, viewMode, copyMode);
+  } = useResponseState(linkedFormId?.toString() ?? "", id, viewMode, copyMode);
 
   const computedParentResponse = useMemo(
     () => (parentResponse ? `${formId};${parentResponse}` : undefined),
@@ -97,7 +98,7 @@ function ConnectedFormSection({
   const validateRequiredFields = () => validateAllFieldsBeforeSubmit().isValid;
 
   const { saved, error, valid } = useFormInFormResponseSave({
-    shouldSave: shouldSave && !!parentResponse,
+    shouldSave: Boolean(shouldSave && parentResponse),
     shouldValidate,
     validateRequiredFields,
     form,
@@ -113,10 +114,15 @@ function ConnectedFormSection({
 
   useEffect(() => {
     setIsLoading(isSaving || shouldSave || shouldValidate);
-  }, [isSaving, shouldSave, shouldValidate, shouldLoad]);
+  }, [isSaving, shouldSave, shouldValidate]);
 
-  if (!connectedFormId) return null;
-  if (isLoading || shouldLoad) return null;
+  if (!linkedFormId) {
+    return null;
+  }
+
+  if (isLoading || shouldLoad) {
+    return null;
+  }
 
   return (
     <ConnectedFormWrapper>

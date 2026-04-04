@@ -6,7 +6,7 @@ import { FormFieldDto, ResponseDto } from "../types/shared";
 
 type ConnectedFieldExtra = {
   connectionType?: string | number;
-  connectedFormId?: number;
+  linkedFormId?: number;
   connectedFieldId?: string;
 };
 
@@ -52,7 +52,7 @@ export const useConnectedFormOptions = ({
 
       return (
         extra.connectionType === connectionTypes.form &&
-        !!extra.connectedFormId &&
+        !!extra.linkedFormId &&
         !!extra.connectedFieldId &&
         !loadedFieldsRef.current.has(field.id)
       );
@@ -66,7 +66,7 @@ export const useConnectedFormOptions = ({
     return [
       ...new Set<number>(
         connectedFields
-          .map((field) => getFieldExtra(field).connectedFormId)
+          .map((field) => getFieldExtra(field).linkedFormId)
           .filter((id): id is number => id !== undefined),
       ),
     ];
