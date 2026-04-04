@@ -21,9 +21,9 @@ import { FormFieldDto } from "../../types/shared";
 type ConditionFieldExtra = {
   connectionType?: string | number;
   options?: string[];
-  numberType?: string;
-  minValue?: number;
-  maxValue?: number;
+  numberFormat?: number;
+  min?: number;
+  max?: number;
 };
 
 type ConditionalFormField = FormFieldDto & {
@@ -144,14 +144,14 @@ const ConditionInputRenderer: React.FC<ConditionInputRendererProps> = ({
     case FieldTypeIds.number:
       return (
         <CustomNumberField
-          value={condition.value}
+          defaultValue={condition.value}
           onChangeHandler={(value) => handleConditionChange("value", value)}
           label="הכנס מספר"
           isDisabled={false}
           isRequired={false}
-          numberType={fieldExtra.numberType}
-          minValue={fieldExtra.minValue}
-          maxValue={fieldExtra.maxValue}
+          numberFormat={fieldExtra.numberFormat}
+          min={fieldExtra.min}
+          max={fieldExtra.max}
           validationMessage={null}
         />
       );

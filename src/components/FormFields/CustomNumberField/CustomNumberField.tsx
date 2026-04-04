@@ -7,15 +7,15 @@ interface CustomNumberFieldProps {
   isDisabled: boolean;
   onChangeHandler: (value: string) => void;
   validationMessage?: string | null;
-  value: any;
-  numberType?: string;
-  minValue?: number;
-  maxValue?: number;
+  defaultValue: any;
+  numberFormat?: number;
+  min?: number;
+  max?: number;
   isTabularEdit?: boolean;
 }
 
 const CustomNumberField: React.FC<CustomNumberFieldProps> = ({
-  value,
+  defaultValue: value,
   isDisabled,
   onChangeHandler,
   validationMessage,

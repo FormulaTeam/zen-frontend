@@ -40,11 +40,10 @@ type FormFieldExtra = {
   connectionType?: string | number;
   parentFieldId?: string;
   parentDependencies?: any[];
-  coordinateType?: string;
-  minValue?: number;
-  maxValue?: number;
-  numberType?: string;
-  initialNumberValue?: number;
+  locationFormat?: number;
+  min?: number;
+  max?: number;
+  numberFormat?: number;
   defaultValue?: any;
   conditions?: any[];
   sectionDescription?: string;
@@ -563,7 +562,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           isRequired={formField.isRequired}
           errors={getLocationErrors(validation)}
           isDisabled={viewMode}
-          coordinateType={formFieldExtra.coordinateType}
+          locationFormat={formFieldExtra.locationFormat}
           onChangeHandler={(value: any) => {
             onChangeHandler(value, fieldId);
           }}
@@ -616,10 +615,10 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           onChangeHandler={(value: string) => {
             onChangeHandler(value, fieldId);
           }}
-          value={formFieldValue ?? formFieldExtra.initialNumberValue ?? ""}
-          numberType={formFieldExtra.numberType}
-          minValue={formFieldExtra.minValue}
-          maxValue={formFieldExtra.maxValue}
+          defaultValue={formFieldValue ?? formFieldExtra.defaultValue ?? ""}
+          numberFormat={formFieldExtra.numberFormat}
+          min={formFieldExtra.min}
+          max={formFieldExtra.max}
           validationMessage={validationMessage}
           isTabularEdit={isTabularEdit}
         />
