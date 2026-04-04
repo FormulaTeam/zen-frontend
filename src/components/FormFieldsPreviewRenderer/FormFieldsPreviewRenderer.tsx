@@ -91,7 +91,7 @@ function FormFieldsPreviewRenderer({ formField }) {
           isDisabled={viewMode}
           onChangeHandler={() => {}}
           value={formFieldValue}
-          showSeconds={formField?.showSeconds}
+          includeSeconds={formField?.showSeconds}
           defaultValue={formField?.initialValType}
           validationMessage={null}
         />

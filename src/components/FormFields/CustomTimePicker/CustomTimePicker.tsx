@@ -1,6 +1,6 @@
 import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { Chrome90RTLFixContainer } from "../Chrome90RTLFix/Chrome90RTLFix";
@@ -11,8 +11,8 @@ dayjs.extend(utc);
 
 interface CustomTimePickerProps {
   value: any;
-  defaultValue?: string;
-  showSeconds?: boolean;
+  defaultValue?: number;
+  includeSeconds?: boolean;
   isTabularEdit?: boolean;
   label: string;
   isRequired: boolean;
@@ -28,28 +28,12 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
   isRequired,
   label,
   defaultValue,
-  showSeconds = false,
+  includeSeconds: showSeconds = false,
   isTabularEdit = false,
   validationMessage,
 }) => {
-  const [timeValue, setTimeValue] = useState<Dayjs | null>(() => {
-    if (typeof value === "string" && value.includes(":")) {
-      const [hours, minutes, seconds] = value.split(":").map(Number);
-      const date = new Date();
-      date.setHours(hours);
-      date.setMinutes(minutes);
-      if (seconds !== undefined) {
-        date.setSeconds(seconds);
-      }
-      return dayjs(date);
-    }
-
-    if (defaultValue === "currentTime") {
-      return dayjs();
-    }
-
-    return null;
-  });
+  const [timeValue, setTimeValue] = useState<Dayjs | null>(null);
+  const didApplyDefaultRef = useRef(false);
 
   useEffect(() => {
     if (typeof value === "string" && value.includes(":")) {
@@ -57,15 +41,15 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
       const date = new Date();
       date.setHours(hours);
       date.setMinutes(minutes);
-      if (seconds !== undefined) {
-        date.setSeconds(seconds);
-      }
+      date.setSeconds(seconds ?? 0);
       setTimeValue(dayjs(date));
       return;
     }
 
-    if (!value && defaultValue === "currentTime") {
-      setTimeValue(dayjs());
+    if (!didApplyDefaultRef.current && !value && defaultValue === 2) {
+      const now = dayjs();
+      didApplyDefaultRef.current = true;
+      setTimeValue(now);
       return;
     }
 
@@ -94,9 +78,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
   return (
     <Chrome90RTLFixContainer>
       <LocalizationProvider
-        localeText={{
-          okButtonLabel: "אישור",
-        }}
+        localeText={{ okButtonLabel: "אישור" }}
         dateAdapter={AdapterDayjs}
         adapterLocale="he">
         <TimePicker
@@ -106,7 +88,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
           onChange={(newValue) => {
             if (newValue?.isValid()) {
               setTimeValue(newValue);
-            } else {
+            } else if (newValue === null) {
               setTimeValue(null);
               onChangeHandler("");
             }

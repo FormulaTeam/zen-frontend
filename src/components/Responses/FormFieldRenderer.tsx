@@ -49,7 +49,6 @@ type FormFieldExtra = {
   conditions?: any[];
   sectionDescription?: string;
   includeTime?: boolean;
-  initialValType?: any;
   includeSeconds?: boolean;
   multiSelect?: boolean;
   multiple?: boolean;
@@ -548,8 +547,8 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             onChangeHandler(value, fieldId);
           }}
           value={formFieldValue}
-          showSeconds={formFieldExtra.includeSeconds}
-          defaultValue={formFieldExtra.initialValType}
+          includeSeconds={formFieldExtra.includeSeconds}
+          defaultValue={formFieldExtra.defaultValue}
           validationMessage={validationMessage}
           isTabularEdit={isTabularEdit}
         />
