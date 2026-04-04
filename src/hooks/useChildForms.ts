@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fieldType } from "formula-gear";
-import type { FormDto, FormFieldDto, ResponseDto, UserRoleDto } from "../types/shared";
+import type { FormFieldDto, ResponseDto, UserRoleDto } from "../types/shared";
 import { NotificationTexts } from "../utils/interfaces";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
-import { deleteResponse, getForms, getResponses } from "../api";
+import { deleteResponse, getResponses } from "../api";
 import { User } from "../contexts/AuthContext";
 
 type ChildFormChildProps = FormFieldDto & {
@@ -15,8 +15,8 @@ type ChildFormChildProps = FormFieldDto & {
 type ChildFormProps = {
   formId: number;
   children: ChildFormChildProps[];
-  saved: boolean[];
-  valid: boolean[];
+  saved: Array<boolean | undefined>;
+  valid: Array<boolean | undefined>;
   shown: boolean;
 };
 
@@ -39,8 +39,8 @@ type UseChildFormsReturn = {
   childFormsValidate: boolean;
   setChildFormsValidate: React.Dispatch<React.SetStateAction<boolean>>;
   handleAddChildForm: (index: number) => void;
-  handleChildSaved: (index: number, success: boolean) => void;
-  handleChildValid: (index: number, success: boolean) => void;
+  handleChildSaved: (index: number, success: boolean, childIndex?: number) => void;
+  handleChildValid: (index: number, success: boolean, childIndex?: number) => void;
   handleRemoveChildForm: (parentIndex: number, childIndex: number) => void;
   handleShowChildForm: (index: number) => void;
 };
@@ -56,9 +56,8 @@ const getFieldExtra = (field: FormFieldDto): Record<string, unknown> =>
     : {};
 
 const getConnectedFormId = (field: FormFieldDto): number | undefined => {
-  const connectedFormId = getFieldExtra(field).connectedFormId;
-
-  return typeof connectedFormId === "number" ? connectedFormId : undefined;
+  const linkedFormId = getFieldExtra(field).linkedFormId;
+  return typeof linkedFormId === "number" ? linkedFormId : undefined;
 };
 
 const isConnectedFormField = (field: FormFieldDto): boolean =>
@@ -105,6 +104,12 @@ const matchesParentResponse = (
   return false;
 };
 
+const isAllHandled = (results: Array<boolean | undefined>, childCount: number) =>
+  Array.from({ length: childCount }).every((_, index) => typeof results[index] === "boolean");
+
+const isAllTrue = (results: Array<boolean | undefined>, childCount: number) =>
+  Array.from({ length: childCount }).every((_, index) => results[index] === true);
+
 export const useChildForms = ({
   formFields,
   id,
@@ -120,16 +125,20 @@ export const useChildForms = ({
   const [childFormsValidate, setChildFormsValidate] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const connectedFields = formFields.filter(isConnectedFormField);
-    const childFormIds = [...new Set(connectedFields.map((field) => getConnectedFormId(field)!))];
+  const connectedFields = useMemo(() => formFields.filter(isConnectedFormField), [formFields]);
 
+  const childFormIds = useMemo(
+    () => [...new Set(connectedFields.map((field) => getConnectedFormId(field)!))],
+    [connectedFields],
+  );
+
+  useEffect(() => {
     const buildEmptyChildForms = () => {
       const nextChildForms = childFormIds.map((childFormId) => ({
         formId: childFormId,
         children: [] as ChildFormChildProps[],
-        saved: [] as boolean[],
-        valid: [] as boolean[],
+        saved: [] as Array<boolean | undefined>,
+        valid: [] as Array<boolean | undefined>,
         shown: false,
       }));
 
@@ -140,6 +149,7 @@ export const useChildForms = ({
           return {
             ...nextChildForm,
             shown: existing?.shown ?? nextChildForm.shown,
+            children: existing?.children ?? nextChildForm.children,
             saved: existing?.saved ?? nextChildForm.saved,
             valid: existing?.valid ?? nextChildForm.valid,
           };
@@ -153,70 +163,38 @@ export const useChildForms = ({
         return;
       }
 
+      if (!id || copyMode) {
+        buildEmptyChildForms();
+        return;
+      }
+
       try {
-        const formsResponse = (await getForms({
-          query: { $or: childFormIds.map((childId) => ({ id: childId })) },
-        })) as FormDto[];
-
-        const availableChildFormIds = new Set(formsResponse.map((form) => form.id));
-
-        if (!id || copyMode) {
-          const nextChildForms = childFormIds
-            .filter((childFormId) => availableChildFormIds.has(childFormId))
-            .map((childFormId) => ({
-              formId: childFormId,
-              children: [] as ChildFormChildProps[],
-              saved: [] as boolean[],
-              valid: [] as boolean[],
-              shown: false,
-            }));
-
-          setChildForms((prev) =>
-            nextChildForms.map((nextChildForm) => {
-              const existing = prev.find((item) => item.formId === nextChildForm.formId);
-
-              return {
-                ...nextChildForm,
-                shown: existing?.shown ?? nextChildForm.shown,
-                saved: existing?.saved ?? nextChildForm.saved,
-                valid: existing?.valid ?? nextChildForm.valid,
-              };
-            }),
-          );
-
-          return;
-        }
-
         const childResponses = await Promise.all(
-          childFormIds
-            .filter((childFormId) => availableChildFormIds.has(childFormId))
-            .map(async (childFormId) => {
-              const responses = (await getResponses({
-                form_id: childFormId,
-              })) as LegacyLinkedResponse[];
+          childFormIds.map(async (childFormId) => {
+            const responses = (await getResponses({
+              form_id: childFormId,
+            })) as LegacyLinkedResponse[];
 
-              const matchingResponses = responses.filter((response) =>
-                matchesParentResponse(response, formId, id),
-              );
+            const matchingResponses = responses.filter((response) =>
+              matchesParentResponse(response, formId, id),
+            );
 
-              const templateField = connectedFields.find(
-                (field) => getConnectedFormId(field) === childFormId,
-              );
+            const templateField = connectedFields.find(
+              (field) => getConnectedFormId(field) === childFormId,
+            );
 
-              const children = templateField
-                ? matchingResponses.map((response) =>
-                    createChildInstance(templateField, response.id),
-                  )
-                : [];
+            const children = templateField
+              ? matchingResponses.map((response) => createChildInstance(templateField, response.id))
+              : [];
 
-              return {
-                formId: childFormId,
-                children,
-                saved: [] as boolean[],
-                valid: [] as boolean[],
-                shown: children.length > 0,
-              };
-            }),
+            return {
+              formId: childFormId,
+              children,
+              saved: [],
+              valid: [],
+              shown: children.length > 0,
+            };
+          }),
         );
 
         setChildForms((prev) =>
@@ -226,6 +204,7 @@ export const useChildForms = ({
             return {
               ...nextChildForm,
               shown: existing?.shown ?? nextChildForm.shown,
+              children: existing?.children?.length ? existing.children : nextChildForm.children,
               saved: existing?.saved ?? nextChildForm.saved,
               valid: existing?.valid ?? nextChildForm.valid,
             };
@@ -237,18 +216,25 @@ export const useChildForms = ({
       }
     };
 
-    loadChildForms();
-  }, [formFields, id, formId, isSuperAdmin, user, copyMode]);
+    void loadChildForms();
+  }, [connectedFields, childFormIds, id, formId, isSuperAdmin, user, copyMode]);
 
   useEffect(() => {
     if (childFormsSaving) {
       const shownForms = childForms.filter((childForm) => childForm.shown);
-
-      const allSaved = shownForms.every((childForm) =>
-        childForm.saved.every((saved) => saved === true),
+      const totalShownChildren = shownForms.reduce(
+        (sum, childForm) => sum + childForm.children.length,
+        0,
       );
-      const allHandled = shownForms.every(
-        (childForm) => childForm.children.length === childForm.saved.length,
+
+      if (totalShownChildren === 0) {
+        setChildFormsSaving(false);
+        navigate(`/responses/${formId}`);
+        return;
+      }
+
+      const allHandled = shownForms.every((childForm) =>
+        isAllHandled(childForm.saved, childForm.children.length),
       );
 
       if (!allHandled) {
@@ -257,6 +243,10 @@ export const useChildForms = ({
 
       setChildFormsSaving(false);
 
+      const allSaved = shownForms.every((childForm) =>
+        isAllTrue(childForm.saved, childForm.children.length),
+      );
+
       if (allSaved) {
         navigate(`/responses/${formId}`);
       } else {
@@ -264,12 +254,19 @@ export const useChildForms = ({
       }
     } else if (childFormsValidate) {
       const shownForms = childForms.filter((childForm) => childForm.shown);
-
-      const isValid = shownForms.every((childForm) =>
-        childForm.valid.every((valid) => valid === true),
+      const totalShownChildren = shownForms.reduce(
+        (sum, childForm) => sum + childForm.children.length,
+        0,
       );
-      const allHandled = shownForms.every(
-        (childForm) => childForm.children.length === childForm.valid.length,
+
+      if (totalShownChildren === 0) {
+        setChildFormsValidate(false);
+        void saveAll();
+        return;
+      }
+
+      const allHandled = shownForms.every((childForm) =>
+        isAllHandled(childForm.valid, childForm.children.length),
       );
 
       if (!allHandled) {
@@ -278,7 +275,22 @@ export const useChildForms = ({
 
       setChildFormsValidate(false);
 
+      const isValid = shownForms.every((childForm) =>
+        isAllTrue(childForm.valid, childForm.children.length),
+      );
+
       if (isValid) {
+        setChildForms((prev) =>
+          prev.map((childForm) =>
+            childForm.shown
+              ? {
+                  ...childForm,
+                  saved: [],
+                }
+              : childForm,
+          ),
+        );
+
         void saveAll();
       } else {
         console.log("Child form validation failed");
@@ -314,14 +326,8 @@ export const useChildForms = ({
       childForm.valid = [...childForm.valid];
 
       childForm.children.splice(childIndex, 1);
-
-      if (childForm.saved.length > childIndex) {
-        childForm.saved.splice(childIndex, 1);
-      }
-
-      if (childForm.valid.length > childIndex) {
-        childForm.valid.splice(childIndex, 1);
-      }
+      childForm.saved.splice(childIndex, 1);
+      childForm.valid.splice(childIndex, 1);
 
       newChildForms[parentIndex] = childForm;
       return newChildForms;
@@ -329,29 +335,32 @@ export const useChildForms = ({
   };
 
   const handleAddChildForm = (index: number) => {
-    if (childForms[index]?.shown) {
-      setChildForms((prev) => {
-        const newChildForms = [...prev];
-        const childForm = newChildForms[index];
+    setChildForms((prev) => {
+      const newChildForms = [...prev];
+      const childForm = newChildForms[index];
 
-        if (!childForm) {
-          return prev;
-        }
+      if (!childForm) {
+        return prev;
+      }
 
-        const fieldTemplate = formFields.find(
-          (field) => isConnectedFormField(field) && getConnectedFormId(field) === childForm.formId,
-        );
+      const fieldTemplate = formFields.find(
+        (field) => isConnectedFormField(field) && getConnectedFormId(field) === childForm.formId,
+      );
 
-        if (!fieldTemplate) {
-          return prev;
-        }
+      if (!fieldTemplate) {
+        return prev;
+      }
 
-        childForm.children = [...childForm.children, createChildInstance(fieldTemplate)];
-        return newChildForms;
-      });
-    } else {
-      handleShowChildForm(index);
-    }
+      newChildForms[index] = {
+        ...childForm,
+        shown: true,
+        children: [...childForm.children, createChildInstance(fieldTemplate)],
+        saved: [...childForm.saved],
+        valid: [...childForm.valid],
+      };
+
+      return newChildForms;
+    });
   };
 
   const handleShowChildForm = (index: number) => {
@@ -369,7 +378,7 @@ export const useChildForms = ({
     });
   };
 
-  const handleChildSaved = (index: number, success: boolean) => {
+  const handleChildSaved = (index: number, success: boolean, childIndex?: number) => {
     setChildForms((prev) => {
       const newChildForms = [...prev];
       const childForm = newChildForms[index];
@@ -378,16 +387,24 @@ export const useChildForms = ({
         return prev;
       }
 
+      const nextSaved = [...childForm.saved];
+
+      if (typeof childIndex === "number") {
+        nextSaved[childIndex] = success;
+      } else {
+        nextSaved.push(success);
+      }
+
       newChildForms[index] = {
         ...childForm,
-        saved: [...childForm.saved, success],
+        saved: nextSaved,
       };
 
       return newChildForms;
     });
   };
 
-  const handleChildValid = (index: number, success: boolean) => {
+  const handleChildValid = (index: number, success: boolean, childIndex?: number) => {
     setChildForms((prev) => {
       const newChildForms = [...prev];
       const childForm = newChildForms[index];
@@ -396,9 +413,17 @@ export const useChildForms = ({
         return prev;
       }
 
+      const nextValid = [...childForm.valid];
+
+      if (typeof childIndex === "number") {
+        nextValid[childIndex] = success;
+      } else {
+        nextValid.push(success);
+      }
+
       newChildForms[index] = {
         ...childForm,
-        valid: [...childForm.valid, success],
+        valid: nextValid,
       };
 
       return newChildForms;

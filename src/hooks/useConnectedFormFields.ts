@@ -34,7 +34,7 @@ export const useConnectedFormFields = ({
     return fields.filter(
       (field) =>
         field.connectionType === connectionTypes.form &&
-        field.connectedFormId &&
+        field.linkedFormId &&
         field.connectedFieldId &&
         !loadedFieldsRef.current.has(field.uniqueId),
     );
@@ -47,7 +47,7 @@ export const useConnectedFormFields = ({
     return [
       ...new Set<number>(
         connectedFields
-          .map((field) => field.connectedFormId)
+          .map((field) => field.linkedFormId)
           .filter((id): id is number => id !== undefined),
       ),
     ];
@@ -88,7 +88,11 @@ export const useConnectedFormFields = ({
         loadedFieldsRef.current.add(field.uniqueId);
 
         const options = response
-          .map((res: ResponseDto) => res.fieldValues?.find((res: ResponseFieldValueDto) => res.fieldId === field.connectedFieldId))
+          .map((res: ResponseDto) =>
+            res.fieldValues?.find(
+              (res: ResponseFieldValueDto) => res.fieldId === field.connectedFieldId,
+            ),
+          )
           .filter(Boolean);
 
         if (options && options.length > 0) {

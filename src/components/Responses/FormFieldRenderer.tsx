@@ -35,7 +35,7 @@ type FormFieldExtra = {
     | any[];
   value?: any;
   validationRegex?: string;
-  connectedFormId?: number;
+  linkedFormId?: number;
   connectedFieldId?: string;
   connectionType?: string | number;
   parentFieldId?: string;
@@ -92,7 +92,7 @@ const isConnectedToForm = (field: FormFieldDto) => {
 
   return (
     extra.connectionType === connectionTypes.form &&
-    !!extra.connectedFormId &&
+    !!extra.linkedFormId &&
     !!extra.connectedFieldId
   );
 };
@@ -330,7 +330,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 
           if (
             formFieldExtra.connectionType === connectionTypes.form &&
-            formFieldExtra.connectedFormId &&
+            formFieldExtra.linkedFormId &&
             formFieldExtra.connectedFieldId
           ) {
             const filteredOptions =

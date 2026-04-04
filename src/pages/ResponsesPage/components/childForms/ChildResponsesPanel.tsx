@@ -55,7 +55,7 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
             {sortedResponses.map((response) => (
               <ChildResponseRow
                 response={response}
-                connectedFormId={form.id}
+                linkedFormId={form.id}
                 key={response.id}
                 formFields={displayFields}
                 parentFormId={parentFormId}
