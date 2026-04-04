@@ -44,6 +44,8 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
     onChangeHandler({ x: nextX, y: yValue });
   };
 
+  const shouldShowGeneralOnBoth = !errors?.x && !errors?.y && !!errors?.general;
+
   return (
     <div
       className={classes["location-text-field-container"]}
@@ -58,8 +60,8 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
           required={isRequired}
           value={yValue}
           onChange={handleYChange}
-          error={Boolean(errors?.y || errors?.general)}
-          helperText={errors?.y || errors?.general || " "}
+          error={Boolean(errors?.y || shouldShowGeneralOnBoth)}
+          helperText={errors?.y || (shouldShowGeneralOnBoth ? errors?.general : undefined) || " "}
           disabled={isDisabled}
           adornment={isTabularEdit ? undefined : "Y"}
           size={isTabularEdit ? "small" : undefined}
@@ -74,8 +76,8 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
           label={isTabularEdit ? "" : " "}
           value={xValue}
           onChange={handleXChange}
-          error={Boolean(errors?.x || errors?.general)}
-          helperText={errors?.x || errors?.general || " "}
+          error={Boolean(errors?.x || shouldShowGeneralOnBoth)}
+          helperText={errors?.x || (shouldShowGeneralOnBoth ? errors?.general : undefined) || " "}
           disabled={isDisabled}
           adornment={isTabularEdit ? undefined : "X"}
           size={isTabularEdit ? "small" : undefined}
