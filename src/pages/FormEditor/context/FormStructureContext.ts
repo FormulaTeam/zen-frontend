@@ -43,7 +43,7 @@ interface FormStructureContext {
   appendCondition: (condition: FormCondition) => ReturnType<typeof validateCondition>;
   deleteConditionAt: (index: number) => void;
   setConditionDataAt: (index: number, condition: FormCondition) => void;
-  validateForm: () => void;
+  validateForm: () => boolean;
   setFormMetadata: (metadata: Partial<FormMetadata>) => boolean;
 }
 
@@ -60,7 +60,7 @@ const FormStructureContext = createContext<FormStructureContext>({
   appendCondition: () => null,
   deleteConditionAt: () => null,
   setConditionDataAt: () => null,
-  validateForm: () => null,
+  validateForm: () => false,
   setFormMetadata: () => false,
 });
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { Autocomplete } from "@mui/material";
-import { FormSelectInput } from "../FormInFormField/styled";
+import { FormSelectInput } from "../SharedStyled";
 
 interface DefaultValueAutocompleteProps {
   options: string[];

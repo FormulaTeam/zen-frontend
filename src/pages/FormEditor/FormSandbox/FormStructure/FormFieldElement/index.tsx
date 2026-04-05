@@ -49,7 +49,7 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
     setNodeRef(containerRef.current);
 
     field.id !== PLACEHOLDER_FIELD_ID &&
-    containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
 
   return (
@@ -65,52 +65,59 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
               {FORM_ELEMENTS[field.data.typeId].name}
             </Typography>
           </div>
-          <FormControlLabel sx={{ marginInlineEnd: "2px" }}
-                            control={<Switch checked={field.data.required}
-                                             disabled={isInputDisabled}
-                                             onChange={(e) => {
-                                               onDataChange({ required: e.target.checked });
-                                             }} />}
-                            label="שדה חובה" />
+          {field.data.typeId !== FieldTypeIds.checkbox && (
+            <FormControlLabel sx={{ marginInlineEnd: "2px" }}
+              control={<Switch checked={field.data.required}
+                disabled={isInputDisabled}
+                onChange={(e) => {
+                  onDataChange({ required: e.target.checked });
+                }} />}
+              label="שדה חובה" />
+          )}
         </div>
         <div className={styles.body}>
           <div className={styles.baseData}>
             <TextField value={field.data.displayName}
-                       className={styles.input}
-                       variant={"standard"}
-                       label={"שם תצוגה"}
-                       error={!!field.validationErrors?.displayName}
-                       helperText={field.validationErrors?.displayName?.errors[0]}
-                       disabled={isInputDisabled}
-                       onChange={(e) => onDataChange({ displayName: e.target.value })}
+              className={styles.input}
+              variant={"standard"}
+              label={"שם תצוגה"}
+              error={!!field.validationErrors?.displayName}
+              helperText={field.validationErrors?.displayName?.errors[0]}
+              disabled={isInputDisabled}
+              slotProps={{
+                htmlInput: {
+                  maxLength: 255,
+                },
+              }}
+              onChange={(e) => onDataChange({ displayName: e.target.value })}
             />
             {
               (isInternalNamesShown && field.data.typeId !== FieldTypeIds.linkedForm) &&
               <TextField value={field.data.name}
-                         className={styles.input}
-                         variant={"standard"}
-                         label={"שם פנימי"}
-                         error={!!field.validationErrors?.name}
-                         helperText={field.validationErrors?.name?.errors[0]}
-                         disabled={isInputDisabled}
-                         onChange={(e) => onDataChange({ name: e.target.value })}
+                className={styles.input}
+                variant={"standard"}
+                label={"שם פנימי"}
+                error={!!field.validationErrors?.name}
+                helperText={field.validationErrors?.name?.errors[0]}
+                disabled={isInputDisabled}
+                onChange={(e) => onDataChange({ name: e.target.value })}
               />
             }
           </div>
           <ExtraElement fieldId={field.id}
-                        typeId={field.data.typeId}
-                        extra={field.data.extra ?? {}}
-                        validationErrors={field.validationErrors?.extra}
-                        onChange={(extra) => onDataChange({ extra })}
-                        disabled={isInputDisabled} />
+            typeId={field.data.typeId}
+            extra={field.data.extra ?? {}}
+            validationErrors={field.validationErrors?.extra}
+            onChange={(extra) => onDataChange({ extra })}
+            disabled={isInputDisabled} />
         </div>
       </div>
       <div className={styles.deleteButtonContainer}>
         {
           !isPlaceholder &&
           <Button className={styles.deleteButton}
-                  onClick={onDelete}
-                  disabled={isInputDisabled}>
+            onClick={onDelete}
+            disabled={isInputDisabled}>
             <DeleteOutlined />
           </Button>
         }

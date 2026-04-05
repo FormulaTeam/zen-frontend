@@ -9,6 +9,7 @@ export type FormEditorMode = typeof FORM_EDITOR_MODE[keyof typeof FORM_EDITOR_MO
 
 interface FormEditorContext {
   mode: FormEditorMode;
+  originalFieldIds?: Set<string>;
 }
 
 const FormEditorContext = createContext<FormEditorContext>({ mode: FORM_EDITOR_MODE.CREATE });

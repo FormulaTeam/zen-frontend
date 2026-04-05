@@ -18,7 +18,8 @@ export const Popup = styled.div`
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 22223;
-  width: 30vw;
+  width: 40vw;
+  min-width: 400px;
   padding: 2% 5%;
   min-height: 300px;
   max-height: 90vh;

@@ -11,7 +11,7 @@
     padding: 8px 12px 8px 0;
     border-radius: 12px;
     box-sizing: border-box;
-    width: 25%;
+    width: 40%;
 }
 
 .controllingFieldFormControl {
@@ -28,9 +28,9 @@
     border-right: 10px solid transparent;
     border-radius: 12px;
     height: calc(50% + 33px);
-    width: calc(50% + 18px);
+    width: calc(35% + 18px);
     margin-inline-start: -18px;
-    right: 25%;
+    right: 40%;
     top: 50%;
 }
 

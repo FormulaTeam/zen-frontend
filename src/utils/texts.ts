@@ -19,7 +19,7 @@ export const texts = {
     deleteForm: "מחק טופס",
     deleteFormConfirm: "האם את/ה בטוח/ה שברצונך למחוק את הטופס?",
 
-    emptyFormAlert: "שם הטופס ריק",
+    emptyFormAlert: "לתשומת ליבך! שם הטופס ריק",
     noHebrewTextAlert: "שם הטופס מורכב מאותיות שאינן עברית.",
     fiveLettersMinAlert: "שם הטופס פחות מ5 אותיות.",
     formNameLabel: "שם טופס",
@@ -36,8 +36,6 @@ export const texts = {
       "האם את/ה בטוח/ה שברצונך למחוק את המקטע? פעולה זו תמחק גם את כל השדות במקטע וכל התוכן המשויך אליהם לצמיתות.",
     undefinedSection: "מקטע ללא שם",
     cantRemoveLastSection: "לא ניתן למחוק את המקטע האחרון בטופס",
-    emptySectionNameAlert: "לא ניתן להשאיר שם מקטע ריק",
-    addSectionDescription: "הוספת תיאור מקטע",
     confirmEdit: "אישור עריכה",
     cancelEdit: "ביטול עריכה",
     editSection: "עריכת מקטע",
@@ -47,6 +45,8 @@ export const texts = {
     expandView: "תצוגה מוגדלת",
     createSectionAnnounce:
       "ניתן לחלק ולסדר את הטופס למקטעי שדות שונים, עם מאפיינים וכותרת ייעודית לכל מקטע",
+    createConditionsAnnounce:
+      "ניהול תנאים לשדות ומקטעים - קבע מתי שדות יופיעו או יוסתרו בהתבסס על תשובות של שדות אחרים",
     createSection: "יצירת מקטע",
     mainSection: "מקטע ראשי",
     manageConditions: "ניהול התניות",

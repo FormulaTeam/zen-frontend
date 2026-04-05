@@ -10,7 +10,7 @@ import { FieldsWrapper } from "../../pages/Response/styled";
 import { NOT_A_SECTION_ID } from "../../utils/sections/consts";
 import { texts } from "../../utils/texts";
 import FormFieldRenderer from "../Responses/FormFieldRenderer";
-import { LoadingContainer } from "../FormInFormField/styled";
+import { StyledLoadingContainer } from "../SharedStyled";
 
 const GridContainer = styled.div`
   display: grid;
@@ -138,9 +138,9 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
         </GridContainer>
 
         {isLoading && (
-          <LoadingContainer>
+          <StyledLoadingContainer>
             <CircularProgress />
-          </LoadingContainer>
+          </StyledLoadingContainer>
         )}
       </Collapse>
     </FieldsWrapper>

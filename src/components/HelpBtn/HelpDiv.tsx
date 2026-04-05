@@ -20,9 +20,9 @@ import { Config } from "../../utils/interfaces";
 import { getConfig } from "../../api";
 import { showErrorNotification } from "../../utils/utils";
 import Loader from "../Responses/Loader";
-import { LoadingContainer } from "../FormInFormField/styled";
 import { theme } from "../../theme/theme";
 import { CloseLeftBtn } from "../AlertMsg/styled";
+import { StyledLoadingContainer } from "../SharedStyled";
 
 const HelpDiv = ({ hideHelpCard }) => {
   const [textToSend, setTextToSend] = useState("");
@@ -92,94 +92,92 @@ const HelpDiv = ({ hideHelpCard }) => {
     }
   }
 
+  if (loading) {
+    return (
+      <StyledLoadingContainer>
+        <Loader />
+      </StyledLoadingContainer>
+    );
+  }
+
   return (
     <ContainerDiv onClick={hideHelpCard}>
-      {loading ? (
-        <HelpCardContainer>
-          <HelpCard>
-            <LoadingContainer>
-              <Loader />
-            </LoadingContainer>
-          </HelpCard>
-        </HelpCardContainer>
-      ) : (
-        <HelpCardContainer>
-          <HelpCard
-            onClick={(event) => {
-              event.stopPropagation();
-            }}>
-            <CloseLeftBtn onClick={hideHelpCard} />
-            <HelpCardTitle>תמיכה טכנית</HelpCardTitle>
-            <Box sx={{ padding: "10px" }}>
-              <HelpCardSubTitle>שאלות ותשובות</HelpCardSubTitle>
+      <HelpCardContainer>
+        <HelpCard
+          onClick={(event) => {
+            event.stopPropagation();
+          }}>
+          <CloseLeftBtn onClick={hideHelpCard} />
+          <HelpCardTitle>תמיכה טכנית</HelpCardTitle>
+          <Box sx={{ padding: "10px" }}>
+            <HelpCardSubTitle>שאלות ותשובות</HelpCardSubTitle>
 
-              <HelpQandAList>
-                {qAndaArr.map((item: any, index: number) => {
-                  const regularLines = item.a.filter(
-                    (line: string) => !line.trim().startsWith("*"),
-                  );
-                  const bulletLines = item.a.filter((line: string) => line.trim().startsWith("*"));
+            <HelpQandAList>
+              {qAndaArr.map((item: any, index: number) => {
+                const regularLines = item.a.filter(
+                  (line: string) => !line.trim().startsWith("*"),
+                );
+                const bulletLines = item.a.filter((line: string) => line.trim().startsWith("*"));
 
-                  return (
-                    <QandAListItem
-                      $selected={openIndex === index}
-                      key={index}
-                      onClick={() => toggleIndex(index)}>
-                      <HelpQandABox>
-                        <QuestionTitle>{item.q}</QuestionTitle>
-                        <IconButton onClick={() => toggleIndex(index)} size="small">
-                          {openIndex === index ? <ExpandLess /> : <ExpandMore />}
-                        </IconButton>
-                      </HelpQandABox>
-                      <Collapse
-                        in={openIndex === index}
-                        timeout="auto"
-                        unmountOnExit
-                        sx={{ width: "100%", textAlign: "right" }}>
-                        <AnswerBox>
-                          {regularLines.map((line: string, lineIndex: number) => (
-                            <RegularAnswerText key={`reg-${lineIndex}`}>{line}</RegularAnswerText>
-                          ))}
+                return (
+                  <QandAListItem
+                    $selected={openIndex === index}
+                    key={index}
+                    onClick={() => toggleIndex(index)}>
+                    <HelpQandABox>
+                      <QuestionTitle>{item.q}</QuestionTitle>
+                      <IconButton onClick={() => toggleIndex(index)} size="small">
+                        {openIndex === index ? <ExpandLess /> : <ExpandMore />}
+                      </IconButton>
+                    </HelpQandABox>
+                    <Collapse
+                      in={openIndex === index}
+                      timeout="auto"
+                      unmountOnExit
+                      sx={{ width: "100%", textAlign: "right" }}>
+                      <AnswerBox>
+                        {regularLines.map((line: string, lineIndex: number) => (
+                          <RegularAnswerText key={`reg-${lineIndex}`}>{line}</RegularAnswerText>
+                        ))}
 
-                          {bulletLines.length > 0 && (
-                            <ul
-                              style={{
-                                margin: 0,
-                                paddingInlineStart: "20px",
-                                listStyleType: "disc",
-                                listStylePosition: "outside",
-                              }}>
-                              {bulletLines.map((line: string, bulletIndex: number) => (
-                                <li
-                                  key={`li-${bulletIndex}`}
-                                  style={{
-                                    color: theme.palette.text.primary,
-                                    fontSize: "18px",
-                                    lineHeight: "1.6",
-                                    paddingLeft: "0.1rem", // indent for wrapped lines
-                                    textIndent: "-0.1rem", // pull first line left to align bullet
-                                  }}>
-                                  {line.replace(/^\*\s*/, "")}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </AnswerBox>
-                      </Collapse>
-                    </QandAListItem>
-                  );
-                })}
-              </HelpQandAList>
-              <HelpCardDivider orientation="horizontal" />
+                        {bulletLines.length > 0 && (
+                          <ul
+                            style={{
+                              margin: 0,
+                              paddingInlineStart: "20px",
+                              listStyleType: "disc",
+                              listStylePosition: "outside",
+                            }}>
+                            {bulletLines.map((line: string, bulletIndex: number) => (
+                              <li
+                                key={`li-${bulletIndex}`}
+                                style={{
+                                  color: theme.palette.text.primary,
+                                  fontSize: "18px",
+                                  lineHeight: "1.6",
+                                  paddingLeft: "0.1rem", // indent for wrapped lines
+                                  textIndent: "-0.1rem", // pull first line left to align bullet
+                                }}>
+                                {line.replace(/^\*\s*/, "")}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </AnswerBox>
+                    </Collapse>
+                  </QandAListItem>
+                );
+              })}
+            </HelpQandAList>
+            <HelpCardDivider orientation="horizontal" />
 
-              <HelpCardSubTitle>{supportPhonesTitle}</HelpCardSubTitle>
-              <List>
-                {PhoneDisplay()}
-              </List>
-            </Box>
-          </HelpCard>
-        </HelpCardContainer>
-      )}
+            <HelpCardSubTitle>{supportPhonesTitle}</HelpCardSubTitle>
+            <List>
+              {PhoneDisplay()}
+            </List>
+          </Box>
+        </HelpCard>
+      </HelpCardContainer>
     </ContainerDiv>
   );
 };

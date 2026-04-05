@@ -4,7 +4,7 @@ import { DraggableElementData, DraggingElement } from "../FormSandbox/context/Fo
 import { arrayMove } from "@dnd-kit/sortable";
 import { PLACEHOLDER_FIELD_ID } from "../context/constants";
 import { FormFieldTypeId } from "../../../utils/interfaces";
-import { generateFieldId, generateFieldName } from "../utils";
+import { generateFieldId, generateNewFieldData } from "../utils";
 import { useCallback, useState } from "react";
 
 function useFormDndHandlers() {
@@ -284,12 +284,7 @@ function useFormDndHandlers() {
             const newField: FormField = {
               id: generateFieldId(),
               parentSectionId,
-              data: {
-                name: generateFieldName(placeholderFieldTypeId),
-                displayName: "",
-                typeId: placeholderFieldTypeId,
-                required: false,
-              },
+              data: generateNewFieldData(placeholderFieldTypeId),
             };
 
             fields[newField.id] = newField;

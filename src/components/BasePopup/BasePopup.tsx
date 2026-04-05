@@ -48,8 +48,8 @@ const BasePopup: React.FC<BasePopupProps> = ({
   const theme = useTheme();
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
       PaperProps={{
         sx: {
@@ -65,7 +65,7 @@ const BasePopup: React.FC<BasePopupProps> = ({
           onClick={onClose}
           sx={{
             position: "absolute",
-            right: 8,
+            left: 8,
             top: 8,
             color: theme.palette.grey[500],
           }}>

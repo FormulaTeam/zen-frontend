@@ -14,21 +14,21 @@ interface AlertMsgProps {
 }
 
 const AlertMsg: React.FC<AlertMsgProps> = ({
-                                             msg,
-                                             closePopup,
-                                             onOk,
-                                             onClose,
-                                             isSuccess = false,
-                                             sectionId = "",
-                                             isTabularEdit = false,
-                                           }) => {
+  msg,
+  closePopup,
+  onOk,
+  onClose,
+  isSuccess = false,
+  sectionId = "",
+  isTabularEdit = false,
+}) => {
   return (
     <Container style={{ padding: "5px 20px" }}>
       <Popup>
         <CloseBtn onClick={closePopup} />
         {isSuccess ? <SuccessIcon fontSize="large" /> : <AlertIcon fontSize="large" />}
         {msg.map((error, index: number) => (
-          <Message key={index} style={{ textAlign: "right" }}>{`${msg.length > 1 ? '-' : ''} ${error}`}</Message>
+          <Message key={index} style={{ textAlign: "center" }}>{`${msg.length > 1 ? '-' : ''} ${error}`}</Message>
         ))}
         {onOk && (
           <ButtonRow>
@@ -37,10 +37,10 @@ const AlertMsg: React.FC<AlertMsgProps> = ({
             </Button>
             {
               onClose ? (
-                  <Button variant="outlined" onClick={onClose}>
-                    יציאה ללא שמירה
-                  </Button>
-                ) :
+                <Button variant="outlined" onClick={onClose}>
+                  יציאה ללא שמירה
+                </Button>
+              ) :
                 (
                   <Button variant="outlined" onClick={closePopup}>
                     ביטול

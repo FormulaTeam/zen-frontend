@@ -2,6 +2,7 @@ import styles from "./style.module.css";
 import { FormEditorHeader } from "./FormEditorHeader";
 import { FormSandbox } from "./FormSandbox";
 import { FormEditorContext, FormEditorMode, FORM_EDITOR_MODE } from "./context/FormEditorContext";
+import { useMemo } from "react";
 import { useFormStructure } from "./hooks/useFormStructure";
 import { FormStructureContext } from "./context/FormStructureContext";
 import type { FormDto } from "../../types/shared";
@@ -26,9 +27,26 @@ type Props = CreateModeProps | EditModeProps;
 function FormEditor({ mode, editedForm }: Props) {
   const { ...formStructure } = useFormStructure(editedForm);
 
+  const originalFieldIds = useMemo<Set<string>>(() => {
+    if (!editedForm?.sections) {
+      return new Set<string>();
+    }
+
+    const ids: string[] = [];
+    editedForm.sections.forEach(section => {
+      if (section?.fields) {
+        section.fields.forEach(field => {
+          if (field?.id) ids.push(field.id.toString());
+        });
+      }
+    });
+
+    return new Set<string>(ids);
+  }, [editedForm]);
+
   return (
     <div className={styles.editorContainer}>
-      <FormEditorContext.Provider value={{ mode }}>
+      <FormEditorContext.Provider value={{ mode, originalFieldIds }}>
         <FormStructureContext.Provider value={{
           ...formStructure,
         }}>
