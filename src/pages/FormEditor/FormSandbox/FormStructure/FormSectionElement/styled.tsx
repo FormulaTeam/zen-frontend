@@ -3,9 +3,11 @@ import { Check, Close, DeleteOutlined, DriveFileRenameOutline, ExpandMore, Keybo
 import { Resizable } from "re-resizable";
 
 export const SectionTitleText = styled(Typography)({
-  flex: 1,
+  display: "inline-block",
   maxWidth: "50vw",
-  minWidth: 0,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
 });
 
 export const StyledAccordion = styled(Accordion)({

@@ -1,6 +1,6 @@
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { AccordionDetails, Button, TextField } from "@mui/material";
+import { AccordionDetails, Button, TextField, Tooltip } from "@mui/material";
 import { FormField, useFormStructureContext } from "../../../context/FormStructureContext";
 import styles from "./style.module.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -133,39 +133,51 @@ function FormSectionElement({ id }: Props) {
       <OverflowTooltip title={self.title} placement="top">
         <SectionTitleText variant={"body1"}>{self.title}</SectionTitleText>
       </OverflowTooltip>
-      <Button className={styles.button}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(_) => {
-          setEditedTitle(self.title);
-          setIsEditingTitle(true);
-        }}>
-        <EditButtonIcon />
-      </Button>
+      <Tooltip title='עריכת מקטע' placement="top">
+        <span style={{ display: 'inline-block' }}>
+          <Button className={styles.button}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(_) => {
+              setEditedTitle(self.title);
+              setIsEditingTitle(true);
+            }}>
+            <EditButtonIcon />
+          </Button>
+        </span>
+      </Tooltip>
     </>
   );
 
   const toggleExpandButton: JSX.Element = (
-    <Button className={styles.button}
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => {
-        toggleSectionExpanded(id);
-        e.stopPropagation();
-      }}>
-      <ExpandIcon expanded={self.expanded ? 1 : 0} />
-    </Button>
+    <Tooltip title={self.expanded ? 'צמצום מקטע' : 'הרחבת מקטע'} placement="top" >
+      <span style={{ display: 'inline-block' }}>
+        <Button className={styles.button}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            toggleSectionExpanded(id);
+            e.stopPropagation();
+          }}>
+          <ExpandIcon expanded={self.expanded ? 1 : 0} />
+        </Button>
+      </span>
+    </Tooltip>
   );
 
   const deleteSectionButton: JSX.Element = (
-    <Button className={styles.button}
-      disabled={isLastSection}
-      color={'error'}
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => {
-        setShowAlertMsg(true);
-        e.stopPropagation();
-      }}>
-      <DeleteIcon ownerState={{ isLastSection }} />
-    </Button>
+    <Tooltip title={isLastSection ? 'לא ניתן למחוק את המקטע היחיד בטופס' : 'מחיקת מקטע'} placement="top">
+      <span style={{ display: 'inline-block' }}>
+        <Button className={styles.button}
+          disabled={isLastSection}
+          color={'error'}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            setShowAlertMsg(true);
+            e.stopPropagation();
+          }}>
+          <DeleteIcon ownerState={{ isLastSection }} />
+        </Button>
+      </span>
+    </Tooltip>
   );
 
   const alertMsgDialog = (

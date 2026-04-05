@@ -36,8 +36,6 @@ export const texts = {
       "האם את/ה בטוח/ה שברצונך למחוק את המקטע? פעולה זו תמחק גם את כל השדות במקטע וכל התוכן המשויך אליהם לצמיתות.",
     undefinedSection: "מקטע ללא שם",
     cantRemoveLastSection: "לא ניתן למחוק את המקטע האחרון בטופס",
-    emptySectionNameAlert: "לא ניתן להשאיר שם מקטע ריק",
-    addSectionDescription: "הוספת תיאור מקטע",
     confirmEdit: "אישור עריכה",
     cancelEdit: "ביטול עריכה",
     editSection: "עריכת מקטע",

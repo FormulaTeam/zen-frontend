@@ -28,7 +28,7 @@ const AlertMsg: React.FC<AlertMsgProps> = ({
         <CloseBtn onClick={closePopup} />
         {isSuccess ? <SuccessIcon fontSize="large" /> : <AlertIcon fontSize="large" />}
         {msg.map((error, index: number) => (
-          <Message key={index} style={{ textAlign: "right" }}>{`${msg.length > 1 ? '-' : ''} ${error}`}</Message>
+          <Message key={index} style={{ textAlign: "center" }}>{`${msg.length > 1 ? '-' : ''} ${error}`}</Message>
         ))}
         {onOk && (
           <ButtonRow>

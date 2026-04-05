@@ -65,13 +65,15 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
               {FORM_ELEMENTS[field.data.typeId].name}
             </Typography>
           </div>
-          <FormControlLabel sx={{ marginInlineEnd: "2px" }}
-            control={<Switch checked={field.data.required}
-              disabled={isInputDisabled}
-              onChange={(e) => {
-                onDataChange({ required: e.target.checked });
-              }} />}
-            label="שדה חובה" />
+          {field.data.typeId !== FieldTypeIds.checkbox && (
+            <FormControlLabel sx={{ marginInlineEnd: "2px" }}
+              control={<Switch checked={field.data.required}
+                disabled={isInputDisabled}
+                onChange={(e) => {
+                  onDataChange({ required: e.target.checked });
+                }} />}
+              label="שדה חובה" />
+          )}
         </div>
         <div className={styles.body}>
           <div className={styles.baseData}>

@@ -1,5 +1,5 @@
 import { OptionsSource } from "../../../../../../../schemas/fields/optionsSchema";
-import { Button, FormControl, FormHelperText, InputLabel, MenuItem, Select } from "@mui/material";
+import { Button, FormControl, FormHelperText, InputLabel, MenuItem, Select, Tooltip } from "@mui/material";
 import { ExtraElementProps } from "../../../index";
 import { OptionsFieldTypeId, SpecificOptions, SpecificOptionsErrors } from "../index";
 import { Close } from "@mui/icons-material";
@@ -148,10 +148,15 @@ function ManualOptions(props: Props) {
           <FormControl className={styles.controllingFieldFormControl}
             disabled={!otherManualOptionsFieldsIds.length}
             error={!!validationErrors?.properties?.controllingOptionsFieldId}>
-            <InputLabel id="controlling-options-label">שדה אפשרויות מוביל</InputLabel>
+            <InputLabel id="controlling-options-label">
+              <Tooltip title={"שדה אפשרויות מוביל"}>
+                <span>שדה אפשרויות מוביל</span>
+              </Tooltip>
+            </InputLabel>
             <Select labelId="controlling-options-label"
               variant={"standard"}
               fullWidth
+              title={"שדה אפשרויות מוביל"}
               aria-describedby={"controlling-options-helper-text"}
               value={controllingOptionsFieldId ?? ""}
               label={"שדה אפשרויות מוביל"}

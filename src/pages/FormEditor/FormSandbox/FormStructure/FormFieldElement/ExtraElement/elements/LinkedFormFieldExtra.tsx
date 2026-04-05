@@ -25,7 +25,7 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
 
   const { formsData: allForms, isLoading } = useGetFormsData({
     searchQuery: searchText.length >= 2 ? searchText : undefined,
-    scope: formsScopeOption.AllForms,
+    scope: formsScopeOption.MyForms,
     enabled: searchText.length >= 2,
   });
 

@@ -7,8 +7,19 @@ import React, { useState } from "react";
 import { useFormEditor } from "../hooks/useFormEditor";
 import IconsGrid from "../../../components/IconsGrid/IconsGrid";
 import { OverflowTooltip } from "../../../components/OverflowTooltip";
-import { MetadataContainer, StyledDescriptionText, StyledTitleText } from "./styled";
+import {
+  MetadataContainer,
+  StyledDescriptionText,
+  StyledTitleText,
+  ExitAlertMsgDialog,
+  ExitAlertMsgCloseIcon,
+  ExitAlertMsgDialogTitle,
+  ExitAlertMsgDialogContent,
+  ExitAlertMsgDialogContentText,
+  ExitAlertMsgDialogActions,
+} from "./styled";
 import { texts } from "@src/utils/texts";
+import AlertMsg from "@components/AlertMsg/AlertMsg";
 
 function FormEditorHeader() {
   const { formStructure, validateForm, setFormMetadata } = useFormStructureContext();
@@ -18,6 +29,7 @@ function FormEditorHeader() {
   const [editedMetadata, setEditedMetadata] = useState<FormMetadata>({ title: "" });
   const [showPickIcon, setShowPickIcon] = useState(false);
   const [showAlertMsg, setShowAlertMsg] = useState(false);
+  const [showValidationErrorsPopup, setShowValidationErrorsPopup] = useState(false);
 
   const { title, description, iconId, validationErrors } = formStructure.metadata;
 
@@ -25,6 +37,8 @@ function FormEditorHeader() {
     const isValid = validateForm();
     if (isValid) {
       handleSaveForm();
+    } else {
+      setShowValidationErrorsPopup(true);
     }
   };
 
@@ -166,7 +180,7 @@ function FormEditorHeader() {
   const headerActionButtons: JSX.Element = (
     <>
       <Button variant={"contained"} color={"primary"} onClick={onSaveClick} disabled={isLoading}>
-        {isLoading ? "שוומר..." : "שמירה"}
+        {isLoading ? "שומר..." : "שמירה"}
       </Button>
       <Button variant={"outlined"} color={"error"} onClick={onExitClick} disabled={isLoading}>יציאה</Button>
     </>
@@ -177,52 +191,49 @@ function FormEditorHeader() {
       open={showAlertMsg}
       onClose={() => setShowAlertMsg(false)}
       sx={{ direction: 'rtl' }}
-      PaperProps={{
-        style: {
-          padding: '2% 5%',
-          minHeight: '300px',
-          width: '45vw',
-          maxWidth: '600px',
-          borderRadius: '20px',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: 'gray 0 0 10px 0',
-          backgroundColor: '#f5f5f5',
-        }
+      slotProps={{
+        paper: {
+          component: ExitAlertMsgDialog,
+        },
       }}
     >
-      <Close
-        onClick={() => setShowAlertMsg(false)}
-        sx={{
-          position: 'absolute',
-          top: 15,
-          right: 15,
-          cursor: 'pointer',
-        }}
-      />
-      <DialogTitle sx={{ textAlign: "center", pt: 0, pb: 1 }}>
+      <ExitAlertMsgCloseIcon>
+        <Close onClick={() => setShowAlertMsg(false)} />
+      </ExitAlertMsgCloseIcon>
+      <ExitAlertMsgDialogTitle>
         <ErrorIcon sx={{ fontSize: '5rem', color: 'red' }} />
-      </DialogTitle>
-      <DialogContent sx={{ pb: 1, padding: 0, textAlign: "center" }}>
-        <DialogContentText sx={{ fontSize: "1.5rem", color: "inherit" }}>
+      </ExitAlertMsgDialogTitle>
+      <ExitAlertMsgDialogContent>
+        <ExitAlertMsgDialogContentText>
           יש לך שינויים שלא נשמרו בטופס. האם ברצונך לשמור את השינויים?
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions sx={{ justifyContent: "center", mt: 3, p: 0, gap: '10px', flexDirection: 'row-reverse' }}>
+        </ExitAlertMsgDialogContentText>
+      </ExitAlertMsgDialogContent>
+      <ExitAlertMsgDialogActions>
         <Button variant="outlined" onClick={() => setShowAlertMsg(false)}>
           ביטול
         </Button>
         <Button variant="contained" color="primary" onClick={handleSaveAndExit}>
           שמירה ויציאה
         </Button>
-        <Button variant="contained" color="primary" onClick={() => {
+        <Button variant="outlined" color="error" onClick={() => {
           setShowAlertMsg(false);
           handleExit();
         }}>
           יציאה ללא שמירה
         </Button>
-      </DialogActions>
+      </ExitAlertMsgDialogActions>
     </Dialog>
+  );
+
+  const validationErrorsPopup = (
+    showValidationErrorsPopup ? (
+      <div style={{ position: 'fixed', top: 80, left: 0, right: 0, zIndex: 1300, display: 'flex', justifyContent: 'center' }}>
+        <AlertMsg
+          msg={["יש שגיאות בטופס. נא לתקן את השדות המסומנים באדום."]}
+          closePopup={() => setShowValidationErrorsPopup(false)}
+        />
+      </div>
+    ) : null
   );
 
   return (
@@ -244,6 +255,7 @@ function FormEditorHeader() {
       )}
 
       {exitAlertMsg}
+      {validationErrorsPopup}
     </div>
   );
 }
