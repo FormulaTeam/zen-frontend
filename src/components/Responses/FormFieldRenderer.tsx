@@ -74,6 +74,7 @@ interface FormFieldRendererProps {
   formFieldsValuesMap: Map<string, any>;
   formFieldsValidMap: Map<string, FieldValidationError | null>;
   onChangeHandler: (value: any, fieldId: string, valid?: any) => void;
+  onBlurHandler: (fieldId: string) => void;
   viewMode: boolean;
   fieldOptions: Record<string, FieldOptionValue[]>;
   formFields: FormFieldRendererField[];
@@ -178,6 +179,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   formFieldsValuesMap,
   formFieldsValidMap,
   onChangeHandler,
+  onBlurHandler,
   viewMode,
   fieldOptions,
   formFields,
@@ -223,6 +225,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           onChangeHandler={(value: string) => {
             onChangeHandler(value, fieldId);
           }}
+          onBlurHandler={() => {
+            onBlurHandler(fieldId);
+          }}
           value={formFieldValue}
           validationMessage={validationMessage}
           multiline
@@ -240,6 +245,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           isDisabled={viewMode}
           onChangeHandler={(value: string) => {
             onChangeHandler(value, fieldId);
+          }}
+          onBlurHandler={() => {
+            onBlurHandler(fieldId);
           }}
           value={formFieldValue}
           validationMessage={validationMessage}
@@ -488,6 +496,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           onChangeHandler={(nextValue: string[] | string) => {
             onChangeHandler(nextValue, fieldId);
           }}
+          onBlurHandler={() => {
+            onBlurHandler(fieldId);
+          }}
           value={value}
           multipleOptions={multiSelect}
           options={availableOptions}
@@ -510,6 +521,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           onChangeHandler={(value: LinkValue) => {
             onChangeHandler(value, fieldId);
           }}
+          onBlurHandler={() => {
+            onBlurHandler(fieldId);
+          }}
           value={formFieldValue || null}
           isTabularEdit={isTabularEdit}
         />
@@ -525,6 +539,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           isDisabled={viewMode}
           onChangeHandler={(value: string) => {
             onChangeHandler(value, fieldId);
+          }}
+          onBlurHandler={() => {
+            onBlurHandler(fieldId);
           }}
           value={formFieldValue}
           dateAndTime={formFieldExtra.includeTime}
@@ -544,6 +561,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           isDisabled={viewMode}
           onChangeHandler={(value: string) => {
             onChangeHandler(value, fieldId);
+          }}
+          onBlurHandler={() => {
+            onBlurHandler(fieldId);
           }}
           value={formFieldValue}
           includeSeconds={formFieldExtra.includeSeconds}
@@ -566,6 +586,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           onChangeHandler={(value: any) => {
             onChangeHandler(value, fieldId);
           }}
+          onBlurHandler={() => {
+            onBlurHandler(fieldId);
+          }}
           value={formFieldValue || { x: "", y: "" }}
           isTabularEdit={isTabularEdit}
         />
@@ -580,6 +603,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           isDisabled={viewMode}
           onChangeHandler={(value: boolean) => {
             onChangeHandler(value, fieldId);
+            onBlurHandler(fieldId);
           }}
           value={formFieldValue}
           defaultValue={formFieldExtra.defaultValue}
@@ -598,6 +622,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           onChangeHandler={(value: any[]) => {
             onChangeHandler(value, fieldId);
           }}
+          onBlurHandler={() => {
+            onBlurHandler(fieldId);
+          }}
           value={formFieldValue}
           validationMessage={validationMessage}
           isTabularEdit={isTabularEdit}
@@ -614,6 +641,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           isDisabled={viewMode}
           onChangeHandler={(value: string) => {
             onChangeHandler(value, fieldId);
+          }}
+          onBlurHandler={() => {
+            onBlurHandler(fieldId);
           }}
           defaultValue={formFieldValue ?? formFieldExtra.defaultValue ?? ""}
           numberFormat={formFieldExtra.numberFormat}
@@ -634,6 +664,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           isDisabled={viewMode}
           onChangeHandler={(value: any) => {
             onChangeHandler(value, fieldId);
+            onBlurHandler(fieldId);
           }}
           value={formFieldValue}
           validationMessage={validationMessage}

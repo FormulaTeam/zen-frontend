@@ -8,6 +8,7 @@ type CustomLatitudeLongitudeFieldProps = {
   value: LocationValue;
   isDisabled: boolean;
   onChangeHandler: (value: LocationValue) => void;
+  onBlurHandler?: () => void;
   errors?: LocationValueError | null;
   isRequired: boolean;
   label: string;
@@ -19,6 +20,7 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
   value,
   isDisabled,
   onChangeHandler,
+  onBlurHandler,
   errors,
   label,
   isRequired,
@@ -60,6 +62,7 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
           required={isRequired}
           value={yValue}
           onChange={handleYChange}
+          onBlur={onBlurHandler}
           error={Boolean(errors?.y || shouldShowGeneralOnBoth)}
           helperText={errors?.y || (shouldShowGeneralOnBoth ? errors?.general : undefined) || " "}
           disabled={isDisabled}
@@ -76,6 +79,7 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
           label={isTabularEdit ? "" : " "}
           value={xValue}
           onChange={handleXChange}
+          onBlur={onBlurHandler}
           error={Boolean(errors?.x || shouldShowGeneralOnBoth)}
           helperText={errors?.x || (shouldShowGeneralOnBoth ? errors?.general : undefined) || " "}
           disabled={isDisabled}

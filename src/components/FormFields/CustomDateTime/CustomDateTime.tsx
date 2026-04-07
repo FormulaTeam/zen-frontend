@@ -23,6 +23,7 @@ interface CustomDateTimeProps {
   isRequired: boolean;
   isDisabled?: boolean;
   onChangeHandler: (value: string) => void;
+  onBlurHandler?: () => void;
   validationMessage?: string | null;
 }
 
@@ -49,6 +50,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   value,
   isDisabled = false,
   onChangeHandler,
+  onBlurHandler,
   isRequired,
   label,
   defaultValue,
@@ -76,7 +78,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
     }
 
     setDateValue(null);
-  }, [value, defaultValue, dateAndTime, onChangeHandler]);
+  }, [value, defaultValue, dateAndTime]);
 
   return (
     <Chrome90RTLFixContainer className={classes["custom-date-time-container"]}>
@@ -99,6 +101,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
               onChangeHandler(toStoredUtcIso(nextValue, dateAndTime));
             }
           }}
+          onClose={onBlurHandler}
           format="DD/MM/YYYY"
           slots={{
             textField: BaseFieldInput,
@@ -110,6 +113,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
               error: Boolean(validationMessage),
               helperText: validationMessage || " ",
               size: isTabularEdit ? "medium" : undefined,
+              onBlur: onBlurHandler,
             } as any,
             inputAdornment: {
               sx: {
@@ -149,12 +153,14 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
                 onChangeHandler(toStoredUtcIso(newValue, true));
               }
             }}
+            onClose={onBlurHandler}
             slotProps={{
               textField: {
                 required: isRequired,
                 error: Boolean(validationMessage),
                 helperText: validationMessage || " ",
                 size: isTabularEdit ? "medium" : undefined,
+                onBlur: onBlurHandler,
               } as any,
               inputAdornment: {
                 sx: {

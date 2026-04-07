@@ -20,6 +20,7 @@ interface CustomFileInputFieldProps {
   value: any;
   isDisabled: boolean;
   onChangeHandler: (value: any) => void;
+  onBlurHandler?: () => void;
   isValid?: boolean;
   label: string;
   isRequired: boolean;
@@ -68,6 +69,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   value,
   isDisabled,
   onChangeHandler,
+  onBlurHandler,
   label,
   isRequired,
   isTabularEdit = false,
@@ -105,16 +107,18 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
       });
 
       emitChange([...files, ...droppedFiles]);
+      onBlurHandler?.();
     },
-    [files, emitChange],
+    [files, emitChange, onBlurHandler],
   );
 
   const deleteFile = useCallback(
     (event: React.MouseEvent, index: number) => {
       event.stopPropagation();
       emitChange(files.filter((_, idx) => idx !== index));
+      onBlurHandler?.();
     },
-    [files, emitChange],
+    [files, emitChange, onBlurHandler],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
