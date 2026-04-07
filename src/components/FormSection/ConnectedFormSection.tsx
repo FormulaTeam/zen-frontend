@@ -74,6 +74,7 @@ function ConnectedFormSection({
     formFieldsValuesMap,
     formFieldsValidMap,
     onChangeHandler,
+    onBlurHandler,
     validateAllFieldsBeforeSubmit,
     loading,
     form,
@@ -163,6 +164,7 @@ function ConnectedFormSection({
                     formFieldsValuesMap={formFieldsValuesMap}
                     formFieldsValidMap={formFieldsValidMap}
                     onChangeHandler={onChangeHandler}
+                    onBlurHandler={onBlurHandler}
                     viewMode={viewMode}
                     fieldOptions={fieldOptions}
                     formFields={formFields}

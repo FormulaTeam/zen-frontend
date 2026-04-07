@@ -7,6 +7,7 @@ type LinkTextFieldProps = {
   value: LinkValue | null;
   isDisabled: boolean;
   onChangeHandler: (value: LinkValue) => void;
+  onBlurHandler?: () => void;
   errors?: LinkValueError | null;
   isRequired: boolean;
   label: string;
@@ -17,6 +18,7 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
   value,
   isDisabled,
   onChangeHandler,
+  onBlurHandler,
   errors,
   label,
   isRequired,
@@ -59,6 +61,7 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
         required={isRequired}
         value={url}
         onChange={handleUrlChange}
+        onBlur={onBlurHandler}
         error={Boolean(errors?.link)}
         helperText={errors?.link || " "}
         disabled={isDisabled}
@@ -72,6 +75,7 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
         required={isRequired}
         value={previewText}
         onChange={handlePreviewTextChange}
+        onBlur={onBlurHandler}
         error={Boolean(errors?.linkTxt)}
         helperText={errors?.linkTxt || " "}
         disabled={isDisabled}

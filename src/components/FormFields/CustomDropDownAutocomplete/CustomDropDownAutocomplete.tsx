@@ -1,5 +1,5 @@
 import { Chip, FormControl } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { texts } from "../../../utils/texts";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -21,6 +21,7 @@ interface CustomDropDownAutocompleteProps {
   isRequired: boolean;
   isDisabled: boolean;
   onChangeHandler: (value: string | string[]) => void;
+  onBlurHandler?: () => void;
   validationMessage?: string | null;
 }
 
@@ -37,6 +38,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   options,
   optionLabels = {},
   onChangeHandler,
+  onBlurHandler,
   label,
   isRequired,
   defaultValue,
@@ -44,10 +46,17 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   validationMessage,
 }) => {
   const [selectedValues, setSelectedValues] = useState<string[]>(normalizeToArray(value));
+  const hasTriggeredBlurRef = useRef(false);
+  const didApplyDefaultRef = useRef(false);
 
   useEffect(() => {
-    if (defaultValue && location.pathname.includes("create")) {
+    if (
+      !didApplyDefaultRef.current &&
+      defaultValue !== undefined &&
+      location.pathname.includes("create")
+    ) {
       const initialValues = normalizeToArray(defaultValue);
+      didApplyDefaultRef.current = true;
       setSelectedValues(initialValues);
 
       if (multipleOptions) {
@@ -56,7 +65,8 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         onChangeHandler(initialValues[0] ?? "");
       }
     }
-  }, [defaultValue, multipleOptions, onChangeHandler]);
+    // intentionally not depending on onChangeHandler to avoid render loops
+  }, [defaultValue, multipleOptions]);
 
   useEffect(() => {
     setSelectedValues(normalizeToArray(value));
@@ -96,6 +106,13 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
     return optionLabels[option] ?? option;
   };
 
+  const triggerBlurValidation = () => {
+    if (!hasTriggeredBlurRef.current) {
+      hasTriggeredBlurRef.current = true;
+      onBlurHandler?.();
+    }
+  };
+
   return (
     <FormControl
       variant="standard"
@@ -127,7 +144,13 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         multiple={multipleOptions}
         options={options}
         value={autocompleteValue}
-        onChange={(event: any, nextValue: any) => onSelectHandler(event, nextValue)}
+        onChange={(event: any, nextValue: any) => {
+          hasTriggeredBlurRef.current = false;
+          onSelectHandler(event, nextValue);
+        }}
+        onClose={() => {
+          triggerBlurValidation();
+        }}
         getOptionLabel={(option: any) => getLabel(String(option))}
         isOptionEqualToValue={(option, currentValue) => option === currentValue}
         size={isTabularEdit ? "small" : "medium"}
@@ -149,6 +172,9 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
             error={Boolean(validationMessage)}
             variant="standard"
             size={isTabularEdit ? "medium" : undefined}
+            onBlur={() => {
+              triggerBlurValidation();
+            }}
             sx={{
               ...(isTabularEdit && {
                 "& .MuiInputBase-root": {

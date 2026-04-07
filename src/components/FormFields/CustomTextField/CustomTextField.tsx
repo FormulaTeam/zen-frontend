@@ -6,6 +6,7 @@ interface CustomTextFieldProps {
   isRequired: boolean;
   isDisabled: boolean;
   onChangeHandler: (value: string) => void;
+  onBlurHandler?: () => void;
   validationMessage?: string | null;
   multiline?: boolean;
   value: any;
@@ -17,6 +18,7 @@ const CustomTextField: React.FC<CustomTextFieldProps> = ({
   isDisabled,
   multiline = false,
   onChangeHandler,
+  onBlurHandler,
   validationMessage,
   label,
   isRequired,
@@ -39,6 +41,7 @@ const CustomTextField: React.FC<CustomTextFieldProps> = ({
         setInputValue(event.target.value);
         onChangeHandler(event.target.value);
       }}
+      onBlur={onBlurHandler}
       multiline={multiline && !isTabularEdit}
       error={Boolean(validationMessage)}
       helperText={validationMessage || " "}

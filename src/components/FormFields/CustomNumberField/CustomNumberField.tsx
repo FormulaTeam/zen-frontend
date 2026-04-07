@@ -6,6 +6,7 @@ interface CustomNumberFieldProps {
   isRequired: boolean;
   isDisabled: boolean;
   onChangeHandler: (value: string) => void;
+  onBlurHandler?: () => void;
   validationMessage?: string | null;
   defaultValue: any;
   numberFormat?: number;
@@ -18,6 +19,7 @@ const CustomNumberField: React.FC<CustomNumberFieldProps> = ({
   defaultValue: value,
   isDisabled,
   onChangeHandler,
+  onBlurHandler,
   validationMessage,
   label,
   isRequired,
@@ -45,6 +47,7 @@ const CustomNumberField: React.FC<CustomNumberFieldProps> = ({
         setInputValue(event.target.value);
         onChangeHandler(event.target.value);
       }}
+      onBlur={onBlurHandler}
       size={isTabularEdit ? "medium" : undefined}
       dir="ltr"
       sx={{

@@ -54,6 +54,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     formFieldsValuesMap,
     formFieldsValidMap,
     onChangeHandler,
+    onBlurHandler,
     validateAllFieldsBeforeSubmit,
     loading,
     form,
@@ -336,6 +337,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
               formFieldsValuesMap={formFieldsValuesMap}
               formFieldsValidMap={formFieldsValidMap}
               onChangeHandler={onChangeHandler}
+              onBlurHandler={onBlurHandler}
               viewMode={viewMode}
               fieldOptions={fieldOptions}
               formFields={formFields}

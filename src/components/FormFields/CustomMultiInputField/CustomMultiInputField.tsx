@@ -26,6 +26,7 @@ interface CustomMultiInputFieldProps {
   value: any;
   isDisabled: boolean;
   onChangeHandler: (value: any[]) => void;
+  onBlurHandler?: () => void;
   isValid?: boolean;
   label: string;
   isRequired: boolean;
@@ -37,6 +38,7 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
   value,
   isDisabled,
   onChangeHandler,
+  onBlurHandler,
   label,
   isRequired,
   isTabularEdit = false,
@@ -72,6 +74,8 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
   const handleDropdownDelete = (index: number) => {
     const newListValueArray = listValues.filter((_, i) => i !== index);
     setListValues(newListValueArray);
+    onChangeHandler(newListValueArray);
+    onBlurHandler?.();
   };
 
   const handleKeyUp = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -127,6 +131,7 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
     setInputValue("");
     setLocalErrorMessage("");
     onChangeHandler(nextValues);
+    onBlurHandler?.();
   };
 
   const onEditListItemClickHandler = (item: ListItem) => {
@@ -140,6 +145,7 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
     const nextValues = listValues.filter((_, index) => index !== item.index);
     setListValues(nextValues);
     onChangeHandler(nextValues);
+    onBlurHandler?.();
   };
 
   useEffect(() => {
@@ -173,6 +179,7 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
         required={isRequired}
         value={inputValue}
         onChange={onChangeValueHandler}
+        onBlur={onBlurHandler}
         error={Boolean(helperText)}
         helperText={helperText || " "}
         disabled={isDisabled}
@@ -259,7 +266,10 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
           isTabularEdit && listValues.length > 0 && dropdownOpen
             ? {
                 open: true,
-                onClose: () => setDropdownOpen(false),
+                onClose: () => {
+                  setDropdownOpen(false);
+                  onBlurHandler?.();
+                },
                 MenuProps: {
                   PaperProps: {
                     style: {

@@ -18,13 +18,51 @@ interface CustomTimePickerProps {
   isRequired: boolean;
   isDisabled?: boolean;
   onChangeHandler: (value: string) => void;
+  onBlurHandler?: () => void;
   validationMessage?: string | null;
 }
+
+const parseTimeStringToDayjs = (value: unknown): Dayjs | null => {
+  if (typeof value !== "string" || !value.includes(":")) {
+    return null;
+  }
+
+  const [hours, minutes, seconds] = value.split(":").map(Number);
+
+  if (
+    Number.isNaN(hours) ||
+    Number.isNaN(minutes) ||
+    (seconds !== undefined && Number.isNaN(seconds))
+  ) {
+    return null;
+  }
+
+  const date = new Date();
+  date.setHours(hours);
+  date.setMinutes(minutes);
+  date.setSeconds(seconds ?? 0);
+  date.setMilliseconds(0);
+
+  return dayjs(date);
+};
+
+const formatDayjsToTimeString = (value: Dayjs, showSeconds: boolean): string => {
+  const hours = value.hour().toString().padStart(2, "0");
+  const minutes = value.minute().toString().padStart(2, "0");
+
+  if (!showSeconds) {
+    return `${hours}:${minutes}`;
+  }
+
+  const seconds = value.second().toString().padStart(2, "0");
+  return `${hours}:${minutes}:${seconds}`;
+};
 
 const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
   value,
   isDisabled = false,
   onChangeHandler,
+  onBlurHandler,
   isRequired,
   label,
   defaultValue,
@@ -34,15 +72,18 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
 }) => {
   const [timeValue, setTimeValue] = useState<Dayjs | null>(null);
   const didApplyDefaultRef = useRef(false);
+  const didTriggerValidationRef = useRef(false);
 
   useEffect(() => {
-    if (typeof value === "string" && value.includes(":")) {
-      const [hours, minutes, seconds] = value.split(":").map(Number);
-      const date = new Date();
-      date.setHours(hours);
-      date.setMinutes(minutes);
-      date.setSeconds(seconds ?? 0);
-      setTimeValue(dayjs(date));
+    const parsedValue = parseTimeStringToDayjs(value);
+
+    if (parsedValue) {
+      setTimeValue((prev) => {
+        if (prev && prev.isValid() && prev.isSame(parsedValue, "second")) {
+          return prev;
+        }
+        return parsedValue;
+      });
       return;
     }
 
@@ -50,30 +91,21 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
       const now = dayjs();
       didApplyDefaultRef.current = true;
       setTimeValue(now);
+      onChangeHandler(formatDayjsToTimeString(now, showSeconds));
       return;
     }
 
     if (!value) {
-      setTimeValue(null);
+      setTimeValue((prev) => (prev === null ? prev : null));
     }
-  }, [value, defaultValue]);
+  }, [value, defaultValue, showSeconds, onChangeHandler]);
 
-  useEffect(() => {
-    if (timeValue && timeValue.isValid()) {
-      const hours = timeValue.hour().toString().padStart(2, "0");
-      const minutes = timeValue.minute().toString().padStart(2, "0");
-      let timeString = `${hours}:${minutes}`;
-
-      if (showSeconds) {
-        const seconds = timeValue.second().toString().padStart(2, "0");
-        timeString = `${timeString}:${seconds}`;
-      }
-
-      onChangeHandler(timeString);
-    } else if (!isRequired) {
-      onChangeHandler("");
+  const triggerValidationOnce = () => {
+    if (!didTriggerValidationRef.current) {
+      didTriggerValidationRef.current = true;
+      onBlurHandler?.();
     }
-  }, [timeValue, isRequired, showSeconds, onChangeHandler]);
+  };
 
   return (
     <Chrome90RTLFixContainer>
@@ -86,12 +118,26 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
           disabled={isDisabled}
           value={timeValue}
           onChange={(newValue) => {
+            didTriggerValidationRef.current = false;
+
             if (newValue?.isValid()) {
               setTimeValue(newValue);
-            } else if (newValue === null) {
+              onChangeHandler(formatDayjsToTimeString(newValue, showSeconds));
+              return;
+            }
+
+            if (newValue === null) {
               setTimeValue(null);
               onChangeHandler("");
             }
+          }}
+          onAccept={(acceptedValue) => {
+            if (acceptedValue?.isValid() || acceptedValue === null) {
+              triggerValidationOnce();
+            }
+          }}
+          onClose={() => {
+            triggerValidationOnce();
           }}
           slots={{ textField: BaseFieldInput }}
           slotProps={{

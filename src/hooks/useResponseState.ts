@@ -147,6 +147,7 @@ export const useResponseState = (
   const [formFieldsValidMap, setFormFieldsValidMap] = useState<
     Map<string, FieldValidationError | null>
   >(new Map());
+  const [formFieldsTouchedMap, setFormFieldsTouchedMap] = useState<Map<string, boolean>>(new Map());
   const [form, setForm] = useState<FormDto | null>(null);
   const [response, setResponse] = useState<ResponseDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -233,6 +234,7 @@ export const useResponseState = (
     const nextFieldsByIdMap = new Map<string, FormFieldWithSectionDto>();
     const nextValuesMap = new Map<string, any>();
     const nextValidMap = new Map<string, FieldValidationError | null>();
+    const nextTouchedMap = new Map<string, boolean>();
 
     nextFormFields.forEach((field) => {
       const currentFieldId = String(field.id);
@@ -240,6 +242,7 @@ export const useResponseState = (
       nextFieldsByIdMap.set(currentFieldId, field);
       nextValuesMap.set(currentFieldId, getDefaultFieldValue(field));
       nextValidMap.set(currentFieldId, null);
+      nextTouchedMap.set(currentFieldId, false);
     });
 
     if (responseId) {
@@ -305,6 +308,7 @@ export const useResponseState = (
     setFormFieldsByIdsMap(nextFieldsByIdMap);
     setFormFieldsValuesMap(nextValuesMap);
     setFormFieldsValidMap(nextValidMap);
+    setFormFieldsTouchedMap(nextTouchedMap);
     setLoading(false);
   }, [form, response, responseId, viewMode, copyMode, roles, user, isSuperAdmin, navigate]);
 
@@ -392,7 +396,101 @@ export const useResponseState = (
 
       return changed ? next : prev;
     });
+
+    setFormFieldsTouchedMap((prev) => {
+      let changed = false;
+      const next = new Map(prev);
+
+      formFields.forEach((field) => {
+        const currentFieldId = String(field.id);
+
+        if (visibleIds.has(currentFieldId)) return;
+
+        if (next.get(currentFieldId)) {
+          next.set(currentFieldId, false);
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
   }, [formFields, visibleFormFields]);
+
+  const validateSingleField = (
+    fieldId: string,
+    valuesMapOverride?: Map<string, any>,
+    markTouched = true,
+  ) => {
+    const normalizedFieldId = String(fieldId);
+    const field = formFieldsByIdMap.get(normalizedFieldId);
+
+    if (!field) return true;
+
+    const visibleFieldIds = new Set(
+      visibleFormFields.map((visibleField) => String(visibleField.id)),
+    );
+
+    if (!visibleFieldIds.has(normalizedFieldId)) {
+      setFormFieldsValidMap((prev) => {
+        const next = new Map(prev);
+        next.set(normalizedFieldId, null);
+        return next;
+      });
+
+      if (markTouched) {
+        setFormFieldsTouchedMap((prev) => {
+          const next = new Map(prev);
+          next.set(normalizedFieldId, true);
+          return next;
+        });
+      }
+
+      return true;
+    }
+
+    const valuesMap = valuesMapOverride ?? formFieldsValuesMap;
+    const rawValue = valuesMap.get(normalizedFieldId);
+    const result = validateFormFieldValue(toValidatorField(field), rawValue);
+    console.log("=== Validating field ===", field, "Raw value:", rawValue, "Validation result:", result);
+
+    if (markTouched) {
+      setFormFieldsTouchedMap((prev) => {
+        const next = new Map(prev);
+        next.set(normalizedFieldId, true);
+        return next;
+      });
+    }
+
+    if (result.success) {
+      setFormFieldsValidMap((prev) => {
+        const next = new Map(prev);
+        next.set(normalizedFieldId, null);
+        return next;
+      });
+
+      if (!valuesMapOverride) {
+        setFormFieldsValuesMap((prev) => {
+          const next = new Map(prev);
+          next.set(normalizedFieldId, result.data);
+          return next;
+        });
+      }
+
+      return true;
+    }
+
+    setFormFieldsValidMap((prev) => {
+      const next = new Map(prev);
+      next.set(normalizedFieldId, toFieldValidationError(result.error.issues));
+      return next;
+    });
+
+    return false;
+  };
+
+  const onBlurHandler = (fieldId: string) => {
+    validateSingleField(fieldId);
+  };
 
   const onChangeHandler = (value: any, fieldId: string, _inputValueValid?: any) => {
     const normalizedFieldId = String(fieldId);
@@ -475,6 +573,12 @@ export const useResponseState = (
                     next.set(childFieldId, null);
                     return next;
                   });
+
+                  setFormFieldsTouchedMap((prev) => {
+                    const next = new Map(prev);
+                    next.set(childFieldId, false);
+                    return next;
+                  });
                 }
               }
             } else if (parentValues.length > 0) {
@@ -486,6 +590,12 @@ export const useResponseState = (
                 next.set(childFieldId, null);
                 return next;
               });
+
+              setFormFieldsTouchedMap((prev) => {
+                const next = new Map(prev);
+                next.set(childFieldId, false);
+                return next;
+              });
             }
           });
         }
@@ -495,6 +605,10 @@ export const useResponseState = (
     });
 
     setFormFieldsValidMap((prev) => {
+      if (!formFieldsTouchedMap.get(normalizedFieldId)) {
+        return prev;
+      }
+
       const next = new Map(prev);
       next.set(normalizedFieldId, null);
       return next;
@@ -505,6 +619,7 @@ export const useResponseState = (
     let isValidForm = true;
     const nextValidMap = new Map<string, FieldValidationError | null>();
     const nextParsedValuesMap = new Map(formFieldsValuesMap);
+    const nextTouchedMap = new Map(formFieldsTouchedMap);
     const visibleFieldIds = new Set(visibleFormFields.map((field) => String(field.id)));
 
     formFields.forEach((field) => {
@@ -512,8 +627,11 @@ export const useResponseState = (
 
       if (!visibleFieldIds.has(currentFieldId)) {
         nextValidMap.set(currentFieldId, null);
+        nextTouchedMap.set(currentFieldId, false);
         return;
       }
+
+      nextTouchedMap.set(currentFieldId, true);
 
       const rawValue = nextParsedValuesMap.get(currentFieldId);
       const result = validateFormFieldValue(toValidatorField(field), rawValue);
@@ -528,6 +646,7 @@ export const useResponseState = (
       nextValidMap.set(currentFieldId, toFieldValidationError(result.error.issues));
     });
 
+    setFormFieldsTouchedMap(nextTouchedMap);
     setFormFieldsValidMap(nextValidMap);
 
     if (isValidForm) {
@@ -566,7 +685,9 @@ export const useResponseState = (
     formFieldsByIdMap,
     formFieldsValuesMap,
     formFieldsValidMap,
+    formFieldsTouchedMap,
     onChangeHandler,
+    onBlurHandler,
     validateAllFieldsBeforeSubmit,
     loading,
     form,
