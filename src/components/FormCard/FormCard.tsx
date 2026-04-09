@@ -10,8 +10,9 @@ import ShareIcon from "../../icons/share.svg";
 import formX from "../../images/form_x.png";
 import { FormOverview } from "../../utils/interfaces";
 import { CustomIcon } from "../../theme/icons";
-import { getFormIconByName, showErrorNotification } from "../../utils/utils";
+import { getFormIconByName, showErrorNotification, PERMISSION_TYPES } from "../../utils/utils";
 import CardCreationDetails from "./CardCreationDetails";
+import { PermissionGate } from "../PermissionGate";
 import {
   DescriptionDiv,
   Img,
@@ -78,6 +79,8 @@ const FormCard = ({
 
   if (!form) return null;
 
+  const userPermissions = form.permissions || [];
+
   return (
     <StyledCard
       sx={{ backgroundcolor: theme.palette.background.paper }}
@@ -120,28 +123,35 @@ const FormCard = ({
       </ItemImgAndTitles>
 
       <ItemBottomDiv>
-        {isSuperAdmin && (
+        <PermissionGate
+          userPermissions={userPermissions}
+          requiredPermissions={[PERMISSION_TYPES.EDIT_FORM, PERMISSION_TYPES.SHARE_FORM]}
+          requireAny>
           <ItemIconsDiv>
-            <Tooltip title="עריכת טופס">
-              <div>
-                <CustomIcon
-                  testClassName="form-edit-button"
-                  forcePointer
-                  iconName="pencil"
-                  onClick={() =>
-                    navigate(`/form/edit/${form.id}`, { state: { from: location.pathname } })
-                  }
-                />
-              </div>
-            </Tooltip>
+            <PermissionGate userPermissions={userPermissions} requiredPermissions={[PERMISSION_TYPES.EDIT_FORM]}>
+              <Tooltip title="עריכת טופס">
+                <div>
+                  <CustomIcon
+                    testClassName="form-edit-button"
+                    forcePointer
+                    iconName="pencil"
+                    onClick={() =>
+                      navigate(`/form/edit/${form.id}`, { state: { from: location.pathname } })
+                    }
+                  />
+                </div>
+              </Tooltip>
+            </PermissionGate>
 
-            <Tooltip title="שיתוף טופס">
-              <div>
-                <GrayShareIcon src={ShareIcon} onClick={handleShareClick} />
-              </div>
-            </Tooltip>
+            <PermissionGate userPermissions={userPermissions} requiredPermissions={[PERMISSION_TYPES.SHARE_FORM]}>
+              <Tooltip title="שיתוף טופס">
+                <div>
+                  <GrayShareIcon src={ShareIcon} onClick={handleShareClick} />
+                </div>
+              </Tooltip>
+            </PermissionGate>
           </ItemIconsDiv>
-        )}
+        </PermissionGate>
 
         {showSharePopup && fullForm && (
           <UserPicker
@@ -153,37 +163,44 @@ const FormCard = ({
         )}
 
         <ItemBtnsDiv>
-          <ItemButton
-            className="form-add-response-button"
-            onClick={() => navigate(`/response/create/${form.id}`)}
-            sx={{
-              backgroundColor: theme.palette.primary.main,
-              color: "white",
-              borderRadius: "15px",
-              "&:hover": {
-                backgroundColor: "white",
-                color: theme.palette.primary.main,
-                outline: `1px solid ${theme.palette.primary.main}`,
-              },
-            }}>
-            הוספת תגובה
-          </ItemButton>
+          <PermissionGate userPermissions={userPermissions} requiredPermissions={[PERMISSION_TYPES.CREATE_RESPONSE]}>
+            <ItemButton
+              className="form-add-response-button"
+              onClick={() => navigate(`/response/create/${form.id}`)}
+              sx={{
+                backgroundColor: theme.palette.primary.main,
+                color: "white",
+                borderRadius: "15px",
+                "&:hover": {
+                  backgroundColor: "white",
+                  color: theme.palette.primary.main,
+                  outline: `1px solid ${theme.palette.primary.main}`,
+                },
+              }}>
+              הוספת תגובה
+            </ItemButton>
+          </PermissionGate>
 
-          <ItemButton
-            className="form-watch-responses-button"
-            onClick={goToResponsesPage}
-            sx={{
-              backgroundColor: theme.palette.primary.main,
-              color: "white",
-              borderRadius: "15px",
-              "&:hover": {
-                backgroundColor: "white",
-                color: theme.palette.primary.main,
-                outline: `1px solid ${theme.palette.primary.main}`,
-              },
-            }}>
-            צפייה בתגובות
-          </ItemButton>
+          <PermissionGate
+            userPermissions={userPermissions}
+            requiredPermissions={[PERMISSION_TYPES.VIEW_RESPONSE, PERMISSION_TYPES.VIEW_YOUR_RESPONSES]}
+            requireAny>
+            <ItemButton
+              className="form-watch-responses-button"
+              onClick={goToResponsesPage}
+              sx={{
+                backgroundColor: theme.palette.primary.main,
+                color: "white",
+                borderRadius: "15px",
+                "&:hover": {
+                  backgroundColor: "white",
+                  color: theme.palette.primary.main,
+                  outline: `1px solid ${theme.palette.primary.main}`,
+                },
+              }}>
+              צפייה בתגובות
+            </ItemButton>
+          </PermissionGate>
         </ItemBtnsDiv>
       </ItemBottomDiv>
     </StyledCard>

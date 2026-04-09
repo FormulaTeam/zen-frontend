@@ -48,6 +48,7 @@ function MainPage({
     sortBy,
     sortDirection,
     enabled: !!user,
+    includePermissions: !isSuperAdmin && tabValue !== formsTabs.currentUserCreated,
   });
 
   useEffect(() => {
