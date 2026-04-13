@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   FormDto,
   FormFieldDto,
@@ -7,7 +7,7 @@ import type {
   ResponseFieldValueDto,
 } from "../types/shared";
 import { fieldType, FieldType, validateFormFieldValue, type FormFieldLike } from "formula-gear";
-import { getFormById, searchResponses } from "../api";
+import { getFormById, getResponses } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
 import { checkUserAccessForResponse } from "../utils/utils";
 import { NOT_A_SECTION_ID } from "../utils/sections/consts";
@@ -153,6 +153,8 @@ export const useResponseState = (
   const [loading, setLoading] = useState(true);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
+  const initializedStateKeyRef = useRef<string | null>(null);
+
   const navigate = useNavigate();
 
   const { fieldOptions, isLoading: loadingConnections } = useConnectedFormOptions({
@@ -181,12 +183,14 @@ export const useResponseState = (
         }
 
         if (responseId) {
-          const res: any = await searchResponses({
+          const responses = await getResponses({
             form_id: Number(formId),
-            searchFilters: [{ searchText: responseId, searchField: "id" }],
+            query: {
+              id: responseId,
+            },
           });
 
-          const found = (res?.responses?.[0] ?? null) as ResponseDto | null;
+          const found = (responses?.[0] ?? null) as ResponseDto | null;
 
           if (isMounted && found) {
             if (copyMode) {
@@ -198,13 +202,15 @@ export const useResponseState = (
               setResponse(found);
             }
           }
+        } else if (isMounted) {
+          setResponse(null);
         }
       } finally {
         // keep loading true until initialization below completes
       }
     };
 
-    loadData();
+    void loadData();
 
     return () => {
       isMounted = false;
@@ -230,6 +236,17 @@ export const useResponseState = (
       }
     }
 
+    const stateKey = `${form.id}:${responseId ?? "new"}:${copyMode ? "copy" : "regular"}:${viewMode ? "view" : "edit"}`;
+
+    if (!responseId && initializedStateKeyRef.current === stateKey) {
+      setLoading(false);
+      return;
+    }
+
+    if (responseId && !response) {
+      return;
+    }
+
     const nextFormFields = flattenFields(form);
     const nextFieldsByIdMap = new Map<string, FormFieldWithSectionDto>();
     const nextValuesMap = new Map<string, any>();
@@ -246,11 +263,9 @@ export const useResponseState = (
     });
 
     if (responseId) {
-      if (!response) return;
-
       setFormTitle((copyMode ? "יצירת תגובה - " : "עריכת תגובה - ") + form.name);
 
-      const fieldValuesArray = (response.fieldValues ?? []) as ResponseFieldValueDto[];
+      const fieldValuesArray = (response?.fieldValues ?? []) as ResponseFieldValueDto[];
       const fieldDefsMap = new Map<string, FormFieldWithSectionDto>();
 
       nextFormFields.forEach((field) => {
@@ -303,6 +318,8 @@ export const useResponseState = (
     if (viewMode) {
       setFormTitle("צפייה בתגובה - " + form.name);
     }
+
+    initializedStateKeyRef.current = stateKey;
 
     setFormFields(nextFormFields);
     setFormFieldsByIdsMap(nextFieldsByIdMap);
@@ -451,7 +468,6 @@ export const useResponseState = (
     const valuesMap = valuesMapOverride ?? formFieldsValuesMap;
     const rawValue = valuesMap.get(normalizedFieldId);
     const result = validateFormFieldValue(toValidatorField(field), rawValue);
-    console.log("=== Validating field ===", field, "Raw value:", rawValue, "Validation result:", result);
 
     if (markTouched) {
       setFormFieldsTouchedMap((prev) => {

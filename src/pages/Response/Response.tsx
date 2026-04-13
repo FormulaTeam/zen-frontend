@@ -3,7 +3,7 @@ import type { FormRoleDto, ResponseDto } from "../../types/shared";
 import { fieldType } from "formula-gear";
 import { Box, Button, Container, Tooltip, Typography } from "@mui/material";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useResponseSave } from "../../hooks/useResponseSave";
+import { useResponseSave, type ParentResponseRef } from "../../hooks/useResponseSave";
 import { useResponseState } from "../../hooks/useResponseState";
 import { showErrorNotification } from "../../utils/utils";
 import { Add } from "@mui/icons-material";
@@ -256,13 +256,20 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     const childFormTitle = getChildFormTitle(childFormData.formId);
     const addResponseTitle = `הוספת תגובה${childFormTitle ? ` - ${childFormTitle}` : ""}`;
 
+    const parentResponse: ParentResponseRef | undefined = savedParentResponseId
+      ? {
+          formId: Number(formId),
+          responseId: savedParentResponseId,
+        }
+      : undefined;
+
     return (
       <Box key={`child-form-${linkedFormId}`}>
         {childFormData.children.map(
           (child, index) =>
             childFormData.shown && (
               <ConnectedFormSection
-                key={child.responseId || child.instanceKey || `child-${linkedFormId}-${index}`}
+                key={child.instanceKey}
                 handleRemoveChildForm={() => handleRemoveChildForm(childFormIndex, index)}
                 formsLength={childFormData.children.length}
                 shouldSave={childFormsSaving}
@@ -271,13 +278,13 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
                 copyMode={copyMode}
                 formId={formId!}
                 field={child}
-                parentResponse={savedParentResponseId}
+                parentResponse={parentResponse}
                 index={index}
                 childSaved={(success: boolean) => handleChildSaved(childFormIndex, success, index)}
                 shouldValidate={childFormsValidate}
                 childValid={(success: boolean) => handleChildValid(childFormIndex, success, index)}
                 id={child.responseId}
-                shouldLoad={isSaving}
+                shouldLoad={false}
               />
             ),
         )}

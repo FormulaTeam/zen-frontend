@@ -26,16 +26,21 @@ type SaveField = FormFieldDto & {
   includeSeconds?: boolean;
 };
 
+export type ParentResponseRef = {
+  formId: number;
+  responseId: string;
+};
+
 type ExistingResponseLike = Partial<ResponseDto> & {
-  parentResponse?: string;
+  parentResponse?: ParentResponseRef;
 };
 
 type CreateResponsePayload = CreateResponseDto & {
-  parentResponse?: string;
+  parentResponse?: ParentResponseRef;
 };
 
 type UpdateResponsePayload = Partial<ResponseDto> & {
-  parentResponse?: string;
+  parentResponse?: ParentResponseRef;
 };
 
 type FileValueItem = {
@@ -85,7 +90,7 @@ export const useResponseSave = (
   form: FormDto | null,
   response: ExistingResponseLike | null | undefined,
   user: any,
-  parentResponse?: string,
+  parentResponse?: ParentResponseRef,
   copyMode?: boolean,
 ) => {
   const formId = form?.id;
