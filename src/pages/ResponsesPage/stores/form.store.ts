@@ -1,11 +1,12 @@
 import { GridColDef } from "@mui/x-data-grid-pro";
 import { create } from "zustand";
 
-import { FormDto } from "../../../types/shared";
+import { FormDto, FormFieldDto } from "../../../types/shared";
 import { Filter, ResponseForm, Row } from "../../../utils/interfaces";
 import { LegacyPermission } from "../../../utils/utils";
 
 export type StoreForm = FormDto & {
+  fields: FormFieldDto[];
   columns?: GridColDef[];
   metro_access_url?: string | null;
   oasisSourceKey?: string | null;

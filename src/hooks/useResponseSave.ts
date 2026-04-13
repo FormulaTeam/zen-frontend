@@ -31,11 +31,26 @@ type ExistingResponseLike = Partial<ResponseDto> & {
 };
 
 type CreateResponsePayload = CreateResponseDto & {
-  parentResponse?: string;
+  parentResponse?: { formId: number; responseId: string };
 };
 
 type UpdateResponsePayload = Partial<ResponseDto> & {
-  parentResponse?: string;
+  parentResponse?: { formId: number; responseId: string };
+};
+
+const parseParentResponse = (parentResponse?: string) => {
+  if (!parentResponse) return undefined;
+
+  const parts = parentResponse.split(";");
+  if (parts.length === 2) {
+    const [formIdStr, responseId] = parts;
+    const formId = parseInt(formIdStr, 10);
+    if (!isNaN(formId)) {
+      return { formId, responseId };
+    }
+  }
+
+  return undefined;
 };
 
 const getFieldExtra = (field: SaveField): EditorFieldExtra =>
@@ -126,13 +141,16 @@ export const useResponseSave = (
     const userName = getUserName(user?.firstName, user?.lastName) || user?.name || "";
     const normalizedUpn = user?.upn?.toLowerCase?.() ?? user?.upn ?? "unknown";
 
+    const parsedParentResponse = parseParentResponse(parentResponse);
+
     try {
       if (response && response.id && !copyMode) {
+        const { parentResponse: _, ...restResponse } = response;
         const updatedResponse: UpdateResponsePayload = {
-          ...response,
+          ...restResponse,
           updatedBy: response.updatedBy,
           fieldValues,
-          ...(parentResponse ? { parentResponse } : {}),
+          ...(parsedParentResponse ? { parentResponse: parsedParentResponse } : {}),
         };
 
         const updated = await mutateUpdateResponseAsync(updatedResponse as any);
@@ -141,7 +159,7 @@ export const useResponseSave = (
 
       const newResponse: CreateResponsePayload = {
         fieldValues,
-        ...(parentResponse ? { parentResponse } : {}),
+        ...(parsedParentResponse ? { parentResponse: parsedParentResponse } : {}),
       };
 
       const createKey = `${formId}::${parentResponse ?? ""}::${JSON.stringify(fieldValues)}`;

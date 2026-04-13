@@ -65,7 +65,7 @@ const getFieldExtra = (field: FormFieldDto): FieldExtra => {
 };
 
 const getFieldType = (field: FormFieldDto): FieldType => {
-  return field.fieldType;
+  return field.fieldType as FieldType;
 };
 
 const flattenFields = (form: FormDto): FormFieldWithSectionDto[] => {
