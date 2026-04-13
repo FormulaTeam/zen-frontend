@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fieldType } from "formula-gear";
 import type { FormFieldDto, ResponseDto, UserRoleDto } from "../types/shared";
@@ -29,6 +29,8 @@ type UseChildFormsParams = {
   isSuperAdmin: boolean | null;
   roles: UserRoleDto[];
   copyMode?: boolean;
+  onSaveComplete?: (allSaved: boolean) => void;
+  onValidateComplete?: (isValid: boolean) => void;
 };
 
 type UseChildFormsReturn = {
@@ -46,7 +48,13 @@ type UseChildFormsReturn = {
 };
 
 type LegacyLinkedResponse = ResponseDto & {
-  parentResponse?: unknown;
+  parentResponse?:
+    | string
+    | {
+        formId?: number | string;
+        responseId?: string;
+      }
+    | null;
   mainResponses?: Array<{ id?: string; index?: number | string }>;
 };
 
@@ -81,6 +89,18 @@ const matchesParentResponse = (
 ): boolean => {
   if (!parentFormId || !parentResponseId) {
     return false;
+  }
+
+  if (
+    typeof response.parentResponse === "object" &&
+    response.parentResponse !== null &&
+    "formId" in response.parentResponse &&
+    "responseId" in response.parentResponse
+  ) {
+    return (
+      Number(response.parentResponse.formId) === Number(parentFormId) &&
+      String(response.parentResponse.responseId) === String(parentResponseId)
+    );
   }
 
   if (typeof response.parentResponse === "string") {
@@ -119,11 +139,16 @@ export const useChildForms = ({
   roles: _roles = [],
   isSuperAdmin = false,
   copyMode = false,
+  onSaveComplete,
+  onValidateComplete,
 }: UseChildFormsParams): UseChildFormsReturn => {
   const [childForms, setChildForms] = useState<ChildFormProps[]>([]);
   const [childFormsSaving, setChildFormsSaving] = useState(false);
   const [childFormsValidate, setChildFormsValidate] = useState(false);
   const navigate = useNavigate();
+
+  const initializedUnsavedRef = useRef(false);
+  const lastLoadedSavedParentRef = useRef<string | undefined>(undefined);
 
   const connectedFields = useMemo(() => formFields.filter(isConnectedFormField), [formFields]);
 
@@ -160,20 +185,43 @@ export const useChildForms = ({
     const loadChildForms = async () => {
       if (childFormIds.length === 0) {
         setChildForms([]);
+        initializedUnsavedRef.current = false;
+        lastLoadedSavedParentRef.current = undefined;
         return;
       }
 
       if (!id || copyMode) {
+        if (initializedUnsavedRef.current) {
+          return;
+        }
+
         buildEmptyChildForms();
+        initializedUnsavedRef.current = true;
+        return;
+      }
+
+      initializedUnsavedRef.current = false;
+
+      if (lastLoadedSavedParentRef.current === id) {
         return;
       }
 
       try {
         const childResponses = await Promise.all(
           childFormIds.map(async (childFormId) => {
-            const responses = (await getResponses({
-              form_id: childFormId,
-            })) as LegacyLinkedResponse[];
+            let responses: LegacyLinkedResponse[] = [];
+
+            try {
+              responses = (await getResponses({
+                form_id: childFormId,
+              })) as LegacyLinkedResponse[];
+            } catch (error: any) {
+              if (error?.response?.status !== 404) {
+                throw error;
+              }
+
+              responses = [];
+            }
 
             const matchingResponses = responses.filter((response) =>
               matchesParentResponse(response, formId, id),
@@ -190,8 +238,8 @@ export const useChildForms = ({
             return {
               formId: childFormId,
               children,
-              saved: [],
-              valid: [],
+              saved: [] as Array<boolean | undefined>,
+              valid: [] as Array<boolean | undefined>,
               shown: children.length > 0,
             };
           }),
@@ -204,12 +252,17 @@ export const useChildForms = ({
             return {
               ...nextChildForm,
               shown: existing?.shown ?? nextChildForm.shown,
-              children: existing?.children?.length ? existing.children : nextChildForm.children,
+              children:
+                existing?.children?.length && !nextChildForm.children.length
+                  ? existing.children
+                  : nextChildForm.children,
               saved: existing?.saved ?? nextChildForm.saved,
               valid: existing?.valid ?? nextChildForm.valid,
             };
           }),
         );
+
+        lastLoadedSavedParentRef.current = id;
       } catch (error) {
         console.error("Error fetching child forms:", error);
         buildEmptyChildForms();
@@ -217,7 +270,7 @@ export const useChildForms = ({
     };
 
     void loadChildForms();
-  }, [connectedFields, childFormIds, id, formId, isSuperAdmin, user, copyMode]);
+  }, [childFormIds, connectedFields, id, formId, isSuperAdmin, user, copyMode]);
 
   useEffect(() => {
     if (childFormsSaving) {
@@ -229,6 +282,12 @@ export const useChildForms = ({
 
       if (totalShownChildren === 0) {
         setChildFormsSaving(false);
+
+        if (onSaveComplete) {
+          onSaveComplete(true);
+          return;
+        }
+
         navigate(`/responses/${formId}`);
         return;
       }
@@ -247,6 +306,11 @@ export const useChildForms = ({
         isAllTrue(childForm.saved, childForm.children.length),
       );
 
+      if (onSaveComplete) {
+        onSaveComplete(allSaved);
+        return;
+      }
+
       if (allSaved) {
         navigate(`/responses/${formId}`);
       } else {
@@ -261,6 +325,12 @@ export const useChildForms = ({
 
       if (totalShownChildren === 0) {
         setChildFormsValidate(false);
+
+        if (onValidateComplete) {
+          onValidateComplete(true);
+          return;
+        }
+
         void saveAll();
         return;
       }
@@ -279,6 +349,11 @@ export const useChildForms = ({
         isAllTrue(childForm.valid, childForm.children.length),
       );
 
+      if (onValidateComplete) {
+        onValidateComplete(isValid);
+        return;
+      }
+
       if (isValid) {
         setChildForms((prev) =>
           prev.map((childForm) =>
@@ -296,7 +371,16 @@ export const useChildForms = ({
         console.log("Child form validation failed");
       }
     }
-  }, [childForms, childFormsSaving, childFormsValidate, formId, navigate, saveAll]);
+  }, [
+    childForms,
+    childFormsSaving,
+    childFormsValidate,
+    formId,
+    navigate,
+    onSaveComplete,
+    onValidateComplete,
+    saveAll,
+  ]);
 
   const handleRemoveChildForm = (parentIndex: number, childIndex: number) => {
     setChildForms((prevChildForms) => {
