@@ -168,7 +168,7 @@ export const useResponseSave = (
 
       const newResponse: CreateResponsePayload = {
         fieldValues,
-        ...(parentResponse ? { parentResponse } : {}),
+        ...(parsedParentResponse ? { parentResponse: parsedParentResponse } : {}),
       };
 
       if (parentResponse) {

@@ -588,7 +588,7 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
             value: item.value,
             fieldId: item.fieldId,
             dateAndTime: extra.dateAndTime,
-            fieldType: currentFieldType,
+            fieldType: currentFieldType as FieldType,
           });
         }
 
@@ -860,23 +860,26 @@ export function generateNewFormFieldData(item: Partial<CustomFormField>) {
 }
 
 export function getUserRole(
-  formUsers: FormUser[],
+  formUsers: FormUser[] | undefined,
   currentUser: User,
   isSuperAdmin: boolean | null,
   fullAccessRoleId: RoleId | null,
 ) {
   if (isSuperAdmin && fullAccessRoleId) return fullAccessRoleId;
-  const permittedUser = formUsers.find(
-    (u) => u.upn?.toLowerCase() === currentUser.upn?.toLowerCase(),
+
+  const permittedUser = (formUsers || []).find(
+    (u) => u.upn?.toLowerCase() === currentUser?.upn?.toLowerCase(),
   );
+
   if (permittedUser) {
     return permittedUser.role_id;
   }
 
-  throw "current user does not have access to this form";
+  throw new Error("User has no role for the form");
 }
 
 export function checkUserAccessForResponse(
+
   roles: Role[],
   viewMode: boolean,
   response: ResponseForm | null,

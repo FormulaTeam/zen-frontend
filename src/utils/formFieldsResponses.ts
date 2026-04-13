@@ -105,7 +105,11 @@ export const resolveUserPermissions = (
 };
 
 export const getCreatorName = (form: any) => {
-  const user = form?.users.find((formUser: any) => form.created_by === formUser.upn);
+  if (form?.createdBy?.name) {
+    return form.createdBy.name;
+  }
 
-  return `${user?.firstName || ""} ${user?.lastName || ""}`;
+  const user = form?.users?.find((formUser: any) => form.created_by === formUser.upn);
+
+  return user ? `${user.firstName || ""} ${user.lastName || ""}` : form?.created_by_name || "";
 };

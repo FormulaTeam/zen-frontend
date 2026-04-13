@@ -20,6 +20,8 @@ import { useFetch } from "../utils/useFetch";
 import { useMutation } from "@tanstack/react-query";
 import { useUpdate } from "../utils/useUpdate";
 import { BulkUpdateResponsesDto, CreateResponseDto, ResponseDto } from "../types/shared";
+import { z } from "zod";
+import { GetResponsesQuerySchema, PaginatedResponsesSchema } from "formula-gear/dist/validators/responses/index";
 
 /**
  * Fetch all responses with optional query parameters.
@@ -256,12 +258,15 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
   });
 };
 
-export const useGetResponsesRows = ({ filter }: { filter?: Filter }) => {
-  return useFetch<Filter, Row[]>({
-    endpoint: `/responses/get-rows`,
-    queryKey: () => ["rows", filter],
-    params: filter,
-    queryOptions: { enabled: !!filter?.form_id },
+export const useGetResponsesRows = (formId: string, params: z.infer<typeof GetResponsesQuerySchema>) => {
+
+  return useFetch<typeof params, z.infer<typeof PaginatedResponsesSchema>>({
+    endpoint: `/forms/${formId}/responses`,
+    queryKey: () => ["responses", formId, params],
+    params: params,
+    queryOptions: {
+      enabled: !!formId,
+    },
   });
 };
 
