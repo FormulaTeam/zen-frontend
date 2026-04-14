@@ -1,7 +1,6 @@
 import React from "react";
-import { Autocomplete, TextField, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
 import male from "../../images/man4.png";
-import female from "../../images/female3.png";
 import { Close } from "@mui/icons-material";
 import {
   SharedUserContainer,
@@ -11,7 +10,6 @@ import {
   UserName,
   UserUPN,
   RoleLabel,
-  RoleOption,
   StyledIconButton,
 } from "./styled";
 import RolesAutocomplete from "./RolesAutocomplete";
@@ -20,9 +18,7 @@ import { useAuth } from "../../contexts/AuthContext";
 const SharedUser = ({ user, roles, handleRoleChange, removeUserFromShare }) => {
   const { user: currentUser } = useAuth();
   const theme = useTheme();
-  const first = user?.firstName || "";
-  const last = user?.lastName || "";
-  const name = first + " " + last;
+  const name = user?.displayName;
   const upn = user?.upn || user?.mail || user?.id || "";
   // Find the current role for the user
   const roleObj =
@@ -35,7 +31,7 @@ const SharedUser = ({ user, roles, handleRoleChange, removeUserFromShare }) => {
   return (
     <SharedUserContainer>
       <UserInfo>
-        <UserAvatar src={user?.gender === "female" ? female : male} alt="User" />
+        <UserAvatar src={male} alt="User" />
         <UserDetails>
           <UserName>{name}</UserName>
           <UserUPN>{upn}</UserUPN>

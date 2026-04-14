@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 
-import type { FormDto } from "../types/shared";
+import type { FormDto, UserDto, UserRoleDto } from "../types/shared";
 import { useUpdateForm } from "../api";
 import { getUsers } from "../api/usersApi";
-import { User } from "../utils/interfaces";
 import { showErrorNotification } from "../utils/utils";
 
-type SharePickerUser = User & {
+type SharePickerUser = Omit<Partial<UserDto>, 'userType' | 'id'> & {
+  id?: string | number;
+  firstName?: string;
+  lastName?: string;
+  mail?: string;
+  displayName?: string;
+  upn?: string;
   role_id?: number;
   selected?: boolean;
 };
@@ -16,6 +21,7 @@ type PublicRole = FormDto["publicRole"];
 interface UseUserPickerProps {
   form: FormDto;
   closeSharePopupAndRefreshForm: (users: SharePickerUser[], updatedForm?: FormDto) => void;
+  roles?: UserRoleDto[];
 }
 
 export interface UserPickerReturnType {
@@ -37,16 +43,15 @@ const getCreatorFromForm = (form: FormDto): SharePickerUser | null => {
   if (!form.createdBy) return null;
 
   return {
-    id: form.createdBy.upn,
     upn: form.createdBy.upn,
     displayName: form.createdBy.name,
-    firstName: form.createdBy.name,
     selected: true,
   } as SharePickerUser;
 };
 
 export const useUserPicker = ({
   form,
+  roles = [],
   closeSharePopupAndRefreshForm,
 }: UseUserPickerProps): UserPickerReturnType => {
   const [loading, setLoading] = useState<boolean>(true);
@@ -66,10 +71,33 @@ export const useUserPicker = ({
   }, [form.publicRole, form.id]);
 
   useEffect(() => {
-    setFormCreator(getCreatorFromForm(form));
-    setSelectedShareWith([]);
+    const creator = getCreatorFromForm(form);
+    setFormCreator(creator);
+
+    const initialSelectedUsers = roles
+      .filter((userRole) => {
+        // filter out creator if present, since creator is shown separately
+        const user = (userRole as Record<string, any>).user;
+        const userUpn = user?.upn?.toLowerCase();
+        const userIdRaw = user?.id?.toString();
+        const creatorUpn = creator?.upn?.toLowerCase();
+        const creatorIdRaw = creator?.id?.toString();
+        return userUpn !== creatorUpn && userIdRaw !== creatorIdRaw;
+      })
+      .map((userRole) => {
+        const user = (userRole as Record<string, any>).user;
+        return {
+          id: user?.id,
+          upn: user?.upn,
+          displayName: user?.name,
+          role_id: userRole.role,
+          selected: true,
+        } as SharePickerUser;
+      });
+
+    setSelectedShareWith(initialSelectedUsers);
     setLoading(false);
-  }, [form]);
+  }, [form, roles]);
 
   const getSelectedShareWithFormCreator = (
     users: SharePickerUser[],
@@ -82,7 +110,7 @@ export const useUserPicker = ({
     if (hasCreator) return users;
 
     const creatorClone = { ...creator };
-    delete creatorClone.displayName;
+    delete creatorClone.name;
 
     return [...users, creatorClone];
   };
@@ -99,8 +127,8 @@ export const useUserPicker = ({
         normalizedUser.role_id = undefined;
       }
 
-      normalizedUser.upn = normalizedUser.upn || normalizedUser.id?.toLowerCase();
-      delete normalizedUser.displayName;
+      normalizedUser.upn = normalizedUser.upn || String(normalizedUser.id)?.toLowerCase();
+      delete normalizedUser.name;
       users.push(normalizedUser);
     });
 

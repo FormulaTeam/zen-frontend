@@ -5,7 +5,7 @@ import { Box, Divider, Tooltip, useTheme } from "@mui/material";
 
 import type { FormDto } from "../../types/shared";
 import { getFormById } from "../../api/formsApi";
-import UserPicker from "../USerPicker/UserPicker";
+import UserPicker from "../UserPicker/UserPicker";
 import ShareIcon from "../../icons/share.svg";
 import formX from "../../images/form_x.png";
 import { FormOverview } from "../../utils/interfaces";

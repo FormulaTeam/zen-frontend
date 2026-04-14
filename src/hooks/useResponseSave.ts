@@ -141,7 +141,7 @@ export const useResponseSave = (
 
       const newResponse: CreateResponsePayload = {
         fieldValues,
-        ...(parentResponse ? { parentResponse } : {}),
+        ...(parentResponse ? { parentResponse: parentResponse as any } : {}),
       };
 
       const createKey = `${formId}::${parentResponse ?? ""}::${JSON.stringify(fieldValues)}`;

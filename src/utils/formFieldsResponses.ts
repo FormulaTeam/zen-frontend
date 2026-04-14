@@ -1,3 +1,5 @@
+import { Role } from "formula-gear";
+import { ROLE_CATALOG } from "../consts/roles";
 import type { FormDto, UserRoleDto } from "../types/shared";
 import { FieldTypeIds, Form, User } from "./interfaces";
 import { getKeyByValue, PERMISSION_TYPES } from "./utils";
@@ -54,7 +56,11 @@ export const normalizeFieldValue = (field: any, value: any): any => {
   return newValue;
 };
 
-const getRolePermissionTypes = (role: UserRoleDto["role"]): number[] => {
+export const getRolePermissionTypes = (role: Role): number[] => {
+  if (typeof role === "number") {
+    const found = ROLE_CATALOG.find((r) => r.role_id === role);
+    return found ? found.permission_types || [] : [];
+  }
   if (role && typeof role === "object" && "permission_types" in role) {
     const permissionTypes = (role as { permission_types?: unknown }).permission_types;
 
@@ -92,7 +98,7 @@ export const resolveUserPermissions = (
   let publicFormPermissions: number[] = [];
 
   if (typeof currentUserId === "number") {
-    const specificRole = roles.find((userRole) => userRole.userId === currentUserId);
+    const specificRole = roles.find((userRole) => (userRole as Record<string, any>).user?.id === currentUserId);
 
     if (specificRole) userSpecificPermissions = getRolePermissionTypes(specificRole.role);
   }

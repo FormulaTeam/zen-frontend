@@ -9,7 +9,6 @@ import {
   useTheme,
 } from "@mui/material";
 import male from "../../images/man4.png";
-import female from "../../images/female3.png";
 import ReactLoading from "react-loading";
 import ClearIcon from "@mui/icons-material/Clear";
 import AutocompleteItem from "./AutocompleteItem";
@@ -24,7 +23,7 @@ import {
   UsersList,
   UserUPN,
 } from "./styled";
-import { useAuth } from "../../contexts/AuthContext";
+import { ROLE_CATALOG } from "../../consts/roles";
 
 interface UserPickerProps {
   loading: boolean;
@@ -49,9 +48,9 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
 }) => {
   const theme = useTheme();
   const [inputValue, setInputValue] = useState("");
-  const { roles } = useAuth();
 
-  const creatorRole = roles.find((r) => r.role_id === formCreator?.role_id);
+  console.log('selectedShareWith:', selectedShareWith);
+  const creatorRole = ROLE_CATALOG.find((r) => r.role_id === formCreator?.role_id);
 
   const onInputChange = (event: any, value: string) => {
     setInputValue(value);
@@ -137,7 +136,7 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
                 displayName={user?.displayName || ""}
                 upn={upn}
                 currentPermissions={
-                  roles.find(
+                  ROLE_CATALOG.find(
                     (r) =>
                       r.role_id ===
                       selectedShareWith.find((u) => {
@@ -158,6 +157,9 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
             borderRadius: "4px",
             padding: "7px 8px",
             borderWidth: "1px",
+          }, "& .MuiInputLabel-root:not(.MuiInputLabel-shrink)": {
+            top: "50%",
+            transform: "translate(14px, -50%) scale(1)",
           },
         }}
         renderInput={(params) => (
@@ -190,10 +192,10 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
         {/* Creator user */}
         <CreatorContainer bgc={theme.palette.background?.default}>
           <UserInfo>
-            <UserAvatar src={formCreator?.gender === "female" ? female : male} alt="Creator" />
+            <UserAvatar src={male} alt="Creator" />
             <UserDetails>
               <Typography style={{ fontWeight: 500, fontSize: "16px" }}>
-                {formCreator?.firstName + " " + formCreator?.lastName || formCreator.upn}
+                {formCreator?.displayName || formCreator.upn}
               </Typography>
               <UserUPN>{formCreator?.upn}</UserUPN>
             </UserDetails>
@@ -208,7 +210,7 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
           <SharedUser
             key={user?.id || index}
             user={user}
-            roles={roles}
+            roles={ROLE_CATALOG}
             handleRoleChange={handleRoleChange}
             removeUserFromShare={removeUserFromShare}
           />

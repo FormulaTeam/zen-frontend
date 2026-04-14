@@ -3,7 +3,7 @@ import { Divider } from "@mui/material";
 import styled from "styled-components";
 
 import type { FormDto } from "../../types/shared";
-import { useAuth } from "../../contexts/AuthContext";
+import { useGetFormRoles } from "../../api/rolesApi";
 import { useFormPermissions } from "../../hooks/useFormPermissions";
 import { useUserPicker } from "../../hooks/useUserPicker";
 import BasePopup from "../BasePopup/BasePopup";
@@ -23,7 +23,8 @@ interface UserPickerProps {
 }
 
 const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) => {
-  const { user, roles } = useAuth();
+  const { data: formRoles } = useGetFormRoles(form.id);
+  const roles = formRoles?.userRoles ?? [];
 
   const {
     loading,
@@ -37,7 +38,7 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
     handleInputChange,
     handleClose,
     handleFormPermissionChange,
-  } = useUserPicker({ form, closeSharePopupAndRefreshForm });
+  } = useUserPicker({ form, closeSharePopupAndRefreshForm, roles });
 
   const {
     isPublic,
@@ -58,12 +59,12 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
   });
 
   useEffect(() => {
-    const newIsPublic = !!form.publicRole;
+    const newIsPublic = !!formRoles?.publicRole;
     setIsPublic(newIsPublic);
 
-    const newFormPermission = form.publicRole || null;
+    const newFormPermission = formRoles?.publicRole || null;
     setFormPermission(newFormPermission);
-  }, [form.publicRole, form.id, setFormPermission, setIsPublic]);
+  }, [formRoles, setFormPermission, setIsPublic]);
 
   return (
     <BasePopup
@@ -86,7 +87,6 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
           <Divider />
 
           <PublicFormSection
-            user={user}
             hasPermission={hasPermission}
             isPublic={isPublic}
             togglePublicForm={togglePublicForm}

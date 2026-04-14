@@ -1,39 +1,29 @@
 import { useMemo, useState } from "react";
 
-import type { FormDto } from "../types/shared";
+import type { FormDto, UserRoleDto } from "../types/shared";
 import { useAuth } from "../contexts/AuthContext";
 import { useSuperAdmin } from "../contexts/SuperAdminContext";
-import { Role, User } from "../utils/interfaces";
-import { prioritizePermissions } from "../utils/formFieldsResponses";
+import { prioritizePermissions, getRolePermissionTypes } from "../utils/formFieldsResponses";
 import { PERMISSION_TYPES } from "../utils/utils";
 
 type PublicRole = FormDto["publicRole"];
 
 interface UseFormPermissionsParams {
   form: FormDto;
-  roles: Role[];
-  selectedShareWith: User[];
+  roles: UserRoleDto[];
+  selectedShareWith: any[];
   saveSharedWith: (updatedFormData?: Record<string, unknown>) => Promise<void>;
   handleFormPermissionChange: (isPublic: boolean, permission?: PublicRole) => void;
   handleClose: () => void;
 }
 
-const getCatalogPermissionTypes = (
-  roles: Role[],
-  role: PublicRole | null | undefined,
-): number[] => {
-  const matchingRole = roles.find((roleItem) => roleItem.role_id === role);
-
-  return matchingRole?.permission_types ?? [];
-};
-
-const getUserId = (user: User | null | undefined): number | undefined => {
+const getUserId = (user: any | null | undefined): number | undefined => {
   if (!user) return undefined;
 
-  const directUserId = (user as User & { id?: unknown }).id;
+  const directUserId = user.id;
   if (typeof directUserId === "number") return directUserId;
 
-  const fallbackUserId = (user as User & { userId?: unknown }).userId;
+  const fallbackUserId = user.userId;
   if (typeof fallbackUserId === "number") return fallbackUserId;
 
   return undefined;
@@ -58,12 +48,14 @@ export const useFormPermissions = ({
   const userSpecificPermissions = useMemo(() => {
     if (typeof currentUserId !== "number") return [];
 
-    return [];
-  }, [currentUserId]);
+    const specificRole = roles.find((userRole) => (userRole as Record<string, any>).user?.id === currentUserId);
+
+    return specificRole ? getRolePermissionTypes(specificRole.role) : [];
+  }, [currentUserId, roles]);
 
   const publicFormPermissions = useMemo(
-    () => (isPublic ? getCatalogPermissionTypes(roles, formPermission) : []),
-    [formPermission, isPublic, roles],
+    () => (isPublic && formPermission ? getRolePermissionTypes(formPermission) : []),
+    [formPermission, isPublic],
   );
 
   const permissionTypes = useMemo(
@@ -88,11 +80,13 @@ export const useFormPermissions = ({
     handleFormPermissionChange(true, formPermission ?? undefined);
   };
 
-  const handleLocalFormPermissionChange = (_: any, newValue: PublicRole) => {
+  const handleLocalFormPermissionChange = (_: any, newValue: any) => {
     if (!newValue) return;
 
-    setFormPermission(newValue);
-    handleFormPermissionChange(isPublic, newValue);
+    const newRoleId = typeof newValue === "object" ? newValue.role_id : newValue;
+
+    setFormPermission(newRoleId);
+    handleFormPermissionChange(isPublic, newRoleId);
   };
 
   const handleSave = async () => {

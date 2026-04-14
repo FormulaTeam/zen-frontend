@@ -3,8 +3,8 @@ import { Checkbox, Tooltip, IconButton } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useTheme } from "@mui/material/styles";
 import RolesAutocomplete from "./RolesAutocomplete";
-import { Form, User } from "../../utils/interfaces";
 import { RoleLabel } from "./styled";
+import { ROLE_CATALOG } from "../../consts/roles";
 import {
   Wrapper,
   LabelWrapper,
@@ -17,7 +17,6 @@ import {
 } from "./publicForm.styled";
 
 interface PublicFormSectionProps {
-  user: User | null;
   hasPermission: boolean;
   isPublic: boolean;
   togglePublicForm: () => void;
@@ -27,7 +26,6 @@ interface PublicFormSectionProps {
 }
 
 const PublicFormSection: React.FC<PublicFormSectionProps> = ({
-  user,
   hasPermission,
   isPublic,
   togglePublicForm,
@@ -36,6 +34,18 @@ const PublicFormSection: React.FC<PublicFormSectionProps> = ({
   handleLocalFormPermissionChange,
 }) => {
   const theme = useTheme();
+
+  const getRoleName = () => {
+    if (!formPermission) return "";
+    if (typeof formPermission === "object" && formPermission.roleName) {
+      return formPermission.roleName;
+    }
+    const roleId = typeof formPermission === "object" ? formPermission.role_id : formPermission;
+    const roleObj = ROLE_CATALOG.find((r) => r.role_id === roleId);
+    return roleObj ? roleObj.roleName : "";
+  };
+
+  const roleName = getRoleName();
 
   return (
     <Wrapper>
@@ -57,17 +67,18 @@ const PublicFormSection: React.FC<PublicFormSectionProps> = ({
             <PermissionsText $color={theme.palette.text.secondary}>
               אילו הרשאות יוגדרו לכלל המשתמשים:
             </PermissionsText>
-            {formPermission && formPermission.roleName ? (
+            {roleName ? (
               <RoleLabel
                 onClick={() => setFormPermission(null)}
                 $isCreator={false}
                 color={theme.palette.button?.primaryText || "#000"}>
-                {formPermission.roleName}
+                {roleName}
               </RoleLabel>
             ) : (
               <RolesAutocomplete
                 isDisabled={!hasPermission}
                 handleRoleChange={handleLocalFormPermissionChange}
+                width="min(180px, 100%)"
               />
             )}
           </PermissionsRow>
