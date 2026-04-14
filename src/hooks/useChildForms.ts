@@ -63,13 +63,26 @@ const getFieldExtra = (field: FormFieldDto): Record<string, unknown> =>
     ? (field.extra as Record<string, unknown>)
     : {};
 
+const toNumber = (value: unknown): number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  return undefined;
+};
+
 const getConnectedFormId = (field: FormFieldDto): number | undefined => {
   const linkedFormId = getFieldExtra(field).linkedFormId;
-  return typeof linkedFormId === "number" ? linkedFormId : undefined;
+  return toNumber(linkedFormId);
 };
 
 const isConnectedFormField = (field: FormFieldDto): boolean =>
-  field.fieldType === fieldType.Form && typeof getConnectedFormId(field) === "number";
+  field.fieldType === fieldType.Form && getConnectedFormId(field) !== undefined;
 
 const createChildInstance = (
   fieldTemplate: FormFieldDto,

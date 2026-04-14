@@ -39,13 +39,26 @@ type Props = {
   formsLength: number;
 };
 
+const toNumber = (value: unknown): number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  return undefined;
+};
+
 const getConnectedFormId = (field: FormFieldDto): number | undefined => {
   if (!field.extra || typeof field.extra !== "object") {
     return undefined;
   }
 
   const linkedFormId = (field.extra as { linkedFormId?: unknown }).linkedFormId;
-  return typeof linkedFormId === "number" ? linkedFormId : undefined;
+  return toNumber(linkedFormId);
 };
 
 function ConnectedFormSection({
