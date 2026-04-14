@@ -247,3 +247,12 @@ export const useDeleteForm = ({ id }: { id: string }) => {
   });
 };
 
+export const useGetLinkableForms = ({ formId }: { formId: string }) => {
+  return useFetch<undefined, FormDto[]>({
+    endpoint: `/forms/${formId}/linkable`,
+    queryKey: () => [formId],
+    queryOptions: {
+      enabled: !!formId,
+    },
+  });
+};
