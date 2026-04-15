@@ -4,10 +4,12 @@ import { useAuth } from "../contexts/AuthContext";
 import { FormDto } from "../types/shared";
 
 interface UseFormInFormSearchProps {
-  connectedFormId?: number;
+  linkedFormId?: number;
 }
 
-export const useFormInFormSearch = ({ connectedFormId }: UseFormInFormSearchProps) => {
+export const useFormInFormSearch = ({
+  linkedFormId: linkedFormId,
+}: UseFormInFormSearchProps) => {
   const [forms, setForms] = useState<FormDto[]>([]);
   const [loadingForms, setLoadingForms] = useState<boolean>(false);
   const [selectedForm, setSelectedForm] = useState<FormDto | null>(null);
@@ -16,14 +18,14 @@ export const useFormInFormSearch = ({ connectedFormId }: UseFormInFormSearchProp
 
   const { user } = useAuth();
 
-  // Load initial form if connectedFormId exists
+  // Load initial form if linkedFormId exists
   useEffect(() => {
-    if (connectedFormId) {
+    if (linkedFormId) {
       const filter = {
         query: {
           $or: [{ name: { $regex: formSearchText } }, { description: { $regex: formSearchText } }],
           users: { $elemMatch: { upn: user?.upn?.toLowerCase() } },
-          id: connectedFormId,
+          id: linkedFormId,
         },
       };
       getForms(filter)
@@ -40,7 +42,7 @@ export const useFormInFormSearch = ({ connectedFormId }: UseFormInFormSearchProp
       setLoading(false);
       setSelectedForm(null);
     }
-  }, [connectedFormId, user?.upn]);
+  }, [linkedFormId, user?.upn]);
 
   // Search forms by name or description
   useEffect(() => {

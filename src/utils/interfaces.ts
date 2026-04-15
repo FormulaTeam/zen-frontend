@@ -129,7 +129,7 @@ export interface FormField {
   parentFieldName?: string;
   parentDependencies?: ParentDependencies[];
   connectionType?: (typeof connectionTypes)[keyof typeof connectionTypes];
-  connectedFormId?: number;
+  linkedFormId?: number;
   connectedFieldId?: string;
   childFieldId?: string;
   childFieldName?: string;
@@ -399,14 +399,20 @@ export enum fieldConnectionTooltipTexts {
   AllowedFields = "שדות טקסט ומספר בלבד",
 }
 
+export type FieldValidationError = {
+  messages: string[];
+  pathMessages: Record<string, string[]>;
+};
+
 export type LocationValue = {
   x: string;
   y: string;
 };
 
 export type LocationValueError = {
-  x: boolean;
-  y: boolean;
+  x?: string;
+  y?: string;
+  general?: string;
 };
 
 export type LinkValue = {
@@ -415,8 +421,9 @@ export type LinkValue = {
 };
 
 export type LinkValueError = {
-  link: boolean;
-  linkTxt: boolean;
+  link?: string;
+  linkTxt?: string;
+  general?: string;
 };
 
 export type FieldValue =
@@ -433,6 +440,14 @@ export interface ResponseFieldValue {
   value: FieldValue;
   field_id?: string;
   uniqueId?: string;
+}
+
+export interface CustomInputFormFieldProps {
+  label: string;
+  isRequired: boolean;
+  isDisabled: boolean;
+  onChangeHandler: (value: any) => void;
+  validationMessage?: string | null;
 }
 
 export type CustomFormField = Pick<
@@ -455,10 +470,9 @@ export type MultiInputFieldValues = string[];
 export interface CustomInputFormFieldProps {
   label: string;
   isRequired: boolean;
-  isValid: boolean;
   isDisabled: boolean;
-  onChangeHandler: (value: any, valid: boolean) => void;
-  validationRegex?: string;
+  onChangeHandler: (value: any) => void;
+  validationMessage?: string | null;
 }
 
 // Add this type to define the structure of a field blueprint

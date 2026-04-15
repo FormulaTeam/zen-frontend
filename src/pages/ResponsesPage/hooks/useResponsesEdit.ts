@@ -47,10 +47,6 @@ type ResponseUpdatePayload = {
   responseData: ResponseDto;
 };
 
-type CreateResponseMutationPayload = CreateResponseDto & {
-  formId: number;
-};
-
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
 
@@ -588,12 +584,11 @@ export const useResponsesEdit = () => {
           }),
         );
 
-        const newResponsePayload: CreateResponseMutationPayload = {
-          formId: dtoForm.id,
+        const newResponsePayload: CreateResponseDto = {
           fieldValues,
         };
 
-        await createResponse(newResponsePayload as any);
+        await createResponse(newResponsePayload);
       }
 
       newRowCounterRef.current = 0;

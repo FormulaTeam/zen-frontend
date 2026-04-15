@@ -18,7 +18,7 @@ export const useStatisticsDateFilter = (
   const prevYear = useCallback(() => setYear((y) => y - 1), []);
 
   const handleDateChange = useCallback(
-    (key: "from" | "to", value: string | null, _valid: boolean | null) => {
+    (key: "from" | "to", value: string | null, _valid?: boolean | null) => {
       const now = new Date().toISOString();
       if (value && value > now) return;
 

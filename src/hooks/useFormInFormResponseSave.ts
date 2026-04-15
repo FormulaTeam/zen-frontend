@@ -1,52 +1,52 @@
-import { useEffect, useState } from "react";
-import { ResponseForm } from "../utils/interfaces";
-import { saveResponse } from "../interfaces/responses";
+import { useEffect, useRef, useState } from "react";
+import type { ResponseDto } from "../types/shared";
 
-// Global queue to manage sequential saving across all child forms
+type SaveResponseFn = (
+  formFieldsByIdMap: Map<string, any>,
+  formFieldsValuesMap: Map<string, any>,
+) => Promise<ResponseDto>;
+
 let saveQueue: Array<{
   index: number;
   saveFunction: () => Promise<void>;
 }> = [];
+
 let isProcessingQueue = false;
 
-const saveFunction = async (
+const runQueuedSave = async (
   index: number,
-  saveResponse: saveResponse,
-  formFieldsByIdMap: any,
-  formFieldsValuesMap: any,
-  setSaved: (v: boolean) => void,
-  setError: (v: boolean) => void
+  saveResponse: SaveResponseFn,
+  formFieldsByIdMap: Map<string, any>,
+  formFieldsValuesMap: Map<string, any>,
+  setSaved: (value: boolean) => void,
+  setError: (value: boolean) => void,
 ) => {
   try {
-    console.log(`[CHILD FORM SAVE] Starting save for child form index ${index}`);
     await saveResponse(formFieldsByIdMap, formFieldsValuesMap);
-    console.log(`[CHILD FORM SAVE] Successfully saved child form index ${index}`);
     setSaved(true);
+    setError(false);
   } catch (error) {
-    console.error(`[CHILD FORM SAVE] Error saving child form index ${index}:`, error);
-    setError(true);
     setSaved(false);
+    setError(true);
     throw error;
   }
 };
 
 const processSaveQueue = async () => {
-  if (isProcessingQueue || saveQueue.length === 0) return;
+  if (isProcessingQueue || saveQueue.length === 0) {
+    return;
+  }
 
   isProcessingQueue = true;
-
-  // Sort queue by index to ensure correct order
   saveQueue.sort((a, b) => a.index - b.index);
 
   while (saveQueue.length > 0) {
     const item = saveQueue.shift()!;
-    console.log(`[CHILD FORM SAVE] Processing queue item for index ${item.index}`);
 
     try {
       await item.saveFunction();
-    } catch (error) {
-      console.error(`[CHILD FORM SAVE] Error in queue processing for index ${item.index}:`, error);
-      // Error is already handled in saveFunction, just continue processing
+    } catch {
+      // failure is already handled by the queued save function
     }
   }
 
@@ -55,38 +55,44 @@ const processSaveQueue = async () => {
 
 export const saveChildForm = async (
   index: number,
-  saveResponse: saveResponse,
-  formFieldsByIdMap: any,
-  formFieldsValuesMap: any,
-  setSaved: (v: boolean) => void,
-  setError: (v: boolean) => void
+  saveResponse: SaveResponseFn,
+  formFieldsByIdMap: Map<string, any>,
+  formFieldsValuesMap: Map<string, any>,
+  setSaved: (value: boolean) => void,
+  setError: (value: boolean) => void,
 ) => {
   saveQueue.push({
     index,
     saveFunction: () =>
-      saveFunction(index, saveResponse, formFieldsByIdMap, formFieldsValuesMap, setSaved, setError),
+      runQueuedSave(
+        index,
+        saveResponse,
+        formFieldsByIdMap,
+        formFieldsValuesMap,
+        setSaved,
+        setError,
+      ),
   });
 
-  await processSaveQueue(); // Will throw error if saveFunction fails
+  await processSaveQueue();
 };
 
-// Function to clear the queue (useful for cleanup)
-const clearSaveQueue = () => {
+export const clearSaveQueue = () => {
   saveQueue = [];
   isProcessingQueue = false;
 };
 
-interface useFormInFormResponseSaveProps {
+interface UseFormInFormResponseSaveProps {
   shouldSave: boolean;
   shouldValidate: boolean;
   validateRequiredFields: () => boolean;
   form: any;
-  saveResponse: saveResponse;
-  formFieldsByIdMap: any;
-  formFieldsValuesMap: any;
+  saveResponse: SaveResponseFn;
+  formFieldsByIdMap: Map<string, any>;
+  formFieldsValuesMap: Map<string, any>;
   childSaved: (saved: boolean) => void;
   childValid: (valid: boolean) => void;
-  index?: number; // Index for ordering child form saves
+  index?: number;
 }
 
 export function useFormInFormResponseSave({
@@ -100,42 +106,68 @@ export function useFormInFormResponseSave({
   childSaved,
   childValid,
   index = 0,
-}: useFormInFormResponseSaveProps) {
+}: UseFormInFormResponseSaveProps) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(false);
   const [valid, setValid] = useState(true);
 
-  useEffect(() => {
-    if (shouldSave && validateRequiredFields() && form) {
-      console.log(`[CHILD FORM SAVE] Adding child form index ${index} to save queue`);
+  const hasTriggeredSaveRef = useRef(false);
 
-      // Use the new saveChildForm function
-      saveChildForm(index, saveResponse, formFieldsByIdMap, formFieldsValuesMap, setSaved, setError)
-        .then(() => {
-          childSaved(true);
-        })
-        .catch((error) => {
-          childSaved(false);
-        });
-    } else {
+  useEffect(() => {
+    if (!shouldSave) {
+      hasTriggeredSaveRef.current = false;
+      setSaved(false);
       setError(false);
+      return;
     }
-  }, [shouldSave]);
+
+    if (hasTriggeredSaveRef.current || !form) {
+      return;
+    }
+
+    if (!validateRequiredFields()) {
+      setValid(false);
+      setError(true);
+      childSaved(false);
+      return;
+    }
+
+    hasTriggeredSaveRef.current = true;
+
+    void saveChildForm(
+      index,
+      saveResponse,
+      formFieldsByIdMap,
+      formFieldsValuesMap,
+      setSaved,
+      setError,
+    )
+      .then(() => {
+        childSaved(true);
+      })
+      .catch(() => {
+        childSaved(false);
+      });
+  }, [
+    shouldSave,
+    form,
+    saveResponse,
+    formFieldsByIdMap,
+    formFieldsValuesMap,
+    validateRequiredFields,
+    childSaved,
+    index,
+  ]);
 
   useEffect(() => {
-    if (shouldValidate && form) {
-      if (validateRequiredFields()) {
-        childValid(true);
-        setValid(true);
-      } else {
-        childValid(false);
-        setValid(false);
-      }
+    if (!shouldValidate || !form) {
+      return;
     }
-  }, [shouldValidate]);
 
-  return { saved, error, valid, setSaved, setError };
+    const isValid = validateRequiredFields();
+    setValid(isValid);
+    childValid(isValid);
+  }, [shouldValidate, form, validateRequiredFields, childValid]);
+
+  return { saved, error, valid };
 }
-
-// Export the clearSaveQueue function for cleanup if needed
-export { clearSaveQueue };

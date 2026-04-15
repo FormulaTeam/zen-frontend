@@ -19,7 +19,7 @@ import { FormFieldDto } from "../../types/shared";
 
 type ConditionFieldExtra = {
   connectionType?: string | number;
-  connectedFormId?: number;
+  linkedFormId?: number;
   connectedFieldId?: string;
   conditions?: Condition[];
   sectionId?: string;
@@ -56,7 +56,7 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
 }) => {
   const fieldsForSelection = availableFields || formFields;
 
-  const handleFieldChange = (value: string | string[], isValid: boolean) => {
+  const handleFieldChange = (value: string | string[]) => {
     const selectedValue = Array.isArray(value) ? value[0] : value;
     if (selectedValue === "" || selectedValue === "בחר שדה...") {
       onConditionChange("field", "");
@@ -72,13 +72,13 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
     return field?.displayName || "";
   };
 
-  const handleOperatorChange = (value: string | string[], isValid: boolean) => {
+  const handleOperatorChange = (value: string | string[]) => {
     const selectedValue = Array.isArray(value) ? value[0] : value;
     if (selectedValue === "" || selectedValue === "סוג התנאי...") {
       onConditionChange("operator", "");
     } else {
       const operatorEntry = Object.entries(conditionOperatorLabels).find(
-        ([key, label]) => label === selectedValue,
+        ([, label]) => label === selectedValue,
       );
       onConditionChange("operator", operatorEntry ? operatorEntry[0] : "");
     }
@@ -141,30 +141,32 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
   };
 
   const getConditionDescription = (
-    condition: Condition,
+    currentCondition: Condition,
     formField?: ConditionalFormField,
   ): string => {
     if (!formField) return "שדה לא נבחר";
 
-    const operatorLabel = conditionOperatorLabels[condition.operator];
+    const operatorLabel = conditionOperatorLabels[currentCondition.operator];
     const fieldName = formField.displayName;
 
     if (
-      condition.operator === ConditionOperators.empty ||
-      condition.operator === ConditionOperators.not_empty
+      currentCondition.operator === ConditionOperators.empty ||
+      currentCondition.operator === ConditionOperators.not_empty
     ) {
       return `${fieldName} ${operatorLabel}`;
     }
 
     let valueDisplay = "";
-    if (formField.fieldType === FieldTypeIds.date && typeof condition.value === "string") {
-      valueDisplay = condition.value ? new Date(condition.value).toLocaleDateString("he-IL") : "";
-    } else if (Array.isArray(condition.value)) {
-      valueDisplay = condition.value.join(", ");
-    } else if (condition.value === "true" || condition.value === "false") {
-      valueDisplay = condition.value === "true" ? "כן" : "לא";
+    if (formField.fieldType === FieldTypeIds.date && typeof currentCondition.value === "string") {
+      valueDisplay = currentCondition.value
+        ? new Date(currentCondition.value).toLocaleDateString("he-IL")
+        : "";
+    } else if (Array.isArray(currentCondition.value)) {
+      valueDisplay = currentCondition.value.join(", ");
+    } else if (currentCondition.value === "true" || currentCondition.value === "false") {
+      valueDisplay = currentCondition.value === "true" ? "כן" : "לא";
     } else {
-      valueDisplay = String(condition.value || "");
+      valueDisplay = String(currentCondition.value || "");
     }
 
     return `${fieldName} ${operatorLabel} "${valueDisplay}"`;
@@ -180,11 +182,11 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
             value={getFieldDisplayValue()}
             options={["בחר שדה...", ...fieldsForSelection.map((field) => field.displayName)]}
             onChangeHandler={handleFieldChange}
-            isValid={true}
             label="בחר שדה..."
             isRequired={false}
             isDisabled={false}
             multipleOptions={false}
+            validationMessage={null}
           />
         </FormFieldWrapper>
 
@@ -198,11 +200,11 @@ const ConditionItem: React.FC<ConditionItemProps> = ({
               ),
             ]}
             onChangeHandler={handleOperatorChange}
-            isValid={true}
             label="סוג התנאי..."
             isRequired={false}
             isDisabled={!condition.field}
             multipleOptions={false}
+            validationMessage={null}
           />
         </FormFieldWrapper>
 

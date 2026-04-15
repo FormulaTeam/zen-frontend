@@ -1,88 +1,84 @@
 import { DatePicker, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import classes from "./CustomDateTime.module.scss";
-import { CustomInputFormFieldProps } from "../../../utils/interfaces";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
-import { useTheme } from "@mui/material/styles";
-import InputLabel from "@mui/material/InputLabel";
 import { Chrome90RTLFixContainer } from "../Chrome90RTLFix/Chrome90RTLFix";
 import "dayjs/locale/he";
 
 dayjs.extend(utc);
+dayjs.extend(timezone);
 
-interface CustomDateTimeProps extends CustomInputFormFieldProps {
-  value: string | null; // Expecting an ISO string
-  defaultValue?: string;
+const ISRAEL_TZ = "Asia/Jerusalem";
+
+interface CustomDateTimeProps {
+  value: string | null;
+  defaultValue?: number;
   dateAndTime?: boolean;
   isTabularEdit?: boolean;
+  label: string;
+  isRequired: boolean;
+  isDisabled?: boolean;
+  onChangeHandler: (value: string) => void;
+  onBlurHandler?: () => void;
+  validationMessage?: string | null;
 }
+
+const isCurrentDateDefault = (defaultValue?: number) => defaultValue === 2;
+
+const toIsraelDayjs = (value: string): Dayjs | null => {
+  if (!value) return null;
+
+  const parsed = dayjs.utc(value);
+  if (!parsed.isValid()) return null;
+
+  return parsed.tz(ISRAEL_TZ);
+};
+
+const toStoredUtcIso = (value: Dayjs, dateAndTime: boolean): string => {
+  if (dateAndTime) {
+    return value.tz(ISRAEL_TZ, true).utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
+  }
+
+  return value.tz(ISRAEL_TZ, true).startOf("day").utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
+};
 
 const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   value,
   isDisabled = false,
-  isValid,
   onChangeHandler,
+  onBlurHandler,
   isRequired,
   label,
   defaultValue,
   dateAndTime = false,
   isTabularEdit = false,
+  validationMessage,
 }) => {
-  const [dateValue, setDateValue] = useState<Dayjs | null>(value ? dayjs(value) : null);
-  const theme = useTheme();
-  useEffect(() => {
-    if (value && dayjs(value).isValid()) {
-      setDateValue(dayjs(value));
-    } else if (defaultValue === "currentTime") {
-      // If the value is an empty string, it means the field has been edited before
-      // Can occur on edit the value like deleting it or when editing an empty value
-      if (value === "") {
-        setDateValue(null);
-      } else {
-        let initDate = dayjs();
-        if (!dateAndTime) initDate = initDate.startOf("day");
-        setDateValue(initDate);
-        onChangeHandler(initDate.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
-      }
-    } else {
-      setDateValue(null);
-    }
-  }, []);
+  const [dateValue, setDateValue] = useState<Dayjs | null>(null);
+  const didApplyDefaultRef = useRef(false);
 
   useEffect(() => {
-    if (value && dayjs(value).isValid()) {
-      setDateValue(dayjs(value));
-    } else if (defaultValue === "currentTime") {
-      // If the value is an empty string, it means the field has been edited before
-      // Can occur on edit the value like deleting it or when editing an empty value
-      if (value === "") {
-        setDateValue(null);
-      } else {
-        let initDate = dayjs();
-        if (!dateAndTime) initDate = initDate.startOf("day");
-        setDateValue(initDate);
-        onChangeHandler(initDate.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
-      }
-    } else {
-      setDateValue(null);
+    if (value) {
+      setDateValue(toIsraelDayjs(value));
+      return;
     }
-  }, [value, defaultValue]); // Watch for changes in `value` or `defaultValue`
 
-  useEffect(() => {
-    // Ensure both date and time are valid before merging
+    if (!didApplyDefaultRef.current && isCurrentDateDefault(defaultValue)) {
+      const now = dayjs().tz(ISRAEL_TZ);
+      const initialValue = dateAndTime ? now : now.startOf("day");
 
-    if (dateAndTime) {
-      if (dateValue?.isValid()) {
-        onChangeHandler(dateValue.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
-      }
-    } else if (dateValue?.isValid()) {
-      onChangeHandler(dateValue.startOf("day").format("YYYY-MM-DD[T]00:00:00.000"), true);
+      didApplyDefaultRef.current = true;
+      setDateValue(initialValue);
+      onChangeHandler(toStoredUtcIso(initialValue, dateAndTime));
+      return;
     }
-  }, [dateValue]);
+
+    setDateValue(null);
+  }, [value, defaultValue, dateAndTime]);
 
   return (
     <Chrome90RTLFixContainer className={classes["custom-date-time-container"]}>
@@ -93,24 +89,19 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
           disabled={isDisabled}
           value={dateValue}
           onChange={(newValue) => {
-            if (newValue?.isValid()) {
-              if (dateAndTime) {
-                const newTime = newValue
-                  .hour(newValue.hour())
-                  .minute(newValue.minute())
-                  .second(newValue.second());
-                setDateValue(newTime);
-
-                onChangeHandler(newValue.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
-              } else {
-                setDateValue(newValue);
-                onChangeHandler(newValue.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
-              }
-            } else {
+            if (newValue === null) {
               setDateValue(null);
-              onChangeHandler("", !isRequired);
+              onChangeHandler("");
+              return;
+            }
+
+            if (newValue.isValid()) {
+              const nextValue = dateAndTime ? newValue : newValue.startOf("day");
+              setDateValue(nextValue);
+              onChangeHandler(toStoredUtcIso(nextValue, dateAndTime));
             }
           }}
+          onClose={onBlurHandler}
           format="DD/MM/YYYY"
           slots={{
             textField: BaseFieldInput,
@@ -119,9 +110,10 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
             textField: {
               isTabularEdit,
               required: isRequired,
-              error: !isValid, // Show error style if there's an error
-              helperText: (!isValid && "יש להזין תאריך בפורמט תקין") || " ", // Display error message
+              error: Boolean(validationMessage),
+              helperText: validationMessage || " ",
               size: isTabularEdit ? "medium" : undefined,
+              onBlur: onBlurHandler,
             } as any,
             inputAdornment: {
               sx: {
@@ -150,26 +142,26 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
             disabled={isDisabled}
             value={dateValue}
             onChange={(newValue) => {
-              if (newValue?.isValid()) {
-                const newTime = newValue
-                  .hour(newValue.hour())
-                  .minute(newValue.minute())
-                  .second(newValue.second());
-                setDateValue(newTime);
-                onChangeHandler(newTime.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
-              } else {
-                const resetTime = dateValue?.startOf("day");
-                setDateValue(resetTime || null);
-                onChangeHandler(resetTime || "", !isRequired);
+              if (newValue === null) {
+                setDateValue(null);
+                onChangeHandler("");
+                return;
+              }
+
+              if (newValue.isValid()) {
+                setDateValue(newValue);
+                onChangeHandler(toStoredUtcIso(newValue, true));
               }
             }}
+            onClose={onBlurHandler}
             slotProps={{
               textField: {
                 required: isRequired,
-                error: !isValid, // Show error style if there's an error
-                helperText: (!isValid && "יש להזין שעה בפורמט תקין") || " ", // Display error message
+                error: Boolean(validationMessage),
+                helperText: validationMessage || " ",
                 size: isTabularEdit ? "medium" : undefined,
-              },
+                onBlur: onBlurHandler,
+              } as any,
               inputAdornment: {
                 sx: {
                   ".MuiIconButton-root": {

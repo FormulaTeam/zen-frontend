@@ -10,7 +10,7 @@ import { IPath } from "../types/enums/global.enums";
 import { hasPermissionToSeeForm } from "../utils/forms";
 
 type ConnectedFieldExtra = {
-  connectedFormId?: number;
+  linkedFormId?: number;
 };
 
 const getFieldExtra = (field: FormFieldDto): ConnectedFieldExtra => {
@@ -82,17 +82,17 @@ export const useInitializeFormData = () => {
           formFields.forEach((field) => {
             const extra = getFieldExtra(field);
 
-            if (field.fieldType === fieldType.Form && extra.connectedFormId) {
+            if (field.fieldType === fieldType.Form && extra.linkedFormId) {
               console.log("[INIT FORM DATA] Processing child form field:", field);
-              getResponses(extra.connectedFormId, {
-                form_id: extra.connectedFormId,
+              getResponses(extra.linkedFormId, {
+                form_id: extra.linkedFormId,
                 query: {
                   parentResponse: { $regex: `${form.id};` },
                 },
               })
                 .then((res) => {
                   console.log(
-                    `[INIT FORM DATA] getResponses for child formId ${extra.connectedFormId} result:`,
+                    `[INIT FORM DATA] getResponses for child formId ${extra.linkedFormId} result:`,
                     res,
                   );
                   if (res) {
@@ -103,7 +103,7 @@ export const useInitializeFormData = () => {
                   console.error("[INIT FORM DATA] Error fetching responses for child form:", error);
                 });
 
-              getFormById(extra.connectedFormId)
+              getFormById(extra.linkedFormId)
                 .then((childForm) => {
                   console.log("[INIT FORM DATA] getFormById for child form result:", childForm);
                   if (childForm) {
@@ -188,17 +188,17 @@ export const useInitializeFormData = () => {
           formFields.forEach((field) => {
             const extra = getFieldExtra(field);
 
-            if (field.fieldType === fieldType.Form && extra.connectedFormId) {
+            if (field.fieldType === fieldType.Form && extra.linkedFormId) {
               console.log("[INIT FORM DATA] Processing child form field:", field);
-              getResponses(extra.connectedFormId, {
-                form_id: extra.connectedFormId,
+              getResponses(extra.linkedFormId, {
+                form_id: extra.linkedFormId,
                 query: {
                   parentResponse: { $regex: `${form.id};` },
                 },
               })
                 .then((res) => {
                   console.log(
-                    `[INIT FORM DATA] getResponses for child formId ${extra.connectedFormId} result:`,
+                    `[INIT FORM DATA] getResponses for child formId ${extra.linkedFormId} result:`,
                     res,
                   );
                   if (res) {
@@ -209,7 +209,7 @@ export const useInitializeFormData = () => {
                   console.error("[INIT FORM DATA] Error fetching responses for child form:", error);
                 });
 
-              getFormById(extra.connectedFormId)
+              getFormById(extra.linkedFormId)
                 .then((childForm) => {
                   console.log("[INIT FORM DATA] getFormById for child form result:", childForm);
                   if (childForm) {
