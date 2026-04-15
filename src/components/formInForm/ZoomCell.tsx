@@ -4,9 +4,8 @@ import IconButton from "@mui/material/IconButton";
 import { OpenInNew } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
-import { searchResponses } from "../../api";
+import { getResponseById } from "../../api";
 import { FormDto } from "../../types/shared";
-import { SearchResponsesFilter } from "../../utils/interfaces";
 
 type ZoomCellRow = {
   id: string | number;
@@ -27,14 +26,10 @@ const ZoomCell = ({ row, form }: { row: ZoomCellRow; form: FormDto }) => {
     }
 
     const [formId, parentResponseId] = parentResponse.split(";");
-    const filter: SearchResponsesFilter = {
-      form_id: Number(formId),
-      searchFilters: [{ searchText: parentResponseId, searchField: "id" }],
-    };
 
-    searchResponses(filter)
-      .then((response: any) => {
-        setIsValid(response.countAllResponses > 0);
+    getResponseById(Number(formId), parentResponseId)
+      .then(() => {
+        setIsValid(true);
       })
       .catch(() => {
         setIsValid(false);

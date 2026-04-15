@@ -18,11 +18,11 @@ import { FormDto } from "../../types/shared";
 interface DeletedResponseItemProps {
   form?: FormDto;
   response: any;
-  handleRestoreResponse: (formId: number, responseIndex: number) => Promise<void>;
+  handleRestoreResponse: (formId: number, responseId: string) => Promise<void>;
   currentDeletedForm?: FormDto | null;
   isSelected?: boolean;
-  onSelect?: (responseIndex: number) => void;
-  onDeselect?: (responseIndex: number) => void;
+  onSelect?: (responseId: string) => void;
+  onDeselect?: (responseId: string) => void;
 }
 
 const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
@@ -52,15 +52,16 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
   }, [form?.icon]);
 
   const responseIndex = response.index;
+  const responseId = response.id;
   const responseFormId = response.form_id ?? response.formId;
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (typeof responseIndex !== "number") return;
+    if (!responseId) return;
 
     if (e.target.checked) {
-      onSelect?.(responseIndex);
+      onSelect?.(responseId);
     } else {
-      onDeselect?.(responseIndex);
+      onDeselect?.(responseId);
     }
   };
 
@@ -139,8 +140,8 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
           <span>
             <Button
               onClick={() => {
-                if (typeof responseFormId === "number" && typeof responseIndex === "number") {
-                  handleRestoreResponse(responseFormId, responseIndex);
+                if (typeof responseFormId === "number" && responseId) {
+                  handleRestoreResponse(responseFormId, responseId);
                 }
               }}
               variant="contained"

@@ -145,14 +145,11 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
               image={deleteResponseImg}
               msg={"האם אתה בטוח שברצונך למחוק את הטופס?"}
               okFunc={() => {
-                deleteForm(
-                  {},
-                  {
-                    onSuccess: () => {
-                      navigate("/", { replace: true });
-                    },
+                deleteForm(undefined, {
+                  onSuccess: () => {
+                    navigate("/", { replace: true });
                   },
-                );
+                });
               }}
               closePopup={() => setShowDeleteFormPopup(false)}
               okBtnText={"מחק טופס"}
@@ -172,11 +169,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
               image={deleteResponseImg}
               msg={"האם אתה בטוח שברצונך למחוק את כל התגובות לטופס?"}
               okFunc={() => {
-                deleteAllResponses({
-                  data: {
-                    form_id: formId,
-                  },
-                });
+                deleteAllResponses(undefined);
               }}
               closePopup={() => setShowDeleteResponsesPopup(false)}
               okBtnText={"מחק תגובות"}
