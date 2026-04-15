@@ -7,7 +7,7 @@ import type {
   ResponseFieldValueDto,
 } from "../types/shared";
 import { fieldType, FieldType } from "formula-gear";
-import { getFormById, searchResponses } from "../api";
+import { getFormById, getResponseById, searchResponses } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
 import {
   checkUserAccessForResponse,
@@ -169,12 +169,7 @@ export const useResponseState = (
         }
 
         if (responseId) {
-          const res: any = await searchResponses({
-            form_id: Number(formId),
-            searchFilters: [{ searchText: responseId, searchField: "id" }],
-          });
-
-          const found = (res?.responses?.[0] ?? null) as ResponseDto | null;
+          const found = await getResponseById(Number(formId), responseId);
 
           if (isMounted && found) {
             if (copyMode) {

@@ -77,7 +77,7 @@ export const useResponseSave = (
   const formId = form?.id;
 
   const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } =
-    useCreateResponse();
+    useCreateResponse(formId);
   const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } =
     useUpdateResponse(formId, response?.id);
 

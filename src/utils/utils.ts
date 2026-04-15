@@ -103,6 +103,32 @@ export const RESPONSE_ACCESS_PERMISSIONS = [
   PERMISSION_TYPES.EXPORT_FORM,
 ];
 
+export const encodeCursor = (index: number, id: string): string => {
+  return btoa(JSON.stringify({ index, id }));
+};
+
+export type DecodedCursor = {
+  index: number;
+  id: string;
+};
+
+export const decodeCursor = (cursor: string): DecodedCursor | null => {
+  try {
+    const decoded = JSON.parse(atob(cursor));
+
+    if (typeof decoded.index !== "number" || typeof decoded.id !== "string") {
+      return null;
+    }
+
+    return {
+      index: decoded.index,
+      id: decoded.id,
+    };
+  } catch {
+    return null;
+  }
+};
+
 export type LegacyPermission = (typeof PERMISSION_TYPES)[keyof typeof PERMISSION_TYPES];
 
 export const allLegacyPermissions: LegacyPermission[] = Object.values(PERMISSION_TYPES);
@@ -400,7 +426,7 @@ function preferredOrder(obj, order) {
 
 export const getResponsesAndExportToExcel = async (form: FormDto) => {
   try {
-    let responses: ResponseDto[] = await getResponses({ form_id: form.id });
+    let responses: ResponseDto[] = await getResponses(form.id, { form_id: form.id });
 
     if (responses?.length > 0) {
       exportToExcel(responses, form);

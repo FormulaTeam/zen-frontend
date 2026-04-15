@@ -47,7 +47,7 @@ export function SavedViewsList({
     user,
     permissionTypes,
   });
-  const [currentViewId, setCurrentViewId] = useState<number | null>(null);
+  const [currentViewId, setCurrentViewId] = useState<string | number | null>(null);
   const hasViews = savedViews.length > 0;
 
   return (

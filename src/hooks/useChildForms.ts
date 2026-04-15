@@ -191,7 +191,7 @@ export const useChildForms = ({
           childFormIds
             .filter((childFormId) => availableChildFormIds.has(childFormId))
             .map(async (childFormId) => {
-              const responses = (await getResponses({
+              const responses = (await getResponses(childFormId, {
                 form_id: childFormId,
               })) as LegacyLinkedResponse[];
 

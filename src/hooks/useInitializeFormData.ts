@@ -84,7 +84,7 @@ export const useInitializeFormData = () => {
 
             if (field.fieldType === fieldType.Form && extra.connectedFormId) {
               console.log("[INIT FORM DATA] Processing child form field:", field);
-              getResponses({
+              getResponses(extra.connectedFormId, {
                 form_id: extra.connectedFormId,
                 query: {
                   parentResponse: { $regex: `${form.id};` },
@@ -190,7 +190,7 @@ export const useInitializeFormData = () => {
 
             if (field.fieldType === fieldType.Form && extra.connectedFormId) {
               console.log("[INIT FORM DATA] Processing child form field:", field);
-              getResponses({
+              getResponses(extra.connectedFormId, {
                 form_id: extra.connectedFormId,
                 query: {
                   parentResponse: { $regex: `${form.id};` },

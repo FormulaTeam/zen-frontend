@@ -31,7 +31,12 @@ export const useViewPermissions = ({
 
     // Otherwise, user can only edit/delete views they created
     const userUpn = user?.upn;
-    return view.createdBy.toLowerCase() === userUpn?.toLowerCase();
+    const creatorUpn =
+      typeof view.createdBy === "string"
+        ? view.createdBy
+        : (view.createdBy as any)?.upn || (view.createdBy as any)?.UPN;
+
+    return creatorUpn?.toLowerCase() === userUpn?.toLowerCase();
   };
 
   return {

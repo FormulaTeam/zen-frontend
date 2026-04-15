@@ -157,8 +157,8 @@ export default function DeletedResponsesTabContent({
                     handleRestoreResponse={restoreResponseById}
                     currentDeletedForm={currentDeletedForm}
                     isSelected={selectedResponseKeys.includes(key)}
-                    onSelect={() => handleSelect(res.form_id, res.index)}
-                    onDeselect={() => handleDeselect(res.form_id, res.index)}
+                    onSelect={() => handleSelect(res.form_id, res.id)}
+                    onDeselect={() => handleDeselect(res.form_id, res.id)}
                   />
                 </FullWidthBox>
               </Grow>
