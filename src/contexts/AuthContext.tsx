@@ -116,6 +116,13 @@ export const useAuth = () => {
  * AuthProvider: Provides authentication state and methods across the app.
  * roles is a static catalog derived from formula-gear's roleId constants.
  */
+export const logoutAction = () => {
+  localStorage.removeItem("user");
+  if (!window.location.pathname.includes("/login") && !window.location.pathname.includes("/comeback")) {
+    window.location.href = "/login";
+  }
+};
+
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -147,7 +154,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
   const logout = useCallback(() => {
     setUser(null);
-    localStorage.removeItem("user");
+    logoutAction();
   }, []);
 
   return (
