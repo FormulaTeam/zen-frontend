@@ -1,5 +1,6 @@
 import axios from "axios";
 import { StatusCodes } from "http-status-codes";
+import { logoutAction } from "../contexts/AuthContext";
 
 const apiClient = axios.create({
   baseURL: (window as any).RUNTIME_ENV
@@ -18,7 +19,7 @@ apiClient.interceptors.response.use(
     const isAuthPage =
       window.location.pathname === "/login" || window.location.pathname === "/comeback";
     if (error.response?.status === StatusCodes.UNAUTHORIZED && !isAuthPage) {
-      window.location.href = "/login";
+      logoutAction();
     }
     return Promise.reject(error);
   },
