@@ -181,7 +181,8 @@ export const useResponseSave = (
           ...(parsedParentResponse ? { parentResponse: parsedParentResponse } : {}),
         };
 
-        return (await mutateUpdateResponseAsync(updatedResponse as any)) as ResponseDto;
+        const result = (await mutateUpdateResponseAsync(updatedResponse as any)) as any;
+        return result?.data ?? result;
       }
 
       const newResponse: CreateResponsePayload = {
