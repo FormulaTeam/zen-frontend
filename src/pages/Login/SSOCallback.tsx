@@ -31,13 +31,29 @@ export const SSOComeback = () => {
     const redirectUri = `${window.location.origin}/comeback`;
 
     loginWithCode(code, redirectUri)
-      .then(() => apiClient.get<{ userId: number }>("/users/me/type"))
-      .then(() => {
-        login({ user: {} });
+      .then(() =>
+        Promise.all([
+          apiClient.get<{ userId: number }>("/users/me/type").catch(() => ({ data: { userId: 0 } })),
+          apiClient.get<{ name: string; upn: string }>("/users/me/personal").catch(() => ({ data: { name: "משתמש", upn: "unknown" } })),
+        ]),
+      )
+      .then(([typeRes, personalRes]) => {
+        const name = personalRes.data?.name || "משתמש";
+        const upn = personalRes.data?.upn || "unknown";
+        
+        const userData = {
+          displayName: name,
+          upn: upn,
+          firstName: name.split(" ")[0] || "",
+          lastName: name.split(" ").slice(1).join(" ") || "",
+        };
+        
+        login({ user: userData });
         const lastVisitedPath = localStorage.getItem("lastVisitedPath");
         navigate(lastVisitedPath ?? "/", { replace: true });
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Login failed:", err);
         navigate("/error", { replace: true });
       });
   }, [location.search, loading, user, navigate, login]);
