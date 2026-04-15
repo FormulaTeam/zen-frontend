@@ -53,6 +53,7 @@ interface ResponseSectionProps {
   formFieldsValuesMap: Map<string, any>;
   formFieldsValidMap: Map<string, any>;
   onChangeHandler: (value: any, fieldId: string, inputValueValid: any) => void;
+  onBlurHandler: (fieldId: string) => void;
   viewMode?: boolean;
   fieldOptions?: Record<string, FieldOptionValue[]>;
   formFields?: SectionField[];
@@ -71,6 +72,7 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
   formFieldsValuesMap,
   formFieldsValidMap,
   onChangeHandler,
+  onBlurHandler,
   viewMode = false,
   fieldOptions = {},
   formFields = [],
@@ -126,6 +128,7 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
                     formFieldsValuesMap={formFieldsValuesMap}
                     formFieldsValidMap={formFieldsValidMap}
                     onChangeHandler={onChangeHandler}
+                    onBlurHandler={onBlurHandler}
                     viewMode={viewMode}
                     fieldOptions={fieldOptions}
                     formFields={formFields}

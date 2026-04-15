@@ -1,12 +1,16 @@
 import { Autocomplete, Chip, FormControl, FormHelperText, useTheme } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { CustomInputFormFieldProps } from "../../../utils/interfaces";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
 
-interface CustomDropDownSelectProps extends CustomInputFormFieldProps {
+interface CustomDropDownSelectProps {
   value: string | string[];
   multiple?: boolean;
-  options: any[];
+  options: string[];
+  label: string;
+  isRequired: boolean;
+  isDisabled: boolean;
+  onChangeHandler: (value: string | string[]) => void;
+  validationMessage?: string | null;
 }
 
 const CustomDropDownSelect: React.FC<CustomDropDownSelectProps> = ({
@@ -15,15 +19,16 @@ const CustomDropDownSelect: React.FC<CustomDropDownSelectProps> = ({
   multiple = false,
   options,
   onChangeHandler,
-  isValid,
   label,
   isRequired,
+  validationMessage,
 }) => {
   const [selectedValues, setSelectedValues] = useState<string[]>(Array.isArray(value) ? value : []);
   const [selectedValue, setSelectedValue] = useState<string>(
     typeof value === "string" ? value : "",
   );
   const theme = useTheme();
+
   useEffect(() => {
     if (multiple) {
       if (Array.isArray(value)) {
@@ -31,7 +36,7 @@ const CustomDropDownSelect: React.FC<CustomDropDownSelectProps> = ({
         setSelectedValues(validValues);
 
         if (validValues.length !== value.length) {
-          onChangeHandler(validValues, validValues.length > 0 || !isRequired);
+          onChangeHandler(validValues);
         }
       } else {
         setSelectedValues([]);
@@ -41,30 +46,32 @@ const CustomDropDownSelect: React.FC<CustomDropDownSelectProps> = ({
         typeof value === "string"
           ? value
           : Array.isArray(value) && value.length > 0
-          ? value[0]
-          : "";
+            ? value[0]
+            : "";
 
       if (newVal && !options.includes(newVal)) {
         setSelectedValue("");
-        onChangeHandler([""], !isRequired);
+        onChangeHandler("");
       } else {
         setSelectedValue(newVal);
       }
     }
-  }, [value, multiple, isRequired]);
+  }, [value, multiple, options, onChangeHandler]);
 
-  const onAutocompleteChangeHandler = (event: any, newValue: string | string[] | null) => {
-    let normalizedValues: string[];
-
+  const onAutocompleteChangeHandler = (
+    _event: React.SyntheticEvent,
+    newValue: string | string[] | null,
+  ) => {
     if (multiple) {
-      normalizedValues = Array.isArray(newValue) ? newValue : [];
+      const normalizedValues = Array.isArray(newValue) ? newValue : [];
       setSelectedValues(normalizedValues);
-    } else {
-      const singleValue = typeof newValue === "string" ? newValue : "";
-      normalizedValues = singleValue ? [singleValue] : [];
-      setSelectedValue(singleValue);
+      onChangeHandler(normalizedValues);
+      return;
     }
-    onChangeHandler(normalizedValues, normalizedValues.length > 0 || !isRequired);
+
+    const singleValue = typeof newValue === "string" ? newValue : "";
+    setSelectedValue(singleValue);
+    onChangeHandler(singleValue);
   };
 
   return (
@@ -80,7 +87,8 @@ const CustomDropDownSelect: React.FC<CustomDropDownSelectProps> = ({
             {...params}
             label={label}
             required={isRequired}
-            error={!isValid}
+            error={Boolean(validationMessage)}
+            helperText={validationMessage || " "}
             sx={{
               "& .MuiInputAdornment-root": {
                 maxHeight: "1.5rem",
@@ -109,12 +117,15 @@ const CustomDropDownSelect: React.FC<CustomDropDownSelectProps> = ({
             }}
           />
         )}
-        renderValue={(value, getTagProps) =>
-          Array.isArray(value)
-            ? value.map((option, index) => (
-                <Chip deleteIcon={<></>} label={option} {...getTagProps({ index })} />
-              ))
-            : value || ""
+        renderValue={(selected, getItemProps) =>
+          multiple && Array.isArray(selected)
+            ? selected.map((option, index) => {
+                const chipProps = getItemProps({ index });
+                return <Chip label={option} {...chipProps} />;
+              })
+            : typeof selected === "string"
+              ? selected
+              : ""
         }
         sx={{
           "& .MuiInputAdornment-root": {
@@ -122,9 +133,8 @@ const CustomDropDownSelect: React.FC<CustomDropDownSelectProps> = ({
           },
         }}
       />
-      <FormHelperText error={!isValid}>
-        {(!isValid && "חובה לבחור פריט מהרשימה") || " "}
-      </FormHelperText>
+
+      <FormHelperText error={Boolean(validationMessage)}>{validationMessage || " "}</FormHelperText>
     </FormControl>
   );
 };

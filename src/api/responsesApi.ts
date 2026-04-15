@@ -335,13 +335,13 @@ export const useCreateResponsesFromFile = (formId: string) => {
   });
 };
 
-export const useCreateResponse = () => {
-  return useCreate<CreateResponseDto | CreateResponseDto[], ResponseDto | ResponseDto[]>({
-    endpoint: "/responses/create",
-    mutationKey: ["create-response"],
+export const useCreateResponse = (formId: number) => {
+  return useCreate<CreateResponseDto, ResponseDto>({
+    endpoint: `/forms/${formId}/responses`,
+    mutationKey: ["create-response", formId],
     mutationOptions: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["responses"] });
+        queryClient.invalidateQueries({ queryKey: ["responses", formId] });
       },
       onError: (error) => {
         console.error("Failed to create response:", error);

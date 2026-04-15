@@ -11,7 +11,7 @@ const locationSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.location),
 
   extra: strictObject({
-    format: zod_enum(LocationFormat).default(LocationFormat.UTM),
+    locationFormat: zod_enum(LocationFormat).default(LocationFormat.UTM),
   }).optional(),
 });
 

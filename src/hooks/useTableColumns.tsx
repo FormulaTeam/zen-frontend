@@ -10,6 +10,11 @@ import ZoomCell from "../components/formInForm/ZoomCell";
 import FormFieldRenderer from "../components/Responses/FormFieldRenderer";
 import { ViewColumn } from "../types/interfaces/tableViews.types";
 
+type TableFieldValidationError = {
+  messages: string[];
+  pathMessages: Record<string, string[]>;
+};
+
 export const useTableColumns = (
   setColumns,
   fileOnClickHandler: (file: any) => void,
@@ -29,10 +34,8 @@ export const useTableColumns = (
   const createTableColumns = (form, permissionTypes, viewConfig?: ViewColumn[]) => {
     let cols: any[] = [];
 
-    // Create a timestamp to force re-render when called
     const timestamp = Date.now();
 
-    // Ensure we have a form before proceeding
     if (!form || !form.fields) {
       setColumns([]);
       setLoadingInsideTable(false);
@@ -56,7 +59,7 @@ export const useTableColumns = (
         Cell: ({ row }) => <ZoomCell row={row} form={form} />,
       });
     }
-    // Helper builders for system columns so they can be inserted per viewConfig order
+
     const buildIdColumn = () => ({
       id: "id",
       header: "מזהה",
@@ -69,6 +72,7 @@ export const useTableColumns = (
       enableResizing: false,
       size: 140,
     });
+
     const buildSyncColumn = () => ({
       id: "pushed_to_metro",
       header: "סטטוס סנכרון",
@@ -83,9 +87,9 @@ export const useTableColumns = (
       grow: false,
       size: 125,
       renderColumnActionsMenuItems: ({ internalColumnMenuItems }) => {
-        let arr: any[] = [];
+        const arr: any[] = [];
         internalColumnMenuItems.forEach((element: any) => {
-          let newLabel = element?.props?.label?.replace("[object Object]", "pushed_to_metro");
+          const newLabel = element?.props?.label?.replace("[object Object]", "pushed_to_metro");
           arr.push({
             ...element,
             props: { ...element?.props, label: newLabel },
@@ -116,11 +120,13 @@ export const useTableColumns = (
     });
 
     const buildDynamicFieldColumn = (field: any, orderIndex: number = 0) => {
-      if (field.typeId === FieldTypeIds.linkedForm) return; // skip connected forms
-      let displayName = field.displayName + "";
-      let uniqueId = field?.uniqueId;
-      let col: any = {
-        id: uniqueId, // Use uniqueId instead of calculated index
+      if (field.typeId === FieldTypeIds.linkedForm) return;
+
+      const displayName = field.displayName + "";
+      const uniqueId = field?.uniqueId;
+
+      const col: any = {
+        id: uniqueId,
         header: displayName,
         accessorKey: uniqueId,
         enableGrouping: false,
@@ -132,25 +138,42 @@ export const useTableColumns = (
           }-${uniqueId}-${isQuickEditMode}-${timestamp}-${JSON.stringify(rowSelection)}-${
             forceRenderCounter || 0
           }`;
+
           if (row && row.original && row.original.data) {
-            let item = row.original.data?.find((f) => f.uniqueId === uniqueId);
+            const item = row.original.data?.find((f) => f.uniqueId === uniqueId);
             let value = ![undefined, null].includes(item?.value) ? item?.value : "";
             const shouldShowEditableField = isQuickEditMode && isRowInEditMode?.(row.original.id);
+
             if (shouldShowEditableField) {
-              const handleCellValueChange = (newValue: any, uniqueId: string) => {
-                onCellValueChange?.(row.original.id, uniqueId, newValue);
+              const handleCellValueChange = (newValue: any, fieldUniqueId: string) => {
+                onCellValueChange?.(row.original.id, fieldUniqueId, newValue);
               };
+
               const editedValue = editedData?.[row.original.id]?.[uniqueId];
               const currentValue = editedValue !== undefined ? editedValue : value;
+
               const formFieldsByIdMap = new Map();
               const formFieldsValuesMap = new Map();
-              const formFieldsValidMap = new Map();
+              const formFieldsValidMap = new Map<string, TableFieldValidationError | null>();
+
               formFieldsByIdMap.set(uniqueId, field);
               formFieldsValuesMap.set(uniqueId, currentValue);
-              formFieldsValidMap.set(uniqueId, !validationErrors?.[row.original.id]?.[uniqueId]);
+
+              const validationMessage = validationErrors?.[row.original.id]?.[uniqueId];
+              formFieldsValidMap.set(
+                uniqueId,
+                validationMessage
+                  ? {
+                      messages: [validationMessage],
+                      pathMessages: {},
+                    }
+                  : null,
+              );
+
               const cellFieldOptions = fieldOptions?.[uniqueId]
                 ? { [uniqueId]: fieldOptions[uniqueId] }
                 : {};
+
               return (
                 <Box
                   key={renderKey}
@@ -165,7 +188,9 @@ export const useTableColumns = (
                       const inputElement = cellElement.querySelector("input, select, textarea") as
                         | HTMLInputElement
                         | HTMLSelectElement
-                        | HTMLTextAreaElement;
+                        | HTMLTextAreaElement
+                        | null;
+
                       if (inputElement) inputElement.focus();
                     }
                   }}
@@ -184,6 +209,7 @@ export const useTableColumns = (
                     formFieldsValuesMap={formFieldsValuesMap}
                     formFieldsValidMap={formFieldsValidMap}
                     onChangeHandler={handleCellValueChange}
+                    onBlurHandler={() => {}}
                     viewMode={false}
                     fieldOptions={cellFieldOptions}
                     formFields={[field]}
@@ -193,20 +219,22 @@ export const useTableColumns = (
                 </Box>
               );
             }
-            // Display modes
+
             if (field.typeId === FieldTypeIds.link) {
               return (
                 <Box className="cell-box" component="span">
                   <label title={value && value.link ? value?.link : ""}>
                     <a
                       href={/^https?:\/\//.test(value.link) ? value.link : `https://${value.link}`}
-                      target="_blank">
+                      target="_blank"
+                      rel="noreferrer">
                       {value.linkTxt}
                     </a>
                   </label>
                 </Box>
               );
             }
+
             if (field.typeId === FieldTypeIds.file) {
               return value.files?.length > 0 ? (
                 <CustomCarousel
@@ -218,6 +246,7 @@ export const useTableColumns = (
                 <></>
               );
             }
+
             if (field.typeId === FieldTypeIds.time) {
               if (value && value !== "") {
                 if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(value)) {
@@ -227,11 +256,13 @@ export const useTableColumns = (
                     </Box>
                   );
                 }
+
                 if (value instanceof Date) {
                   const hours = value.getHours().toString().padStart(2, "0");
                   const minutes = value.getMinutes().toString().padStart(2, "0");
                   const seconds = value.getSeconds().toString().padStart(2, "0");
                   const timeString = `${hours}:${minutes}:${seconds}`;
+
                   return (
                     <Box className="cell-box-date" component="span">
                       <label>{timeString}</label>
@@ -239,17 +270,20 @@ export const useTableColumns = (
                   );
                 }
               }
+
               return (
                 <Box className="cell-box-date" component="span">
                   <label></label>
                 </Box>
               );
             }
+
             if (field.typeId === FieldTypeIds.date) {
               if (value && value !== "" && moment(value).isValid()) {
                 value = field.dateAndTime
                   ? moment(value).format(DEFAULT_DATE_TIME_FORMAT)
                   : moment(value).format(DEFAULT_DATE_FORMAT);
+
                 return (
                   <Box className="cell-box-date" component="span">
                     <label>{value}</label>
@@ -257,6 +291,7 @@ export const useTableColumns = (
                 );
               }
             }
+
             if (field.typeId === FieldTypeIds.location) {
               if (value?.x && value?.y) {
                 return (
@@ -270,10 +305,13 @@ export const useTableColumns = (
                   </div>
                 );
               }
+
               return null;
             }
+
             if (field.typeId === FieldTypeIds.checkbox) return <div>{value ? "כן" : "לא"}</div>;
             if (field.typeId === FieldTypeIds.number) return <div dir="ltr">{String(value)}</div>;
+
             if (value && (typeof value === "string" || typeof value === "number")) {
               return (
                 <Box className="cell-box" component="span">
@@ -289,9 +327,11 @@ export const useTableColumns = (
               );
             }
           }
+
           return <Box className="cell-box" component="span"></Box>;
         },
       };
+
       if (field.typeId === FieldTypeIds.options) {
         col.filterFn = "equals";
         col.filterSelectOptions =
@@ -302,6 +342,7 @@ export const useTableColumns = (
           [];
         col.filterVariant = "select";
       }
+
       if (field.typeId === FieldTypeIds.number) {
         col.filterVariant = "number";
         col.sortingFn = (rowA, rowB, columnId) => {
@@ -311,7 +352,9 @@ export const useTableColumns = (
         };
         col.muiFilterTextFieldProps = { type: "number" };
       }
+
       if (field.typeId === FieldTypeIds.file) col.grow = false;
+
       if (field.typeId === FieldTypeIds.checkbox) {
         col.filterVariant = "select";
         col.filterSelectOptions = [
@@ -319,6 +362,7 @@ export const useTableColumns = (
           { value: false, label: "לא" },
         ];
       }
+
       cols.push(col);
     };
 
@@ -332,6 +376,7 @@ export const useTableColumns = (
         filterFn: "contains",
       };
     };
+
     const addSystemEditedColumn = () => {
       return {
         id: "edited",
@@ -341,7 +386,7 @@ export const useTableColumns = (
         grow: true,
         size: 150,
         Cell: ({ row }) => {
-          let value = moment(row?.original?.edited).format(DEFAULT_DATE_FORMAT);
+          const value = moment(row?.original?.edited).format(DEFAULT_DATE_FORMAT);
           return (
             <Box className="cell-box" component="span">
               <label title={value}>{value}</label>
@@ -362,10 +407,10 @@ export const useTableColumns = (
         visibleConfigs.map((vc) => ({ columnId: vc.columnId, order: vc.order })),
       );
 
-      // Process columns in the exact order specified by viewConfig
-      cols = []; // Start fresh
+      cols = [];
       visibleConfigs.forEach((vc, i) => {
         console.log(`Processing column ${vc.columnId} at order ${vc.order} (index ${i})`);
+
         switch (vc.columnId) {
           case "id":
             cols.push(buildIdColumn());
@@ -388,18 +433,16 @@ export const useTableColumns = (
           }
         }
       });
-
-      // When viewConfig is provided, respect it completely - no fallback additions
-      // Only add missing essential columns if explicitly needed for functionality
     } else {
-      // Default order: id, sync, fields, edited_by_name, edited
       cols.push(buildIdColumn());
       cols.push(buildSyncColumn());
+
       const sortedFormFields = [...form.fields].sort((a, b) => {
         const sectionOrderDiff = (a?.sectionOrder ?? 0) - (b?.sectionOrder ?? 0);
         if (sectionOrderDiff !== 0) return sectionOrderDiff;
         return a.index - b.index;
       });
+
       sortedFormFields.forEach((field, i) => buildDynamicFieldColumn(field, i));
       cols.push(addSystemEditedByColumn());
       cols.push(addSystemEditedColumn());

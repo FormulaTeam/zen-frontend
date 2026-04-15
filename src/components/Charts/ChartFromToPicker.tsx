@@ -22,7 +22,7 @@ const ClearTextButton = styled(Button)`
 
 interface ChartFromToPickerProps {
   range: { from: string | null; to: string | null };
-  handleDateChange: (key: "from" | "to", value: string | null, valid: boolean | null) => void;
+  handleDateChange: (key: "from" | "to", value: string | null, valid?: boolean | null) => void;
   handleClearRange: () => void;
 }
 
@@ -36,22 +36,23 @@ const ChartFromToPicker: React.FC<ChartFromToPickerProps> = ({
       <CustomDateTime
         label="מ"
         isRequired={false}
-        isValid={true}
         isDisabled={false}
-        onChangeHandler={(value, valid) => handleDateChange("from", value, valid)}
+        onChangeHandler={(value) => handleDateChange("from", value || null, null)}
         value={range.from}
         dateAndTime={false}
         defaultValue={undefined}
+        validationMessage={null}
       />
+
       <CustomDateTime
         label="עד"
         isRequired={false}
-        isValid={true}
         isDisabled={false}
-        onChangeHandler={(value, valid) => handleDateChange("to", value, valid)}
+        onChangeHandler={(value) => handleDateChange("to", value || null, null)}
         value={range.to}
         dateAndTime={false}
         defaultValue={undefined}
+        validationMessage={null}
       />
 
       <ClearTextButton onClick={handleClearRange}>נקה</ClearTextButton>

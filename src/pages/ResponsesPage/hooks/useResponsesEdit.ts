@@ -47,10 +47,6 @@ type ResponseUpdatePayload = {
   responseData: ResponseDto;
 };
 
-type CreateResponseMutationPayload = CreateResponseDto & {
-  formId: number;
-};
-
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
 
@@ -150,7 +146,7 @@ export const useResponsesEdit = () => {
     formId: dtoForm?.id || 0,
   });
 
-  const { mutateAsync: createResponse } = useCreateResponse();
+  const { mutateAsync: createResponse } = useCreateResponse(dtoForm?.id || 0);
 
   const responseRows: Row[] = (rows?.filter((row) => row != null) as Row[]) || [];
   const hasUnsavedChanges = editedRows.size > 0;
@@ -590,12 +586,11 @@ export const useResponsesEdit = () => {
           }),
         );
 
-        const newResponsePayload: CreateResponseMutationPayload = {
-          formId: dtoForm.id,
+        const newResponsePayload: CreateResponseDto = {
           fieldValues,
         };
 
-        await createResponse(newResponsePayload as any);
+        await createResponse(newResponsePayload);
       }
 
       newRowCounterRef.current = 0;

@@ -1,6 +1,5 @@
-import { Autocomplete, Chip, FormControl } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { CustomInputFormFieldProps } from "../../../utils/interfaces";
+import { Chip, FormControl } from "@mui/material";
+import React, { useEffect, useRef, useState } from "react";
 import { texts } from "../../../utils/texts";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -11,74 +10,108 @@ import {
   StyledAutocomplete,
 } from "./styled";
 
-interface CustomDropDownAutocompleteProps extends CustomInputFormFieldProps {
+interface CustomDropDownAutocompleteProps {
   value: string | string[];
   multipleOptions?: boolean;
   options: string[];
+  optionLabels?: Record<string, string>;
   defaultValue?: string | string[];
   isTabularEdit?: boolean;
+  label: string;
+  isRequired: boolean;
+  isDisabled: boolean;
+  onChangeHandler: (value: string | string[]) => void;
+  onBlurHandler?: () => void;
+  validationMessage?: string | null;
 }
+
+const normalizeToArray = (value: string | string[] | null | undefined): string[] => {
+  if (Array.isArray(value)) return value.filter((item) => typeof item === "string");
+  if (typeof value === "string") return value ? [value] : [];
+  return [];
+};
 
 const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   value,
   isDisabled,
   multipleOptions = false,
   options,
+  optionLabels = {},
   onChangeHandler,
-  isValid,
+  onBlurHandler,
   label,
   isRequired,
   defaultValue,
   isTabularEdit = false,
+  validationMessage,
 }) => {
-  const [selectedValues, setSelectedValues] = useState<string[]>(
-    Array.isArray(value) ? value : value ? [value] : [],
-  );
+  const [selectedValues, setSelectedValues] = useState<string[]>(normalizeToArray(value));
+  const hasTriggeredBlurRef = useRef(false);
+  const didApplyDefaultRef = useRef(false);
 
   useEffect(() => {
-    if (defaultValue && location.pathname.includes("create")) {
-      const initialValues = Array.isArray(defaultValue) ? defaultValue : [defaultValue];
+    if (
+      !didApplyDefaultRef.current &&
+      defaultValue !== undefined &&
+      location.pathname.includes("create")
+    ) {
+      const initialValues = normalizeToArray(defaultValue);
+      didApplyDefaultRef.current = true;
       setSelectedValues(initialValues);
-      onChangeHandler(initialValues, isValid);
+
+      if (multipleOptions) {
+        onChangeHandler(initialValues);
+      } else {
+        onChangeHandler(initialValues[0] ?? "");
+      }
     }
-  }, []);
+    // intentionally not depending on onChangeHandler to avoid render loops
+  }, [defaultValue, multipleOptions]);
+
+  useEffect(() => {
+    setSelectedValues(normalizeToArray(value));
+  }, [value]);
+
+  const emitChange = (nextValues: string[]) => {
+    const normalized = nextValues.map((val) => (val === texts.heb.emptyValue ? "" : val));
+
+    setSelectedValues(normalized);
+
+    if (multipleOptions) {
+      onChangeHandler(normalized);
+    } else {
+      onChangeHandler(normalized[0] ?? "");
+    }
+  };
 
   const onSelectHandler = (
     event: React.SyntheticEvent<Element, Event>,
     newValue: string | string[] | null,
   ) => {
-    const normalized = newValue == null ? [""] : Array.isArray(newValue) ? newValue : [newValue]; // if null (emptying with x button), should act the same as picking texts.heb.emptyValue
-    const reportedValue = normalized.map((val) => (val === texts.heb.emptyValue ? "" : val));
-    setSelectedValues(reportedValue);
-    onChangeHandler(reportedValue, isValid);
+    const normalized = newValue == null ? [""] : Array.isArray(newValue) ? newValue : [newValue];
+    emitChange(normalized);
   };
-
-  const displayedValue = selectedValues.map((val) => (val === "" ? texts.heb.emptyValue : val));
 
   const onDeleteHandler = (index: number) => {
     const newSelected = [...selectedValues];
     newSelected.splice(index, 1);
-    setSelectedValues(newSelected);
-    onChangeHandler(newSelected, !isRequired || newSelected.length > 0);
+    emitChange(newSelected);
   };
 
-  const getValue = () =>
-    multipleOptions
-      ? displayedValue.filter(
-          (val) =>
-            (typeof val === "string" || typeof val === "number") && val !== texts.heb.emptyValue,
-        )
-      : typeof displayedValue[0] === "string" || typeof displayedValue[0] === "number"
-      ? displayedValue[0]
-      : "";
+  const displayedValue = selectedValues.map((val) => (val === "" ? texts.heb.emptyValue : val));
+  const autocompleteValue = multipleOptions ? displayedValue : (displayedValue[0] ?? null);
 
-  useEffect(() => {
-    if (Array.isArray(value)) {
-      setSelectedValues(value);
-    } else if (typeof value === "string") {
-      setSelectedValues(value ? [value] : []);
+  const getLabel = (option: string) => {
+    if (option === "") return texts.heb.emptyValue;
+    return optionLabels[option] ?? option;
+  };
+
+  const triggerBlurValidation = () => {
+    if (!hasTriggeredBlurRef.current) {
+      hasTriggeredBlurRef.current = true;
+      onBlurHandler?.();
     }
-  }, [value]);
+  };
 
   return (
     <FormControl
@@ -96,12 +129,13 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
       {!isTabularEdit && (
         <StyledInputLabel
           shrink
-          error={!isValid}
+          error={Boolean(validationMessage)}
           required={isRequired}
           id={`select-helper-label-${label}`}>
           {label}
         </StyledInputLabel>
       )}
+
       <StyledAutocomplete
         slotProps={{
           listbox: { component: StyledListbox },
@@ -109,18 +143,24 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         disabled={isDisabled}
         multiple={multipleOptions}
         options={options}
-        value={getValue()}
-        onChange={(event: any, value: any) => onSelectHandler(event, value)}
-        getOptionLabel={(option: any) => (option === "" ? "ערך ריק" : String(option))}
-        isOptionEqualToValue={(option, value) => option === value}
+        value={autocompleteValue}
+        onChange={(event: any, nextValue: any) => {
+          hasTriggeredBlurRef.current = false;
+          onSelectHandler(event, nextValue);
+        }}
+        onClose={() => {
+          triggerBlurValidation();
+        }}
+        getOptionLabel={(option: any) => getLabel(String(option))}
+        isOptionEqualToValue={(option, currentValue) => option === currentValue}
         size={isTabularEdit ? "small" : "medium"}
-        renderTags={(value: any, getTagProps) =>
-          value.map((option, index) => (
+        renderTags={(tagValue: any, getTagProps) =>
+          tagValue.map((option: string, index: number) => (
             <Chip
-              label={option === texts.heb.emptyValue ? "" : option}
+              label={option === texts.heb.emptyValue ? "" : getLabel(option)}
               {...getTagProps({ index })}
               key={uuidv4()}
-              onDelete={(index) => onDeleteHandler(index)}
+              onDelete={() => onDeleteHandler(index)}
               size={isTabularEdit ? "small" : "medium"}
             />
           ))
@@ -129,9 +169,12 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
           <StyledTextField
             {...params}
             required={isRequired}
-            error={!isValid}
+            error={Boolean(validationMessage)}
             variant="standard"
             size={isTabularEdit ? "medium" : undefined}
+            onBlur={() => {
+              triggerBlurValidation();
+            }}
             sx={{
               ...(isTabularEdit && {
                 "& .MuiInputBase-root": {
@@ -187,9 +230,8 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
           />
         )}
       />
-      <StyledFormHelperText>
-        {(!isValid && texts.heb.listChooseRequired) || " "}
-      </StyledFormHelperText>
+
+      <StyledFormHelperText>{validationMessage || " "}</StyledFormHelperText>
     </FormControl>
   );
 };

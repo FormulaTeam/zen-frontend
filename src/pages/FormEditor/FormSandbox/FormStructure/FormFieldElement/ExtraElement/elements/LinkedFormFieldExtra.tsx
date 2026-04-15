@@ -12,9 +12,7 @@ import { LoaderContainer, WarningText } from "./styled";
 type Props = ExtraElementProps<typeof FieldTypeIds.linkedForm>;
 
 function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: Props) {
-  const {
-    linkedFormId,
-  } = extra;
+  const { linkedFormId } = extra;
 
   const { formStructure } = useFormStructureContext();
   const [searchText, setSearchText] = useState("");

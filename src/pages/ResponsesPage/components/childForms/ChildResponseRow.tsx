@@ -15,7 +15,7 @@ import { ResponseCell } from "./styled";
 
 interface ChildResponseRowProps {
   response: Row;
-  connectedFormId: number;
+  linkedFormId: number;
   formFields: FormFieldDto[];
   parentFormId?: number;
 }
@@ -57,7 +57,7 @@ const CarouselNoPad = styled(CustomCarousel)({
 
 const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
   response,
-  connectedFormId,
+  linkedFormId,
   formFields,
   parentFormId,
 }) => {
@@ -70,10 +70,10 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
   });
 
   const handleViewClick = useCallback((): void => {
-    navigate(`/response/view/${connectedFormId}/${response.id}`, {
+    navigate(`/response/view/${linkedFormId}/${response.id}`, {
       state: { parentFormId },
     });
-  }, [navigate, connectedFormId, response.id, parentFormId]);
+  }, [navigate, linkedFormId, response.id, parentFormId]);
 
   const getResponseFieldStringValue = (field: FormFieldDto, value: unknown): string => {
     if (value === undefined || value === null) return "";
@@ -161,9 +161,9 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
 
   const onFileClick = useCallback(
     (file: File) => {
-      downloadFileFromResponse(file, String(connectedFormId));
+      downloadFileFromResponse(file, String(linkedFormId));
     },
-    [connectedFormId],
+    [linkedFormId],
   );
 
   const formatFileCell = useCallback(
@@ -180,7 +180,7 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
           {fileValue.files.map((file, index: number) => (
             <FileRow key={index}>
               <CarouselNoPad
-                formId={connectedFormId}
+                formId={linkedFormId}
                 items={[file]}
                 onItemClickHandler={onFileClick}
               />
@@ -189,7 +189,7 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
         </FileCellWrapper>
       );
     },
-    [connectedFormId, onFileClick],
+    [linkedFormId, onFileClick],
   );
 
   return (
