@@ -4,7 +4,7 @@ import { useInitiateFormStore } from "../stores/form.store";
 import { Row } from "../../../utils/interfaces";
 
 export function useFormLoader(formId: string) {
-  const { form, setForm, setPermissions, setRows, filter } = useInitiateFormStore();
+  const { form, setForm, setPermissions, setRows, filter, setResponses } = useInitiateFormStore();
 
   const {
     data: formData,
@@ -20,9 +20,13 @@ export function useFormLoader(formId: string) {
     limit: filter?.pageSize ?? 25,
     search: filter?.query ? JSON.stringify(filter.query) : "",
     sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
+    before: filter?.before,
+    after: filter?.after,
   }), [filter]);
 
   const { data: responsesRowsData, isSuccess: isResponsesSuccess } = useGetResponsesRows(formId, queryParams as any);
+
+  const { setPageInfo } = useInitiateFormStore();
 
   useEffect(() => {
     if (responsesRowsData && isResponsesSuccess && formData) {
@@ -57,9 +61,11 @@ export function useFormLoader(formId: string) {
       });
 
       setRows(rows);
+      setResponses(responsesRowsData.edges.map((edge) => edge.node as any));
+      setPageInfo(responsesRowsData.pageInfo);
       console.log("Responses loaded and mapped:", rows);
     }
-  }, [responsesRowsData, setRows, isResponsesSuccess, formData]);
+  }, [responsesRowsData, setRows, setPageInfo, isResponsesSuccess, formData, setResponses]);
 
   useEffect(() => {
     if (formData && isSuccess) {
@@ -67,9 +73,16 @@ export function useFormLoader(formId: string) {
         .flatMap((section) => section.fields ?? [])
         .sort((a, b) => a.index - b.index);
 
+      const columns = flattenedFields.map((field) => ({
+        field: field.displayName,
+        headerName: field.displayName,
+        editable: true,
+      }));
+
       setForm({
         ...formData,
         fields: flattenedFields,
+        columns,
       } as any);
 
       const permissions =
