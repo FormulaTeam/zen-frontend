@@ -117,15 +117,28 @@ export const useAuth = () => {
  */
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error("Failed to parse saved user:", error);
+        localStorage.removeItem("user");
+      }
+    }
+    setLoading(false);
+  }, []);
 
   const login = useCallback(({ user }: { user: User }) => {
     setUser(user);
+    localStorage.setItem("user", JSON.stringify(user));
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading: false, login, roles: ROLE_CATALOG }}>
+    <AuthContext.Provider value={{ user, loading, login, roles: ROLE_CATALOG }}>
       {children}
     </AuthContext.Provider>
   );

@@ -92,7 +92,7 @@ export const resolveUserPermissions = (
   let publicFormPermissions: number[] = [];
 
   if (typeof currentUserId === "number") {
-    const specificRole = roles.find((userRole) => userRole.user.id === currentUserId);
+    const specificRole = roles.find((userRole) => userRole.userId === currentUserId);
 
     if (specificRole) userSpecificPermissions = getRolePermissionTypes(specificRole.role);
   }
