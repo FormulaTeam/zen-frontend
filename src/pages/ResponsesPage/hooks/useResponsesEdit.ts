@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { GridRowModel } from "@mui/x-data-grid-pro";
 import { showSuccessNotification, showErrorNotification, DEFAULT_DATE_FORMAT } from "@utils/utils";
-import { useBatchUpdateResponses, useGetResponses, useCreateResponse } from "@api/responsesApi";
+import { useBatchUpdateResponses, useCreateResponse } from "@api/responsesApi";
 import { uploadFilesToS3 } from "@api/filesApi";
 import { useFormStore } from "../stores/form.store";
 import { useAuth } from "@contexts/AuthContext";
@@ -117,7 +117,7 @@ const getEditedFileValueParts = (editedValue: unknown) => {
 };
 
 export const useResponsesEdit = () => {
-  const { form, rows, setRows, filter } = useFormStore();
+  const { form, rows, setRows, filter, responses } = useFormStore();
   const { user } = useAuth();
 
   const [isInEditMode, setIsInEditMode] = useState(false);
@@ -138,15 +138,13 @@ export const useResponsesEdit = () => {
       .sort((a, b) => a.index - b.index);
   }, [dtoForm]);
 
-  const { data: fullResponses } = useGetResponses({
-    filter: { ...filter, form_id: dtoForm?.id },
-  });
+  const fullResponses = (responses as unknown as ResponseDto[]) || undefined;
 
   const { mutateAsync: batchUpdateResponses, isPending: isUpdating } = useBatchUpdateResponses({
     formId: dtoForm?.id || 0,
   });
 
-  const { mutateAsync: createResponse } = useCreateResponse(dtoForm?.id || 0);
+  const { mutateAsync: createResponse } = useCreateResponse(dtoForm?.id);
 
   const responseRows: Row[] = (rows?.filter((row) => row != null) as Row[]) || [];
   const hasUnsavedChanges = editedRows.size > 0;
