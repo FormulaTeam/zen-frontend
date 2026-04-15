@@ -91,6 +91,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: ({ user }: { user: User }) => void;
+  logout: () => void;
   roles: Role[];
 }
 
@@ -123,7 +124,12 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
+          setUser(parsed);
+        } else {
+          localStorage.removeItem("user");
+        }
       } catch (error) {
         console.error("Failed to parse saved user:", error);
         localStorage.removeItem("user");
@@ -133,12 +139,19 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = useCallback(({ user }: { user: User }) => {
-    setUser(user);
-    localStorage.setItem("user", JSON.stringify(user));
+    if (user && Object.keys(user).length > 0) {
+      setUser(user);
+      localStorage.setItem("user", JSON.stringify(user));
+    }
+  }, []);
+
+  const logout = useCallback(() => {
+    setUser(null);
+    localStorage.removeItem("user");
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, roles: ROLE_CATALOG }}>
+    <AuthContext.Provider value={{ user, loading, login, roles: ROLE_CATALOG, logout }}>
       {children}
     </AuthContext.Provider>
   );
