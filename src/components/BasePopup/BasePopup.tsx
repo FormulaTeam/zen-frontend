@@ -9,6 +9,7 @@ import {
   Typography,
   Box,
   useTheme,
+  Tooltip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -18,6 +19,7 @@ interface ButtonConfig {
   variant?: "text" | "outlined" | "contained";
   color?: "primary" | "secondary" | "error" | "success" | "info" | "warning";
   disabled?: boolean;
+  tooltip?: React.ReactNode;
 }
 
 interface BasePopupProps {
@@ -46,6 +48,20 @@ const BasePopup: React.FC<BasePopupProps> = ({
   maxWidth,
 }) => {
   const theme = useTheme();
+
+  const button: JSX.Element | undefined = mainButton && (
+    <Button
+      variant={mainButton.variant || "contained"}
+      onClick={mainButton.onClick}
+      disabled={mainButton.disabled}
+      disableElevation
+      color={mainButton.color || "primary"}
+      sx={{
+        padding: "4px 24px",
+      }}>
+      {mainButton.text}
+    </Button>
+  );
 
   return (
     <Dialog
@@ -102,7 +118,7 @@ const BasePopup: React.FC<BasePopupProps> = ({
 
       <DialogContent sx={{ padding: 2, textAlign: "center" }}>
         {content && (
-          <Typography variant="body1" fontSize="24px">
+          <Typography component="div" variant="body1" fontSize="24px">
             {content}
           </Typography>
         )}
@@ -128,19 +144,15 @@ const BasePopup: React.FC<BasePopupProps> = ({
               {cancelButton.text}
             </Button>
           )}
-          {mainButton && (
-            <Button
-              variant={mainButton.variant || "contained"}
-              onClick={mainButton.onClick}
-              disabled={mainButton.disabled}
-              disableElevation
-              color={mainButton.color || "primary"}
-              sx={{
-                padding: "4px 24px",
-              }}>
-              {mainButton.text}
-            </Button>
-          )}
+          {mainButton &&
+            mainButton.tooltip ? (
+            <Tooltip title={mainButton.tooltip} placement="top">
+              <span>{button}</span>
+            </Tooltip>
+          ) : (
+            button
+          )
+          }
         </DialogActions>
       )}
     </Dialog>

@@ -2,6 +2,7 @@ import React from "react";
 import { Checkbox, Tooltip, IconButton } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useTheme } from "@mui/material/styles";
+import { role } from "formula-gear";
 import RolesAutocomplete from "./RolesAutocomplete";
 import { RoleLabel } from "./styled";
 import { ROLE_CATALOG } from "../../consts/roles";
@@ -79,6 +80,7 @@ const PublicFormSection: React.FC<PublicFormSectionProps> = ({
                 isDisabled={!hasPermission}
                 handleRoleChange={handleLocalFormPermissionChange}
                 width="min(180px, 100%)"
+                excludeRoleIds={[role.FormAdmin]}
               />
             )}
           </PermissionsRow>

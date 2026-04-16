@@ -10,14 +10,14 @@ export const ROLE_CATALOG: {
     {
       id: 1,
       role_id: role.FormAdmin,
-      roleName: "מנהל טופס",
+      roleName: "שליטה מלאה",
       role_description: "גישה מלאה לטופס",
       permission_types: Object.values(permission),
     },
     {
       id: 2,
       role_id: role.AllResponsesManager,
-      roleName: "מנהל תגובות",
+      roleName: "ניהול תגובות",
       role_description: "צפייה, עריכה ומחיקה של כל התגובות",
       permission_types: [
         permission.ReadAnyResponse,
@@ -29,7 +29,7 @@ export const ROLE_CATALOG: {
     {
       id: 3,
       role_id: role.AllResponsesManagerWithoutDeletion,
-      roleName: "מנהל תגובות ללא מחיקה",
+      roleName: "ניהול תגובות ללא מחיקה",
       role_description: "צפייה ועריכה של כל התגובות",
       permission_types: [
         permission.ReadAnyResponse,
@@ -40,22 +40,22 @@ export const ROLE_CATALOG: {
     {
       id: 4,
       role_id: role.ResponsesCreator,
-      roleName: "יוצר תגובות",
-      role_description: "יצירת תגובות בלבד",
+      roleName: "יצירת תגובות",
+      role_description: "יצירת תגובות וצפייה בתגובות שהמשתמש יצר",
       permission_types: [permission.CreateResponse],
     },
     {
       id: 5,
       role_id: role.AllResponsesReader,
-      roleName: "קורא תגובות",
+      roleName: "צפייה בלבד",
       role_description: "צפייה בכל התגובות",
       permission_types: [permission.ReadAnyResponse],
     },
     {
       id: 6,
       role_id: role.OwnResponsesManagerWithoutDeletion,
-      roleName: "מנהל תגובות אישיות",
-      role_description: "יצירה עריכה וצפייה בתגובות שלי בלבד ללא אפשרות מחיקה",
+      roleName: "ניהול תגובות המשתמש",
+      role_description: "יצירה עריכה וצפייה בתגובות שהמשתמש יצר בלבד ללא אפשרות מחיקה",
       permission_types: [
         permission.CreateResponse,
         permission.UpdateMyResponse,

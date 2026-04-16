@@ -35,11 +35,13 @@ const FormCard = ({
   isSuperAdmin,
   navigate,
   resetSearchValue,
+  isCreator,
 }: {
   form: FormOverview;
   isSuperAdmin: boolean | null;
   navigate: any;
   resetSearchValue: () => void;
+  isCreator?: boolean;
 }) => {
   const theme = useTheme();
   const [showSharePopup, setShowSharePopup] = useState(false);
@@ -48,6 +50,8 @@ const FormCard = ({
   const handleShareClick = async () => {
     try {
       const fetchedForm = await getFormById(form.id);
+
+      console.log("Fetched form for sharing:", fetchedForm);
       setFullForm(fetchedForm);
       setShowSharePopup(true);
     } catch {
@@ -79,7 +83,7 @@ const FormCard = ({
 
   if (!form) return null;
 
-  const userPermissions = form.permissions || [];
+  const userPermissions = isCreator ? Object.values(PERMISSION_TYPES) : form.permissions || [];
 
   return (
     <StyledCard

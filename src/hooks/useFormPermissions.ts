@@ -5,14 +5,16 @@ import { useAuth } from "../contexts/AuthContext";
 import { useSuperAdmin } from "../contexts/SuperAdminContext";
 import { prioritizePermissions, getRolePermissionTypes } from "../utils/formFieldsResponses";
 import { PERMISSION_TYPES } from "../utils/utils";
+import { Role } from "formula-gear";
 
 type PublicRole = FormDto["publicRole"];
 
 interface UseFormPermissionsParams {
   form: FormDto;
   roles: UserRoleDto[];
+  formPublicRole: Role | null;
   selectedShareWith: any[];
-  saveSharedWith: (updatedFormData?: Record<string, unknown>) => Promise<void>;
+  saveSharedWith: () => Promise<void>;
   handleFormPermissionChange: (isPublic: boolean, permission?: PublicRole) => void;
   handleClose: () => void;
 }
@@ -32,6 +34,7 @@ const getUserId = (user: any | null | undefined): number | undefined => {
 export const useFormPermissions = ({
   form,
   roles,
+  formPublicRole,
   selectedShareWith,
   saveSharedWith,
   handleFormPermissionChange,
@@ -90,20 +93,14 @@ export const useFormPermissions = ({
   };
 
   const handleSave = async () => {
-    const updatedFormData: Record<string, unknown> = {
-      publicRole: isPublic ? (formPermission ?? undefined) : undefined,
-    };
-
     const hasFormPermissionUpdates =
-      form.publicRole !== (isPublic ? (formPermission ?? undefined) : undefined);
+      formPublicRole !== formPermission;
 
-    const hasUserRoleAssignments = selectedShareWith.some(
-      (selectedUser) => selectedUser.role_id && selectedUser.role_id !== -1,
-    );
+    const hasUserRoleAssignments = selectedShareWith.length > 0 || roles.length > 0;
 
     try {
       if (hasUserRoleAssignments || hasFormPermissionUpdates) {
-        await saveSharedWith(updatedFormData);
+        await saveSharedWith();
 
         return;
       }

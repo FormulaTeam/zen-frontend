@@ -48,7 +48,7 @@ const SharedUser = ({ user, roles, handleRoleChange, removeUserFromShare }) => {
             {roleName}
           </RoleLabel>
         ) : (
-          <RolesAutocomplete isDisabled={isDisabled} handleRoleChange={handleRoleChange} />
+          <RolesAutocomplete isDisabled={isDisabled} handleRoleChange={handleRoleChange} user={user} />
         )}
 
         {/* Always show the X button, just disable it for current user */}

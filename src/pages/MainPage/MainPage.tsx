@@ -122,6 +122,7 @@ function MainPage({
                 resetSearchValue={resetSearchValue}
                 isSuperAdmin={isSuperAdmin}
                 navigate={navigate}
+                isCreator={form.createdBy?.upn?.toLowerCase() === myPersonal?.upn?.toLowerCase()}
               />
             </Grid>
           ))}

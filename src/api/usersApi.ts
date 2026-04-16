@@ -1,12 +1,13 @@
 import { UseQueryResult } from "@tanstack/react-query";
-import { UserType, userType } from "formula-gear";
+import { UserType, userType, UserWithoutUserTypeSchema } from "formula-gear";
+import z from "zod";
 
 import type { UserDto, UserPersonalDto } from "../types/shared";
 import { useFetch } from "../utils/useFetch";
 import apiClient from "./config";
 
 type UserSearchResult = {
-  id: string;
+  id: number;
   displayName: string;
   upn: string;
 };
@@ -14,6 +15,8 @@ type UserSearchResult = {
 export type UserTypeDto = {
   userType: (typeof userType)[keyof typeof userType];
 };
+
+type UserWithoutType = z.infer<typeof UserWithoutUserTypeSchema>
 
 export const getUsers = async (filterName?: string): Promise<UserSearchResult[]> => {
   const trimmedName = filterName?.trim();
@@ -25,10 +28,10 @@ export const getUsers = async (filterName?: string): Promise<UserSearchResult[]>
       params: { searchQuery: trimmedName },
     });
 
-    return (response.data ?? []).map((userDto) => ({
-      id: String(userDto.id),
-      displayName: userDto.name,
-      upn: userDto.upn,
+    return (response.data ?? []).map((user: UserWithoutType) => ({
+      id: user.id,
+      displayName: user.name || "",
+      upn: user.upn || "",
     }));
   } catch (error) {
     console.error("Failed to fetch users:", error);

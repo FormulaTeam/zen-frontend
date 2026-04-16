@@ -9,6 +9,7 @@ import { useUserPicker } from "../../hooks/useUserPicker";
 import BasePopup from "../BasePopup/BasePopup";
 import PublicFormSection from "./PublicFormSection";
 import UserPickerContent from "./UserPickerContent";
+import { ReasonsContainer } from "./styled";
 import "./UserPicker.scss";
 
 const ContentWrapper = styled.div`
@@ -24,7 +25,8 @@ interface UserPickerProps {
 
 const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) => {
   const { data: formRoles } = useGetFormRoles(form.id);
-  const roles = formRoles?.userRoles ?? [];
+  const roles = React.useMemo(() => formRoles?.userRoles ?? [], [formRoles?.userRoles]);
+  const publicRole = formRoles?.publicRole ?? null;
 
   const {
     loading,
@@ -38,7 +40,7 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
     handleInputChange,
     handleClose,
     handleFormPermissionChange,
-  } = useUserPicker({ form, closeSharePopupAndRefreshForm, roles });
+  } = useUserPicker({ form, closeSharePopupAndRefreshForm, roles, publicRole });
 
   const {
     isPublic,
@@ -52,6 +54,7 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
   } = useFormPermissions({
     form,
     roles,
+    formPublicRole: publicRole,
     selectedShareWith,
     saveSharedWith,
     handleFormPermissionChange,
@@ -65,6 +68,29 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
     const newFormPermission = formRoles?.publicRole || null;
     setFormPermission(newFormPermission);
   }, [formRoles, setFormPermission, setIsPublic]);
+
+  const getDisabledReason = (): JSX.Element | undefined => {
+    const reasons: string[] = [];
+    if (selectedShareWith.some((user) => !user.role_id || user.role_id === -1)) {
+      reasons.push("יש לבחור הרשאה למשתמשים שנוספו");
+    }
+    if (isPublic && !formPermission) {
+      reasons.push("יש לבחור הרשאה שתוגדר לכלל המשתמשים לטופס");
+    }
+
+    if (reasons.length === 0) return undefined;
+
+    return (
+      <ReasonsContainer>
+        {reasons.map((reason, index) => (
+          <div key={index}>• {reason}</div>
+        ))}
+      </ReasonsContainer>
+    );
+  };
+
+  const disabledReason = getDisabledReason();
+  const isSaveDisabled = !!disabledReason;
 
   return (
     <BasePopup
@@ -96,7 +122,16 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
           />
         </ContentWrapper>
       }
-      mainButton={!loading ? { text: "אישור", onClick: handleSave } : undefined}
+      mainButton={
+        loading
+          ? undefined
+          : {
+            text: "אישור",
+            onClick: handleSave,
+            disabled: isSaveDisabled,
+            tooltip: isSaveDisabled ? disabledReason : undefined,
+          }
+      }
       cancelButton={!loading ? { text: "בטל פעולה", onClick: handleClose } : undefined}
     />
   );

@@ -151,7 +151,6 @@ theme.components = {
     styleOverrides: {
       tooltip: {
         "&": {
-          direction: "rtl",
           fontSize: "1rem",
           "&.font-lg": {
             fontSize: "1.25rem",
