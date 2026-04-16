@@ -15,7 +15,6 @@ import SaveIcon from "@mui/icons-material/Save";
 import CheckIcon from "@mui/icons-material/Check";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import "./CustomMultiInputField.scss";
-import { CustomInputFormFieldProps } from "../../../utils/interfaces";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
 
 type ListItem = {
@@ -23,24 +22,31 @@ type ListItem = {
   value: string;
 };
 
-interface CustomMultiInputFieldProps extends CustomInputFormFieldProps {
+interface CustomMultiInputFieldProps {
   value: any;
+  isDisabled: boolean;
+  onChangeHandler: (value: any[]) => void;
+  onBlurHandler?: () => void;
+  isValid?: boolean;
+  label: string;
+  isRequired: boolean;
   isTabularEdit?: boolean;
+  validationMessage?: string | null;
 }
 
 const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
   value,
   isDisabled,
   onChangeHandler,
-  isValid,
+  onBlurHandler,
   label,
   isRequired,
   isTabularEdit = false,
+  validationMessage,
 }) => {
   const theme = useTheme();
 
   const errorMessageNoInputText = "לא ניתן לשמור שדה ריק";
-  const errorMessageNoListValues = "אין אפשרות לשמור את הרשימה ריקה";
 
   const [inputValue, setInputValue] = useState("");
   const [listValues, setListValues] = useState<string[]>([]);
@@ -48,29 +54,18 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
   const [isEditItemMode, setIsEditItemMode] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ListItem>();
 
-  const [hasError, setHasError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(errorMessageNoInputText);
+  const [localErrorMessage, setLocalErrorMessage] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showSuccessIcon, setShowSuccessIcon] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Handle dropdown selection
-  const handleDropdownChange = (event: any) => {
-    // Close dropdown when clicking on items
-    setDropdownOpen(false);
-  };
-
-  // Add a state to control when to show input in tabular edit mode
-  const [showInputInTabular, setShowInputInTabular] = useState(false);
-
-  // Handle dropdown actions (edit/delete)
-  const handleDropdownEdit = (value: string, index: number) => {
-    setSelectedItem({ index, value });
+  const handleDropdownEdit = (itemValue: string, index: number) => {
+    setSelectedItem({ index, value: itemValue });
     setIsEditItemMode(true);
-    setInputValue(value);
+    setInputValue(itemValue);
     setDropdownOpen(false);
-    setShowInputInTabular(true);
+
     setTimeout(() => {
       inputRef?.current?.focus();
     }, 100);
@@ -79,10 +74,10 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
   const handleDropdownDelete = (index: number) => {
     const newListValueArray = listValues.filter((_, i) => i !== index);
     setListValues(newListValueArray);
-    setDropdownOpen(false);
+    onChangeHandler(newListValueArray);
+    onBlurHandler?.();
   };
 
-  // Enabling 'Enter' Click for do operations
   const handleKeyUp = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       if (isEditItemMode) {
@@ -93,56 +88,52 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
     }
   };
 
-  // Field input change function
   const onChangeValueHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);
+    setLocalErrorMessage("");
   };
 
-  // Create New Item Function
   const onPlusClickHandler = () => {
     if (inputValue.trim() === "") {
-      setErrorMessage(errorMessageNoInputText);
+      setLocalErrorMessage(errorMessageNoInputText);
       return;
     }
-    setListValues((prev) => [...prev, inputValue]);
-    setInputValue("");
-    setHasError(false);
-    setErrorMessage("");
 
-    // Show success icon only in tabular edit mode
+    const nextValues = [...listValues, inputValue];
+    setListValues(nextValues);
+    setInputValue("");
+    setLocalErrorMessage("");
+    onChangeHandler(nextValues);
+
     if (isTabularEdit) {
       setShowSuccessIcon(true);
-      setShowInputInTabular(false);
-      // Reset to plus icon after 1 second
       setTimeout(() => {
         setShowSuccessIcon(false);
       }, 1000);
     }
   };
 
-  // Update Item Value Function
   const onSaveEditedListItemClickHandler = () => {
     if (selectedItem?.index === undefined) return;
+
     if (inputValue.trim() === "") {
-      setErrorMessage(errorMessageNoInputText);
+      setLocalErrorMessage(errorMessageNoInputText);
       return;
     }
 
-    setListValues((prevListValues) =>
-      prevListValues.map((item, index) => (index === selectedItem.index ? inputValue : item)),
+    const nextValues = listValues.map((item, index) =>
+      index === selectedItem.index ? inputValue : item,
     );
 
+    setListValues(nextValues);
     setSelectedItem(undefined);
     setIsEditItemMode(false);
     setInputValue("");
-    // Reset to dropdown mode in tabular edit after saving
-    if (isTabularEdit) {
-      setShowInputInTabular(false);
-    }
-    setErrorMessage("");
+    setLocalErrorMessage("");
+    onChangeHandler(nextValues);
+    onBlurHandler?.();
   };
 
-  // Set Edit Mode for Editing List Item
   const onEditListItemClickHandler = (item: ListItem) => {
     setSelectedItem(item);
     setIsEditItemMode(true);
@@ -150,23 +141,25 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
     inputRef?.current?.focus();
   };
 
-  // Delete Item Function
   const onDeleteListItemClickHandler = (item: ListItem) => {
-    const newListValueArray = listValues.filter((listItem, index) => index !== item.index);
-    setListValues(newListValueArray);
+    const nextValues = listValues.filter((_, index) => index !== item.index);
+    setListValues(nextValues);
+    onChangeHandler(nextValues);
+    onBlurHandler?.();
   };
 
-  // Update The Form Values State on the parent component
   useEffect(() => {
-    onChangeHandler(listValues, hasError);
-  }, [listValues, hasError]);
-
-  // Set List Values from parent Form component (Edit Mode)
-  useEffect(() => {
-    if (value && listValues.length === 0) {
+    if (Array.isArray(value)) {
       setListValues(value);
+      return;
     }
-  }, []);
+
+    if (!value) {
+      setListValues([]);
+    }
+  }, [value]);
+
+  const helperText = localErrorMessage || validationMessage || "";
 
   return (
     <div
@@ -178,25 +171,17 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
           gap: "4px",
         }),
       }}>
-      {/* Always show regular input field with + icon and chevron if items exist */}
       <BaseFieldInput
         isTabularEdit={isTabularEdit}
         fullWidth={true}
-        label={
-          isTabularEdit && isEditItemMode
-            ? ""
-            : isTabularEdit && showInputInTabular
-            ? ""
-            : isTabularEdit
-            ? ""
-            : label
-        }
+        label={isTabularEdit ? "" : label}
         inputRef={inputRef}
         required={isRequired}
         value={inputValue}
         onChange={onChangeValueHandler}
-        error={hasError}
-        helperText={hasError ? errorMessage || errorMessageNoListValues : ""}
+        onBlur={onBlurHandler}
+        error={Boolean(helperText)}
+        helperText={helperText || " "}
         disabled={isDisabled}
         onKeyUp={handleKeyUp}
         size={isTabularEdit ? "medium" : undefined}
@@ -241,7 +226,6 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
           endAdornment: (
             <InputAdornment position="end">
               <div style={{ display: "flex", alignItems: "center" }}>
-                {/* Always show plus icon */}
                 {!isDisabled && (
                   <IconButton
                     sx={{
@@ -261,21 +245,18 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
                     )}
                   </IconButton>
                 )}
-                {/* Show chevron only if there are items in tabular edit mode */}
-                {isTabularEdit &&
-                  listValues.length > 0 &&
-                  !isEditItemMode &&
-                  !showInputInTabular && (
-                    <IconButton
-                      size="small"
-                      onClick={() => setDropdownOpen(true)}
-                      sx={{
-                        ml: 0.5,
-                        "& svg": { fontSize: "16px" },
-                      }}>
-                      <KeyboardArrowDownIcon />
-                    </IconButton>
-                  )}
+
+                {isTabularEdit && listValues.length > 0 && !isEditItemMode && (
+                  <IconButton
+                    size="small"
+                    onClick={() => setDropdownOpen(true)}
+                    sx={{
+                      ml: 0.5,
+                      "& svg": { fontSize: "16px" },
+                    }}>
+                    <KeyboardArrowDownIcon />
+                  </IconButton>
+                )}
               </div>
             </InputAdornment>
           ),
@@ -285,7 +266,10 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
           isTabularEdit && listValues.length > 0 && dropdownOpen
             ? {
                 open: true,
-                onClose: () => setDropdownOpen(false),
+                onClose: () => {
+                  setDropdownOpen(false);
+                  onBlurHandler?.();
+                },
                 MenuProps: {
                   PaperProps: {
                     style: {
@@ -296,12 +280,11 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
               }
             : undefined
         }>
-        {/* Dropdown items - only show when in tabular edit mode and dropdown is open */}
         {isTabularEdit &&
           listValues.length > 0 &&
           dropdownOpen &&
-          listValues.map((value, index) => (
-            <MenuItem key={index} value={value} onClick={() => setDropdownOpen(false)}>
+          listValues.map((itemValue, index) => (
+            <MenuItem key={index} value={itemValue} onClick={() => setDropdownOpen(false)}>
               <Box
                 sx={{
                   display: "flex",
@@ -309,13 +292,13 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
                   justifyContent: "space-between",
                   width: "100%",
                 }}>
-                <span style={{ flex: 1, textAlign: "right" }}>{value}</span>
+                <span style={{ flex: 1, textAlign: "right" }}>{itemValue}</span>
                 <Box sx={{ display: "flex", gap: 0.5, ml: 1 }}>
                   <IconButton
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDropdownEdit(value, index);
+                      handleDropdownEdit(itemValue, index);
                     }}
                     sx={{ "& svg": { fontSize: "14px" } }}>
                     <EditIcon />
@@ -335,7 +318,6 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
           ))}
       </BaseFieldInput>
 
-      {/* Show list only in non-tabular mode or when in edit mode */}
       {(!isTabularEdit || isEditItemMode) && (
         <ul
           className="multi-input-field-list-items"
@@ -349,7 +331,7 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
             }),
           }}>
           {listValues.length > 0 &&
-            listValues.map((value, index) => {
+            listValues.map((itemValue, index) => {
               return (
                 <li
                   key={index}
@@ -360,7 +342,7 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
                       fontSize: "0.8rem",
                     }),
                   }}>
-                  <Tooltip title={value}>
+                  <Tooltip title={itemValue}>
                     <Typography
                       className={selectedItem?.index === index ? "is-edit" : ""}
                       sx={{
@@ -369,14 +351,14 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
                           lineHeight: 1.2,
                         }),
                       }}>
-                      {value}
+                      {itemValue}
                     </Typography>
                   </Tooltip>
 
                   {!isDisabled && (
                     <div>
                       <IconButton
-                        onClick={() => onEditListItemClickHandler({ index, value })}
+                        onClick={() => onEditListItemClickHandler({ index, value: itemValue })}
                         sx={{
                           ...(isTabularEdit && {
                             padding: "2px",
@@ -387,7 +369,7 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
                       </IconButton>
 
                       <IconButton
-                        onClick={() => onDeleteListItemClickHandler({ index, value })}
+                        onClick={() => onDeleteListItemClickHandler({ index, value: itemValue })}
                         sx={{
                           ...(isTabularEdit && {
                             padding: "2px",

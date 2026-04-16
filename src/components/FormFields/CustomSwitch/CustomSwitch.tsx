@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {  Switch } from "@mui/material";
-import { StyledFormControl, StyledFormControlLabel, StyledLabel } from "./styled";
+import { Switch } from "@mui/material";
+import { StyledFormControl, StyledFormControlLabel } from "./styled";
 import { CheckboxInitialValType } from "../../../types/enums/formFields.enums";
 
 type CustomSwitchProps = {
@@ -20,21 +20,20 @@ const CustomSwitch: React.FC<CustomSwitchProps> = ({
   defaultValue,
   isTabularEdit = false,
 }) => {
-  const [isChecked, setIsChecked] = useState<boolean>(
-    value ?? defaultValue === CheckboxInitialValType.CHECKED,
-  );
+  const resolveEffectiveValue = () =>
+    typeof value === "boolean" ? value : defaultValue === CheckboxInitialValType.CHECKED;
+
+  const [isChecked, setIsChecked] = useState<boolean>(resolveEffectiveValue());
+
+  useEffect(() => {
+    setIsChecked(resolveEffectiveValue());
+  }, [value, defaultValue]);
 
   const onChangeSwitchHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.checked;
     setIsChecked(newValue);
     onChangeHandler(newValue);
   };
-
-  useEffect(() => {
-    const effectiveValue = value ?? defaultValue === CheckboxInitialValType.CHECKED;
-    setIsChecked(effectiveValue);
-    onChangeHandler(effectiveValue);
-  }, [value, defaultValue]);
 
   return (
     <StyledFormControl isTabularEdit={isTabularEdit}>

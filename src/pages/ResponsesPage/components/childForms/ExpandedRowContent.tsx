@@ -9,7 +9,7 @@ import { ChildResponsesPanel } from "./ChildResponsesPanel";
 import { DetailsContainer } from "../../styled";
 
 type EditorFieldExtra = {
-  connectedFormId?: number;
+  linkedFormId?: number;
 };
 
 interface ChildFormData {
@@ -40,7 +40,7 @@ export const ExpandedRowContent: React.FC<ExpandedRowContentProps> = ({
       parentFormFields.filter((field) => {
         const fieldExtra = getFieldExtra(field);
 
-        return field.fieldType === fieldType.Form && !!fieldExtra.connectedFormId;
+        return field.fieldType === fieldType.Form && !!fieldExtra.linkedFormId;
       }),
     [parentFormFields],
   );
@@ -49,9 +49,9 @@ export const ExpandedRowContent: React.FC<ExpandedRowContentProps> = ({
     () =>
       formInFormFields.map((field) => {
         const fieldExtra = getFieldExtra(field);
-        const connectedFormId = fieldExtra.connectedFormId;
+        const linkedFormId = fieldExtra.linkedFormId;
 
-        const childFormData = childrenFormsData.find((data) => data.form.id === connectedFormId);
+        const childFormData = childrenFormsData.find((data) => data.form.id === linkedFormId);
 
         if (!childFormData)
           return {

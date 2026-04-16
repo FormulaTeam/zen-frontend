@@ -23,7 +23,7 @@
     "axios": "^1.7.2",
     "dayjs": "^1.11.12",
     "file-saver": "^2.0.5",
-    "formula-gear": "github:raskinbarak/formula-gear",
+    "formula-gear": "github:FormulaTeam/formula-gear",
     "http-status-codes": "^2.3.0",
     "jwt-decode": "^4.0.0",
     "material-icons": "^1.13.14",
@@ -55,7 +55,7 @@
     "build": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject",
-    "gear:update": "npm install formula-gear@github:raskinbarak/formula-gear"
+    "gear:update": "npm install formula-gear@github:FormulaTeam/formula-gear"
   },
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.16.7",

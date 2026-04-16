@@ -54,8 +54,8 @@ const FormsChart: React.FC<FormsChartProps> = ({ type, chartType, yearFilter, da
     type === IRetrieveDataType.CREATED
       ? createdFormsQuery.isLoading
       : type === IRetrieveDataType.DELETED
-      ? deletedFormsQuery.isLoading
-      : unitsRangeQuery.isLoading;
+        ? deletedFormsQuery.isLoading
+        : unitsRangeQuery.isLoading;
 
   const filteredColumnData = useMemo(() => {
     if (!data) return [];
@@ -88,7 +88,7 @@ const FormsChart: React.FC<FormsChartProps> = ({ type, chartType, yearFilter, da
       if (range.to && itemDate > new Date(range.to)) return false;
       return true;
     });
-  }, [data, year, range, yearFilter]);
+  }, [data, year, range]);
 
   const filteredPieData = useMemo(() => {
     if (!serializeMirageUsers) return [];
