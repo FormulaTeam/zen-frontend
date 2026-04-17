@@ -8,6 +8,7 @@ import {
   FormFieldDto,
   ResponseDto,
   ResponseFieldValueDto,
+  UpdateResponseDto,
 } from "../types/shared";
 import { fieldType } from "formula-gear";
 
@@ -36,10 +37,6 @@ type ExistingResponseLike = Partial<ResponseDto> & {
 };
 
 type CreateResponsePayload = CreateResponseDto & {
-  parentResponse?: ParentResponseRef;
-};
-
-type UpdateResponsePayload = Partial<ResponseDto> & {
   parentResponse?: ParentResponseRef;
 };
 
@@ -153,14 +150,11 @@ export const useResponseSave = (
 
     try {
       if (response && response.id && !copyMode) {
-        const updatedResponse: UpdateResponsePayload = {
-          ...response,
-          updatedBy: response.updatedBy,
+        const updatedResponse: UpdateResponseDto = {
           fieldValues,
-          ...(parentResponse ? { parentResponse } : {}),
         };
 
-        return (await mutateUpdateResponseAsync(updatedResponse as any)) as ResponseDto;
+        return (await mutateUpdateResponseAsync(updatedResponse)) as ResponseDto;
       }
 
       const newResponse: CreateResponsePayload = {
