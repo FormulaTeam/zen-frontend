@@ -154,6 +154,7 @@ export const useResponseState = (
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
   const initializedStateKeyRef = useRef<string | null>(null);
+  const formFieldsValuesMapRef = useRef<Map<string, any>>(new Map());
 
   const navigate = useNavigate();
 
@@ -167,6 +168,10 @@ export const useResponseState = (
       [sectionId]: !prev[sectionId],
     }));
   };
+
+  useEffect(() => {
+    formFieldsValuesMapRef.current = formFieldsValuesMap;
+  }, [formFieldsValuesMap]);
 
   useEffect(() => {
     let isMounted = true;
@@ -320,6 +325,7 @@ export const useResponseState = (
     }
 
     initializedStateKeyRef.current = stateKey;
+    formFieldsValuesMapRef.current = nextValuesMap;
 
     setFormFields(nextFormFields);
     setFormFieldsByIdsMap(nextFieldsByIdMap);
@@ -393,6 +399,10 @@ export const useResponseState = (
         }
       });
 
+      if (changed) {
+        formFieldsValuesMapRef.current = next;
+      }
+
       return changed ? next : prev;
     });
 
@@ -465,7 +475,7 @@ export const useResponseState = (
       return true;
     }
 
-    const valuesMap = valuesMapOverride ?? formFieldsValuesMap;
+    const valuesMap = valuesMapOverride ?? formFieldsValuesMapRef.current;
     const rawValue = valuesMap.get(normalizedFieldId);
     const result = validateFormFieldValue(toValidatorField(field), rawValue);
 
@@ -488,6 +498,7 @@ export const useResponseState = (
         setFormFieldsValuesMap((prev) => {
           const next = new Map(prev);
           next.set(normalizedFieldId, result.data);
+          formFieldsValuesMapRef.current = next;
           return next;
         });
       }
@@ -617,6 +628,7 @@ export const useResponseState = (
         }
       }
 
+      formFieldsValuesMapRef.current = newFormFieldsValuesMap;
       return newFormFieldsValuesMap;
     });
 
@@ -634,7 +646,7 @@ export const useResponseState = (
   const validateAllFieldsBeforeSubmit = () => {
     let isValidForm = true;
     const nextValidMap = new Map<string, FieldValidationError | null>();
-    const nextParsedValuesMap = new Map(formFieldsValuesMap);
+    const nextParsedValuesMap = new Map(formFieldsValuesMapRef.current);
     const nextTouchedMap = new Map(formFieldsTouchedMap);
     const visibleFieldIds = new Set(visibleFormFields.map((field) => String(field.id)));
 
@@ -666,6 +678,7 @@ export const useResponseState = (
     setFormFieldsValidMap(nextValidMap);
 
     if (isValidForm) {
+      formFieldsValuesMapRef.current = nextParsedValuesMap;
       setFormFieldsValuesMap(nextParsedValuesMap);
     }
 
