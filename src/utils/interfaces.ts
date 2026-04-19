@@ -310,9 +310,7 @@ export type NewResponse = {
  */
 export interface Filter {
   form_id?: number;
-  query?: {
-    [key: string]: any;
-  };
+  query?: any;
   sortBy?: string;
   orderBy?: IOrderBy.ASC | IOrderBy.DESC;
   pageSize?: number;
@@ -321,6 +319,15 @@ export interface Filter {
   signal?: AbortSignal;
   deleted?: boolean;
   isDeletedForm?: boolean;
+  before?: string;
+  after?: string;
+}
+
+export interface PageInfo {
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  startCursor: string | null;
+  endCursor: string | null;
 }
 
 /**

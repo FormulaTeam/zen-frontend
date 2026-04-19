@@ -1,5 +1,5 @@
 import { GridRowId, GridRowModel, GridRowSelectionModel } from "@mui/x-data-grid-pro";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 
 import SidePanel from "../../components/SidePanel/SidePanel";
@@ -68,7 +68,7 @@ const ResponsesPageContent = (): JSX.Element => {
   });
 
   const [search, setSearch] = useState<string>("");
-  const { rows: storeRows, form, permissions } = useFormStore();
+  const { rows: storeRows, form, permissions, filter, setFilter } = useFormStore();
   const { user } = useAuth();
 
   const {
@@ -101,21 +101,21 @@ const ResponsesPageContent = (): JSX.Element => {
     handleApplyView,
   } = useResponsesViews();
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilter({
+        ...filter,
+        query: search,
+        before: undefined,
+        after: undefined,
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const displayedRows = useMemo<ResponsePageRow[]>(() => {
-    const trimmedSearch = search.trim().toLowerCase();
-    const sourceRows = (isInEditMode ? localRows : storeRows) as ResponsePageRow[];
-
-    if (!trimmedSearch) {
-      return sourceRows;
-    }
-
-    return sourceRows.filter((row) =>
-      Object.values(row).some((value) => {
-        if (value == null) return false;
-        return String(value).toLowerCase().includes(trimmedSearch);
-      }),
-    );
-  }, [storeRows, localRows, isInEditMode, search]);
+    return (isInEditMode ? localRows : storeRows) as ResponsePageRow[];
+  }, [storeRows, localRows, isInEditMode]);
 
   const selectedIds: GridRowId[] = Array.from(rowSelectionModel.ids);
   const hasSelection = rowSelectionModel.type === "include" ? selectedIds.length > 0 : true;

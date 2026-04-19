@@ -28,8 +28,8 @@ interface SavedViewCardProps {
   onLoadView: (view: ResponsesView) => void;
   onEditView?: (view: ResponsesView) => void;
   onDeleteView?: (view: ResponsesView) => void;
-  currentViewId?: number | null;
-  setCurrentViewId?: (id: number | null) => void;
+  currentViewId?: string | number | null;
+  setCurrentViewId?: (id: string | number | null) => void;
 }
 
 export function SavedViewCard({
@@ -73,7 +73,9 @@ export function SavedViewCard({
             <ViewChipsContainer></ViewChipsContainer>
 
             <Typography variant="caption" color="text.secondary">
-              {HebrewTitles.CREATED_BY} {view.createdByName}
+              {HebrewTitles.CREATED_BY}{" "}
+              {view.createdByName ||
+                (typeof view.createdBy === "object" ? view.createdBy.name : view.createdBy)}
             </Typography>
           </ViewCardInfo>
 

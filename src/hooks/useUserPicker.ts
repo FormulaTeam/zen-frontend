@@ -12,7 +12,7 @@ export type SharePickerUser = {
   id?: number | string;
   displayName: string;
   upn: string;
-  role_id?: number;
+  role_id?: Role;
   selected?: boolean;
 };
 
@@ -62,7 +62,7 @@ export const useUserPicker = ({
     null,
   );
 
-  const { mutateAsync: upsertFormRolesAsync } = useUpsertFormRoles();
+  const { mutateAsync: upsertFormRolesAsync } = useUpsertFormRoles(form.id);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -88,16 +88,17 @@ export const useUserPicker = ({
   }, [form, roles, publicRole]);
 
   const saveSharedWith = async () => {
-    const userRoles: { userId: number; role: number }[] = [];
+    const userRoles: { userId: number; role: Role }[] = [];
     let allPermissionsSelected = true;
 
     selectedShareWith.forEach((user) => {
-      if (user.role_id === -1 || !user.role_id) {
+      const { role_id } = user;
+      if (!role_id) {
         allPermissionsSelected = false;
       } else {
         userRoles.push({
           userId: Number(user.id),
-          role: user.role_id,
+          role: role_id,
         });
       }
     });
@@ -156,11 +157,8 @@ export const useUserPicker = ({
     try {
       setLoading(true);
       const response = await upsertFormRolesAsync({
-        formId: form.id,
-        data: {
-          userRoles,
-          publicRole: formPermissionState ?? null,
-        }
+        userRoles: userRoles,
+        publicRole: formPermissionState ?? undefined,
       });
 
       if (response && response.publicRole) {
@@ -209,7 +207,7 @@ export const useUserPicker = ({
 
       if (alreadyExists) return previousUsers;
 
-      return [...previousUsers, { ...newValue, role_id: -1, selected: true }];
+      return [...previousUsers, { ...newValue, role_id: undefined, selected: true }];
     });
 
     handleInputChange(null, "");

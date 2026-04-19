@@ -69,7 +69,7 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
 
   const getDisabledReason = (): JSX.Element | undefined => {
     const reasons: string[] = [];
-    if (selectedShareWith.some((user) => !user.role_id || user.role_id === -1)) {
+    if (selectedShareWith.some((user) => !user.role_id)) {
       reasons.push("יש לבחור הרשאה למשתמשים שנוספו");
     }
     if (isPublic && !formPermission) {

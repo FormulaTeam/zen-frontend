@@ -124,8 +124,8 @@ export const useViewManager = ({
         };
 
         const saved = payload.id
-          ? await updateResponsesView(payload.id, payload)
-          : await createResponsesView(payload);
+          ? await updateResponsesView(String(form.id), payload.id, payload)
+          : await createResponsesView(String(form.id), payload);
 
         showSuccessNotification(
           payload.id ? HebrewMessages.UpdateViewSuccess : HebrewMessages.SaveViewSuccess,
@@ -133,7 +133,7 @@ export const useViewManager = ({
 
         setCurrentView(saved);
         setSelectedViewId(saved.id ? String(saved.id) : "");
-        setCurrentViewConfig(saved.config.columns);
+        setCurrentViewConfig(saved.config?.columns ?? []);
 
         if (saved.isDefault) await refetch();
       } catch (err) {
@@ -152,11 +152,11 @@ export const useViewManager = ({
   const handleLoadView = useCallback(
     (view: ResponsesView) => {
       setCurrentView(view);
-      setCurrentViewConfig(view.config.columns);
+      setCurrentViewConfig(view.config?.columns ?? []);
       setSelectedViewId(view.id ? String(view.id) : "");
 
       if (setSorting && tableColumns?.length) {
-        applyViewSorting(setSorting, view.config.columns, tableColumns);
+        applyViewSorting(setSorting, view.config?.columns ?? [], tableColumns);
       }
     },
     [setSorting, tableColumns],
@@ -201,10 +201,10 @@ export const useViewManager = ({
    * -------------------------------- */
   const handleDeleteView = useCallback(
     async (view: ResponsesView) => {
-      if (!view.id) return;
+      if (!view.id || !form) return;
 
       try {
-        await deleteResponsesView(view.id);
+        await deleteResponsesView(String(form.id), view.id);
 
         if (currentView?.id === view.id) {
           setCurrentView(undefined);

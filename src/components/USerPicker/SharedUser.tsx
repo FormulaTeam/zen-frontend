@@ -22,11 +22,11 @@ const SharedUser = ({ user, roles, handleRoleChange, removeUserFromShare }) => {
   const upn = user?.upn || user?.mail || user?.id || "";
   // Find the current role for the user
   const roleObj =
-    user?.role_id !== undefined && user?.role_id !== -1
+    user?.role_id !== undefined && user?.role_id
       ? roles.find((r) => r.role_id === user.role_id)
       : null;
   const roleName = roleObj?.roleName || "";
-  const isValid = user?.role_id !== undefined && user?.role_id !== -1;
+  const isValid = user?.role_id !== undefined && user?.role_id;
   const isDisabled = user?.upn === currentUser?.upn;
   return (
     <SharedUserContainer>

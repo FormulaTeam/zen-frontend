@@ -10,6 +10,11 @@ import { useCreate } from "../utils/useCreate";
 import queryClient from "./queryClient";
 import { FormDto } from "../types/shared";
 
+const stringifyQuery = (query: any): string => {
+  if (query && typeof query === "object") return JSON.stringify(query);
+  return query || "";
+};
+
 /**
  * Fetch all forms with optional query parameters.
  *
@@ -18,10 +23,7 @@ import { FormDto } from "../types/shared";
  */
 export const getForms = async (filter?: Filter): Promise<FormDto[]> => {
   const params = {
-    query:
-      filter?.query && typeof filter.query !== "string"
-        ? JSON.stringify(filter.query)
-        : filter?.query,
+    search: stringifyQuery(filter?.query),
     sortBy: filter?.sortBy,
     orderBy: filter?.orderBy,
     pageSize: filter?.pageSize,
@@ -29,13 +31,7 @@ export const getForms = async (filter?: Filter): Promise<FormDto[]> => {
   };
 
   try {
-    const response = await apiClient.get<Form>("/forms/get-forms", { params, signal: filter?.signal });
-    if (!Array.isArray(response?.data)) {
-      console.log("response:", response, "type: ", typeof response);
-      console.log("response?.data:", response?.data, "type: ", typeof response?.data);
-      return [];
-    }
-
+    const response = await apiClient.get<FormDto[]>("/forms", { params, signal: filter?.signal });
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch forms:", error);
@@ -43,6 +39,12 @@ export const getForms = async (filter?: Filter): Promise<FormDto[]> => {
   }
 };
 
+/**
+ * Fetch a specific form by ID.
+ *
+ * @param formId - The ID of the form.
+ * @returns A promise that resolves to the form data.
+ */
 export const getFormById = async (formId?: number): Promise<FormDto | null> => {
   if (!formId) {
     return null;
@@ -57,17 +59,49 @@ export const getFormById = async (formId?: number): Promise<FormDto | null> => {
 };
 
 /**
- * restores an deleted form.
+ * Fetch linkable forms for a given form ID.
  *
- * @param id - The ID of the form to update.
- * @returns A promise that resolves to the updated form.
+ * @param formId - The ID of the form.
+ * @returns A promise that resolves to an array of linkable forms.
  */
-export const restoreForm = async (id: number): Promise<Form> => {
+export const getLinkableForms = async (formId: number): Promise<FormDto[]> => {
   try {
-    const response = await apiClient.put<Form>(`/forms/restore/${id}`);
+    const response = await apiClient.get<FormDto[]>(`/forms/${formId}/linkable`);
+    return response?.data || [];
+  } catch (error) {
+    console.error("Failed to fetch linkable forms:", error);
+    throw error;
+  }
+};
+
+/**
+ * Restores a soft-deleted form.
+ *
+ * @param id - The ID of the form to restore.
+ * @returns A promise that resolves to the restored form.
+ */
+export const restoreForm = async (id: number): Promise<FormDto> => {
+  try {
+    const response = await apiClient.post<FormDto>(`/forms/${id}/restore`);
     return response?.data;
   } catch (error) {
-    console.error("Failed to update form:", error);
+    console.error("Failed to restore form:", error);
+    throw error;
+  }
+};
+
+/**
+ * Soft deletes a form.
+ *
+ * @param id - The ID of the form to delete.
+ * @returns A promise that resolves to the deleted form.
+ */
+export const deleteForm = async (id: number): Promise<FormDto> => {
+  try {
+    const response = await apiClient.post<FormDto>(`/forms/${id}/soft-delete`);
+    return response?.data;
+  } catch (error) {
+    console.error("Failed to delete form:", error);
     throw error;
   }
 };
@@ -79,9 +113,9 @@ export const restoreForm = async (id: number): Promise<Form> => {
  * @param usersForShare - The users to share the form with.
  * @returns A promise that resolves to the updated form.
  */
-export const shareForm = async (id: number, usersForShare: User[]): Promise<Form> => {
+export const shareForm = async (id: number, usersForShare: User[]): Promise<FormDto> => {
   try {
-    const response = await apiClient.put<Form>(`/forms/share/${id}`, usersForShare);
+    const response = await apiClient.patch<FormDto>(`/forms/${id}`, { users: usersForShare });
     return response?.data;
   } catch (error) {
     console.error("Failed to share form:", error);
@@ -90,15 +124,15 @@ export const shareForm = async (id: number, usersForShare: User[]): Promise<Form
 };
 
 /**
- * Update an existing form with given users.
+ * Update an existing form with metro data.
  *
  * @param id - The ID of the form to update.
  * @param metroObj - The metroObj to update form with.
  * @returns A promise that resolves to the updated form.
  */
-export const updateMetroLbsInForm = async (id: number, metroObj: any): Promise<Form> => {
+export const updateMetroLbsInForm = async (id: number, metroObj: any): Promise<FormDto> => {
   try {
-    const response = await apiClient.put<Form>(`/forms/updateMetroLbs/${id}`, metroObj);
+    const response = await apiClient.patch<FormDto>(`/forms/${id}`, metroObj);
     return response?.data;
   } catch (error) {
     console.error("Failed to update metro labels in form:", error);
@@ -108,9 +142,6 @@ export const updateMetroLbsInForm = async (id: number, metroObj: any): Promise<F
 
 /**
  * Push the responses of a specific form to Metro.
- *
- * @param id - The ID of the form to send its responses to metro.
- * @returns A promise that resolves to the updated form.
  */
 export const sendToMetroFormResponses = async (id: number): Promise<MetroReturnedData> => {
   try {
@@ -123,30 +154,7 @@ export const sendToMetroFormResponses = async (id: number): Promise<MetroReturne
 };
 
 /**
- * Delete a form.
- *
- * @param id - The ID of the form to delete.
- * @returns A promise that resolves to the deleted form.
- */
-export const deleteForm = async (id: number, userData: UserData): Promise<Form> => {
-  const { upn, userName } = userData;
-  try {
-    const response = await apiClient.delete<Form>(
-      `/forms/delete/${id}?upn=${upn}&userName=${userName}`,
-    );
-
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to delete form:", error);
-    throw error;
-  }
-};
-
-/**
  * Upsert source to Metro.
- *
- * @param id - The ID of the form to upsert the source for.
- * @returns A promise that resolves to the upsert response data.
  */
 export const upsertSourceToMetro = async (id: number): Promise<any> => {
   try {
@@ -160,9 +168,6 @@ export const upsertSourceToMetro = async (id: number): Promise<any> => {
 
 /**
  * Edit source in Metro.
- *
- * @param id - The ID of the form to edit the source for.
- * @returns A promise that resolves to the edit response data.
  */
 export const editSourceToMetro = async (id: number): Promise<any> => {
   try {
@@ -180,7 +185,7 @@ export const editSourceToMetro = async (id: number): Promise<any> => {
 export type CreateFormDto = z.infer<typeof CreateFormSchema>;
 
 export const useCreateForm = () => {
-  return useCreate<CreateFormDto, Form>({
+  return useCreate<CreateFormDto, FormDto>({
     endpoint: "/forms",
     mutationKey: ["create-form"],
     mutationOptions: {
@@ -236,13 +241,19 @@ export const useGetForm = ({
 };
 
 export const useDeleteForm = ({ id }: { id: string }) => {
-  return useDelete<null, { upn: string | undefined; userName: string | undefined }>({
-    endpoint: `/forms/delete/${id}`,
-    mutationKey: ["deleteForm", id],
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["forms"] });
-      },
+  return useMutation({
+    mutationFn: () => deleteForm(Number(id)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["forms"] });
+    },
+  });
+};
+
+export const useRestoreForm = ({ id }: { id: string }) => {
+  return useMutation({
+    mutationFn: () => restoreForm(Number(id)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["forms"] });
     },
   });
 };

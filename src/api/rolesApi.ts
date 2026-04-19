@@ -1,36 +1,49 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import apiClient from "./config";
-import { FormRoleDto } from "../types/shared";
+import { z } from "zod";
+import { FormRolesSchema, FormRolesQuerySchema } from "formula-gear";
+import queryClient from "./queryClient";
 
-interface UpsertFormRolesDto {
-  userRoles: { userId: number; role: number }[];
-  publicRole?: number | null;
-}
+export type FormRoles = z.infer<typeof FormRolesSchema>;
+export type FormRolesQuery = z.infer<typeof FormRolesQuerySchema>;
 
-const getFormRoles = async (formId: number): Promise<FormRoleDto> => {
-  const response = await apiClient.get<FormRoleDto>(`/forms/${formId}/roles`);
+/**
+ * Fetch the roles for a specific form.
+ *
+ * @param formId - The ID of the form.
+ * @returns A promise that resolves to the form roles.
+ */
+export const getFormRoles = async (formId: number): Promise<FormRoles> => {
+  const response = await apiClient.get<FormRoles>(`/forms/${formId}/roles`);
+  return response.data;
+};
+
+/**
+ * Upsert roles for a specific form.
+ *
+ * @param formId - The ID of the form.
+ * @param roles - The roles data to upsert.
+ * @returns A promise that resolves to the updated form roles.
+ */
+export const upsertFormRoles = async (formId: number, roles: FormRolesQuery): Promise<FormRoles> => {
+  const response = await apiClient.post<FormRoles>(`/forms/${formId}/roles`, roles);
   return response.data;
 };
 
 export const useGetFormRoles = (formId: number | string | undefined, enabled = true) => {
   const numericFormId = Number(formId);
-  return useQuery<FormRoleDto>({
+  return useQuery<FormRoles>({
     queryKey: ["form-roles", numericFormId],
     queryFn: () => getFormRoles(numericFormId),
     enabled: enabled && !!formId && !isNaN(numericFormId),
   });
 };
 
-export const useUpsertFormRoles = () => {
-  const queryClient = useQueryClient();
-
+export const useUpsertFormRoles = (formId: number) => {
   return useMutation({
-    mutationFn: async ({ formId, data }: { formId: number; data: UpsertFormRolesDto }) => {
-      const response = await apiClient.post<FormRoleDto>(`/forms/${formId}/roles`, data);
-      return response.data;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["form-roles", variables.formId] });
+    mutationFn: (roles: FormRolesQuery) => upsertFormRoles(formId, roles),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["form-roles", formId] });
     },
   });
 };

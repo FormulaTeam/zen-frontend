@@ -103,6 +103,32 @@ export const RESPONSE_ACCESS_PERMISSIONS = [
   PERMISSION_TYPES.EXPORT_FORM,
 ];
 
+export const encodeCursor = (index: number, id: string): string => {
+  return btoa(JSON.stringify({ index, id }));
+};
+
+export type DecodedCursor = {
+  index: number;
+  id: string;
+};
+
+export const decodeCursor = (cursor: string): DecodedCursor | null => {
+  try {
+    const decoded = JSON.parse(atob(cursor));
+
+    if (typeof decoded.index !== "number" || typeof decoded.id !== "string") {
+      return null;
+    }
+
+    return {
+      index: decoded.index,
+      id: decoded.id,
+    };
+  } catch {
+    return null;
+  }
+};
+
 export type LegacyPermission = (typeof PERMISSION_TYPES)[keyof typeof PERMISSION_TYPES];
 
 export const allLegacyPermissions: LegacyPermission[] = Object.values(PERMISSION_TYPES);
@@ -400,7 +426,7 @@ function preferredOrder(obj, order) {
 
 export const getResponsesAndExportToExcel = async (form: FormDto) => {
   try {
-    let responses: ResponseDto[] = await getResponses({ form_id: form.id });
+    let responses: ResponseDto[] = await getResponses(form.id, { form_id: form.id });
 
     if (responses?.length > 0) {
       exportToExcel(responses, form);
@@ -588,7 +614,7 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
             value: item.value,
             fieldId: item.fieldId,
             dateAndTime: extra.dateAndTime,
-            fieldType: currentFieldType,
+            fieldType: currentFieldType as FieldType,
           });
         }
 
@@ -860,23 +886,26 @@ export function generateNewFormFieldData(item: Partial<CustomFormField>) {
 }
 
 export function getUserRole(
-  formUsers: FormUser[],
+  formUsers: FormUser[] | undefined,
   currentUser: User,
   isSuperAdmin: boolean | null,
   fullAccessRoleId: RoleId | null,
 ) {
   if (isSuperAdmin && fullAccessRoleId) return fullAccessRoleId;
-  const permittedUser = formUsers.find(
-    (u) => u.upn?.toLowerCase() === currentUser.upn?.toLowerCase(),
+
+  const permittedUser = (formUsers || []).find(
+    (u) => u.upn?.toLowerCase() === currentUser?.upn?.toLowerCase(),
   );
+
   if (permittedUser) {
     return permittedUser.role_id;
   }
 
-  throw "current user does not have access to this form";
+  throw new Error("User has no role for the form");
 }
 
 export function checkUserAccessForResponse(
+
   roles: Role[],
   viewMode: boolean,
   response: ResponseForm | null,

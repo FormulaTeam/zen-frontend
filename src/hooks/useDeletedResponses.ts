@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Filter, ResponseForm } from "../utils/interfaces";
 import type { FormDto } from "../types/shared";
-import { getAllDeletedResponses, restoreResponse } from "../api";
+import { getResponses, restoreResponses } from "../api";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
 import { useSuperAdmin } from "../contexts/SuperAdminContext";
 import { useDebounce } from "./utilsHooks/useDebounce";
@@ -18,7 +18,7 @@ export const getResponseKey = (formId: number, responseIndex: number) =>
  */
 const sortResponses = (responses: ResponseForm[], sortValue: number): ResponseForm[] => {
   const getDeletedTime = (r: ResponseForm) => {
-    const raw = r?.deleted_at ?? 0;
+    const raw = (r as any)?.deleted_at || (r as any)?.deletedAt || 0;
     const time = new Date(raw).getTime();
     return Number.isFinite(time) ? time : 0;
   };
@@ -54,18 +54,6 @@ export const useDeletedResponses = (
   const debouncedSearchValue = useDebounce(searchValue, 500);
   const { isSuperAdmin } = useSuperAdmin();
 
-  /**
-   * Fetch deleted responses (new payload format).
-   *
-   * Expected backend behavior:
-   * - Auth token determines user; backend enforces permissions.
-   * - query.search: search forms by name OR numeric id (if numeric).
-   * - query.deletedByText: filter by deleter user.name OR user.upn (ILIKE/contains).
-   * - query.createdByText: filter by creator user.name OR user.upn (ILIKE/contains).
-   * - query.formId: return deleted responses for that form only.
-   * - query.isDeletedForm: filter deleted_with_form=true when a deleted form is selected.
-   * - query.sort: deletedAtDesc / deletedAtAsc
-   */
   const fetchResponses = async (
     pageNumber = 1,
     search = "",
@@ -79,36 +67,32 @@ export const useDeletedResponses = (
 
     try {
       const trimmedSearch = search.trim();
-
-      const sort = customSort === 8 ? "deletedAtAsc" : "deletedAtDesc"; // default 7 => desc
+      const sort = customSort === 8 ? "deletedAtAsc" : "deletedAtDesc";
 
       const filter: Filter = {
         pageSize: PAGE_SIZE,
         pageNumber,
+        deleted: true,
         query: {
           sort,
-          // These are plain strings; backend should do "contains/ILIKE" on user.upn and user.name
           deletedByText: customFilters.deletedBy?.trim() || undefined,
           createdByText: customFilters.createdBy?.trim() || undefined,
-
-          // Top search box: backend should treat as form name or id search.
           search: trimmedSearch || undefined,
-
-          // If user selected a deleted form: restrict to this form.
           ...(currentDeletedForm
             ? {
-                formId: currentDeletedForm.id,
                 isDeletedForm: true,
               }
             : {}),
         },
       };
 
-      const result = await getAllDeletedResponses(filter);
+      const result = currentDeletedForm
+        ? await getResponses(currentDeletedForm.id, filter)
+        : [];
 
       if (queryId !== currentQueryId.current) return;
 
-      const sorted = sortResponses(result ?? [], customSort);
+      const sorted = sortResponses(result as any ?? [], customSort);
 
       if (pageNumber === 1) {
         setResponses(sorted);
@@ -147,17 +131,15 @@ export const useDeletedResponses = (
     }
   };
 
-  const restoreResponseById = async (formId: number, responseIndex: number) => {
+  const restoreResponseById = async (formId: number, responseId: string) => {
     setIsLoading(true);
     try {
-      const restored = await restoreResponse(formId, responseIndex);
-      if (!restored) return showErrorNotification("Restore failed");
-
+      await restoreResponses(formId, [responseId]);
       showSuccessNotification("התגובה שוחזרה בהצלחה");
 
       setResponses((prev: any[]) =>
         prev.filter(
-          (r) => !((r.form_id ?? r.formId) === formId && (r.index ?? r.id) === responseIndex),
+          (r) => !((r.form_id ?? r.formId) === formId && (r.id) === responseId),
         ),
       );
     } catch (err) {
@@ -173,26 +155,28 @@ export const useDeletedResponses = (
 
   const restoreSelectedResponses = async () => {
     for (const response of responses) {
-      const formId = response.form_id ?? response.form_id;
-      const index = response.index;
+      const formId = response.form_id;
+      const responseId = response.id;
 
-      if (typeof formId !== "number" || typeof index !== "number") continue;
-
-      const key = getResponseKey(formId, index);
+      const key = getResponseKey(formId, response.index);
       if (selectedResponseKeys.includes(key)) {
-        await restoreResponseById(formId, index);
+        await restoreResponseById(formId, responseId);
       }
     }
     cancelSelection();
   };
 
-  const handleSelect = (formId: number, responseIndex: number) => {
-    const key = getResponseKey(formId, responseIndex);
+  const handleSelect = (formId: number, responseId: string) => {
+    const response = responses.find((r) => r.id === responseId);
+    if (!response) return;
+    const key = getResponseKey(formId, response.index);
     setSelectedResponseKeys((prev) => (prev.includes(key) ? prev : [...prev, key]));
   };
 
-  const handleDeselect = (formId: number, responseIndex: number) => {
-    const key = getResponseKey(formId, responseIndex);
+  const handleDeselect = (formId: number, responseId: string) => {
+    const response = responses.find((r) => r.id === responseId);
+    if (!response) return;
+    const key = getResponseKey(formId, response.index);
     setSelectedResponseKeys((prev) => prev.filter((x) => x !== key));
   };
 

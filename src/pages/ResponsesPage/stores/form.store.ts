@@ -1,11 +1,12 @@
 import { GridColDef } from "@mui/x-data-grid-pro";
 import { create } from "zustand";
 
-import { FormDto } from "../../../types/shared";
-import { Filter, ResponseForm, Row } from "../../../utils/interfaces";
+import { FormDto, FormFieldDto } from "../../../types/shared";
+import { Filter, PageInfo, ResponseForm, Row } from "../../../utils/interfaces";
 import { LegacyPermission } from "../../../utils/utils";
 
 export type StoreForm = FormDto & {
+  fields: FormFieldDto[];
   columns?: GridColDef[];
   metro_access_url?: string | null;
   oasisSourceKey?: string | null;
@@ -23,6 +24,8 @@ interface FormsState {
   rows: Row[];
   setRows: (rows: Row[]) => void;
   isRowsLoading?: boolean;
+  pageInfo: PageInfo | null;
+  setPageInfo: (pageInfo: PageInfo | null) => void;
 }
 
 export const useInitiateFormStore = create<FormsState>((set) => ({
@@ -36,6 +39,8 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
   setFilter: (filter: Filter | null) => set({ filter }),
   rows: [],
   setRows: (rows: Row[]) => set({ rows }),
+  pageInfo: null,
+  setPageInfo: (pageInfo: PageInfo | null) => set({ pageInfo }),
 }));
 
 export function useFormStore() {
@@ -55,5 +60,7 @@ export function useFormStore() {
     rows: store.rows,
     setRows: store.setRows,
     isRowsLoading: store.isRowsLoading,
+    pageInfo: store.pageInfo,
+    setPageInfo: store.setPageInfo,
   };
 }
