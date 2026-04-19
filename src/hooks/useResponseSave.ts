@@ -1,5 +1,5 @@
 import { useCreateResponse, useUpdateResponse } from "../api";
-import { showErrorNotification } from "../utils/utils";
+import { showErrorNotification, getUserName } from "../utils/utils";
 import { NotificationTexts } from "../utils/interfaces";
 import moment from "moment";
 import {
@@ -52,6 +52,22 @@ type FileValueItem = {
   [key: string]: any;
 };
 
+const parseParentResponse = (parentResponse?: string | ParentResponseRef): ParentResponseRef | undefined => {
+  if (!parentResponse) return undefined;
+  if (typeof parentResponse === "object") return parentResponse;
+
+  const parts = parentResponse.split(";");
+  if (parts.length === 2) {
+    const [formIdStr, responseId] = parts;
+    const formId = parseInt(formIdStr, 10);
+    if (!isNaN(formId)) {
+      return { formId, responseId };
+    }
+  }
+
+  return undefined;
+};
+
 const getFieldExtra = (field: SaveField): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
 
@@ -96,7 +112,7 @@ export const useResponseSave = (
   const formId = form?.id;
 
   const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } =
-    useCreateResponse(formId!);
+    useCreateResponse(formId);
   const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } =
     useUpdateResponse(formId, response?.id);
 
@@ -151,21 +167,27 @@ export const useResponseSave = (
       });
     }
 
+    const userName = getUserName(user?.firstName, user?.lastName) || user?.name || "";
+    const normalizedUpn = user?.upn?.toLowerCase?.() ?? user?.upn ?? "unknown";
+
+    const parsedParentResponse = parseParentResponse(parentResponse);
     try {
       if (response && response.id && !copyMode) {
+        const { parentResponse: _, ...restResponse } = response;
         const updatedResponse: UpdateResponsePayload = {
-          ...response,
+          ...restResponse,
           updatedBy: response.updatedBy,
           fieldValues,
-          ...(parentResponse ? { parentResponse } : {}),
+          ...(parsedParentResponse ? { parentResponse: parsedParentResponse } : {}),
         };
 
-        return (await mutateUpdateResponseAsync(updatedResponse as any)) as ResponseDto;
+        const result = (await mutateUpdateResponseAsync(updatedResponse as any)) as any;
+        return result?.data ?? result;
       }
 
       const newResponse: CreateResponsePayload = {
         fieldValues,
-        ...(parentResponse ? { parentResponse } : {}),
+        ...(parsedParentResponse ? { parentResponse: parsedParentResponse } : {}),
       };
 
       if (parentResponse) {

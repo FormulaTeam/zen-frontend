@@ -37,8 +37,16 @@ export function useLegacyFormsData(maxInPage = 1000) {
 
   const getData: IGetFormsData = useCallback(
     async (nextPage, currentFilter = {}, additionalFilter = {}, deleted = false) => {
+      const mergedQuery =
+        currentFilter.query &&
+        typeof currentFilter.query === "object" &&
+        additionalFilter.query &&
+        typeof additionalFilter.query === "object"
+          ? { ...currentFilter.query, ...additionalFilter.query }
+          : additionalFilter.query || currentFilter.query;
+
       const filter: Filter = {
-        query: { ...currentFilter.query, ...additionalFilter.query },
+        query: mergedQuery,
         pageSize: maxInPage,
         pageNumber: nextPage,
         sortBy: additionalFilter.sortBy ?? currentFilter.sortBy ?? "name",

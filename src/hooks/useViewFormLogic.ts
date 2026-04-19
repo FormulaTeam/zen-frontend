@@ -91,7 +91,7 @@ export const useViewFormLogic = ({
     columns: cloneColumns(columns),
   });
 
-  const lastSyncedViewId = useRef<number | undefined>(undefined);
+  const lastSyncedViewId = useRef<string | number | undefined>(undefined);
 
   /* ------------------------ Sync ------------------------ */
 
@@ -109,7 +109,7 @@ export const useViewFormLogic = ({
       viewName: currentView.name,
       isPublic: currentView.isPublic,
       isDefault: currentView.isDefault,
-      columns: cloneColumns(currentView.config.columns),
+      columns: cloneColumns(currentView.config?.columns ?? []),
     });
   }, [currentView]);
 

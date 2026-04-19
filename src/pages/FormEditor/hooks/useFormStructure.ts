@@ -55,7 +55,7 @@ function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
         id: fieldId,
         parentSectionId: sectionId,
         data: {
-          typeId: fieldData.fieldType,
+          typeId: fieldData.fieldType as any,
           name: fieldData.name || "",
           displayName: fieldData.displayName || "",
           required: fieldData.isRequired || false,

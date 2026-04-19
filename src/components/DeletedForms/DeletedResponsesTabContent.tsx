@@ -71,7 +71,7 @@ export default function DeletedResponsesTabContent({
     }
 
     if (!mounted) return;
-    getData(1, { query: {} });
+    getData(1, { query: "" });
   }, [responses, searchValue]);
 
   useEffect(() => {
@@ -157,8 +157,8 @@ export default function DeletedResponsesTabContent({
                     handleRestoreResponse={restoreResponseById}
                     currentDeletedForm={currentDeletedForm}
                     isSelected={selectedResponseKeys.includes(key)}
-                    onSelect={() => handleSelect(res.form_id, res.index)}
-                    onDeselect={() => handleDeselect(res.form_id, res.index)}
+                    onSelect={() => handleSelect(res.form_id, res.id)}
+                    onDeselect={() => handleDeselect(res.form_id, res.id)}
                   />
                 </FullWidthBox>
               </Grow>

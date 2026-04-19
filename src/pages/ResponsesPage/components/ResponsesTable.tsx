@@ -22,7 +22,18 @@ import CloudOffIcon from "@mui/icons-material/CloudOff";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "@components/formInForm/ZoomCell";
-import { Box, Menu, MenuItem, ListItemIcon, ListItemText } from "@mui/material";
+import {
+  Box,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  IconButton,
+  Stack,
+  Typography,
+} from "@mui/material";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
 import { downloadFileFromResponse } from "@api/filesApi";
@@ -88,8 +99,28 @@ export const ResponsesTable = ({
   onRowSelectionModelChange,
   currentViewConfig,
 }: ResponsesTableProps) => {
-  const { form, rows } = useFormStore();
+  const { form, rows, pageInfo, filter, setFilter } = useFormStore();
   const navigate = useNavigate();
+
+  const handleNextPage = useCallback(() => {
+    if (pageInfo?.hasNextPage && pageInfo.endCursor) {
+      setFilter({
+        ...filter,
+        after: pageInfo.endCursor,
+        before: undefined,
+      });
+    }
+  }, [pageInfo, filter, setFilter]);
+
+  const handlePreviousPage = useCallback(() => {
+    if (pageInfo?.hasPreviousPage && pageInfo.startCursor) {
+      setFilter({
+        ...filter,
+        before: pageInfo.startCursor,
+        after: undefined,
+      });
+    }
+  }, [pageInfo, filter, setFilter]);
 
   const formFields = useMemo<FormFieldDto[]>(
     () => (form?.sections ?? []).flatMap((section) => section.fields ?? []),
@@ -459,7 +490,21 @@ export const ResponsesTable = ({
             {`כמות תגובות בטופס - ${rows.length}`}
           </ResponsesAmountText>
         </ResponsesAmountBox>
-        <GridFooter />
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ ml: "auto", mr: 2 }}>
+          <IconButton
+            onClick={handlePreviousPage}
+            disabled={!pageInfo?.hasPreviousPage || isInEditMode}
+            size="small">
+            <NavigateNextIcon />
+          </IconButton>
+          <Typography variant="body2">דף הבא / הקודם</Typography>
+          <IconButton
+            onClick={handleNextPage}
+            disabled={!pageInfo?.hasNextPage || isInEditMode}
+            size="small">
+            <NavigateBeforeIcon />
+          </IconButton>
+        </Stack>
       </GridFooterContainer>
     );
   };
@@ -486,10 +531,6 @@ export const ResponsesTable = ({
           density="comfortable"
           rowHeight={isInEditMode ? 140 : 65}
           loading={!rows}
-          pagination
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          pageSizeOptions={[15, 25, 50, 100]}
           checkboxSelection
           disableRowSelectionOnClick
           onRowSelectionModelChange={onRowSelectionModelChange}

@@ -135,7 +135,7 @@ export const useConnectedFormOptions = ({
    */
   const loadConnectedFormOptions = async (connectedFields: ConnectedFormField[]): Promise<void> => {
     const formIds = getUniqueFormIds(connectedFields);
-    const promises = formIds.map((formId) => getResponses({ form_id: formId }));
+    const promises = formIds.map((formId) => getResponses(formId, { form_id: formId }));
 
     try {
       setIsLoading(true);

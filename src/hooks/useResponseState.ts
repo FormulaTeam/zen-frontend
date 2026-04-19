@@ -7,7 +7,7 @@ import type {
   ResponseFieldValueDto,
 } from "../types/shared";
 import { fieldType, FieldType, validateFormFieldValue, type FormFieldLike } from "formula-gear";
-import { getFormById, getResponses } from "../api";
+import { getFormById, getResponseById, searchResponses, getResponses } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
 import { checkUserAccessForResponse } from "../utils/utils";
 import { NOT_A_SECTION_ID } from "../utils/sections/consts";
@@ -62,7 +62,7 @@ const getFieldExtra = (field: FormFieldDto): FieldExtra => {
 };
 
 const getFieldType = (field: FormFieldDto): FieldType => {
-  return field.fieldType;
+  return field.fieldType as FieldType;
 };
 
 const flattenFields = (form: FormDto): FormFieldWithSectionDto[] => {
@@ -188,14 +188,7 @@ export const useResponseState = (
         }
 
         if (responseId) {
-          const responses = await getResponses({
-            form_id: Number(formId),
-            query: {
-              id: responseId,
-            },
-          });
-
-          const found = (responses?.[0] ?? null) as ResponseDto | null;
+          const found = await getResponseById(Number(formId), responseId);
 
           if (isMounted && found) {
             if (copyMode) {

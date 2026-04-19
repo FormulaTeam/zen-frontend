@@ -12,10 +12,10 @@ export interface ViewConfig {
 }
 
 export interface ResponsesView {
-  id?: number; // Numeric sequence ID from backend
+  id?: string | number; // UUID or numeric sequence ID from backend
   formId: string; // Form this view belongs to
   name: string; // Not globally unique, but must be unique per formId
-  createdBy: string; // User upn
+  createdBy: string | { name: string; upn: string }; // User upn or object
   createdByName?: string; // User display name
   isPublic: boolean; // true = visible to all users
   isDefault: boolean; // true = auto-applied for this form

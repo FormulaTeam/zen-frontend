@@ -47,10 +47,9 @@ const fetchChildFormData = async (
     const rowsData = await getResponsesRows({
       filter: {
         form_id: connectedFormId,
-        query: {
-          parentResponse: { $regex: `${parentFormId};` },
-        },
+        query: `parentResponse: { $regex: ${parentFormId};`,
       },
+      form: formData || undefined,
     });
 
     if (formData && rowsData) {

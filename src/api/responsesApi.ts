@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import apiClient from "./config";
 import {
   FieldTypeIds,
@@ -19,31 +20,33 @@ import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { useMutation } from "@tanstack/react-query";
 import { useUpdate } from "../utils/useUpdate";
-import { CreateResponseDto, ResponseDto } from "../types/shared";
+import { CreateResponseDto, ResponseDto, FormDto } from "../types/shared";
+import { z } from "zod";
+import { GetResponsesQuerySchema } from "formula-gear/dist/validators/responses/index";
+import { SortDirection } from "formula-gear";
+
+const stringifyQuery = (query: any): string => {
+  if (query && typeof query === "object") return JSON.stringify(query);
+  return query || "";
+};
 
 /**
- * Fetch all responses with optional query parameters.
+ * Fetch all responses for a form with optional query parameters.
  *
+ * @param formId - The ID of the form.
  * @param filter - Optional filter parameters for querying responses.
  * @returns A promise that resolves to an array of responses.
  */
-export const getResponses = async (filter?: Filter): Promise<ResponseDto[]> => {
-  const params = {
-    query: filter?.query ? JSON.stringify(filter.query) : undefined,
-    sortBy: filter?.sortBy,
-    orderBy: filter?.orderBy,
-    pageSize: filter?.pageSize,
-    pageNumber: filter?.pageNumber,
+export const getResponses = async (formId: number, filter?: Filter): Promise<ResponseDto[]> => {
+  const params: z.infer<typeof GetResponsesQuerySchema> = {
+    limit: filter?.pageSize ?? 25,
+    search: stringifyQuery(filter?.query),
+    sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+    before: filter?.before,
+    after: filter?.after,
   };
   try {
-    if (!filter?.form_id) {
-      console.error("Form ID is required to fetch responses.");
-      return [];
-    }
-    const response = await apiClient.get<ResponseDto[]>(
-      `/responses/get-responses?form_id=${filter?.form_id}`,
-      { params },
-    );
+    const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, { params });
     return response?.data ?? [];
   } catch (error) {
     console.error("Failed to fetch responses:", error);
@@ -52,48 +55,134 @@ export const getResponses = async (filter?: Filter): Promise<ResponseDto[]> => {
 };
 
 /**
- * Fetch responses that have the search text in their data.
+ * Fetch a specific response by ID.
  *
- * @param filter - The filter options including form ID, search filters, pagination, and sorting.
- * @returns A promise that resolves to an array of responses.
+ * @param formId - The ID of the form.
+ * @param responseId - The ID of the response.
+ * @returns A promise that resolves to the response data.
  */
-export const searchResponses = async (filter: Filter): Promise<ResponseForm[]> => {
+export const getResponseById = async (formId: number, responseId: string): Promise<ResponseDto> => {
   try {
-    // Prepare the request body as expected by the updated API
-    const requestBody = {
-      form_id: filter.form_id,
-      searchFilters: filter.searchFilters,
-      sortBy: filter?.sortBy,
-      orderBy: filter?.orderBy,
-      pageSize: filter?.pageSize,
-      pageNumber: filter?.pageNumber,
-    };
-
-    const response = await apiClient.post<ResponseForm[]>(`/responses/search`, requestBody, {
-      signal: filter?.signal,
-    });
-    return response?.data || [];
+    const response = await apiClient.get<ResponseDto>(`/forms/${formId}/responses/${responseId}`);
+    return response.data;
   } catch (error) {
-    console.error("Failed to fetch responses:", error);
+    console.error("Failed to fetch response:", error);
     throw error;
   }
 };
 
 /**
- * Get the number of responses for a given form ID, excluding those marked as deleted.
+ * Create a new response for a form.
  *
- * @param form_id - The form id to get the number of responses for.
- * @returns A promise that resolves to the number of responses for the given form id.
+ * @param formId - The ID of the form.
+ * @param responseData - The data for the new response.
+ * @returns A promise that resolves to the created response.
  */
-export const getResponsesCount = async (form_id: number): Promise<ResponseCount> => {
+export const createResponse = async (
+  formId: number,
+  responseData: CreateResponseDto,
+): Promise<ResponseDto> => {
   try {
-    const response = await apiClient.get<ResponseCount>(`/responses/count?form_id=${form_id}`);
-    return response?.data;
+    const response = await apiClient.post<ResponseDto>(`/forms/${formId}/responses`, responseData);
+    return response.data;
   } catch (error) {
     console.error("Failed to create response:", error);
     throw error;
   }
 };
+
+/**
+ * Soft delete multiple responses.
+ *
+ * @param formId - The ID of the form.
+ * @param responseIds - The IDs of the responses to delete.
+ * @returns A promise that resolves to the result of the deletion.
+ */
+export const softDeleteResponses = async (formId: number, responseIds: string[]): Promise<void> => {
+  try {
+    await apiClient.post(`/forms/${formId}/responses/soft-delete`, { responseIds });
+  } catch (error) {
+    console.error("Failed to soft-delete responses:", error);
+    throw error;
+  }
+};
+
+/**
+ * Restore multiple soft-deleted responses.
+ *
+ * @param formId - The ID of the form.
+ * @param responseIds - The IDs of the responses to restore.
+ * @returns A promise that resolves to the result of the restoration.
+ */
+export const restoreResponses = async (formId: number, responseIds: string[]): Promise<void> => {
+  try {
+    await apiClient.post(`/forms/${formId}/responses/restore`, { responseIds });
+  } catch (error) {
+    console.error("Failed to restore responses:", error);
+    throw error;
+  }
+};
+
+/**
+ * Fetch responses that have the search text in their data.
+ */
+export const searchResponses = async (filter: Filter): Promise<ResponseDto[]> => {
+  try {
+    const formId = filter?.form_id;
+    if (!formId) throw new Error("form_id is required for searchResponses");
+
+    const params: z.infer<typeof GetResponsesQuerySchema> = {
+      limit: filter?.pageSize ?? 25,
+      search: stringifyQuery(filter?.query),
+      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+    };
+
+    const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, { params });
+    return response?.data || [];
+  } catch (error) {
+    console.error("Failed to search responses:", error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a single response.
+ */
+export const deleteResponse = async (formId: number, responseId: string): Promise<void> => {
+  return softDeleteResponses(formId, [responseId]);
+};
+
+/**
+ * Fetch all deleted responses based on the provided filter.
+ */
+export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseDto[]> => {
+  try {
+    const formId = filter?.form_id;
+    if (!formId) throw new Error("form_id is required for getAllDeletedResponses");
+
+    const params: any = {
+      limit: filter?.pageSize ?? 25,
+      search: stringifyQuery(filter?.query),
+      deleted: true,
+    };
+
+    const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, { params });
+    return response?.data || [];
+  } catch (error) {
+    console.error("Failed to fetch deleted responses:", error);
+    throw error;
+  }
+};
+
+/**
+ * Restore a single soft-deleted response.
+ */
+export const restoreResponse = async (formId: number, responseId: string): Promise<void> => {
+  return restoreResponses(formId, [responseId]);
+};
+
+// Legacy/Utility methods
+// ============================================================
 
 export const getResponseWithFlatFields = (
   responseData: ResponseFieldValue[],
@@ -108,7 +197,7 @@ export const getResponseWithFlatFields = (
       switch (fieldMetaData.typeId) {
         case FieldTypeIds.options:
           if (field.value) {
-            acc[fieldName] = field.value.join(",");
+            acc[fieldName] = Array.isArray(field.value) ? field.value.join(",") : field.value;
           } else {
             acc[fieldName] = null;
           }
@@ -144,223 +233,134 @@ export const getResponseWithFlatFields = (
   return fieldsNameValueObj;
 };
 
-/**
- * Delete a response.
- *
- * @param id - The ID of the response to delete.
- * @returns A promise that resolves to the deleted response.
- */
-export const deleteResponse = async (formId: number, id: string): Promise<ResponseDto> => {
-  try {
-    const response = await apiClient.delete<ResponseDto>(`/responses/delete/${formId}/${id}`);
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to delete response:", error);
-    throw error;
-  }
-};
-
-/**
- * Delete multiple responses.
- *
- * @param deleteData - Data for the responses to delete.
- * @returns A promise that resolves to the number of deleted responses.
- */
-export interface DeleteMultipleResponsesRequest {
-  form_id: number;
-  response_ids: string[];
-}
-
-export const deleteMultipleResponses = async (
-  deleteData: DeleteMultipleResponsesRequest,
-): Promise<number> => {
-  try {
-    const response = await apiClient.delete<number>("/responses/delete-multiple", {
-      data: deleteData,
-    });
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to delete multiple responses:", error);
-    throw error;
-  }
-};
-
-/**
- * Delete all responses of form.
- *
- * @param formId - formId of the form.
- * @returns A promise that resolves to the number of deleted responses.
- */
-export const deleteAllResponses = async (formId: number): Promise<number> => {
-  try {
-    const response = await apiClient.delete<number>("/responses/delete-all-form-responses", {
-      data: { form_id: formId },
-    });
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to delete all responses of form: ", formId, error);
-    throw error;
-  }
-};
-
-/**
- * Restore a deleted response.
- *
- * @param formId - The ID of the form.
- * @param id - The ID of the response to restore.
- * @returns A promise that resolves to the restored response.
- */
-export const restoreResponse = async (formId: number, id: number): Promise<ResponseForm> => {
-  try {
-    const response = await apiClient.put<ResponseForm>(`/responses/restore/${formId}/${id}`);
-    return response?.data;
-  } catch (error) {
-    console.error("Failed to restore response:", error);
-    throw error;
-  }
-};
-
-/**
- * Fetch all deleted responses based on the provided filter.
- *
- * @param filter - The filter options including pagination and query parameters.
- * @returns A promise that resolves to an array of deleted responses.
- */
-export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseForm[]> => {
-  try {
-    const body = {
-      pageSize: filter?.pageSize,
-      pageNumber: filter?.pageNumber,
-      query: filter?.query || {},
-      isDeletedForm: Boolean(filter?.query?.isDeletedForm || filter?.isDeletedForm),
-    };
-
-    const response = await apiClient.post<ResponseForm[]>("/responses/get-deleted-responses", body);
-
-    return response?.data || [];
-  } catch (error) {
-    console.error("Failed to fetch deleted responses:", error);
-    throw error;
-  }
-};
-
-// Yahel's changes - above is the original file - below are the changes
+// Hooks
 // ============================================================
 
+export const useGetResponsesRows = (
+  formId: string,
+  params: z.infer<typeof GetResponsesQuerySchema>,
+) => {
+  const safeParams = useMemo(() => ({
+    ...params,
+    search: stringifyQuery(params.search),
+  }), [params]);
+
+  return useFetch<typeof safeParams, ResponseDto[]>({
+    endpoint: `/forms/${formId}/responses`,
+    queryKey: () => ["responses", formId, safeParams],
+    params: safeParams,
+    queryOptions: {
+      enabled: !!formId,
+    },
+  });
+};
+
 export const useGetResponses = ({ filter }: { filter?: Filter }) => {
-  return useFetch<Filter, ResponseForm[]>({
-    endpoint: `/responses/get-responses`,
+  const formId = filter?.form_id;
+  const params: z.infer<typeof GetResponsesQuerySchema> = useMemo(
+    () => ({
+      limit: filter?.pageSize ?? 25,
+      search: stringifyQuery(filter?.query),
+      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      before: filter?.before,
+      after: filter?.after,
+    }),
+    [filter],
+  );
+
+  return useFetch<typeof params | undefined, ResponseDto[]>({
+    endpoint: `/forms/${formId}/responses`,
     queryKey: () => ["responses", filter],
-    params: filter,
-    // queryOptions: { enabled: !!filter?.form_id },
+    params: params,
+    queryOptions: { enabled: !!formId },
   });
 };
 
-export const useGetResponsesRows = ({ filter }: { filter?: Filter }) => {
-  return useFetch<Filter, Row[]>({
-    endpoint: `/responses/get-rows`,
-    queryKey: () => ["rows", filter],
-    params: filter,
-    queryOptions: { enabled: !!filter?.form_id },
-  });
-};
-
-export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
-  return useDelete<{ form_id: string }, void>({
-    endpoint: `/responses/delete-all-form-responses`,
-    mutationKey: ["delete-all-form-responses", formId],
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [formId] });
-        queryClient.invalidateQueries({ queryKey: ["responses"] });
-      },
+export const useCreateResponse = (formId?: number) => {
+  return useMutation({
+    mutationFn: (responseData: CreateResponseDto) => {
+      const targetFormId = formId || (responseData as any).form_id;
+      if (!targetFormId) throw new Error("formId is required for createResponse");
+      return createResponse(targetFormId, responseData);
+    },
+    onSuccess: (_, variables) => {
+      const targetFormId = formId || (variables as any).form_id;
+      queryClient.invalidateQueries({ queryKey: ["responses", String(targetFormId)] });
     },
   });
 };
 
-export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
-  return useCreate<FormData, ExcelImportResult>({
-    endpoint: `/responses/create-from-file?form_id=${formId}`,
-    mutationKey: ["import-responses-from-file", formId],
-    axiosConfig: {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+export const useUpdateResponse = (formId?: number, responseId?: string) => {
+  return useMutation({
+    mutationFn: (responseData: Partial<ResponseDto>) => {
+      if (!formId || !responseId) throw new Error("formId and responseId are required");
+      return apiClient.patch<ResponseDto>(`/forms/${formId}/responses/${responseId}`, responseData);
     },
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [formId] });
-        queryClient.invalidateQueries({ queryKey: ["responses"] });
-      },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
     },
   });
 };
 
 export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
   return useMutation({
-    mutationFn: async (responses: Array<{ id: number; responseData: Partial<ResponseForm> }>) => {
-      const responsesPromises = responses.map(({ id, responseData }) => {
-        return apiClient.put<ResponseForm>(`/responses/edit/${formId}/${id}`, responseData);
-      });
-      const responsesResults = await Promise.all(responsesPromises);
-      return responsesResults.map((response) => response.data);
+    mutationFn: async (
+      responses: Array<{ id: string | number; responseData: Partial<ResponseDto> }>,
+    ) => {
+      const promises = responses.map(({ id, responseData }) =>
+        apiClient.patch<ResponseDto>(`/forms/${formId}/responses/${id}`, responseData),
+      );
+      const results = await Promise.all(promises);
+      return results.map((r) => r.data);
     },
-    mutationKey: ["batch-update-responses", formId],
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["responses"] });
-      queryClient.invalidateQueries({ queryKey: ["rows"] });
+      queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
     },
   });
 };
 
-// Gali's changes
-// ========================
-export const useCreateResponsesFromFile = (formId: string) => {
-  return useCreate<FormData, any>({
-    endpoint: `/responses/create-from-file?form_id=${formId}`,
-    mutationKey: ["create-responses-from-file", formId],
-    axiosConfig: {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    },
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["responses"] });
-      },
-      onError: (error) => {
-        console.error("Failed to create responses from file:", error);
-      },
+export const useSoftDeleteResponses = (formId: number) => {
+  return useMutation({
+    mutationFn: (responseIds: string[]) => softDeleteResponses(formId, responseIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
     },
   });
 };
 
-export const useCreateResponse = (formId: number) => {
-  return useCreate<CreateResponseDto, ResponseDto>({
-    endpoint: `/forms/${formId}/responses`,
-    mutationKey: ["create-response", formId],
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["responses", formId] });
-      },
-      onError: (error) => {
-        console.error("Failed to create response:", error);
-      },
+export const useRestoreResponses = (formId: number) => {
+  return useMutation({
+    mutationFn: (responseIds: string[]) => restoreResponses(formId, responseIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
     },
   });
 };
 
-export const useUpdateResponse = (formId?: number, id?: string) => {
-  return useUpdate<Partial<ResponseDto>, ResponseDto>({
-    endpoint: `/responses/edit/${formId}/${id}`,
-    mutationKey: ["update-response", formId, id],
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["responses"] });
-      },
-      onError: (error) => {
-        console.error("Failed to update response:", error);
-      },
+export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
+  return useMutation({
+    mutationFn: async () => {
+      // If there's no explicit "delete all" endpoint, we might need to fetch all and delete,
+      // but let's assume Engine might add it or we use a filter.
+      // For now, let's keep the hook signature but it might need implementation.
+      console.warn("useDeleteAllFormsResponses not fully implemented in Engine yet");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses", formId] });
+    },
+  });
+};
+
+export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
+  return useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await apiClient.post(`/forms/${formId}/responses/import`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses", formId] });
     },
   });
 };
@@ -368,26 +368,73 @@ export const useUpdateResponse = (formId?: number, id?: string) => {
 /**
  * Fetch rows for a form with optional query parameters.
  *
- * @param filter - Optional filter parameters for querying rows.
+ * @param params - Filter and optional form for mapping.
  * @returns A promise that resolves to an array of rows.
  */
-export const getResponsesRows = async ({ filter }: { filter?: Filter }): Promise<Row[]> => {
+export const getResponsesRows = async ({
+  filter,
+  form,
+}: {
+  filter?: Filter;
+  form?: FormDto;
+}): Promise<Row[]> => {
   try {
-    if (!filter?.form_id) {
+    const formId = filter?.form_id || form?.id;
+    if (!formId) {
       console.error("Form ID is required to fetch rows.");
       return [];
     }
-    const params = {
-      query: filter?.query ? JSON.stringify(filter.query) : undefined,
-      sortBy: filter?.sortBy,
-      orderBy: filter?.orderBy,
-      pageSize: filter?.pageSize,
-      pageNumber: filter?.pageNumber,
+    const params: z.infer<typeof GetResponsesQuerySchema> = {
+      limit: filter?.pageSize ?? 25,
+      search: stringifyQuery(filter?.query),
+      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      before: filter?.before,
+      after: filter?.after,
     };
-    const response = await apiClient.get<Row[]>(`/responses/get-rows?form_id=${filter.form_id}`, {
+    const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, {
       params,
     });
-    return response?.data || [];
+
+    const rawData = response?.data;
+    const responses: any[] = Array.isArray(rawData)
+      ? rawData
+      : (rawData as any)?.edges?.map((e: any) => e.node) || (rawData as any)?.responses || [];
+
+    const fieldIdToDisplayName = new Map<string, string>();
+    if (form) {
+      (form.sections ?? []).forEach((section) => {
+        (section.fields ?? []).forEach((field) => {
+          fieldIdToDisplayName.set(field.id, field.displayName);
+        });
+      });
+    }
+
+    const rows: Row[] = responses.map((node: any) => {
+      const row: Row = {
+        id: node.id,
+        edited: node.updated_at || node.updatedAt,
+        editedByName: node.updated_by?.name || node.updatedBy?.name,
+        created: node.created_at || node.createdAt,
+        createdByName: node.created_by?.name || node.createdBy?.name,
+        index: node.index,
+        form_id: node.form_id || node.formId,
+      };
+
+      const fieldValues = node.fieldValues || node.field_values || node.data || [];
+      fieldValues.forEach((fv: any) => {
+        const fieldId = fv.field_id || fv.fieldId;
+        const displayName = fieldIdToDisplayName.get(fieldId);
+        if (displayName) {
+          row[displayName] = fv.value;
+        } else {
+          row[fieldId] = fv.value;
+        }
+      });
+
+      return row;
+    });
+
+    return rows;
   } catch (error) {
     console.error("Failed to fetch rows:", error);
     throw error;

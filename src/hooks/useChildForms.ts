@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fieldType } from "formula-gear";
-import type { FormFieldDto, ResponseDto, UserRoleDto } from "../types/shared";
+import type { FormDto, FormFieldDto, ResponseDto, UserRoleDto } from "../types/shared";
 import { NotificationTexts } from "../utils/interfaces";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
-import { deleteResponse, getResponses } from "../api";
+import { deleteResponse, getForms, getResponses } from "../api";
 import { User } from "../contexts/AuthContext";
 
 type ChildFormChildProps = FormFieldDto & {
@@ -203,42 +203,73 @@ export const useChildForms = ({
         return;
       }
 
-      if (!id || copyMode) {
-        if (initializedUnsavedRef.current) {
+      try {
+        const formsResponse = (await getForms({
+          query: { $or: childFormIds.map((childId) => ({ id: childId })) },
+        })) as FormDto[];
+
+        const availableChildFormIds = new Set(formsResponse.map((form) => form.id));
+
+        if (!id || copyMode) {
+          if (initializedUnsavedRef.current) {
+            return;
+          }
+
+          const nextChildForms = childFormIds
+            .filter((childFormId) => availableChildFormIds.has(childFormId))
+            .map((childFormId) => ({
+              formId: childFormId,
+              children: [] as ChildFormChildProps[],
+              saved: [] as Array<boolean | undefined>,
+              valid: [] as Array<boolean | undefined>,
+              shown: false,
+            }));
+
+          setChildForms((prev) =>
+            nextChildForms.map((nextChildForm) => {
+              const existing = prev.find((item) => item.formId === nextChildForm.formId);
+
+              return {
+                ...nextChildForm,
+                shown: existing?.shown ?? nextChildForm.shown,
+                children: existing?.children ?? nextChildForm.children,
+                saved: existing?.saved ?? nextChildForm.saved,
+                valid: existing?.valid ?? nextChildForm.valid,
+              };
+            }),
+          );
+
+          initializedUnsavedRef.current = true;
           return;
         }
 
-        buildEmptyChildForms();
-        initializedUnsavedRef.current = true;
-        return;
-      }
+        initializedUnsavedRef.current = false;
 
-      initializedUnsavedRef.current = false;
+        if (lastLoadedSavedParentRef.current === id) {
+          return;
+        }
 
-      if (lastLoadedSavedParentRef.current === id) {
-        return;
-      }
-
-      try {
         const childResponses = await Promise.all(
-          childFormIds.map(async (childFormId) => {
-            let responses: LegacyLinkedResponse[] = [];
+          childFormIds
+            .filter((childFormId) => availableChildFormIds.has(childFormId))
+            .map(async (childFormId) => {
+              let responses: LegacyLinkedResponse[] = [];
 
-            try {
-              responses = (await getResponses({
-                form_id: childFormId,
-              })) as LegacyLinkedResponse[];
-            } catch (error: any) {
-              if (error?.response?.status !== 404) {
-                throw error;
+              try {
+                responses = (await getResponses(childFormId, {
+                  form_id: childFormId,
+                })) as LegacyLinkedResponse[];
+              } catch (error: any) {
+                if (error?.response?.status !== 404) {
+                  throw error;
+                }
+
+                responses = [];
               }
 
-              responses = [];
-            }
-
-            const matchingResponses = responses.filter((response) =>
-              matchesParentResponse(response, formId, id),
-            );
+              const matchingResponses = responses.filter((response) =>
+                matchesParentResponse(response, formId, id),
+              );
 
             const templateField = connectedFields.find(
               (field) => getConnectedFormId(field) === childFormId,

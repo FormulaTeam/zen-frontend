@@ -7,7 +7,7 @@ import { EditButtonWrapper } from "../styled";
 import { useFormStore } from "../stores/form.store";
 import { PERMISSION_TYPES } from "../../../utils/utils";
 import { useSuperAdmin } from "../../../contexts/SuperAdminContext";
-import { deleteMultipleResponses } from "../../../api";
+import { softDeleteResponses } from "../../../api";
 import { queryClient } from "../../../api/queryClient";
 import { showSuccessNotification, showErrorNotification } from "../../../utils/utils";
 
@@ -73,10 +73,7 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
 
       if (responseIds.length === 0) return;
 
-      await deleteMultipleResponses({
-        form_id: Number(form.id),
-        response_ids: responseIds,
-      });
+      await softDeleteResponses(Number(form.id), responseIds);
 
       queryClient.invalidateQueries({ queryKey: ["rows"] });
       showSuccessNotification("מחיקת התגובות בוצעה בהצלחה");
