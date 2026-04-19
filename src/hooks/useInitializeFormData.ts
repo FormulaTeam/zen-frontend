@@ -86,9 +86,7 @@ export const useInitializeFormData = () => {
               console.log("[INIT FORM DATA] Processing child form field:", field);
               getResponses({
                 form_id: extra.linkedFormId,
-                query: {
-                  parentResponse: { $regex: `${form.id};` },
-                },
+                query: `parentResponse: { $regex: ${form.id};`,
               })
                 .then((res) => {
                   console.log(
@@ -192,9 +190,7 @@ export const useInitializeFormData = () => {
               console.log("[INIT FORM DATA] Processing child form field:", field);
               getResponses({
                 form_id: extra.linkedFormId,
-                query: {
-                  parentResponse: { $regex: `${form.id};` },
-                },
+                query: `parentResponse: { $regex: ${form.id};`,
               })
                 .then((res) => {
                   console.log(

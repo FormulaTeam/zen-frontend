@@ -308,9 +308,7 @@ export type NewResponse = {
  */
 export interface Filter {
   form_id?: number;
-  query?: {
-    [key: string]: any;
-  };
+  query?: any;
   sortBy?: string;
   orderBy?: IOrderBy.ASC | IOrderBy.DESC;
   pageSize?: number;

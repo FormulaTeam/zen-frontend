@@ -17,11 +17,11 @@ export function useFormLoader(formId: string) {
   });
 
   const queryParams = useMemo(() => ({
-    limit: filter?.pageSize ?? 25,
-    search: filter?.query ? JSON.stringify(filter.query) : "",
-    sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
-    before: filter?.before,
-    after: filter?.after,
+  limit: filter?.pageSize ?? 25,
+  search: filter?.query ?? "",
+  sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
+  before: filter?.before,
+  after: filter?.after,
   }), [filter]);
 
   const { data: responsesRowsData, isSuccess: isResponsesSuccess } = useGetResponsesRows(formId, queryParams as any);
@@ -30,28 +30,41 @@ export function useFormLoader(formId: string) {
 
   useEffect(() => {
     if (responsesRowsData && isResponsesSuccess && formData) {
+      // Defensive mapping to handle both array and paginated object formats
+      const responses: any[] = Array.isArray(responsesRowsData)
+        ? responsesRowsData
+        : (responsesRowsData as any)?.edges?.map((e: any) => e.node) ||
+          (responsesRowsData as any)?.responses ||
+          [];
+
+      const pageInfoFromData =
+        !Array.isArray(responsesRowsData) && (responsesRowsData as any).pageInfo
+          ? (responsesRowsData as any).pageInfo
+          : null;
+
       // Map field IDs to displayNames for the grid
       const fieldIdToDisplayName = new Map<string, string>();
-      formData.sections.forEach(section => {
-        section.fields.forEach(field => {
+      formData.sections.forEach((section) => {
+        section.fields.forEach((field) => {
           fieldIdToDisplayName.set(field.id, field.displayName);
         });
       });
 
-      const rows: Row[] = responsesRowsData.edges.map((edge) => {
-        const node = edge.node;
+      const rows: Row[] = responses.map((node: any) => {
         const row: Row = {
           id: node.id,
-          edited: node.updatedAt,
-          editedByName: node.updatedBy?.name,
-          created: node.createdAt,
-          createdByName: node.createdBy?.name,
+          edited: node.updated_at || node.updatedAt,
+          editedByName: node.updated_by?.name || node.updatedBy?.name,
+          created: node.created_at || node.createdAt,
+          createdByName: node.created_by?.name || node.createdBy?.name,
           index: node.index,
-          form_id: node.formId,
+          form_id: node.form_id || node.formId,
         };
 
-        node.fieldValues.forEach((fv) => {
-          const displayName = fieldIdToDisplayName.get(fv.fieldId);
+        const fieldValues = node.fieldValues || node.field_values || node.data || [];
+        fieldValues.forEach((fv: any) => {
+          const fieldId = fv.field_id || fv.fieldId;
+          const displayName = fieldIdToDisplayName.get(fieldId);
           if (displayName) {
             row[displayName] = fv.value;
           }
@@ -61,12 +74,25 @@ export function useFormLoader(formId: string) {
       });
 
       setRows(rows);
-      setResponses(responsesRowsData.edges.map((edge) => edge.node as any));
-      setPageInfo(responsesRowsData.pageInfo);
+      setResponses(responses as any);
+
+      if (pageInfoFromData) {
+        setPageInfo(pageInfoFromData);
+      } else {
+        const limit = queryParams.limit;
+        const hasNextPage = responses.length === limit;
+        const hasPreviousPage = !!queryParams.before || !!queryParams.after;
+
+        setPageInfo({
+          hasNextPage,
+          hasPreviousPage,
+          startCursor: responses.length > 0 ? responses[0].id : null,
+          endCursor: responses.length > 0 ? responses[responses.length - 1].id : null,
+        });
+      }
       console.log("Responses loaded and mapped:", rows);
     }
   }, [responsesRowsData, setRows, setPageInfo, isResponsesSuccess, formData, setResponses]);
-
   useEffect(() => {
     if (formData && isSuccess) {
       const flattenedFields = (formData.sections ?? [])

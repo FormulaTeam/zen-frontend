@@ -105,7 +105,7 @@ const ResponsesPageContent = (): JSX.Element => {
     const timer = setTimeout(() => {
       setFilter({
         ...filter,
-        query: search ? { search } : undefined,
+        query: search,
         before: undefined,
         after: undefined,
       });
