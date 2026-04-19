@@ -41,7 +41,7 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
 
   const hasPermission = !!isSuperAdmin;
 
-  const deletedAt = response.deleted_at ?? response.deleted;
+  const deletedAt = response.deleted_at || (response as any).deletedAt || response.deleted;
   const deletedDateObj = new Date(deletedAt);
   const isValidDate = !isNaN(deletedDateObj.getTime());
   const deletedDate = isValidDate ? deletedDateObj.toLocaleDateString("he-IL") : "לא ידוע";

@@ -18,7 +18,7 @@ export const getResponseKey = (formId: number, responseIndex: number) =>
  */
 const sortResponses = (responses: ResponseForm[], sortValue: number): ResponseForm[] => {
   const getDeletedTime = (r: ResponseForm) => {
-    const raw = r?.deleted_at ?? 0;
+    const raw = (r as any)?.deleted_at || (r as any)?.deletedAt || 0;
     const time = new Date(raw).getTime();
     return Number.isFinite(time) ? time : 0;
   };

@@ -10,6 +10,11 @@ import { useCreate } from "../utils/useCreate";
 import queryClient from "./queryClient";
 import { FormDto } from "../types/shared";
 
+const stringifyQuery = (query: any): string => {
+  if (query && typeof query === "object") return JSON.stringify(query);
+  return query || "";
+};
+
 /**
  * Fetch all forms with optional query parameters.
  *
@@ -18,10 +23,7 @@ import { FormDto } from "../types/shared";
  */
 export const getForms = async (filter?: Filter): Promise<FormDto[]> => {
   const params = {
-    query:
-      filter?.query && typeof filter.query !== "string"
-        ? JSON.stringify(filter.query)
-        : filter?.query,
+    search: stringifyQuery(filter?.query),
     sortBy: filter?.sortBy,
     orderBy: filter?.orderBy,
     pageSize: filter?.pageSize,

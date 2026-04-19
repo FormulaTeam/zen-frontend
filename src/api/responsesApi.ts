@@ -20,9 +20,15 @@ import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { useMutation } from "@tanstack/react-query";
 import { useUpdate } from "../utils/useUpdate";
-import { CreateResponseDto, ResponseDto } from "../types/shared";
+import { CreateResponseDto, ResponseDto, FormDto } from "../types/shared";
 import { z } from "zod";
-import { GetResponsesQuerySchema, PaginatedResponsesSchema } from "formula-gear/dist/validators/responses/index";
+import { GetResponsesQuerySchema } from "formula-gear/dist/validators/responses/index";
+import { SortDirection } from "formula-gear";
+
+const stringifyQuery = (query: any): string => {
+  if (query && typeof query === "object") return JSON.stringify(query);
+  return query || "";
+};
 
 /**
  * Fetch all responses for a form with optional query parameters.
@@ -32,18 +38,15 @@ import { GetResponsesQuerySchema, PaginatedResponsesSchema } from "formula-gear/
  * @returns A promise that resolves to an array of responses.
  */
 export const getResponses = async (formId: number, filter?: Filter): Promise<ResponseDto[]> => {
-  const params = {
-    limit: filter?.pageSize,
-    search: filter?.query ? JSON.stringify(filter.query) : undefined,
-    sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
+  const params: z.infer<typeof GetResponsesQuerySchema> = {
+    limit: filter?.pageSize ?? 25,
+    search: stringifyQuery(filter?.query),
+    sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     before: filter?.before,
     after: filter?.after,
   };
   try {
-    const response = await apiClient.get<ResponseDto[]>(
-      `/forms/${formId}/responses`,
-      { params },
-    );
+    const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, { params });
     return response?.data ?? [];
   } catch (error) {
     console.error("Failed to fetch responses:", error);
@@ -75,7 +78,10 @@ export const getResponseById = async (formId: number, responseId: string): Promi
  * @param responseData - The data for the new response.
  * @returns A promise that resolves to the created response.
  */
-export const createResponse = async (formId: number, responseData: CreateResponseDto): Promise<ResponseDto> => {
+export const createResponse = async (
+  formId: number,
+  responseData: CreateResponseDto,
+): Promise<ResponseDto> => {
   try {
     const response = await apiClient.post<ResponseDto>(`/forms/${formId}/responses`, responseData);
     return response.data;
@@ -122,13 +128,13 @@ export const restoreResponses = async (formId: number, responseIds: string[]): P
  */
 export const searchResponses = async (filter: Filter): Promise<ResponseDto[]> => {
   try {
-    const formId = filter.form_id;
+    const formId = filter?.form_id;
     if (!formId) throw new Error("form_id is required for searchResponses");
 
-    const params = {
-      limit: filter.pageSize,
-      search: filter.query ? JSON.stringify(filter.query) : undefined,
-      sortDirection: filter.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
+    const params: z.infer<typeof GetResponsesQuerySchema> = {
+      limit: filter?.pageSize ?? 25,
+      search: stringifyQuery(filter?.query),
+      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     };
 
     const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, { params });
@@ -151,12 +157,12 @@ export const deleteResponse = async (formId: number, responseId: string): Promis
  */
 export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseDto[]> => {
   try {
-    const formId = filter.form_id;
+    const formId = filter?.form_id;
     if (!formId) throw new Error("form_id is required for getAllDeletedResponses");
 
-    const params = {
-      limit: filter.pageSize,
-      search: filter.query ? JSON.stringify(filter.query) : undefined,
+    const params: any = {
+      limit: filter?.pageSize ?? 25,
+      search: stringifyQuery(filter?.query),
       deleted: true,
     };
 
@@ -234,10 +240,15 @@ export const useGetResponsesRows = (
   formId: string,
   params: z.infer<typeof GetResponsesQuerySchema>,
 ) => {
-  return useFetch<typeof params, z.infer<typeof PaginatedResponsesSchema>>({
+  const safeParams = useMemo(() => ({
+    ...params,
+    search: stringifyQuery(params.search),
+  }), [params]);
+
+  return useFetch<typeof safeParams, ResponseDto[]>({
     endpoint: `/forms/${formId}/responses`,
-    queryKey: () => ["responses", formId, params],
-    params: params,
+    queryKey: () => ["responses", formId, safeParams],
+    params: safeParams,
     queryOptions: {
       enabled: !!formId,
     },
@@ -246,11 +257,11 @@ export const useGetResponsesRows = (
 
 export const useGetResponses = ({ filter }: { filter?: Filter }) => {
   const formId = filter?.form_id;
-  const params = useMemo(
+  const params: z.infer<typeof GetResponsesQuerySchema> = useMemo(
     () => ({
-      limit: filter?.pageSize,
-      search: filter?.query ? JSON.stringify(filter.query) : undefined,
-      sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
+      limit: filter?.pageSize ?? 25,
+      search: stringifyQuery(filter?.query),
+      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
     }),
@@ -293,12 +304,14 @@ export const useUpdateResponse = (formId?: number, responseId?: string) => {
 
 export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
   return useMutation({
-    mutationFn: async (responses: Array<{ id: string | number; responseData: Partial<ResponseDto> }>) => {
+    mutationFn: async (
+      responses: Array<{ id: string | number; responseData: Partial<ResponseDto> }>,
+    ) => {
       const promises = responses.map(({ id, responseData }) =>
-        apiClient.patch<ResponseDto>(`/forms/${formId}/responses/${id}`, responseData)
+        apiClient.patch<ResponseDto>(`/forms/${formId}/responses/${id}`, responseData),
       );
       const results = await Promise.all(promises);
-      return results.map(r => r.data);
+      return results.map((r) => r.data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
@@ -327,8 +340,8 @@ export const useRestoreResponses = (formId: number) => {
 export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
   return useMutation({
     mutationFn: async () => {
-      // If there's no explicit "delete all" endpoint, we might need to fetch all and delete, 
-      // but let's assume Engine might add it or we use a filter. 
+      // If there's no explicit "delete all" endpoint, we might need to fetch all and delete,
+      // but let's assume Engine might add it or we use a filter.
       // For now, let's keep the hook signature but it might need implementation.
       console.warn("useDeleteAllFormsResponses not fully implemented in Engine yet");
     },
@@ -342,7 +355,7 @@ export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
   return useMutation({
     mutationFn: async (formData: FormData) => {
       const response = await apiClient.post(`/forms/${formId}/responses/import`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: { "Content-Type": "multipart/form-data" },
       });
       return response.data;
     },
@@ -355,30 +368,73 @@ export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
 /**
  * Fetch rows for a form with optional query parameters.
  *
- * @param filter - Optional filter parameters for querying rows.
+ * @param params - Filter and optional form for mapping.
  * @returns A promise that resolves to an array of rows.
  */
-export const getResponsesRows = async ({ filter }: { filter?: Filter }): Promise<Row[]> => {
+export const getResponsesRows = async ({
+  filter,
+  form,
+}: {
+  filter?: Filter;
+  form?: FormDto;
+}): Promise<Row[]> => {
   try {
-    const formId = filter?.form_id;
+    const formId = filter?.form_id || form?.id;
     if (!formId) {
       console.error("Form ID is required to fetch rows.");
       return [];
     }
-    const params = {
-      limit: filter?.pageSize,
-      search: filter?.query ? JSON.stringify(filter.query) : undefined,
-      sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
+    const params: z.infer<typeof GetResponsesQuerySchema> = {
+      limit: filter?.pageSize ?? 25,
+      search: stringifyQuery(filter?.query),
+      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      before: filter?.before,
+      after: filter?.after,
     };
     const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, {
       params,
     });
 
-    // We might need to map these to Row interface if the consumer expects flat structure
-    // but for now let's just return data or map it if we have form fields.
-    // If this is used for simple lists, maybe ResponseDto is enough or it needs mapping.
-    // Given the previous implementation returned Row[], we should probably return something compatible.
-    return (response?.data as any) || [];
+    const rawData = response?.data;
+    const responses: any[] = Array.isArray(rawData)
+      ? rawData
+      : (rawData as any)?.edges?.map((e: any) => e.node) || (rawData as any)?.responses || [];
+
+    const fieldIdToDisplayName = new Map<string, string>();
+    if (form) {
+      (form.sections ?? []).forEach((section) => {
+        (section.fields ?? []).forEach((field) => {
+          fieldIdToDisplayName.set(field.id, field.displayName);
+        });
+      });
+    }
+
+    const rows: Row[] = responses.map((node: any) => {
+      const row: Row = {
+        id: node.id,
+        edited: node.updated_at || node.updatedAt,
+        editedByName: node.updated_by?.name || node.updatedBy?.name,
+        created: node.created_at || node.createdAt,
+        createdByName: node.created_by?.name || node.createdBy?.name,
+        index: node.index,
+        form_id: node.form_id || node.formId,
+      };
+
+      const fieldValues = node.fieldValues || node.field_values || node.data || [];
+      fieldValues.forEach((fv: any) => {
+        const fieldId = fv.field_id || fv.fieldId;
+        const displayName = fieldIdToDisplayName.get(fieldId);
+        if (displayName) {
+          row[displayName] = fv.value;
+        } else {
+          row[fieldId] = fv.value;
+        }
+      });
+
+      return row;
+    });
+
+    return rows;
   } catch (error) {
     console.error("Failed to fetch rows:", error);
     throw error;
