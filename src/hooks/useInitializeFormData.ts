@@ -84,11 +84,10 @@ export const useInitializeFormData = () => {
 
             if (field.fieldType === fieldType.Form && extra.linkedFormId) {
               console.log("[INIT FORM DATA] Processing child form field:", field);
-              getResponses({
+              getResponses(extra.linkedFormId, {
                 form_id: extra.linkedFormId,
-                query: `parentResponse: { $regex: ${form.id};`,
-              })
-                .then((res) => {
+                query: `parentResponse: { $regex: ${form.id};`,      
+              })                .then((res) => {
                   console.log(
                     `[INIT FORM DATA] getResponses for child formId ${extra.linkedFormId} result:`,
                     res,
@@ -188,11 +187,10 @@ export const useInitializeFormData = () => {
 
             if (field.fieldType === fieldType.Form && extra.linkedFormId) {
               console.log("[INIT FORM DATA] Processing child form field:", field);
-              getResponses({
+              getResponses(extra.linkedFormId, {
                 form_id: extra.linkedFormId,
-                query: `parentResponse: { $regex: ${form.id};`,
-              })
-                .then((res) => {
+                query: `parentResponse: { $regex: ${form.id};`,      
+              })                .then((res) => {
                   console.log(
                     `[INIT FORM DATA] getResponses for child formId ${extra.linkedFormId} result:`,
                     res,

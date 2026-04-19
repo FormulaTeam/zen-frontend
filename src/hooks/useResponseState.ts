@@ -188,11 +188,9 @@ export const useResponseState = (
         }
 
         if (responseId) {
-          const responses = await getResponses({
+          const responses = await getResponses(Number(formId), {
             form_id: Number(formId),
-            query: {
-              id: responseId,
-            },
+            query: { id: responseId },
           });
 
           const found = (responses?.[0] ?? null) as ResponseDto | null;

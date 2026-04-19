@@ -225,11 +225,10 @@ export const useChildForms = ({
             let responses: LegacyLinkedResponse[] = [];
 
             try {
-              responses = (await getResponses({
+              responses = (await getResponses(childFormId, {
                 form_id: childFormId,
               })) as LegacyLinkedResponse[];
-            } catch (error: any) {
-              if (error?.response?.status !== 404) {
+            } catch (error: any) {              if (error?.response?.status !== 404) {
                 throw error;
               }
 

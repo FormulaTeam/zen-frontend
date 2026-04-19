@@ -168,8 +168,7 @@ export const useResponseSave = (
 
       const newResponse: CreateResponsePayload = {
         fieldValues,
-        ...(parsedParentResponse ? { parentResponse: parsedParentResponse } : {}),
-      };
+        ...(parentResponse ? { parentResponse } : {}),      };
 
       if (parentResponse) {
         return (await mutateCreateResponseAsync(newResponse)) as ResponseDto;

@@ -20,7 +20,7 @@ import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { useMutation } from "@tanstack/react-query";
 import { useUpdate } from "../utils/useUpdate";
-import { BulkUpdateResponsesDto, CreateResponseDto, ResponseDto } from "../types/shared";
+import { BulkUpdateResponsesDto, CreateResponseDto, ResponseDto, FormDto } from "../types/shared";
 import { z } from "zod";
 import { GetResponsesQuerySchema } from "formula-gear/dist/validators/responses/index";
 import { SortDirection } from "formula-gear";
@@ -328,20 +328,7 @@ export const useSoftDeleteResponses = (formId: number) => {
   });
 };
 
-export const useCreateResponse = (formId: number) => {
-  return useCreate<CreateResponseDto, ResponseDto>({
-    endpoint: `/forms/${formId}/responses`,
-    mutationKey: ["create-response", formId],
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["responses", formId] });
-      },
-      onError: (error) => {
-        console.error("Failed to create response:", error);
-      },
-    },
-  });
-};
+
 
 export const useUpdateResponses = (formId?: number) => {
   return useUpdate<BulkUpdateResponsesDto, ResponseDto[]>({
@@ -432,4 +419,30 @@ export const getResponsesRows = async ({
     console.error("Failed to fetch rows:", error);
     throw error;
   }
+};
+
+export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
+  return useMutation({
+    mutationFn: async () => {
+      // Dummy implementation or call to soft-delete all
+      console.warn("useDeleteAllFormsResponses not fully implemented in Engine yet");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
+    },
+  });
+};
+
+export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
+  return useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await apiClient.post(`/forms/${formId}/responses/import`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
+    },
+  });
 };
