@@ -1,14 +1,14 @@
-import { useCreateResponse, useUpdateResponse } from "../api";
+import { useCreateResponse, useUpdateResponses } from "../api";
 import { showErrorNotification } from "../utils/utils";
 import { NotificationTexts } from "../utils/interfaces";
 import moment from "moment";
 import {
+  BulkUpdateResponsesDto,
   CreateResponseDto,
   FormDto,
   FormFieldDto,
   ResponseDto,
   ResponseFieldValueDto,
-  UpdateResponseDto,
 } from "../types/shared";
 import { fieldType } from "formula-gear";
 
@@ -94,8 +94,8 @@ export const useResponseSave = (
 
   const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } =
     useCreateResponse(formId!);
-  const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } =
-    useUpdateResponse(formId, response?.id);
+  const { mutateAsync: mutateUpdateResponsesAsync, isPending: isUpdateResponsePending } =
+    useUpdateResponses(formId);
 
   const saveResponse = async (
     formFieldsByIdMap: Map<string, SaveField>,
@@ -150,11 +150,20 @@ export const useResponseSave = (
 
     try {
       if (response && response.id && !copyMode) {
-        const updatedResponse: UpdateResponseDto = {
-          fieldValues,
+        const updatedResponsesPayload: BulkUpdateResponsesDto = {
+          responses: [
+            {
+              responseId: response.id,
+              fieldValues,
+            },
+          ],
         };
 
-        return (await mutateUpdateResponseAsync(updatedResponse)) as ResponseDto;
+        const updatedResponses = (await mutateUpdateResponsesAsync(
+          updatedResponsesPayload,
+        )) as ResponseDto[];
+
+        return updatedResponses[0];
       }
 
       const newResponse: CreateResponsePayload = {

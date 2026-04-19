@@ -19,7 +19,7 @@ import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { useMutation } from "@tanstack/react-query";
 import { useUpdate } from "../utils/useUpdate";
-import { CreateResponseDto, ResponseDto, UpdateResponseDto } from "../types/shared";
+import { BulkUpdateResponsesDto, CreateResponseDto, ResponseDto } from "../types/shared";
 
 /**
  * Fetch all responses with optional query parameters.
@@ -350,16 +350,16 @@ export const useCreateResponse = (formId: number) => {
   });
 };
 
-export const useUpdateResponse = (formId?: number, id?: string) => {
-  return useUpdate<UpdateResponseDto, ResponseDto>({
-    endpoint: `/forms/${formId}/responses/${id}`,
-    mutationKey: ["update-response", formId, id],
+export const useUpdateResponses = (formId?: number) => {
+  return useUpdate<BulkUpdateResponsesDto, ResponseDto[]>({
+    endpoint: `/forms/${formId}/responses`,
+    mutationKey: ["update-responses", formId],
     mutationOptions: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["responses", formId] });
       },
       onError: (error) => {
-        console.error("Failed to update response:", error);
+        console.error("Failed to update responses:", error);
       },
     },
   });
