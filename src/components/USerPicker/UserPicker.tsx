@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { Divider } from "@mui/material";
 import styled from "styled-components";
 
-import type { FormDto } from "../../types/shared";
 import { useGetFormRoles } from "../../api/rolesApi";
 import { useFormPermissions } from "../../hooks/useFormPermissions";
 import { useUserPicker } from "../../hooks/useUserPicker";
@@ -11,6 +10,7 @@ import PublicFormSection from "./PublicFormSection";
 import UserPickerContent from "./UserPickerContent";
 import { ReasonsContainer } from "./styled";
 import "./UserPicker.scss";
+import { FormOverview } from "@src/utils/interfaces";
 
 const ContentWrapper = styled.div`
   display: flex;
@@ -19,8 +19,8 @@ const ContentWrapper = styled.div`
 `;
 
 interface UserPickerProps {
-  form: FormDto;
-  closeSharePopupAndRefreshForm: (users: any[], updatedForm?: FormDto) => void;
+  form: FormOverview | any;
+  closeSharePopupAndRefreshForm: (users: any[], updatedForm?: FormOverview | any) => void;
 }
 
 const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) => {
@@ -47,12 +47,10 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
     setIsPublic,
     formPermission,
     setFormPermission,
-    hasPermission,
     togglePublicForm,
     handleLocalFormPermissionChange,
     handleSave,
   } = useFormPermissions({
-    form,
     roles,
     formPublicRole: publicRole,
     selectedShareWith,
@@ -113,7 +111,6 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
           <Divider />
 
           <PublicFormSection
-            hasPermission={hasPermission}
             isPublic={isPublic}
             togglePublicForm={togglePublicForm}
             formPermission={formPermission}

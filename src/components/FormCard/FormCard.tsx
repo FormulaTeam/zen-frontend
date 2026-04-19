@@ -2,15 +2,12 @@ import React, { useState } from "react";
 
 import * as MuiIcons from "@mui/icons-material";
 import { Box, Divider, Tooltip, useTheme } from "@mui/material";
-
-import type { FormDto } from "../../types/shared";
-import { getFormById } from "../../api/formsApi";
 import UserPicker from "../UserPicker/UserPicker";
 import ShareIcon from "../../icons/share.svg";
 import formX from "../../images/form_x.png";
 import { FormOverview } from "../../utils/interfaces";
 import { CustomIcon } from "../../theme/icons";
-import { getFormIconByName, showErrorNotification, PERMISSION_TYPES } from "../../utils/utils";
+import { getFormIconByName, PERMISSION_TYPES } from "../../utils/utils";
 import CardCreationDetails from "./CardCreationDetails";
 import { PermissionGate } from "../PermissionGate";
 import {
@@ -41,22 +38,13 @@ const FormCard = ({
   isSuperAdmin: boolean | null;
   navigate: any;
   resetSearchValue: () => void;
-  isCreator?: boolean;
+  isCreator: boolean;
 }) => {
   const theme = useTheme();
   const [showSharePopup, setShowSharePopup] = useState(false);
-  const [fullForm, setFullForm] = useState<FormDto | null>(null);
 
   const handleShareClick = async () => {
-    try {
-      const fetchedForm = await getFormById(form.id);
-
-      console.log("Fetched form for sharing:", fetchedForm);
-      setFullForm(fetchedForm);
-      setShowSharePopup(true);
-    } catch {
-      showErrorNotification("טעינת הטופס נכשלה");
-    }
+    setShowSharePopup(true);
   };
 
   const renderDynamicIcon = (name: string) => {
@@ -83,7 +71,7 @@ const FormCard = ({
 
   if (!form) return null;
 
-  const userPermissions = isCreator ? Object.values(PERMISSION_TYPES) : form.permissions || [];
+  const userPermissions = ((isSuperAdmin || isCreator) ? Object.values(PERMISSION_TYPES) : form.permissions) ?? [];
 
   return (
     <StyledCard
@@ -157,9 +145,9 @@ const FormCard = ({
           </ItemIconsDiv>
         </PermissionGate>
 
-        {showSharePopup && fullForm && (
+        {showSharePopup && (
           <UserPicker
-            form={fullForm}
+            form={form}
             closeSharePopupAndRefreshForm={() => {
               setShowSharePopup(false);
             }}

@@ -18,7 +18,6 @@ import {
 } from "./publicForm.styled";
 
 interface PublicFormSectionProps {
-  hasPermission: boolean;
   isPublic: boolean;
   togglePublicForm: () => void;
   formPermission: any;
@@ -27,7 +26,6 @@ interface PublicFormSectionProps {
 }
 
 const PublicFormSection: React.FC<PublicFormSectionProps> = ({
-  hasPermission,
   isPublic,
   togglePublicForm,
   formPermission,
@@ -50,8 +48,8 @@ const PublicFormSection: React.FC<PublicFormSectionProps> = ({
 
   return (
     <Wrapper>
-      <LabelWrapper disabled={!hasPermission} $color={theme.palette.text.primary}>
-        <Checkbox disabled={!hasPermission} checked={isPublic} onChange={togglePublicForm} />
+      <LabelWrapper $color={theme.palette.text.primary}>
+        <Checkbox checked={isPublic} onChange={togglePublicForm} />
         <InfoRow>
           <LabelText>האם להגדיר טופס זה כטופס פומבי?</LabelText>
           <Tooltip title="הגדרת הטופס כפומבי תהפוך את הטופס למשותף עם כלל משתמשי המערכת">
@@ -77,7 +75,7 @@ const PublicFormSection: React.FC<PublicFormSectionProps> = ({
               </RoleLabel>
             ) : (
               <RolesAutocomplete
-                isDisabled={!hasPermission}
+                isDisabled={false}
                 handleRoleChange={handleLocalFormPermissionChange}
                 width="min(180px, 100%)"
                 excludeRoleIds={[role.FormAdmin]}

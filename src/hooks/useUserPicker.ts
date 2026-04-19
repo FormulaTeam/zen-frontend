@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Role, role } from "formula-gear";
+import { useQueryClient } from "@tanstack/react-query";
 
-import type { FormDto, UserRoleDto } from "../types/shared";
+import type { UserRoleDto } from "../types/shared";
 import { useUpsertFormRoles } from "../api/rolesApi";
 import { getUsers } from "../api/usersApi";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
+import { FormOverview } from "@src/utils/interfaces";
 
 export type SharePickerUser = {
   id?: number | string;
@@ -15,8 +17,8 @@ export type SharePickerUser = {
 };
 
 interface UseUserPickerProps {
-  form: FormDto;
-  closeSharePopupAndRefreshForm: (users: SharePickerUser[], updatedForm?: FormDto) => void;
+  form: FormOverview;
+  closeSharePopupAndRefreshForm: (users: SharePickerUser[], updatedForm?: FormOverview) => void;
   roles?: UserRoleDto[];
   publicRole?: Role | null;
 }
@@ -35,7 +37,7 @@ export interface UserPickerReturnType {
   handleFormPermissionChange: (isPublic: boolean, permission?: Role) => void;
 }
 
-const getCreatorFromForm = (form: FormDto): SharePickerUser | null => {
+const getCreatorFromForm = (form: FormOverview): SharePickerUser | null => {
   if (!form.createdBy) return null;
 
   return {
@@ -61,7 +63,7 @@ export const useUserPicker = ({
   );
 
   const { mutateAsync: upsertFormRolesAsync } = useUpsertFormRoles();
-
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const creator = getCreatorFromForm(form);
@@ -124,6 +126,33 @@ export const useUserPicker = ({
       return;
     }
 
+
+    let previousForms: [any, any][] | null = null;
+
+    const myPersonal = queryClient.getQueryData<any>(["user-personal"]);
+    const currentUserUpn: string | undefined = myPersonal?.upn;
+
+    if (currentUserUpn) {
+      const isPublicForm: boolean = formPermissionState !== null;
+
+      if (!isPublicForm) {
+        const originalMyRole: UserRoleDto | undefined = roles.find((userRole: UserRoleDto) => userRole.user?.upn?.toLowerCase() === currentUserUpn.toLowerCase());
+        const hadAdminRole: boolean = !!originalMyRole && originalMyRole.role === role.FormAdmin;
+
+        const myCurrentRole: SharePickerUser | undefined = selectedShareWith.find((selectedUser: SharePickerUser) => selectedUser.upn?.toLowerCase() === currentUserUpn.toLowerCase());
+        const hasAdminRole: boolean = !!myCurrentRole && myCurrentRole.role_id === role.FormAdmin;
+
+        if (hadAdminRole && !hasAdminRole) {
+          previousForms = queryClient.getQueriesData({ queryKey: ["forms"] });
+
+          queryClient.setQueriesData({ queryKey: ["forms"] }, (oldData: any) => {
+            if (!Array.isArray(oldData)) return oldData;
+            return oldData.filter((formItem: any) => formItem.id !== form.id);
+          });
+        }
+      }
+    }
+
     try {
       setLoading(true);
       const response = await upsertFormRolesAsync({
@@ -143,6 +172,11 @@ export const useUserPicker = ({
     } catch (error) {
       console.error("שגיאה בעדכון הטופס:", error);
       showErrorNotification("עדכון הטופס נכשל");
+      if (previousForms) {
+        previousForms.forEach(([queryKey, oldData]: [any, any]) => {
+          queryClient.setQueryData(queryKey, oldData);
+        });
+      }
     } finally {
       setLoading(false);
     }

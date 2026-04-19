@@ -19,9 +19,9 @@ import wavingHand from "../../images/waving_hand.png";
 import "./MainPage.scss";
 import BasePopup from "../../components/BasePopup/BasePopup";
 import { AutoDelete } from "@mui/icons-material";
-import { RowBox, StyledTypography, GreetingBox, TabsBox, SortControlsBox } from "./styled";
 import MainSortSelect from "../../components/MainSortSelect/MainSortSelect";
 import { useGetMyPersonal } from "../../api/usersApi";
+import { RowBox, StyledTypography, GreetingBox, TabsBox, SortControlsBox } from "./styled";
 
 function MainPage({
   user,
