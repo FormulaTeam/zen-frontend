@@ -105,7 +105,6 @@ const normalizeFileValue = (value: any): { files: FileValueItem[] } => {
 export const useResponseSave = (
   form: FormDto | null,
   response: ExistingResponseLike | null | undefined,
-  user: any,
   parentResponse?: ParentResponseRef,
   copyMode?: boolean,
 ) => {
@@ -166,9 +165,6 @@ export const useResponseSave = (
         value,
       });
     }
-
-    const userName = getUserName(user?.firstName, user?.lastName) || user?.name || "";
-    const normalizedUpn = user?.upn?.toLowerCase?.() ?? user?.upn ?? "unknown";
 
     const parsedParentResponse = parseParentResponse(parentResponse);
     try {

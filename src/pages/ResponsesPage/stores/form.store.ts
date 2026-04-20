@@ -3,7 +3,7 @@ import { create } from "zustand";
 
 import { FormDto, FormFieldDto } from "../../../types/shared";
 import { Filter, PageInfo, ResponseForm, Row } from "../../../utils/interfaces";
-import { LegacyPermission } from "../../../utils/utils";
+import { Permission } from "formula-gear";
 
 export type StoreForm = FormDto & {
   fields: FormFieldDto[];
@@ -15,8 +15,8 @@ export type StoreForm = FormDto & {
 interface FormsState {
   form: StoreForm | null;
   setForm: (form: StoreForm | null) => void;
-  permissions?: LegacyPermission[];
-  setPermissions: (permissions: number[]) => void;
+  permissions?: Permission[];
+  setPermissions: (permissions: Permission[]) => void;
   responses: ResponseForm[] | null;
   setResponses: (responses: ResponseForm[] | null) => void;
   filter: Filter | null;
@@ -32,7 +32,7 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
   form: null,
   setForm: (form: StoreForm | null) => set({ form }),
   permissions: [],
-  setPermissions: (permissions: number[]) => set({ permissions }),
+  setPermissions: (permissions: Permission[]) => set({ permissions }),
   responses: null,
   setResponses: (responses: ResponseForm[] | null) => set({ responses }),
   filter: { pageSize: 25, pageNumber: 1 },

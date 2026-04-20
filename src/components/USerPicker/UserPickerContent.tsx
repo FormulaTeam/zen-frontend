@@ -1,18 +1,17 @@
 import React, { useState } from "react";
 import SharedUser from "./SharedUser";
 import {
-  Autocomplete,
   TextField,
-  Typography,
   IconButton,
   InputAdornment,
   useTheme,
 } from "@mui/material";
 import male from "../../images/man4.png";
-import female from "../../images/female3.png";
 import ReactLoading from "react-loading";
 import ClearIcon from "@mui/icons-material/Clear";
 import AutocompleteItem from "./AutocompleteItem";
+import { ROLE_CATALOG } from "../../consts/roles";
+import { SharePickerUser } from "@src/hooks/useUserPicker";
 import {
   Container,
   CreatorContainer,
@@ -23,17 +22,19 @@ import {
   UserInfo,
   UsersList,
   UserUPN,
+  UserPickerAutocomplete,
+  AutocompleteListItem,
+  CreatorName,
 } from "./styled";
-import { useAuth } from "../../contexts/AuthContext";
 
 interface UserPickerProps {
   loading: boolean;
-  shareWithOptionsUsers: any[];
-  selectedShareWith: any[];
-  formCreator: any;
+  shareWithOptionsUsers: SharePickerUser[];
+  selectedShareWith: SharePickerUser[];
+  formCreator: SharePickerUser | null;
   removeUserFromShare: (user: any) => void;
-  handleRoleChange: (event: any, newValue: any, user: any) => void;
-  handleValueChange: (event: any, newValue: any) => void;
+  handleRoleChange: (event: any, newValue: any, user: SharePickerUser) => void;
+  handleValueChange: (event: any, newValue: SharePickerUser) => void;
   handleInputChange: (event: any, value: string) => void;
 }
 
@@ -49,14 +50,13 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
 }) => {
   const theme = useTheme();
   const [inputValue, setInputValue] = useState("");
-  const { roles } = useAuth();
 
-  const creatorRole = roles.find((r) => r.role_id === formCreator?.role_id);
+  const creatorRole = ROLE_CATALOG.find((r) => r.role_id === formCreator?.role_id);;
 
   const onInputChange = (event: any, value: string) => {
     setInputValue(value);
-    if (inputValue && inputValue.length >= 2) {
-      handleInputChange(event, inputValue);
+    if (value && value.length >= 2) {
+      handleInputChange(event, value);
     } else {
       handleInputChange(event, "");
     }
@@ -86,7 +86,7 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
     </LoaderContainer>
   ) : (
     <Container>
-      <Autocomplete
+      <UserPickerAutocomplete
         isOptionEqualToValue={(option, value) => option?.id === value?.id}
         value={null}
         options={inputValue.length >= 2 ? shareWithOptionsUsers : []} // הצגת תוצאות רק מעל 2 תווים
@@ -98,67 +98,51 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
         onChange={onChange}
         noOptionsText={inputValue.length < 2 ? "הקלד לפחות 2 תווים" : "לא נמצאו משתמשים"}
         getOptionLabel={(option: any) => {
-          const first = option?.firstName || "";
-          const last = option?.lastName || "";
           const userUPN = option?.upn || option?.UPN || option?.id || "";
-          const displayName = option?.displayName || "";
-          return `${userUPN} ${first} ${last} ${displayName}`.trim();
+          const displayName = option?.displayName || option?.name || "";
+          return `${userUPN} ${displayName}`.trim();
         }}
         renderOption={(props: any, user: any) => {
-          const upn = (user?.upn || user?.mail || user?.id || "").toLowerCase();
+          const upn: string = user?.upn.toLowerCase();
+          const id: string = String(user?.id || "").toLowerCase();
+          const formCreatorUpn: string = formCreator?.upn?.toLowerCase() || "";
 
-          const formCreatorUpn = formCreator?.upn?.toLowerCase() || "";
-          const formCreatorId = formCreator?.id?.toLowerCase() || "";
-
-          const isSelected =
-            // Check if user is the form creator
+          const isSelected: boolean =
             (formCreatorUpn && formCreatorUpn === upn) ||
-            (formCreatorId && formCreatorId === upn) ||
             // Check if user is in selectedShareWith
-            selectedShareWith.some((u) => {
-              const uUpn = u.upn?.toLowerCase() || "";
-              const uId = u.id?.toLowerCase() || "";
-              return uUpn === upn || uId === upn;
+            selectedShareWith.some((user: SharePickerUser) => {
+              const userUpn: string = user.upn?.toLowerCase() || "";
+              const userId: string = String(user.id || "").toLowerCase();
+
+              return userUpn === upn || userId === id;
             });
 
           const { key, ...restProps } = props;
 
           return (
-            <li
+            <AutocompleteListItem
               key={key}
               {...restProps}
-              style={{
-                ...restProps.style,
-                opacity: isSelected ? 0.5 : 1,
-                pointerEvents: isSelected ? "none" : "auto", // prevent click
-              }}>
+              $isSelected={isSelected}
+            >
               <AutocompleteItem
                 user={{ ...user, isSelected }}
-                displayName={user?.displayName || ""}
+                displayName={user?.displayName || user?.name || ""}
                 upn={upn}
                 currentPermissions={
-                  roles.find(
+                  ROLE_CATALOG.find(
                     (r) =>
                       r.role_id ===
                       selectedShareWith.find((u) => {
-                        const uId = u.id?.toLowerCase() || "";
+                        const uId = String(u.id || "").toLowerCase();
                         const uUpn = u.upn?.toLowerCase() || "";
-                        return uId === user.id?.toLowerCase() || uUpn === user.upn?.toLowerCase();
+                        return uId === String(user?.id || "").toLowerCase() || uUpn === upn;
                       })?.role_id,
                   )?.roleName
                 }
               />
-            </li>
+            </AutocompleteListItem>
           );
-        }}
-        sx={{
-          width: "309px",
-          "& .MuiInputBase-root": {
-            height: "40px",
-            borderRadius: "4px",
-            padding: "7px 8px",
-            borderWidth: "1px",
-          },
         }}
         renderInput={(params) => (
           <TextField
@@ -188,13 +172,13 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
 
       <UsersList>
         {/* Creator user */}
-        <CreatorContainer bgc={theme.palette.background?.default}>
+        <CreatorContainer $bgc={theme.palette.background?.default}>
           <UserInfo>
-            <UserAvatar src={formCreator?.gender === "female" ? female : male} alt="Creator" />
+            <UserAvatar src={male} alt="Creator" />
             <UserDetails>
-              <Typography style={{ fontWeight: 500, fontSize: "16px" }}>
-                {formCreator?.firstName + " " + formCreator?.lastName || formCreator.upn}
-              </Typography>
+              <CreatorName>
+                {formCreator?.displayName || formCreator?.upn}
+              </CreatorName>
               <UserUPN>{formCreator?.upn}</UserUPN>
             </UserDetails>
           </UserInfo>
@@ -208,7 +192,7 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
           <SharedUser
             key={user?.id || index}
             user={user}
-            roles={roles}
+            roles={ROLE_CATALOG}
             handleRoleChange={handleRoleChange}
             removeUserFromShare={removeUserFromShare}
           />

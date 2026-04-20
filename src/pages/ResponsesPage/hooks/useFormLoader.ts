@@ -13,15 +13,16 @@ export function useFormLoader(formId: string) {
     isSuccess,
   } = useGetForm({
     formId,
+    includePermissions: true,
     config: { enabled: !!formId },
   });
 
   const queryParams = useMemo(() => ({
-  limit: filter?.pageSize ?? 25,
-  search: filter?.query ?? "",
-  sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
-  before: filter?.before,
-  after: filter?.after,
+    limit: filter?.pageSize ?? 25,
+    search: filter?.query ?? "",
+    sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
+    before: filter?.before,
+    after: filter?.after,
   }), [filter]);
 
   const { data: responsesRowsData, isSuccess: isResponsesSuccess } = useGetResponsesRows(formId, queryParams as any);
@@ -34,8 +35,8 @@ export function useFormLoader(formId: string) {
       const responses: any[] = Array.isArray(responsesRowsData)
         ? responsesRowsData
         : (responsesRowsData as any)?.edges?.map((e: any) => e.node) ||
-          (responsesRowsData as any)?.responses ||
-          [];
+        (responsesRowsData as any)?.responses ||
+        [];
 
       const pageInfoFromData =
         !Array.isArray(responsesRowsData) && (responsesRowsData as any).pageInfo
@@ -90,7 +91,6 @@ export function useFormLoader(formId: string) {
           endCursor: responses.length > 0 ? responses[responses.length - 1].id : null,
         });
       }
-      console.log("Responses loaded and mapped:", rows);
     }
   }, [responsesRowsData, setRows, setPageInfo, isResponsesSuccess, formData, setResponses]);
   useEffect(() => {

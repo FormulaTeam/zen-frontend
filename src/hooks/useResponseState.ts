@@ -7,7 +7,7 @@ import type {
   ResponseFieldValueDto,
 } from "../types/shared";
 import { fieldType, FieldType, validateFormFieldValue, type FormFieldLike } from "formula-gear";
-import { getFormById, getResponseById, searchResponses, getResponses } from "../api";
+import { getResponseById, useGetForm } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
 import { checkUserAccessForResponse } from "../utils/utils";
 import { NOT_A_SECTION_ID } from "../utils/sections/consts";
@@ -173,6 +173,11 @@ export const useResponseState = (
     formFieldsValuesMapRef.current = formFieldsValuesMap;
   }, [formFieldsValuesMap]);
 
+  const { data: formFromQuery } = useGetForm({
+    formId,
+    includePermissions: true,
+  });
+
   useEffect(() => {
     let isMounted = true;
 
@@ -180,11 +185,8 @@ export const useResponseState = (
       setLoading(true);
 
       try {
-        if (formId) {
-          const fetchedForm = await getFormById(Number(formId));
-          if (isMounted && fetchedForm) {
-            setForm(fetchedForm as FormDto);
-          }
+        if (formFromQuery && isMounted) {
+          setForm(formFromQuery);
         }
 
         if (responseId) {
@@ -213,7 +215,7 @@ export const useResponseState = (
     return () => {
       isMounted = false;
     };
-  }, [formId, responseId, copyMode]);
+  }, [formFromQuery, responseId, copyMode, formId]);
 
   useEffect(() => {
     if (!form) return;

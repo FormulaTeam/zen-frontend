@@ -3,8 +3,9 @@ import { v4 as uuidv4 } from "uuid";
 import * as XLSX from "sheetjs-style";
 import * as FileSaver from "file-saver";
 import moment from "moment";
-import { getResponses, searchResponses } from "../api";
-import { FieldType, formIcon } from "formula-gear";
+import { getResponses } from "../api";
+import { FieldType, formIcon, permission, Permission } from "formula-gear";
+import { fieldType } from "formula-gear";
 import {
   CustomFormField,
   FieldTypeIds,
@@ -18,7 +19,6 @@ import {
   LocationValue,
   MultiInputFieldValues,
   NotificationTexts,
-  ResponseFieldValue,
   ResponseForm,
   Role,
   RoleId,
@@ -54,7 +54,6 @@ import txt from "../images/txt.png";
 import xls from "../images/xls.png";
 import formX from "../images/form_x.png";
 import { FormDto, ResponseDto, ResponseFieldValueDto } from "../types/shared";
-import { fieldType } from "formula-gear";
 
 export const LIST_NAMES = {
   CONFIG: "drs_config",
@@ -78,29 +77,14 @@ export const CHECKBOX_TYPES = {
   CHECKED: 1,
 };
 
-export const PERMISSION_TYPES = {
-  CREATE_FORM: 1,
-  DELETE_FORM: 2,
-  EDIT_FORM: 3,
-  SHARE_FORM: 4,
-  SYNC_FORM: 5,
-  EXPORT_FORM: 6,
-
-  CREATE_RESPONSE: 7,
-  DELETE_RESPONSE: 8,
-  EDIT_RESPONSE: 9,
-  VIEW_RESPONSE: 10,
-  VIEW_YOUR_RESPONSES: 11,
-};
-
-export const RESPONSE_ACCESS_PERMISSIONS = [
-  PERMISSION_TYPES.VIEW_RESPONSE,
-  PERMISSION_TYPES.CREATE_FORM,
-  PERMISSION_TYPES.DELETE_FORM,
-  PERMISSION_TYPES.EDIT_FORM,
-  PERMISSION_TYPES.SHARE_FORM,
-  PERMISSION_TYPES.SYNC_FORM,
-  PERMISSION_TYPES.EXPORT_FORM,
+export const RESPONSE_ACCESS_PERMISSIONS: Permission[] = [
+  permission.ReadAnyResponse,
+  permission.ReadForm,
+  permission.DeleteForm,
+  permission.UpdateForm,
+  permission.ShareForm,
+  permission.SyncForm,
+  permission.ExportForm,
 ];
 
 export const encodeCursor = (index: number, id: string): string => {
@@ -129,31 +113,12 @@ export const decodeCursor = (cursor: string): DecodedCursor | null => {
   }
 };
 
-export type LegacyPermission = (typeof PERMISSION_TYPES)[keyof typeof PERMISSION_TYPES];
-
-export const allLegacyPermissions: LegacyPermission[] = Object.values(PERMISSION_TYPES);
-
-export const CREATE_RESPONSE_PERMISSIONS = [PERMISSION_TYPES.CREATE_RESPONSE];
-// human labels for debug/admin UI
-export const PERMISSION_LABELS: Record<LegacyPermission, string> = {
-  [PERMISSION_TYPES.CREATE_FORM]: "Create form",
-  [PERMISSION_TYPES.DELETE_FORM]: "Delete form",
-  [PERMISSION_TYPES.EDIT_FORM]: "Edit form",
-  [PERMISSION_TYPES.SHARE_FORM]: "Share form",
-  [PERMISSION_TYPES.SYNC_FORM]: "Sync form",
-  [PERMISSION_TYPES.EXPORT_FORM]: "Export form",
-  [PERMISSION_TYPES.CREATE_RESPONSE]: "Create response",
-  [PERMISSION_TYPES.DELETE_RESPONSE]: "Delete response",
-  [PERMISSION_TYPES.EDIT_RESPONSE]: "Edit response",
-  [PERMISSION_TYPES.VIEW_RESPONSE]: "View any response",
-  [PERMISSION_TYPES.VIEW_YOUR_RESPONSES]: "View your own responses",
-};
 
 export function makePermSet(perms?: number[] | null) {
   return new Set<number>(perms ?? []);
 }
 
-export function hasPerm(permsSet: Set<number>, p: LegacyPermission) {
+export function hasPerm(permsSet: Set<number>, p: Permission) {
   return permsSet.has(p);
 }
 
@@ -905,7 +870,6 @@ export function getUserRole(
 }
 
 export function checkUserAccessForResponse(
-
   roles: Role[],
   viewMode: boolean,
   response: ResponseForm | null,
@@ -915,7 +879,7 @@ export function checkUserAccessForResponse(
 ) {
   try {
     const fullAccessRole = roles.find(
-      (role) => role.permission_types.length === Object.keys(PERMISSION_TYPES).length,
+      (role) => role.permission_types.length === Object.keys(permission).length,
     );
 
     const userRole = getUserRole(form.users, user, !!isSuperAdmin, fullAccessRole?.role_id || null);
@@ -926,7 +890,7 @@ export function checkUserAccessForResponse(
     if (response?.id && !viewMode) {
       // if response exists and not in view mode, check for roles
       const hasPermissionForResponse = permissionTypes.some((type) =>
-        RESPONSE_ACCESS_PERMISSIONS.includes(type),
+        RESPONSE_ACCESS_PERMISSIONS.includes(type as Permission),
       );
       if (!hasPermissionForResponse) {
         return false;
@@ -934,7 +898,7 @@ export function checkUserAccessForResponse(
     } else if (!response?.id && !viewMode) {
       // if its a new response and not in view mode, check for roles
       const hasPermissionToCreateResponse = permissionTypes.some((type) =>
-        CREATE_RESPONSE_PERMISSIONS.includes(type),
+        (permission.CreateResponse === type),
       );
       if (!hasPermissionToCreateResponse) {
         return false;

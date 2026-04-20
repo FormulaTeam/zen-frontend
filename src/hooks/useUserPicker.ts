@@ -1,21 +1,26 @@
 import { useEffect, useState } from "react";
+import { Role, role } from "formula-gear";
+import { useQueryClient } from "@tanstack/react-query";
 
-import type { FormDto } from "../types/shared";
-import { useUpdateForm } from "../api";
+import type { UserRoleDto } from "../types/shared";
+import { useUpsertFormRoles } from "../api/rolesApi";
 import { getUsers } from "../api/usersApi";
-import { User } from "../utils/interfaces";
-import { showErrorNotification } from "../utils/utils";
+import { showErrorNotification, showSuccessNotification } from "../utils/utils";
+import { FormOverview } from "@src/utils/interfaces";
 
-type SharePickerUser = User & {
-  role_id?: number;
+export type SharePickerUser = {
+  id?: number | string;
+  displayName: string;
+  upn: string;
+  role_id?: Role;
   selected?: boolean;
 };
 
-type PublicRole = FormDto["publicRole"];
-
 interface UseUserPickerProps {
-  form: FormDto;
-  closeSharePopupAndRefreshForm: (users: SharePickerUser[], updatedForm?: FormDto) => void;
+  form: FormOverview;
+  closeSharePopupAndRefreshForm: (users: SharePickerUser[], updatedForm?: FormOverview) => void;
+  roles?: UserRoleDto[];
+  publicRole?: Role | null;
 }
 
 export interface UserPickerReturnType {
@@ -23,117 +28,153 @@ export interface UserPickerReturnType {
   shareWithOptionsUsers: SharePickerUser[];
   selectedShareWith: SharePickerUser[];
   formCreator: SharePickerUser | null;
-  saveSharedWith: (updatedFormData?: Record<string, unknown>) => Promise<void>;
+  saveSharedWith: () => Promise<void>;
   removeUserFromShare: (user: SharePickerUser) => void;
   handleRoleChange: (_: any, newValue: any, user: SharePickerUser) => void;
   handleValueChange: (_: any, newValue: SharePickerUser) => void;
   handleInputChange: (_: any, value: string) => void;
   handleClose: () => void;
-  saveFormPermissions: (isPublic: boolean, formPermission?: PublicRole) => Promise<void>;
-  handleFormPermissionChange: (isPublic: boolean, permission?: PublicRole) => void;
+  handleFormPermissionChange: (isPublic: boolean, permission?: Role) => void;
 }
 
-const getCreatorFromForm = (form: FormDto): SharePickerUser | null => {
+const getCreatorFromForm = (form: FormOverview): SharePickerUser | null => {
   if (!form.createdBy) return null;
 
   return {
-    id: form.createdBy.upn,
     upn: form.createdBy.upn,
     displayName: form.createdBy.name,
-    firstName: form.createdBy.name,
+    role_id: role.FormAdmin,
     selected: true,
-  } as SharePickerUser;
+  };
 };
 
 export const useUserPicker = ({
   form,
+  roles = [],
+  publicRole = null,
   closeSharePopupAndRefreshForm,
 }: UseUserPickerProps): UserPickerReturnType => {
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedShareWith, setSelectedShareWith] = useState<SharePickerUser[]>([]);
   const [shareWithOptionsUsers, setSharedWithOptionsUsers] = useState<SharePickerUser[]>([]);
   const [formCreator, setFormCreator] = useState<SharePickerUser | null>(null);
-  const [formPublicState, setFormPublicState] = useState<boolean>(!!form.publicRole);
-  const [formPermissionState, setFormPermissionState] = useState<PublicRole | null>(
-    form.publicRole ?? null,
+  const [formPermissionState, setFormPermissionState] = useState<Role | null>(
+    null,
   );
 
-  const { mutateAsync: mutateUpdateFormAsync } = useUpdateForm();
+  const { mutateAsync: upsertFormRolesAsync } = useUpsertFormRoles(form.id);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    setFormPublicState(!!form.publicRole);
-    setFormPermissionState(form.publicRole ?? null);
-  }, [form.publicRole, form.id]);
+    const creator = getCreatorFromForm(form);
+    setFormCreator(creator);
 
-  useEffect(() => {
-    setFormCreator(getCreatorFromForm(form));
-    setSelectedShareWith([]);
+    const initialSelectedUsers = roles
+      .map((userRole: UserRoleDto) => {
+        const user = userRole.user;
+
+        return {
+          id: user?.id,
+          upn: user?.upn,
+          displayName: user?.name,
+          role_id: userRole.role,
+          selected: true,
+        } as SharePickerUser;
+      });
+
+    setSelectedShareWith(initialSelectedUsers);
+    setFormPermissionState(publicRole);
     setLoading(false);
-  }, [form]);
+  }, [form, roles, publicRole]);
 
-  const getSelectedShareWithFormCreator = (
-    users: SharePickerUser[],
-    creator: SharePickerUser | null,
-  ): SharePickerUser[] => {
-    if (!creator) return users;
-
-    const hasCreator = users.some((user) => user.upn === creator.upn || user.id === creator.id);
-
-    if (hasCreator) return users;
-
-    const creatorClone = { ...creator };
-    delete creatorClone.displayName;
-
-    return [...users, creatorClone];
-  };
-
-  const saveSharedWith = async (updatedFormData?: Record<string, unknown>) => {
-    const users: SharePickerUser[] = [];
+  const saveSharedWith = async () => {
+    const userRoles: { userId: number; role: Role }[] = [];
     let allPermissionsSelected = true;
 
     selectedShareWith.forEach((user) => {
-      const normalizedUser = { ...user };
-
-      if (normalizedUser.role_id === -1 || !normalizedUser.role_id) {
+      const { role_id } = user;
+      if (!role_id) {
         allPermissionsSelected = false;
-        normalizedUser.role_id = undefined;
+      } else {
+        userRoles.push({
+          userId: Number(user.id),
+          role: role_id,
+        });
       }
-
-      normalizedUser.upn = normalizedUser.upn || normalizedUser.id?.toLowerCase();
-      delete normalizedUser.displayName;
-      users.push(normalizedUser);
     });
 
-    if (users.length > 0 && !allPermissionsSelected) {
-      showErrorNotification("לא ניתן לשתף משתמש בלי לבחור לו רמת הרשאות");
 
+    if (selectedShareWith.length > 0 && !allPermissionsSelected) {
+      showErrorNotification("לא ניתן לשתף משתמש בלי לבחור לו רמת הרשאות");
       return;
     }
 
-    const usersWithCreator = getSelectedShareWithFormCreator(users, formCreator);
+    const originalUserRoles = roles.map(roleData => ({ userId: Number(roleData.user?.id), role: roleData.role }));
+
+    const hasUserRolesChanged: boolean =
+      userRoles.length !== originalUserRoles.length ||
+      userRoles.some(
+        userRole => !originalUserRoles.some(originalUserRoles => originalUserRoles.userId === userRole.userId && originalUserRoles.role === userRole.role)
+      ) ||
+      originalUserRoles.some(
+        originalUserRoles => !userRoles.some(userRole => userRole.userId === originalUserRoles.userId && userRole.role === originalUserRoles.role)
+      );
+
+    const hasPublicRoleChanged: boolean = formPermissionState !== publicRole;
+
+    if (!hasUserRolesChanged && !hasPublicRoleChanged) {
+      closeSharePopupAndRefreshForm(selectedShareWith, form ?? undefined);
+      return;
+    }
+
+
+    let previousForms: [any, any][] | null = null;
+
+    const myPersonal = queryClient.getQueryData<any>(["user-personal"]);
+    const currentUserUpn: string | undefined = myPersonal?.upn;
+
+    if (currentUserUpn) {
+      const isPublicForm: boolean = formPermissionState !== null;
+
+      if (!isPublicForm) {
+        const originalMyRole: UserRoleDto | undefined = roles.find((userRole: UserRoleDto) => userRole.user?.upn?.toLowerCase() === currentUserUpn.toLowerCase());
+        const hadAdminRole: boolean = !!originalMyRole && originalMyRole.role === role.FormAdmin;
+
+        const myCurrentRole: SharePickerUser | undefined = selectedShareWith.find((selectedUser: SharePickerUser) => selectedUser.upn?.toLowerCase() === currentUserUpn.toLowerCase());
+        const hasAdminRole: boolean = !!myCurrentRole && myCurrentRole.role_id === role.FormAdmin;
+
+        if (hadAdminRole && !hasAdminRole) {
+          previousForms = queryClient.getQueriesData({ queryKey: ["forms"] });
+
+          queryClient.setQueriesData({ queryKey: ["forms"] }, (oldData: any) => {
+            if (!Array.isArray(oldData)) return oldData;
+            return oldData.filter((formItem: any) => formItem.id !== form.id);
+          });
+        }
+      }
+    }
 
     try {
       setLoading(true);
-
-      const finalFormData: Record<string, unknown> = {
-        ...updatedFormData,
-      };
-
-      const updatedForm = await mutateUpdateFormAsync({
-        id: form.id,
-        formData: finalFormData,
+      const response = await upsertFormRolesAsync({
+        userRoles: userRoles,
+        publicRole: formPermissionState ?? null,
       });
 
-      if (updatedForm) {
-        if ("publicRole" in updatedForm) setFormPublicState(!!updatedForm.publicRole);
-
-        if ("publicRole" in updatedForm) setFormPermissionState(updatedForm.publicRole ?? null);
+      if (response && response.publicRole) {
+        setFormPermissionState(response.publicRole ?? null);
       }
 
-      closeSharePopupAndRefreshForm(usersWithCreator, updatedForm ?? undefined);
+      closeSharePopupAndRefreshForm(selectedShareWith, form ?? undefined);
+      showSuccessNotification("ההרשאות לטופס עודכנו בהצלחה!")
     } catch (error) {
       console.error("שגיאה בעדכון הטופס:", error);
       showErrorNotification("עדכון הטופס נכשל");
+      if (previousForms) {
+        previousForms.forEach(([queryKey, oldData]: [any, any]) => {
+          queryClient.setQueryData(queryKey, oldData);
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -148,9 +189,11 @@ export const useUserPicker = ({
   const handleRoleChange = (_: any, newValue: any, user: SharePickerUser) => {
     setSelectedShareWith((previousUsers) => {
       const updatedUsers = [...previousUsers];
-      const userIndex = updatedUsers.findIndex((currentUser) => currentUser.id === user.id);
+      const userIndex = updatedUsers.findIndex((currentUser) => String(currentUser.id || "") === String(user.id || ""));
 
-      if (userIndex !== -1 && newValue) updatedUsers[userIndex].role_id = newValue.role_id;
+      if (userIndex !== -1 && newValue) {
+        updatedUsers[userIndex].role_id = newValue.role_id;
+      }
 
       return updatedUsers;
     });
@@ -164,7 +207,7 @@ export const useUserPicker = ({
 
       if (alreadyExists) return previousUsers;
 
-      return [...previousUsers, { ...newValue, role_id: -1, selected: true }];
+      return [...previousUsers, { ...newValue, role_id: undefined, selected: true }];
     });
 
     handleInputChange(null, "");
@@ -195,35 +238,7 @@ export const useUserPicker = ({
     closeSharePopupAndRefreshForm([], form);
   };
 
-  const saveFormPermissions = async (isPublic: boolean, formPermission?: PublicRole) => {
-    try {
-      setLoading(true);
-
-      const updatedFormData: Record<string, unknown> = {
-        publicRole: isPublic ? formPermission : undefined,
-      };
-
-      const updatedForm = await mutateUpdateFormAsync({
-        id: form.id,
-        formData: updatedFormData,
-      });
-
-      if (updatedForm) {
-        setFormPublicState(!!updatedForm.publicRole);
-        setFormPermissionState(updatedForm.publicRole ?? null);
-      }
-
-      closeSharePopupAndRefreshForm([], updatedForm ?? undefined);
-    } catch (error) {
-      console.error("שגיאה בעדכון הרשאות הטופס:", error);
-      showErrorNotification("עדכון הרשאות הטופס נכשל");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFormPermissionChange = (isPublic: boolean, permission?: PublicRole) => {
-    setFormPublicState(isPublic);
+  const handleFormPermissionChange = (isPublic: boolean, permission?: Role) => {
     setFormPermissionState(isPublic ? (permission ?? null) : null);
   };
 
@@ -238,7 +253,6 @@ export const useUserPicker = ({
     handleValueChange,
     handleInputChange,
     handleClose,
-    saveFormPermissions,
     handleFormPermissionChange,
   };
 };

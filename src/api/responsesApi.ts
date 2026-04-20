@@ -44,6 +44,7 @@ export const getResponses = async (formId: number, filter?: Filter): Promise<Res
     sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     before: filter?.before,
     after: filter?.after,
+    sortBy: ""
   };
   try {
     const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, { params });
@@ -135,6 +136,7 @@ export const searchResponses = async (filter: Filter): Promise<ResponseDto[]> =>
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      sortBy: ""
     };
 
     const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, { params });
@@ -264,6 +266,7 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
+      sortBy: ""
     }),
     [filter],
   );
@@ -390,6 +393,7 @@ export const getResponsesRows = async ({
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
+      sortBy: ""
     };
     const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, {
       params,
