@@ -340,7 +340,7 @@ export const useUpdateResponses = (formId?: number) => {
     mutationKey: ["update-responses", formId],
     mutationOptions: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["responses", formId] });
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
       },
       onError: (error) => {
         console.error("Failed to update responses:", error);
