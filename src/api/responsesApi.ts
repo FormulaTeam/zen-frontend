@@ -41,6 +41,7 @@ export const getResponses = async (formId: number, filter?: Filter): Promise<Res
   const params: z.infer<typeof GetResponsesQuerySchema> = {
     limit: filter?.pageSize ?? 25,
     search: stringifyQuery(filter?.query),
+    sortBy: "",
     sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     before: filter?.before,
     after: filter?.after,
@@ -134,6 +135,7 @@ export const searchResponses = async (filter: Filter): Promise<ResponseDto[]> =>
     const params: z.infer<typeof GetResponsesQuerySchema> = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
+      sortBy: "",
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     };
 
@@ -240,10 +242,13 @@ export const useGetResponsesRows = (
   formId: string,
   params: z.infer<typeof GetResponsesQuerySchema>,
 ) => {
-  const safeParams = useMemo(() => ({
-    ...params,
-    search: stringifyQuery(params.search),
-  }), [params]);
+  const safeParams = useMemo(
+    () => ({
+      ...params,
+      search: stringifyQuery(params.search),
+    }),
+    [params],
+  );
 
   return useFetch<typeof safeParams, ResponseDto[]>({
     endpoint: `/forms/${formId}/responses`,
@@ -261,6 +266,7 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
     () => ({
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
+      sortBy: "",
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
@@ -328,8 +334,6 @@ export const useSoftDeleteResponses = (formId: number) => {
   });
 };
 
-
-
 export const useUpdateResponses = (formId?: number) => {
   return useUpdate<BulkUpdateResponsesDto, ResponseDto[]>({
     endpoint: `/forms/${formId}/responses`,
@@ -367,6 +371,7 @@ export const getResponsesRows = async ({
     const params: z.infer<typeof GetResponsesQuerySchema> = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
+      sortBy: "",
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
