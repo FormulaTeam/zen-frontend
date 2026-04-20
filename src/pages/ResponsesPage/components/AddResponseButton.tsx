@@ -4,7 +4,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from "react-router-dom";
 import { StyledAddButton, EditButtonWrapper } from "../styled";
 import { useFormStore } from "../stores/form.store";
-import { PERMISSION_TYPES } from "../../../utils/utils";
+import { permission } from "formula-gear";
 import { useSuperAdmin } from "../../../contexts/SuperAdminContext";
 
 export const AddResponseButton: React.FC = () => {
@@ -12,7 +12,7 @@ export const AddResponseButton: React.FC = () => {
     const { form, permissions } = useFormStore();
     const { isSuperAdmin } = useSuperAdmin();
 
-    const canCreate = (permissions || []).includes(PERMISSION_TYPES.CREATE_RESPONSE) || !!isSuperAdmin;
+    const canCreate = (permissions || []).includes(permission.CreateResponse) || !!isSuperAdmin;
 
     if (!form || !canCreate) return null;
 

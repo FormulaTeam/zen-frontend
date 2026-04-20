@@ -2,12 +2,13 @@ import React, { useState } from "react";
 
 import * as MuiIcons from "@mui/icons-material";
 import { Box, Divider, Tooltip, useTheme } from "@mui/material";
+import { permission } from "formula-gear";
 import UserPicker from "../UserPicker/UserPicker";
 import ShareIcon from "../../icons/share.svg";
 import formX from "../../images/form_x.png";
 import { FormOverview } from "../../utils/interfaces";
 import { CustomIcon } from "../../theme/icons";
-import { getFormIconByName, PERMISSION_TYPES } from "../../utils/utils";
+import { getFormIconByName } from "../../utils/utils";
 import CardCreationDetails from "./CardCreationDetails";
 import { PermissionGate } from "../PermissionGate";
 import {
@@ -71,7 +72,7 @@ const FormCard = ({
 
   if (!form) return null;
 
-  const userPermissions = ((isSuperAdmin || isCreator) ? Object.values(PERMISSION_TYPES) : form.permissions) ?? [];
+  const userPermissions = ((isSuperAdmin || isCreator) ? Object.values(permission) : form.permissions) ?? [];
 
   return (
     <StyledCard
@@ -117,10 +118,10 @@ const FormCard = ({
       <ItemBottomDiv>
         <PermissionGate
           userPermissions={userPermissions}
-          requiredPermissions={[PERMISSION_TYPES.EDIT_FORM, PERMISSION_TYPES.SHARE_FORM]}
+          requiredPermissions={[permission.UpdateForm, permission.ShareForm]}
           requireAny>
           <ItemIconsDiv>
-            <PermissionGate userPermissions={userPermissions} requiredPermissions={[PERMISSION_TYPES.EDIT_FORM]}>
+            <PermissionGate userPermissions={userPermissions} requiredPermissions={[permission.UpdateForm]}>
               <Tooltip title="עריכת טופס">
                 <div>
                   <CustomIcon
@@ -135,7 +136,7 @@ const FormCard = ({
               </Tooltip>
             </PermissionGate>
 
-            <PermissionGate userPermissions={userPermissions} requiredPermissions={[PERMISSION_TYPES.SHARE_FORM]}>
+            <PermissionGate userPermissions={userPermissions} requiredPermissions={[permission.ShareForm]}>
               <Tooltip title="שיתוף טופס">
                 <div>
                   <GrayShareIcon src={ShareIcon} onClick={handleShareClick} />
@@ -155,7 +156,7 @@ const FormCard = ({
         )}
 
         <ItemBtnsDiv>
-          <PermissionGate userPermissions={userPermissions} requiredPermissions={[PERMISSION_TYPES.CREATE_RESPONSE]}>
+          <PermissionGate userPermissions={userPermissions} requiredPermissions={[permission.CreateResponse]}>
             <ItemButton
               className="form-add-response-button"
               onClick={() => navigate(`/response/create/${form.id}`)}
@@ -175,7 +176,7 @@ const FormCard = ({
 
           <PermissionGate
             userPermissions={userPermissions}
-            requiredPermissions={[PERMISSION_TYPES.VIEW_RESPONSE, PERMISSION_TYPES.VIEW_YOUR_RESPONSES]}
+            requiredPermissions={[permission.ReadAnyResponse]}
             requireAny>
             <ItemButton
               className="form-watch-responses-button"

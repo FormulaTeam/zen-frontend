@@ -1,12 +1,11 @@
 import React from "react";
-import { PERMISSION_TYPES } from "@utils/utils";
+import { Permission } from "formula-gear";
 import { useSuperAdmin } from "@contexts/SuperAdminContext";
 
-type PermissionType = (typeof PERMISSION_TYPES)[keyof typeof PERMISSION_TYPES];
 
 type PermissionGateProps = {
     userPermissions: number[];
-    requiredPermissions: PermissionType[];
+    requiredPermissions: Permission[];
     requireAny?: boolean;
     fallback?: React.ReactNode;
     children: React.ReactNode;

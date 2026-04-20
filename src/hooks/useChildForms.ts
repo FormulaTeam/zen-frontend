@@ -27,7 +27,6 @@ type UseChildFormsParams = {
   saveAll: () => void | Promise<void>;
   user: User;
   isSuperAdmin: boolean | null;
-  roles: UserRoleDto[];
   copyMode?: boolean;
   onSaveComplete?: (allSaved: boolean) => void;
   onValidateComplete?: (isValid: boolean) => void;
@@ -49,12 +48,12 @@ type UseChildFormsReturn = {
 
 type LegacyLinkedResponse = ResponseDto & {
   parentResponse?:
-    | string
-    | {
-        formId?: number | string;
-        responseId?: string;
-      }
-    | null;
+  | string
+  | {
+    formId?: number | string;
+    responseId?: string;
+  }
+  | null;
   mainResponses?: Array<{ id?: string; index?: number | string }>;
 };
 
@@ -149,7 +148,6 @@ export const useChildForms = ({
   formId,
   saveAll,
   user,
-  roles: _roles = [],
   isSuperAdmin = false,
   copyMode = false,
   onSaveComplete,
@@ -271,22 +269,22 @@ export const useChildForms = ({
                 matchesParentResponse(response, formId, id),
               );
 
-            const templateField = connectedFields.find(
-              (field) => getConnectedFormId(field) === childFormId,
-            );
+              const templateField = connectedFields.find(
+                (field) => getConnectedFormId(field) === childFormId,
+              );
 
-            const children = templateField
-              ? matchingResponses.map((response) => createChildInstance(templateField, response.id))
-              : [];
+              const children = templateField
+                ? matchingResponses.map((response) => createChildInstance(templateField, response.id))
+                : [];
 
-            return {
-              formId: childFormId,
-              children,
-              saved: [] as Array<boolean | undefined>,
-              valid: [] as Array<boolean | undefined>,
-              shown: children.length > 0,
-            };
-          }),
+              return {
+                formId: childFormId,
+                children,
+                saved: [] as Array<boolean | undefined>,
+                valid: [] as Array<boolean | undefined>,
+                shown: children.length > 0,
+              };
+            }),
         );
 
         setChildForms((prev) =>
@@ -403,9 +401,9 @@ export const useChildForms = ({
           prev.map((childForm) =>
             childForm.shown
               ? {
-                  ...childForm,
-                  saved: [],
-                }
+                ...childForm,
+                saved: [],
+              }
               : childForm,
           ),
         );

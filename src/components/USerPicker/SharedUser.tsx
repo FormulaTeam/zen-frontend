@@ -13,10 +13,8 @@ import {
   StyledIconButton,
 } from "./styled";
 import RolesAutocomplete from "./RolesAutocomplete";
-import { useAuth } from "../../contexts/AuthContext";
 
 const SharedUser = ({ user, roles, handleRoleChange, removeUserFromShare }) => {
-  const { user: currentUser } = useAuth();
   const theme = useTheme();
   const name = user?.displayName;
   const upn = user?.upn || user?.mail || user?.id || "";
@@ -27,7 +25,6 @@ const SharedUser = ({ user, roles, handleRoleChange, removeUserFromShare }) => {
       : null;
   const roleName = roleObj?.roleName || "";
   const isValid = user?.role_id !== undefined && user?.role_id;
-  const isDisabled = user?.upn === currentUser?.upn;
   return (
     <SharedUserContainer>
       <UserInfo>
@@ -48,13 +45,12 @@ const SharedUser = ({ user, roles, handleRoleChange, removeUserFromShare }) => {
             {roleName}
           </RoleLabel>
         ) : (
-          <RolesAutocomplete isDisabled={isDisabled} handleRoleChange={handleRoleChange} user={user} />
+          <RolesAutocomplete isDisabled={false} handleRoleChange={handleRoleChange} user={user} />
         )}
 
         {/* Always show the X button, just disable it for current user */}
         <StyledIconButton
-          color={isDisabled ? theme.palette.button?.disabled : theme.palette.button?.primaryText}
-          disabled={isDisabled}
+          color={theme.palette.button?.primaryText}
           onClick={() => removeUserFromShare(user)}
           size="small">
           <Close fontSize="small" />

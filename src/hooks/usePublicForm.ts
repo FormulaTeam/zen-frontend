@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Form, Role } from "../utils/interfaces";
-import { prioritizePermissions } from "../utils/formFieldsResponses";
 
 interface UsePublicFormProps {
   form: Form;
@@ -47,7 +46,7 @@ export const usePublicForm = ({
   const togglePublicForm = () => {
     const newIsPublic = !isPublic;
     setIsPublic(newIsPublic);
-    
+
     if (!newIsPublic) {
       setFormPermission(null); // If public is disabled, clear permission
       onFormPermissionChange(newIsPublic, undefined);

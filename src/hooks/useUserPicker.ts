@@ -158,7 +158,7 @@ export const useUserPicker = ({
       setLoading(true);
       const response = await upsertFormRolesAsync({
         userRoles: userRoles,
-        publicRole: formPermissionState ?? undefined,
+        publicRole: formPermissionState ?? null,
       });
 
       if (response && response.publicRole) {
