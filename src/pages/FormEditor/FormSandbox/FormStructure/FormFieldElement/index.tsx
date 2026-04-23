@@ -89,7 +89,8 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
                   maxLength: 255,
                 },
               }}
-              onChange={(e) => onDataChange({ displayName: e.target.value })}
+              onChange={(e) => onDataChange({ displayName: e.target.value.trimStart() })}
+              onBlur={(e) => onDataChange({ displayName: e.target.value.trim() })}
             />
             {
               (isInternalNamesShown && field.data.typeId !== FieldTypeIds.linkedForm) &&
@@ -100,7 +101,8 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
                 error={!!field.validationErrors?.name}
                 helperText={field.validationErrors?.name?.errors[0]}
                 disabled={isInputDisabled}
-                onChange={(e) => onDataChange({ name: e.target.value })}
+                onChange={(e) => onDataChange({ name: e.target.value.trimStart() })}
+                onBlur={(e) => onDataChange({ name: e.target.value.trim() })}
               />
             }
           </div>

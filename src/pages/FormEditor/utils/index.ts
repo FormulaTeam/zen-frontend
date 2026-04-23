@@ -43,7 +43,7 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
   };
 
   if (elementTypeId === FieldTypeIds.location) {
-    data.extra = { format: LocationFormat.UTM };
+    data.extra = { locationFormat: LocationFormat.UTM };
   }
 
   return data;

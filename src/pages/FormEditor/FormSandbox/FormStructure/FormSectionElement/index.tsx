@@ -111,7 +111,8 @@ function FormSectionElement({ id }: Props) {
         }}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
-        onChange={(e) => setEditedTitle(e.target.value)} />
+        onChange={(e) => setEditedTitle(e.target.value.trimStart())}
+        onBlur={(e) => setEditedTitle(e.target.value.trim())} />
       <Button className={styles.button}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(_) => {
