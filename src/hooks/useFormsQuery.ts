@@ -9,6 +9,7 @@ export interface FormsQueryParams {
   sortBy?: FormsSortOption;
   sortDirection?: SortDirection;
   enabled?: boolean;
+  includePermissions?: boolean;
 }
 
 export function useGetFormsQuery({ enabled = true, searchQuery, ...rest }: FormsQueryParams) {

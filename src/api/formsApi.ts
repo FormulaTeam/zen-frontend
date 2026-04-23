@@ -248,17 +248,23 @@ export const useUpdateForm = () => {
 
 export const useGetForm = ({
   formId,
+  includePermissions,
   config,
 }: {
   formId?: string;
+  includePermissions?: boolean;
   config?: Omit<
     UseQueryOptions<FormDto | null, Error, FormDto | null, readonly unknown[]>,
     "queryKey" | "queryFn"
   >;
 }): UseQueryResult<FormDto | null> => {
+  const params = new URLSearchParams();
+  if (includePermissions) params.set("includePermissions", "true");
+  const queryString = params.size ? `?${params.toString()}` : "";
+
   return useFetch<undefined, FormDto | null>({
-    endpoint: `/forms/${formId}`,
-    queryKey: () => [formId],
+    endpoint: `/forms/${formId}${queryString}`,
+    queryKey: () => [formId, includePermissions],
     queryOptions: {
       enabled: !!formId,
       ...config,

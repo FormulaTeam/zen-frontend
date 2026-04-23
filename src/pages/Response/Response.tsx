@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { FormRoleDto, ResponseDto } from "../../types/shared";
+import type { ResponseDto } from "../../types/shared";
 import { fieldType } from "formula-gear";
 import { Box, Button, Container, Tooltip, Typography } from "@mui/material";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -10,14 +10,12 @@ import { Add } from "@mui/icons-material";
 import { FormSectionsContainer } from "./styled";
 import ConnectedFormSection from "../../components/FormSection/ConnectedFormSection";
 import { useChildForms } from "../../hooks/useChildForms";
-import { resolveUserPermissions } from "../../utils/formFieldsResponses";
 import styled from "styled-components";
 import ResponseHeader from "../../components/ResponseComponents/ResponseHeader";
 import ResponseSection from "../../components/ResponseComponents/ResponseSection";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import AlertMsg from "../../components/AlertMsg/AlertMsg";
 import { useValidationErrors } from "../../hooks/useValidationErrors";
-import { useGetFormRoles } from "../../api/rolesApi";
 
 const PageContainer = styled(Container)`
   height: 100%;
@@ -44,9 +42,6 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   const navigate = useNavigate();
   const { isSuperAdmin } = useSuperAdmin();
 
-  const { data: formRoles } = useGetFormRoles(formId);
-  const roles = useMemo(() => (formRoles as FormRoleDto | undefined)?.userRoles ?? [], [formRoles]);
-
   const {
     formTitle,
     formFields,
@@ -66,7 +61,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     toggleSectionCollapse,
   } = useResponseState(formId, id, viewMode, copyMode, undefined, user, isSuperAdmin ?? undefined);
 
-  const { saveResponse, isSaving } = useResponseSave(form, response, user, undefined, copyMode);
+  const { saveResponse, isSaving } = useResponseSave(form, response, undefined, copyMode);
 
   const parentCreatePromiseRef = useRef<Promise<ResponseDto> | null>(null);
   const generateValidationErrorMessagesRef = useRef<() => string[]>(() => []);
@@ -157,7 +152,6 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     saveAll,
     user,
     isSuperAdmin,
-    roles,
     copyMode,
   });
 
@@ -179,8 +173,11 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   );
 
   useEffect(() => {
-    resolveUserPermissions(form, user, roles, viewMode, setPermissionTypes);
-  }, [form, user, roles, viewMode]);
+    if (viewMode && form) {
+      setPermissionTypes(form?.permissions ?? []);
+    }
+
+  }, [form, viewMode]);
 
   useEffect(() => {
     if (!childFormsValidate) {
@@ -228,9 +225,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       prev.map((childForm) =>
         childForm.shown
           ? {
-              ...childForm,
-              valid: [],
-            }
+            ...childForm,
+            valid: [],
+          }
           : childForm,
       ),
     );
@@ -258,9 +255,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
     const parentResponse: ParentResponseRef | undefined = savedParentResponseId
       ? {
-          formId: Number(formId),
-          responseId: savedParentResponseId,
-        }
+        formId: Number(formId),
+        responseId: savedParentResponseId,
+      }
       : undefined;
 
     return (

@@ -45,6 +45,7 @@ export const getResponses = async (formId: number, filter?: Filter): Promise<any
     sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     before: filter?.before,
     after: filter?.after,
+    sortBy: ""
   };
   try {
     const response = await apiClient.get(`/forms/${formId}/responses`, { params });
@@ -137,6 +138,7 @@ export const searchResponses = async (filter: Filter): Promise<any> => {
       search: stringifyQuery(filter?.query),
       sortBy: filter?.sortBy,
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      sortBy: ""
     };
 
     const response = await apiClient.get(`/forms/${formId}/responses`, { params });
@@ -269,6 +271,7 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
+      sortBy: ""
     }),
     [filter],
   );
@@ -396,6 +399,7 @@ export const getResponsesRows = async ({
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
+      sortBy: ""
     };
     const response = await apiClient.get(`/forms/${formId}/responses`, {
       params,

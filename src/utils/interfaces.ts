@@ -3,7 +3,11 @@ import { formsTabs } from "./utils";
 import { z } from "zod";
 import { FormOverviewSchema } from "formula-gear";
 
-export type FormOverview = z.infer<typeof FormOverviewSchema>;
+export type FormOverviewType = z.infer<typeof FormOverviewSchema>;
+
+export type FormOverview = FormOverviewType & {
+  permissions?: number[];
+};
 
 export interface FormOption {
   id: string;
@@ -52,8 +56,6 @@ export interface Role {
   permission_types: number[];
   form_id: null | number;
 }
-
-// export type Roles = Role[];
 
 declare module "@mui/material/Button" {
   interface ButtonPropsVariantOverrides {

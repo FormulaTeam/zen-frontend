@@ -7,7 +7,7 @@ import type {
   ResponseFieldValueDto,
 } from "../types/shared";
 import { fieldType, FieldType, validateFormFieldValue, type FormFieldLike } from "formula-gear";
-import { getFormById, getResponseById, searchResponses, getResponses } from "../api";
+import { getResponseById, useGetForm } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
 import { checkUserAccessForResponse } from "../utils/utils";
 import { NOT_A_SECTION_ID } from "../utils/sections/consts";
@@ -154,6 +154,7 @@ export const useResponseState = (
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
   const initializedStateKeyRef = useRef<string | null>(null);
+  const formFieldsValuesMapRef = useRef<Map<string, any>>(new Map());
 
   const navigate = useNavigate();
 
@@ -169,17 +170,23 @@ export const useResponseState = (
   };
 
   useEffect(() => {
+    formFieldsValuesMapRef.current = formFieldsValuesMap;
+  }, [formFieldsValuesMap]);
+
+  const { data: formFromQuery } = useGetForm({
+    formId,
+    includePermissions: true,
+  });
+
+  useEffect(() => {
     let isMounted = true;
 
     const loadData = async () => {
       setLoading(true);
 
       try {
-        if (formId) {
-          const fetchedForm = await getFormById(Number(formId));
-          if (isMounted && fetchedForm) {
-            setForm(fetchedForm as FormDto);
-          }
+        if (formFromQuery && isMounted) {
+          setForm(formFromQuery);
         }
 
         if (responseId) {
@@ -208,7 +215,7 @@ export const useResponseState = (
     return () => {
       isMounted = false;
     };
-  }, [formId, responseId, copyMode]);
+  }, [formFromQuery, responseId, copyMode, formId]);
 
   useEffect(() => {
     if (!form) return;
@@ -313,6 +320,7 @@ export const useResponseState = (
     }
 
     initializedStateKeyRef.current = stateKey;
+    formFieldsValuesMapRef.current = nextValuesMap;
 
     setFormFields(nextFormFields);
     setFormFieldsByIdsMap(nextFieldsByIdMap);
@@ -386,6 +394,10 @@ export const useResponseState = (
         }
       });
 
+      if (changed) {
+        formFieldsValuesMapRef.current = next;
+      }
+
       return changed ? next : prev;
     });
 
@@ -458,7 +470,7 @@ export const useResponseState = (
       return true;
     }
 
-    const valuesMap = valuesMapOverride ?? formFieldsValuesMap;
+    const valuesMap = valuesMapOverride ?? formFieldsValuesMapRef.current;
     const rawValue = valuesMap.get(normalizedFieldId);
     const result = validateFormFieldValue(toValidatorField(field), rawValue);
 
@@ -481,6 +493,7 @@ export const useResponseState = (
         setFormFieldsValuesMap((prev) => {
           const next = new Map(prev);
           next.set(normalizedFieldId, result.data);
+          formFieldsValuesMapRef.current = next;
           return next;
         });
       }
@@ -610,6 +623,7 @@ export const useResponseState = (
         }
       }
 
+      formFieldsValuesMapRef.current = newFormFieldsValuesMap;
       return newFormFieldsValuesMap;
     });
 
@@ -627,7 +641,7 @@ export const useResponseState = (
   const validateAllFieldsBeforeSubmit = () => {
     let isValidForm = true;
     const nextValidMap = new Map<string, FieldValidationError | null>();
-    const nextParsedValuesMap = new Map(formFieldsValuesMap);
+    const nextParsedValuesMap = new Map(formFieldsValuesMapRef.current);
     const nextTouchedMap = new Map(formFieldsTouchedMap);
     const visibleFieldIds = new Set(visibleFormFields.map((field) => String(field.id)));
 
@@ -659,6 +673,7 @@ export const useResponseState = (
     setFormFieldsValidMap(nextValidMap);
 
     if (isValidForm) {
+      formFieldsValuesMapRef.current = nextParsedValuesMap;
       setFormFieldsValuesMap(nextParsedValuesMap);
     }
 

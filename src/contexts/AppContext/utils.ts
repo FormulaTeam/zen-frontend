@@ -16,7 +16,6 @@ export interface UserPayLoad {
   family_name: string;
   given_name: string;
   displayName: string;
-  gender?: "male" | "female" | undefined;
 }
 
 // Define the shape of the context value
@@ -33,7 +32,7 @@ export const defaultState: SharedDataContext = {
 
 export const defaultContext: AppContextType = {
   state: defaultState,
-  setState: () => {},
+  setState: () => { },
 };
 
 export interface SharedDataContext {

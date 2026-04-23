@@ -27,7 +27,6 @@ type UseChildFormsParams = {
   saveAll: () => void | Promise<void>;
   user: User;
   isSuperAdmin: boolean | null;
-  roles: UserRoleDto[];
   copyMode?: boolean;
   onSaveComplete?: (allSaved: boolean) => void;
   onValidateComplete?: (isValid: boolean) => void;
@@ -49,12 +48,12 @@ type UseChildFormsReturn = {
 
 type LegacyLinkedResponse = ResponseDto & {
   parentResponse?:
-    | string
-    | {
-        formId?: number | string;
-        responseId?: string;
-      }
-    | null;
+  | string
+  | {
+    formId?: number | string;
+    responseId?: string;
+  }
+  | null;
   mainResponses?: Array<{ id?: string; index?: number | string }>;
 };
 
@@ -149,7 +148,6 @@ export const useChildForms = ({
   formId,
   saveAll,
   user,
-  roles: _roles = [],
   isSuperAdmin = false,
   copyMode = false,
   onSaveComplete,
@@ -275,9 +273,7 @@ export const useChildForms = ({
               );
 
               const children = templateField
-                ? matchingResponses.map((response) =>
-                    createChildInstance(templateField, response.id),
-                  )
+                ? matchingResponses.map((response) => createChildInstance(templateField, response.id))
                 : [];
 
               return {
@@ -404,9 +400,9 @@ export const useChildForms = ({
           prev.map((childForm) =>
             childForm.shown
               ? {
-                  ...childForm,
-                  saved: [],
-                }
+                ...childForm,
+                saved: [],
+              }
               : childForm,
           ),
         );

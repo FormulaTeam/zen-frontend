@@ -13,6 +13,7 @@ export function useFormLoader(formId: string) {
     isSuccess,
   } = useGetForm({
     formId,
+    includePermissions: true,
     config: { enabled: !!formId },
   });
 
@@ -96,9 +97,9 @@ export function useFormLoader(formId: string) {
           endCursor: null,
         });
       }
-      console.log("Responses loaded and mapped:", rows);
     }
   }, [responsesRowsData, setRows, setPageInfo, isResponsesSuccess, formData, setResponses]);
+
   useEffect(() => {
     if (formData && isSuccess) {
       const flattenedFields = (formData.sections ?? [])

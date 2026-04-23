@@ -1,77 +1,29 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
-import type { FormDto } from "../types/shared";
-import { useAuth } from "../contexts/AuthContext";
-import { useSuperAdmin } from "../contexts/SuperAdminContext";
-import { Role, User } from "../utils/interfaces";
-import { prioritizePermissions } from "../utils/formFieldsResponses";
-import { PERMISSION_TYPES } from "../utils/utils";
-
-type PublicRole = FormDto["publicRole"];
+import type { UserRoleDto } from "../types/shared";
+import { Role } from "formula-gear";
 
 interface UseFormPermissionsParams {
-  form: FormDto;
-  roles: Role[];
-  selectedShareWith: User[];
-  saveSharedWith: (updatedFormData?: Record<string, unknown>) => Promise<void>;
-  handleFormPermissionChange: (isPublic: boolean, permission?: PublicRole) => void;
+  roles: UserRoleDto[];
+  formPublicRole: Role | null;
+  selectedShareWith: any[];
+  saveSharedWith: () => Promise<void>;
+  handleFormPermissionChange: (isPublic: boolean, permission?: Role) => void;
   handleClose: () => void;
 }
 
-const getCatalogPermissionTypes = (
-  roles: Role[],
-  role: PublicRole | null | undefined,
-): number[] => {
-  const matchingRole = roles.find((roleItem) => roleItem.role_id === role);
-
-  return matchingRole?.permission_types ?? [];
-};
-
-const getUserId = (user: User | null | undefined): number | undefined => {
-  if (!user) return undefined;
-
-  const directUserId = (user as User & { id?: unknown }).id;
-  if (typeof directUserId === "number") return directUserId;
-
-  const fallbackUserId = (user as User & { userId?: unknown }).userId;
-  if (typeof fallbackUserId === "number") return fallbackUserId;
-
-  return undefined;
-};
-
 export const useFormPermissions = ({
-  form,
   roles,
+  formPublicRole,
   selectedShareWith,
   saveSharedWith,
   handleFormPermissionChange,
   handleClose,
 }: UseFormPermissionsParams) => {
-  const { user } = useAuth();
-  const { isSuperAdmin } = useSuperAdmin();
 
-  const [isPublic, setIsPublic] = useState<boolean>(!!form.publicRole);
-  const [formPermission, setFormPermission] = useState<PublicRole | null>(form.publicRole ?? null);
+  const [isPublic, setIsPublic] = useState<boolean>(!!formPublicRole);
+  const [formPermission, setFormPermission] = useState<Role | null>(formPublicRole ?? null);
 
-  const currentUserId = getUserId(user);
-
-  const userSpecificPermissions = useMemo(() => {
-    if (typeof currentUserId !== "number") return [];
-
-    return [];
-  }, [currentUserId]);
-
-  const publicFormPermissions = useMemo(
-    () => (isPublic ? getCatalogPermissionTypes(roles, formPermission) : []),
-    [formPermission, isPublic, roles],
-  );
-
-  const permissionTypes = useMemo(
-    () => prioritizePermissions(userSpecificPermissions, publicFormPermissions),
-    [publicFormPermissions, userSpecificPermissions],
-  );
-
-  const hasPermission = !!isSuperAdmin || permissionTypes.includes(PERMISSION_TYPES.EDIT_FORM);
 
   const togglePublicForm = () => {
     const nextIsPublic = !isPublic;
@@ -88,28 +40,24 @@ export const useFormPermissions = ({
     handleFormPermissionChange(true, formPermission ?? undefined);
   };
 
-  const handleLocalFormPermissionChange = (_: any, newValue: PublicRole) => {
+  const handleLocalFormPermissionChange = (_: any, newValue: any) => {
     if (!newValue) return;
 
-    setFormPermission(newValue);
-    handleFormPermissionChange(isPublic, newValue);
+    const newRoleId = typeof newValue === "object" ? newValue.role_id : newValue;
+
+    setFormPermission(newRoleId);
+    handleFormPermissionChange(isPublic, newRoleId);
   };
 
   const handleSave = async () => {
-    const updatedFormData: Record<string, unknown> = {
-      publicRole: isPublic ? (formPermission ?? undefined) : undefined,
-    };
-
     const hasFormPermissionUpdates =
-      form.publicRole !== (isPublic ? (formPermission ?? undefined) : undefined);
+      formPublicRole !== formPermission;
 
-    const hasUserRoleAssignments = selectedShareWith.some(
-      (selectedUser) => selectedUser.role_id && selectedUser.role_id !== -1,
-    );
+    const hasUserRoleAssignments = selectedShareWith.length > 0 || roles.length > 0;
 
     try {
       if (hasUserRoleAssignments || hasFormPermissionUpdates) {
-        await saveSharedWith(updatedFormData);
+        await saveSharedWith();
 
         return;
       }
@@ -125,8 +73,6 @@ export const useFormPermissions = ({
     setIsPublic,
     setFormPermission,
     formPermission,
-    permissionTypes,
-    hasPermission,
     togglePublicForm,
     handleLocalFormPermissionChange,
     handleSave,
