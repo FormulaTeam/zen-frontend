@@ -157,58 +157,56 @@ function ManualOptions(props: Props) {
       <div className={styles.controllingFieldContainer}>
         <div className={styles.controllingFieldWrapper}
           style={{ borderColor: controllingOptionsFieldId ? "#e1e7ec" : "transparent" }}>
-          <Tooltip title={!otherManualOptionsFieldsIds.length ? "לא קיים שדה אפשרויות נוסף" : ""} placement="top">
-            <span style={{ flex: 1, display: 'flex' }}>
-              <FormControl className={styles.controllingFieldFormControl}
-                disabled={!otherManualOptionsFieldsIds.length}
-                error={!!validationErrors?.properties?.controllingOptionsFieldId}>
-                <Autocomplete
-                  disabled={!otherManualOptionsFieldsIds.length}
-                  options={otherManualOptionsFieldsIds}
-                  getOptionLabel={(option) => formStructure.fields[option]?.data?.displayName || ""}
-                  value={controllingOptionsFieldId || null}
-                  noOptionsText={"לא נמצאו שדות מתאימים"}
-                  onChange={(_, newValue) => {
-                    const newItems = [...items];
-                    const newControllingOptionsFieldId = newValue || undefined;
-                    const newControllingFieldItems = newControllingOptionsFieldId ? ((formStructure.fields[newControllingOptionsFieldId].data.extra as FormFieldExtra<OptionsFieldTypeId> & {
-                      options: ManualOptions
-                    })?.options?.items as ManualItems)?.filter((item) => !!item.text?.length) : [];
+          <FormControl className={styles.controllingFieldFormControl}
+            disabled={!otherManualOptionsFieldsIds.length}
+            error={!!validationErrors?.properties?.controllingOptionsFieldId}>
+            <InputLabel id="controlling-options-label">
+              <Tooltip title={"שדה אפשרויות מוביל"}>
+                <span>שדה אפשרויות מוביל</span>
+              </Tooltip>
+            </InputLabel>
+            <Select labelId="controlling-options-label"
+              variant={"standard"}
+              fullWidth
+              title={"שדה אפשרויות מוביל"}
+              aria-describedby={"controlling-options-helper-text"}
+              value={controllingOptionsFieldId ?? ""}
+              label={"שדה אפשרויות מוביל"}
+              onChange={(e) => {
+                const newItems = [...items];
+                const newControllingOptionsFieldId = e.target.value;
+                const newControllingFieldItems = ((formStructure.fields[newControllingOptionsFieldId].data.extra as FormFieldExtra<OptionsFieldTypeId> & {
+                  options: ManualOptions
+                })?.options?.items as ManualItems)?.filter((item) => !!item.text?.length);
 
-                    newItems.forEach((item) => {
-                      if (item.text?.length) {
-                        item.controllingItemsIds = newControllingFieldItems?.map(i => i.id) || [];
-                      } else {
-                        delete item.controllingItemsIds;
-                      }
-                    });
+                newItems.forEach((item) => {
+                  if (item.text?.length) {
+                    item.controllingItemsIds = newControllingFieldItems?.map(i => i.id) || [];
+                  } else {
+                    delete item.controllingItemsIds;
+                  }
+                });
 
-                    onChange({
-                      options: {
-                        ...options,
-                        controllingOptionsFieldId: newControllingOptionsFieldId,
-                        items: newItems,
-                      },
-                    });
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      disabled={!otherManualOptionsFieldsIds.length}
-                      label={
-                        <Tooltip title={"שדה אפשרויות מוביל"}>
-                          <span>שדה אפשרויות מוביל</span>
-                        </Tooltip>
-                      }
-                      variant="standard"
-                      error={!!validationErrors?.properties?.controllingOptionsFieldId}
-                      helperText={validationErrors?.properties?.controllingOptionsFieldId?.errors?.[0]}
-                    />
-                  )}
-                />
-              </FormControl>
-            </span>
-          </Tooltip>
+                onChange({
+                  options: {
+                    ...options,
+                    controllingOptionsFieldId: newControllingOptionsFieldId,
+                    items: newItems,
+                  },
+                });
+              }}>
+              {
+                otherManualOptionsFieldsIds.map((manualOptionsFieldId) => (
+                  <MenuItem key={manualOptionsFieldId} value={manualOptionsFieldId}>
+                    {formStructure.fields[manualOptionsFieldId].data.displayName}
+                  </MenuItem>
+                ))
+              }
+            </Select>
+            <FormHelperText id="controlling-options-helper-text">
+              {validationErrors?.properties?.controllingOptionsFieldId?.errors[0]}
+            </FormHelperText>
+          </FormControl>
           {
             controllingOptionsFieldId &&
             <Button className={styles.button}
