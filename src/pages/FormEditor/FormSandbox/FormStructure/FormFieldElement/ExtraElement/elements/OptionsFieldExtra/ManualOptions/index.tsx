@@ -4,7 +4,7 @@ import { ExtraElementProps } from "../../../index";
 import { OptionsFieldTypeId, SpecificOptions, SpecificOptionsErrors } from "../index";
 import { Close } from "@mui/icons-material";
 import { generateOptionItemId } from "../../../../../../../utils";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { ArrayElement } from "../../../../../../../../../types/utils";
 import { FieldTypeIds } from "../../../../../../../../../utils/interfaces";
 import { useFormStructureContext } from "../../../../../../../context/FormStructureContext";
@@ -78,42 +78,6 @@ function ManualOptions(props: Props) {
       setSelectedControlledItemIndex(items.length - 1);
   }, [items.length]);
 
-  const itemFields = useMemo(() => (
-    items.map((item, index) => (
-      <ManualOptionsItemField index={index}
-        item={item}
-        validationErrors={validationErrors?.properties?.items?.items?.[index]?.properties?.text}
-        isDeletable={items.length > 2}
-        onChange={(e) => onChange({
-          options: {
-            ...options,
-            items: items.toSpliced(index, 1, { ...item, text: e.target.value }),
-          },
-        })}
-        onFocus={() => {
-          setSelectedControlledItemIndex(index);
-        }}
-        onDelete={() => {
-          items.length > 2 &&
-            onChange({
-              options: {
-                ...options,
-                items: items.toSpliced(index, 1),
-                defaultOptionId: item.id === defaultOptionId ? undefined : defaultOptionId,
-              },
-            });
-        }}
-        isSelectedControlledItem={
-          !!controllingOptionsFieldId ?
-            selectedControlledItemIndex === index :
-            undefined
-        }
-        onSelectControlledItem={() => {
-          setSelectedControlledItemIndex(index);
-        }} />
-    ))
-  ), [items, validationErrors?.properties?.items?.items, onChange, options, selectedControlledItemIndex]);
-
   const controllingFieldItems = useMemo(() => {
     if (!controllingOptionsFieldId) return null;
 
@@ -140,6 +104,54 @@ function ManualOptions(props: Props) {
     }
   }, [controllingFieldItems, controllingOptionsFieldId]);
 
+  const handleItemChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number, item: ArrayElement<ManualItems>) => {
+    const newText = e.target.value.trimStart();
+    const newlyFilled = !item.text && newText;
+    const updatedItem = { ...item, text: newText };
+
+    if (newlyFilled && controllingFieldItems?.length) {
+      updatedItem.controllingItemsIds = controllingFieldItems.map((controllingItem) => controllingItem.id);
+    }
+
+    onChange({
+      options: {
+        ...options,
+        items: items.toSpliced(index, 1, updatedItem),
+      },
+    });
+  }, [items, options, controllingFieldItems, onChange]);
+
+  const itemFields = useMemo(() => (
+    items.map((item, index) => (
+      <ManualOptionsItemField index={index}
+        item={item}
+        validationErrors={validationErrors?.properties?.items?.items?.[index]?.properties?.text}
+        isDeletable={items.length > 2}
+        onChange={(e) => handleItemChange(e, index, item)}
+        onFocus={() => {
+          setSelectedControlledItemIndex(index);
+        }}
+        onDelete={() => {
+          items.length > 2 &&
+            onChange({
+              options: {
+                ...options,
+                items: items.toSpliced(index, 1),
+                defaultOptionId: item.id === defaultOptionId ? undefined : defaultOptionId,
+              },
+            });
+        }}
+        isSelectedControlledItem={
+          !!controllingOptionsFieldId ?
+            selectedControlledItemIndex === index :
+            undefined
+        }
+        onSelectControlledItem={() => {
+          setSelectedControlledItemIndex(index);
+        }} />
+    ))
+  ), [items, validationErrors?.properties?.items?.items, onChange, options, selectedControlledItemIndex]);
+
   return (
     <>
       <div className={styles.controllingFieldContainer}>
@@ -162,15 +174,23 @@ function ManualOptions(props: Props) {
               label={"שדה אפשרויות מוביל"}
               onChange={(e) => {
                 const newItems = [...items];
+                const newControllingOptionsFieldId = e.target.value;
+                const newControllingFieldItems = ((formStructure.fields[newControllingOptionsFieldId].data.extra as FormFieldExtra<OptionsFieldTypeId> & {
+                  options: ManualOptions
+                })?.options?.items as ManualItems)?.filter((item) => !!item.text?.length);
 
                 newItems.forEach((item) => {
-                  delete item.controllingItemsIds;
+                  if (item.text?.length) {
+                    item.controllingItemsIds = newControllingFieldItems?.map(i => i.id) || [];
+                  } else {
+                    delete item.controllingItemsIds;
+                  }
                 });
 
                 onChange({
                   options: {
                     ...options,
-                    controllingOptionsFieldId: e.target.value as string,
+                    controllingOptionsFieldId: newControllingOptionsFieldId,
                     items: newItems,
                   },
                 });

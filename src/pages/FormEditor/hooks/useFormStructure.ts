@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { z } from "zod";
 import { $ZodErrorTree } from "zod/v4/core";
+import { isEqual } from "lodash";
 
 import { FormField, FormMetadata, FormStructure, Section } from "../context/FormStructureContext";
 import { getEmptyForm } from "../context/utils";
@@ -268,12 +269,15 @@ function applyComponentDeletionToConditions(componentType: ValueOf<typeof FormCo
 }
 
 function useFormStructure(editedForm?: ExtendedFormDto) {
-  const [formStructure, setFormStructure] = useState<FormStructure>(() => editedForm ? yieldFormStructure(editedForm) : { ...getEmptyForm() });
+  const [initialFormStructure, setInitialFormStructure] = useState<FormStructure>(() => editedForm ? yieldFormStructure(editedForm) : { ...getEmptyForm() });
+  const [formStructure, setFormStructure] = useState<FormStructure>(initialFormStructure);
 
   // When editedForm updates from external fetching properly sync the visual state
   useEffect(() => {
     if (editedForm) {
-      setFormStructure(yieldFormStructure(editedForm));
+      const newStructure = yieldFormStructure(editedForm);
+      setInitialFormStructure(newStructure);
+      setFormStructure(newStructure);
     }
   }, [editedForm]);
 
@@ -572,9 +576,14 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     return isValid;
   }, [formStructure]);
 
+  const checkHasChanges = useCallback(() => {
+    return !isEqual(formStructure, initialFormStructure);
+  }, [formStructure, initialFormStructure]);
+
   return {
     formStructure,
     setFormStructure,
+    checkHasChanges,
     appendSection,
     deleteSection,
     renameSection,
