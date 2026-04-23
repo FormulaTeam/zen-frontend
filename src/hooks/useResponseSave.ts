@@ -163,12 +163,17 @@ export const useResponseSave = (
           updatedResponsesPayload,
         )) as ResponseDto[];
 
+        if (!Array.isArray(updatedResponses) || updatedResponses.length === 0) {
+          throw new Error("Update response returned no updated responses");
+        }
+
         return updatedResponses[0];
       }
 
       const newResponse: CreateResponsePayload = {
         fieldValues,
-        ...(parentResponse ? { parentResponse } : {}),      };
+        ...(parentResponse ? { parentResponse } : {}),
+      };
 
       if (parentResponse) {
         return (await mutateCreateResponseAsync(newResponse)) as ResponseDto;
