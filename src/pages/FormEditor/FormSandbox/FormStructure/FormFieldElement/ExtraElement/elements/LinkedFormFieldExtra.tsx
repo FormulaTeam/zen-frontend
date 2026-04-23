@@ -2,42 +2,39 @@ import { FieldTypeIds } from "@utils/interfaces";
 import React, { useState, useMemo } from "react";
 import { FormControl, CircularProgress, Box, styled, Autocomplete, TextField } from "@mui/material";
 import { ExtraElementProps } from "../index";
-import { useGetForm } from "@api/formsApi";
-import { useGetFormsData } from "@hooks/useGetFormsData";
-import { formsScopeOption } from "@src/types/enums/filtersAndSorts.enum";
+import { FormIdentifierDto, useGetForm, useGetLinkableForms } from "@api/formsApi";
 import { useFormStructureContext } from "@pages/FormEditor/context/FormStructureContext";
 import { FormOption } from "@utils/interfaces";
 import { LoaderContainer, WarningText } from "./styled";
+import { useParams } from "react-router-dom";
 
 type Props = ExtraElementProps<typeof FieldTypeIds.linkedForm>;
 
 function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: Props) {
   const { linkedFormId } = extra;
+  const { id: urlFormId } = useParams();
 
   const { formStructure } = useFormStructureContext();
   const [searchText, setSearchText] = useState("");
+
+  const currentFormId = formStructure?.metadata?.id || urlFormId;
 
   const { data: initialForm, isLoading: isInitializing } = useGetForm({
     formId: linkedFormId ? linkedFormId.toString() : undefined,
   });
 
-  const { formsData: allForms, isLoading } = useGetFormsData({
-    searchQuery: searchText.length >= 2 ? searchText : undefined,
-    scope: formsScopeOption.MyForms,
-    enabled: searchText.length >= 2,
+  const { data: allForms = [], isLoading } = useGetLinkableForms({
+    formId: currentFormId ? currentFormId.toString() : "",
+    search: searchText || undefined,
   });
 
-  const availableForms = useMemo<FormOption[]>(() => {
-    const list = formStructure?.metadata?.id
-      ? allForms.filter((form) => form.id !== formStructure.metadata.id)
-      : allForms;
+  const availableForms = useMemo(() => {
+    return allForms;
+  }, [allForms]);
 
-    return list.map(form => ({ id: form.id.toString(), name: form.name }));
-  }, [allForms, formStructure?.metadata?.id]);
-
-  const selectedForm = useMemo<FormOption | null>(() => {
+  const selectedForm = useMemo(() => {
     if (!initialForm) return null;
-    return { id: initialForm.id.toString(), name: initialForm.name };
+    return { id: initialForm.id, name: initialForm.name };
   }, [initialForm]);
 
   if (isInitializing) {
@@ -53,17 +50,16 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
       <FormControl disabled={disabled} error={!!validationErrors?.properties?.linkedFormId}>
         <Autocomplete
           options={availableForms}
-          getOptionLabel={(option) => {
+          getOptionLabel={(option: any) => {
             return option?.name || "";
           }}
           value={selectedForm}
-          loading={isLoading}
-          loadingText="מחפש..."
-          noOptionsText={searchText.length < 2 ? "יש להזין לפחות 2 תווים" : "לא נמצאו תוצאות"}
-          onInputChange={(_, newInputValue) => {
-            setSearchText(newInputValue);
+          onInputChange={(_, newInputValue, reason) => {
+            if (reason !== "reset") {
+              setSearchText(newInputValue);
+            }
           }}
-          onChange={(_, newValue) => {
+          onChange={(_, newValue: any) => {
             onChange({ linkedFormId: newValue ? newValue.id.toString() : undefined });
           }}
           isOptionEqualToValue={(option, value) => option?.id === value?.id}
@@ -88,7 +84,8 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
         />
       </FormControl>
       <WarningText>
-        שימו לב! על מנת שמשתמש יוכל ליצור תגובות בטופס שנבחר, נדרש שיהיו לו הרשאות מתאימות לטופס שנבחר
+        שימו לב! על מנת שמשתמש יוכל ליצור תגובות בטופס שנבחר, נדרש שיהיו לו הרשאות מתאימות לטופס
+        שנבחר
       </WarningText>
     </>
   );

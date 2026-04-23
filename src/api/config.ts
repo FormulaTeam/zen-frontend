@@ -1,6 +1,6 @@
 import axios from "axios";
 import { StatusCodes } from "http-status-codes";
-import { logoutAction } from "../contexts/AuthContext";
+import { logoutAction } from "../utils/auth";
 
 const apiClient = axios.create({
   baseURL: (window as any).RUNTIME_ENV

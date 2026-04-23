@@ -1,10 +1,11 @@
+import { NumberValueType } from "formula-gear";
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
 import { enum as zod_enum, literal, number, strictObject } from "zod";
 
 enum NumberFormat {
-  INTEGER = 1,
-  DECIMAL = 2,
+  INTEGER = NumberValueType.Integer,
+  DECIMAL = NumberValueType.Double,
 }
 
 const ErrorMessages = {

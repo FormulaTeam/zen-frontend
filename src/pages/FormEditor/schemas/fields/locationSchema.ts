@@ -1,10 +1,11 @@
+import { CoordinateType } from "formula-gear";
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
 import { enum as zod_enum, literal, strictObject } from "zod";
 
 enum LocationFormat {
-  UTM = 1,
-  WKT = 2,
+  UTM = CoordinateType.UTM,
+  WKT = CoordinateType.WKT,
 }
 
 const locationSchema = baseFormFieldSchema.safeExtend({

@@ -9,6 +9,7 @@ import {
 } from "react";
 import { Role } from "../utils/interfaces";
 import { PERMISSION_TYPES } from "../utils/utils";
+import { logoutAction } from "../utils/auth";
 
 export interface User {
   gender?: "male" | "female";
@@ -116,13 +117,6 @@ export const useAuth = () => {
  * AuthProvider: Provides authentication state and methods across the app.
  * roles is a static catalog derived from formula-gear's roleId constants.
  */
-export const logoutAction = () => {
-  localStorage.removeItem("user");
-  if (!window.location.pathname.includes("/login") && !window.location.pathname.includes("/comeback")) {
-    window.location.href = "/login";
-  }
-};
-
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
