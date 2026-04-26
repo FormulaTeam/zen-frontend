@@ -1,5 +1,5 @@
 import { useCreateResponse, useUpdateResponses } from "../api";
-import { showErrorNotification } from "../utils/utils";
+import { showErrorNotification, getUserName } from "../utils/utils";
 import { NotificationTexts } from "../utils/interfaces";
 import moment from "moment";
 import {
@@ -49,6 +49,22 @@ type FileValueItem = {
   [key: string]: any;
 };
 
+const parseParentResponse = (parentResponse?: string | ParentResponseRef): ParentResponseRef | undefined => {
+  if (!parentResponse) return undefined;
+  if (typeof parentResponse === "object") return parentResponse;
+
+  const parts = parentResponse.split(";");
+  if (parts.length === 2) {
+    const [formIdStr, responseId] = parts;
+    const formId = parseInt(formIdStr, 10);
+    if (!isNaN(formId)) {
+      return { formId, responseId };
+    }
+  }
+
+  return undefined;
+};
+
 const getFieldExtra = (field: SaveField): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
 
@@ -86,7 +102,6 @@ const normalizeFileValue = (value: any): { files: FileValueItem[] } => {
 export const useResponseSave = (
   form: FormDto | null,
   response: ExistingResponseLike | null | undefined,
-  user: any,
   parentResponse?: ParentResponseRef,
   copyMode?: boolean,
 ) => {
@@ -148,6 +163,7 @@ export const useResponseSave = (
       });
     }
 
+    const parsedParentResponse = parseParentResponse(parentResponse);
     try {
       if (response && response.id && !copyMode) {
         const updatedResponsesPayload: BulkUpdateResponsesDto = {
@@ -172,7 +188,7 @@ export const useResponseSave = (
 
       const newResponse: CreateResponsePayload = {
         fieldValues,
-        ...(parentResponse ? { parentResponse } : {}),
+        ...(parsedParentResponse ? { parentResponse: parsedParentResponse } : {}),
       };
 
       if (parentResponse) {

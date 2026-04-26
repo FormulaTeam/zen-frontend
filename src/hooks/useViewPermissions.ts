@@ -1,5 +1,5 @@
+import { permission } from "formula-gear";
 import { ResponsesView } from "../types/interfaces/tableViews.types";
-import { PERMISSION_TYPES } from "../utils/utils";
 
 interface UseViewPermissionsProps {
   user?: {
@@ -20,7 +20,7 @@ export const useViewPermissions = ({
   permissionTypes = [],
 }: UseViewPermissionsProps): UseViewPermissionsReturn => {
   // Determine if user has full access (superadmin or has all permissions)
-  const hasFullAccess = user?.isSuperAdmin || permissionTypes?.includes(PERMISSION_TYPES.EDIT_FORM);
+  const hasFullAccess = user?.isSuperAdmin || permissionTypes?.includes(permission.UpdateForm);
 
   // Helper function to check if user can edit/delete a specific view
   const canEditOrDeleteView = (view: ResponsesView): boolean => {

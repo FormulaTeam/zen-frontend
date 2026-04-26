@@ -1,9 +1,10 @@
 import React from "react";
-import { LegacyPermission, makePermSet } from "../../utils/utils";
+import { makePermSet } from "../../utils/utils";
+import { Permission } from "formula-gear";
 
 type PermissionGateProps = {
-  userPermissions: LegacyPermission[];
-  permissions: LegacyPermission[];
+  userPermissions: Permission[];
+  permissions: Permission[];
   fallback?: React.ReactNode;
   disableInsteadOfHide?: boolean;
   children: React.ReactNode;

@@ -1,7 +1,6 @@
 import React from "react";
-import { Autocomplete, TextField, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
 import male from "../../images/man4.png";
-import female from "../../images/female3.png";
 import { Close } from "@mui/icons-material";
 import {
   SharedUserContainer,
@@ -11,31 +10,25 @@ import {
   UserName,
   UserUPN,
   RoleLabel,
-  RoleOption,
   StyledIconButton,
 } from "./styled";
 import RolesAutocomplete from "./RolesAutocomplete";
-import { useAuth } from "../../contexts/AuthContext";
 
 const SharedUser = ({ user, roles, handleRoleChange, removeUserFromShare }) => {
-  const { user: currentUser } = useAuth();
   const theme = useTheme();
-  const first = user?.firstName || "";
-  const last = user?.lastName || "";
-  const name = first + " " + last;
+  const name = user?.displayName;
   const upn = user?.upn || user?.mail || user?.id || "";
   // Find the current role for the user
   const roleObj =
-    user?.role_id !== undefined && user?.role_id !== -1
+    user?.role_id !== undefined && user?.role_id
       ? roles.find((r) => r.role_id === user.role_id)
       : null;
   const roleName = roleObj?.roleName || "";
-  const isValid = user?.role_id !== undefined && user?.role_id !== -1;
-  const isDisabled = user?.upn === currentUser?.upn;
+  const isValid = user?.role_id !== undefined && user?.role_id;
   return (
     <SharedUserContainer>
       <UserInfo>
-        <UserAvatar src={user?.gender === "female" ? female : male} alt="User" />
+        <UserAvatar src={male} alt="User" />
         <UserDetails>
           <UserName>{name}</UserName>
           <UserUPN>{upn}</UserUPN>
@@ -52,13 +45,12 @@ const SharedUser = ({ user, roles, handleRoleChange, removeUserFromShare }) => {
             {roleName}
           </RoleLabel>
         ) : (
-          <RolesAutocomplete isDisabled={isDisabled} handleRoleChange={handleRoleChange} />
+          <RolesAutocomplete isDisabled={false} handleRoleChange={handleRoleChange} user={user} />
         )}
 
         {/* Always show the X button, just disable it for current user */}
         <StyledIconButton
-          color={isDisabled ? theme.palette.button?.disabled : theme.palette.button?.primaryText}
-          disabled={isDisabled}
+          $customColor={theme.palette.button?.primaryText}
           onClick={() => removeUserFromShare(user)}
           size="small">
           <Close fontSize="small" />

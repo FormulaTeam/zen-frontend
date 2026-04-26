@@ -5,11 +5,11 @@ import { useNavigate } from "react-router-dom";
 import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { EditButtonWrapper } from "../styled";
 import { useFormStore } from "../stores/form.store";
-import { PERMISSION_TYPES } from "../../../utils/utils";
 import { useSuperAdmin } from "../../../contexts/SuperAdminContext";
 import { softDeleteResponses } from "../../../api";
 import { queryClient } from "../../../api/queryClient";
 import { showSuccessNotification, showErrorNotification } from "../../../utils/utils";
+import { permission } from "formula-gear";
 
 interface RowActionsButtonsProps {
   rowSelectionModel: GridRowSelectionModel;
@@ -35,13 +35,12 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
   const hasSelection = selectedIds.length > 0;
 
   const canView =
-    permissions.includes(PERMISSION_TYPES.VIEW_RESPONSE) ||
-    permissions.includes(PERMISSION_TYPES.VIEW_YOUR_RESPONSES) ||
+    permissions.includes(permission.ReadAnyResponse) ||
     !!isSuperAdmin;
 
-  const canEdit = permissions.includes(PERMISSION_TYPES.EDIT_RESPONSE) || !!isSuperAdmin;
+  const canEdit = permissions.includes(permission.UpdateAnyResponse) || !!isSuperAdmin;
 
-  const canDelete = permissions.includes(PERMISSION_TYPES.DELETE_RESPONSE) || !!isSuperAdmin;
+  const canDelete = permissions.includes(permission.DeleteAnyResponse) || !!isSuperAdmin;
 
   const handleView = () => {
     if (!isSingleSelection) return;

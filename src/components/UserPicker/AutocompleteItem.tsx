@@ -1,6 +1,5 @@
 import React from "react";
 import male from "../../images/man4.png";
-import female from "../../images/female3.png";
 import {
   AutoCompleteDisplayName,
   AutoCompleteImage,
@@ -30,7 +29,7 @@ const AutocompleteItem: React.FC<AutocompleteItemProps> = ({
       {...props}
       key={"user_" + user?.id}
       style={{ cursor: user?.isSelected ? "default" : "pointer" }}>
-      <AutoCompleteImage src={user?.gender === "female" ? female : male} alt="User" />
+      <AutoCompleteImage src={male} alt="User" />
       <AutoCompleteInfo>
         <AutoCompleteDisplayName>{displayName}</AutoCompleteDisplayName>
         <AutoCompleteUPN>{upn}</AutoCompleteUPN>

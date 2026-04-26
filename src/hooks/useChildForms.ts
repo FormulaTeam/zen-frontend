@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fieldType } from "formula-gear";
-import type { FormFieldDto, UserRoleDto } from "../types/shared";
+import type { FormDto, FormFieldDto, ResponseDto, UserRoleDto } from "../types/shared";
 import { NotificationTexts } from "../utils/interfaces";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
-import { deleteResponse, getResponseById } from "../api";
+import { deleteResponse, getForms, getResponses, getResponseById } from "../api";
 import { User } from "../contexts/AuthContext";
 
 type ChildFormChildProps = FormFieldDto & {
@@ -27,7 +27,6 @@ type UseChildFormsParams = {
   saveAll: () => void | Promise<void>;
   user: User;
   isSuperAdmin: boolean | null;
-  roles: UserRoleDto[];
   copyMode?: boolean;
   onSaveComplete?: (allSaved: boolean) => void;
   onValidateComplete?: (isValid: boolean) => void;
@@ -46,6 +45,7 @@ type UseChildFormsReturn = {
   handleRemoveChildForm: (parentIndex: number, childIndex: number) => void;
   handleShowChildForm: (index: number) => void;
 };
+
 
 const getFieldExtra = (field: FormFieldDto): Record<string, unknown> =>
   typeof field.extra === "object" && field.extra !== null
@@ -96,7 +96,6 @@ export const useChildForms = ({
   formId,
   saveAll,
   user,
-  roles: _roles = [],
   isSuperAdmin = false,
   copyMode = false,
   onSaveComplete,
@@ -166,47 +165,78 @@ export const useChildForms = ({
         return;
       }
 
-      if (!id || copyMode) {
-        if (initializedUnsavedRef.current) {
+      try {
+        const formsResponse = (await getForms({
+          query: { $or: childFormIds.map((childId) => ({ id: childId })) },
+        })) as FormDto[];
+
+        const availableChildFormIds = new Set(formsResponse.map((form) => form.id));
+
+        if (!id || copyMode) {
+          if (initializedUnsavedRef.current) {
+            return;
+          }
+
+          const nextChildForms = childFormIds
+            .filter((childFormId) => availableChildFormIds.has(childFormId))
+            .map((childFormId) => ({
+              formId: childFormId,
+              children: [] as ChildFormChildProps[],
+              saved: [] as Array<boolean | undefined>,
+              valid: [] as Array<boolean | undefined>,
+              shown: false,
+            }));
+
+          setChildForms((prev) =>
+            nextChildForms.map((nextChildForm) => {
+              const existing = prev.find((item) => item.formId === nextChildForm.formId);
+
+              return {
+                ...nextChildForm,
+                shown: existing?.shown ?? nextChildForm.shown,
+                children: existing?.children ?? nextChildForm.children,
+                saved: existing?.saved ?? nextChildForm.saved,
+                valid: existing?.valid ?? nextChildForm.valid,
+              };
+            }),
+          );
+
+          initializedUnsavedRef.current = true;
           return;
         }
 
-        buildEmptyChildForms();
-        initializedUnsavedRef.current = true;
-        return;
-      }
+        initializedUnsavedRef.current = false;
 
-      initializedUnsavedRef.current = false;
+        if (lastLoadedSavedParentRef.current === id) {
+          return;
+        }
 
-      if (lastLoadedSavedParentRef.current === id) {
-        return;
-      }
-
-      try {
         const parentResponse = await getResponseById(Number(formId), id);
         const linkedChildResponses = parentResponse.childResponses ?? [];
 
-        const childResponses = childFormIds.map((childFormId) => {
-          const templateField = connectedFields.find(
-            (field) => getConnectedFormId(field) === childFormId,
-          );
+          const childResponses = childFormIds
+            .filter((childFormId) => availableChildFormIds.has(childFormId))
+            .map((childFormId) => {
+              const templateField = connectedFields.find(
+                (field) => getConnectedFormId(field) === childFormId,
+              );
 
-          const matchingResponses = linkedChildResponses.filter(
-            (response) => Number(response.formId) === Number(childFormId),
-          );
+              const matchingResponses = linkedChildResponses.filter(
+                (response) => Number(response.formId) === Number(childFormId),
+              );
 
-          const children = templateField
-            ? matchingResponses.map((response) => createChildInstance(templateField, response.id))
-            : [];
+              const children = templateField
+                ? matchingResponses.map((response) => createChildInstance(templateField, response.id))
+                : [];
 
-          return {
-            formId: childFormId,
-            children,
-            saved: [] as Array<boolean | undefined>,
-            valid: [] as Array<boolean | undefined>,
-            shown: children.length > 0,
-          };
-        });
+              return {
+                formId: childFormId,
+                children,
+                saved: [] as Array<boolean | undefined>,
+                valid: [] as Array<boolean | undefined>,
+                shown: children.length > 0,
+              };
+            });
 
         setChildForms((prev) =>
           childResponses.map((nextChildForm) => {
@@ -343,9 +373,9 @@ export const useChildForms = ({
           prev.map((childForm) =>
             childForm.shown
               ? {
-                  ...childForm,
-                  saved: [],
-                }
+                ...childForm,
+                saved: [],
+              }
               : childForm,
           ),
         );

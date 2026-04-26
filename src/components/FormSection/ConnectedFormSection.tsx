@@ -109,7 +109,6 @@ function ConnectedFormSection({
   const { isSaving, saveResponse } = useResponseSave(
     form,
     response,
-    user,
     parentResponse,
     copyMode,
   );

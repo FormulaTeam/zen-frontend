@@ -2,14 +2,15 @@ import React, { useEffect } from "react";
 import { Divider } from "@mui/material";
 import styled from "styled-components";
 
-import type { FormDto } from "../../types/shared";
-import { useAuth } from "../../contexts/AuthContext";
+import { useGetFormRoles } from "../../api/rolesApi";
 import { useFormPermissions } from "../../hooks/useFormPermissions";
 import { useUserPicker } from "../../hooks/useUserPicker";
 import BasePopup from "../BasePopup/BasePopup";
 import PublicFormSection from "./PublicFormSection";
 import UserPickerContent from "./UserPickerContent";
+import { ReasonsContainer } from "./styled";
 import "./UserPicker.scss";
+import { FormOverview } from "@src/utils/interfaces";
 
 const ContentWrapper = styled.div`
   display: flex;
@@ -18,12 +19,14 @@ const ContentWrapper = styled.div`
 `;
 
 interface UserPickerProps {
-  form: FormDto;
-  closeSharePopupAndRefreshForm: (users: any[], updatedForm?: FormDto) => void;
+  form: FormOverview | any;
+  closeSharePopupAndRefreshForm: (users: any[], updatedForm?: FormOverview | any) => void;
 }
 
 const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) => {
-  const { user, roles } = useAuth();
+  const { data: formRoles } = useGetFormRoles(form.id);
+  const roles = React.useMemo(() => formRoles?.userRoles ?? [], [formRoles?.userRoles]);
+  const publicRole = formRoles?.publicRole ?? null;
 
   const {
     loading,
@@ -37,20 +40,19 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
     handleInputChange,
     handleClose,
     handleFormPermissionChange,
-  } = useUserPicker({ form, closeSharePopupAndRefreshForm });
+  } = useUserPicker({ form, closeSharePopupAndRefreshForm, roles, publicRole });
 
   const {
     isPublic,
     setIsPublic,
     formPermission,
     setFormPermission,
-    hasPermission,
     togglePublicForm,
     handleLocalFormPermissionChange,
     handleSave,
   } = useFormPermissions({
-    form,
     roles,
+    formPublicRole: publicRole,
     selectedShareWith,
     saveSharedWith,
     handleFormPermissionChange,
@@ -58,12 +60,35 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
   });
 
   useEffect(() => {
-    const newIsPublic = !!form.publicRole;
+    const newIsPublic = !!formRoles?.publicRole;
     setIsPublic(newIsPublic);
 
-    const newFormPermission = form.publicRole || null;
+    const newFormPermission = formRoles?.publicRole || null;
     setFormPermission(newFormPermission);
-  }, [form.publicRole, form.id, setFormPermission, setIsPublic]);
+  }, [formRoles, setFormPermission, setIsPublic]);
+
+  const getDisabledReason = (): JSX.Element | undefined => {
+    const reasons: string[] = [];
+    if (selectedShareWith.some((user) => !user.role_id)) {
+      reasons.push("יש לבחור הרשאה למשתמשים שנוספו");
+    }
+    if (isPublic && !formPermission) {
+      reasons.push("יש לבחור הרשאה שתוגדר לכלל המשתמשים לטופס");
+    }
+
+    if (reasons.length === 0) return undefined;
+
+    return (
+      <ReasonsContainer>
+        {reasons.map((reason, index) => (
+          <div key={index}>• {reason}</div>
+        ))}
+      </ReasonsContainer>
+    );
+  };
+
+  const disabledReason = getDisabledReason();
+  const isSaveDisabled = !!disabledReason;
 
   return (
     <BasePopup
@@ -86,8 +111,6 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
           <Divider />
 
           <PublicFormSection
-            user={user}
-            hasPermission={hasPermission}
             isPublic={isPublic}
             togglePublicForm={togglePublicForm}
             formPermission={formPermission}
@@ -96,7 +119,16 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
           />
         </ContentWrapper>
       }
-      mainButton={!loading ? { text: "אישור", onClick: handleSave } : undefined}
+      mainButton={
+        loading
+          ? undefined
+          : {
+            text: "אישור",
+            onClick: handleSave,
+            disabled: isSaveDisabled,
+            tooltip: isSaveDisabled ? disabledReason : undefined,
+          }
+      }
       cancelButton={!loading ? { text: "בטל פעולה", onClick: handleClose } : undefined}
     />
   );

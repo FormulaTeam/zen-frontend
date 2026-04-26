@@ -1,11 +1,10 @@
 import { Box, Button, CircularProgress, IconButton, Typography, useTheme } from "@mui/material";
 import React from "react";
 import styled from "styled-components";
-import { PERMISSION_TYPES } from "../../utils/utils";
+import { permission } from "formula-gear";
 import { Edit } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
 
-const Header = styled(Box)<{ backgroundColor: string }>`
+const Header = styled(Box) <{ backgroundColor: string }>`
   position: sticky;
   top: 0;
   zindex: 1000;
@@ -39,7 +38,7 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
   const theme = useTheme();
   return (
     <Header p={2} backgroundColor={theme.palette.background.default}>
-      {viewMode && permissionTypes.includes(PERMISSION_TYPES.EDIT_RESPONSE) && (
+      {viewMode && permissionTypes.includes(permission.UpdateAnyResponse) && (
         <div className="edit-btn">
           <IconButton onClick={onEdit}>
             <Edit />

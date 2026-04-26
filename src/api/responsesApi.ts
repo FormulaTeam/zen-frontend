@@ -41,7 +41,7 @@ export const getResponses = async (formId: number, filter?: Filter): Promise<Res
   const params: z.infer<typeof GetResponsesQuerySchema> = {
     limit: filter?.pageSize ?? 25,
     search: stringifyQuery(filter?.query),
-    sortBy: "",
+    sortBy: filter?.sortBy ?? "id",
     sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     before: filter?.before,
     after: filter?.after,
@@ -135,8 +135,8 @@ export const searchResponses = async (filter: Filter): Promise<ResponseDto[]> =>
     const params: z.infer<typeof GetResponsesQuerySchema> = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
-      sortBy: "",
-      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      sortBy: filter?.sortBy ?? "id",
+    sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     };
 
     const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, { params });
@@ -266,8 +266,8 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
     () => ({
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
-      sortBy: "",
-      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      sortBy: filter?.sortBy ?? "id",
+    sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
     }),
@@ -349,6 +349,43 @@ export const useUpdateResponses = (formId?: number) => {
   });
 };
 
+export const useRestoreResponses = (formId: number) => {
+  return useMutation({
+    mutationFn: (responseIds: string[]) => restoreResponses(formId, responseIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
+    },
+  });
+};
+
+export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
+  return useMutation({
+    mutationFn: async () => {
+      // If there's no explicit "delete all" endpoint, we might need to fetch all and delete,
+      // but let's assume Engine might add it or we use a filter.
+      // For now, let's keep the hook signature but it might need implementation.
+      console.warn("useDeleteAllFormsResponses not fully implemented in Engine yet");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses", formId] });
+    },
+  });
+};
+
+export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
+  return useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await apiClient.post(`/forms/${formId}/responses/import`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["responses", formId] });
+    },
+  });
+};
+
 /**
  * Fetch rows for a form with optional query parameters.
  *
@@ -371,8 +408,8 @@ export const getResponsesRows = async ({
     const params: z.infer<typeof GetResponsesQuerySchema> = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
-      sortBy: "",
-      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      sortBy: filter?.sortBy ?? "id",
+    sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
     };
@@ -424,30 +461,4 @@ export const getResponsesRows = async ({
     console.error("Failed to fetch rows:", error);
     throw error;
   }
-};
-
-export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
-  return useMutation({
-    mutationFn: async () => {
-      // Dummy implementation or call to soft-delete all
-      console.warn("useDeleteAllFormsResponses not fully implemented in Engine yet");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
-    },
-  });
-};
-
-export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
-  return useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await apiClient.post(`/forms/${formId}/responses/import`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
-    },
-  });
 };

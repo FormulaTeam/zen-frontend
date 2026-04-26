@@ -2,16 +2,15 @@ import React, { useState } from "react";
 
 import * as MuiIcons from "@mui/icons-material";
 import { Box, Divider, Tooltip, useTheme } from "@mui/material";
-
-import type { FormDto } from "../../types/shared";
-import { getFormById } from "../../api/formsApi";
+import { permission } from "formula-gear";
 import UserPicker from "../UserPicker/UserPicker";
 import ShareIcon from "../../icons/share.svg";
 import formX from "../../images/form_x.png";
 import { FormOverview } from "../../utils/interfaces";
 import { CustomIcon } from "../../theme/icons";
-import { getFormIconByName, showErrorNotification } from "../../utils/utils";
+import { getFormIconByName } from "../../utils/utils";
 import CardCreationDetails from "./CardCreationDetails";
+import { PermissionGate } from "../PermissionGate";
 import {
   DescriptionDiv,
   Img,
@@ -34,24 +33,19 @@ const FormCard = ({
   isSuperAdmin,
   navigate,
   resetSearchValue,
+  isCreator,
 }: {
   form: FormOverview;
   isSuperAdmin: boolean | null;
   navigate: any;
   resetSearchValue: () => void;
+  isCreator: boolean;
 }) => {
   const theme = useTheme();
   const [showSharePopup, setShowSharePopup] = useState(false);
-  const [fullForm, setFullForm] = useState<FormDto | null>(null);
 
   const handleShareClick = async () => {
-    try {
-      const fetchedForm = await getFormById(form.id);
-      setFullForm(fetchedForm);
-      setShowSharePopup(true);
-    } catch {
-      showErrorNotification("טעינת הטופס נכשלה");
-    }
+    setShowSharePopup(true);
   };
 
   const renderDynamicIcon = (name: string) => {
@@ -77,6 +71,8 @@ const FormCard = ({
   };
 
   if (!form) return null;
+
+  const userPermissions = ((isSuperAdmin || isCreator) ? Object.values(permission) : form.permissions) ?? [];
 
   return (
     <StyledCard
@@ -120,32 +116,39 @@ const FormCard = ({
       </ItemImgAndTitles>
 
       <ItemBottomDiv>
-        {isSuperAdmin && (
+        <PermissionGate
+          userPermissions={userPermissions}
+          requiredPermissions={[permission.UpdateForm, permission.ShareForm]}
+          requireAny>
           <ItemIconsDiv>
-            <Tooltip title="עריכת טופס">
-              <div>
-                <CustomIcon
-                  testClassName="form-edit-button"
-                  forcePointer
-                  iconName="pencil"
-                  onClick={() =>
-                    navigate(`/form/edit/${form.id}`, { state: { from: location.pathname } })
-                  }
-                />
-              </div>
-            </Tooltip>
+            <PermissionGate userPermissions={userPermissions} requiredPermissions={[permission.UpdateForm]}>
+              <Tooltip title="עריכת טופס">
+                <div>
+                  <CustomIcon
+                    testClassName="form-edit-button"
+                    forcePointer
+                    iconName="pencil"
+                    onClick={() =>
+                      navigate(`/form/edit/${form.id}`, { state: { from: location.pathname } })
+                    }
+                  />
+                </div>
+              </Tooltip>
+            </PermissionGate>
 
-            <Tooltip title="שיתוף טופס">
-              <div>
-                <GrayShareIcon src={ShareIcon} onClick={handleShareClick} />
-              </div>
-            </Tooltip>
+            <PermissionGate userPermissions={userPermissions} requiredPermissions={[permission.ShareForm]}>
+              <Tooltip title="שיתוף טופס">
+                <div>
+                  <GrayShareIcon src={ShareIcon} onClick={handleShareClick} />
+                </div>
+              </Tooltip>
+            </PermissionGate>
           </ItemIconsDiv>
-        )}
+        </PermissionGate>
 
-        {showSharePopup && fullForm && (
+        {showSharePopup && (
           <UserPicker
-            form={fullForm}
+            form={form}
             closeSharePopupAndRefreshForm={() => {
               setShowSharePopup(false);
             }}
@@ -153,37 +156,44 @@ const FormCard = ({
         )}
 
         <ItemBtnsDiv>
-          <ItemButton
-            className="form-add-response-button"
-            onClick={() => navigate(`/response/create/${form.id}`)}
-            sx={{
-              backgroundColor: theme.palette.primary.main,
-              color: "white",
-              borderRadius: "15px",
-              "&:hover": {
-                backgroundColor: "white",
-                color: theme.palette.primary.main,
-                outline: `1px solid ${theme.palette.primary.main}`,
-              },
-            }}>
-            הוספת תגובה
-          </ItemButton>
+          <PermissionGate userPermissions={userPermissions} requiredPermissions={[permission.CreateResponse]}>
+            <ItemButton
+              className="form-add-response-button"
+              onClick={() => navigate(`/response/create/${form.id}`)}
+              sx={{
+                backgroundColor: theme.palette.primary.main,
+                color: "white",
+                borderRadius: "15px",
+                "&:hover": {
+                  backgroundColor: "white",
+                  color: theme.palette.primary.main,
+                  outline: `1px solid ${theme.palette.primary.main}`,
+                },
+              }}>
+              הוספת תגובה
+            </ItemButton>
+          </PermissionGate>
 
-          <ItemButton
-            className="form-watch-responses-button"
-            onClick={goToResponsesPage}
-            sx={{
-              backgroundColor: theme.palette.primary.main,
-              color: "white",
-              borderRadius: "15px",
-              "&:hover": {
-                backgroundColor: "white",
-                color: theme.palette.primary.main,
-                outline: `1px solid ${theme.palette.primary.main}`,
-              },
-            }}>
-            צפייה בתגובות
-          </ItemButton>
+          <PermissionGate
+            userPermissions={userPermissions}
+            requiredPermissions={[permission.ReadAnyResponse]}
+            requireAny>
+            <ItemButton
+              className="form-watch-responses-button"
+              onClick={goToResponsesPage}
+              sx={{
+                backgroundColor: theme.palette.primary.main,
+                color: "white",
+                borderRadius: "15px",
+                "&:hover": {
+                  backgroundColor: "white",
+                  color: theme.palette.primary.main,
+                  outline: `1px solid ${theme.palette.primary.main}`,
+                },
+              }}>
+              צפייה בתגובות
+            </ItemButton>
+          </PermissionGate>
         </ItemBtnsDiv>
       </ItemBottomDiv>
     </StyledCard>

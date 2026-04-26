@@ -7,11 +7,11 @@ import { useDeleteAllFormsResponses, useDeleteForm } from "../../../api";
 import deleteResponseImg from "../../../images/delete_response.png";
 import ConfirmPopup from "../../../popups/ConfirmPopup/ConfirmPopup";
 import { CustomIcon } from "../../../theme/icons";
-import { PERMISSION_TYPES } from "../../../utils/utils";
 import { PermissionGate } from "../PermissionGate";
 import { useFormStore } from "../stores/form.store";
 import { SourceOperationStatus, SourceOperationStatusType } from "./FormActionsToolbar";
 import { UploadResponses } from "./UploadResponses";
+import { permission } from "formula-gear";
 
 interface MoreOptionsProps {
   setAnchorElSourceType: React.Dispatch<React.SetStateAction<HTMLElement | null>>;
@@ -93,7 +93,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           vertical: "top",
           horizontal: "left",
         }}>
-        <PermissionGate permissions={[PERMISSION_TYPES.SYNC_FORM]} userPermissions={permissions}>
+        <PermissionGate permissions={[permission.SyncForm]} userPermissions={permissions}>
           {sourceOperationStatus === SourceOperationStatus.NOT_IN_PROGRESS ? (
             syncingDataMenuItem
           ) : (
@@ -119,7 +119,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
         </PermissionGate>
 
         <PermissionGate
-          permissions={[PERMISSION_TYPES.CREATE_RESPONSE, PERMISSION_TYPES.EDIT_RESPONSE]}
+          permissions={[permission.CreateResponse, permission.UpdateAnyResponse]}
           userPermissions={permissions}>
           <MenuItem disabled={!hasFormFields} onClick={() => setShowImportFromExcelPopup(true)}>
             <ListItemIcon>
@@ -133,7 +133,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           />
         </PermissionGate>
 
-        <PermissionGate permissions={[PERMISSION_TYPES.EDIT_FORM]} userPermissions={permissions}>
+        <PermissionGate permissions={[permission.UpdateForm]} userPermissions={permissions}>
           <MenuItem onClick={() => setShowDeleteFormPopup(true)}>
             <ListItemIcon>
               <DeleteForever sx={{ color: "red", fontSize: 22 }} />
@@ -157,7 +157,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           )}
         </PermissionGate>
 
-        <PermissionGate permissions={[PERMISSION_TYPES.EDIT_FORM]} userPermissions={permissions}>
+        <PermissionGate permissions={[permission.UpdateForm]} userPermissions={permissions}>
           <MenuItem onClick={() => setShowDeleteResponsesPopup(true)} disabled={rows.length === 0}>
             <ListItemIcon>
               <DeleteForever sx={{ color: "red", fontSize: 22 }} />

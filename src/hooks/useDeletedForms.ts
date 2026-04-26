@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { PERMISSION_TYPES, showErrorNotification, showSuccessNotification } from "../utils/utils";
+import { showErrorNotification, showSuccessNotification } from "../utils/utils";
 import { Filter, User } from "../utils/interfaces";
 import { getForms, restoreForm } from "../api";
 import { useSuperAdmin } from "../contexts/SuperAdminContext";
 import { DELETED_TABS } from "../utils/recycleBin";
 import { getSortedFilter } from "../utils/filters";
+import { permission } from "formula-gear";
 
 export interface DeletedFormsFilters {
   deletedBy: string;
@@ -41,7 +42,7 @@ export const useDeletedForms = (
           users: {
             $elemMatch: {
               upn: user.upn?.toLowerCase(),
-              role_id: PERMISSION_TYPES.CREATE_FORM,
+              role_id: permission.ReadForm,
             },
           },
         },
