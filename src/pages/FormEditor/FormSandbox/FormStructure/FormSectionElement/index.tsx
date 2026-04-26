@@ -45,7 +45,11 @@ function FormSectionElement({ id }: Props) {
     transition,
     active,
     isDragging,
-  } = useSortable({ id, data: { elementType: "section" } as DraggableElementData });
+  } = useSortable({
+    id,
+    data: { elementType: "section" } as DraggableElementData,
+    resizeObserverConfig: undefined,
+  });
 
   const {
     formStructure,

@@ -10,7 +10,14 @@ interface DragOverlayProps {
 function withDragOverlay(overlayComponent: FunctionComponent<DragOverlayProps>) {
   return (
     ({ draggingElement }: DragOverlayProps) => (
-      <DragOverlay zIndex={1500} modifiers={[snapCenterToCursor]}>
+      <DragOverlay
+        zIndex={1500}
+        modifiers={[snapCenterToCursor]}
+        className=""
+        style={{}}
+        transition={undefined}
+        adjustScale={false}
+      >
         {overlayComponent({ draggingElement })}
       </DragOverlay>
     )
