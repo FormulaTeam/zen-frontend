@@ -128,6 +128,8 @@ const toFieldValidationError = (
   };
 };
 
+type UseResponseStateInitialResponse = ResponseDto | null | undefined;
+
 export const useResponseState = (
   formId: string | undefined,
   responseId: string | undefined,
@@ -137,6 +139,7 @@ export const useResponseState = (
   user?: any,
   isSuperAdmin?: boolean,
   setHasUnsavedChanges?: (hasUnsavedChanges: boolean) => void,
+  initialResponse?: UseResponseStateInitialResponse,
 ) => {
   const [formTitle, setFormTitle] = useState("");
   const [formFields, setFormFields] = useState<FormFieldWithSectionDto[]>([]);
@@ -149,7 +152,7 @@ export const useResponseState = (
   >(new Map());
   const [formFieldsTouchedMap, setFormFieldsTouchedMap] = useState<Map<string, boolean>>(new Map());
   const [form, setForm] = useState<FormDto | null>(null);
-  const [response, setResponse] = useState<ResponseDto | null>(null);
+  const [response, setResponse] = useState<ResponseDto | null>(initialResponse ?? null);
   const [loading, setLoading] = useState(true);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
@@ -174,6 +177,12 @@ export const useResponseState = (
   }, [formFieldsValuesMap]);
 
   useEffect(() => {
+    if (initialResponse !== undefined) {
+      setResponse(initialResponse ?? null);
+    }
+  }, [initialResponse]);
+
+  useEffect(() => {
     let isMounted = true;
 
     const loadData = async () => {
@@ -187,7 +196,18 @@ export const useResponseState = (
           }
         }
 
-        if (responseId && formId) {
+        if (initialResponse !== undefined) {
+          if (isMounted) {
+            if (initialResponse && copyMode) {
+              setResponse({
+                ...initialResponse,
+                id: null as unknown as ResponseDto["id"],
+              });
+            } else {
+              setResponse(initialResponse ?? null);
+            }
+          }
+        } else if (responseId && formId) {
           const found = await getResponseById(Number(formId), responseId);
 
           if (isMounted && found) {
@@ -213,7 +233,7 @@ export const useResponseState = (
     return () => {
       isMounted = false;
     };
-  }, [formId, responseId, copyMode]);
+  }, [formId, responseId, copyMode, initialResponse]);
 
   useEffect(() => {
     if (!form) return;
@@ -234,14 +254,15 @@ export const useResponseState = (
       }
     }
 
-    const stateKey = `${form.id}:${responseId ?? "new"}:${copyMode ? "copy" : "regular"}:${viewMode ? "view" : "edit"}`;
+    const effectiveResponseId = response?.id ?? responseId;
+    const stateKey = `${form.id}:${effectiveResponseId ?? "new"}:${copyMode ? "copy" : "regular"}:${viewMode ? "view" : "edit"}`;
 
-    if (!responseId && initializedStateKeyRef.current === stateKey) {
+    if (!effectiveResponseId && initializedStateKeyRef.current === stateKey) {
       setLoading(false);
       return;
     }
 
-    if (responseId && !response) {
+    if ((responseId || initialResponse) && !response) {
       return;
     }
 
@@ -260,7 +281,7 @@ export const useResponseState = (
       nextTouchedMap.set(currentFieldId, false);
     });
 
-    if (responseId) {
+    if (effectiveResponseId) {
       setFormTitle((copyMode ? "יצירת תגובה - " : "עריכת תגובה - ") + form.name);
 
       const fieldValuesArray = (response?.fieldValues ?? []) as ResponseFieldValueDto[];
@@ -326,7 +347,18 @@ export const useResponseState = (
     setFormFieldsValidMap(nextValidMap);
     setFormFieldsTouchedMap(nextTouchedMap);
     setLoading(false);
-  }, [form, response, responseId, viewMode, copyMode, roles, user, isSuperAdmin, navigate]);
+  }, [
+    form,
+    response,
+    responseId,
+    initialResponse,
+    viewMode,
+    copyMode,
+    roles,
+    user,
+    isSuperAdmin,
+    navigate,
+  ]);
 
   const evaluateFieldVisibility = (
     field: FormFieldWithSectionDto,

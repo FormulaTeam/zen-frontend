@@ -37,6 +37,7 @@ type Props = {
   copyMode?: boolean;
   shouldLoad?: boolean;
   formsLength: number;
+  initialResponse?: ResponseDto;
 };
 
 const toNumber = (value: unknown): number | undefined => {
@@ -76,6 +77,7 @@ function ConnectedFormSection({
   shouldLoad,
   formsLength,
   handleRemoveChildForm,
+  initialResponse,
 }: Props) {
   const linkedFormId = getConnectedFormId(field);
 
@@ -92,7 +94,17 @@ function ConnectedFormSection({
     response,
     fieldOptions,
     loadingConnections,
-  } = useResponseState(linkedFormId?.toString() ?? "", id, viewMode, copyMode);
+  } = useResponseState(
+    linkedFormId?.toString() ?? "",
+    id,
+    viewMode,
+    copyMode,
+    undefined,
+    user,
+    undefined,
+    undefined,
+    initialResponse,
+  );
 
   const { isSaving, saveResponse } = useResponseSave(
     form,

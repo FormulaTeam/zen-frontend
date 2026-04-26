@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import MetroSyncingPopup from "@components/ResponseToolbar/Popups/MetroSyncingPopup";
 import SyncTypeMenu from "@components/ResponseToolbar/Menus/SyncTypeMenu";
-import UserPicker from "../../../components/USerPicker/UserPicker";
+import UserPicker from "../../../components/UserPicker/UserPicker";
 import { useMetro } from "@hooks/useMetro";
 import { CustomIcon } from "../../../theme/icons";
 import { PERMISSION_TYPES } from "../../../utils/utils";
