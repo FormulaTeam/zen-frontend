@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { normalizeFieldValue } from "../utils/formFieldsResponses";
 import { texts } from "../utils/texts";
+import { FieldTypeIds } from "../utils/interfaces";
 
 interface UseFormFieldLogicProps {
   formField: any;
@@ -37,13 +38,15 @@ export const useFormFieldLogic = ({
   }, [formFieldsValuesMap, uniqueId, field]);
 
   useEffect(() => {
-    if (field.typeId !== "options") return;
+    if (field.typeId !== FieldTypeIds.options) return;
 
-    let options = field.options || [];
+    const extra = field.extra ?? {};
+    const multiSelect = Boolean(field.multiSelect ?? extra.multiSelect ?? extra.multiple);
+    let options = extra.options || field.options || [];
 
-    const parentFieldId = field.parentFieldId;
-    const parentDependencies = field.parentDependencies;
-    const connectedToForm = field.connectionType === "form";
+    const parentFieldId = extra.parentFieldId ?? field.parentFieldId;
+    const parentDependencies = extra.parentDependencies ?? field.parentDependencies;
+    const connectedToForm = extra.connectionType === "form" || field.connectionType === "form";
 
     if (connectedToForm && fieldOptions[uniqueId]) {
       options = fieldOptions[uniqueId].map((f) => f.value);
@@ -51,40 +54,55 @@ export const useFormFieldLogic = ({
 
     if (parentFieldId && parentDependencies) {
       const parentValue = formFieldsValuesMap.get(parentFieldId);
-      const parentField = formFields.find((f) => f.uniqueId === parentFieldId);
+      const parentField = formFields.find((f) => String(f.id) === String(parentFieldId) || f.uniqueId === parentFieldId);
       const allowedOptions = new Set();
 
       if (parentField) {
+        const parentExtra = parentField.extra ?? {};
+        const parentOptions = parentExtra.options || parentField.options || [];
         const parentValues = Array.isArray(parentValue) ? parentValue : [parentValue];
 
         parentValues.forEach((val) => {
-          const parentIndex = parentField.options.indexOf(val);
-          const dep = parentDependencies.find((d) => d.parentOptionIndex === parentIndex);
+          const parentIndex = parentOptions.indexOf(val);
+          const dep = parentDependencies.find((d: any) => d.parentOptionIndex === parentIndex);
 
           if (dep) {
             dep.childOptionIndices.forEach((childIndex: number) => {
-              if (field.options[childIndex]) {
-                allowedOptions.add(field.options[childIndex]);
+              if (options[childIndex]) {
+                allowedOptions.add(options[childIndex]);
               }
             });
           }
         });
 
-        options = field.options.filter((opt: any) => allowedOptions.has(opt));
+        options = options.filter((opt: any) => allowedOptions.has(opt));
 
         // Clean invalid selection
-        if (value && !allowedOptions.has(value)) {
-          const newVal = field.multiSelect ? [] : "";
-          setValue(newVal);
-          setTimeout(() => {
-            onChangeHandler(newVal, uniqueId, !field.required);
-          }, 0);
+        if (value) {
+          if (multiSelect) {
+            const currentValues = Array.isArray(value) ? value : [value];
+            const validValues = currentValues.filter(v => allowedOptions.has(v));
+            if (validValues.length !== currentValues.length) {
+              setValue(validValues);
+              setTimeout(() => {
+                onChangeHandler(validValues, uniqueId, !field.required);
+              }, 0);
+            }
+          } else if (!allowedOptions.has(value)) {
+            const newVal = "";
+            setValue(newVal);
+            setTimeout(() => {
+              onChangeHandler(newVal, uniqueId, !field.required);
+            }, 0);
+          }
         }
       }
     }
 
-    if (!field.required && !field.multiSelect) {
-      options = [texts.heb.emptyValue, ...options];
+    if (!field.required && !multiSelect) {
+      if (!options.includes(texts.heb.emptyValue)) {
+        options = [texts.heb.emptyValue, ...options];
+      }
       if (value === texts.heb.emptyValue) setValue("");
     }
 

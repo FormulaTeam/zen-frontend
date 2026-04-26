@@ -35,9 +35,12 @@ export function useFormLoader(formId: string) {
   useEffect(() => {
     if (responsesRowsData && isResponsesSuccess && formData) {
       const data = responsesRowsData as any;
-      const responses: any[] = Array.isArray(data)
-        ? data
-        : data?.edges?.map((e: any) => e.node) || data?.responses || [];
+      // Defensive mapping to handle both array and paginated object formats
+      const responses: any[] = Array.isArray(responsesRowsData)
+        ? responsesRowsData
+        : (responsesRowsData as any)?.edges?.map((e: any) => e.node) ||
+          (responsesRowsData as any)?.responses ||
+          [];
 
       // Robust PageInfo detection (handle camelCase and snake_case)
       const rawPageInfo = data?.pageInfo || data?.page_info;
@@ -97,6 +100,7 @@ export function useFormLoader(formId: string) {
           endCursor: null,
         });
       }
+
     }
   }, [responsesRowsData, setRows, setPageInfo, isResponsesSuccess, formData, setResponses]);
 

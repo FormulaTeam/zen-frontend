@@ -10,6 +10,8 @@ import {
 import { Role } from "../utils/interfaces";
 import { logoutAction } from "../utils/auth";
 
+import { ROLE_CATALOG } from "../consts/roles";
+
 export interface User {
   firstName?: string;
   lastName?: string;
@@ -22,7 +24,7 @@ interface AuthContextType {
   loading: boolean;
   login: ({ user }: { user: User }) => void;
   logout: () => void;
-  roles: Role[];
+  roles: any[];
 }
 
 interface AuthProviderProps {
@@ -81,7 +83,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, roles: [], logout }}>
+    <AuthContext.Provider value={{ user, loading, login, roles: ROLE_CATALOG, logout }}>
       {children}
     </AuthContext.Provider>
   );

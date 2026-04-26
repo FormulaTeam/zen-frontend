@@ -91,6 +91,25 @@ export const encodeCursor = (index: number, id: string): string => {
   return btoa(JSON.stringify({ index, id }));
 };
 
+export type LegacyPermission = Permission;
+
+export const allLegacyPermissions: LegacyPermission[] = Object.values(permission);
+
+export const CREATE_RESPONSE_PERMISSIONS = [permission.CreateResponse];
+// human labels for debug/admin UI
+export const PERMISSION_LABELS: Record<string, string> = {
+  [permission.ReadForm]: "Create form",
+  [permission.DeleteForm]: "Delete form",
+  [permission.UpdateForm]: "Edit form",
+  [permission.ShareForm]: "Share form",
+  [permission.SyncForm]: "Sync form",
+  [permission.ExportForm]: "Export form",
+  [permission.CreateResponse]: "Create response",
+  [permission.DeleteAnyResponse]: "Delete response",
+  [permission.UpdateAnyResponse]: "Edit response",
+  [permission.ReadAnyResponse]: "View any response",
+};
+
 export type DecodedCursor = {
   index: number;
   id: string;
