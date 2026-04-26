@@ -35,8 +35,8 @@ export function useFormLoader(formId: string) {
       const responses: any[] = Array.isArray(responsesRowsData)
         ? responsesRowsData
         : (responsesRowsData as any)?.edges?.map((e: any) => e.node) ||
-        (responsesRowsData as any)?.responses ||
-        [];
+          (responsesRowsData as any)?.responses ||
+          [];
 
       const pageInfoFromData =
         !Array.isArray(responsesRowsData) && (responsesRowsData as any).pageInfo
@@ -91,6 +91,7 @@ export function useFormLoader(formId: string) {
           endCursor: responses.length > 0 ? responses[responses.length - 1].id : null,
         });
       }
+
     }
   }, [responsesRowsData, setRows, setPageInfo, isResponsesSuccess, formData, setResponses]);
   useEffect(() => {

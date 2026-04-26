@@ -20,7 +20,7 @@ import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
 import { useMutation } from "@tanstack/react-query";
 import { useUpdate } from "../utils/useUpdate";
-import { CreateResponseDto, ResponseDto, FormDto } from "../types/shared";
+import { BulkUpdateResponsesDto, CreateResponseDto, ResponseDto, FormDto } from "../types/shared";
 import { z } from "zod";
 import { GetResponsesQuerySchema } from "formula-gear/dist/validators/responses/index";
 import { SortDirection } from "formula-gear";
@@ -41,10 +41,10 @@ export const getResponses = async (formId: number, filter?: Filter): Promise<Res
   const params: z.infer<typeof GetResponsesQuerySchema> = {
     limit: filter?.pageSize ?? 25,
     search: stringifyQuery(filter?.query),
+    sortBy: filter?.sortBy ?? "id",
     sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     before: filter?.before,
     after: filter?.after,
-    sortBy: ""
   };
   try {
     const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, { params });
@@ -135,8 +135,8 @@ export const searchResponses = async (filter: Filter): Promise<ResponseDto[]> =>
     const params: z.infer<typeof GetResponsesQuerySchema> = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
-      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
-      sortBy: ""
+      sortBy: filter?.sortBy ?? "id",
+    sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     };
 
     const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, { params });
@@ -242,10 +242,13 @@ export const useGetResponsesRows = (
   formId: string,
   params: z.infer<typeof GetResponsesQuerySchema>,
 ) => {
-  const safeParams = useMemo(() => ({
-    ...params,
-    search: stringifyQuery(params.search),
-  }), [params]);
+  const safeParams = useMemo(
+    () => ({
+      ...params,
+      search: stringifyQuery(params.search),
+    }),
+    [params],
+  );
 
   return useFetch<typeof safeParams, ResponseDto[]>({
     endpoint: `/forms/${formId}/responses`,
@@ -263,10 +266,10 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
     () => ({
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
-      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      sortBy: filter?.sortBy ?? "id",
+    sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
-      sortBy: ""
     }),
     [filter],
   );
@@ -331,6 +334,21 @@ export const useSoftDeleteResponses = (formId: number) => {
   });
 };
 
+export const useUpdateResponses = (formId?: number) => {
+  return useUpdate<BulkUpdateResponsesDto, ResponseDto[]>({
+    endpoint: `/forms/${formId}/responses`,
+    mutationKey: ["update-responses", formId],
+    mutationOptions: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["responses"] });
+      },
+      onError: (error) => {
+        console.error("Failed to update responses:", error);
+      },
+    },
+  });
+};
+
 export const useRestoreResponses = (formId: number) => {
   return useMutation({
     mutationFn: (responseIds: string[]) => restoreResponses(formId, responseIds),
@@ -390,10 +408,10 @@ export const getResponsesRows = async ({
     const params: z.infer<typeof GetResponsesQuerySchema> = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
-      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      sortBy: filter?.sortBy ?? "id",
+    sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
-      sortBy: ""
     };
     const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, {
       params,

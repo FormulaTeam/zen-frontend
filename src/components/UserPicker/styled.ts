@@ -82,8 +82,8 @@ export const RoleOption = styled.div`
   width: 100%;
 `;
 
-export const StyledIconButton = styled(IconButton) <{ color?: string }>`
-  color: ${({ color }) => color} !important;
+export const StyledIconButton = styled(IconButton) <{ $customColor?: string }>`
+  color: ${({ $customColor }) => $customColor} !important;
   &:hover {
     background-color: rgba(0, 0, 0, 0.04);
   }

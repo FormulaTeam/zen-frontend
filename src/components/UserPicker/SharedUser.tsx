@@ -50,7 +50,7 @@ const SharedUser = ({ user, roles, handleRoleChange, removeUserFromShare }) => {
 
         {/* Always show the X button, just disable it for current user */}
         <StyledIconButton
-          color={theme.palette.button?.primaryText}
+          $customColor={theme.palette.button?.primaryText}
           onClick={() => removeUserFromShare(user)}
           size="small">
           <Close fontSize="small" />

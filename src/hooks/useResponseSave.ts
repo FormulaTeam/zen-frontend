@@ -1,8 +1,9 @@
-import { useCreateResponse, useUpdateResponse } from "../api";
+import { useCreateResponse, useUpdateResponses } from "../api";
 import { showErrorNotification, getUserName } from "../utils/utils";
 import { NotificationTexts } from "../utils/interfaces";
 import moment from "moment";
 import {
+  BulkUpdateResponsesDto,
   CreateResponseDto,
   FormDto,
   FormFieldDto,
@@ -36,10 +37,6 @@ type ExistingResponseLike = Partial<ResponseDto> & {
 };
 
 type CreateResponsePayload = CreateResponseDto & {
-  parentResponse?: ParentResponseRef;
-};
-
-type UpdateResponsePayload = Partial<ResponseDto> & {
   parentResponse?: ParentResponseRef;
 };
 
@@ -111,9 +108,9 @@ export const useResponseSave = (
   const formId = form?.id;
 
   const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } =
-    useCreateResponse(formId);
-  const { mutateAsync: mutateUpdateResponseAsync, isPending: isUpdateResponsePending } =
-    useUpdateResponse(formId, response?.id);
+    useCreateResponse(formId!);
+  const { mutateAsync: mutateUpdateResponsesAsync, isPending: isUpdateResponsePending } =
+    useUpdateResponses(formId);
 
   const saveResponse = async (
     formFieldsByIdMap: Map<string, SaveField>,
@@ -169,16 +166,24 @@ export const useResponseSave = (
     const parsedParentResponse = parseParentResponse(parentResponse);
     try {
       if (response && response.id && !copyMode) {
-        const { parentResponse: _, ...restResponse } = response;
-        const updatedResponse: UpdateResponsePayload = {
-          ...restResponse,
-          updatedBy: response.updatedBy,
-          fieldValues,
-          ...(parsedParentResponse ? { parentResponse: parsedParentResponse } : {}),
+        const updatedResponsesPayload: BulkUpdateResponsesDto = {
+          responses: [
+            {
+              responseId: response.id,
+              fieldValues,
+            },
+          ],
         };
 
-        const result = (await mutateUpdateResponseAsync(updatedResponse as any)) as any;
-        return result?.data ?? result;
+        const updatedResponses = (await mutateUpdateResponsesAsync(
+          updatedResponsesPayload,
+        )) as ResponseDto[];
+
+        if (!Array.isArray(updatedResponses) || updatedResponses.length === 0) {
+          throw new Error("Update response returned no updated responses");
+        }
+
+        return updatedResponses[0];
       }
 
       const newResponse: CreateResponsePayload = {
