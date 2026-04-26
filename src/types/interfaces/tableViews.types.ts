@@ -5,7 +5,8 @@ export interface ResponsesViewColumn {
   metaColumnId?: number | null; // index, created_at, updated_at, created_by, updated_by
   displayName?: string;
   isVisible: boolean;
-  index: number; // Horizontal ordering
+  index: number; // Horizontal position (0-indexed)
+  isSortColumn: boolean; // Critical: True if this is the primary sort column
 }
 
 /**
@@ -34,7 +35,7 @@ export interface ResponsesView {
   isPublic: boolean; // true = visible to all users
   isDefault: boolean; // true = auto-applied for this form
   columns: ResponsesViewColumn[];
-  sortColumnId?: string | number | null; // Points to a specific ResponsesViewColumn.id
+  sortColumnId?: string | number | null; // Engine calculated based on isSortColumn
   sortDirection: "asc" | "desc";
   config?: ViewConfig; // Legacy config support
   createdAt?: Date;
