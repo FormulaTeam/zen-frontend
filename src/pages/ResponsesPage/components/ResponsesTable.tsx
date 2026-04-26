@@ -6,7 +6,6 @@ import {
   GridCellModesModel,
   GridCellModes,
   GridFooterContainer,
-  GridFooter,
   GridColDef,
   GridRenderCellParams,
   GridRowSelectionModel,
@@ -20,6 +19,10 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "@components/formInForm/ZoomCell";
 import {
@@ -32,17 +35,14 @@ import {
   Stack,
   Typography,
   Select,
+  Tooltip,
 } from "@mui/material";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
 import { downloadFileFromResponse } from "@api/filesApi";
 import {
   ContentContainer,
   MainContent,
-  ResponsesAmountBox,
-  ResponsesAmountText,
   StyledDataGrid,
   SyncStatusIconBox,
   HeaderAsterisk,
@@ -50,11 +50,13 @@ import {
   CellErrorWrapper,
   CellErrorText,
   CellValueFlex,
+  PaginationContainer,
+  PaginationButton,
 } from "../styled";
 import { useChildForms } from "../hooks/useChildForms";
 import { useDetailPanel } from "../hooks/useDetailPanel";
 import { useNavigate } from "react-router-dom";
-import { ResponsesView, ViewColumn } from "../../../types/interfaces/tableViews.types";
+import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { FormFieldDto } from "../../../types/shared";
 import { FieldTypeIds, MetaColumnIds } from "../../../utils/interfaces";
 import * as Gear from "formula-gear";
@@ -131,9 +133,6 @@ export const ResponsesTable = ({
 
   const currentViewConfig = useMemo(() => currentView?.columns || [], [currentView]);
 
-  console.log("ResponsesTable: pageInfo from store:", pageInfo);
-  console.log("ResponsesTable: isInEditMode:", isInEditMode);
-
   const handleNextPage = useCallback(() => {
     if (pageInfo?.hasNextPage && pageInfo.endCursor) {
       setFilter({
@@ -178,7 +177,6 @@ export const ResponsesTable = ({
         if (fieldObj) {
           sortBy = `${prefixes.Field}${fieldObj.id}`;
         } else {
-          // Rule 1: Unified Sorting Keys
           switch (field) {
             case "index":
               sortBy = `${prefixes.Meta}index`;
@@ -206,7 +204,6 @@ export const ResponsesTable = ({
           }
         }
 
-        // Rule 3: State Reset - Reset pagination cursors on sort change
         setFilter({
           ...filter,
           sortBy,
@@ -229,7 +226,6 @@ export const ResponsesTable = ({
 
   const apiRef = useGridApiRef();
   const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
-  const [paginationModel, setPaginationModel] = useState({ pageSize: 25, page: 0 });
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
     mouseY: number;
@@ -722,13 +718,13 @@ export const ResponsesTable = ({
     return (
       <GridFooterContainer>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: 2, mr: 2 }}>
-          <Typography variant="body2">הצג</Typography>
+          <Typography variant="body2" color="text.secondary">הצג</Typography>
           <Select
             value={filter?.pageSize ?? 25}
             onChange={handlePageSizeChange}
             size="small"
             variant="standard"
-            sx={{ minWidth: 40, fontSize: "0.875rem", textAlign: "center" }}
+            sx={{ minWidth: 40, fontSize: "0.875rem", textAlign: "center", fontWeight: 500 }}
             disabled={isInEditMode}>
             {[10, 25, 50, 100].map((size) => (
               <MenuItem key={size} value={size}>
@@ -736,22 +732,39 @@ export const ResponsesTable = ({
               </MenuItem>
             ))}
           </Select>
-          <Typography variant="body2">{`תגובות בעמוד מתוך סך הכל ${form?.responsesCount ?? 0} תגובות`}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {`תגובות בעמוד מתוך סך הכל ${form?.responsesCount ?? 0} תגובות`}
+          </Typography>
         </Stack>
+
         <Stack direction="row" spacing={2} alignItems="center" sx={{ mr: 2 }}>
-          <IconButton
-            onClick={handlePreviousPage}
-            disabled={!pageInfo?.hasPreviousPage || isInEditMode}
-            size="small">
-            <NavigateNextIcon />
-          </IconButton>
-          <Typography variant="body2">דף קודם / הבא</Typography>
-          <IconButton
-            onClick={handleNextPage}
-            disabled={!pageInfo?.hasNextPage || isInEditMode}
-            size="small">
-            <NavigateBeforeIcon />
-          </IconButton>
+          <PaginationContainer>
+            <Tooltip title="עמוד קודם">
+              <span>
+                <PaginationButton
+                  onClick={handlePreviousPage}
+                  disabled={!pageInfo?.hasPreviousPage || isInEditMode}
+                  size="small">
+                  <ArrowForwardIosIcon />
+                </PaginationButton>
+              </span>
+            </Tooltip>
+            
+            <Typography variant="body2" sx={{ fontWeight: 600, px: 1, color: "#4a5568" }}>
+              דף
+            </Typography>
+
+            <Tooltip title="עמוד הבא">
+              <span>
+                <PaginationButton
+                  onClick={handleNextPage}
+                  disabled={!pageInfo?.hasNextPage || isInEditMode}
+                  size="small">
+                  <ArrowBackIosNewIcon />
+                </PaginationButton>
+              </span>
+            </Tooltip>
+          </PaginationContainer>
         </Stack>
       </GridFooterContainer>
     );
@@ -767,6 +780,7 @@ export const ResponsesTable = ({
           disableColumnSorting={isInEditMode}
           disableColumnResize={isInEditMode}
           sortingMode="server"
+          sortingOrder={["asc", "desc"]}
           onSortModelChange={handleSortModelChange}
           editMode="cell"
           cellModesModel={cellModesModel}
