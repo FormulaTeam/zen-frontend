@@ -68,7 +68,7 @@ export const createResponsesView = async (
 export const updateResponsesView = async (
   formId: string,
   responsesViewId: string | number,
-  updates: Partial<Pick<ResponsesView, "name" | "isPublic" | "isDefault" | "config">>,
+  updates: Partial<ResponsesView>,
 ): Promise<ResponsesView> => {
   const { data } = await apiClient.patch<ResponsesView>(
     `/forms/${formId}/responses-views/${responsesViewId}`,
@@ -96,15 +96,41 @@ export const deleteResponsesView = async (
   return data;
 };
 
-// Hooks
+// Hooks with Optimistic UI
 // ============================================================
+
+const VIEW_QUERY_KEY = "responses-views";
 
 export const useCreateResponsesView = (formId: string) => {
   return useMutation({
     mutationFn: (responsesView: Omit<ResponsesView, "_id" | "id" | "createdAt" | "updatedAt">) =>
       createResponsesView(formId, responsesView),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["responses-views", formId] });
+    onMutate: async (newView) => {
+      await queryClient.cancelQueries({ queryKey: [VIEW_QUERY_KEY, formId] });
+      const previousViews = queryClient.getQueryData<ResponsesView[]>([VIEW_QUERY_KEY, formId]);
+
+      if (previousViews) {
+        // We don't have a real ID yet, so we use a temp one
+        const optimisticView: ResponsesView = {
+          ...newView,
+          id: "temp-id-" + Date.now(),
+        } as ResponsesView;
+
+        queryClient.setQueryData<ResponsesView[]>([VIEW_QUERY_KEY, formId], [
+          ...previousViews,
+          optimisticView,
+        ]);
+      }
+
+      return { previousViews };
+    },
+    onError: (_err, _newView, context) => {
+      if (context?.previousViews) {
+        queryClient.setQueryData([VIEW_QUERY_KEY, formId], context.previousViews);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: [VIEW_QUERY_KEY, formId] });
     },
   });
 };
@@ -116,10 +142,30 @@ export const useUpdateResponsesView = (formId: string) => {
       updates,
     }: {
       responsesViewId: string | number;
-      updates: Partial<Pick<ResponsesView, "name" | "isPublic" | "isDefault" | "config">>;
+      updates: Partial<ResponsesView>;
     }) => updateResponsesView(formId, responsesViewId, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["responses-views", formId] });
+    onMutate: async ({ responsesViewId, updates }) => {
+      await queryClient.cancelQueries({ queryKey: [VIEW_QUERY_KEY, formId] });
+      const previousViews = queryClient.getQueryData<ResponsesView[]>([VIEW_QUERY_KEY, formId]);
+
+      if (previousViews) {
+        queryClient.setQueryData<ResponsesView[]>(
+          [VIEW_QUERY_KEY, formId],
+          previousViews.map((view) =>
+            (view.id === responsesViewId ? { ...view, ...updates } : view) as ResponsesView,
+          ),
+        );
+      }
+
+      return { previousViews };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousViews) {
+        queryClient.setQueryData([VIEW_QUERY_KEY, formId], context.previousViews);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: [VIEW_QUERY_KEY, formId] });
     },
   });
 };
@@ -127,8 +173,26 @@ export const useUpdateResponsesView = (formId: string) => {
 export const useDeleteResponsesView = (formId: string) => {
   return useMutation({
     mutationFn: (responsesViewId: string | number) => deleteResponsesView(formId, responsesViewId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["responses-views", formId] });
+    onMutate: async (responsesViewId) => {
+      await queryClient.cancelQueries({ queryKey: [VIEW_QUERY_KEY, formId] });
+      const previousViews = queryClient.getQueryData<ResponsesView[]>([VIEW_QUERY_KEY, formId]);
+
+      if (previousViews) {
+        queryClient.setQueryData<ResponsesView[]>(
+          [VIEW_QUERY_KEY, formId],
+          previousViews.filter((view) => view.id !== responsesViewId),
+        );
+      }
+
+      return { previousViews };
+    },
+    onError: (_err, _responsesViewId, context) => {
+      if (context?.previousViews) {
+        queryClient.setQueryData([VIEW_QUERY_KEY, formId], context.previousViews);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: [VIEW_QUERY_KEY, formId] });
     },
   });
 };

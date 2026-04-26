@@ -19,6 +19,12 @@ export const SavedViewsContainer = styled(Box)`
   margin-bottom: 24px;
 `;
 
+export const SectionTitle = styled(Typography)`
+  font-weight: 500;
+  margin-bottom: 12px;
+  color: #666;
+`;
+
 export const ViewCard = styled(Card)<{ $isSelected?: boolean }>`
   margin-bottom: 8px;
   cursor: pointer;

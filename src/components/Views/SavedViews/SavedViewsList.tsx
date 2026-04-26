@@ -6,6 +6,7 @@ import {
   SavedViewsContainer,
   CreateNewViewContainer,
   CreateNewViewButton,
+  SectionTitle,
 } from "../ViewManager/styled";
 import {
   CreateFirstViewButton,
@@ -15,7 +16,7 @@ import {
 } from "../../Responses/styled";
 import { SavedViewCard } from "./index";
 import { User } from "../../../utils/interfaces";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface SavedViewsListProps {
   savedViews?: ResponsesView[];
@@ -32,6 +33,8 @@ enum HebrewTitles {
   NoViewsSubtitle = "תצוגות הן פשוטות לבנייה ועושות המון סדר",
   CreateFirstView = "ליצירת תצוגה ראשונה",
   CreateNewView = "יצירת תצוגה חדשה",
+  PublicViews = "תצוגות ציבוריות",
+  PrivateViews = "תצוגות פרטיות",
 }
 
 export function SavedViewsList({
@@ -50,22 +53,40 @@ export function SavedViewsList({
   const [currentViewId, setCurrentViewId] = useState<string | number | null>(null);
   const hasViews = savedViews.length > 0;
 
+  const publicViews = useMemo(() => savedViews.filter((v) => v.isPublic), [savedViews]);
+  const privateViews = useMemo(() => savedViews.filter((v) => !v.isPublic), [savedViews]);
+
+  const renderViewList = (views: ResponsesView[]) =>
+    views.map((view) => (
+      <SavedViewCard
+        key={view.id}
+        view={view}
+        canEditOrDeleteView={canEditOrDeleteView}
+        onLoadView={onLoadView}
+        onEditView={onEditView}
+        onDeleteView={onDeleteView}
+        currentViewId={currentViewId}
+        setCurrentViewId={setCurrentViewId}
+      />
+    ));
+
   return (
     <Box>
       {hasViews && (
         <SavedViewsContainer>
-          {savedViews.map((view) => (
-            <SavedViewCard
-              key={view.id}
-              view={view}
-              canEditOrDeleteView={canEditOrDeleteView}
-              onLoadView={onLoadView}
-              onEditView={onEditView}
-              onDeleteView={onDeleteView}
-              currentViewId={currentViewId}
-              setCurrentViewId={setCurrentViewId}
-            />
-          ))}
+          {publicViews.length > 0 && (
+            <Box mb={3}>
+              <SectionTitle variant="subtitle2">{HebrewTitles.PublicViews}</SectionTitle>
+              {renderViewList(publicViews)}
+            </Box>
+          )}
+
+          {privateViews.length > 0 && (
+            <Box>
+              <SectionTitle variant="subtitle2">{HebrewTitles.PrivateViews}</SectionTitle>
+              {renderViewList(privateViews)}
+            </Box>
+          )}
         </SavedViewsContainer>
       )}
 

@@ -26,7 +26,7 @@ interface ResponsesViewPageProps {
   permissionTypes?: number[];
   isSaving?: boolean;
   onSaveView: (view: ResponsesView) => void;
-  onApplyView?: (viewConfig: ViewColumn[]) => void;
+  onApplyView?: (view: ResponsesView) => void;
   onCancel: () => void;
 }
 
@@ -66,7 +66,8 @@ export function ResponsesViewPage({
     isSaving,
   });
 
-  const { hasFullAccess } = useViewPermissions({ user, permissionTypes });
+  const { canManagePublicViews, canEditOrDeleteView } = useViewPermissions({ user, permissionTypes });
+  const canEditCurrentView = canEditOrDeleteView(currentView);
 
   const visibleColumnsCount = useMemo(
     () => columns.filter((column) => column.visible).length,
@@ -86,7 +87,9 @@ export function ResponsesViewPage({
             formId={Number(form?.id ?? 0)}
             formName={form?.name ?? HEBREW_FORM}
             columns={columns}
-            hasFullAccess={hasFullAccess}
+            formFields={form?.fields}
+            canManagePublicViews={canManagePublicViews}
+            canEditCurrentView={canEditCurrentView}
             viewName={formLogic.viewName}
             setViewName={formLogic.setViewName}
             isPublic={formLogic.isPublic}

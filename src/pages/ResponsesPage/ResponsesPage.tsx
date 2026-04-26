@@ -140,28 +140,26 @@ const ResponsesPageContent = (): JSX.Element => {
     };
   }, [form]);
 
-  const sidePanelUser = useMemo<UserPersonalDto | undefined>(() => {
+  const sidePanelUser = useMemo(() => {
     if (!user) {
       return undefined;
     }
 
-    const safeUpn = "upn" in user && typeof user.upn === "string" ? user.upn : "";
+    const safeUpn = (user as any)?.upn || (user as any)?.UPN || "";
+    const safeEmail = (user as any)?.email || (user as any)?.mail || "";
 
-    if ("name" in user && typeof user.name === "string") {
-      return {
-        name: user.name || safeUpn,
-        upn: safeUpn,
-      };
+    let displayName = (user as any)?.name || "";
+    if (!displayName) {
+      const firstName = (user as any)?.firstName || "";
+      const lastName = (user as any)?.lastName || "";
+      displayName = `${firstName} ${lastName}`.trim();
     }
 
-    const firstName =
-      "firstName" in user && typeof user.firstName === "string" ? user.firstName : "";
-    const lastName = "lastName" in user && typeof user.lastName === "string" ? user.lastName : "";
-    const fullName = `${firstName} ${lastName}`.trim();
-
     return {
-      name: fullName || safeUpn,
+      ...user,
+      name: displayName || safeUpn || safeEmail,
       upn: safeUpn,
+      email: safeEmail,
     };
   }, [user]);
 
@@ -204,7 +202,7 @@ const ResponsesPageContent = (): JSX.Element => {
           validationErrors={validationErrors}
           onCellLiveChange={handleCellLiveChange}
           onRowSelectionModelChange={setRowSelectionModel}
-          currentViewConfig={currentViewConfig}
+          currentView={currentView}
         />
         <CancelEditDialog
           open={showCancelDialog}

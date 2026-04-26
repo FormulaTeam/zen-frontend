@@ -77,6 +77,18 @@ export interface RequestConfig {
   StartRow?: number;
 }
 
+export const MetaColumnIds = {
+  index: 1,
+  created_at: 2,
+  updated_at: 3,
+  created_by: 4,
+  updated_by: 5,
+  pushed_to_metro: 6,
+  id: 7,
+} as const satisfies Record<string, number>;
+
+export type MetaColumnId = (typeof MetaColumnIds)[keyof typeof MetaColumnIds];
+
 export const FieldTypeIds = {
   longText: 1,
   shortText: 2,

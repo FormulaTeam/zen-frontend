@@ -1,107 +1,105 @@
-import { ViewColumn } from "../types/interfaces/tableViews.types";
+import { ResponsesView, ViewColumn } from "../types/interfaces/tableViews.types";
+import { MetaColumnIds } from "./interfaces";
 
 /**
- * Converts view column configuration to Material React Table sorting state
- * @param viewConfig - Array of view columns with sorting information
- * @param tableColumns - Material React Table columns array for ID mapping
- * @returns MRT sorting state array
+ * Converts view configuration to grid sorting state
+ * @param view - The ResponsesView object
+ * @param tableColumns - Grid columns for mapping
+ * @returns Sorting state array
  */
 export const convertViewConfigToSorting = (
-  viewConfig: ViewColumn[],
+  view: ResponsesView | undefined,
   tableColumns: any[],
 ): any[] => {
-  if (!viewConfig || viewConfig.length === 0) {
-    console.log("convertViewConfigToSorting: No viewConfig provided");
+  if (!view || (!view.sortColumnId && !view.config?.columns)) {
     return [];
   }
 
-  if (!tableColumns || tableColumns.length === 0) {
-    console.log("convertViewConfigToSorting: No tableColumns provided");
-    return [];
+  // Handle new schema: sortColumnId + sortDirection
+  if (view.sortColumnId) {
+    const sortedColumn = view.columns?.find((col) => col.id === view.sortColumnId);
+    if (sortedColumn) {
+      const columnId = sortedColumn.fieldId || 
+        (Object.keys(MetaColumnIds).find(key => MetaColumnIds[key as keyof typeof MetaColumnIds] === sortedColumn.metaColumnId));
+
+      if (columnId) {
+        // Find matching table column
+        const matchingTableColumn = tableColumns.find(
+          (col) => col.accessorKey === columnId || col.id === columnId || col.field === columnId,
+        );
+
+        if (matchingTableColumn) {
+          return [
+            {
+              id: matchingTableColumn.id || matchingTableColumn.field,
+              desc: view.sortDirection === "desc",
+            },
+          ];
+        }
+      }
+    }
   }
 
-  console.log("convertViewConfigToSorting: Processing columns:", viewConfig);
-  console.log(
-    "Available table columns:",
-    tableColumns.map((col) => ({ id: col.id, accessorKey: col.accessorKey })),
-  );
-
-  // Get the primary sorted column (sortOrder = 1) - Material React Table only supports single column sorting in practice
-  const primarySortColumn = viewConfig.filter((col) => {
-    const hasSort = col.sortDirection && col.sortOrder === 1 && col.visible;
-    console.log(
-      `Column ${col.columnId}: sortDirection=${col.sortDirection}, sortOrder=${col.sortOrder}, visible=${col.visible}, hasSort=${hasSort}`,
+  // Fallback to legacy config if present
+  const legacyConfig = view.config?.columns;
+  if (legacyConfig && legacyConfig.length > 0) {
+    const primarySortColumn = legacyConfig.find(
+      (col) => col.sortDirection && col.sortOrder === 1 && col.visible,
     );
-    return hasSort;
-  })[0];
 
-  if (!primarySortColumn) {
-    console.log("No primary sort column found");
-    return [];
+    if (primarySortColumn) {
+      const matchingTableColumn = tableColumns.find(
+        (col) => col.accessorKey === primarySortColumn.columnId || col.field === primarySortColumn.columnId,
+      );
+
+      if (matchingTableColumn) {
+        return [
+          {
+            id: matchingTableColumn.id || matchingTableColumn.field,
+            desc: primarySortColumn.sortDirection === "desc",
+          },
+        ];
+      }
+    }
   }
 
-  console.log("Primary sort column found:", primarySortColumn);
-
-  // Find the actual table column by matching accessorKey with columnId
-  const matchingTableColumn = tableColumns.find(
-    (col) => col.accessorKey === primarySortColumn.columnId,
-  );
-
-  if (!matchingTableColumn) {
-    console.log(`No matching table column found for columnId: ${primarySortColumn.columnId}`);
-    console.log(
-      "Available accessorKeys:",
-      tableColumns.map((col) => col.accessorKey),
-    );
-    return [];
-  }
-
-  console.log("Matching table column found:", {
-    id: matchingTableColumn.id,
-    accessorKey: matchingTableColumn.accessorKey,
-  });
-
-  // Convert to MRT sorting format - use the numeric id from the table column
-  const result = [
-    {
-      id: matchingTableColumn.id,
-      desc: primarySortColumn.sortDirection === "desc",
-    },
-  ];
-
-  console.log("Final MRT sorting state:", result);
-  return result;
+  return [];
 };
 
 /**
- * Applies view-based sorting to the sorting state (triggers existing Material React Table flow)
- * @param setSorting - React setter for sorting state
- * @param viewConfig - View configuration with sorting information
- * @param tableColumns - Material React Table columns array for ID mapping
+ * Applies view-based sorting to the sorting state
  */
 export const applyViewSorting = (
   setSorting: (sorting: any[]) => void,
-  viewConfig: ViewColumn[],
+  view: ResponsesView | undefined,
   tableColumns: any[],
 ) => {
-  const sortingState = convertViewConfigToSorting(viewConfig, tableColumns);
+  const sortingState = convertViewConfigToSorting(view, tableColumns);
   setSorting(sortingState);
 };
 
 /**
- * Gets a summary of sorting configuration from view columns
- * @param viewConfig - View configuration
- * @returns Readable sorting summary
+ * Gets a summary of sorting configuration
  */
-export const getSortingSummary = (viewConfig: ViewColumn[]): string => {
-  const sortedColumn = viewConfig.filter(
-    (col) => col.sortDirection && col.sortOrder === 1 && col.visible,
-  )[0]; // Only one column can be sorted
+export const getSortingSummary = (view: ResponsesView | undefined): string => {
+  if (!view) return "ללא מיון";
 
-  if (!sortedColumn) {
-    return "ללא מיון";
+  if (view.sortColumnId) {
+    const sortedColumn = view.columns?.find((col) => col.id === view.sortColumnId);
+    if (sortedColumn) {
+      const direction = view.sortDirection === "asc" ? "עולה" : "יורד";
+      const colName = sortedColumn.displayName || sortedColumn.fieldId || 
+        (Object.keys(MetaColumnIds).find(key => MetaColumnIds[key as keyof typeof MetaColumnIds] === sortedColumn.metaColumnId));
+      return `${colName} (${direction})`;
+    }
   }
 
-  const direction = sortedColumn.sortDirection === "asc" ? "עולה" : "יורד";
-  return `${sortedColumn.columnId} (${direction})`;
+  // Legacy fallback
+  const legacySort = view.config?.columns?.find((col) => col.sortDirection && col.sortOrder === 1);
+  if (legacySort) {
+    const direction = legacySort.sortDirection === "asc" ? "עולה" : "יורד";
+    return `${legacySort.displayName || legacySort.columnId} (${direction})`;
+  }
+
+  return "ללא מיון";
 };

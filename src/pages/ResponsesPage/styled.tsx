@@ -577,3 +577,37 @@ export const CellValueFlex = styled("div")({
   alignItems: "center",
   overflow: "hidden",
 });
+
+export const PaginationContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: theme.spacing(1),
+  backgroundColor: "#f5f7fa",
+  padding: "4px 8px",
+  borderRadius: "12px",
+  border: "1px solid #e0e4e8",
+  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+}));
+
+export const PaginationButton = styled(IconButton)(({ theme }) => ({
+  width: "36px",
+  height: "36px",
+  borderRadius: "10px",
+  backgroundColor: "#ffffff",
+  border: "1px solid #d1d9e0",
+  transition: "all 0.2s ease",
+  "&:hover": {
+    backgroundColor: "#edf2f7",
+    borderColor: "#cbd5e0",
+    transform: "translateY(-1px)",
+  },
+  "&.Mui-disabled": {
+    backgroundColor: "#f8fafc",
+    borderColor: "#e2e8f0",
+    opacity: 0.6,
+  },
+  "& svg": {
+    fontSize: "1.25rem",
+    color: "#4a5568",
+  },
+}));
