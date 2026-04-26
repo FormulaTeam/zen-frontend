@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { DropResult } from "@hello-pangea/dnd";
 import { ViewColumn, ResponsesView } from "../types/interfaces/tableViews.types";
 import { FormFieldDto } from "../types/shared";
+import { MetaColumnIds } from "../utils/interfaces";
 
 /* ------------------------------------------------------------------ */
 /* System Columns                                                      */
@@ -13,13 +14,15 @@ interface SystemViewColumn {
   defaultVisible: boolean;
 }
 
-const PRE_SYSTEM_COLUMNS: SystemViewColumn[] = [
-  { columnId: "id", displayName: "מזהה", defaultVisible: true },
+export const PRE_SYSTEM_COLUMNS: SystemViewColumn[] = [
+  { columnId: "index", displayName: "מזהה", defaultVisible: true },
+  { columnId: "created_by", displayName: "נוצר ע״י", defaultVisible: true },
+  { columnId: "created_at", displayName: "תאריך יצירה", defaultVisible: true },
   { columnId: "pushed_to_metro", displayName: "סטטוס סנכרון", defaultVisible: true },
 ];
-const POST_SYSTEM_VIEW_COLUMNS: SystemViewColumn[] = [
-  { columnId: "updated_by_name", displayName: "השתנה ע״י", defaultVisible: true },
-  { columnId: "updated", displayName: "תאריך שינוי", defaultVisible: true },
+export const POST_SYSTEM_VIEW_COLUMNS: SystemViewColumn[] = [
+  { columnId: "updated_by", displayName: "השתנה ע״י", defaultVisible: true },
+  { columnId: "updated_at", displayName: "תאריך שינוי", defaultVisible: true },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -71,23 +74,42 @@ export function useViewColumnConfiguration({
 
       let order = 0;
 
-      const existing = viewToLoad?.config.columns ?? [];
+      // Handle both new schema (columns) and legacy schema (config.columns)
+      const existing = viewToLoad?.columns ?? viewToLoad?.config?.columns ?? [];
 
-      const getExisting = (id: string) => existing.find((c) => c.columnId === id);
+      const getExisting = (id: string) => {
+        // Find by fieldId, metaColumnId or legacy columnId
+        return existing.find((c: any) => 
+          c.fieldId === id || 
+          (c.metaColumnId && MetaColumnIds[id as keyof typeof MetaColumnIds] === c.metaColumnId) || 
+          c.columnId === id
+        );
+      };
 
       const buildColumn = (base: {
         columnId: string;
         displayName: string;
         defaultVisible: boolean;
       }): ViewColumn => {
-        const prev = getExisting(base.columnId);
+        const prev = getExisting(base.columnId) as any;
+        
+        // Handle new schema sorting if applicable
+        let sortDir = prev?.sortDirection;
+        let sOrder = prev?.sortOrder;
+        
+        if (viewToLoad?.sortColumnId && prev?.id === viewToLoad.sortColumnId) {
+           sortDir = viewToLoad.sortDirection;
+           sOrder = 1;
+        }
+
         return {
+          id: prev?.id,
           columnId: base.columnId,
           displayName: base.displayName,
-          visible: prev?.visible ?? base.defaultVisible,
-          order: prev?.order ?? order++,
-          sortDirection: prev?.sortDirection,
-          sortOrder: prev?.sortOrder,
+          visible: prev?.isVisible ?? prev?.visible ?? base.defaultVisible,
+          order: prev?.index ?? prev?.order ?? order++,
+          sortDirection: sortDir,
+          sortOrder: sOrder,
         };
       };
 

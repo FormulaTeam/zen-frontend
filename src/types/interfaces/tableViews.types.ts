@@ -1,5 +1,19 @@
+export interface ResponsesViewColumn {
+  id?: string | number;
+  viewId?: string | number;
+  fieldId?: string | null; // UUID for dynamic fields
+  metaColumnId?: number | null; // index, created_at, updated_at, created_by, updated_by
+  displayName?: string;
+  isVisible: boolean;
+  index: number; // Horizontal ordering
+}
+
+/**
+ * @deprecated Use ResponsesViewColumn instead where possible
+ */
 export interface ViewColumn {
-  columnId: string;
+  id?: string | number;
+  columnId: string; // "field:<UUID>" or "meta:<KEY>"
   displayName?: string;
   visible: boolean;
   order: number;
@@ -19,9 +33,12 @@ export interface ResponsesView {
   createdByName?: string; // User display name
   isPublic: boolean; // true = visible to all users
   isDefault: boolean; // true = auto-applied for this form
-  config: ViewConfig;
-  createdAt: Date;
-  updatedAt: Date;
+  columns: ResponsesViewColumn[];
+  sortColumnId?: string | number | null; // Points to a specific ResponsesViewColumn.id
+  sortDirection: "asc" | "desc";
+  config?: ViewConfig; // Legacy config support
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface FormField {

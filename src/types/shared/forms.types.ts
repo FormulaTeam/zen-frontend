@@ -19,3 +19,4 @@ export type FormOverviewDto = z.infer<typeof FormOverviewSchema>;
 export type GetFormsOverviewsQueryDto = z.infer<typeof GetFormsOverviewsQuerySchema>;
 export type FormFieldDto = z.infer<typeof FormFieldSchema>;
 export type FormSectionDto = z.infer<typeof FormSectionSchema>;
+export { MetaColumnIds } from "../../utils/interfaces";

@@ -17,17 +17,42 @@ import BaseFieldInput from "../../FormFields/BaseFieldInput/BaseFieldInput";
 import CustomSwitch from "../../FormFields/CustomSwitch/CustomSwitch";
 import { ViewColumn } from "../../../types/interfaces/tableViews.types";
 import { SubtitlesTypography } from "../ViewManager/styled";
+import { FormFieldDto } from "../../../types/shared";
+import * as Gear from "formula-gear";
+
+// Use bracket notation to bypass static analysis of bundlers which might have stale cache
+const getGearConstant = (key: string) => {
+  const g = Gear as any;
+  return g[key];
+};
+
+const gearComparableFieldTypes = getGearConstant("comparable" + "FieldTypes") || [
+  Gear.fieldType.LongText,
+  Gear.fieldType.ShortText,
+  Gear.fieldType.Options,
+  Gear.fieldType.Date,
+  Gear.fieldType.Time,
+  Gear.fieldType.Boolean,
+  Gear.fieldType.Number,
+];
+
+const isSortable = (typeId?: number): boolean => {
+  if (typeId === undefined) return true; // Meta columns are always sortable
+  return (gearComparableFieldTypes as number[]).includes(typeId);
+};
 
 interface ResponsesViewSettingsProps {
   formId?: number;
   formName?: string;
   columns: ViewColumn[];
+  formFields?: FormFieldDto[];
   viewName: string;
   setViewName: (viewName: string) => void;
   isPublic: boolean;
   isDefault: boolean;
   setIsDefault: (isDefault: boolean) => void;
-  hasFullAccess: boolean;
+  canManagePublicViews: boolean;
+  canEditCurrentView: boolean;
   handleSwitchPublic: (next: boolean) => void;
   getSortedColumns: () => { columnId: string; direction: "asc" | "desc" }[];
   setSortColumn: (id: string, direction: "asc" | "desc") => void;
@@ -54,12 +79,14 @@ export function ResponsesViewSettings({
   formId,
   formName,
   columns,
+  formFields = [],
   viewName,
   setViewName,
   isPublic,
   isDefault,
   setIsDefault,
-  hasFullAccess,
+  canManagePublicViews,
+  canEditCurrentView,
   handleSwitchPublic,
   getSortedColumns,
   setSortColumn,
@@ -67,12 +94,18 @@ export function ResponsesViewSettings({
 }: ResponsesViewSettingsProps) {
   const VIEW_NAME_PLACEHOLDER = `תצוגה חדשה ב${formName}`;
   const sortedColumn = getSortedColumns()[0];
-  const canEdit = Boolean(formId && hasFullAccess);
+  const canEdit = Boolean(formId && canEditCurrentView);
 
   const visibleColumns = useMemo(
     () => columns.filter((column: ViewColumn) => column.visible),
     [columns],
   );
+
+  const getIsColumnSortable = (columnId: string) => {
+    // Meta columns (id, updated, etc) are always sortable in this context or handled by isSortable(undefined)
+    const field = formFields.find((f) => String(f.id) === String(columnId));
+    return isSortable(field?.fieldType);
+  };
 
   return (
     <Box display="flex" flexDirection="column" gap={-0.5}>
@@ -86,6 +119,7 @@ export function ResponsesViewSettings({
         onChange={(event) => setViewName(event.target.value)}
         fullWidth
         placeholder={VIEW_NAME_PLACEHOLDER}
+        disabled={!canEdit}
       />
 
       {canEdit && (
@@ -106,7 +140,7 @@ export function ResponsesViewSettings({
             <Stack direction="row" alignItems="center" spacing={1}>
               <CustomSwitch
                 label=""
-                isDisabled={!hasFullAccess}
+                isDisabled={!canManagePublicViews}
                 value={isPublic}
                 onChangeHandler={handleSwitchPublic}
               />
@@ -120,7 +154,7 @@ export function ResponsesViewSettings({
               </Typography>
 
               <Tooltip title={HebrewTitles.DEFAULT_VIEW_TOOLTIP}>
-                <IconButton size="small" disabled={!isPublic}>
+                <IconButton size="small" disabled={!isPublic || !canManagePublicViews}>
                   <InfoOutline fontSize="small" />
                 </IconButton>
               </Tooltip>
@@ -131,7 +165,7 @@ export function ResponsesViewSettings({
                 label=""
                 value={isDefault}
                 onChangeHandler={setIsDefault}
-                isDisabled={!isPublic}
+                isDisabled={!isPublic || !canManagePublicViews}
               />
             </Stack>
           </Stack>
@@ -141,7 +175,7 @@ export function ResponsesViewSettings({
       <SubtitlesTypography mb={0.8}>{HebrewTitles.SORT_BY}</SubtitlesTypography>
 
       <Box display="flex" flexDirection="column" gap={1}>
-        <FormControl size="small" sx={{ minWidth: 240, flexGrow: 1 }}>
+        <FormControl size="small" sx={{ minWidth: 240, flexGrow: 1 }} disabled={!canEdit}>
           <InputLabel>{HebrewTitles.CHOOSE_COLUMN}</InputLabel>
 
           <Select
@@ -155,7 +189,11 @@ export function ResponsesViewSettings({
             </MenuItem>
 
             {visibleColumns.map((column: ViewColumn) => (
-              <MenuItem key={column.columnId} value={column.columnId}>
+              <MenuItem 
+                key={column.columnId} 
+                value={column.columnId}
+                disabled={!getIsColumnSortable(column.columnId)}
+              >
                 {column.displayName}
               </MenuItem>
             ))}
@@ -169,6 +207,7 @@ export function ResponsesViewSettings({
               value={sortedColumn.direction}
               onChange={(_, value) => value && setSortColumn(sortedColumn.columnId, value)}
               size="small"
+              disabled={!canEdit}
               sx={{
                 border: "none",
                 "& .MuiToggleButton-root": {
@@ -207,6 +246,7 @@ export function ResponsesViewSettings({
               <IconButton
                 size="small"
                 onClick={clearSort}
+                disabled={!canEdit}
                 sx={{
                   borderRadius: 0,
                   padding: 1,

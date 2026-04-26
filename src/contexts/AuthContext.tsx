@@ -17,6 +17,9 @@ export interface User {
   lastName?: string;
   displayName?: string;
   upn?: string;
+  email?: string;
+  mail?: string;
+  UPN?: string;
 }
 
 interface AuthContextType {
