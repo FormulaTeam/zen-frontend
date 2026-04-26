@@ -155,12 +155,12 @@ export const useViewFormLogic = ({
     const sortedCol = columns.find(c => c.sortOrder === 1);
 
     const view: ResponsesView = {
+      ...(currentView?.id && !isCreatingNew ? { id: currentView.id } : {}),
       formId: String(form.id),
       name: viewName.trim() || "Temporary View",
       createdBy: (user as any)?.upn || (user as any)?.UPN || "unknown",
       isPublic,
       isDefault,
-      sortColumnId: sortedCol?.id,
       sortDirection: sortedCol?.sortDirection || "asc",
       columns: columns.map((c, i) => {
         const isSystem = PRE_SYSTEM_COLUMNS.some(sc => sc.columnId === c.columnId) || 
@@ -173,12 +173,13 @@ export const useViewFormLogic = ({
           displayName: c.displayName,
           isVisible: c.visible,
           index: i,
+          isSortColumn: sortedCol?.columnId === c.columnId,
         };
       }),
     };
     
     onApplyView?.(view);
-  }, [columns, onApplyView, form, viewName, user, isPublic, isDefault]);
+  }, [columns, onApplyView, form, viewName, user, isPublic, isDefault, currentView, isCreatingNew]);
 
   const handleSwitchPublic = useCallback(
     (next: boolean) => {
@@ -193,7 +194,7 @@ export const useViewFormLogic = ({
 
     const sortedCol = columns.find(c => c.sortOrder === 1);
 
-    const view: any = {
+    const view: ResponsesView = {
       ...(currentView?.id && !isCreatingNew ? { id: currentView.id } : {}),
       formId: String(form.id),
       name: viewName.trim(),
@@ -201,7 +202,6 @@ export const useViewFormLogic = ({
       createdByName: getViewUserDisplayName(user),
       isPublic,
       isDefault,
-      sortColumnId: sortedCol?.id,
       sortDirection: sortedCol?.sortDirection || "asc",
       columns: columns.map((c, i) => {
         const isSystem = PRE_SYSTEM_COLUMNS.some(sc => sc.columnId === c.columnId) || 
@@ -214,6 +214,7 @@ export const useViewFormLogic = ({
           displayName: c.displayName,
           isVisible: c.visible,
           index: i,
+          isSortColumn: sortedCol?.columnId === c.columnId,
         };
       }),
       config: { columns: cloneColumns(columns) },
@@ -228,7 +229,7 @@ export const useViewFormLogic = ({
       columns: cloneColumns(columns),
     });
 
-    onSaveView(view as ResponsesView);
+    onSaveView(view);
     setIsCreatingNew(false);
   }, [form, viewName, user, isPublic, isDefault, columns, currentView, isCreatingNew, onSaveView]);
 

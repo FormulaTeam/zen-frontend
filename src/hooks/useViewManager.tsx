@@ -129,16 +129,32 @@ export const useViewManager = ({
       if (!form) return;
 
       try {
-        const payload: ResponsesView = {
+        // Spec Rule 3: isPublic must be true if isDefault is true
+        const isPublic = view.isDefault ? true : view.isPublic;
+
+        const payload: any = {
           ...view,
+          isPublic,
           formId: String(form.id),
           createdBy: (user as any)?.upn || (user as any)?.UPN || "unknown",
           createdByName: getViewUserDisplayName(user),
         };
 
-        const saved = payload.id
-          ? await updateView({ responsesViewId: payload.id, updates: payload })
-          : await createView(payload);
+        let saved: ResponsesView;
+
+        if (payload.id) {
+           // Spec Rule 6: Read-Only Removal for PATCH
+           const patchPayload = { ...payload };
+           delete patchPayload.id;
+           delete patchPayload.createdAt;
+           delete patchPayload.updatedAt;
+           delete patchPayload.createdBy;
+           delete patchPayload.formId;
+
+           saved = await updateView({ responsesViewId: payload.id, updates: patchPayload });
+        } else {
+           saved = await createView(payload);
+        }
 
         showSuccessNotification(
           payload.id ? HebrewMessages.UpdateViewSuccess : HebrewMessages.SaveViewSuccess,

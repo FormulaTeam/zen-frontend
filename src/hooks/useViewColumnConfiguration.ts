@@ -97,9 +97,14 @@ export function useViewColumnConfiguration({
         let sortDir = prev?.sortDirection;
         let sOrder = prev?.sortOrder;
         
-        if (viewToLoad?.sortColumnId && prev?.id === viewToLoad.sortColumnId) {
-           sortDir = viewToLoad.sortDirection;
-           sOrder = 1;
+        // Prioritize isSortColumn flag from new schema
+        if (prev?.isSortColumn) {
+          sortDir = viewToLoad?.sortDirection;
+          sOrder = 1;
+        } else if (viewToLoad?.sortColumnId && prev?.id === viewToLoad.sortColumnId) {
+          // Fallback to engine-calculated sortColumnId
+          sortDir = viewToLoad.sortDirection;
+          sOrder = 1;
         }
 
         return {
