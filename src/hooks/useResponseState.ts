@@ -18,7 +18,7 @@ import { ConditionUtils } from "../utils/interfaces";
 
 type FieldExtra = {
   options?: any[];
-  multiSelect?: boolean;
+  multiple?: boolean;
   value?: any;
   validationRegex?: string;
   linkedFormId?: number;
@@ -312,9 +312,9 @@ export const useResponseState = (
               break;
 
             case fieldType.Options:
-              if (extra.multiSelect && value && !Array.isArray(value)) {
+              if (extra.multiple && value && !Array.isArray(value)) {
                 value = [value];
-              } else if (!extra.multiSelect && Array.isArray(value)) {
+              } else if (!extra.multiple && Array.isArray(value)) {
                 value = value[0] ?? "";
               }
               break;
@@ -614,7 +614,7 @@ export const useResponseState = (
                 const validValues = childValues.filter((val) => allowedOptions.has(val));
 
                 if (validValues.length !== childValues.length) {
-                  const newValue = childExtra.multiSelect
+                  const newValue = childExtra.multiple
                     ? validValues
                     : validValues.length > 0
                       ? validValues[0]
@@ -636,7 +636,7 @@ export const useResponseState = (
                 }
               }
             } else if (parentValues.length > 0) {
-              const emptyValue = childExtra.multiSelect ? [] : "";
+              const emptyValue = childExtra.multiple ? [] : "";
               newFormFieldsValuesMap.set(childFieldId, emptyValue);
 
               setFormFieldsValidMap((prev) => {
