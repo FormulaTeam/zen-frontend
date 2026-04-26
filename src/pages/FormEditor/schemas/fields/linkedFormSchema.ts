@@ -1,6 +1,6 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
-import { literal, strictObject, string } from "zod";
+import { literal, number, strictObject, string } from "zod";
 
 const noLinkedIdErrorMessage = "לא נבחר טופס לקישור";
 
@@ -9,6 +9,7 @@ const linkedFormSchema = baseFormFieldSchema.safeExtend({
 
   extra: strictObject({
     linkedFormId: string(noLinkedIdErrorMessage).min(1, noLinkedIdErrorMessage),
+    connectedFormId: number().int().positive().optional(),
   }).optional(),
 });
 

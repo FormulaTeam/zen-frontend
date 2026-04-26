@@ -20,10 +20,13 @@ export function useFormLoader(formId: string) {
   const queryParams = useMemo(() => ({
     limit: filter?.pageSize ?? 25,
     search: filter?.query ?? "",
+    sortBy: filter?.sortBy,
     sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
     before: filter?.before,
     after: filter?.after,
   }), [filter]);
+
+  console.log("useFormLoader: Sending queryParams:", queryParams);
 
   const { data: responsesRowsData, isSuccess: isResponsesSuccess } = useGetResponsesRows(formId, queryParams as any);
 
@@ -31,6 +34,7 @@ export function useFormLoader(formId: string) {
 
   useEffect(() => {
     if (responsesRowsData && isResponsesSuccess && formData) {
+      const data = responsesRowsData as any;
       // Defensive mapping to handle both array and paginated object formats
       const responses: any[] = Array.isArray(responsesRowsData)
         ? responsesRowsData
@@ -38,10 +42,17 @@ export function useFormLoader(formId: string) {
           (responsesRowsData as any)?.responses ||
           [];
 
-      const pageInfoFromData =
-        !Array.isArray(responsesRowsData) && (responsesRowsData as any).pageInfo
-          ? (responsesRowsData as any).pageInfo
-          : null;
+      // Robust PageInfo detection (handle camelCase and snake_case)
+      const rawPageInfo = data?.pageInfo || data?.page_info;
+      const pageInfoFromData = rawPageInfo ? {
+        hasNextPage: !!(rawPageInfo.hasNextPage ?? rawPageInfo.has_next_page),
+        hasPreviousPage: !!(rawPageInfo.hasPreviousPage ?? rawPageInfo.has_previous_page),
+        startCursor: rawPageInfo.startCursor ?? rawPageInfo.start_cursor ?? null,
+        endCursor: rawPageInfo.endCursor ?? rawPageInfo.end_cursor ?? null,
+      } : null;
+
+      console.log("useFormLoader: responsesRowsData:", data);
+      console.log("useFormLoader: pageInfoFromData:", pageInfoFromData);
 
       // Map field IDs to displayNames for the grid
       const fieldIdToDisplayName = new Map<string, string>();
@@ -80,20 +91,19 @@ export function useFormLoader(formId: string) {
       if (pageInfoFromData) {
         setPageInfo(pageInfoFromData);
       } else {
-        const limit = queryParams.limit;
-        const hasNextPage = responses.length === limit;
-        const hasPreviousPage = !!queryParams.before || !!queryParams.after;
-
+        // Fallback for unexpected formats, though Rule 4 says trust cursors.
+        // If we don't have pageInfo, we can't do stable cursor pagination.
         setPageInfo({
-          hasNextPage,
-          hasPreviousPage,
-          startCursor: responses.length > 0 ? responses[0].id : null,
-          endCursor: responses.length > 0 ? responses[responses.length - 1].id : null,
+          hasNextPage: false,
+          hasPreviousPage: false,
+          startCursor: null,
+          endCursor: null,
         });
       }
 
     }
   }, [responsesRowsData, setRows, setPageInfo, isResponsesSuccess, formData, setResponses]);
+
   useEffect(() => {
     if (formData && isSuccess) {
       const flattenedFields = (formData.sections ?? [])

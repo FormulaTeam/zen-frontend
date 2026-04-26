@@ -4,7 +4,7 @@ import { fieldType } from "formula-gear";
 import type { FormDto, FormFieldDto, ResponseDto, UserRoleDto } from "../types/shared";
 import { NotificationTexts } from "../utils/interfaces";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
-import { deleteResponse, getForms, getResponses, getResponseById } from "../api";
+import { deleteResponse, getForms, getLinkableForms, getResponses, getResponseById } from "../api";
 import { User } from "../contexts/AuthContext";
 
 type ChildFormChildProps = FormFieldDto & {
@@ -158,7 +158,7 @@ export const useChildForms = ({
     };
 
     const loadChildForms = async () => {
-      if (childFormIds.length === 0) {
+      if (childFormIds.length === 0 || !formId) {
         setChildForms([]);
         initializedUnsavedRef.current = false;
         lastLoadedSavedParentRef.current = undefined;
@@ -166,9 +166,8 @@ export const useChildForms = ({
       }
 
       try {
-        const formsResponse = (await getForms({
-          query: { $or: childFormIds.map((childId) => ({ id: childId })) },
-        })) as FormDto[];
+        const allLinkableForms = await getLinkableForms(Number(formId));
+        const formsResponse = allLinkableForms.filter((f) => childFormIds.includes(f.id));
 
         const availableChildFormIds = new Set(formsResponse.map((form) => form.id));
 

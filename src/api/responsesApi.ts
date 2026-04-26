@@ -35,10 +35,10 @@ const stringifyQuery = (query: any): string => {
  *
  * @param formId - The ID of the form.
  * @param filter - Optional filter parameters for querying responses.
- * @returns A promise that resolves to an array of responses.
+ * @returns A promise that resolves to an array of responses or a paginated response object.
  */
-export const getResponses = async (formId: number, filter?: Filter): Promise<ResponseDto[]> => {
-  const params: z.infer<typeof GetResponsesQuerySchema> = {
+export const getResponses = async (formId: number, filter?: Filter): Promise<any> => {
+  const params: any = {
     limit: filter?.pageSize ?? 25,
     search: stringifyQuery(filter?.query),
     sortBy: filter?.sortBy ?? "id",
@@ -47,7 +47,7 @@ export const getResponses = async (formId: number, filter?: Filter): Promise<Res
     after: filter?.after,
   };
   try {
-    const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, { params });
+    const response = await apiClient.get(`/forms/${formId}/responses`, { params });
     return response?.data ?? [];
   } catch (error) {
     console.error("Failed to fetch responses:", error);
@@ -127,19 +127,19 @@ export const restoreResponses = async (formId: number, responseIds: string[]): P
 /**
  * Fetch responses that have the search text in their data.
  */
-export const searchResponses = async (filter: Filter): Promise<ResponseDto[]> => {
+export const searchResponses = async (filter: Filter): Promise<any> => {
   try {
     const formId = filter?.form_id;
     if (!formId) throw new Error("form_id is required for searchResponses");
 
-    const params: z.infer<typeof GetResponsesQuerySchema> = {
+    const params: any = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
       sortBy: filter?.sortBy ?? "id",
-    sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     };
 
-    const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, { params });
+    const response = await apiClient.get(`/forms/${formId}/responses`, { params });
     return response?.data || [];
   } catch (error) {
     console.error("Failed to search responses:", error);
@@ -157,7 +157,7 @@ export const deleteResponse = async (formId: number, responseId: string): Promis
 /**
  * Fetch all deleted responses based on the provided filter.
  */
-export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseDto[]> => {
+export const getAllDeletedResponses = async (filter: Filter): Promise<any> => {
   try {
     const formId = filter?.form_id;
     if (!formId) throw new Error("form_id is required for getAllDeletedResponses");
@@ -165,10 +165,12 @@ export const getAllDeletedResponses = async (filter: Filter): Promise<ResponseDt
     const params: any = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
+      sortBy: filter?.sortBy,
+      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       deleted: true,
     };
 
-    const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, { params });
+    const response = await apiClient.get(`/forms/${formId}/responses`, { params });
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch deleted responses:", error);
@@ -240,7 +242,7 @@ export const getResponseWithFlatFields = (
 
 export const useGetResponsesRows = (
   formId: string,
-  params: z.infer<typeof GetResponsesQuerySchema>,
+  params: any,
 ) => {
   const safeParams = useMemo(
     () => ({
@@ -250,7 +252,7 @@ export const useGetResponsesRows = (
     [params],
   );
 
-  return useFetch<typeof safeParams, ResponseDto[]>({
+  return useFetch<typeof safeParams, any>({
     endpoint: `/forms/${formId}/responses`,
     queryKey: () => ["responses", formId, safeParams],
     params: safeParams,
@@ -262,19 +264,19 @@ export const useGetResponsesRows = (
 
 export const useGetResponses = ({ filter }: { filter?: Filter }) => {
   const formId = filter?.form_id;
-  const params: z.infer<typeof GetResponsesQuerySchema> = useMemo(
+  const params: any = useMemo(
     () => ({
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
       sortBy: filter?.sortBy ?? "id",
-    sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
     }),
     [filter],
   );
 
-  return useFetch<typeof params | undefined, ResponseDto[]>({
+  return useFetch<typeof params | undefined, any>({
     endpoint: `/forms/${formId}/responses`,
     queryKey: () => ["responses", filter],
     params: params,
@@ -405,15 +407,15 @@ export const getResponsesRows = async ({
       console.error("Form ID is required to fetch rows.");
       return [];
     }
-    const params: z.infer<typeof GetResponsesQuerySchema> = {
+    const params: any = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
       sortBy: filter?.sortBy ?? "id",
-    sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
     };
-    const response = await apiClient.get<ResponseDto[]>(`/forms/${formId}/responses`, {
+    const response = await apiClient.get(`/forms/${formId}/responses`, {
       params,
     });
 

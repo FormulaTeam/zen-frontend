@@ -1,14 +1,18 @@
-import apiClient from "./config";
+import { useQuery, UseQueryOptions, UseQueryResult, useMutation } from "@tanstack/react-query";
+import { CreateFormSchema, FormIdentifierSchema, getLinkableFormsQuerySchema } from "formula-gear";
+import { useMemo } from "react";
 import { z } from "zod";
-import { CreateFormSchema } from "formula-gear";
-import { Filter, Form, MetroReturnedData, NewForm, UpdateFormPayload, User } from "../utils/interfaces";
 import { UserData } from "../types/interfaces/forms.types";
-import { useFetch } from "../utils/useFetch";
-import { UseQueryOptions, UseQueryResult, useMutation } from "@tanstack/react-query";
-import { useDelete } from "../utils/useDelete";
-import { useCreate } from "../utils/useCreate";
-import queryClient from "./queryClient";
 import { FormDto } from "../types/shared";
+import { Filter, Form, MetroReturnedData, NewForm, UpdateFormPayload, User } from "../utils/interfaces";
+import { useCreate } from "../utils/useCreate";
+import { useDelete } from "../utils/useDelete";
+import { useFetch } from "../utils/useFetch";
+import apiClient from "./config";
+import queryClient from "./queryClient";
+
+export type FormIdentifierDto = z.infer<typeof FormIdentifierSchema>;
+export type GetLinkableFormsQueryDto = z.infer<typeof getLinkableFormsQuerySchema>;
 
 const stringifyQuery = (query: any): string => {
   if (query && typeof query === "object") return JSON.stringify(query);
@@ -62,11 +66,23 @@ export const getFormById = async (formId?: number): Promise<FormDto | null> => {
  * Fetch linkable forms for a given form ID.
  *
  * @param formId - The ID of the form.
+ * @param search - Optional search string.
  * @returns A promise that resolves to an array of linkable forms.
  */
-export const getLinkableForms = async (formId: number): Promise<FormDto[]> => {
+export const getLinkableForms = async (
+  formId: number,
+  search?: string,
+): Promise<FormIdentifierDto[]> => {
   try {
-    const response = await apiClient.get<FormDto[]>(`/forms/${formId}/linkable`);
+    const params: GetLinkableFormsQueryDto = {
+      search: search || "",
+      sortBy: "name",
+      sortDirection: "asc",
+      includePermissions: false,
+    };
+    const response = await apiClient.get<FormIdentifierDto[]>(`/forms/${formId}/linkable`, {
+      params,
+    });
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch linkable forms:", error);
@@ -201,7 +217,17 @@ export const useCreateForm = () => {
 
 export const useUpdateForm = () => {
   return useMutation({
-    mutationFn: async ({ id, formData, payload, isUpdateMetro }: { id: number; formData?: Record<string, unknown>; payload?: Partial<CreateFormDto>; isUpdateMetro?: boolean }) => {
+    mutationFn: async ({
+      id,
+      formData,
+      payload,
+      isUpdateMetro,
+    }: {
+      id: number;
+      formData?: Record<string, unknown>;
+      payload?: Partial<CreateFormDto>;
+      isUpdateMetro?: boolean;
+    }) => {
       const body = { ...(payload || formData), isUpdateMetro };
       const response = await apiClient.patch<FormDto>(`/forms/${id}`, body);
       return response.data;
@@ -264,10 +290,18 @@ export const useRestoreForm = ({ id }: { id: string }) => {
   });
 };
 
-export const useGetLinkableForms = ({ formId }: { formId: string }) => {
-  return useFetch<undefined, FormDto[]>({
+export const useGetLinkableForms = ({ formId, search }: { formId: string; search?: string }) => {
+  const params: GetLinkableFormsQueryDto = useMemo(() => ({
+    search: search || "",
+    sortBy: "name",
+    sortDirection: "asc",
+    includePermissions: false,
+  }), [search]);
+
+  return useFetch<GetLinkableFormsQueryDto, FormIdentifierDto[]>({
     endpoint: `/forms/${formId}/linkable`,
-    queryKey: () => [formId],
+    queryKey: (p) => ["linkable", formId, p?.search],
+    params,
     queryOptions: {
       enabled: !!formId,
     },

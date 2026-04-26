@@ -31,6 +31,7 @@ import {
   IconButton,
   Stack,
   Typography,
+  Select,
 } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
@@ -55,12 +56,38 @@ import { useDetailPanel } from "../hooks/useDetailPanel";
 import { useNavigate } from "react-router-dom";
 import { ViewColumn } from "../../../types/interfaces/tableViews.types";
 import { FormFieldDto } from "../../../types/shared";
+import { FieldTypeIds } from "../../../utils/interfaces";
+import * as Gear from "formula-gear";
 
 const VIEW_COLUMN_ID_TO_GRID_FIELD: Record<string, string> = {
   id: "id",
+  index: "index",
   pushed_to_metro: "sync",
   updated_by_name: "editedByName",
   updated: "edited",
+  created_at: "created",
+  created_by_name: "createdByName",
+};
+
+// Use bracket notation to bypass static analysis of bundlers which might have stale cache
+const getGearConstant = (key: string) => {
+  const g = Gear as any;
+  return g[key];
+};
+
+const gearComparableFieldTypes = getGearConstant("comparable" + "FieldTypes") || [
+  Gear.fieldType.LongText,
+  Gear.fieldType.ShortText,
+  Gear.fieldType.Options,
+  Gear.fieldType.Date,
+  Gear.fieldType.Time,
+  Gear.fieldType.Boolean,
+  Gear.fieldType.Number,
+];
+
+const isSortable = (typeId?: number): boolean => {
+  if (typeId === undefined) return true; // Meta columns are always sortable
+  return (gearComparableFieldTypes as number[]).includes(typeId);
 };
 
 type Row = GridRowModel & {
@@ -102,6 +129,9 @@ export const ResponsesTable = ({
   const { form, rows, pageInfo, filter, setFilter } = useFormStore();
   const navigate = useNavigate();
 
+  console.log("ResponsesTable: pageInfo from store:", pageInfo);
+  console.log("ResponsesTable: isInEditMode:", isInEditMode);
+
   const handleNextPage = useCallback(() => {
     if (pageInfo?.hasNextPage && pageInfo.endCursor) {
       setFilter({
@@ -125,6 +155,71 @@ export const ResponsesTable = ({
   const formFields = useMemo<FormFieldDto[]>(
     () => (form?.sections ?? []).flatMap((section) => section.fields ?? []),
     [form],
+  );
+
+  const handleSortModelChange = useCallback(
+    (newSortModel: GridSortModel) => {
+      if (newSortModel.length > 0) {
+        const { field, sort } = newSortModel[0];
+        let sortBy: string;
+
+        const columnPrefix = getGearConstant("column" + "Prefix") || { Field: "field:", Meta: "meta:" };
+        const prefixes = {
+          Field: columnPrefix.Field,
+          Meta: columnPrefix.Meta,
+        };
+
+        const fieldObj = formFields.find((f) => f.displayName === field);
+        if (fieldObj) {
+          sortBy = `${prefixes.Field}${fieldObj.id}`;
+        } else {
+          // Rule 1: Unified Sorting Keys
+          switch (field) {
+            case "index":
+              sortBy = `${prefixes.Meta}index`;
+              break;
+            case "created":
+              sortBy = `${prefixes.Meta}created_at`;
+              break;
+            case "edited":
+              sortBy = `${prefixes.Meta}updated_at`;
+              break;
+            case "createdByName":
+              sortBy = `${prefixes.Meta}created_by`;
+              break;
+            case "editedByName":
+              sortBy = `${prefixes.Meta}updated_by`;
+              break;
+            case "sync":
+              sortBy = `${prefixes.Meta}pushed_to_metro`;
+              break;
+            case "id":
+              sortBy = `${prefixes.Meta}id`;
+              break;
+            default:
+              sortBy = `${prefixes.Meta}${field}`;
+          }
+        }
+
+        // Rule 3: State Reset - Reset pagination cursors on sort change
+        setFilter({
+          ...filter,
+          sortBy,
+          orderBy: sort?.toUpperCase() as any,
+          before: undefined,
+          after: undefined,
+        });
+      } else {
+        setFilter({
+          ...filter,
+          sortBy: undefined,
+          orderBy: undefined,
+          before: undefined,
+          after: undefined,
+        });
+      }
+    },
+    [formFields, filter, setFilter],
   );
 
   const apiRef = useGridApiRef();
@@ -310,6 +405,7 @@ export const ResponsesTable = ({
                 headerName: column?.headerName ?? column?.field ?? "",
                 editable: !isColumnId,
                 fieldTypeId: formField?.fieldType,
+                sortable: isSortable(formField?.fieldType),
                 renderEditCell,
                 renderHeader: () => {
                   const header: string = column?.headerName || column?.field || "";
@@ -352,12 +448,42 @@ export const ResponsesTable = ({
             })
         : [];
 
+    const indexColumn: GridColDef = {
+      field: "index",
+      headerName: "מזהה",
+      width: 100,
+      minWidth: 80,
+      editable: false,
+      sortable: true,
+    };
+
+    const createdByColumn: GridColDef = {
+      field: "createdByName",
+      headerName: "נוצר ע״י",
+      flex: 1,
+      width: 200,
+      minWidth: 150,
+      editable: false,
+      sortable: true,
+    };
+
+    const createdAtColumn: GridColDef = {
+      field: "created",
+      headerName: "תאריך יצירה",
+      flex: 1,
+      width: 200,
+      minWidth: 150,
+      editable: false,
+      sortable: true,
+    };
+
     const syncColumn: GridColDef = {
       field: "sync",
       headerName: "",
       renderHeader: () => <CloudUploadIcon fontSize="large" />,
       minWidth: 150,
       editable: false,
+      sortable: true,
       align: "center" as const,
       headerAlign: "center" as const,
       renderCell: (params: GridRenderCellParams) => (
@@ -372,6 +498,7 @@ export const ResponsesTable = ({
       width: 200,
       minWidth: 150,
       editable: false,
+      sortable: true,
     };
 
     const editedAtColumn: GridColDef = {
@@ -381,6 +508,7 @@ export const ResponsesTable = ({
       width: 200,
       minWidth: 150,
       editable: false,
+      sortable: true,
     };
 
     const parentResponseColumns = hasParentResponses
@@ -406,8 +534,11 @@ export const ResponsesTable = ({
             },
           ]
         : []),
+      indexColumn,
       ...baseFormColumns,
       syncColumn,
+      createdByColumn,
+      createdAtColumn,
       editedByColumn,
       editedAtColumn,
       ...parentResponseColumns,
@@ -460,6 +591,51 @@ export const ResponsesTable = ({
   ]);
 
   const sortModel = useMemo((): GridSortModel => {
+    const columnPrefix = getGearConstant("column" + "Prefix") || { Field: "field:", Meta: "meta:" };
+    const prefixes = {
+      Field: columnPrefix.Field,
+      Meta: columnPrefix.Meta,
+    };
+
+    if (filter?.sortBy) {
+      let gridField: string | undefined;
+      if (filter.sortBy.startsWith(prefixes.Field)) {
+        const fieldId = filter.sortBy.replace(prefixes.Field, "");
+        gridField = formFields.find((f) => f.id === fieldId)?.displayName;
+      } else if (filter.sortBy.startsWith(prefixes.Meta)) {
+        const metaName = filter.sortBy.replace(prefixes.Meta, "");
+        switch (metaName) {
+          case "index":
+            gridField = "index";
+            break;
+          case "created_at":
+            gridField = "created";
+            break;
+          case "updated_at":
+            gridField = "edited";
+            break;
+          case "created_by":
+            gridField = "createdByName";
+            break;
+          case "updated_by":
+            gridField = "editedByName";
+            break;
+          case "pushed_to_metro":
+            gridField = "sync";
+            break;
+          case "id":
+            gridField = "id";
+            break;
+          default:
+            gridField = metaName;
+        }
+      }
+
+      if (gridField) {
+        return [{ field: gridField, sort: filter.orderBy?.toLowerCase() as "asc" | "desc" }];
+      }
+    }
+
     if (!currentViewConfig) {
       return [];
     }
@@ -480,17 +656,42 @@ export const ResponsesTable = ({
 
       return { field: gridField, sort: viewColumn.sortDirection as "asc" | "desc" };
     });
-  }, [currentViewConfig, formFields]);
+  }, [currentViewConfig, formFields, filter]);
+
+  const handlePageSizeChange = useCallback(
+    (event: any) => {
+      const newSize = Number(event.target.value);
+      setFilter({
+        ...filter,
+        pageSize: newSize,
+        before: undefined,
+        after: undefined,
+      });
+    },
+    [filter, setFilter],
+  );
 
   const CustomFooter = (): JSX.Element => {
     return (
       <GridFooterContainer>
-        <ResponsesAmountBox>
-          <ResponsesAmountText variant="body2">
-            {`כמות תגובות בטופס - ${rows.length}`}
-          </ResponsesAmountText>
-        </ResponsesAmountBox>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ ml: "auto", mr: 2 }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: 2, mr: 2 }}>
+          <Typography variant="body2">הצג</Typography>
+          <Select
+            value={filter?.pageSize ?? 25}
+            onChange={handlePageSizeChange}
+            size="small"
+            variant="standard"
+            sx={{ minWidth: 40, fontSize: "0.875rem", textAlign: "center" }}
+            disabled={isInEditMode}>
+            {[10, 25, 50, 100].map((size) => (
+              <MenuItem key={size} value={size}>
+                {size}
+              </MenuItem>
+            ))}
+          </Select>
+          <Typography variant="body2">{`תגובות בעמוד מתוך סך הכל ${form?.responsesCount ?? 0} תגובות`}</Typography>
+        </Stack>
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ mr: 2 }}>
           <IconButton
             onClick={handlePreviousPage}
             disabled={!pageInfo?.hasPreviousPage || isInEditMode}
@@ -518,6 +719,8 @@ export const ResponsesTable = ({
           disableColumnMenu={isInEditMode}
           disableColumnSorting={isInEditMode}
           disableColumnResize={isInEditMode}
+          sortingMode="server"
+          onSortModelChange={handleSortModelChange}
           editMode="cell"
           cellModesModel={cellModesModel}
           onCellModesModelChange={handleCellModesModelChange}
