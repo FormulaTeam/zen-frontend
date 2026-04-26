@@ -54,9 +54,9 @@ import {
 import { useChildForms } from "../hooks/useChildForms";
 import { useDetailPanel } from "../hooks/useDetailPanel";
 import { useNavigate } from "react-router-dom";
-import { ViewColumn } from "../../../types/interfaces/tableViews.types";
+import { ResponsesView, ViewColumn } from "../../../types/interfaces/tableViews.types";
 import { FormFieldDto } from "../../../types/shared";
-import { FieldTypeIds } from "../../../utils/interfaces";
+import { FieldTypeIds, MetaColumnIds } from "../../../utils/interfaces";
 import * as Gear from "formula-gear";
 
 const VIEW_COLUMN_ID_TO_GRID_FIELD: Record<string, string> = {
@@ -107,7 +107,7 @@ interface ResponsesTableProps {
   validationErrors?: Record<number | string, Record<string, string>>;
   onCellLiveChange?: (rowId: number | string, columnName: string, value: unknown) => void;
   onRowSelectionModelChange?: (model: GridRowSelectionModel) => void;
-  currentViewConfig?: ViewColumn[];
+  currentView?: ResponsesView;
 }
 
 const SyncStatusIcon: React.FC<{ pushedToMetro?: string | null }> = ({ pushedToMetro }) => (
@@ -124,10 +124,12 @@ export const ResponsesTable = ({
   validationErrors,
   onCellLiveChange,
   onRowSelectionModelChange,
-  currentViewConfig,
+  currentView,
 }: ResponsesTableProps) => {
   const { form, rows, pageInfo, filter, setFilter } = useFormStore();
   const navigate = useNavigate();
+
+  const currentViewConfig = useMemo(() => currentView?.columns || [], [currentView]);
 
   console.log("ResponsesTable: pageInfo from store:", pageInfo);
   console.log("ResponsesTable: isInEditMode:", isInEditMode);
@@ -163,7 +165,10 @@ export const ResponsesTable = ({
         const { field, sort } = newSortModel[0];
         let sortBy: string;
 
-        const columnPrefix = getGearConstant("column" + "Prefix") || { Field: "field:", Meta: "meta:" };
+        const columnPrefix = getGearConstant("column" + "Prefix") || {
+          Field: "field:",
+          Meta: "meta:",
+        };
         const prefixes = {
           Field: columnPrefix.Field,
           Meta: columnPrefix.Meta,
@@ -386,78 +391,73 @@ export const ResponsesTable = ({
   }, [contextMenu, navigateToCreateResponseCopy, handleCloseContextMenu]);
 
   const getFormColumns = useMemo((): GridColDef[] => {
-    const baseFormColumns =
-      form?.columns && form.columns.length > 0
-        ? form.columns
-            .filter(
-              (column: GridColDef | undefined) =>
-                !!column && typeof column === "object" && column.field,
-            )
-            .map((column: GridColDef) => {
-              const formField = formFields.find((field) => field.displayName === column.field);
-              const isColumnId: boolean = column.field === "id";
+    const prefixes = {
+      Field: "field:",
+      Meta: "meta:",
+    };
 
-              return {
-                flex: isColumnId ? 0 : 2,
-                minWidth: isColumnId ? 120 : 200,
-                width: isColumnId ? 150 : 400,
-                ...column,
-                headerName: column?.headerName ?? column?.field ?? "",
-                editable: !isColumnId,
-                fieldTypeId: formField?.fieldType,
-                sortable: isSortable(formField?.fieldType),
-                renderEditCell,
-                renderHeader: () => {
-                  const header: string = column?.headerName || column?.field || "";
-                  return (
-                    <HeaderFlex>
-                      <span>{header}</span>
-                      {isInEditMode && formField?.isRequired && <HeaderAsterisk>*</HeaderAsterisk>}
-                    </HeaderFlex>
-                  );
-                },
-                renderCell: (params: GridRenderCellParams) => {
-                  const rowId = params.id;
-                  const cellError = validationErrors?.[rowId]?.[column.field as string];
-                  let display: React.ReactNode;
+    // 1. Build all possible columns
+    const dynamicColumnsMap = new Map<string, GridColDef>();
+    formFields.forEach((field) => {
+      if (
+        (field as any).typeId === FieldTypeIds.linkedForm ||
+        field.fieldType === FieldTypeIds.linkedForm
+      )
+        return;
 
-                  if (isColumnId) {
-                    display = params.value ?? <Box component="span" className="cell-box" />;
-                  } else if (formField) {
-                    const content =
-                      params.value !== undefined && params.value !== null
-                        ? formatCellValue(params.value, formField)
-                        : null;
-                    display = content ?? <Box component="span" className="cell-box" />;
-                  } else {
-                    display = <Box component="span" className="cell-box" />;
-                  }
+      const columnId = `${prefixes.Field}${field.id}`;
+      const gridField = field.displayName || field.name || field.id;
 
-                  if (isInEditMode && cellError) {
-                    return (
-                      <CellErrorWrapper>
-                        <CellErrorText>{cellError}</CellErrorText>
-                        <CellValueFlex>{display}</CellValueFlex>
-                      </CellErrorWrapper>
-                    );
-                  }
+      const col: GridColDef = {
+        field: gridField,
+        headerName: field.displayName,
+        flex: 2,
+        minWidth: 200,
+        width: 400,
+        editable: true,
+        sortable: isSortable(field.fieldType),
+        renderEditCell,
+        renderHeader: () => (
+          <HeaderFlex>
+            <span>{field.displayName}</span>
+            {isInEditMode && field.isRequired && <HeaderAsterisk>*</HeaderAsterisk>}
+          </HeaderFlex>
+        ),
+        renderCell: (params: GridRenderCellParams) => {
+          const rowId = params.id;
+          const cellError = validationErrors?.[rowId]?.[gridField];
+          const content =
+            params.value !== undefined && params.value !== null
+              ? formatCellValue(params.value, field)
+              : null;
+          const display = content ?? <Box component="span" className="cell-box" />;
 
-                  return display;
-                },
-              };
-            })
-        : [];
+          if (isInEditMode && cellError) {
+            return (
+              <CellErrorWrapper>
+                <CellErrorText>{cellError}</CellErrorText>
+                <CellValueFlex>{display}</CellValueFlex>
+              </CellErrorWrapper>
+            );
+          }
+          return display;
+        },
+      };
+      dynamicColumnsMap.set(columnId, col);
+    });
 
-    const indexColumn: GridColDef = {
+    const metaColumnsMap = new Map<string, GridColDef>();
+
+    metaColumnsMap.set(`${prefixes.Meta}index`, {
       field: "index",
       headerName: "מזהה",
       width: 100,
       minWidth: 80,
       editable: false,
       sortable: true,
-    };
+    });
 
-    const createdByColumn: GridColDef = {
+    metaColumnsMap.set(`${prefixes.Meta}created_by`, {
       field: "createdByName",
       headerName: "נוצר ע״י",
       flex: 1,
@@ -465,9 +465,9 @@ export const ResponsesTable = ({
       minWidth: 150,
       editable: false,
       sortable: true,
-    };
+    });
 
-    const createdAtColumn: GridColDef = {
+    metaColumnsMap.set(`${prefixes.Meta}created_at`, {
       field: "created",
       headerName: "תאריך יצירה",
       flex: 1,
@@ -475,23 +475,23 @@ export const ResponsesTable = ({
       minWidth: 150,
       editable: false,
       sortable: true,
-    };
+    });
 
-    const syncColumn: GridColDef = {
+    metaColumnsMap.set(`${prefixes.Meta}pushed_to_metro`, {
       field: "sync",
       headerName: "",
       renderHeader: () => <CloudUploadIcon fontSize="large" />,
       minWidth: 150,
       editable: false,
       sortable: true,
-      align: "center" as const,
-      headerAlign: "center" as const,
+      align: "center",
+      headerAlign: "center",
       renderCell: (params: GridRenderCellParams) => (
         <SyncStatusIcon pushedToMetro={params.row?.pushed_to_metro} />
       ),
-    };
+    });
 
-    const editedByColumn: GridColDef = {
+    metaColumnsMap.set(`${prefixes.Meta}updated_by`, {
       field: "editedByName",
       headerName: "השתנה ע״י",
       flex: 1,
@@ -499,9 +499,9 @@ export const ResponsesTable = ({
       minWidth: 150,
       editable: false,
       sortable: true,
-    };
+    });
 
-    const editedAtColumn: GridColDef = {
+    metaColumnsMap.set(`${prefixes.Meta}updated_at`, {
       field: "edited",
       headerName: "תאריך שינוי",
       flex: 1,
@@ -509,7 +509,30 @@ export const ResponsesTable = ({
       minWidth: 150,
       editable: false,
       sortable: true,
-    };
+    });
+
+    // Special meta columns that are not in the standard list
+    metaColumnsMap.set(`${prefixes.Meta}id`, {
+      field: "id",
+      headerName: "ID",
+      width: 150,
+      editable: false,
+      sortable: true,
+    });
+
+    // Structural columns
+    const structuralColumns: GridColDef[] = [
+      ...(expandColumn ? [expandColumn] : []),
+      ...(hasFormInFormFields
+        ? [
+            {
+              ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
+              field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
+              renderHeader: (params: any) => <div aria-label={params?.colDef?.headerName ?? ""} />,
+            },
+          ]
+        : []),
+    ];
 
     const parentResponseColumns = hasParentResponses
       ? [
@@ -523,60 +546,44 @@ export const ResponsesTable = ({
         ]
       : [];
 
-    const allColumns: GridColDef[] = [
-      ...(expandColumn ? [expandColumn] : []),
-      ...(hasFormInFormFields
-        ? [
-            {
-              ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
-              field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
-              renderHeader: (params: any) => <div aria-label={params?.colDef?.headerName ?? ""} />,
-            },
-          ]
-        : []),
-      indexColumn,
-      ...baseFormColumns,
-      syncColumn,
-      createdByColumn,
-      createdAtColumn,
-      editedByColumn,
-      editedAtColumn,
-      ...parentResponseColumns,
-    ];
+    // 2. Resolve columns based on view config or default
+    let resultColumns: GridColDef[] = [];
 
-    if (!currentViewConfig || currentViewConfig.length === 0) {
-      return allColumns;
+    if (currentViewConfig && currentViewConfig.length > 0) {
+      resultColumns = currentViewConfig
+        .filter((vc) => vc.isVisible)
+        .sort((a, b) => a.index - b.index)
+        .map((vc) => {
+          let columnId = "";
+          if (vc.fieldId) {
+            columnId = `${prefixes.Field}${vc.fieldId}`;
+          } else if (vc.metaColumnId) {
+            const metaName = Object.keys(MetaColumnIds).find(
+              (key) => MetaColumnIds[key as keyof typeof MetaColumnIds] === vc.metaColumnId,
+            );
+            if (metaName) columnId = `${prefixes.Meta}${metaName}`;
+          }
+
+          if (dynamicColumnsMap.has(columnId)) return dynamicColumnsMap.get(columnId);
+          if (metaColumnsMap.has(columnId)) return metaColumnsMap.get(columnId);
+
+          return undefined;
+        })
+        .filter((col): col is GridColDef => col !== undefined);
+    } else {
+      // Default columns if no view config
+      resultColumns = [
+        metaColumnsMap.get(`${prefixes.Meta}index`)!,
+        ...Array.from(dynamicColumnsMap.values()),
+        metaColumnsMap.get(`${prefixes.Meta}pushed_to_metro`)!,
+        metaColumnsMap.get(`${prefixes.Meta}created_by`)!,
+        metaColumnsMap.get(`${prefixes.Meta}created_at`)!,
+        metaColumnsMap.get(`${prefixes.Meta}updated_by`)!,
+        metaColumnsMap.get(`${prefixes.Meta}updated_at`)!,
+      ];
     }
 
-    const structuralFieldNames = new Set([GRID_DETAIL_PANEL_TOGGLE_FIELD, "expand"]);
-    const structuralColumns = allColumns.filter((col) => structuralFieldNames.has(col.field));
-    const dataColumns = allColumns.filter((col) => !structuralFieldNames.has(col.field));
-
-    const gridFieldToColDef = new Map<string, GridColDef>(
-      dataColumns.map((col) => [col.field, col]),
-    );
-
-    const fieldIdToGridField = new Map<string, string>(
-      formFields.map((field) => [field.id, field.displayName ?? field.name ?? ""]),
-    );
-
-    const resolveViewColumnIdToGridField = (columnId: string): string | undefined => {
-      if (VIEW_COLUMN_ID_TO_GRID_FIELD[columnId] !== undefined) {
-        return VIEW_COLUMN_ID_TO_GRID_FIELD[columnId];
-      }
-      return fieldIdToGridField.get(columnId);
-    };
-
-    const orderedVisibleColumns = currentViewConfig
-      .filter((viewColumn) => viewColumn.visible)
-      .sort((a, b) => a.order - b.order)
-      .map((viewColumn) => {
-        const resolvedField = resolveViewColumnIdToGridField(viewColumn.columnId);
-        return resolvedField !== undefined ? gridFieldToColDef.get(resolvedField) : undefined;
-      })
-      .filter((col): col is GridColDef => col !== undefined);
-
-    return [...structuralColumns, ...orderedVisibleColumns];
+    return [...structuralColumns, ...resultColumns, ...parentResponseColumns];
   }, [
     form,
     formFields,
@@ -591,17 +598,18 @@ export const ResponsesTable = ({
   ]);
 
   const sortModel = useMemo((): GridSortModel => {
-    const columnPrefix = getGearConstant("column" + "Prefix") || { Field: "field:", Meta: "meta:" };
     const prefixes = {
-      Field: columnPrefix.Field,
-      Meta: columnPrefix.Meta,
+      Field: "field:",
+      Meta: "meta:",
     };
 
+    // 1. If we have an active filter.sortBy, use it (highest priority)
     if (filter?.sortBy) {
       let gridField: string | undefined;
       if (filter.sortBy.startsWith(prefixes.Field)) {
         const fieldId = filter.sortBy.replace(prefixes.Field, "");
-        gridField = formFields.find((f) => f.id === fieldId)?.displayName;
+        const fieldObj = formFields.find((f) => String(f.id) === String(fieldId));
+        gridField = fieldObj?.displayName || fieldObj?.name || fieldId;
       } else if (filter.sortBy.startsWith(prefixes.Meta)) {
         const metaName = filter.sortBy.replace(prefixes.Meta, "");
         switch (metaName) {
@@ -636,27 +644,66 @@ export const ResponsesTable = ({
       }
     }
 
-    if (!currentViewConfig) {
-      return [];
+    // 2. If we have a current view with a primary sort, use it
+    if (currentView?.sortColumnId) {
+      const sortedColumn = currentView.columns?.find((col) => col.id === currentView.sortColumnId);
+      if (sortedColumn) {
+        let gridField: string | undefined;
+        if (sortedColumn.fieldId) {
+          const fieldObj = formFields.find((f) => String(f.id) === String(sortedColumn.fieldId));
+          gridField = fieldObj?.displayName || fieldObj?.name || sortedColumn.fieldId;
+        } else if (sortedColumn.metaColumnId) {
+          const metaName = Object.keys(MetaColumnIds).find(
+            (key) => MetaColumnIds[key as keyof typeof MetaColumnIds] === sortedColumn.metaColumnId,
+          );
+          switch (metaName) {
+            case "index":
+              gridField = "index";
+              break;
+            case "created_at":
+              gridField = "created";
+              break;
+            case "updated_at":
+              gridField = "edited";
+              break;
+            case "created_by":
+              gridField = "createdByName";
+              break;
+            case "updated_by":
+              gridField = "editedByName";
+              break;
+            case "pushed_to_metro":
+              gridField = "sync";
+              break;
+            case "id":
+              gridField = "id";
+              break;
+            default:
+              gridField = metaName;
+          }
+        }
+
+        if (gridField) {
+          return [{ field: gridField, sort: currentView.sortDirection || "asc" }];
+        }
+      }
     }
 
-    const fieldIdToGridField = new Map<string, string>(
-      formFields.map((field) => [field.id, field.displayName ?? field.name ?? ""]),
+    const legacySort = currentView?.config?.columns?.find(
+      (col) => col.sortDirection && col.sortOrder === 1,
     );
+    if (legacySort) {
+      let gridField = legacySort.columnId;
+      const fieldObj = formFields.find(
+        (f) => f.id === legacySort.columnId || (f as any).uniqueId === legacySort.columnId,
+      );
+      if (fieldObj) gridField = fieldObj.displayName || fieldObj.name || fieldObj.id;
 
-    const sorted = currentViewConfig
-      .filter((viewColumn) => viewColumn.sortDirection && viewColumn.visible)
-      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+      return [{ field: gridField, sort: legacySort.sortDirection as "asc" | "desc" }];
+    }
 
-    return sorted.map((viewColumn) => {
-      const gridField =
-        VIEW_COLUMN_ID_TO_GRID_FIELD[viewColumn.columnId] ??
-        fieldIdToGridField.get(viewColumn.columnId) ??
-        viewColumn.columnId;
-
-      return { field: gridField, sort: viewColumn.sortDirection as "asc" | "desc" };
-    });
-  }, [currentViewConfig, formFields, filter]);
+    return [];
+  }, [currentView, formFields, filter]);
 
   const handlePageSizeChange = useCallback(
     (event: any) => {
@@ -698,7 +745,7 @@ export const ResponsesTable = ({
             size="small">
             <NavigateNextIcon />
           </IconButton>
-          <Typography variant="body2">דף הבא / הקודם</Typography>
+          <Typography variant="body2">דף קודם / הבא</Typography>
           <IconButton
             onClick={handleNextPage}
             disabled={!pageInfo?.hasNextPage || isInEditMode}

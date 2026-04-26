@@ -21,7 +21,7 @@ interface ViewManagerProps {
   onSaveView: (view: ResponsesView) => void;
   onLoadView: (view: ResponsesView) => void;
   onDeleteView?: (view: ResponsesView) => void;
-  onApplyView?: (viewConfig: ViewColumn[]) => void;
+  onApplyView?: (view: ResponsesView) => void;
   currentView?: ResponsesView;
   savedViews?: ResponsesView[];
   permissionTypes?: number[];

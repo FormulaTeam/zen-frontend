@@ -1,15 +1,15 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  createResponsesView,
-  updateResponsesView,
-  deleteResponsesView,
   useGetResponsesViews,
+  useCreateResponsesView,
+  useUpdateResponsesView,
+  useDeleteResponsesView,
 } from "../api/responsesViewsApi";
 import { ResponsesView, ViewColumn } from "../types/interfaces/tableViews.types";
 import { showErrorNotification, showSuccessNotification, getUserName } from "../utils/utils";
 import { applyViewSorting } from "../utils/viewSortingUtils";
 import { ViewUserBase } from "../types/interfaces/view.types";
-import { FormFieldDto, UserPersonalDto } from "../types/shared";
+import { FormFieldDto, UserPersonalDto, MetaColumnIds } from "../types/shared";
 
 type ViewManagerFormBase = {
   id: string | number;
@@ -58,16 +58,21 @@ export const useViewManager = ({
   setSorting,
   tableColumns,
 }: UseViewManagerProps) => {
+  const formId = form ? String(form.id) : "";
   const [currentView, setCurrentView] = useState<ResponsesView>();
   const [currentViewConfig, setCurrentViewConfig] = useState<ViewColumn[]>();
   const [selectedViewId, setSelectedViewId] = useState<string>("");
-  const [isSaving, setIsSaving] = useState(false);
 
   const {
     data: formViews = [],
     error,
-    refetch,
-  } = useGetResponsesViews(form ? String(form.id) : "");
+  } = useGetResponsesViews(formId);
+
+  const { mutateAsync: createView, isPending: isCreating } = useCreateResponsesView(formId);
+  const { mutateAsync: updateView, isPending: isUpdating } = useUpdateResponsesView(formId);
+  const { mutateAsync: deleteView, isPending: isDeleting } = useDeleteResponsesView(formId);
+
+  const isSaving = isCreating || isUpdating;
 
   /** --------------------------------
    * Error handling
@@ -80,11 +85,34 @@ export const useViewManager = ({
   }, [error]);
 
   /** --------------------------------
-   * Filter views (future-proof)
+   * Filter and sort views
+   * Order: Default first -> Other Public -> Personal. 
+   * Internal group sorting: Most recent first.
    * -------------------------------- */
   const availableViews = useMemo(() => {
-    return formViews;
-  }, [formViews]);
+    const userUpn = ((user as any)?.upn || (user as any)?.UPN || "").toLowerCase();
+
+    return [...formViews].sort((a, b) => {
+      // 1. Default view always first
+      if (a.isDefault && !b.isDefault) return -1;
+      if (!a.isDefault && b.isDefault) return 1;
+
+      // 2. Public views before personal views
+      if (a.isPublic && !b.isPublic) return -1;
+      if (!a.isPublic && b.isPublic) return 1;
+
+      // 3. Within same group, sort by createdAt descending (most recent first)
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      
+      if (dateA !== dateB) {
+        return dateB - dateA;
+      }
+
+      // Final fallback: name
+      return a.name.localeCompare(b.name);
+    });
+  }, [formViews, user]);
 
   /** --------------------------------
    * Notify parent of config changes
@@ -94,38 +122,23 @@ export const useViewManager = ({
   }, [currentViewConfig, onViewConfigChange]);
 
   /** --------------------------------
-   * Apply sorting when config changes
-   * -------------------------------- */
-  useEffect(() => {
-    if (!setSorting) return;
-
-    if (currentViewConfig && tableColumns?.length) {
-      applyViewSorting(setSorting, currentViewConfig, tableColumns);
-    } else {
-      setSorting([]);
-    }
-  }, [currentViewConfig, tableColumns, setSorting]);
-
-  /** --------------------------------
    * Save / Update
    * -------------------------------- */
   const handleSaveView = useCallback(
     async (view: ResponsesView) => {
       if (!form) return;
 
-      setIsSaving(true);
-
       try {
         const payload: ResponsesView = {
           ...view,
           formId: String(form.id),
-          createdBy: user?.upn ?? "unknown",
+          createdBy: (user as any)?.upn || (user as any)?.UPN || "unknown",
           createdByName: getViewUserDisplayName(user),
         };
 
         const saved = payload.id
-          ? await updateResponsesView(String(form.id), payload.id, payload)
-          : await createResponsesView(String(form.id), payload);
+          ? await updateView({ responsesViewId: payload.id, updates: payload })
+          : await createView(payload);
 
         showSuccessNotification(
           payload.id ? HebrewMessages.UpdateViewSuccess : HebrewMessages.SaveViewSuccess,
@@ -134,16 +147,12 @@ export const useViewManager = ({
         setCurrentView(saved);
         setSelectedViewId(saved.id ? String(saved.id) : "");
         setCurrentViewConfig(saved.config?.columns ?? []);
-
-        if (saved.isDefault) await refetch();
       } catch (err) {
         console.error(err);
         showErrorNotification(HebrewMessages.SaveViewError);
-      } finally {
-        setIsSaving(false);
       }
     },
-    [form, user, refetch],
+    [form, user, createView, updateView],
   );
 
   /** --------------------------------
@@ -156,11 +165,36 @@ export const useViewManager = ({
       setSelectedViewId(view.id ? String(view.id) : "");
 
       if (setSorting && tableColumns?.length) {
-        applyViewSorting(setSorting, view.config?.columns ?? [], tableColumns);
+        applyViewSorting(setSorting, view, tableColumns);
       }
     },
     [setSorting, tableColumns],
   );
+
+  /** --------------------------------
+   * Auto-load default view
+   * -------------------------------- */
+  useEffect(() => {
+    if (!currentView && !selectedViewId && availableViews.length > 0) {
+      const defaultView = availableViews.find((v) => v.isDefault);
+      if (defaultView) {
+        handleLoadView(defaultView);
+      }
+    }
+  }, [availableViews, currentView, selectedViewId, handleLoadView]);
+
+  /** --------------------------------
+   * Apply sorting when view or columns change
+   * -------------------------------- */
+  useEffect(() => {
+    if (!setSorting) return;
+
+    if (currentView && tableColumns?.length) {
+      applyViewSorting(setSorting, currentView, tableColumns);
+    } else {
+      setSorting([]);
+    }
+  }, [currentView, tableColumns, setSorting]);
 
   /** --------------------------------
    * Dropdown change
@@ -186,11 +220,17 @@ export const useViewManager = ({
    * Apply config
    * -------------------------------- */
   const handleApplyView = useCallback(
-    (config: ViewColumn[]) => {
-      setCurrentViewConfig(config);
+    (view: ResponsesView) => {
+      setCurrentView(view);
+      setCurrentViewConfig(view.columns?.map(c => ({
+        columnId: c.fieldId || (Object.keys(MetaColumnIds).find(key => MetaColumnIds[key as keyof typeof MetaColumnIds] === c.metaColumnId)) || "",
+        displayName: c.displayName,
+        visible: c.isVisible,
+        order: c.index
+      })) ?? view.config?.columns ?? []);
 
       if (setSorting && tableColumns?.length) {
-        applyViewSorting(setSorting, config, tableColumns);
+        applyViewSorting(setSorting, view, tableColumns);
       }
     },
     [setSorting, tableColumns],
@@ -204,7 +244,7 @@ export const useViewManager = ({
       if (!view.id || !form) return;
 
       try {
-        await deleteResponsesView(String(form.id), view.id);
+        await deleteView(view.id);
 
         if (currentView?.id === view.id) {
           setCurrentView(undefined);
@@ -213,13 +253,12 @@ export const useViewManager = ({
         }
 
         showSuccessNotification(HebrewMessages.DeleteViewSuccess);
-        await refetch();
       } catch (err) {
         console.error(err);
         showErrorNotification(HebrewMessages.DeleteViewError);
       }
     },
-    [currentView, refetch],
+    [currentView, deleteView, form],
   );
 
   return {

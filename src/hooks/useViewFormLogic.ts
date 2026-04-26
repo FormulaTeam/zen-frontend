@@ -3,6 +3,8 @@ import { ResponsesView, ViewColumn } from "../types/interfaces/tableViews.types"
 import { ViewUserBase } from "../types/interfaces/view.types";
 import { FormFieldDto, UserPersonalDto } from "../types/shared";
 import { getUserName } from "../utils/utils";
+import { PRE_SYSTEM_COLUMNS, POST_SYSTEM_VIEW_COLUMNS } from "./useViewColumnConfiguration";
+import { MetaColumnIds } from "../utils/interfaces";
 
 /* ------------------------ Utils ------------------------ */
 
@@ -56,7 +58,7 @@ interface UseViewFormLogicProps {
   createDefaultColumns: () => ViewColumn[];
   resetToOriginalColumns: (columns: ViewColumn[]) => void;
   onSaveView: (view: ResponsesView) => void;
-  onApplyView?: (columns: ViewColumn[]) => void;
+  onApplyView?: (view: ResponsesView) => void;
   isSaving?: boolean;
 }
 
@@ -109,7 +111,12 @@ export const useViewFormLogic = ({
       viewName: currentView.name,
       isPublic: currentView.isPublic,
       isDefault: currentView.isDefault,
-      columns: cloneColumns(currentView.config?.columns ?? []),
+      columns: cloneColumns(currentView.columns?.map(c => ({
+        columnId: c.fieldId || (Object.keys(MetaColumnIds).find(key => MetaColumnIds[key as keyof typeof MetaColumnIds] === c.metaColumnId)) || "",
+        displayName: c.displayName,
+        visible: c.isVisible,
+        order: c.index
+      })) ?? currentView.config?.columns ?? []),
     });
   }, [currentView]);
 
@@ -136,12 +143,42 @@ export const useViewFormLogic = ({
 
     const restoredColumns = cloneColumns(originalState.columns);
     resetToOriginalColumns(restoredColumns);
-    onApplyView?.(restoredColumns);
-  }, [originalState, resetToOriginalColumns, onApplyView]);
+    
+    if (currentView) {
+      onApplyView?.(currentView);
+    }
+  }, [originalState, resetToOriginalColumns, onApplyView, currentView]);
 
   const handleApply = useCallback(() => {
-    onApplyView?.(columns);
-  }, [columns, onApplyView]);
+    if (!form) return;
+    
+    const sortedCol = columns.find(c => c.sortOrder === 1);
+
+    const view: ResponsesView = {
+      formId: String(form.id),
+      name: viewName.trim() || "Temporary View",
+      createdBy: (user as any)?.upn || (user as any)?.UPN || "unknown",
+      isPublic,
+      isDefault,
+      sortColumnId: sortedCol?.id,
+      sortDirection: sortedCol?.sortDirection || "asc",
+      columns: columns.map((c, i) => {
+        const isSystem = PRE_SYSTEM_COLUMNS.some(sc => sc.columnId === c.columnId) || 
+                        POST_SYSTEM_VIEW_COLUMNS.some(sc => sc.columnId === c.columnId);
+        
+        return {
+          id: c.id,
+          fieldId: isSystem ? null : c.columnId,
+          metaColumnId: isSystem ? MetaColumnIds[c.columnId as keyof typeof MetaColumnIds] : null,
+          displayName: c.displayName,
+          isVisible: c.visible,
+          index: i,
+        };
+      }),
+    };
+    
+    onApplyView?.(view);
+  }, [columns, onApplyView, form, viewName, user, isPublic, isDefault]);
 
   const handleSwitchPublic = useCallback(
     (next: boolean) => {
@@ -154,14 +191,31 @@ export const useViewFormLogic = ({
   const handleSaveView = useCallback(() => {
     if (!form || !viewName.trim()) return;
 
-    const view: ResponsesView = {
+    const sortedCol = columns.find(c => c.sortOrder === 1);
+
+    const view: any = {
       ...(currentView?.id && !isCreatingNew ? { id: currentView.id } : {}),
       formId: String(form.id),
       name: viewName.trim(),
-      createdBy: user?.upn ?? "unknown",
+      createdBy: (user as any)?.upn || (user as any)?.UPN || "unknown",
       createdByName: getViewUserDisplayName(user),
       isPublic,
       isDefault,
+      sortColumnId: sortedCol?.id,
+      sortDirection: sortedCol?.sortDirection || "asc",
+      columns: columns.map((c, i) => {
+        const isSystem = PRE_SYSTEM_COLUMNS.some(sc => sc.columnId === c.columnId) || 
+                        POST_SYSTEM_VIEW_COLUMNS.some(sc => sc.columnId === c.columnId);
+        
+        return {
+          id: c.id,
+          fieldId: isSystem ? null : c.columnId,
+          metaColumnId: isSystem ? MetaColumnIds[c.columnId as keyof typeof MetaColumnIds] : null,
+          displayName: c.displayName,
+          isVisible: c.visible,
+          index: i,
+        };
+      }),
       config: { columns: cloneColumns(columns) },
       createdAt: currentView?.createdAt ?? new Date(),
       updatedAt: new Date(),
@@ -171,10 +225,10 @@ export const useViewFormLogic = ({
       viewName: view.name,
       isPublic: view.isPublic,
       isDefault: view.isDefault,
-      columns: cloneColumns(view.config.columns),
+      columns: cloneColumns(columns),
     });
 
-    onSaveView(view);
+    onSaveView(view as ResponsesView);
     setIsCreatingNew(false);
   }, [form, viewName, user, isPublic, isDefault, columns, currentView, isCreatingNew, onSaveView]);
 

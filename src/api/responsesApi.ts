@@ -41,7 +41,7 @@ export const getResponses = async (formId: number, filter?: Filter): Promise<any
   const params: any = {
     limit: filter?.pageSize ?? 25,
     search: stringifyQuery(filter?.query),
-    sortBy: filter?.sortBy ?? "id",
+    sortBy: filter?.sortBy ?? "meta:index",
     sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     before: filter?.before,
     after: filter?.after,
@@ -135,7 +135,7 @@ export const searchResponses = async (filter: Filter): Promise<any> => {
     const params: any = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
-      sortBy: filter?.sortBy ?? "id",
+      sortBy: filter?.sortBy ?? "meta:index",
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     };
 
@@ -268,7 +268,7 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
     () => ({
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
-      sortBy: filter?.sortBy ?? "id",
+      sortBy: filter?.sortBy ?? "meta:index",
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
@@ -410,7 +410,7 @@ export const getResponsesRows = async ({
     const params: any = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
-      sortBy: filter?.sortBy ?? "id",
+      sortBy: filter?.sortBy ?? "meta:index",
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
