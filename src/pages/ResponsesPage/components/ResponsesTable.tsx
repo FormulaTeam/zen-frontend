@@ -738,28 +738,31 @@ export const ResponsesTable = React.memo(
       return (
         <GridFooterContainer>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: 2, mr: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              הצג
-            </Typography>
-            <Select
-              value={filter?.pageSize ?? 25}
-              onChange={handlePageSizeChange}
-              size="small"
-              variant="standard"
-              sx={{ minWidth: 40, fontSize: "0.875rem", textAlign: "center", fontWeight: 500 }}
-              disabled={isInEditMode}>
-              {[10, 25, 50, 100].map((size) => (
-                <MenuItem key={size} value={size}>
-                  {size}
-                </MenuItem>
-              ))}
-            </Select>
-            <Typography variant="body2" color="text.secondary">
-              {`תגובות בעמוד מתוך סך הכל ${form?.responsesCount ?? 0} תגובות`}
+            <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
+              {`${form?.responsesCount ?? 0} תגובות בסך הכל`}
             </Typography>
           </Stack>
 
-          <Stack direction="row" spacing={2} alignItems="center" sx={{ mr: 2 }}>
+          <Stack direction="row" spacing={3} alignItems="center" sx={{ mr: 2 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Select
+                value={filter?.pageSize ?? 25}
+                onChange={handlePageSizeChange}
+                size="small"
+                variant="standard"
+                sx={{ minWidth: 40, fontSize: "0.875rem", textAlign: "center", fontWeight: 500 }}
+                disabled={isInEditMode}>
+                {[10, 25, 50, 100].map((size) => (
+                  <MenuItem key={size} value={size}>
+                    {size}
+                  </MenuItem>
+                ))}
+              </Select>
+              <Typography variant="body2" color="text.secondary">
+                תגובות בעמוד
+              </Typography>
+            </Stack>
+
             <PaginationContainer>
               <Tooltip title="עמוד קודם">
                 <span>
