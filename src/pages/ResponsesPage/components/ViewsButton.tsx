@@ -16,7 +16,7 @@ interface ViewsButtonProps
     > { }
 
 const MANAGE_VIEWS_LABEL = "ניהול תצוגות";
-const ALL_FIELDS_LABEL = "כל השדות";
+const SELECT_VIEW_LABEL = "בחר תצוגה";
 
 export const ViewsButton: React.FC<ViewsButtonProps> = ({
     isSidePanelOpen,
@@ -37,6 +37,7 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
                     onChange={(e) => handleViewDropdownChange(e.target.value as string)}
                     size="small"
                     variant="outlined"
+                    displayEmpty
                     sx={{
                         minWidth: 180,
                         backgroundColor: "#ffffff",
@@ -49,7 +50,7 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
                     }}
                 >
                     <MenuItem value="" sx={{ fontStyle: "italic", color: "text.secondary" }}>
-                        {ALL_FIELDS_LABEL}
+                        {SELECT_VIEW_LABEL}
                     </MenuItem>
                     {savedViews.map((view) => (
                         <MenuItem key={String(view.id)} value={String(view.id)}>
