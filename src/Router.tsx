@@ -93,8 +93,8 @@ const AppRouter = () => {
           </Route>
         </Routes>
         <ToastContainer rtl />
-        <HelpBtn showHelpCard={() => setShowHelpCard(true)} />
-        {showHelpCard && <HelpDiv hideHelpCard={() => setShowHelpCard(false)} />}
+        {/* <HelpBtn showHelpCard={() => setShowHelpCard(true)} />
+        {showHelpCard && <HelpDiv hideHelpCard={() => setShowHelpCard(false)} />} */}
       </Box>
     </BrowserRouter>
   );
