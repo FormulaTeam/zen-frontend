@@ -1,10 +1,9 @@
 import { FieldTypeIds } from "@utils/interfaces";
 import React, { useState, useMemo } from "react";
-import { FormControl, CircularProgress, Box, styled, Autocomplete, TextField } from "@mui/material";
+import { FormControl, CircularProgress, Autocomplete, TextField } from "@mui/material";
 import { ExtraElementProps } from "../index";
 import { FormIdentifierDto, useGetForm, useGetLinkableForms } from "@api/formsApi";
 import { useFormStructureContext } from "@pages/FormEditor/context/FormStructureContext";
-import { FormOption } from "@utils/interfaces";
 import { LoaderContainer, WarningText } from "./styled";
 import { useParams } from "react-router-dom";
 
@@ -24,7 +23,7 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
   });
 
   const { data: allForms = [], isLoading } = useGetLinkableForms({
-    formId: currentFormId ? currentFormId.toString() : "",
+    formId: currentFormId ? currentFormId.toString() : undefined,
     search: searchText || undefined,
   });
 

@@ -74,13 +74,14 @@ export const getLinkableForms = async (
   search?: string,
 ): Promise<FormIdentifierDto[]> => {
   try {
-    const params: GetLinkableFormsQueryDto = {
+    const params: GetLinkableFormsQueryDto & { formId?: number } = {
       search: search || "",
       sortBy: "name",
       sortDirection: "asc",
       includePermissions: false,
+      formId,
     };
-    const response = await apiClient.get<FormIdentifierDto[]>(`/forms/${formId}/linkable`, {
+    const response = await apiClient.get<FormIdentifierDto[]>(`/forms/linkable`, {
       params,
     });
     return response?.data || [];
@@ -290,20 +291,21 @@ export const useRestoreForm = ({ id }: { id: string }) => {
   });
 };
 
-export const useGetLinkableForms = ({ formId, search }: { formId: string; search?: string }) => {
-  const params: GetLinkableFormsQueryDto = useMemo(() => ({
+export const useGetLinkableForms = ({ formId, search }: { formId?: string; search?: string }) => {
+  const params: GetLinkableFormsQueryDto & { formId?: number } = useMemo(() => ({
     search: search || "",
     sortBy: "name",
     sortDirection: "asc",
     includePermissions: false,
-  }), [search]);
+    formId: formId ? Number(formId) : undefined,
+  }), [search, formId]);
 
-  return useFetch<GetLinkableFormsQueryDto, FormIdentifierDto[]>({
-    endpoint: `/forms/${formId}/linkable`,
+  return useFetch<GetLinkableFormsQueryDto & { formId?: number }, FormIdentifierDto[]>({
+    endpoint: `/forms/linkable`,
     queryKey: (p) => ["linkable", formId, p?.search],
     params,
     queryOptions: {
-      enabled: !!formId,
+      enabled: true,
     },
   });
 };
