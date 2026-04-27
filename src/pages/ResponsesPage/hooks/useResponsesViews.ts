@@ -12,6 +12,7 @@ export interface UseResponsesViewsReturn {
   currentViewConfig: ViewColumn[] | undefined;
   currentView: ResponsesView | undefined;
   savedViews: ResponsesView[];
+  hasUserCreatedViews: boolean;
   selectedViewId: string;
   isSaving: boolean;
   handleSaveView: (view: ResponsesView) => Promise<void>;
@@ -86,6 +87,40 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
     user: viewManagerUser,
   });
 
+  const hasUserCreatedViews = useMemo(() => {
+    if (!user || !savedViews.length) return false;
+
+    // Get all possible identifiers for the current user
+    const userIdentifiers = new Set<string>();
+    const u = user as any;
+    if (u.upn) userIdentifiers.add(u.upn.toLowerCase());
+    if (u.email) userIdentifiers.add(u.email.toLowerCase());
+    if (u.UPN) userIdentifiers.add(u.UPN.toLowerCase());
+    if (u.mail) userIdentifiers.add(u.mail.toLowerCase());
+
+    if (userIdentifiers.size === 0) return false;
+
+    return savedViews.some((view) => {
+      // Get all possible identifiers for the view creator
+      const creatorIdentifiers = new Set<string>();
+      if (typeof view.createdBy === "string") {
+        creatorIdentifiers.add(view.createdBy.toLowerCase());
+      } else if (view.createdBy && typeof view.createdBy === "object") {
+        const c = view.createdBy as any;
+        if (c.upn) creatorIdentifiers.add(c.upn.toLowerCase());
+        if (c.UPN) creatorIdentifiers.add(c.UPN.toLowerCase());
+        if (c.email) creatorIdentifiers.add(c.email.toLowerCase());
+        if (c.mail) creatorIdentifiers.add(c.mail.toLowerCase());
+      }
+
+      // Check if there's any overlap
+      for (const id of userIdentifiers) {
+        if (creatorIdentifiers.has(id)) return true;
+      }
+      return false;
+    });
+  }, [user, savedViews]);
+
   // Sync view sorting to store filter
   useEffect(() => {
     if (!currentView) return;
@@ -137,6 +172,7 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
     currentViewConfig,
     currentView,
     savedViews,
+    hasUserCreatedViews,
     selectedViewId,
     isSaving,
     handleSaveView,
