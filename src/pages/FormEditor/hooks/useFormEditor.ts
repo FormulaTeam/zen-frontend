@@ -32,8 +32,10 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
                 showSuccessNotification("הטופס עודכן בהצלחה!");
                 queryClient.invalidateQueries({ queryKey: [formStructure.metadata.id.toString()] });
             } else {
-                await mutateCreateFormAsync(payload);
+                const createdForm = await mutateCreateFormAsync(payload);
                 showSuccessNotification("הטופס נשמר בהצלחה!");
+
+                navigate(`/form/edit/${createdForm.id}`, { replace: true });
             }
 
             queryClient.invalidateQueries({ queryKey: ["forms"] });

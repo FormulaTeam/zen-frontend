@@ -22,7 +22,7 @@ import { texts } from "@src/utils/texts";
 import AlertMsg from "@components/AlertMsg/AlertMsg";
 
 function FormEditorHeader() {
-  const { formStructure, validateForm, setFormMetadata } = useFormStructureContext();
+  const { formStructure, validateForm, setFormMetadata, checkHasChanges } = useFormStructureContext();
   const { handleSaveForm, handleExit, isLoading } = useFormEditor(formStructure);
 
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
@@ -52,7 +52,11 @@ function FormEditorHeader() {
   };
 
   const onExitClick = () => {
-    setShowAlertMsg(true);
+    if (checkHasChanges()) {
+      setShowAlertMsg(true);
+    } else {
+      handleExit();
+    }
   };
 
   const onIconChange = (newIcon: string | null): void => {
@@ -116,7 +120,8 @@ function FormEditorHeader() {
           error={!!validationErrors?.title}
           helperText={validationErrors?.title?.[0]}
           variant={"standard"}
-          onChange={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value }))}
+          onChange={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trimStart() }))}
+          onBlur={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trim() }))}
         />
         <TextField
           value={editedMetadata.description}
@@ -131,7 +136,11 @@ function FormEditorHeader() {
           variant={"standard"}
           onChange={(e) => setEditedMetadata((prev) => ({
             ...prev,
-            description: e.target.value,
+            description: e.target.value.trimStart(),
+          }))}
+          onBlur={(e) => setEditedMetadata((prev) => ({
+            ...prev,
+            description: e.target.value.trim(),
           }))}
         />
       </div>
