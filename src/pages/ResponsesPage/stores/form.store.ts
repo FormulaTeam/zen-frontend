@@ -42,7 +42,7 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
   setFilter: (filter: Filter | null) => set({ filter, isRowsLoading: true }),
   rows: [],
   setRows: (rows: Row[]) => set({ rows }),
-  isRowsLoading: false,
+  isRowsLoading: true,
   setIsRowsLoading: (isRowsLoading: boolean) => set({ isRowsLoading }),
   pageInfo: null,
   setPageInfo: (pageInfo: PageInfo | null) => set({ pageInfo }),
