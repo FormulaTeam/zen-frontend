@@ -186,22 +186,23 @@ export const useResponseSave = (
         return updatedResponses[0];
       }
 
-      const newResponse: CreateResponsePayload = {
+      const newResponse: CreateResponseDto = {
         fieldValues,
         ...(parsedParentResponse ? { parentResponse: parsedParentResponse } : {}),
       };
 
       if (parentResponse) {
-        return (await mutateCreateResponseAsync(newResponse)) as ResponseDto;
+        const results = (await mutateCreateResponseAsync(newResponse)) as ResponseDto[];
+        return results[0];
       }
 
       const createKey = `${formId}::${JSON.stringify(fieldValues)}`;
 
       if (!createRequestCache.has(createKey)) {
-        const requestPromise = (mutateCreateResponseAsync(newResponse) as Promise<ResponseDto>)
+        const requestPromise = (mutateCreateResponseAsync(newResponse) as Promise<ResponseDto[]>)
           .then((res) => {
             createRequestCache.delete(createKey);
-            return res;
+            return res[0];
           })
           .catch((err) => {
             createRequestCache.delete(createKey);
