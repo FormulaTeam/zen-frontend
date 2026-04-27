@@ -112,6 +112,7 @@ const ResponsesPageContent = (): JSX.Element => {
         query: search,
         before: undefined,
         after: undefined,
+        pageNumber: 1,
       });
     }, 500);
     return () => clearTimeout(timer);

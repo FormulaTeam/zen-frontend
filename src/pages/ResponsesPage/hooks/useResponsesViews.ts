@@ -132,6 +132,7 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
         orderBy,
         before: undefined,
         after: undefined,
+        pageNumber: 1,
       });
     }
   }, [currentView?.id, currentView?.sortColumnId, currentView?.sortDirection, filter, setFilter]);
