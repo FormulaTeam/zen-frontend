@@ -94,7 +94,7 @@ const ResponsesPageContent = (): JSX.Element => {
     currentViewConfig,
     currentView,
     savedViews,
-    hasUserCreatedViews,
+    hasSavedViews,
     selectedViewId,
     defaultViewId,
     handleViewDropdownChange,
@@ -203,7 +203,7 @@ const ResponsesPageContent = (): JSX.Element => {
           <ViewsButton
             isSidePanelOpen={isSidePanelOpen}
             setIsSidePanelOpen={setIsSidePanelOpen}
-            hasUserCreatedViews={hasUserCreatedViews}
+            hasSavedViews={hasSavedViews}
             savedViews={savedViews}
             selectedViewId={selectedViewId}
             defaultViewId={defaultViewId}

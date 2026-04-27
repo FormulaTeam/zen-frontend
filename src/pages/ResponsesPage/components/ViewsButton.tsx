@@ -8,7 +8,7 @@ interface ViewsButtonProps
     extends Pick<UseResponsesViewsReturn,
         "isSidePanelOpen" |
         "setIsSidePanelOpen" |
-        "hasUserCreatedViews" |
+        "hasSavedViews" |
         "savedViews" |
         "selectedViewId" |
         "defaultViewId" |
@@ -21,7 +21,7 @@ const SELECT_VIEW_LABEL = "בחר תצוגה";
 export const ViewsButton: React.FC<ViewsButtonProps> = ({
     isSidePanelOpen,
     setIsSidePanelOpen,
-    hasUserCreatedViews,
+    hasSavedViews,
     savedViews,
     selectedViewId,
     defaultViewId,
@@ -31,7 +31,7 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
 
     return (
         <Stack direction="row" spacing={1} alignItems="center">
-            {hasUserCreatedViews && !isSidePanelOpen && (
+            {hasSavedViews && !isSidePanelOpen && (
                 <Select
                     value={activeViewId}
                     onChange={(e) => handleViewDropdownChange(e.target.value as string)}
@@ -60,15 +60,15 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
                 </Select>
             )}
 
-            <Tooltip title={hasUserCreatedViews ? MANAGE_VIEWS_LABEL : ""}>
+            <Tooltip title={hasSavedViews ? MANAGE_VIEWS_LABEL : ""}>
                 <span>
                     <ViewManageButton
                         variant="contained"
                         onClick={() => setIsSidePanelOpen(true)}
                         disabled={isSidePanelOpen}
-                        sx={hasUserCreatedViews ? { width: "39px", height: "39px", padding: "8px", minWidth: 0 } : {}}>
+                        sx={hasSavedViews ? { width: "39px", height: "39px", padding: "8px", minWidth: 0 } : {}}>
                         <BackupTable />
-                        {!hasUserCreatedViews && <span>{MANAGE_VIEWS_LABEL}</span>}
+                        {!hasSavedViews && <span>{MANAGE_VIEWS_LABEL}</span>}
                     </ViewManageButton>
                 </span>
             </Tooltip>
