@@ -153,12 +153,14 @@ export const ResponsesTable = React.memo(
         lastFetchStartedRef.current = true;
       }
 
-      if (!isRowsLoading && lastFetchStartedRef.current) {
+      // If we are not loading, OR if the data/pageInfo has changed, reset navigation guards.
+      // This covers both network fetches and immediate cache returns.
+      if (!isRowsLoading) {
         transitionInProgress.current = false;
         setIsNavigating(false);
         lastFetchStartedRef.current = false;
       }
-    }, [isRowsLoading]);
+    }, [isRowsLoading, pageInfo, rows]);
 
     const handleNextPage = useCallback(() => {
       if (pageInfo?.hasNextPage && pageInfo.endCursor && !isRowsLoading && !transitionInProgress.current) {
@@ -885,7 +887,7 @@ export const ResponsesTable = React.memo(
             getCellClassName={getCellClassName}
             density="comfortable"
             rowHeight={isInEditMode ? 140 : 65}
-            loading={isRowsLoading && localRows.length === 0}
+            loading={isRowsLoading && rows.length === 0}
             checkboxSelection
             disableRowSelectionOnClick
             onRowSelectionModelChange={onRowSelectionModelChange}
