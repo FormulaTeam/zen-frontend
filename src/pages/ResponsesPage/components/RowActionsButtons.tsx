@@ -24,6 +24,8 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
   const { form, permissions, rows } = useFormStore();
   const { isSuperAdmin } = useSuperAdmin();
 
+  if (!form || !permissions) return null;
+
   const isExcludeAll = rowSelectionModel.type === "exclude";
   const excludedIds = new Set(Array.from(rowSelectionModel.ids).map((id) => String(id)));
 
