@@ -60,7 +60,7 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
                 </Select>
             )}
 
-            <Tooltip title={MANAGE_VIEWS_LABEL}>
+            <Tooltip title={hasUserCreatedViews ? MANAGE_VIEWS_LABEL : ""}>
                 <span>
                     <ViewManageButton
                         variant="contained"
