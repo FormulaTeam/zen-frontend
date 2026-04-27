@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useGetForm, useGetResponsesRows } from "../../../api";
 import { useInitiateFormStore } from "../stores/form.store";
 import { Row } from "../../../utils/interfaces";
@@ -104,8 +104,11 @@ export function useFormLoader(formId: string) {
     }
   }, [responsesRowsData, setRows, setPageInfo, isResponsesSuccess, formData, setResponses]);
 
+  const lastFormIdRef = useRef<string | number | undefined>(undefined);
+
   useEffect(() => {
-    if (formData && isSuccess) {
+    if (formData && isSuccess && formData.id !== lastFormIdRef.current) {
+      lastFormIdRef.current = formData.id;
       const flattenedFields = (formData.sections ?? [])
         .flatMap((section) => section.fields ?? [])
         .sort((a, b) => a.index - b.index);

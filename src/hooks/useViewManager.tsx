@@ -202,13 +202,21 @@ export const useViewManager = ({
   /** --------------------------------
    * Apply sorting when view or columns change
    * -------------------------------- */
+  const lastAppliedViewId = useRef<string | number | undefined>(undefined);
+
   useEffect(() => {
     if (!setSorting) return;
 
     if (currentView && tableColumns?.length) {
-      applyViewSorting(setSorting, currentView, tableColumns);
+      if (currentView.id !== lastAppliedViewId.current) {
+        applyViewSorting(setSorting, currentView, tableColumns);
+        lastAppliedViewId.current = currentView.id;
+      }
     } else {
-      setSorting([]);
+      if (lastAppliedViewId.current !== undefined) {
+        setSorting([]);
+        lastAppliedViewId.current = undefined;
+      }
     }
   }, [currentView, tableColumns, setSorting]);
 
