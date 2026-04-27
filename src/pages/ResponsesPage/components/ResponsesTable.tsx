@@ -743,7 +743,7 @@ export const ResponsesTable = React.memo(
             </Typography>
           </Stack>
 
-          <Stack direction="row" spacing={3} alignItems="center" sx={{ mr: 2 }}>
+          <Stack direction="row" spacing={3} alignItems="center" sx={{ mr: 4 }}>
             <Stack direction="row" spacing={1} alignItems="center">
               <Select
                 value={filter?.pageSize ?? 25}
