@@ -1,4 +1,5 @@
 import { permission } from "formula-gear";
+import { useCallback } from "react";
 import { ResponsesView } from "../types/interfaces/tableViews.types";
 
 interface UseViewPermissionsProps {
@@ -27,14 +28,14 @@ export const useViewPermissions = ({
   const canManagePublicViews = Boolean(user?.isSuperAdmin || permissionTypes?.includes(permission.UpdateForm));
 
   // Helper function to check if user can edit/delete a specific view
-  const canEditOrDeleteView = (view?: ResponsesView): boolean => {
-    // If no view, it's a "create" scenario which is always allowed for personal views
+  const canEditOrDeleteView = useCallback((view?: ResponsesView): boolean => {
+    // If no view, it's a "create" scenario which is always allowed
     if (!view || !view.id) {
       return true;
     }
 
-    // Super admin or form admin can edit/delete any view
-    if (canManagePublicViews) {
+    // Super admin can edit/delete any view for maintenance
+    if (user?.isSuperAdmin) {
       return true;
     }
 
@@ -44,8 +45,6 @@ export const useViewPermissions = ({
     if (user?.email) userIdentifiers.add(user.email.toLowerCase());
     if (user?.UPN) userIdentifiers.add(user.UPN.toLowerCase());
     if (user?.mail) userIdentifiers.add(user.mail.toLowerCase());
-    if (user?.displayName) userIdentifiers.add(user.displayName.toLowerCase());
-    if (user?.name) userIdentifiers.add(user.name.toLowerCase());
 
     if (userIdentifiers.size === 0) return false;
 
@@ -59,13 +58,6 @@ export const useViewPermissions = ({
       if (c.UPN) creatorIdentifiers.add(c.UPN.toLowerCase());
       if (c.email) creatorIdentifiers.add(c.email.toLowerCase());
       if (c.mail) creatorIdentifiers.add(c.mail.toLowerCase());
-      if (c.name) creatorIdentifiers.add(c.name.toLowerCase());
-      if (c.displayName) creatorIdentifiers.add(c.displayName.toLowerCase());
-    }
-
-    // Also check createdByName if it exists
-    if (view.createdByName) {
-      creatorIdentifiers.add(view.createdByName.toLowerCase());
     }
 
     // Check if there's any overlap between user identifiers and creator identifiers
@@ -76,7 +68,7 @@ export const useViewPermissions = ({
     }
 
     return false;
-  };
+  }, [user]);
 
   return {
     canManagePublicViews,

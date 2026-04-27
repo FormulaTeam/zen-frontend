@@ -22,7 +22,7 @@ export const PRE_SYSTEM_COLUMNS: SystemViewColumn[] = [
 ];
 export const POST_SYSTEM_VIEW_COLUMNS: SystemViewColumn[] = [
   { columnId: "updated_by", displayName: "השתנה ע״י", defaultVisible: true },
-  { columnId: "updated_at", displayName: "תאריך שינוי", defaultVisible: true },
+  { columnId: "updated_at", displayName: "תאריך עדכון", defaultVisible: true },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -107,14 +107,16 @@ export function useViewColumnConfiguration({
           sOrder = 1;
         }
 
+        const visible = prev?.isVisible ?? prev?.visible ?? base.defaultVisible;
+
         return {
           id: prev?.id,
           columnId: base.columnId,
           displayName: base.displayName,
-          visible: prev?.isVisible ?? prev?.visible ?? base.defaultVisible,
+          visible,
           order: prev?.index ?? prev?.order ?? order++,
-          sortDirection: sortDir,
-          sortOrder: sOrder,
+          sortDirection: visible ? sortDir : undefined,
+          sortOrder: visible ? sOrder : undefined,
         };
       };
 
@@ -132,7 +134,7 @@ export function useViewColumnConfiguration({
 
       setColumns(merged);
     },
-    [form],
+    [form?.fields],
   );
 
   useEffect(() => {
@@ -144,19 +146,32 @@ export function useViewColumnConfiguration({
       lastInitViewId.current = currentView?.id;
       initialize(currentView);
     }
-  }, [form?.fields, currentView, initialize]);
+  }, [form?.fields, currentView?.id, initialize]);
 
   /* --------------------------- Visibility --------------------------- */
 
-  const toggleColumnVisibility = (columnId: string) => {
+  const toggleColumnVisibility = useCallback((columnId: string) => {
     setColumns((cols) =>
-      cols.map((c) => (c.columnId === columnId ? { ...c, visible: !c.visible } : c)),
+      cols.map((c) => {
+        if (c.columnId === columnId) {
+          const nextVisible = !c.visible;
+
+          return {
+            ...c,
+            visible: nextVisible,
+            sortDirection: !nextVisible ? undefined : c.sortDirection,
+            sortOrder: !nextVisible ? undefined : c.sortOrder,
+          };
+        }
+
+        return c;
+      }),
     );
-  };
+  }, []);
 
   /* ------------------------------ Drag ------------------------------ */
 
-  const handleDragEnd = (result: DropResult) => {
+  const handleDragEnd = useCallback((result: DropResult) => {
     if (!result.destination) return;
 
     setColumns((cols) => {
@@ -166,11 +181,11 @@ export function useViewColumnConfiguration({
 
       return reordered.map((c, i) => ({ ...c, order: i }));
     });
-  };
+  }, []);
 
   /* ------------------------------ Sorting --------------------------- */
 
-  const setSortColumn = (columnId: string | null, direction: "asc" | "desc" | null) => {
+  const setSortColumn = useCallback((columnId: string | null, direction: "asc" | "desc" | null) => {
     setColumns((cols) =>
       cols.map((c) =>
         c.columnId === columnId && direction
@@ -178,14 +193,14 @@ export function useViewColumnConfiguration({
           : { ...c, sortDirection: undefined, sortOrder: undefined },
       ),
     );
-  };
+  }, []);
 
-  const getSortedColumns = (): SortDescriptor[] =>
+  const getSortedColumns = useCallback((): SortDescriptor[] =>
     columns
       .filter((c) => c.sortDirection)
-      .map((c) => ({ columnId: c.columnId, direction: c.sortDirection! }));
+      .map((c) => ({ columnId: c.columnId, direction: c.sortDirection! })), [columns]);
 
-  const clearSort = () => {
+  const clearSort = useCallback(() => {
     setColumns((cols) =>
       cols.map((c) => ({
         ...c,
@@ -193,11 +208,11 @@ export function useViewColumnConfiguration({
         sortOrder: undefined,
       })),
     );
-  };
+  }, []);
 
   /* --------------------------- Defaults ----------------------------- */
 
-  const createDefaultColumns = (): ViewColumn[] => {
+  const createDefaultColumns = useCallback((): ViewColumn[] => {
     if (!form?.fields) return [];
 
     let order = 0;
@@ -222,11 +237,11 @@ export function useViewColumnConfiguration({
         order: order++,
       })),
     ];
-  };
+  }, [form?.fields]);
 
-  const resetToOriginalColumns = (cols: ViewColumn[]) => {
+  const resetToOriginalColumns = useCallback((cols: ViewColumn[]) => {
     setColumns(cols);
-  };
+  }, []);
 
   /* ----------------------------- API -------------------------------- */
 

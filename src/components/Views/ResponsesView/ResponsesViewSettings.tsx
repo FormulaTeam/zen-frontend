@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -93,7 +93,7 @@ export function ResponsesViewSettings({
   clearSort,
 }: ResponsesViewSettingsProps) {
   const VIEW_NAME_PLACEHOLDER = `תצוגה חדשה ב${formName}`;
-  const sortedColumn = getSortedColumns()[0];
+  const sortedColumn = useMemo(() => getSortedColumns()[0], [getSortedColumns]);
   const canEdit = Boolean(formId && canEditCurrentView);
 
   const visibleColumns = useMemo(
@@ -101,11 +101,11 @@ export function ResponsesViewSettings({
     [columns],
   );
 
-  const getIsColumnSortable = (columnId: string) => {
+  const getIsColumnSortable = useCallback((columnId: string) => {
     // Meta columns (id, updated, etc) are always sortable in this context or handled by isSortable(undefined)
     const field = formFields.find((f) => String(f.id) === String(columnId));
     return isSortable(field?.fieldType);
-  };
+  }, [formFields]);
 
   return (
     <Box display="flex" flexDirection="column" gap={-0.5}>
@@ -122,7 +122,7 @@ export function ResponsesViewSettings({
         disabled={!canEdit}
       />
 
-      {canEdit && (
+      {canEdit && canManagePublicViews && (
         <Stack spacing={-4}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Stack direction="row" alignItems="center" spacing={1}>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   useGetResponsesViews,
   useCreateResponsesView,
@@ -188,27 +188,40 @@ export const useViewManager = ({
   );
 
   /** --------------------------------
-   * Auto-load default view
+   * Auto-load default view (only once on initial load)
    * -------------------------------- */
+  const hasAttemptedInitialLoad = useRef(false);
+
   useEffect(() => {
-    if (!currentView && !selectedViewId && availableViews.length > 0) {
+    if (hasAttemptedInitialLoad.current) return;
+    
+    if (availableViews.length > 0) {
+      hasAttemptedInitialLoad.current = true;
       const defaultView = availableViews.find((v) => v.isDefault);
       if (defaultView) {
         handleLoadView(defaultView);
       }
     }
-  }, [availableViews, currentView, selectedViewId, handleLoadView]);
+  }, [availableViews, handleLoadView]);
 
   /** --------------------------------
    * Apply sorting when view or columns change
    * -------------------------------- */
+  const lastAppliedViewId = useRef<string | number | undefined>(undefined);
+
   useEffect(() => {
     if (!setSorting) return;
 
     if (currentView && tableColumns?.length) {
-      applyViewSorting(setSorting, currentView, tableColumns);
+      if (currentView.id !== lastAppliedViewId.current) {
+        applyViewSorting(setSorting, currentView, tableColumns);
+        lastAppliedViewId.current = currentView.id;
+      }
     } else {
-      setSorting([]);
+      if (lastAppliedViewId.current !== undefined) {
+        setSorting([]);
+        lastAppliedViewId.current = undefined;
+      }
     }
   }, [currentView, tableColumns, setSorting]);
 
@@ -277,11 +290,17 @@ export const useViewManager = ({
     [currentView, deleteView, form],
   );
 
+  const defaultViewId = useMemo(() => {
+    const defaultView = availableViews.find((v) => v.isDefault);
+    return defaultView?.id ? String(defaultView.id) : "";
+  }, [availableViews]);
+
   return {
     currentView,
     savedViews: availableViews,
     currentViewConfig,
     selectedViewId,
+    defaultViewId,
     isSaving,
     handleSaveView,
     handleLoadView,

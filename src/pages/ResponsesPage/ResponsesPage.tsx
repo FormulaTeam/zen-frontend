@@ -1,5 +1,5 @@
 import { GridRowId, GridRowModel, GridRowSelectionModel } from "@mui/x-data-grid-pro";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 
 import SidePanel from "../../components/SidePanel/SidePanel";
@@ -94,11 +94,15 @@ const ResponsesPageContent = (): JSX.Element => {
     currentViewConfig,
     currentView,
     savedViews,
-    isSaving,
-    handleSaveView,
+    hasSavedViews,
+    selectedViewId,
+    defaultViewId,
+    handleViewDropdownChange,
     handleLoadView,
     handleDeleteView,
     handleApplyView,
+    handleSaveView,
+    isSaving,
   } = useResponsesViews();
 
   useEffect(() => {
@@ -163,6 +167,10 @@ const ResponsesPageContent = (): JSX.Element => {
     };
   }, [user]);
 
+  const handleRowSelectionModelChange = useCallback((model: GridRowSelectionModel) => {
+    setRowSelectionModel(model);
+  }, []);
+
   return (
     <PageWrapper>
       <MainContentWrapper>
@@ -192,7 +200,15 @@ const ResponsesPageContent = (): JSX.Element => {
             )}
           </ActionsRow>
           <SearchInfo search={search} setSearch={setSearch} />
-          <ViewsButton isSidePanelOpen={isSidePanelOpen} setIsSidePanelOpen={setIsSidePanelOpen} />
+          <ViewsButton
+            isSidePanelOpen={isSidePanelOpen}
+            setIsSidePanelOpen={setIsSidePanelOpen}
+            hasSavedViews={hasSavedViews}
+            savedViews={savedViews}
+            selectedViewId={selectedViewId}
+            defaultViewId={defaultViewId}
+            handleViewDropdownChange={handleViewDropdownChange}
+          />
         </TopSection>
         <ResponsesTable
           isInEditMode={isInEditMode}
@@ -201,7 +217,7 @@ const ResponsesPageContent = (): JSX.Element => {
           onCellEditStart={handleCellEditStart}
           validationErrors={validationErrors}
           onCellLiveChange={handleCellLiveChange}
-          onRowSelectionModelChange={setRowSelectionModel}
+          onRowSelectionModelChange={handleRowSelectionModelChange}
           currentView={currentView}
         />
         <CancelEditDialog

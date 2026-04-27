@@ -90,11 +90,18 @@ export const ViewManageButton = styled(SmallRoundButton)`
   margin: 5px 0;
   padding: 6px 14px;
 
+  background-color: #DBE7F4 !important;
+  color: #000000 !important;
   font-size: 1rem;
   font-weight: 500;
 
   .MuiSvgIcon-root {
     font-size: 1.6rem;
+    color: #000000 !important;
+  }
+
+  &:hover {
+    background-color: #bbdefb !important;
   }
 
   &:disabled {

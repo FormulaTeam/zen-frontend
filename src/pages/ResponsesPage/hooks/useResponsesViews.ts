@@ -12,7 +12,9 @@ export interface UseResponsesViewsReturn {
   currentViewConfig: ViewColumn[] | undefined;
   currentView: ResponsesView | undefined;
   savedViews: ResponsesView[];
+  hasSavedViews: boolean;
   selectedViewId: string;
+  defaultViewId: string;
   isSaving: boolean;
   handleSaveView: (view: ResponsesView) => Promise<void>;
   handleLoadView: (view: ResponsesView) => void;
@@ -75,6 +77,7 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
     savedViews,
     currentViewConfig,
     selectedViewId,
+    defaultViewId,
     isSaving,
     handleSaveView,
     handleLoadView,
@@ -85,6 +88,8 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
     form: viewManagerForm,
     user: viewManagerUser,
   });
+
+  const hasSavedViews = useMemo(() => savedViews.length > 0, [savedViews]);
 
   // Sync view sorting to store filter
   useEffect(() => {
@@ -118,16 +123,18 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
       }
     }
 
-    if (sortBy) {
+    const orderBy = (currentView.sortDirection || "asc").toUpperCase() as any;
+
+    if (sortBy && (filter?.sortBy !== sortBy || filter?.orderBy !== orderBy)) {
       setFilter({
         ...filter,
         sortBy,
-        orderBy: (currentView.sortDirection || "asc").toUpperCase() as any,
+        orderBy,
         before: undefined,
         after: undefined,
       });
     }
-  }, [currentView?.id, currentView?.sortColumnId, currentView?.sortDirection]);
+  }, [currentView?.id, currentView?.sortColumnId, currentView?.sortDirection, filter, setFilter]);
 
   return {
     isSidePanelOpen,
@@ -135,7 +142,9 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
     currentViewConfig,
     currentView,
     savedViews,
+    hasSavedViews,
     selectedViewId,
+    defaultViewId,
     isSaving,
     handleSaveView,
     handleLoadView,
