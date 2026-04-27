@@ -24,7 +24,8 @@ interface FormsState {
   setFilter: (filter: Filter | null) => void;
   rows: Row[];
   setRows: (rows: Row[]) => void;
-  isRowsLoading?: boolean;
+  isRowsLoading: boolean;
+  setIsRowsLoading: (isLoading: boolean) => void;
   pageInfo: PageInfo | null;
   setPageInfo: (pageInfo: PageInfo | null) => void;
 }
@@ -40,6 +41,8 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
   setFilter: (filter: Filter | null) => set({ filter }),
   rows: [],
   setRows: (rows: Row[]) => set({ rows }),
+  isRowsLoading: false,
+  setIsRowsLoading: (isRowsLoading: boolean) => set({ isRowsLoading }),
   pageInfo: null,
   setPageInfo: (pageInfo: PageInfo | null) => set({ pageInfo }),
 }));
@@ -61,6 +64,7 @@ export function useFormStore() {
     rows: store.rows,
     setRows: store.setRows,
     isRowsLoading: store.isRowsLoading,
+    setIsRowsLoading: store.setIsRowsLoading,
     pageInfo: store.pageInfo,
     setPageInfo: store.setPageInfo,
   };

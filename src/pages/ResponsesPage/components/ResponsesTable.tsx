@@ -132,13 +132,13 @@ export const ResponsesTable = React.memo(
     onRowSelectionModelChange,
     currentView,
   }: ResponsesTableProps) => {
-    const { form, rows, pageInfo, filter, setFilter } = useFormStore();
+    const { form, rows, pageInfo, filter, setFilter, isRowsLoading } = useFormStore();
     const navigate = useNavigate();
 
     const currentViewConfig = useMemo(() => currentView?.columns || [], [currentView]);
 
     const handleNextPage = useCallback(() => {
-      if (pageInfo?.hasNextPage && pageInfo.endCursor) {
+      if (pageInfo?.hasNextPage && pageInfo.endCursor && !isRowsLoading) {
         setFilter({
           ...filter,
           after: pageInfo.endCursor,
@@ -146,10 +146,10 @@ export const ResponsesTable = React.memo(
           pageNumber: (filter?.pageNumber ?? 1) + 1,
         });
       }
-    }, [pageInfo, filter, setFilter]);
+    }, [pageInfo, filter, setFilter, isRowsLoading]);
 
     const handlePreviousPage = useCallback(() => {
-      if (pageInfo?.hasPreviousPage && pageInfo.startCursor) {
+      if (pageInfo?.hasPreviousPage && pageInfo.startCursor && !isRowsLoading) {
         setFilter({
           ...filter,
           before: pageInfo.startCursor,
@@ -157,7 +157,7 @@ export const ResponsesTable = React.memo(
           pageNumber: Math.max((filter?.pageNumber ?? 1) - 1, 1),
         });
       }
-    }, [pageInfo, filter, setFilter]);
+    }, [pageInfo, filter, setFilter, isRowsLoading]);
 
     const formFields = useMemo<FormFieldDto[]>(
       () => (form?.sections ?? []).flatMap((section) => section.fields ?? []),
