@@ -751,7 +751,7 @@ export const ResponsesTable = React.memo(
         <GridFooterContainer sx={{ justifyContent: "space-between", px: 3 }}>
           <FooterInfoContainer>
             <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
-              {`מציג ${startRange}-${endRange} תגובות מתוך ${totalCount}`}
+              {`מציג ${endRange}-${startRange} תגובות מתוך ${totalCount}`}
             </Typography>
           </FooterInfoContainer>
 
