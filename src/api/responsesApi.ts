@@ -18,7 +18,7 @@ import queryClient from "./queryClient";
 import { useCreate } from "../utils/useCreate";
 import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, keepPreviousData } from "@tanstack/react-query";
 import { useUpdate } from "../utils/useUpdate";
 import { BulkUpdateResponsesDto, CreateResponseDto, ResponseDto, FormDto } from "../types/shared";
 import { z } from "zod";
@@ -258,6 +258,7 @@ export const useGetResponsesRows = (
     params: safeParams,
     queryOptions: {
       enabled: !!formId,
+      placeholderData: keepPreviousData,
     },
   });
 };
