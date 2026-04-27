@@ -149,7 +149,7 @@ export const ResponsesTable = React.memo(
     }, [pageInfo, filter, setFilter, isRowsLoading]);
 
     const handlePreviousPage = useCallback(() => {
-      if (pageInfo?.hasPreviousPage && pageInfo.startCursor && !isRowsLoading) {
+      if (pageInfo?.hasPreviousPage && pageInfo.startCursor && !isRowsLoading && (filter?.pageNumber ?? 1) > 1) {
         setFilter({
           ...filter,
           before: pageInfo.startCursor,
