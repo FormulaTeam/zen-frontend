@@ -19,6 +19,7 @@ import {
 
 const Header = () => {
   const { form } = useFormStore();
+  if (!form) return null;
 
   const infoTooltipContent = (
     <FormInfoContentBox>

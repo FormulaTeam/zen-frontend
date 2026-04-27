@@ -55,6 +55,9 @@ export const UploadResponses = ({
   const { id: formId } = useParams();
   const { form } = useFormStore();
   const uploadRef = useRef<HTMLInputElement>(null);
+
+  if (!form) return null;
+
   const [showErrorFileTooBig, setShowErrorFileTooBig] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
