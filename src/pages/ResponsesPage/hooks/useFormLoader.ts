@@ -38,32 +38,31 @@ export function useFormLoader(formId: string) {
   const { setPageInfo, setIsRowsLoading } = useInitiateFormStore();
 
   useEffect(() => {
-    setIsRowsLoading(isRowsFetching || isPlaceholderData);
-  }, [isRowsFetching, isPlaceholderData, setIsRowsLoading]);
+    // If we are currently fetching or showing placeholder data, we are loading.
+    if (isRowsFetching || isPlaceholderData) {
+      setIsRowsLoading(true);
+      return;
+    }
 
-  useEffect(() => {
+    // If we have data and it's not stale (placeholder), process it and then stop loading.
     if (responsesRowsData && isResponsesSuccess && formData) {
       const data = responsesRowsData as any;
-      // Defensive mapping to handle both array and paginated object formats
       const responses: any[] = Array.isArray(responsesRowsData)
         ? responsesRowsData
         : (responsesRowsData as any)?.edges?.map((e: any) => e.node) ||
           (responsesRowsData as any)?.responses ||
           [];
 
-      // Robust PageInfo detection (handle camelCase and snake_case)
       const rawPageInfo = data?.pageInfo || data?.page_info;
-      const pageInfoFromData = rawPageInfo ? {
-        hasNextPage: !!(rawPageInfo.hasNextPage ?? rawPageInfo.has_next_page),
-        hasPreviousPage: !!(rawPageInfo.hasPreviousPage ?? rawPageInfo.has_previous_page),
-        startCursor: rawPageInfo.startCursor ?? rawPageInfo.start_cursor ?? null,
-        endCursor: rawPageInfo.endCursor ?? rawPageInfo.end_cursor ?? null,
-      } : null;
+      const pageInfoFromData = rawPageInfo
+        ? {
+            hasNextPage: !!(rawPageInfo.hasNextPage ?? rawPageInfo.has_next_page),
+            hasPreviousPage: !!(rawPageInfo.hasPreviousPage ?? rawPageInfo.has_previous_page),
+            startCursor: rawPageInfo.startCursor ?? rawPageInfo.start_cursor ?? null,
+            endCursor: rawPageInfo.endCursor ?? rawPageInfo.end_cursor ?? null,
+          }
+        : null;
 
-      console.log("useFormLoader: responsesRowsData:", data);
-      console.log("useFormLoader: pageInfoFromData:", pageInfoFromData);
-
-      // Map field IDs to displayNames for the grid
       const fieldIdToDisplayName = new Map<string, string>();
       formData.sections.forEach((section) => {
         section.fields.forEach((field) => {
@@ -94,24 +93,32 @@ export function useFormLoader(formId: string) {
         return row;
       });
 
+      // Update everything atomically (within the same store update cycle if possible)
       setRows(rows);
       setResponses(responses as any);
-
-      if (pageInfoFromData) {
-        setPageInfo(pageInfoFromData);
-      } else {
-        // Fallback for unexpected formats, though Rule 4 says trust cursors.
-        // If we don't have pageInfo, we can't do stable cursor pagination.
-        setPageInfo({
+      setPageInfo(
+        pageInfoFromData || {
           hasNextPage: false,
           hasPreviousPage: false,
           startCursor: null,
           endCursor: null,
-        });
-      }
-
+        },
+      );
+      
+      // Finally, set loading to false. This ensures ResponsesTable sees the new data AND enabled buttons simultaneously.
+      setIsRowsLoading(false);
     }
-  }, [responsesRowsData, setRows, setPageInfo, isResponsesSuccess, formData, setResponses]);
+  }, [
+    responsesRowsData,
+    isResponsesSuccess,
+    isRowsFetching,
+    isPlaceholderData,
+    formData,
+    setRows,
+    setResponses,
+    setPageInfo,
+    setIsRowsLoading,
+  ]);
 
   const lastFormIdRef = useRef<string | number | undefined>(undefined);
 
