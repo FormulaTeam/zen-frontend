@@ -4,10 +4,12 @@ import { create } from "zustand";
 import { FormDto, FormFieldDto } from "../../../types/shared";
 import { Filter, PageInfo, ResponseForm, Row } from "../../../utils/interfaces";
 import { Permission } from "formula-gear";
+import { IOrderBy } from "../../../types/enums/filtersAndSorts.enum";
 
 export type StoreForm = FormDto & {
   fields: FormFieldDto[];
   columns?: GridColDef[];
+  responsesCount?: number;
   metro_access_url?: string | null;
   oasisSourceKey?: string | null;
 };
@@ -23,7 +25,8 @@ interface FormsState {
   setFilter: (filter: Filter | null) => void;
   rows: Row[];
   setRows: (rows: Row[]) => void;
-  isRowsLoading?: boolean;
+  isRowsLoading: boolean;
+  setIsRowsLoading: (isLoading: boolean) => void;
   pageInfo: PageInfo | null;
   setPageInfo: (pageInfo: PageInfo | null) => void;
 }
@@ -35,18 +38,18 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
   setPermissions: (permissions: Permission[]) => set({ permissions }),
   responses: null,
   setResponses: (responses: ResponseForm[] | null) => set({ responses }),
-  filter: { pageSize: 25, pageNumber: 1 },
-  setFilter: (filter: Filter | null) => set({ filter }),
+  filter: { pageSize: 25, pageNumber: 1, sortBy: "meta:index", orderBy: IOrderBy.DESC },
+  setFilter: (filter: Filter | null) => set({ filter, isRowsLoading: true }),
   rows: [],
   setRows: (rows: Row[]) => set({ rows }),
+  isRowsLoading: false,
+  setIsRowsLoading: (isRowsLoading: boolean) => set({ isRowsLoading }),
   pageInfo: null,
   setPageInfo: (pageInfo: PageInfo | null) => set({ pageInfo }),
 }));
 
 export function useFormStore() {
   const store = useInitiateFormStore();
-
-  if (!store.form || !store.permissions) throw new Error("form has not been loaded.");
 
   return {
     form: store.form,
@@ -60,6 +63,7 @@ export function useFormStore() {
     rows: store.rows,
     setRows: store.setRows,
     isRowsLoading: store.isRowsLoading,
+    setIsRowsLoading: store.setIsRowsLoading,
     pageInfo: store.pageInfo,
     setPageInfo: store.setPageInfo,
   };

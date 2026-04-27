@@ -17,44 +17,83 @@ export function useFormLoader(formId: string) {
     config: { enabled: !!formId },
   });
 
-  const queryParams = useMemo(() => ({
-    limit: filter?.pageSize ?? 25,
-    search: filter?.query ?? "",
-    sortBy: filter?.sortBy,
-    sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
-    before: filter?.before,
-    after: filter?.after,
-  }), [filter]);
+  const queryParams = useMemo(
+    () => ({
+      limit: filter?.pageSize ?? 25,
+      search: filter?.query ?? "",
+      sortBy: filter?.sortBy,
+      sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
+      before: filter?.before,
+      after: filter?.after,
+    }),
+    [filter],
+  );
 
-  console.log("useFormLoader: Sending queryParams:", queryParams);
+  const {
+    data: responsesRowsData,
+    isSuccess: isResponsesSuccess,
+    isFetching: isRowsFetching,
+    isPlaceholderData,
+    isError: isResponsesError,
+    isPending: isRowsPending,
+  } = useGetResponsesRows(formId, queryParams as any);
 
-  const { data: responsesRowsData, isSuccess: isResponsesSuccess } = useGetResponsesRows(formId, queryParams as any);
+  const { setPageInfo, setIsRowsLoading } = useInitiateFormStore();
 
-  const { setPageInfo } = useInitiateFormStore();
-
+  // 1. Sync loading state (Sync with query lifecycle)
   useEffect(() => {
-    if (responsesRowsData && isResponsesSuccess && formData) {
-      const data = responsesRowsData as any;
-      // Defensive mapping to handle both array and paginated object formats
-      const responses: any[] = Array.isArray(responsesRowsData)
-        ? responsesRowsData
-        : (responsesRowsData as any)?.edges?.map((e: any) => e.node) ||
-          (responsesRowsData as any)?.responses ||
-          [];
+    // We are loading if the query is pending (initial) OR if it's currently fetching new data (including transitions)
+    const activeLoading = isRowsPending || isPlaceholderData || isRowsFetching;
 
-      // Robust PageInfo detection (handle camelCase and snake_case)
-      const rawPageInfo = data?.pageInfo || data?.page_info;
-      const pageInfoFromData = rawPageInfo ? {
-        hasNextPage: !!(rawPageInfo.hasNextPage ?? rawPageInfo.has_next_page),
-        hasPreviousPage: !!(rawPageInfo.hasPreviousPage ?? rawPageInfo.has_previous_page),
-        startCursor: rawPageInfo.startCursor ?? rawPageInfo.start_cursor ?? null,
-        endCursor: rawPageInfo.endCursor ?? rawPageInfo.end_cursor ?? null,
-      } : null;
+    if (activeLoading) {
+      setIsRowsLoading(true);
+    }
+  }, [isRowsPending, isPlaceholderData, isRowsFetching, setIsRowsLoading]);
 
-      console.log("useFormLoader: responsesRowsData:", data);
-      console.log("useFormLoader: pageInfoFromData:", pageInfoFromData);
+  // 2. Clear loading on error
+  useEffect(() => {
+    if (isResponsesError) {
+      setIsRowsLoading(false);
+    }
+  }, [isResponsesError, setIsRowsLoading]);
 
-      // Map field IDs to displayNames for the grid
+  // 3. Process data when success
+  useEffect(() => {
+    if (isResponsesSuccess && formData) {
+      // If we have stale placeholder data, don't update the store yet, but keep loading true.
+      if (isPlaceholderData) return;
+
+      // Robust response data extraction
+      const findResponses = (obj: any): any[] | null => {
+        if (!obj || typeof obj !== "object") return null;
+        if (Array.isArray(obj)) return obj;
+        if (Array.isArray(obj.edges)) return obj.edges.map((e: any) => e.node);
+        if (Array.isArray(obj.responses)) return obj.responses;
+        if (obj.data) return findResponses(obj.data);
+        return null;
+      };
+
+      const responses = findResponses(responsesRowsData) || [];
+
+      // Robust PageInfo extraction
+      const findPageInfo = (obj: any): any | null => {
+        if (!obj || typeof obj !== "object") return null;
+        const pi = obj.pageInfo || obj.page_info;
+        if (pi) return pi;
+        if (obj.data) return findPageInfo(obj.data);
+        return null;
+      };
+
+      const rawPageInfo = findPageInfo(responsesRowsData);
+      const pageInfoFromData = rawPageInfo
+        ? {
+            hasNextPage: !!(rawPageInfo.hasNextPage ?? rawPageInfo.has_next_page),
+            hasPreviousPage: !!(rawPageInfo.hasPreviousPage ?? rawPageInfo.has_previous_page),
+            startCursor: rawPageInfo.startCursor ?? rawPageInfo.start_cursor ?? null,
+            endCursor: rawPageInfo.endCursor ?? rawPageInfo.end_cursor ?? null,
+          }
+        : null;
+
       const fieldIdToDisplayName = new Map<string, string>();
       formData.sections.forEach((section) => {
         section.fields.forEach((field) => {
@@ -85,24 +124,31 @@ export function useFormLoader(formId: string) {
         return row;
       });
 
+      // Atomic Update
       setRows(rows);
       setResponses(responses as any);
-
-      if (pageInfoFromData) {
-        setPageInfo(pageInfoFromData);
-      } else {
-        // Fallback for unexpected formats, though Rule 4 says trust cursors.
-        // If we don't have pageInfo, we can't do stable cursor pagination.
-        setPageInfo({
+      setPageInfo(
+        pageInfoFromData || {
           hasNextPage: false,
           hasPreviousPage: false,
           startCursor: null,
           endCursor: null,
-        });
-      }
+        },
+      );
 
+      // Reset loading state AFTER data is processed
+      setIsRowsLoading(false);
     }
-  }, [responsesRowsData, setRows, setPageInfo, isResponsesSuccess, formData, setResponses]);
+  }, [
+    responsesRowsData,
+    isResponsesSuccess,
+    isPlaceholderData,
+    formData,
+    setRows,
+    setResponses,
+    setPageInfo,
+    setIsRowsLoading,
+  ]);
 
   const lastFormIdRef = useRef<string | number | undefined>(undefined);
 

@@ -20,6 +20,7 @@ import { useResponsesViews } from "./hooks/useResponsesViews";
 import { useFormStore } from "./stores/form.store";
 import { ActionsRow, CenteredBox, MainContentWrapper, PageWrapper, TopSection } from "./styled";
 import { FormDto, FormFieldDto, UserPersonalDto } from "../../types/shared";
+import { IOrderBy } from "@src/types/enums/filtersAndSorts.enum";
 
 type ResponsePageRow = GridRowModel & {
   id: string | number;
@@ -112,6 +113,9 @@ const ResponsesPageContent = (): JSX.Element => {
         query: search,
         before: undefined,
         after: undefined,
+        pageNumber: 1,
+        sortBy: filter?.sortBy || "meta:index",
+        orderBy: filter?.orderBy || IOrderBy.DESC,
       });
     }, 500);
     return () => clearTimeout(timer);

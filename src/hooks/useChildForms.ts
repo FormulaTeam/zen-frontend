@@ -211,7 +211,7 @@ export const useChildForms = ({
         }
 
         const parentResponse = await getResponseById(Number(formId), id);
-        const linkedChildResponses = parentResponse.childResponses ?? [];
+        const linkedChildResponses = (parentResponse as any).childResponses ?? [];
 
           const childResponses = childFormIds
             .filter((childFormId) => availableChildFormIds.has(childFormId))

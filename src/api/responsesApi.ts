@@ -18,7 +18,7 @@ import queryClient from "./queryClient";
 import { useCreate } from "../utils/useCreate";
 import { ExcelImportResult } from "../types/interfaces/forms.types";
 import { useFetch } from "../utils/useFetch";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, keepPreviousData } from "@tanstack/react-query";
 import { useUpdate } from "../utils/useUpdate";
 import { BulkUpdateResponsesDto, CreateResponseDto, ResponseDto, FormDto } from "../types/shared";
 import { z } from "zod";
@@ -73,21 +73,21 @@ export const getResponseById = async (formId: number, responseId: string): Promi
 };
 
 /**
- * Create a new response for a form.
+ * Create responses for a form (Bulk submission).
  *
  * @param formId - The ID of the form.
- * @param responseData - The data for the new response.
- * @returns A promise that resolves to the created response.
+ * @param responseData - An array of data for the new responses.
+ * @returns A promise that resolves to an array of created responses.
  */
 export const createResponse = async (
   formId: number,
-  responseData: CreateResponseDto,
-): Promise<ResponseDto> => {
+  responseData: CreateResponseDto[],
+): Promise<ResponseDto[]> => {
   try {
-    const response = await apiClient.post<ResponseDto>(`/forms/${formId}/responses`, responseData);
+    const response = await apiClient.post<ResponseDto[]>(`/forms/${formId}/responses`, responseData);
     return response.data;
   } catch (error) {
-    console.error("Failed to create response:", error);
+    console.error("Failed to create responses:", error);
     throw error;
   }
 };
@@ -258,6 +258,7 @@ export const useGetResponsesRows = (
     params: safeParams,
     queryOptions: {
       enabled: !!formId,
+      placeholderData: keepPreviousData,
     },
   });
 };
@@ -286,13 +287,15 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
 
 export const useCreateResponse = (formId?: number) => {
   return useMutation({
-    mutationFn: (responseData: CreateResponseDto) => {
-      const targetFormId = formId || (responseData as any).form_id;
+    mutationFn: (responseData: CreateResponseDto | CreateResponseDto[]) => {
+      const dataArray = Array.isArray(responseData) ? responseData : [responseData];
+      const targetFormId = formId || (dataArray[0] as any).form_id;
       if (!targetFormId) throw new Error("formId is required for createResponse");
-      return createResponse(targetFormId, responseData);
+      return createResponse(targetFormId, dataArray);
     },
     onSuccess: (_, variables) => {
-      const targetFormId = formId || (variables as any).form_id;
+      const dataArray = Array.isArray(variables) ? variables : [variables];
+      const targetFormId = formId || (dataArray[0] as any).form_id;
       queryClient.invalidateQueries({ queryKey: ["responses", String(targetFormId)] });
     },
   });
