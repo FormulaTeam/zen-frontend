@@ -94,12 +94,15 @@ const ResponsesPageContent = (): JSX.Element => {
     currentViewConfig,
     currentView,
     savedViews,
-    isSaving,
-    handleSaveView,
+    hasUserCreatedViews,
+    selectedViewId,
+    defaultViewId,
+    handleViewDropdownChange,
     handleLoadView,
     handleDeleteView,
     handleApplyView,
-    hasUserCreatedViews,
+    handleSaveView,
+    isSaving,
   } = useResponsesViews();
 
   useEffect(() => {
@@ -201,6 +204,10 @@ const ResponsesPageContent = (): JSX.Element => {
             isSidePanelOpen={isSidePanelOpen}
             setIsSidePanelOpen={setIsSidePanelOpen}
             hasUserCreatedViews={hasUserCreatedViews}
+            savedViews={savedViews}
+            selectedViewId={selectedViewId}
+            defaultViewId={defaultViewId}
+            handleViewDropdownChange={handleViewDropdownChange}
           />
         </TopSection>
         <ResponsesTable

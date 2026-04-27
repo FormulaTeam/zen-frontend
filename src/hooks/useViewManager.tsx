@@ -285,11 +285,17 @@ export const useViewManager = ({
     [currentView, deleteView, form],
   );
 
+  const defaultViewId = useMemo(() => {
+    const defaultView = availableViews.find((v) => v.isDefault);
+    return defaultView?.id ? String(defaultView.id) : "";
+  }, [availableViews]);
+
   return {
     currentView,
     savedViews: availableViews,
     currentViewConfig,
     selectedViewId,
+    defaultViewId,
     isSaving,
     handleSaveView,
     handleLoadView,
