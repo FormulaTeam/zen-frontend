@@ -22,7 +22,7 @@ export const PRE_SYSTEM_COLUMNS: SystemViewColumn[] = [
 ];
 export const POST_SYSTEM_VIEW_COLUMNS: SystemViewColumn[] = [
   { columnId: "updated_by", displayName: "השתנה ע״י", defaultVisible: true },
-  { columnId: "updated_at", displayName: "תאריך שינוי", defaultVisible: true },
+  { columnId: "updated_at", displayName: "תאריך עדכון", defaultVisible: true },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -107,14 +107,16 @@ export function useViewColumnConfiguration({
           sOrder = 1;
         }
 
+        const visible = prev?.isVisible ?? prev?.visible ?? base.defaultVisible;
+
         return {
           id: prev?.id,
           columnId: base.columnId,
           displayName: base.displayName,
-          visible: prev?.isVisible ?? prev?.visible ?? base.defaultVisible,
+          visible,
           order: prev?.index ?? prev?.order ?? order++,
-          sortDirection: sortDir,
-          sortOrder: sOrder,
+          sortDirection: visible ? sortDir : undefined,
+          sortOrder: visible ? sOrder : undefined,
         };
       };
 
@@ -150,7 +152,20 @@ export function useViewColumnConfiguration({
 
   const toggleColumnVisibility = (columnId: string) => {
     setColumns((cols) =>
-      cols.map((c) => (c.columnId === columnId ? { ...c, visible: !c.visible } : c)),
+      cols.map((c) => {
+        if (c.columnId === columnId) {
+          const nextVisible = !c.visible;
+
+          return {
+            ...c,
+            visible: nextVisible,
+            sortDirection: !nextVisible ? undefined : c.sortDirection,
+            sortOrder: !nextVisible ? undefined : c.sortOrder,
+          };
+        }
+
+        return c;
+      }),
     );
   };
 
