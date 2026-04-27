@@ -885,7 +885,7 @@ export const ResponsesTable = React.memo(
             getCellClassName={getCellClassName}
             density="comfortable"
             rowHeight={isInEditMode ? 140 : 65}
-            loading={isRowsLoading}
+            loading={isRowsLoading && localRows.length === 0}
             checkboxSelection
             disableRowSelectionOnClick
             onRowSelectionModelChange={onRowSelectionModelChange}

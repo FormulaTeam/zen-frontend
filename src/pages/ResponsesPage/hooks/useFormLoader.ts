@@ -34,14 +34,17 @@ export function useFormLoader(formId: string) {
     isFetching: isRowsFetching,
     isPlaceholderData,
     isError: isResponsesError,
+    isPending: isRowsPending,
   } = useGetResponsesRows(formId, queryParams as any);
 
   const { setPageInfo, setIsRowsLoading } = useInitiateFormStore();
 
-  // 1. Sync loading state (Independent of processing)
+  // 1. Sync loading state (Targeted: only for initial load or key transitions)
   useEffect(() => {
-    setIsRowsLoading(isRowsFetching || isPlaceholderData);
-  }, [isRowsFetching, isPlaceholderData, setIsRowsLoading]);
+    // Show loading if we are in the initial pending state (no data yet)
+    // OR if we are transitioning between keys (pagination/filtering)
+    setIsRowsLoading(isRowsPending || isPlaceholderData);
+  }, [isRowsPending, isPlaceholderData, setIsRowsLoading]);
 
   // 2. Clear loading on error
   useEffect(() => {
