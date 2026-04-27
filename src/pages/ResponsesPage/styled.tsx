@@ -589,6 +589,17 @@ export const PaginationContainer = styled(Box)(({ theme }) => ({
   boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
 }));
 
+export const FooterInfoContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: theme.spacing(1),
+  backgroundColor: "#f5f7fa",
+  padding: "6px 12px",
+  borderRadius: "12px",
+  border: "1px solid #e0e4e8",
+  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+}));
+
 export const PaginationButton = styled(IconButton)(({ theme }) => ({
   width: "36px",
   height: "36px",
