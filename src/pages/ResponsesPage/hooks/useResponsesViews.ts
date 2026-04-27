@@ -28,7 +28,7 @@ type ViewManagerForm = Pick<FormDto, "id" | "name"> & {
 };
 
 export const useResponsesViews = (): UseResponsesViewsReturn => {
-  const { form, filter, setFilter } = useFormStore();
+  const { form, filter, setFilter, isRowsLoading, setIsRowsLoading } = useFormStore();
   const { user } = useAuth();
 
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
@@ -87,6 +87,8 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
   } = useViewManager({
     form: viewManagerForm,
     user: viewManagerUser,
+    isRowsLoading,
+    setIsRowsLoading,
   });
 
   const hasSavedViews = useMemo(() => savedViews.length > 0, [savedViews]);

@@ -25,6 +25,8 @@ interface UseViewManagerProps {
   onViewConfigChange?: (viewConfig?: ViewColumn[]) => void;
   setSorting?: (sorting: any[]) => void;
   tableColumns?: any[];
+  isRowsLoading?: boolean;
+  setIsRowsLoading?: (loading: boolean) => void;
 }
 
 enum HebrewMessages {
@@ -57,6 +59,8 @@ export const useViewManager = ({
   onViewConfigChange,
   setSorting,
   tableColumns,
+  isRowsLoading,
+  setIsRowsLoading,
 }: UseViewManagerProps) => {
   const formId = form ? String(form.id) : "";
   const [currentView, setCurrentView] = useState<ResponsesView>();
@@ -176,6 +180,7 @@ export const useViewManager = ({
    * -------------------------------- */
   const handleLoadView = useCallback(
     (view: ResponsesView) => {
+      setIsRowsLoading?.(true);
       setCurrentView(view);
       setCurrentViewConfig(view.config?.columns ?? []);
       setSelectedViewId(view.id ? String(view.id) : "");
@@ -184,7 +189,7 @@ export const useViewManager = ({
         applyViewSorting(setSorting, view, tableColumns);
       }
     },
-    [setSorting, tableColumns],
+    [setSorting, tableColumns, setIsRowsLoading],
   );
 
   /** --------------------------------
@@ -233,6 +238,7 @@ export const useViewManager = ({
       setSelectedViewId(viewId);
 
       if (!viewId) {
+        setIsRowsLoading?.(true);
         setCurrentView(undefined);
         setCurrentViewConfig(undefined);
         setSorting?.([]);
@@ -242,7 +248,7 @@ export const useViewManager = ({
       const view = availableViews.find((v) => (v.id ? String(v.id) : "") === viewId);
       if (view) handleLoadView(view);
     },
-    [availableViews, handleLoadView, setSorting],
+    [availableViews, handleLoadView, setSorting, setIsRowsLoading],
   );
 
   /** --------------------------------
