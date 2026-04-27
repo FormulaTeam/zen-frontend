@@ -17,16 +17,17 @@ export function useFormLoader(formId: string) {
     config: { enabled: !!formId },
   });
 
-  const queryParams = useMemo(() => ({
-    limit: filter?.pageSize ?? 25,
-    search: filter?.query ?? "",
-    sortBy: filter?.sortBy,
-    sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
-    before: filter?.before,
-    after: filter?.after,
-  }), [filter]);
-
-  console.log("useFormLoader: Sending queryParams:", queryParams);
+  const queryParams = useMemo(
+    () => ({
+      limit: filter?.pageSize ?? 25,
+      search: filter?.query ?? "",
+      sortBy: filter?.sortBy,
+      sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
+      before: filter?.before,
+      after: filter?.after,
+    }),
+    [filter],
+  );
 
   const {
     data: responsesRowsData,
@@ -46,26 +47,23 @@ export function useFormLoader(formId: string) {
 
     if (activeLoading) {
       setIsRowsLoading(true);
-    } else {
-      // If the query is not active, but we haven't processed the success yet, 
-      // let the success effect handle it. Otherwise, clear it now.
-      if (!isResponsesSuccess) {
-        setIsRowsLoading(false);
-      }
     }
-  }, [isRowsPending, isPlaceholderData, isRowsFetching, isResponsesSuccess, setIsRowsLoading]);
+  }, [isRowsPending, isPlaceholderData, isRowsFetching, setIsRowsLoading]);
 
-  // 2. Process data when success
+  // 2. Clear loading on error
+  useEffect(() => {
+    if (isResponsesError) {
+      setIsRowsLoading(false);
+    }
+  }, [isResponsesError, setIsRowsLoading]);
+
+  // 3. Process data when success
   useEffect(() => {
     if (isResponsesSuccess && formData) {
-      // Reset loading state immediately on success so the grid can transition 
-      // even if processing takes a few ms or results are empty.
-      setIsRowsLoading(false);
-
+      // If we have stale placeholder data, don't update the store yet, but keep loading true.
       if (isPlaceholderData) return;
 
-      const data = responsesRowsData as any;
-      
+      // Robust response data extraction
       const findResponses = (obj: any): any[] | null => {
         if (!obj || typeof obj !== "object") return null;
         if (Array.isArray(obj)) return obj;
@@ -77,6 +75,7 @@ export function useFormLoader(formId: string) {
 
       const responses = findResponses(responsesRowsData) || [];
 
+      // Robust PageInfo extraction
       const findPageInfo = (obj: any): any | null => {
         if (!obj || typeof obj !== "object") return null;
         const pi = obj.pageInfo || obj.page_info;
@@ -125,6 +124,7 @@ export function useFormLoader(formId: string) {
         return row;
       });
 
+      // Atomic Update
       setRows(rows);
       setResponses(responses as any);
       setPageInfo(
@@ -135,8 +135,8 @@ export function useFormLoader(formId: string) {
           endCursor: null,
         },
       );
-      
-      // Fallback: Force loading false on success
+
+      // Reset loading state AFTER data is processed
       setIsRowsLoading(false);
     }
   }, [
@@ -147,7 +147,7 @@ export function useFormLoader(formId: string) {
     setRows,
     setResponses,
     setPageInfo,
-    setIsRowsLoading
+    setIsRowsLoading,
   ]);
 
   const lastFormIdRef = useRef<string | number | undefined>(undefined);
