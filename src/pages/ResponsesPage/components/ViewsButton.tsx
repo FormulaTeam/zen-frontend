@@ -44,16 +44,16 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
                         borderRadius: "8px",
                         "& .MuiSelect-select": {
                             padding: "8px 14px",
-                            fontSize: "0.95rem",
+                            fontSize: "1.1rem",
                             fontWeight: 500,
                         }
                     }}
                 >
-                    <MenuItem value="" sx={{ fontStyle: "italic", color: "text.secondary" }}>
+                    <MenuItem value="" sx={{ fontStyle: "italic", color: "text.secondary", fontSize: "1.1rem" }}>
                         {SELECT_VIEW_LABEL}
                     </MenuItem>
                     {savedViews.map((view) => (
-                        <MenuItem key={String(view.id)} value={String(view.id)}>
+                        <MenuItem key={String(view.id)} value={String(view.id)} sx={{ fontSize: "1.1rem" }}>
                             {view.name}
                         </MenuItem>
                     ))}
