@@ -39,31 +39,45 @@ export function useFormLoader(formId: string) {
 
   const { setPageInfo, setIsRowsLoading } = useInitiateFormStore();
 
-  // 1. Sync loading state (Targeted: only for initial load or key transitions)
+  // 1. Sync loading state (Sync with query lifecycle)
   useEffect(() => {
-    // Show loading if we are in the initial pending state (no data yet)
-    // OR if we are transitioning between keys (pagination/filtering)
-    setIsRowsLoading(isRowsPending || isPlaceholderData);
-  }, [isRowsPending, isPlaceholderData, setIsRowsLoading]);
-
-  // 2. Clear loading on error
-  useEffect(() => {
-    if (isResponsesError) {
+    // We are loading if the query is pending (initial) OR if it's currently fetching new data (including transitions)
+    const activeLoading = isRowsPending || isPlaceholderData || isRowsFetching;
+    
+    // Only set to false if we are truly done
+    if (activeLoading) {
+      setIsRowsLoading(true);
+    } else {
       setIsRowsLoading(false);
     }
-  }, [isResponsesError, setIsRowsLoading]);
+  }, [isRowsPending, isPlaceholderData, isRowsFetching, setIsRowsLoading]);
 
-  // 3. Process data when success
+  // 2. Process data when success and not placeholder
   useEffect(() => {
-    if (responsesRowsData && isResponsesSuccess && formData && !isPlaceholderData) {
+    if (isResponsesSuccess && formData && !isPlaceholderData) {
       const data = responsesRowsData as any;
-      const responses: any[] = Array.isArray(responsesRowsData)
-        ? responsesRowsData
-        : (responsesRowsData as any)?.edges?.map((e: any) => e.node) ||
-          (responsesRowsData as any)?.responses ||
-          [];
+      
+      // ... same processing logic ...
+      const findResponses = (obj: any): any[] | null => {
+        if (!obj || typeof obj !== "object") return null;
+        if (Array.isArray(obj)) return obj;
+        if (Array.isArray(obj.edges)) return obj.edges.map((e: any) => e.node);
+        if (Array.isArray(obj.responses)) return obj.responses;
+        if (obj.data) return findResponses(obj.data);
+        return null;
+      };
 
-      const rawPageInfo = data?.pageInfo || data?.page_info;
+      const responses = findResponses(responsesRowsData) || [];
+
+      const findPageInfo = (obj: any): any | null => {
+        if (!obj || typeof obj !== "object") return null;
+        const pi = obj.pageInfo || obj.page_info;
+        if (pi) return pi;
+        if (obj.data) return findPageInfo(obj.data);
+        return null;
+      };
+
+      const rawPageInfo = findPageInfo(responsesRowsData);
       const pageInfoFromData = rawPageInfo
         ? {
             hasNextPage: !!(rawPageInfo.hasNextPage ?? rawPageInfo.has_next_page),
