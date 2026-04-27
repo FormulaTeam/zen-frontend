@@ -1,4 +1,5 @@
 import { permission } from "formula-gear";
+import { useCallback } from "react";
 import { ResponsesView } from "../types/interfaces/tableViews.types";
 
 interface UseViewPermissionsProps {
@@ -27,7 +28,7 @@ export const useViewPermissions = ({
   const canManagePublicViews = Boolean(user?.isSuperAdmin || permissionTypes?.includes(permission.UpdateForm));
 
   // Helper function to check if user can edit/delete a specific view
-  const canEditOrDeleteView = (view?: ResponsesView): boolean => {
+  const canEditOrDeleteView = useCallback((view?: ResponsesView): boolean => {
     // If no view, it's a "create" scenario which is always allowed
     if (!view || !view.id) {
       return true;
@@ -67,7 +68,7 @@ export const useViewPermissions = ({
     }
 
     return false;
-  };
+  }, [user]);
 
   return {
     canManagePublicViews,

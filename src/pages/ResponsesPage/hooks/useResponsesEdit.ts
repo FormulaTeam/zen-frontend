@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useCallback } from "react";
 import { GridRowModel } from "@mui/x-data-grid-pro";
 import { showSuccessNotification, showErrorNotification, DEFAULT_DATE_FORMAT } from "@utils/utils";
 import { useBatchUpdateResponses, useCreateResponse } from "@api/responsesApi";
@@ -149,7 +149,7 @@ export const useResponsesEdit = () => {
   const responseRows: Row[] = (rows?.filter((row) => row != null) as Row[]) || [];
   const hasUnsavedChanges = editedRows.size > 0;
 
-  const toggleEditMode = (): void => {
+  const toggleEditMode = useCallback((): void => {
     if (isInEditMode && hasUnsavedChanges) {
       setShowCancelDialog(true);
     } else {
@@ -164,29 +164,29 @@ export const useResponsesEdit = () => {
         newRowCounterRef.current = 0;
       }
     }
-  };
+  }, [isInEditMode, hasUnsavedChanges, responseRows]);
 
-  const confirmCancel = (): void => {
+  const confirmCancel = useCallback((): void => {
     setEditedRows(new Map());
     setLocalRows(responseRows);
     setIsInEditMode(false);
     setShowCancelDialog(false);
     setValidationErrors({});
     newRowCounterRef.current = 0;
-  };
+  }, [responseRows]);
 
-  const closeCancelDialog = (): void => {
+  const closeCancelDialog = useCallback((): void => {
     setShowCancelDialog(false);
-  };
+  }, []);
 
-  const startCellEdit = (): void => {
+  const startCellEdit = useCallback((): void => {
     if (!isInEditMode) {
       setIsInEditMode(true);
       setLocalRows([...responseRows]);
     }
-  };
+  }, [isInEditMode, responseRows]);
 
-  const handleCellLiveChange = <T>(
+  const handleCellLiveChange = useCallback(<T>(
     rowId: RowId,
     columnName: string,
     value: T,
@@ -256,9 +256,9 @@ export const useResponsesEdit = () => {
     } catch {
       // ignore
     }
-  };
+  }, [formFields]);
 
-  const processRowUpdate = (newRow: GridRowModel, oldRow: GridRowModel): GridRowModel => {
+  const processRowUpdate = useCallback((newRow: GridRowModel, oldRow: GridRowModel): GridRowModel => {
     const newRowId = newRow.id as RowId;
 
     setLocalRows((prevRows) =>
@@ -325,7 +325,7 @@ export const useResponsesEdit = () => {
     }
 
     return newRow;
-  };
+  }, [formFields]);
 
   const buildResponseUpdatePayload = async (
     rowId: string,
@@ -404,7 +404,7 @@ export const useResponsesEdit = () => {
     };
   };
 
-  const addNewResponse = (): void => {
+  const addNewResponse = useCallback((): void => {
     if (!isInEditMode || !dtoForm || formFields.length === 0) return;
 
     newRowCounterRef.current += 1;
@@ -431,9 +431,9 @@ export const useResponsesEdit = () => {
 
     setLocalRows((prev) => [newRow, ...prev]);
     setEditedRows((prev) => new Map(prev).set(tempId, newRow));
-  };
+  }, [isInEditMode, dtoForm, formFields, user]);
 
-  const saveChanges = async (): Promise<void> => {
+  const saveChanges = useCallback(async (): Promise<void> => {
     try {
       const newValidationErrors: Record<RowId, Record<string, string>> = {};
 
