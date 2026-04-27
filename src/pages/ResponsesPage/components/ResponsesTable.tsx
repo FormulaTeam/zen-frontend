@@ -736,14 +736,8 @@ export const ResponsesTable = React.memo(
 
     const CustomFooter = (): JSX.Element => {
       return (
-        <GridFooterContainer>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: 2, mr: 2 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
-              {`${form?.responsesCount ?? 0} תגובות בסך הכל`}
-            </Typography>
-          </Stack>
-
-          <Stack direction="row" spacing={3} alignItems="center" sx={{ mr: 4 }}>
+        <GridFooterContainer sx={{ justifyContent: "space-between", px: 3 }}>
+          <Stack direction="row" spacing={3} alignItems="center">
             <Stack direction="row" spacing={1} alignItems="center">
               <Select
                 value={filter?.pageSize ?? 25}
@@ -790,6 +784,12 @@ export const ResponsesTable = React.memo(
                 </span>
               </Tooltip>
             </PaginationContainer>
+          </Stack>
+
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
+              {`${form?.responsesCount ?? 0} תגובות בסך הכל`}
+            </Typography>
           </Stack>
         </GridFooterContainer>
       );
