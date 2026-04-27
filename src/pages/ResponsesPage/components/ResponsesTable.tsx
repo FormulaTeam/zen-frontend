@@ -143,6 +143,7 @@ export const ResponsesTable = React.memo(
           ...filter,
           after: pageInfo.endCursor,
           before: undefined,
+          pageNumber: (filter?.pageNumber ?? 1) + 1,
         });
       }
     }, [pageInfo, filter, setFilter]);
@@ -153,6 +154,7 @@ export const ResponsesTable = React.memo(
           ...filter,
           before: pageInfo.startCursor,
           after: undefined,
+          pageNumber: Math.max((filter?.pageNumber ?? 1) - 1, 1),
         });
       }
     }, [pageInfo, filter, setFilter]);
@@ -214,6 +216,7 @@ export const ResponsesTable = React.memo(
             orderBy: sort?.toUpperCase() as any,
             before: undefined,
             after: undefined,
+            pageNumber: 1,
           });
         } else {
           setFilter({
@@ -222,6 +225,7 @@ export const ResponsesTable = React.memo(
             orderBy: undefined,
             before: undefined,
             after: undefined,
+            pageNumber: 1,
           });
         }
       },
@@ -730,17 +734,24 @@ export const ResponsesTable = React.memo(
           pageSize: newSize,
           before: undefined,
           after: undefined,
+          pageNumber: 1,
         });
       },
       [filter, setFilter],
     );
 
     const CustomFooter = (): JSX.Element => {
+      const pageNumber = filter?.pageNumber ?? 1;
+      const pageSize = filter?.pageSize ?? 25;
+      const totalCount = form?.responsesCount ?? 0;
+      const startRange = totalCount === 0 ? 0 : (pageNumber - 1) * pageSize + 1;
+      const endRange = Math.min(pageNumber * pageSize, totalCount);
+
       return (
         <GridFooterContainer sx={{ justifyContent: "space-between", px: 3 }}>
           <FooterInfoContainer>
             <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
-              {`${form?.responsesCount ?? 0} תגובות בסך הכל`}
+              {`מציג ${startRange}-${endRange} תגובות מתוך ${totalCount}`}
             </Typography>
           </FooterInfoContainer>
 
