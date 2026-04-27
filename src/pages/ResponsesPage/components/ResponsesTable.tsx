@@ -137,6 +137,8 @@ export const ResponsesTable = React.memo(
 
     const currentViewConfig = useMemo(() => currentView?.columns || [], [currentView]);
 
+    if (!form) return null;
+
     const [isNavigating, setIsNavigating] = useState(false);
     const transitionInProgress = useRef(false);
 

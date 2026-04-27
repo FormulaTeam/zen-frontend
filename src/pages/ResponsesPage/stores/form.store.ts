@@ -51,8 +51,6 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
 export function useFormStore() {
   const store = useInitiateFormStore();
 
-  if (!store.form || !store.permissions) throw new Error("form has not been loaded.");
-
   return {
     form: store.form,
     permissions: store.permissions,

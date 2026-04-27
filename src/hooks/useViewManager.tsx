@@ -180,7 +180,6 @@ export const useViewManager = ({
    * -------------------------------- */
   const handleLoadView = useCallback(
     (view: ResponsesView) => {
-      setIsRowsLoading?.(true);
       setCurrentView(view);
       setCurrentViewConfig(view.config?.columns ?? []);
       setSelectedViewId(view.id ? String(view.id) : "");
@@ -189,7 +188,7 @@ export const useViewManager = ({
         applyViewSorting(setSorting, view, tableColumns);
       }
     },
-    [setSorting, tableColumns, setIsRowsLoading],
+    [setSorting, tableColumns],
   );
 
   /** --------------------------------
@@ -238,7 +237,6 @@ export const useViewManager = ({
       setSelectedViewId(viewId);
 
       if (!viewId) {
-        setIsRowsLoading?.(true);
         setCurrentView(undefined);
         setCurrentViewConfig(undefined);
         setSorting?.([]);
@@ -248,7 +246,7 @@ export const useViewManager = ({
       const view = availableViews.find((v) => (v.id ? String(v.id) : "") === viewId);
       if (view) handleLoadView(view);
     },
-    [availableViews, handleLoadView, setSorting, setIsRowsLoading],
+    [availableViews, handleLoadView, setSorting],
   );
 
   /** --------------------------------
