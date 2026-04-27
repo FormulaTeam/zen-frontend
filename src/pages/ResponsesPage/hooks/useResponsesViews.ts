@@ -118,16 +118,18 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
       }
     }
 
-    if (sortBy) {
+    const orderBy = (currentView.sortDirection || "asc").toUpperCase() as any;
+
+    if (sortBy && (filter?.sortBy !== sortBy || filter?.orderBy !== orderBy)) {
       setFilter({
         ...filter,
         sortBy,
-        orderBy: (currentView.sortDirection || "asc").toUpperCase() as any,
+        orderBy,
         before: undefined,
         after: undefined,
       });
     }
-  }, [currentView?.id, currentView?.sortColumnId, currentView?.sortDirection]);
+  }, [currentView?.id, currentView?.sortColumnId, currentView?.sortDirection, filter, setFilter]);
 
   return {
     isSidePanelOpen,
