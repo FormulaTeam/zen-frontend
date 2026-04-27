@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useViewManager } from "../../../hooks/useViewManager";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useFormStore } from "../stores/form.store";
 import { ResponsesView, ViewColumn } from "../../../types/interfaces/tableViews.types";
 import { FormDto, FormFieldDto, UserPersonalDto } from "../../../types/shared";
+import { MetaColumnIds } from "../../../utils/interfaces";
 
 export interface UseResponsesViewsReturn {
   isSidePanelOpen: boolean;
@@ -16,7 +17,7 @@ export interface UseResponsesViewsReturn {
   handleSaveView: (view: ResponsesView) => Promise<void>;
   handleLoadView: (view: ResponsesView) => void;
   handleViewDropdownChange: (viewId: string) => void;
-  handleApplyView: (config: ViewColumn[]) => void;
+  handleApplyView: (view: ResponsesView) => void;
   handleDeleteView: (view: ResponsesView) => Promise<void>;
 }
 
@@ -25,7 +26,7 @@ type ViewManagerForm = Pick<FormDto, "id" | "name"> & {
 };
 
 export const useResponsesViews = (): UseResponsesViewsReturn => {
-  const { form } = useFormStore();
+  const { form, filter, setFilter } = useFormStore();
   const { user } = useAuth();
 
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
@@ -51,23 +52,21 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
       return undefined;
     }
 
-    const safeUpn = "upn" in user && typeof user.upn === "string" ? user.upn : "";
+    const safeUpn = (user as any)?.upn || (user as any)?.UPN || "";
+    const safeEmail = (user as any)?.email || (user as any)?.mail || "";
 
-    if ("name" in user && typeof user.name === "string") {
-      return {
-        name: user.name || safeUpn,
-        upn: safeUpn,
-      };
+    let displayName = (user as any)?.name || "";
+    if (!displayName) {
+      const firstName = (user as any)?.firstName || "";
+      const lastName = (user as any)?.lastName || "";
+      displayName = `${firstName} ${lastName}`.trim();
     }
 
-    const firstName =
-      "firstName" in user && typeof user.firstName === "string" ? user.firstName : "";
-    const lastName = "lastName" in user && typeof user.lastName === "string" ? user.lastName : "";
-    const fullName = `${firstName} ${lastName}`.trim();
-
     return {
-      name: fullName || safeUpn,
+      ...user,
+      name: displayName || safeUpn || safeEmail,
       upn: safeUpn,
+      email: safeEmail,
     };
   }, [user]);
 
@@ -86,6 +85,49 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
     form: viewManagerForm,
     user: viewManagerUser,
   });
+
+  // Sync view sorting to store filter
+  useEffect(() => {
+    if (!currentView) return;
+
+    let sortBy: string | undefined;
+
+    if (currentView.sortColumnId) {
+      const sortedColumn = currentView.columns?.find((col) => col.id === currentView.sortColumnId);
+      if (sortedColumn) {
+        if (sortedColumn.fieldId) {
+          sortBy = `field:${sortedColumn.fieldId}`;
+        } else if (sortedColumn.metaColumnId) {
+          const metaName = Object.keys(MetaColumnIds).find(
+            (key) => MetaColumnIds[key as keyof typeof MetaColumnIds] === sortedColumn.metaColumnId,
+          );
+          if (metaName) {
+            sortBy = `meta:${metaName}`;
+          }
+        }
+      }
+    } else {
+      // Legacy fallback
+      const legacySort = currentView.config?.columns?.find(
+        (col) => col.sortDirection && col.sortOrder === 1,
+      );
+      if (legacySort) {
+        const isMeta =
+          ["id", "index", "pushed_to_metro", "updated_by_name", "updated", "created_at", "created_by_name"].includes(legacySort.columnId);
+        sortBy = isMeta ? `meta:${legacySort.columnId}` : `field:${legacySort.columnId}`;
+      }
+    }
+
+    if (sortBy) {
+      setFilter({
+        ...filter,
+        sortBy,
+        orderBy: (currentView.sortDirection || "asc").toUpperCase() as any,
+        before: undefined,
+        after: undefined,
+      });
+    }
+  }, [currentView?.id, currentView?.sortColumnId, currentView?.sortDirection]);
 
   return {
     isSidePanelOpen,

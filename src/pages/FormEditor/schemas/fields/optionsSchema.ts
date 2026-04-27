@@ -1,6 +1,20 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
-import { any, array, boolean, discriminatedUnion, enum as zod_enum, literal, object, record, string } from "zod";
+import {
+  any,
+  array,
+  boolean,
+  discriminatedUnion,
+  literal,
+  object,
+  record,
+  string,
+} from "zod";
+import * as Gear from "formula-gear";
+
+// Use bracket notation to bypass potential bundler export issues if cache is stale
+const GearAny = Gear as any;
+const gearOptionsSource = GearAny["optionsSource"] || { Manual: 1, FormFieldResponses: 2 };
 
 enum OptionsSource {
   MANUAL = 1,
@@ -12,21 +26,23 @@ const noFieldSelectedErrorMessage = "לא נבחר שדה";
 const duplicateOptionErrorMessage = "לא ניתן לחזור על אפשרות קיימת";
 
 const baseOptionsExtraSchema = object({
-  source: zod_enum(OptionsSource),
+  source: any(), // We'll refine this in sub-schemas
   multiple: boolean().default(false),
 
   options: record(string(), any()).optional(),
 });
 
-const manualOptionsSchema = baseOptionsExtraSchema.safeExtend({
+const manualOptionsSchema = baseOptionsExtraSchema.extend({
   source: literal(OptionsSource.MANUAL),
 
   options: object({
-    items: array(object({
-      id: string().min(1),
-      text: string().min(1, "חובה לציין טקסט לכל אפשרות"),
-      controllingItemsIds: array(string().min(1)).optional(),
-    })).min(2, "על השדה להכיל 2 או יותר אפשרויות"),
+    items: array(
+      object({
+        id: string().min(1),
+        text: string().min(1, "חובה לציין טקסט לכל אפשרות"),
+        controllingItemsIds: array(string().min(1)).optional(),
+      }),
+    ).min(2, "על השדה להכיל 2 או יותר אפשרויות"),
     controllingOptionsFieldId: string().min(1).optional(),
     defaultOptionId: string().min(1).optional(),
   }).superRefine(({ items, defaultOptionId }, ctx) => {
@@ -62,7 +78,7 @@ const manualOptionsSchema = baseOptionsExtraSchema.safeExtend({
   }),
 });
 
-const formFieldResponsesOptionsSchema = baseOptionsExtraSchema.safeExtend({
+const formFieldResponsesOptionsSchema = baseOptionsExtraSchema.extend({
   source: literal(OptionsSource.FORM_FIELD_RESPONSES),
 
   options: object({
@@ -71,13 +87,10 @@ const formFieldResponsesOptionsSchema = baseOptionsExtraSchema.safeExtend({
   }),
 });
 
-const optionsSchema = baseFormFieldSchema.safeExtend({
+const optionsSchema = baseFormFieldSchema.extend({
   typeId: literal(FieldTypeIds.options),
 
-  extra: discriminatedUnion("source", [
-    manualOptionsSchema,
-    formFieldResponsesOptionsSchema,
-  ]).optional(),
+  extra: discriminatedUnion("source", [manualOptionsSchema, formFieldResponsesOptionsSchema]).optional(),
 });
 
 export { OptionsSource };

@@ -60,7 +60,7 @@ function ManualOptions(props: Props) {
   const definedItems = useMemo(() => items?.filter((item) => !!item.text), [items]);
 
   useEffect(() => {
-    onChange({ source: OptionsSource.MANUAL, options: { ...options, items } });
+    onChange({ source: OptionsSource.MANUAL as const, options: { ...options, items } });
   }, []);
 
   useEffect(() => {
@@ -297,7 +297,7 @@ function ManualOptions(props: Props) {
             value={defaultOptionId ?? ""}
             label={"ברירת מחדל"}
             onChange={(e) => {
-              onChange({ options: { ...options, defaultOptionId: e.target.value } });
+              onChange({ options: { ...options, defaultOptionId: e.target.value as string } });
             }}>
             {
               definedItems.map((item) => (

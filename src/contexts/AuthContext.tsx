@@ -8,12 +8,18 @@ import {
   useEffect
 } from "react";
 import { Role } from "../utils/interfaces";
+import { logoutAction } from "../utils/auth";
+
+import { ROLE_CATALOG } from "../consts/roles";
 
 export interface User {
   firstName?: string;
   lastName?: string;
   displayName?: string;
   upn?: string;
+  email?: string;
+  mail?: string;
+  UPN?: string;
 }
 
 interface AuthContextType {
@@ -21,7 +27,7 @@ interface AuthContextType {
   loading: boolean;
   login: ({ user }: { user: User }) => void;
   logout: () => void;
-  roles: Role[];
+  roles: any[];
 }
 
 interface AuthProviderProps {
@@ -45,13 +51,6 @@ export const useAuth = () => {
  * AuthProvider: Provides authentication state and methods across the app.
  * roles is a static catalog derived from formula-gear's roleId constants.
  */
-export const logoutAction = () => {
-  localStorage.removeItem("user");
-  if (!window.location.pathname.includes("/login") && !window.location.pathname.includes("/comeback")) {
-    window.location.href = "/login";
-  }
-};
-
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,7 +86,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, roles: [], logout }}>
+    <AuthContext.Provider value={{ user, loading, login, roles: ROLE_CATALOG, logout }}>
       {children}
     </AuthContext.Provider>
   );

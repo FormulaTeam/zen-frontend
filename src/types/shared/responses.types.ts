@@ -5,11 +5,17 @@ import {
   CreateResponseSchema,
   ResponseFieldValueSchema,
   ResponseSchema,
-  UpdateResponseSchema,
 } from "formula-gear";
 
 export type BulkDeleteResponsesQuery = z.infer<typeof BulkDeleteResponsesQuerySchema>;
 export type CreateResponseDto = z.infer<typeof CreateResponseSchema>;
 export type ResponseDto = z.infer<typeof ResponseSchema>;
 export type ResponseFieldValueDto = z.infer<typeof ResponseFieldValueSchema>;
-export type UpdateResponseDto = z.infer<typeof UpdateResponseSchema>;
+export type UpdateOneResponseDto = {
+  responseId: string;
+  fieldValues: ResponseFieldValueDto[];
+};
+
+export type BulkUpdateResponsesDto = {
+  responses: UpdateOneResponseDto[];
+};

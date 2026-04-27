@@ -11,8 +11,9 @@ export const normalizeFieldValue = (field: any, value: any): any => {
   }
 
   if (field.typeId === FieldTypeIds.options) {
-    if (field.multiSelect && newValue && !Array.isArray(newValue)) newValue = [newValue];
-    else if (!field.multiSelect && Array.isArray(newValue)) newValue = newValue[0];
+    const multiSelect = Boolean(field.multiSelect ?? field.extra?.multiSelect ?? field.extra?.multiple);
+    if (multiSelect && newValue && !Array.isArray(newValue)) newValue = [newValue];
+    else if (!multiSelect && Array.isArray(newValue)) newValue = newValue[0];
   }
 
   return newValue;

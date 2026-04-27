@@ -13,6 +13,11 @@ const NavigatorWrapper = styled(Box)`
 
 const YearLabel = styled(Typography)`
   margin: 0 8px;
+  display: inline-block;
+  font-family: "Assistant-Bold", sans-serif;
+  font-size: 1.25rem;
+  line-height: 1.6;
+  font-weight: 500;
 `;
 
 interface ChartYearNavigatorProps {
@@ -27,7 +32,7 @@ const ChartYearNavigator: React.FC<ChartYearNavigatorProps> = ({ year, nextYear,
         <ArrowForwardIosIcon fontSize="small" />
       </IconButton>
 
-      <YearLabel variant="h6" as="span">
+      <YearLabel variant="h6">
         {year}
       </YearLabel>
 

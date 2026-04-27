@@ -1,18 +1,20 @@
 import { useState, useEffect } from "react";
-import { getForms } from "../api";
+import { getForms, getLinkableForms, FormIdentifierDto } from "../api";
 import { useAuth } from "../contexts/AuthContext";
 import { FormDto } from "../types/shared";
 
 interface UseFormInFormSearchProps {
+  formId: number;
   linkedFormId?: number;
 }
 
 export const useFormInFormSearch = ({
-  linkedFormId: linkedFormId,
+  formId,
+  linkedFormId,
 }: UseFormInFormSearchProps) => {
-  const [forms, setForms] = useState<FormDto[]>([]);
+  const [forms, setForms] = useState<FormIdentifierDto[]>([]);
   const [loadingForms, setLoadingForms] = useState<boolean>(false);
-  const [selectedForm, setSelectedForm] = useState<FormDto | null>(null);
+  const [selectedForm, setSelectedForm] = useState<FormDto | FormIdentifierDto | null>(null);
   const [formSearchText, setFormSearchText] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -21,18 +23,14 @@ export const useFormInFormSearch = ({
   // Load initial form if linkedFormId exists
   useEffect(() => {
     if (linkedFormId) {
-      const filter = {
-        query: {
-          $or: [{ name: { $regex: formSearchText } }, { description: { $regex: formSearchText } }],
-          users: { $elemMatch: { upn: user?.upn?.toLowerCase() } },
-          id: linkedFormId,
-        },
-      };
-      getForms(filter)
+      getForms({
+        query: { id: linkedFormId }
+      })
         .then((response) => {
           setSelectedForm(response[0] ?? null);
         })
         .catch((error) => {
+          console.error("Failed to load initial form:", error);
           setSelectedForm(null);
         })
         .finally(() => {
@@ -42,44 +40,31 @@ export const useFormInFormSearch = ({
       setLoading(false);
       setSelectedForm(null);
     }
-  }, [linkedFormId, user?.upn]);
+  }, [linkedFormId]);
 
-  // Search forms by name or description
+  // Fetch linkable forms (all or with search)
   useEffect(() => {
-    setLoadingForms(true);
-    const abortController = new AbortController();
-
-    if (formSearchText.length > 2) {
-      const filter = {
-        query: {
-          $or: [{ name: { $regex: formSearchText } }, { description: { $regex: formSearchText } }],
-          users: { $elemMatch: { upn: user?.upn?.toLowerCase() } },
-        },
-        signal: abortController.signal,
-      };
-      getForms(filter)
+    if (formId) {
+      setLoadingForms(true);
+      getLinkableForms(formId, formSearchText || undefined)
         .then((response) => {
           setForms(response);
           setLoadingForms(false);
         })
         .catch((error) => {
+          console.error("Failed to fetch linkable forms:", error);
           setForms([]);
           setLoadingForms(false);
         });
-    } else {
-      setForms([]);
-      setLoadingForms(false);
     }
-
-    return () => abortController.abort();
-  }, [formSearchText, user?.upn]);
+  }, [formId, formSearchText]);
 
   const handleSearchForm = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setFormSearchText(value);
   };
 
-  const handleSelectForm = (event: React.SyntheticEvent, value: FormDto | null) => {
+  const handleSelectForm = (event: React.SyntheticEvent, value: FormDto | FormIdentifierDto | null) => {
     setSelectedForm(value);
   };
 

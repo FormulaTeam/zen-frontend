@@ -9,7 +9,7 @@ import { Row } from "@utils/interfaces";
 import { useRowExpansion } from "./useRowExpansion";
 import { ExpandIconBox } from "../styled";
 import { ExpandedRowContent } from "../components/childForms/ExpandedRowContent";
-import { ViewColumn } from "../../../types/interfaces/tableViews.types";
+import { ResponsesView, ResponsesViewColumn } from "../../../types/interfaces/tableViews.types";
 import { FormDto, FormFieldDto } from "../../../types/shared";
 import { fieldType } from "formula-gear";
 
@@ -29,7 +29,7 @@ interface UseDetailPanelProps {
   childrenFormsData: ChildFormData[];
   isInEditMode: boolean;
   getChildFormData: (formId: number) => ChildFormData | undefined;
-  currentViewConfig?: ViewColumn[];
+  currentViewConfig?: ResponsesViewColumn[];
 }
 
 interface UseDetailPanelReturn {
@@ -62,9 +62,9 @@ export const useDetailPanel = ({
     }
 
     const visibleIds = new Set<string>();
-    currentViewConfig.forEach((viewColumn) => {
-      if (viewColumn.visible) {
-        visibleIds.add(viewColumn.columnId);
+    currentViewConfig.forEach((vc: any) => {
+      if (vc.isVisible ?? vc.visible) {
+        visibleIds.add(vc.fieldId || vc.columnId);
       }
     });
     return visibleIds;
