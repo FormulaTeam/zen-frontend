@@ -99,6 +99,7 @@ const ResponsesPageContent = (): JSX.Element => {
     handleLoadView,
     handleDeleteView,
     handleApplyView,
+    hasUserCreatedViews,
   } = useResponsesViews();
 
   useEffect(() => {
@@ -196,7 +197,11 @@ const ResponsesPageContent = (): JSX.Element => {
             )}
           </ActionsRow>
           <SearchInfo search={search} setSearch={setSearch} />
-          <ViewsButton isSidePanelOpen={isSidePanelOpen} setIsSidePanelOpen={setIsSidePanelOpen} />
+          <ViewsButton
+            isSidePanelOpen={isSidePanelOpen}
+            setIsSidePanelOpen={setIsSidePanelOpen}
+            hasUserCreatedViews={hasUserCreatedViews}
+          />
         </TopSection>
         <ResponsesTable
           isInEditMode={isInEditMode}

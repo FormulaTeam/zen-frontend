@@ -5,19 +5,20 @@ import { ViewManageButton } from "@components/Responses/styled";
 import { UseResponsesViewsReturn } from "../hooks/useResponsesViews";
 
 interface ViewsButtonProps
-    extends Pick<UseResponsesViewsReturn, "isSidePanelOpen" | "setIsSidePanelOpen"> { }
+    extends Pick<UseResponsesViewsReturn, "isSidePanelOpen" | "setIsSidePanelOpen" | "hasUserCreatedViews"> { }
 
 const MANAGE_VIEWS_LABEL = "ניהול תצוגות";
 
-export const ViewsButton: React.FC<ViewsButtonProps> = ({ isSidePanelOpen, setIsSidePanelOpen }) => (
+export const ViewsButton: React.FC<ViewsButtonProps> = ({ isSidePanelOpen, setIsSidePanelOpen, hasUserCreatedViews }) => (
     <Tooltip title={MANAGE_VIEWS_LABEL}>
         <span>
             <ViewManageButton
                 variant="contained"
                 onClick={() => setIsSidePanelOpen(true)}
-                disabled={isSidePanelOpen}>
+                disabled={isSidePanelOpen}
+                sx={hasUserCreatedViews ? { width: "39px", height: "39px", padding: "8px", minWidth: 0 } : {}}>
                 <BackupTable />
-                <span>{MANAGE_VIEWS_LABEL}</span>
+                {!hasUserCreatedViews && <span>{MANAGE_VIEWS_LABEL}</span>}
             </ViewManageButton>
         </span>
     </Tooltip>
