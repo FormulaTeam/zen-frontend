@@ -737,20 +737,27 @@ export const ResponsesTable = React.memo(
     const CustomFooter = (): JSX.Element => {
       return (
         <GridFooterContainer sx={{ justifyContent: "space-between", px: 3 }}>
-          <Stack direction="row" spacing={1} alignItems="center">
+          <FooterInfoContainer>
             <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
               {`${form?.responsesCount ?? 0} תגובות בסך הכל`}
             </Typography>
-          </Stack>
+          </FooterInfoContainer>
 
-          <Stack direction="row" spacing={3} alignItems="center">
-            <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={2} alignItems="center">
+            <FooterInfoContainer>
               <Select
                 value={filter?.pageSize ?? 25}
                 onChange={handlePageSizeChange}
                 size="small"
                 variant="standard"
-                sx={{ minWidth: 40, fontSize: "0.875rem", textAlign: "center", fontWeight: 500 }}
+                disableUnderline
+                sx={{
+                  minWidth: 40,
+                  fontSize: "0.875rem",
+                  textAlign: "center",
+                  fontWeight: 600,
+                  color: "#4a5568",
+                }}
                 disabled={isInEditMode}>
                 {[10, 25, 50, 100].map((size) => (
                   <MenuItem key={size} value={size}>
@@ -758,10 +765,10 @@ export const ResponsesTable = React.memo(
                   </MenuItem>
                 ))}
               </Select>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
                 תגובות בעמוד
               </Typography>
-            </Stack>
+            </FooterInfoContainer>
 
             <PaginationContainer>
               <Tooltip title="עמוד קודם">
