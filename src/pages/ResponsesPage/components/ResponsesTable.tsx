@@ -51,6 +51,7 @@ import {
   CellErrorText,
   CellValueFlex,
   PaginationContainer,
+  FooterInfoContainer,
   PaginationButton,
 } from "../styled";
 import { useChildForms } from "../hooks/useChildForms";
