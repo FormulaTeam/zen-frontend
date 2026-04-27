@@ -33,19 +33,26 @@ export function useFormLoader(formId: string) {
     isSuccess: isResponsesSuccess,
     isFetching: isRowsFetching,
     isPlaceholderData,
+    isError: isResponsesError,
   } = useGetResponsesRows(formId, queryParams as any);
 
   const { setPageInfo, setIsRowsLoading } = useInitiateFormStore();
 
+  // 1. Sync loading state (Independent of processing)
   useEffect(() => {
-    // If we are currently fetching or showing placeholder data, we are loading.
-    if (isRowsFetching || isPlaceholderData) {
-      setIsRowsLoading(true);
-      return;
-    }
+    setIsRowsLoading(isRowsFetching || isPlaceholderData);
+  }, [isRowsFetching, isPlaceholderData, setIsRowsLoading]);
 
-    // If we have data and it's not stale (placeholder), process it and then stop loading.
-    if (responsesRowsData && isResponsesSuccess && formData) {
+  // 2. Clear loading on error
+  useEffect(() => {
+    if (isResponsesError) {
+      setIsRowsLoading(false);
+    }
+  }, [isResponsesError, setIsRowsLoading]);
+
+  // 3. Process data when success
+  useEffect(() => {
+    if (responsesRowsData && isResponsesSuccess && formData && !isPlaceholderData) {
       const data = responsesRowsData as any;
       const responses: any[] = Array.isArray(responsesRowsData)
         ? responsesRowsData
@@ -93,7 +100,6 @@ export function useFormLoader(formId: string) {
         return row;
       });
 
-      // Update everything atomically (within the same store update cycle if possible)
       setRows(rows);
       setResponses(responses as any);
       setPageInfo(
@@ -104,20 +110,15 @@ export function useFormLoader(formId: string) {
           endCursor: null,
         },
       );
-      
-      // Finally, set loading to false. This ensures ResponsesTable sees the new data AND enabled buttons simultaneously.
-      setIsRowsLoading(false);
     }
   }, [
     responsesRowsData,
     isResponsesSuccess,
-    isRowsFetching,
     isPlaceholderData,
     formData,
     setRows,
     setResponses,
     setPageInfo,
-    setIsRowsLoading,
   ]);
 
   const lastFormIdRef = useRef<string | number | undefined>(undefined);
