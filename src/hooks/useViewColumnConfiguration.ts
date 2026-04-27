@@ -134,7 +134,7 @@ export function useViewColumnConfiguration({
 
       setColumns(merged);
     },
-    [form],
+    [form?.fields],
   );
 
   useEffect(() => {
@@ -146,11 +146,11 @@ export function useViewColumnConfiguration({
       lastInitViewId.current = currentView?.id;
       initialize(currentView);
     }
-  }, [form?.fields, currentView, initialize]);
+  }, [form?.fields, currentView?.id, initialize]);
 
   /* --------------------------- Visibility --------------------------- */
 
-  const toggleColumnVisibility = (columnId: string) => {
+  const toggleColumnVisibility = useCallback((columnId: string) => {
     setColumns((cols) =>
       cols.map((c) => {
         if (c.columnId === columnId) {
@@ -167,11 +167,11 @@ export function useViewColumnConfiguration({
         return c;
       }),
     );
-  };
+  }, []);
 
   /* ------------------------------ Drag ------------------------------ */
 
-  const handleDragEnd = (result: DropResult) => {
+  const handleDragEnd = useCallback((result: DropResult) => {
     if (!result.destination) return;
 
     setColumns((cols) => {
@@ -181,11 +181,11 @@ export function useViewColumnConfiguration({
 
       return reordered.map((c, i) => ({ ...c, order: i }));
     });
-  };
+  }, []);
 
   /* ------------------------------ Sorting --------------------------- */
 
-  const setSortColumn = (columnId: string | null, direction: "asc" | "desc" | null) => {
+  const setSortColumn = useCallback((columnId: string | null, direction: "asc" | "desc" | null) => {
     setColumns((cols) =>
       cols.map((c) =>
         c.columnId === columnId && direction
@@ -193,14 +193,14 @@ export function useViewColumnConfiguration({
           : { ...c, sortDirection: undefined, sortOrder: undefined },
       ),
     );
-  };
+  }, []);
 
-  const getSortedColumns = (): SortDescriptor[] =>
+  const getSortedColumns = useCallback((): SortDescriptor[] =>
     columns
       .filter((c) => c.sortDirection)
-      .map((c) => ({ columnId: c.columnId, direction: c.sortDirection! }));
+      .map((c) => ({ columnId: c.columnId, direction: c.sortDirection! })), [columns]);
 
-  const clearSort = () => {
+  const clearSort = useCallback(() => {
     setColumns((cols) =>
       cols.map((c) => ({
         ...c,
@@ -208,11 +208,11 @@ export function useViewColumnConfiguration({
         sortOrder: undefined,
       })),
     );
-  };
+  }, []);
 
   /* --------------------------- Defaults ----------------------------- */
 
-  const createDefaultColumns = (): ViewColumn[] => {
+  const createDefaultColumns = useCallback((): ViewColumn[] => {
     if (!form?.fields) return [];
 
     let order = 0;
@@ -237,11 +237,11 @@ export function useViewColumnConfiguration({
         order: order++,
       })),
     ];
-  };
+  }, [form?.fields]);
 
-  const resetToOriginalColumns = (cols: ViewColumn[]) => {
+  const resetToOriginalColumns = useCallback((cols: ViewColumn[]) => {
     setColumns(cols);
-  };
+  }, []);
 
   /* ----------------------------- API -------------------------------- */
 
