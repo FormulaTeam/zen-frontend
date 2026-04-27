@@ -173,7 +173,7 @@ export const OrderBadge = styled(Box)`
 
 // Action Buttons
 export const ViewActionsContainer = styled(Box)`
-  margin-top: 24px;
+  margin-top: 8px;
   display: flex;
   gap: 8px;
 `;
