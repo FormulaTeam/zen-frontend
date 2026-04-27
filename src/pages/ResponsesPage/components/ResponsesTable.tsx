@@ -795,10 +795,6 @@ export const ResponsesTable = React.memo(
                 </span>
               </Tooltip>
 
-              <Typography variant="body2" sx={{ fontWeight: 600, px: 1, color: "#4a5568" }}>
-                עמוד קודם / הבא
-              </Typography>
-
               <Tooltip title="עמוד הבא">
                 <span>
                   <PaginationButton
