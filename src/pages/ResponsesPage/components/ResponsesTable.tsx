@@ -137,8 +137,20 @@ export const ResponsesTable = React.memo(
 
     const currentViewConfig = useMemo(() => currentView?.columns || [], [currentView]);
 
+    const [isNavigating, setIsNavigating] = useState(false);
+    const transitionInProgress = useRef(false);
+
+    useEffect(() => {
+      if (!isRowsLoading) {
+        transitionInProgress.current = false;
+        setIsNavigating(false);
+      }
+    }, [isRowsLoading]);
+
     const handleNextPage = useCallback(() => {
-      if (pageInfo?.hasNextPage && pageInfo.endCursor && !isRowsLoading) {
+      if (pageInfo?.hasNextPage && pageInfo.endCursor && !isRowsLoading && !transitionInProgress.current) {
+        transitionInProgress.current = true;
+        setIsNavigating(true);
         setFilter({
           ...filter,
           after: pageInfo.endCursor,
@@ -149,12 +161,21 @@ export const ResponsesTable = React.memo(
     }, [pageInfo, filter, setFilter, isRowsLoading]);
 
     const handlePreviousPage = useCallback(() => {
-      if (pageInfo?.hasPreviousPage && pageInfo.startCursor && !isRowsLoading && (filter?.pageNumber ?? 1) > 1) {
+      const currentPage = filter?.pageNumber ?? 1;
+      if (
+        pageInfo?.hasPreviousPage &&
+        pageInfo.startCursor &&
+        !isRowsLoading &&
+        !transitionInProgress.current &&
+        currentPage > 1
+      ) {
+        transitionInProgress.current = true;
+        setIsNavigating(true);
         setFilter({
           ...filter,
           before: pageInfo.startCursor,
           after: undefined,
-          pageNumber: Math.max((filter?.pageNumber ?? 1) - 1, 1),
+          pageNumber: Math.max(currentPage - 1, 1),
         });
       }
     }, [pageInfo, filter, setFilter, isRowsLoading]);
@@ -788,7 +809,13 @@ export const ResponsesTable = React.memo(
                 <span>
                   <PaginationButton
                     onClick={handlePreviousPage}
-                    disabled={!pageInfo?.hasPreviousPage || isInEditMode}
+                    disabled={
+                      !pageInfo?.hasPreviousPage ||
+                      (filter?.pageNumber ?? 1) <= 1 ||
+                      isInEditMode ||
+                      isRowsLoading ||
+                      isNavigating
+                    }
                     size="small">
                     <ArrowForwardIosIcon />
                   </PaginationButton>
@@ -799,7 +826,9 @@ export const ResponsesTable = React.memo(
                 <span>
                   <PaginationButton
                     onClick={handleNextPage}
-                    disabled={!pageInfo?.hasNextPage || isInEditMode}
+                    disabled={
+                      !pageInfo?.hasNextPage || isInEditMode || isRowsLoading || isNavigating
+                    }
                     size="small">
                     <ArrowBackIosNewIcon />
                   </PaginationButton>
