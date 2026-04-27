@@ -14,6 +14,7 @@ export interface UseResponsesViewsReturn {
   savedViews: ResponsesView[];
   hasUserCreatedViews: boolean;
   selectedViewId: string;
+  defaultViewId: string;
   isSaving: boolean;
   handleSaveView: (view: ResponsesView) => Promise<void>;
   handleLoadView: (view: ResponsesView) => void;
@@ -76,6 +77,7 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
     savedViews,
     currentViewConfig,
     selectedViewId,
+    defaultViewId,
     isSaving,
     handleSaveView,
     handleLoadView,
@@ -174,6 +176,7 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
     savedViews,
     hasUserCreatedViews,
     selectedViewId,
+    defaultViewId,
     isSaving,
     handleSaveView,
     handleLoadView,
