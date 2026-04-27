@@ -138,7 +138,7 @@ export const useResponsesEdit = () => {
       .sort((a, b) => a.index - b.index);
   }, [dtoForm]);
 
-  const fullResponses = (responses as unknown as ResponseDto[]) || undefined;
+  const fullResponses = useMemo(() => (responses as unknown as ResponseDto[]) || undefined, [responses]);
 
   const { mutateAsync: batchUpdateResponses, isPending: isUpdating } = useBatchUpdateResponses({
     formId: dtoForm?.id || 0,
@@ -146,8 +146,8 @@ export const useResponsesEdit = () => {
 
   const { mutateAsync: createResponse } = useCreateResponse(dtoForm?.id);
 
-  const responseRows: Row[] = (rows?.filter((row) => row != null) as Row[]) || [];
-  const hasUnsavedChanges = editedRows.size > 0;
+  const responseRows: Row[] = useMemo(() => (rows?.filter((row) => row != null) as Row[]) || [], [rows]);
+  const hasUnsavedChanges = useMemo(() => editedRows.size > 0, [editedRows]);
 
   const toggleEditMode = useCallback((): void => {
     if (isInEditMode && hasUnsavedChanges) {
@@ -327,7 +327,7 @@ export const useResponsesEdit = () => {
     return newRow;
   }, [formFields]);
 
-  const buildResponseUpdatePayload = async (
+  const buildResponseUpdatePayload = useCallback(async (
     rowId: string,
     editedRow: Partial<Row>,
   ): Promise<ResponseUpdatePayload | null> => {
@@ -402,7 +402,7 @@ export const useResponsesEdit = () => {
         fieldValues: updatedFieldValues,
       },
     };
-  };
+  }, [fullResponses, formFields, user, dtoForm?.id]);
 
   const addNewResponse = useCallback((): void => {
     if (!isInEditMode || !dtoForm || formFields.length === 0) return;
@@ -613,7 +613,18 @@ export const useResponsesEdit = () => {
         showErrorNotification(new SaveFailedError().message);
       }
     }
-  };
+  }, [
+    editedRows,
+    formFields,
+    hasUnsavedChanges,
+    dtoForm,
+    fullResponses,
+    buildResponseUpdatePayload,
+    batchUpdateResponses,
+    createResponse,
+    localRows,
+    setRows,
+  ]);
 
   return {
     isInEditMode,
