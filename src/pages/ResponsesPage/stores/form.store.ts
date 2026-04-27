@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { FormDto, FormFieldDto } from "../../../types/shared";
 import { Filter, PageInfo, ResponseForm, Row } from "../../../utils/interfaces";
 import { Permission } from "formula-gear";
+import { IOrderBy } from "../../../types/enums/filtersAndSorts.enum";
 
 export type StoreForm = FormDto & {
   fields: FormFieldDto[];
@@ -37,7 +38,7 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
   setPermissions: (permissions: Permission[]) => set({ permissions }),
   responses: null,
   setResponses: (responses: ResponseForm[] | null) => set({ responses }),
-  filter: { pageSize: 25, pageNumber: 1 },
+  filter: { pageSize: 25, pageNumber: 1, sortBy: "meta:index", orderBy: IOrderBy.DESC },
   setFilter: (filter: Filter | null) => set({ filter, isRowsLoading: true }),
   rows: [],
   setRows: (rows: Row[]) => set({ rows }),

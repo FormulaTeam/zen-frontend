@@ -755,7 +755,8 @@ export const ResponsesTable = React.memo(
         return [{ field: gridField, sort: legacySort.sortDirection as "asc" | "desc" }];
       }
 
-      return [];
+      // Default fallback
+      return [{ field: "index", sort: "desc" }];
     }, [currentView, formFields, filter]);
 
     const handlePageSizeChange = useCallback(
