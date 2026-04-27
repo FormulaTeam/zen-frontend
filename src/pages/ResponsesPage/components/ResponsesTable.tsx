@@ -748,7 +748,7 @@ export const ResponsesTable = React.memo(
       const endRange = Math.min(pageNumber * pageSize, totalCount);
 
       return (
-        <GridFooterContainer sx={{ justifyContent: "space-between", px: 3 }}>
+        <GridFooterContainer sx={{ justifyContent: "space-between", px: 3, py: 1.5, minHeight: "60px" }}>
           <FooterInfoContainer>
             <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
               {`מציג ${endRange}-${startRange} תגובות מתוך ${totalCount}`}
