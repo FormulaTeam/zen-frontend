@@ -188,16 +188,21 @@ export const useViewManager = ({
   );
 
   /** --------------------------------
-   * Auto-load default view
+   * Auto-load default view (only once on initial load)
    * -------------------------------- */
+  const hasAttemptedInitialLoad = useRef(false);
+
   useEffect(() => {
-    if (!currentView && !selectedViewId && availableViews.length > 0) {
+    if (hasAttemptedInitialLoad.current) return;
+    
+    if (availableViews.length > 0) {
+      hasAttemptedInitialLoad.current = true;
       const defaultView = availableViews.find((v) => v.isDefault);
       if (defaultView) {
         handleLoadView(defaultView);
       }
     }
-  }, [availableViews, currentView, selectedViewId, handleLoadView]);
+  }, [availableViews, handleLoadView]);
 
   /** --------------------------------
    * Apply sorting when view or columns change
