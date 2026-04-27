@@ -118,7 +118,7 @@ const SyncStatusIcon: React.FC<{ pushedToMetro?: string | null }> = ({ pushedToM
   </SyncStatusIconBox>
 );
 
-export const ResponsesTable = ({
+export const ResponsesTable = React.memo(({
   isInEditMode,
   localRows,
   handleProcessRowUpdate,
