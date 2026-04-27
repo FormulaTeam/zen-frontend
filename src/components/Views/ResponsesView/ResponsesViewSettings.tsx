@@ -122,7 +122,7 @@ export function ResponsesViewSettings({
         disabled={!canEdit}
       />
 
-      {canEdit && (
+      {canEdit && canManagePublicViews && (
         <Stack spacing={-4}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Stack direction="row" alignItems="center" spacing={1}>
