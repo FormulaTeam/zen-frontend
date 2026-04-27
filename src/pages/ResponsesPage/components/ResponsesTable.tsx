@@ -56,9 +56,11 @@ import {
 import { useChildForms } from "../hooks/useChildForms";
 import { useDetailPanel } from "../hooks/useDetailPanel";
 import { useNavigate } from "react-router-dom";
+import moment from "moment";
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { FormFieldDto } from "../../../types/shared";
 import { FieldTypeIds, MetaColumnIds } from "../../../utils/interfaces";
+import { DEFAULT_DATE_TIME_FORMAT } from "../../../utils/utils";
 import * as Gear from "formula-gear";
 
 const VIEW_COLUMN_ID_TO_GRID_FIELD: Record<string, string> = {
@@ -472,6 +474,12 @@ export const ResponsesTable = React.memo(
         minWidth: 150,
         editable: false,
         sortable: true,
+        renderCell: (params: GridRenderCellParams) =>
+          params.value ? (
+            <Box component="span" className="cell-box-date">
+              <label>{moment(params.value).format(DEFAULT_DATE_TIME_FORMAT)}</label>
+            </Box>
+          ) : null,
       });
 
       metaColumnsMap.set(`${prefixes.Meta}pushed_to_metro`, {
@@ -506,6 +514,12 @@ export const ResponsesTable = React.memo(
         minWidth: 150,
         editable: false,
         sortable: true,
+        renderCell: (params: GridRenderCellParams) =>
+          params.value ? (
+            <Box component="span" className="cell-box-date">
+              <label>{moment(params.value).format(DEFAULT_DATE_TIME_FORMAT)}</label>
+            </Box>
+          ) : null,
       });
 
       // Special meta columns that are not in the standard list
