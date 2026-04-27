@@ -43,21 +43,29 @@ export function useFormLoader(formId: string) {
   useEffect(() => {
     // We are loading if the query is pending (initial) OR if it's currently fetching new data (including transitions)
     const activeLoading = isRowsPending || isPlaceholderData || isRowsFetching;
-    
-    // Only set to false if we are truly done
+
     if (activeLoading) {
       setIsRowsLoading(true);
     } else {
-      setIsRowsLoading(false);
+      // If the query is not active, but we haven't processed the success yet, 
+      // let the success effect handle it. Otherwise, clear it now.
+      if (!isResponsesSuccess) {
+        setIsRowsLoading(false);
+      }
     }
-  }, [isRowsPending, isPlaceholderData, isRowsFetching, setIsRowsLoading]);
+  }, [isRowsPending, isPlaceholderData, isRowsFetching, isResponsesSuccess, setIsRowsLoading]);
 
-  // 2. Process data when success and not placeholder
+  // 2. Process data when success
   useEffect(() => {
-    if (isResponsesSuccess && formData && !isPlaceholderData) {
+    if (isResponsesSuccess && formData) {
+      // Reset loading state immediately on success so the grid can transition 
+      // even if processing takes a few ms or results are empty.
+      setIsRowsLoading(false);
+
+      if (isPlaceholderData) return;
+
       const data = responsesRowsData as any;
       
-      // ... same processing logic ...
       const findResponses = (obj: any): any[] | null => {
         if (!obj || typeof obj !== "object") return null;
         if (Array.isArray(obj)) return obj;
@@ -127,6 +135,9 @@ export function useFormLoader(formId: string) {
           endCursor: null,
         },
       );
+      
+      // Fallback: Force loading false on success
+      setIsRowsLoading(false);
     }
   }, [
     responsesRowsData,
@@ -136,6 +147,7 @@ export function useFormLoader(formId: string) {
     setRows,
     setResponses,
     setPageInfo,
+    setIsRowsLoading
   ]);
 
   const lastFormIdRef = useRef<string | number | undefined>(undefined);
