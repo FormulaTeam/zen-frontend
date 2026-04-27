@@ -28,13 +28,18 @@ export function useFormLoader(formId: string) {
 
   console.log("useFormLoader: Sending queryParams:", queryParams);
 
-  const { data: responsesRowsData, isSuccess: isResponsesSuccess, isFetching: isRowsFetching } = useGetResponsesRows(formId, queryParams as any);
+  const {
+    data: responsesRowsData,
+    isSuccess: isResponsesSuccess,
+    isFetching: isRowsFetching,
+    isPlaceholderData,
+  } = useGetResponsesRows(formId, queryParams as any);
 
   const { setPageInfo, setIsRowsLoading } = useInitiateFormStore();
 
   useEffect(() => {
-    setIsRowsLoading(isRowsFetching);
-  }, [isRowsFetching, setIsRowsLoading]);
+    setIsRowsLoading(isRowsFetching || isPlaceholderData);
+  }, [isRowsFetching, isPlaceholderData, setIsRowsLoading]);
 
   useEffect(() => {
     if (responsesRowsData && isResponsesSuccess && formData) {
