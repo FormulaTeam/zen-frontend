@@ -80,8 +80,8 @@ export function ResponsesViewPage({
   }, [formLogic, onCancel]);
 
   return (
-    <Stack direction="column" height="100vh" justifyContent="space-between">
-      <Box overflow="auto" pb={`${ACTIONS_HEIGHT}px`}>
+    <Stack direction="column" height="100%" justifyContent="space-between">
+      <Box overflow="auto" flex={1}>
         <Box width="97%">
           <ResponsesViewSettings
             formId={Number(form?.id ?? 0)}
@@ -111,7 +111,20 @@ export function ResponsesViewPage({
           />
         </Box>
       </Box>
-      <Box position="sticky" bottom={0} zIndex={1} bgcolor="background.paper">
+      <Box
+        position="sticky"
+        bottom={-16} // Dock to the very bottom of the padded container
+        zIndex={10}
+        bgcolor="#ffffff"
+        pt={1}
+        pb={2}
+        px={2}
+        sx={{
+          borderTop: "1px solid #e0e0e0",
+          boxShadow: "0 -4px 12px rgba(0, 0, 0, 0.08)",
+          mx: -2, // Offset the ViewManagerContainer 16px padding
+          width: "calc(100% + 32px)",
+        }}>
         <ResponsesViewFormActions
           isSaving={isSaving}
           isCreatingNew={formLogic.isCreatingNew}
