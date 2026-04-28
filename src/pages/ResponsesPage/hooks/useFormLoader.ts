@@ -5,7 +5,7 @@ import { Row } from "../../../utils/interfaces";
 
 export function useFormLoader(formId: string) {
   const { form, setForm, setPermissions, setRows, filter, setResponses } = useInitiateFormStore();
-
+  
   const {
     data: formData,
     isLoading,
@@ -110,6 +110,7 @@ export function useFormLoader(formId: string) {
           createdByName: node.created_by?.name || node.createdBy?.name,
           index: node.index,
           form_id: node.form_id || node.formId,
+          childResponses: node.childResponses || [],
         };
 
         const fieldValues = node.fieldValues || node.field_values || node.data || [];
