@@ -548,6 +548,8 @@ export const useResponsesEdit = () => {
         }
       }
 
+      const newResponsesPayloads: CreateResponseDto[] = [];
+
       for (const [, editedRow] of sortedNewRowEntries) {
         const fieldValues: ResponseFieldValueDto[] = await Promise.all(
           formFields.map(async (field) => {
@@ -584,11 +586,13 @@ export const useResponsesEdit = () => {
           }),
         );
 
-        const newResponsePayload: CreateResponseDto = {
+        newResponsesPayloads.push({
           fieldValues,
-        };
+        });
+      }
 
-        await createResponse(newResponsePayload);
+      if (newResponsesPayloads.length > 0) {
+        await createResponse(newResponsesPayloads);
       }
 
       newRowCounterRef.current = 0;

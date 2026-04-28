@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import {
   useGridApiRef,
   GridRowModel,
@@ -132,32 +132,78 @@ export const ResponsesTable = React.memo(
     onRowSelectionModelChange,
     currentView,
   }: ResponsesTableProps) => {
-    const { form, rows, pageInfo, filter, setFilter } = useFormStore();
+    const { form, rows, pageInfo, filter, setFilter, isRowsLoading } = useFormStore();
     const navigate = useNavigate();
 
     const currentViewConfig = useMemo(() => currentView?.columns || [], [currentView]);
 
+    if (!form) return null;
+
+    const [isNavigating, setIsNavigating] = useState(false);
+    const transitionInProgress = useRef(false);
+    const lastIntendedPageNumber = useRef(filter?.pageNumber ?? 1);
+    const lastFetchStartedRef = useRef(false);
+
+    // Sync ref with store filter
+    useEffect(() => {
+      lastIntendedPageNumber.current = filter?.pageNumber ?? 1;
+    }, [filter?.pageNumber]);
+
+    // Robust loading reset logic
+    useEffect(() => {
+      if (isRowsLoading) {
+        lastFetchStartedRef.current = true;
+      }
+
+      // If we are not loading, OR if the data/pageInfo has changed, reset navigation guards.
+      // This covers both network fetches and immediate cache returns.
+      if (!isRowsLoading) {
+        transitionInProgress.current = false;
+        setIsNavigating(false);
+        lastFetchStartedRef.current = false;
+      }
+    }, [isRowsLoading, pageInfo, rows]);
+
     const handleNextPage = useCallback(() => {
-      if (pageInfo?.hasNextPage && pageInfo.endCursor) {
+      if (pageInfo?.hasNextPage && pageInfo.endCursor && !isRowsLoading && !transitionInProgress.current) {
+        transitionInProgress.current = true;
+        setIsNavigating(true);
+        
+        const nextPage = lastIntendedPageNumber.current + 1;
+        lastIntendedPageNumber.current = nextPage;
+
         setFilter({
           ...filter,
           after: pageInfo.endCursor,
           before: undefined,
-          pageNumber: (filter?.pageNumber ?? 1) + 1,
+          pageNumber: nextPage,
         });
       }
-    }, [pageInfo, filter, setFilter]);
+    }, [pageInfo, filter, setFilter, isRowsLoading]);
 
     const handlePreviousPage = useCallback(() => {
-      if (pageInfo?.hasPreviousPage && pageInfo.startCursor) {
+      const currentPage = lastIntendedPageNumber.current;
+      if (
+        pageInfo?.hasPreviousPage &&
+        pageInfo.startCursor &&
+        !isRowsLoading &&
+        !transitionInProgress.current &&
+        currentPage > 1
+      ) {
+        transitionInProgress.current = true;
+        setIsNavigating(true);
+        
+        const prevPage = Math.max(currentPage - 1, 1);
+        lastIntendedPageNumber.current = prevPage;
+
         setFilter({
           ...filter,
           before: pageInfo.startCursor,
           after: undefined,
-          pageNumber: Math.max((filter?.pageNumber ?? 1) - 1, 1),
+          pageNumber: prevPage,
         });
       }
-    }, [pageInfo, filter, setFilter]);
+    }, [pageInfo, filter, setFilter, isRowsLoading]);
 
     const formFields = useMemo<FormFieldDto[]>(
       () => (form?.sections ?? []).flatMap((section) => section.fields ?? []),
@@ -723,7 +769,8 @@ export const ResponsesTable = React.memo(
         return [{ field: gridField, sort: legacySort.sortDirection as "asc" | "desc" }];
       }
 
-      return [];
+      // Default fallback
+      return [{ field: "index", sort: "desc" }];
     }, [currentView, formFields, filter]);
 
     const handlePageSizeChange = useCallback(
@@ -788,22 +835,26 @@ export const ResponsesTable = React.memo(
                 <span>
                   <PaginationButton
                     onClick={handlePreviousPage}
-                    disabled={!pageInfo?.hasPreviousPage || isInEditMode}
+                    disabled={
+                      !pageInfo?.hasPreviousPage ||
+                      (filter?.pageNumber ?? 1) <= 1 ||
+                      isInEditMode ||
+                      isRowsLoading ||
+                      isNavigating
+                    }
                     size="small">
                     <ArrowForwardIosIcon />
                   </PaginationButton>
                 </span>
               </Tooltip>
 
-              <Typography variant="body2" sx={{ fontWeight: 600, px: 1, color: "#4a5568" }}>
-                עמוד קודם / הבא
-              </Typography>
-
               <Tooltip title="עמוד הבא">
                 <span>
                   <PaginationButton
                     onClick={handleNextPage}
-                    disabled={!pageInfo?.hasNextPage || isInEditMode}
+                    disabled={
+                      !pageInfo?.hasNextPage || isInEditMode || isRowsLoading || isNavigating
+                    }
                     size="small">
                     <ArrowBackIosNewIcon />
                   </PaginationButton>
@@ -839,7 +890,7 @@ export const ResponsesTable = React.memo(
             getCellClassName={getCellClassName}
             density="comfortable"
             rowHeight={isInEditMode ? 140 : 65}
-            loading={!rows}
+            loading={isRowsLoading && rows.length === 0}
             checkboxSelection
             disableRowSelectionOnClick
             onRowSelectionModelChange={onRowSelectionModelChange}

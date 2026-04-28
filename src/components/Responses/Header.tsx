@@ -6,6 +6,7 @@ import { useFormStore } from "../../pages/ResponsesPage/stores/form.store";
 
 const Header = () => {
   const { form } = useFormStore();
+  if (!form) return null;
   return (
     <Box>
       <Tooltip title="מזהה הטופס">

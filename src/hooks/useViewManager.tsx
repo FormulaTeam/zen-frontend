@@ -25,6 +25,8 @@ interface UseViewManagerProps {
   onViewConfigChange?: (viewConfig?: ViewColumn[]) => void;
   setSorting?: (sorting: any[]) => void;
   tableColumns?: any[];
+  isRowsLoading?: boolean;
+  setIsRowsLoading?: (loading: boolean) => void;
 }
 
 enum HebrewMessages {
@@ -57,6 +59,8 @@ export const useViewManager = ({
   onViewConfigChange,
   setSorting,
   tableColumns,
+  isRowsLoading,
+  setIsRowsLoading,
 }: UseViewManagerProps) => {
   const formId = form ? String(form.id) : "";
   const [currentView, setCurrentView] = useState<ResponsesView>();
