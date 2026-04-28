@@ -141,7 +141,10 @@ export const ResponsesTable = React.memo(
 
     const [isNavigating, setIsNavigating] = useState(false);
     const transitionInProgress = useRef(false);
+    const lastIntendedPageNumber = useRef(filter?.pageNumber ?? 1);
+    const lastFetchStartedRef = useRef(false);
 
+    // Sync ref with store filter
     useEffect(() => {
       lastIntendedPageNumber.current = filter?.pageNumber ?? 1;
     }, [filter?.pageNumber]);
@@ -157,6 +160,7 @@ export const ResponsesTable = React.memo(
       if (!isRowsLoading) {
         transitionInProgress.current = false;
         setIsNavigating(false);
+        lastFetchStartedRef.current = false;
       }
     }, [isRowsLoading, pageInfo, rows]);
 
@@ -164,17 +168,21 @@ export const ResponsesTable = React.memo(
       if (pageInfo?.hasNextPage && pageInfo.endCursor && !isRowsLoading && !transitionInProgress.current) {
         transitionInProgress.current = true;
         setIsNavigating(true);
+        
+        const nextPage = lastIntendedPageNumber.current + 1;
+        lastIntendedPageNumber.current = nextPage;
+
         setFilter({
           ...filter,
           after: pageInfo.endCursor,
           before: undefined,
-          pageNumber: (filter?.pageNumber ?? 1) + 1,
+          pageNumber: nextPage,
         });
       }
     }, [pageInfo, filter, setFilter, isRowsLoading]);
 
     const handlePreviousPage = useCallback(() => {
-      const currentPage = filter?.pageNumber ?? 1;
+      const currentPage = lastIntendedPageNumber.current;
       if (
         pageInfo?.hasPreviousPage &&
         pageInfo.startCursor &&
@@ -184,11 +192,15 @@ export const ResponsesTable = React.memo(
       ) {
         transitionInProgress.current = true;
         setIsNavigating(true);
+        
+        const prevPage = Math.max(currentPage - 1, 1);
+        lastIntendedPageNumber.current = prevPage;
+
         setFilter({
           ...filter,
           before: pageInfo.startCursor,
           after: undefined,
-          pageNumber: Math.max(currentPage - 1, 1),
+          pageNumber: prevPage,
         });
       }
     }, [pageInfo, filter, setFilter, isRowsLoading]);
