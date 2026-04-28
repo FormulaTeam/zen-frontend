@@ -4,9 +4,11 @@ import { getResponsesRows } from "../../../api/responsesApi";
 import type { FormDto, FormFieldDto } from "../../../types/shared";
 import { fieldType } from "formula-gear";
 import { Row } from "../../../utils/interfaces";
+import { FieldTypeIds } from "../../../utils/interfaces";
 
 type FieldExtra = {
-    connectedFormId?: number;
+    connectedFormId?: number | string;
+    linkedFormId?: number | string;
 };
 
 interface UseChildFormsProps {
@@ -22,7 +24,7 @@ interface UseChildFormsReturn {
     childrenFormsData: ChildFormData[];
     hasFormInFormFields: boolean;
     loadingChildForms: boolean;
-    getChildFormData: (connectedFormId: number) => ChildFormData | undefined;
+    getChildFormData: (connectedFormId: number | string) => ChildFormData | undefined;
 }
 
 const getFieldExtra = (field: FormFieldDto): FieldExtra => {
@@ -39,21 +41,21 @@ const getFormFields = (form: FormDto | null): FormFieldDto[] => {
 };
 
 const fetchChildFormData = async (
-    connectedFormId: number,
+    connectedFormId: number | string,
     parentFormId: number,
 ): Promise<ChildFormData | null> => {
     try {
-        const formData = await getFormById(connectedFormId);
+        const formData = await getFormById(Number(connectedFormId));
         const rowsData = await getResponsesRows({
             filter: {
-                form_id: connectedFormId,
+                form_id: Number(connectedFormId),
                 query: `parentResponse: { $regex: ${parentFormId};`,
             },
             form: formData || undefined,
         });
 
         if (formData && rowsData) {
-            return { form: formData, rows: rowsData };
+            return { form: formData, rows: rowsData as Row[] };
         }
 
         return null;
@@ -72,7 +74,12 @@ export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn
         () =>
             formFields.filter((field) => {
                 const extra = getFieldExtra(field);
-                return field.fieldType === fieldType.Form && !!extra.connectedFormId;
+                return (
+                    (field.fieldType === fieldType.Form ||
+                        (field as any).typeId === FieldTypeIds.linkedForm ||
+                        (field as any).fieldType === FieldTypeIds.linkedForm) &&
+                    !!(extra.connectedFormId || extra.linkedFormId)
+                );
             }),
         [formFields],
     );
@@ -82,8 +89,11 @@ export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn
     const childFormIds = useMemo(
         () =>
             formInFormFields
-                .map((field) => getFieldExtra(field).connectedFormId)
-                .filter((id): id is number => typeof id === "number"),
+                .map((field) => {
+                    const id = getFieldExtra(field).connectedFormId || getFieldExtra(field).linkedFormId;
+                    return id ? Number(id) : undefined;
+                })
+                .filter((id): id is number => typeof id === "number" && !isNaN(id)),
         [formInFormFields],
     );
 
@@ -98,7 +108,7 @@ export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn
 
         setLoadingChildForms(true);
 
-        Promise.all(childFormIds.map((connectedFormId) => fetchChildFormData(connectedFormId, form.id)))
+        Promise.all(childFormIds.map((id) => fetchChildFormData(id, form.id)))
             .then((results) => {
                 if (isMounted) {
                     setChildrenFormsData(results.filter(Boolean) as ChildFormData[]);
@@ -117,8 +127,8 @@ export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn
         };
     }, [hasFormInFormFields, form?.id, childFormIds.join(",")]);
 
-    const getChildFormData = (connectedFormId: number): ChildFormData | undefined => {
-        return childrenFormsData.find((data) => data.form.id === connectedFormId);
+    const getChildFormData = (connectedFormId: number | string): ChildFormData | undefined => {
+        return childrenFormsData.find((data) => String(data.form.id) === String(connectedFormId));
     };
 
     return {
