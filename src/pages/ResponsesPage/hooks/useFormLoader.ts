@@ -26,8 +26,6 @@ export function useFormLoader(formId: string) {
     after: filter?.after,
   }), [filter]);
 
-  console.log("useFormLoader: Sending queryParams:", queryParams);
-
   const { data: responsesRowsData, isSuccess: isResponsesSuccess } = useGetResponsesRows(formId, queryParams as any);
 
   const { setPageInfo } = useInitiateFormStore();
@@ -39,8 +37,8 @@ export function useFormLoader(formId: string) {
       const responses: any[] = Array.isArray(responsesRowsData)
         ? responsesRowsData
         : (responsesRowsData as any)?.edges?.map((e: any) => e.node) ||
-          (responsesRowsData as any)?.responses ||
-          [];
+        (responsesRowsData as any)?.responses ||
+        [];
 
       // Robust PageInfo detection (handle camelCase and snake_case)
       const rawPageInfo = data?.pageInfo || data?.page_info;
@@ -50,9 +48,6 @@ export function useFormLoader(formId: string) {
         startCursor: rawPageInfo.startCursor ?? rawPageInfo.start_cursor ?? null,
         endCursor: rawPageInfo.endCursor ?? rawPageInfo.end_cursor ?? null,
       } : null;
-
-      console.log("useFormLoader: responsesRowsData:", data);
-      console.log("useFormLoader: pageInfoFromData:", pageInfoFromData);
 
       // Map field IDs to displayNames for the grid
       const fieldIdToDisplayName = new Map<string, string>();
@@ -71,6 +66,7 @@ export function useFormLoader(formId: string) {
           createdByName: node.created_by?.name || node.createdBy?.name,
           index: node.index,
           form_id: node.form_id || node.formId,
+          childResponses: node.childResponses || [],
         };
 
         const fieldValues = node.fieldValues || node.field_values || node.data || [];
