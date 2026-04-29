@@ -1,18 +1,21 @@
 import { useRef, useState } from "react";
+import { useParams } from "react-router-dom";
+
 import { useImportResponsesFromFile } from "../../../api";
-import ImportFromExcelPopup from "../../../components/ResponseToolbar/Popups/ImportFromExcelPopup";
+import ImportFromExcelPopup, {
+  ExcelImportPopupError,
+} from "../../../components/ResponseToolbar/Popups/ImportFromExcelPopup";
 import {
   createExcelMold,
   showErrorNotification,
   showSuccessNotification,
 } from "../../../utils/utils";
-import { useParams } from "react-router-dom";
 import { useFormStore } from "../stores/form.store";
 
 const MAX_PAYLOAD_SIZE_MB = (window as any).RUNTIME_ENV?.REACT_MAX_PAYLOAD_SIZE_MB ?? 10;
 
 type ExcelImportRowError = {
-  rowNumber: number;
+  rowNumber?: number;
   fieldName?: string;
   messages: string[];
 };
@@ -35,13 +38,13 @@ type FormulaErrorResponse = {
   };
 };
 
-const formatImportErrors = (errors: ExcelImportRowError[]): string[] => {
+const formatImportErrors = (errors: ExcelImportRowError[]): ExcelImportPopupError[] => {
   return errors.flatMap((error) =>
-    error.messages.map((message) =>
-      error.fieldName
-        ? `שורה ${error.rowNumber}, שדה ${error.fieldName}: ${message}`
-        : `שורה ${error.rowNumber}: ${message}`,
-    ),
+    error.messages.map((message) => ({
+      rowNumber: error.rowNumber,
+      fieldName: error.fieldName,
+      message,
+    })),
   );
 };
 
@@ -55,16 +58,15 @@ export const UploadResponses = ({
   const { id: formId } = useParams();
   const { form } = useFormStore();
   const uploadRef = useRef<HTMLInputElement>(null);
-
-  if (!form) return null;
-
   const [showErrorFileTooBig, setShowErrorFileTooBig] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [validationErrors, setValidationErrors] = useState<ExcelImportPopupError[]>([]);
 
   const { mutateAsync: importResponses } = useImportResponsesFromFile({
     formId: formId ?? "",
   });
+
+  if (!form) return null;
 
   const resetFileInput = () => {
     if (uploadRef.current) {
@@ -121,7 +123,7 @@ export const UploadResponses = ({
       if (Array.isArray(importErrors)) {
         setValidationErrors(formatImportErrors(importErrors));
       } else if (responseData?.meta?.reason) {
-        setValidationErrors([responseData.meta.reason]);
+        setValidationErrors([{ message: responseData.meta.reason }]);
       }
     } finally {
       setIsImporting(false);
