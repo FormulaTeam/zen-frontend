@@ -17,6 +17,8 @@ import {
   ErrorGroupSubText,
   ErrorGroupTitle,
   ErrorGroupsWrapper,
+  ErrorMessageBlock,
+  ErrorMessageDetail,
   ErrorMessageText,
   ErrorSummary,
   PopupContentWrapper,
@@ -30,10 +32,13 @@ export type ExcelImportPopupError = {
   rowNumber?: number;
   fieldName?: string;
   message: string;
+  detail?: string;
+  isGeneral?: boolean;
 };
 
 type GroupedMessageErrors = {
   message: string;
+  detail?: string;
   rowNumbers: number[];
   unknownRowsCount: number;
 };
@@ -45,34 +50,15 @@ type GroupedFieldErrors = {
 };
 
 export interface ImportFromExcelPopupProps {
-  /** The form definition — used to decide whether actions are enabled and to build a template */
   form: StoreForm;
-
-  /** Controls whether the popup is visible. Parent owns open state. */
   isOpen: boolean;
-
-  /** Called when the popup should be closed */
   onClose: () => void;
-
-  /** Optional: ref to a hidden file input controlled by the parent */
   uploadRef?: React.RefObject<HTMLInputElement>;
-
-  /** Called when user requests to import. If not provided, component will fallback to clicking uploadRef. */
   onImport?: () => void;
-
-  /** Called when user requests to download a template. Defaults to createExcelMold(form) */
   onDownloadTemplate?: (form: StoreForm) => void;
-
-  /** Whether the error/status view is currently loading */
   isLoading?: boolean;
-
-  /** File-too-big state to show a specific inline error inside ExcelImportContent */
   showFileTooBig?: boolean;
-
-  /** Validation errors to display after a failed import */
   errors?: ExcelImportPopupError[];
-
-  /** Labels are configurable for i18n/testing */
   mainButtonLabel?: string;
   downloadButtonLabel?: string;
 }
@@ -118,7 +104,8 @@ const groupErrorsByFieldAndMessage = (errors: ExcelImportPopupError[]): GroupedF
 
   errors.forEach((error) => {
     const fieldKey = error.fieldName?.trim() || "unknown";
-    const messageKey = error.message.trim() || "שגיאה לא ידועה";
+    const message = error.message.trim() || "שגיאה לא ידועה";
+    const messageKey = `${message}-${error.detail ?? ""}`;
 
     const fieldGroup = groupedByField.get(fieldKey) ?? {
       fieldName: error.fieldName,
@@ -127,7 +114,8 @@ const groupErrorsByFieldAndMessage = (errors: ExcelImportPopupError[]): GroupedF
     };
 
     const messageGroup = fieldGroup.messages.get(messageKey) ?? {
-      message: messageKey,
+      message,
+      detail: error.detail,
       rowNumbers: [],
       unknownRowsCount: 0,
     };
@@ -183,10 +171,17 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
   const canPerformActions = hasFormFields(form);
   const [openFields, setOpenFields] = useState<Set<string>>(new Set());
 
-  const groupedErrors = useMemo(() => groupErrorsByFieldAndMessage(errors), [errors]);
-  const failedRowsCount = useMemo(() => getUniqueFailedRowsCount(errors), [errors]);
+  const generalErrors = useMemo(() => errors.filter((error) => error.isGeneral), [errors]);
 
-  const hasErrors = errors.length > 0;
+  const fieldErrors = useMemo(() => errors.filter((error) => !error.isGeneral), [errors]);
+
+  const groupedErrors = useMemo(() => groupErrorsByFieldAndMessage(fieldErrors), [fieldErrors]);
+
+  const failedRowsCount = useMemo(() => getUniqueFailedRowsCount(fieldErrors), [fieldErrors]);
+
+  const hasGeneralErrors = generalErrors.length > 0;
+  const hasFieldErrors = fieldErrors.length > 0;
+  const hasErrors = hasGeneralErrors || hasFieldErrors;
 
   const resetUploadRefValue = useCallback(() => {
     if (!uploadRef) return;
@@ -250,7 +245,15 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
 
   const popupContent = isLoading ? (
     <Loader />
-  ) : hasErrors ? (
+  ) : hasGeneralErrors ? (
+    <StatusWrapper>
+      <StatusHeader>
+        {generalErrors.map((error, index) => (
+          <StatusDescription key={index}>{error.message}</StatusDescription>
+        ))}
+      </StatusHeader>
+    </StatusWrapper>
+  ) : hasFieldErrors ? (
     <StatusWrapper>
       <StatusHeader>
         <StatusDescription>
@@ -259,8 +262,8 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
       </StatusHeader>
 
       <ErrorSummary>
-        נמצאו {errors.length} שגיאות {getFailedRowsLabel(failedRowsCount)}. הייבוא נעצר כדי למנוע
-        יצירת תגובות חלקיות.
+        נמצאו {fieldErrors.length} שגיאות {getFailedRowsLabel(failedRowsCount)}. הייבוא נעצר כדי
+        למנוע יצירת תגובות חלקיות.
       </ErrorSummary>
 
       <ErrorGroupsWrapper>
@@ -292,7 +295,12 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
 
                   {group.errors.map((errorGroup, index) => (
                     <ErrorDetailRow key={`${fieldKey}-${errorGroup.message}-${index}`}>
-                      <ErrorMessageText>{errorGroup.message}</ErrorMessageText>
+                      <ErrorMessageBlock>
+                        <ErrorMessageText>{errorGroup.message}</ErrorMessageText>
+                        {errorGroup.detail && (
+                          <ErrorMessageDetail>{errorGroup.detail}</ErrorMessageDetail>
+                        )}
+                      </ErrorMessageBlock>
 
                       <RowNumbersText>
                         {getRowsLabel(errorGroup) || <EmptyValue>—</EmptyValue>}

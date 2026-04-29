@@ -14,10 +14,16 @@ import { useFormStore } from "../stores/form.store";
 
 const MAX_PAYLOAD_SIZE_MB = (window as any).RUNTIME_ENV?.REACT_MAX_PAYLOAD_SIZE_MB ?? 10;
 
+type FieldValidationMessage = {
+  code: string;
+  message: string;
+  detail: string;
+};
+
 type ExcelImportRowError = {
   rowNumber?: number;
   fieldName?: string;
-  messages: string[];
+  messages: FieldValidationMessage[];
 };
 
 type ExcelImportResult = {
@@ -43,7 +49,8 @@ const formatImportErrors = (errors: ExcelImportRowError[]): ExcelImportPopupErro
     error.messages.map((message) => ({
       rowNumber: error.rowNumber,
       fieldName: error.fieldName,
-      message,
+      message: message.message,
+      detail: message.detail,
     })),
   );
 };
@@ -123,7 +130,12 @@ export const UploadResponses = ({
       if (Array.isArray(importErrors)) {
         setValidationErrors(formatImportErrors(importErrors));
       } else if (responseData?.meta?.reason) {
-        setValidationErrors([{ message: responseData.meta.reason }]);
+        setValidationErrors([
+          {
+            message: responseData.meta.reason,
+            isGeneral: true,
+          },
+        ]);
       }
     } finally {
       setIsImporting(false);

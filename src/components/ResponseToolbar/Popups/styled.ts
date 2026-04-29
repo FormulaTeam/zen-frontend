@@ -124,10 +124,10 @@ export const ErrorDetailsWrapper = styled.div`
 `;
 
 export const ErrorDetailsHeader = styled.div`
-  width: min(100%, 620px);
+  width: min(100%, 640px);
   margin: 0 auto 8px;
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) 220px;
+  grid-template-columns: minmax(280px, 1fr) 220px;
   column-gap: 32px;
   align-items: center;
   justify-content: center;
@@ -138,10 +138,10 @@ export const ErrorDetailsHeader = styled.div`
 `;
 
 export const ErrorDetailRow = styled.div`
-  width: min(100%, 620px);
+  width: min(100%, 640px);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) 220px;
+  grid-template-columns: minmax(280px, 1fr) 220px;
   column-gap: 32px;
   align-items: center;
   justify-content: center;
@@ -150,11 +150,28 @@ export const ErrorDetailRow = styled.div`
   border-top: 1px solid #f1f3f4;
 `;
 
+export const ErrorMessageBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  justify-content: center;
+`;
+
 export const ErrorMessageText = styled.div`
   font-size: 15px;
   line-height: 1.5;
   color: #202124;
-  font-weight: 600;
+  font-weight: 700;
+  word-break: break-word;
+`;
+
+export const ErrorMessageDetail = styled.div`
+  max-width: 100%;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #6b7280;
+  font-weight: 400;
   word-break: break-word;
 `;
 

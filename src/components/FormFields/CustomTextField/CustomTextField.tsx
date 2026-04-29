@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
+import FieldErrorText from "../FieldErrorText/FieldErrorText";
 
 interface CustomTextFieldProps {
   label: string;
@@ -8,6 +9,7 @@ interface CustomTextFieldProps {
   onChangeHandler: (value: string) => void;
   onBlurHandler?: () => void;
   validationMessage?: string | null;
+  validationDetail?: string | null;
   multiline?: boolean;
   value: any;
   isTabularEdit?: boolean;
@@ -20,6 +22,7 @@ const CustomTextField: React.FC<CustomTextFieldProps> = ({
   onChangeHandler,
   onBlurHandler,
   validationMessage,
+  validationDetail,
   label,
   isRequired,
   isTabularEdit = false,
@@ -44,7 +47,7 @@ const CustomTextField: React.FC<CustomTextFieldProps> = ({
       onBlur={onBlurHandler}
       multiline={multiline && !isTabularEdit}
       error={Boolean(validationMessage)}
-      helperText={validationMessage || " "}
+      helperText={<FieldErrorText message={validationMessage} detail={validationDetail} />}
       size={isTabularEdit ? "medium" : undefined}
       disabled={isDisabled}
       sx={{

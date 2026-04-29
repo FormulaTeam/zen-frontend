@@ -3,6 +3,12 @@ import { Box } from "@mui/material";
 import { LocationValue, LocationValueError } from "../../../utils/interfaces";
 import classes from "./CustomLatitudeLongitudeField.module.scss";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
+import FieldErrorText from "../FieldErrorText/FieldErrorText";
+
+type FieldErrorDisplay = {
+  message?: string;
+  detail?: string;
+};
 
 type CustomLatitudeLongitudeFieldProps = {
   value: LocationValue;
@@ -10,6 +16,7 @@ type CustomLatitudeLongitudeFieldProps = {
   onChangeHandler: (value: LocationValue) => void;
   onBlurHandler?: () => void;
   errors?: LocationValueError | null;
+  errorDetail?: FieldErrorDisplay | null;
   isRequired: boolean;
   label: string;
   locationFormat?: number;
@@ -22,6 +29,7 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
   onChangeHandler,
   onBlurHandler,
   errors,
+  errorDetail,
   label,
   isRequired,
   isTabularEdit = false,
@@ -48,6 +56,9 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
 
   const shouldShowGeneralOnBoth = !errors?.x && !errors?.y && !!errors?.general;
 
+  const yMessage = errors?.y || (shouldShowGeneralOnBoth ? errors?.general : undefined);
+  const xMessage = errors?.x || (shouldShowGeneralOnBoth ? errors?.general : undefined);
+
   return (
     <div
       className={classes["location-text-field-container"]}
@@ -63,8 +74,8 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
           value={yValue}
           onChange={handleYChange}
           onBlur={onBlurHandler}
-          error={Boolean(errors?.y || shouldShowGeneralOnBoth)}
-          helperText={errors?.y || (shouldShowGeneralOnBoth ? errors?.general : undefined) || " "}
+          error={Boolean(yMessage)}
+          helperText={<FieldErrorText message={yMessage} detail={errorDetail?.detail} />}
           disabled={isDisabled}
           adornment={isTabularEdit ? undefined : "Y"}
           size={isTabularEdit ? "small" : undefined}
@@ -80,8 +91,8 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
           value={xValue}
           onChange={handleXChange}
           onBlur={onBlurHandler}
-          error={Boolean(errors?.x || shouldShowGeneralOnBoth)}
-          helperText={errors?.x || (shouldShowGeneralOnBoth ? errors?.general : undefined) || " "}
+          error={Boolean(xMessage)}
+          helperText={<FieldErrorText message={xMessage} detail={errorDetail?.detail} />}
           disabled={isDisabled}
           adornment={isTabularEdit ? undefined : "X"}
           size={isTabularEdit ? "small" : undefined}

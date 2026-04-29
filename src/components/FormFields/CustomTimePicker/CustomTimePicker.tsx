@@ -5,6 +5,7 @@ import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { Chrome90RTLFixContainer } from "../Chrome90RTLFix/Chrome90RTLFix";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
+import FieldErrorText from "../FieldErrorText/FieldErrorText";
 import "dayjs/locale/he";
 
 dayjs.extend(utc);
@@ -20,6 +21,7 @@ interface CustomTimePickerProps {
   onChangeHandler: (value: string) => void;
   onBlurHandler?: () => void;
   validationMessage?: string | null;
+  validationDetail?: string | null;
 }
 
 const parseTimeStringToDayjs = (value: unknown): Dayjs | null => {
@@ -69,6 +71,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
   includeSeconds: showSeconds = false,
   isTabularEdit = false,
   validationMessage,
+  validationDetail,
 }) => {
   const [timeValue, setTimeValue] = useState<Dayjs | null>(null);
   const didApplyDefaultRef = useRef(false);
@@ -145,7 +148,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
               isTabularEdit,
               required: isRequired,
               error: Boolean(validationMessage),
-              helperText: validationMessage || " ",
+              helperText: <FieldErrorText message={validationMessage} detail={validationDetail} />,
               size: isTabularEdit ? "medium" : undefined,
             } as any,
             inputAdornment: {

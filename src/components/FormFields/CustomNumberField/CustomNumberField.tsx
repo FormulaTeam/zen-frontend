@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
+import FieldErrorText from "../FieldErrorText/FieldErrorText";
 
 interface CustomNumberFieldProps {
   label: string;
@@ -8,6 +9,7 @@ interface CustomNumberFieldProps {
   onChangeHandler: (value: string) => void;
   onBlurHandler?: () => void;
   validationMessage?: string | null;
+  validationDetail?: string | null;
   defaultValue: any;
   numberFormat?: number;
   min?: number;
@@ -21,6 +23,7 @@ const CustomNumberField: React.FC<CustomNumberFieldProps> = ({
   onChangeHandler,
   onBlurHandler,
   validationMessage,
+  validationDetail,
   label,
   isRequired,
   isTabularEdit = false,
@@ -41,7 +44,7 @@ const CustomNumberField: React.FC<CustomNumberFieldProps> = ({
       disabled={isDisabled}
       value={inputValue}
       error={Boolean(validationMessage)}
-      helperText={validationMessage || " "}
+      helperText={<FieldErrorText message={validationMessage} detail={validationDetail} />}
       required={isRequired}
       onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
         setInputValue(event.target.value);

@@ -15,7 +15,7 @@ import ResponseHeader from "../../components/ResponseComponents/ResponseHeader";
 import ResponseSection from "../../components/ResponseComponents/ResponseSection";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import AlertMsg from "../../components/AlertMsg/AlertMsg";
-import { useValidationErrors } from "../../hooks/useValidationErrors";
+import { useValidationErrors, type ValidationDisplayError } from "../../hooks/useValidationErrors";
 
 const PageContainer = styled(Container)`
   height: 100%;
@@ -35,7 +35,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   const [permissionTypes, setPermissionTypes] = useState<number[]>([]);
   const [savedParentResponseId, setSavedParentResponseId] = useState<string | undefined>(id);
   const [showLoadingSaveBtn, setShowLoadingSaveBtn] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [validationErrors, setValidationErrors] = useState<ValidationDisplayError[]>([]);
   const [showValidationPopup, setShowValidationPopup] = useState(false);
 
   const location = useLocation();
@@ -64,7 +64,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   const { saveResponse, isSaving } = useResponseSave(form, response, undefined, copyMode);
 
   const parentCreatePromiseRef = useRef<Promise<ResponseDto> | null>(null);
-  const generateValidationErrorMessagesRef = useRef<() => string[]>(() => []);
+  const generateValidationErrorMessagesRef = useRef<() => ValidationDisplayError[]>(() => []);
 
   useEffect(() => {
     if (id) {
@@ -176,7 +176,6 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     if (viewMode && form) {
       setPermissionTypes(form?.permissions ?? []);
     }
-
   }, [form, viewMode]);
 
   useEffect(() => {
@@ -225,9 +224,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       prev.map((childForm) =>
         childForm.shown
           ? {
-            ...childForm,
-            valid: [],
-          }
+              ...childForm,
+              valid: [],
+            }
           : childForm,
       ),
     );
@@ -255,9 +254,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
     const parentResponse: ParentResponseRef | undefined = savedParentResponseId
       ? {
-        formId: Number(formId),
-        responseId: savedParentResponseId,
-      }
+          formId: Number(formId),
+          responseId: savedParentResponseId,
+        }
       : undefined;
 
     return (

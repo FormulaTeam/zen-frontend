@@ -6,8 +6,15 @@ import type {
   ResponseDto,
   ResponseFieldValueDto,
 } from "../types/shared";
-import { fieldType, FieldType, validateFormFieldValue, type FormFieldLike } from "formula-gear";
-import { getFormById, getResponseById, useGetForm } from "../api";
+import {
+  fieldType,
+  FieldType,
+  validateFormFieldValue,
+  type FormFieldLike,
+  getFieldValidationMessage,
+  type FieldValidationMessage,
+} from "formula-gear";
+import { getResponseById, useGetForm } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
 import { checkUserAccessForResponse } from "../utils/utils";
 import { NOT_A_SECTION_ID } from "../utils/sections/consts";
@@ -53,8 +60,8 @@ interface SectionsMap {
 }
 
 export type FieldValidationError = {
-  messages: string[];
-  pathMessages: Record<string, string[]>;
+  messages: FieldValidationMessage[];
+  pathMessages: Record<string, FieldValidationMessage[]>;
 };
 
 const getFieldExtra = (field: FormFieldDto): FieldExtra => {
@@ -109,21 +116,23 @@ const toValidatorField = (field: FormFieldDto): FormFieldLike => ({
 
 const toFieldValidationError = (
   issues: readonly { path: readonly PropertyKey[]; message: string }[],
-) => {
-  const pathMessages: Record<string, string[]> = {};
+): FieldValidationError => {
+  const pathMessages: Record<string, FieldValidationMessage[]> = {};
 
-  issues.forEach((issue) => {
+  const messages = issues.map((issue) => getFieldValidationMessage(issue.message));
+
+  issues.forEach((issue, index) => {
     const key = issue.path.length > 0 ? String(issue.path[0]) : "_root";
 
     if (!pathMessages[key]) {
       pathMessages[key] = [];
     }
 
-    pathMessages[key].push(issue.message);
+    pathMessages[key].push(messages[index]);
   });
 
   return {
-    messages: issues.map((issue) => issue.message),
+    messages,
     pathMessages,
   };
 };
@@ -257,7 +266,9 @@ export const useResponseState = (
     }
 
     const effectiveResponseId = response?.id ?? responseId;
-    const stateKey = `${form.id}:${effectiveResponseId ?? "new"}:${copyMode ? "copy" : "regular"}:${viewMode ? "view" : "edit"}`;
+    const stateKey = `${form.id}:${effectiveResponseId ?? "new"}:${
+      copyMode ? "copy" : "regular"
+    }:${viewMode ? "view" : "edit"}`;
 
     if (!effectiveResponseId && initializedStateKeyRef.current === stateKey) {
       setLoading(false);
