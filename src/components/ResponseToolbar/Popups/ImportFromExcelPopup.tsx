@@ -99,17 +99,17 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
   const triggerUpload = useCallback(() => {
     if (onImport) {
       onImport();
-
       return;
     }
 
-    if (uploadRef && "current" in uploadRef && uploadRef.current) uploadRef.current.click();
+    if (uploadRef && "current" in uploadRef && uploadRef.current) {
+      uploadRef.current.click();
+    }
   }, [onImport, uploadRef]);
 
   const handleDownload = useCallback(() => {
     if (onDownloadTemplate) {
       onDownloadTemplate(form);
-
       return;
     }
 
@@ -117,15 +117,18 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
   }, [onDownloadTemplate, form]);
 
   const hasErrors = errors.length > 0;
-  const isPostImportState = isLoading || hasErrors;
 
-  const mainButton = isPostImportState
-    ? { text: mainButtonLabel, onClick: () => {}, disabled: true }
-    : { text: mainButtonLabel, onClick: triggerUpload, disabled: !canPerformActions };
+  const mainButton = {
+    text: mainButtonLabel,
+    onClick: triggerUpload,
+    disabled: !canPerformActions,
+  };
 
-  const cancelButton = isPostImportState
-    ? { text: downloadButtonLabel, onClick: () => {}, disabled: true }
-    : { text: downloadButtonLabel, onClick: handleDownload, disabled: !canPerformActions };
+  const cancelButton = {
+    text: downloadButtonLabel,
+    onClick: handleDownload,
+    disabled: !canPerformActions,
+  };
 
   const popupContent = isLoading ? (
     <Loader />
