@@ -34,6 +34,7 @@ export function convertFormStructureToCreateDto(formStructure: FormStructure): C
         description: formStructure.metadata.description ?? "",
         icon: formStructure.metadata.iconId ?? DEFAULT_ICON_NAME,
         sections,
+        conditions: formStructure.conditions ?? [],
     };
 
     return payload as CreateFormDto;

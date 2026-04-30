@@ -3,7 +3,7 @@ import { FormEditorHeader } from "./FormEditorHeader";
 import { FormSandbox } from "./FormSandbox";
 import { FormEditorContext, FormEditorMode, FORM_EDITOR_MODE } from "./context/FormEditorContext";
 import { useMemo } from "react";
-import { useFormStructure } from "./hooks/useFormStructure";
+import { ExtendedFormDto, useFormStructure } from "./hooks/useFormStructure";
 import { FormStructureContext } from "./context/FormStructureContext";
 import type { FormDto } from "../../types/shared";
 
@@ -25,7 +25,7 @@ interface CreateModeProps extends EditorProps {
 type Props = CreateModeProps | EditModeProps;
 
 function FormEditor({ mode, editedForm }: Props) {
-  const { ...formStructure } = useFormStructure(editedForm);
+  const { ...formStructure } = useFormStructure(editedForm as ExtendedFormDto | undefined);
 
   const originalFieldIds = useMemo<Set<string>>(() => {
     if (!editedForm?.sections) {

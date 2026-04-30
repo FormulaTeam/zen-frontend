@@ -50,11 +50,11 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
 }
 
 function generateOptionItemId() {
-  return nanoid5();
+  return uuid4();
 }
 
 function generateConditionId() {
-  return nanoid5();
+  return uuid4();
 }
 
 export { generateSectionId, generateFieldId, generateFieldName, generateNewFieldData, generateOptionItemId, generateConditionId };

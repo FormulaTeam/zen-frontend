@@ -17,14 +17,15 @@ import {
   FormComponentType,
   FormCondition,
   FormConditionDependantComponents,
-  FormConditionPredicateGroups, FormConditions,
+  FormConditionPredicateGroups,
+  FormConditions,
   FormConditionSummary,
   predicateGroupsSchema,
 } from "../schemas/conditions";
 import { ValueOf } from "../../../types/utils";
 import type { FormDto, FormSectionDto } from "../../../types/shared";
 
-type ExtendedFormDto = Partial<Omit<FormDto, 'sections'>> & {
+export type ExtendedFormDto = Partial<Omit<FormDto, 'sections'>> & {
   conditions?: FormConditions;
   sections?: Partial<FormSectionDto>[];
 };
@@ -80,7 +81,8 @@ function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
     sections,
     orderedSectionIds,
     fields,
-    conditions: form?.conditions || [],
+    conditions: (form?.conditions || []) as FormConditions,
+
   };
 }
 
