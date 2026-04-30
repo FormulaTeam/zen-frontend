@@ -1,4 +1,4 @@
-import { DeleteForever, MoreVert } from "@mui/icons-material";
+import { DeleteForever, FileDownload, MoreVert } from "@mui/icons-material";
 import { Button, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import { FC, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -7,6 +7,7 @@ import { useDeleteAllFormsResponses, useDeleteForm } from "../../../api";
 import deleteResponseImg from "../../../images/delete_response.png";
 import ConfirmPopup from "../../../popups/ConfirmPopup/ConfirmPopup";
 import { CustomIcon } from "../../../theme/icons";
+import { createExcelExport } from "../../../utils/utils";
 import { PermissionGate } from "../PermissionGate";
 import { useFormStore } from "../stores/form.store";
 import { SourceOperationStatus, SourceOperationStatusType } from "./FormActionsToolbar";
@@ -27,18 +28,28 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
   const { id: formId } = useParams();
   const navigate = useNavigate();
   const { permissions, form, rows } = useFormStore();
-  const [anchorElMoreActions, setAnchorElMoreActions] = useState<HTMLElement | null>(null);
-  const { mutate: deleteForm } = useDeleteForm({ id: formId ?? "" });
-  const { mutate: deleteAllResponses } = useDeleteAllFormsResponses({ formId: formId ?? "" });
 
+  const [anchorElMoreActions, setAnchorElMoreActions] = useState<HTMLElement | null>(null);
   const [showDeleteFormPopup, setShowDeleteFormPopup] = useState(false);
   const [showDeleteResponsesPopup, setShowDeleteResponsesPopup] = useState(false);
   const [showImportFromExcelPopup, setShowImportFromExcelPopup] = useState(false);
+
+  const { mutate: deleteForm } = useDeleteForm({ id: formId ?? "" });
+  const { mutate: deleteAllResponses } = useDeleteAllFormsResponses({ formId: formId ?? "" });
 
   if (!permissions || !form || !formId) return null;
 
   const hasMetroSource = !!(form.metro_access_url || form.oasisSourceKey);
   const hasFormFields = (form.sections ?? []).some((section) => (section.fields?.length ?? 0) > 0);
+
+  const closeMoreActionsMenu = () => {
+    setAnchorElMoreActions(null);
+  };
+
+  const handleExportToExcel = () => {
+    createExcelExport(form, rows);
+    closeMoreActionsMenu();
+  };
 
   const getSourceOperationTooltip = (): string => {
     if (sourceOperationStatus === SourceOperationStatus.CREATING)
@@ -84,7 +95,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
         aria-labelledby="demo-positioned-button"
         anchorEl={anchorElMoreActions}
         open={anchorElMoreActions !== null}
-        onClose={() => setAnchorElMoreActions(null)}
+        onClose={closeMoreActionsMenu}
         anchorOrigin={{
           vertical: "top",
           horizontal: "right",
@@ -101,6 +112,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
               <span style={{ display: "block" }}>{syncingDataMenuItem}</span>
             </Tooltip>
           )}
+
           {hasMetroSource ? (
             <MenuItem onClick={(event) => setAnchorElSourceType(event.currentTarget)}>
               <ListItemIcon>
@@ -121,25 +133,45 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
         <PermissionGate
           permissions={[permission.CreateResponse, permission.UpdateAnyResponse]}
           userPermissions={permissions}>
-          <MenuItem disabled={!hasFormFields} onClick={() => setShowImportFromExcelPopup(true)}>
+          <MenuItem
+            disabled={!hasFormFields}
+            onClick={() => {
+              setShowImportFromExcelPopup(true);
+              closeMoreActionsMenu();
+            }}>
             <ListItemIcon>
               <CustomIcon iconName="import" />
             </ListItemIcon>
             <ListItemText>ייבוא נתונים</ListItemText>
           </MenuItem>
+
           <UploadResponses
             showImportFromExcelPopup={showImportFromExcelPopup}
             setShowImportFromExcelPopup={setShowImportFromExcelPopup}
           />
         </PermissionGate>
 
+        <PermissionGate permissions={[permission.ReadForm]} userPermissions={permissions}>
+          <MenuItem disabled={!hasFormFields} onClick={handleExportToExcel}>
+            <ListItemIcon>
+              <FileDownload sx={{ fontSize: 22 }} />
+            </ListItemIcon>
+            <ListItemText>ייצוא לאקסל</ListItemText>
+          </MenuItem>
+        </PermissionGate>
+
         <PermissionGate permissions={[permission.UpdateForm]} userPermissions={permissions}>
-          <MenuItem onClick={() => setShowDeleteFormPopup(true)}>
+          <MenuItem
+            onClick={() => {
+              setShowDeleteFormPopup(true);
+              closeMoreActionsMenu();
+            }}>
             <ListItemIcon>
               <DeleteForever sx={{ color: "red", fontSize: 22 }} />
             </ListItemIcon>
             <ListItemText sx={{ color: "red" }}>מחיקת הטופס</ListItemText>
           </MenuItem>
+
           {showDeleteFormPopup && (
             <ConfirmPopup
               image={deleteResponseImg}
@@ -158,12 +190,18 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
         </PermissionGate>
 
         <PermissionGate permissions={[permission.UpdateForm]} userPermissions={permissions}>
-          <MenuItem onClick={() => setShowDeleteResponsesPopup(true)} disabled={rows.length === 0}>
+          <MenuItem
+            onClick={() => {
+              setShowDeleteResponsesPopup(true);
+              closeMoreActionsMenu();
+            }}
+            disabled={rows.length === 0}>
             <ListItemIcon>
               <DeleteForever sx={{ color: "red", fontSize: 22 }} />
             </ListItemIcon>
             <ListItemText sx={{ color: "red" }}>מחיקת כל התגובות</ListItemText>
           </MenuItem>
+
           {showDeleteResponsesPopup && (
             <ConfirmPopup
               image={deleteResponseImg}

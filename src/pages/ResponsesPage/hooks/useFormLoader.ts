@@ -5,7 +5,7 @@ import { Row } from "../../../utils/interfaces";
 
 export function useFormLoader(formId: string) {
   const { form, setForm, setPermissions, setRows, filter, setResponses } = useInitiateFormStore();
-  
+
   const {
     data: formData,
     isLoading,
@@ -40,9 +40,7 @@ export function useFormLoader(formId: string) {
 
   const { setPageInfo, setIsRowsLoading } = useInitiateFormStore();
 
-  // 1. Sync loading state (Sync with query lifecycle)
   useEffect(() => {
-    // We are loading if the query is pending (initial) OR if it's currently fetching new data (including transitions)
     const activeLoading = isRowsPending || isPlaceholderData || isRowsFetching;
 
     if (activeLoading) {
@@ -50,20 +48,16 @@ export function useFormLoader(formId: string) {
     }
   }, [isRowsPending, isPlaceholderData, isRowsFetching, setIsRowsLoading]);
 
-  // 2. Clear loading on error
   useEffect(() => {
     if (isResponsesError) {
       setIsRowsLoading(false);
     }
   }, [isResponsesError, setIsRowsLoading]);
 
-  // 3. Process data when success
   useEffect(() => {
     if (isResponsesSuccess && formData) {
-      // If we have stale placeholder data, don't update the store yet, but keep loading true.
       if (isPlaceholderData) return;
 
-      // Robust response data extraction
       const findResponses = (obj: any): any[] | null => {
         if (!obj || typeof obj !== "object") return null;
         if (Array.isArray(obj)) return obj;
@@ -75,7 +69,6 @@ export function useFormLoader(formId: string) {
 
       const responses = findResponses(responsesRowsData) || [];
 
-      // Robust PageInfo extraction
       const findPageInfo = (obj: any): any | null => {
         if (!obj || typeof obj !== "object") return null;
         const pi = obj.pageInfo || obj.page_info;
@@ -95,6 +88,7 @@ export function useFormLoader(formId: string) {
         : null;
 
       const fieldIdToDisplayName = new Map<string, string>();
+
       formData.sections.forEach((section) => {
         section.fields.forEach((field) => {
           fieldIdToDisplayName.set(field.id, field.displayName);
@@ -114,10 +108,17 @@ export function useFormLoader(formId: string) {
         };
 
         const fieldValues = node.fieldValues || node.field_values || node.data || [];
+
         fieldValues.forEach((fv: any) => {
           const fieldId = fv.field_id || fv.fieldId;
+
+          if (!fieldId) return;
+
           const displayName = fieldIdToDisplayName.get(fieldId);
-          if (displayName) {
+
+          row[fieldId] = fv.value;
+
+          if (displayName && row[displayName] === undefined) {
             row[displayName] = fv.value;
           }
         });
@@ -125,7 +126,6 @@ export function useFormLoader(formId: string) {
         return row;
       });
 
-      // Atomic Update
       setRows(rows);
       setResponses(responses as any);
       setPageInfo(
@@ -137,7 +137,6 @@ export function useFormLoader(formId: string) {
         },
       );
 
-      // Reset loading state AFTER data is processed
       setIsRowsLoading(false);
     }
   }, [
@@ -156,6 +155,7 @@ export function useFormLoader(formId: string) {
   useEffect(() => {
     if (formData && isSuccess && formData.id !== lastFormIdRef.current) {
       lastFormIdRef.current = formData.id;
+
       const flattenedFields = (formData.sections ?? [])
         .flatMap((section) => section.fields ?? [])
         .sort((a, b) => a.index - b.index);
