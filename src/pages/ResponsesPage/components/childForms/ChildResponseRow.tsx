@@ -22,6 +22,7 @@ interface ChildResponseRowProps {
 
 type EditorFieldExtra = {
   dateAndTime?: boolean;
+  includeTime?: boolean;
 };
 
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
@@ -106,7 +107,7 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
         if (!moment(value).isValid()) return "";
 
         const extra = getFieldExtra(field);
-        const includeTime = extra.dateAndTime;
+        const includeTime = (field as any).dateAndTime || extra.dateAndTime || (field as any).includeTime || extra.includeTime;
 
         return includeTime
           ? moment(value).format(DEFAULT_DATE_TIME_FORMAT)

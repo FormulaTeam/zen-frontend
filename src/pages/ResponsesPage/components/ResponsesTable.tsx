@@ -903,6 +903,8 @@ export const ResponsesTable = React.memo(
             localeText={{
               ...heIL.components.MuiDataGrid.defaultProps.localeText,
               columnMenuLabel: "פעולות",
+              pinToLeft: "נעץ מימין",
+              pinToRight: "נעץ משמאל",
             }}
             columns={getFormColumns}
             sortModel={sortModel}
@@ -910,12 +912,13 @@ export const ResponsesTable = React.memo(
             slots={{
               footer: CustomFooter,
             }}
-            {...(hasFormInFormFields && {
-              getDetailPanelContent,
-              getDetailPanelHeight,
-              detailPanelExpandedRowIds,
-            })}
             slotProps={{
+              columnMenu: {
+                slots: {
+                  columnMenuColumnsItem: null,
+                  columnMenuFilterItem: null,
+                },
+              },
               row: {
                 onContextMenu: handleContextMenu,
                 style: { cursor: "context-menu" },

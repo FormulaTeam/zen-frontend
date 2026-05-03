@@ -597,7 +597,7 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
             displayName,
             value: item.value,
             fieldId: item.fieldId,
-            dateAndTime: extra.dateAndTime,
+            dateAndTime: (currentFieldMetaData as any).dateAndTime || extra.dateAndTime,
             fieldType: currentFieldType as FieldType,
           });
         }

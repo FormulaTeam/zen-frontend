@@ -587,7 +587,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             onBlurHandler(fieldId);
           }}
           value={formFieldValue}
-          dateAndTime={formFieldExtra.dateAndTime}
+          dateAndTime={(formField as any).dateAndTime || formFieldExtra.dateAndTime || (formField as any).includeTime || (formFieldExtra as any).includeTime}
           defaultValue={formFieldExtra.defaultValue}
           validationMessage={validationMessage}
           validationDetail={validationDetail}

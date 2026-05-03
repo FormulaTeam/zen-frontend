@@ -18,6 +18,7 @@ interface UseCellDisplayReturn {
 
 type EditorFieldExtra = {
   dateAndTime?: boolean;
+  includeTime?: boolean;
 };
 
 type LocationValue = {
@@ -215,7 +216,7 @@ export const useCellDisplay = ({
         return <Box component="span" className="cell-box"></Box>;
 
       const extra = getFieldExtra(field);
-      const dateAndTime = extra.dateAndTime;
+      const dateAndTime = (field as any).dateAndTime || extra.dateAndTime || (field as any).includeTime || extra.includeTime;
 
       switch (field.fieldType) {
         case fieldType.Link:
