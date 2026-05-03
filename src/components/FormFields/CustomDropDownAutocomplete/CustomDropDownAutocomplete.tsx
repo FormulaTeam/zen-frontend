@@ -2,6 +2,7 @@ import { Chip, FormControl } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import { texts } from "../../../utils/texts";
 import { v4 as uuidv4 } from "uuid";
+import FieldErrorText from "../FieldErrorText/FieldErrorText";
 import {
   StyledFormHelperText,
   StyledInputLabel,
@@ -23,6 +24,7 @@ interface CustomDropDownAutocompleteProps {
   onChangeHandler: (value: string | string[]) => void;
   onBlurHandler?: () => void;
   validationMessage?: string | null;
+  validationDetail?: string | null;
 }
 
 const normalizeToArray = (value: string | string[] | null | undefined): string[] => {
@@ -44,6 +46,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   defaultValue,
   isTabularEdit = false,
   validationMessage,
+  validationDetail,
 }) => {
   const [selectedValues, setSelectedValues] = useState<string[]>(normalizeToArray(value));
   const hasTriggeredBlurRef = useRef(false);
@@ -231,7 +234,9 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         )}
       />
 
-      <StyledFormHelperText>{validationMessage || " "}</StyledFormHelperText>
+      <StyledFormHelperText>
+        <FieldErrorText message={validationMessage} detail={validationDetail} />
+      </StyledFormHelperText>
     </FormControl>
   );
 };

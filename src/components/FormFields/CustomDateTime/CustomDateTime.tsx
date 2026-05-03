@@ -6,6 +6,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import classes from "./CustomDateTime.module.scss";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
+import FieldErrorText from "../FieldErrorText/FieldErrorText";
 import { Chrome90RTLFixContainer } from "../Chrome90RTLFix/Chrome90RTLFix";
 import "dayjs/locale/he";
 
@@ -25,6 +26,7 @@ interface CustomDateTimeProps {
   onChangeHandler: (value: string) => void;
   onBlurHandler?: () => void;
   validationMessage?: string | null;
+  validationDetail?: string | null;
 }
 
 const isCurrentDateDefault = (defaultValue?: number) => defaultValue === 2;
@@ -57,6 +59,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   dateAndTime = false,
   isTabularEdit = false,
   validationMessage,
+  validationDetail,
 }) => {
   const [dateValue, setDateValue] = useState<Dayjs | null>(null);
   const didApplyDefaultRef = useRef(false);
@@ -78,7 +81,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
     }
 
     setDateValue(null);
-  }, [value, defaultValue, dateAndTime]);
+  }, [value, defaultValue, dateAndTime, onChangeHandler]);
 
   return (
     <Chrome90RTLFixContainer className={classes["custom-date-time-container"]}>
@@ -111,7 +114,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
               isTabularEdit,
               required: isRequired,
               error: Boolean(validationMessage),
-              helperText: validationMessage || " ",
+              helperText: <FieldErrorText message={validationMessage} detail={validationDetail} />,
               size: isTabularEdit ? "medium" : undefined,
               onBlur: onBlurHandler,
             } as any,
@@ -158,7 +161,9 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
               textField: {
                 required: isRequired,
                 error: Boolean(validationMessage),
-                helperText: validationMessage || " ",
+                helperText: (
+                  <FieldErrorText message={validationMessage} detail={validationDetail} />
+                ),
                 size: isTabularEdit ? "medium" : undefined,
                 onBlur: onBlurHandler,
               } as any,

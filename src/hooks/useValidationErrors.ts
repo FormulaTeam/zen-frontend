@@ -1,6 +1,18 @@
+type FieldValidationMessage = {
+  code: string;
+  message: string;
+  detail: string;
+};
+
 type FieldValidationError = {
-  messages: string[];
-  pathMessages: Record<string, string[]>;
+  messages: FieldValidationMessage[];
+  pathMessages: Record<string, FieldValidationMessage[]>;
+};
+
+export type ValidationDisplayError = {
+  fieldName?: string;
+  message: string;
+  detail?: string;
 };
 
 interface UseValidationErrorsParams {
@@ -17,8 +29,8 @@ export const useValidationErrors = ({
   childForms,
   childFormsValidate,
 }: UseValidationErrorsParams) => {
-  const generateValidationErrorMessages = (): string[] => {
-    const errors: string[] = [];
+  const generateValidationErrorMessages = (): ValidationDisplayError[] => {
+    const errors: ValidationDisplayError[] = [];
 
     formFields.forEach((field) => {
       const fieldId = String(field.id);
@@ -31,7 +43,11 @@ export const useValidationErrors = ({
       const fieldName = field.displayName || field.name || `שדה ${fieldId}`;
 
       validation.messages.forEach((message) => {
-        errors.push(`${fieldName}: ${message}`);
+        errors.push({
+          fieldName,
+          message: message.message,
+          detail: message.detail,
+        });
       });
     });
 
@@ -39,9 +55,9 @@ export const useValidationErrors = ({
       childForms.forEach((childForm, childFormIndex) => {
         if (childForm.shown && childForm.children && childForm.children.length > 0) {
           const childFormField = formFields.find(
-            (f) =>
-              f.extra?.linkedFormId === childForm.formId ||
-              f.linkedFormId === childForm.formId,
+            (field) =>
+              field.extra?.linkedFormId === childForm.formId ||
+              field.linkedFormId === childForm.formId,
           );
 
           const childFormName =
@@ -49,13 +65,17 @@ export const useValidationErrors = ({
             childFormField?.name ||
             `טופס משובץ ${childFormIndex + 1}`;
 
-          childForm.children.forEach((child: any, childIndex: number) => {
+          childForm.children.forEach((_child: any, childIndex: number) => {
             if (
               childForm.valid &&
               childForm.valid.length > childIndex &&
               childForm.valid[childIndex] === false
             ) {
-              errors.push(`${childFormName} (תגובה ${childIndex + 1}): יש שדות חובה שלא מולאו`);
+              errors.push({
+                fieldName: `${childFormName} (תגובה ${childIndex + 1})`,
+                message: "שדה חובה",
+                detail: "יש שדות חובה שלא מולאו",
+              });
             }
           });
 
@@ -64,7 +84,11 @@ export const useValidationErrors = ({
             childForm.valid &&
             childForm.valid.length < childForm.children.length
           ) {
-            errors.push(`${childFormName}: יש לוודא שכל השדות החובה מולאו`);
+            errors.push({
+              fieldName: childFormName,
+              message: "שדה חובה",
+              detail: "יש לוודא שכל שדות החובה מולאו",
+            });
           }
         }
       });

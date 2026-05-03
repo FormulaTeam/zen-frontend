@@ -7,7 +7,7 @@ import {
   LocationValueError,
   LinkValueError,
 } from "../../utils/interfaces";
-import { fieldType as legacyFieldTypeIds } from "formula-gear";
+import { fieldType as legacyFieldTypeIds, type FieldValidationMessage } from "formula-gear";
 import CustomDateTime from "../FormFields/CustomDateTime/CustomDateTime";
 import CustomDropDownAutocomplete from "../FormFields/CustomDropDownAutocomplete/CustomDropDownAutocomplete";
 import CustomFileInputField from "../FormFields/CustomFileInputField/CustomFileInputField";
@@ -64,8 +64,13 @@ type FormFieldRendererField = FormFieldDto & {
 };
 
 type FieldValidationError = {
-  messages: string[];
-  pathMessages: Record<string, string[]>;
+  messages: FieldValidationMessage[];
+  pathMessages: Record<string, FieldValidationMessage[]>;
+};
+
+type FieldErrorDisplay = {
+  message?: string;
+  detail?: string;
 };
 
 interface FormFieldRendererProps {
@@ -147,7 +152,10 @@ const getParentDependencies = (field: FormFieldDto): any[] => {
 };
 
 const getValidationMessage = (validation: FieldValidationError | null | undefined): string | null =>
-  validation?.messages?.[0] ?? null;
+  validation?.messages?.[0]?.message ?? null;
+
+const getValidationDetail = (validation: FieldValidationError | null | undefined): string | null =>
+  validation?.messages?.[0]?.detail ?? null;
 
 const getLocationErrors = (
   validation: FieldValidationError | null | undefined,
@@ -155,9 +163,20 @@ const getLocationErrors = (
   if (!validation) return null;
 
   return {
-    x: validation.pathMessages?.x?.[0],
-    y: validation.pathMessages?.y?.[0],
-    general: validation.pathMessages?._root?.[0] ?? validation.messages?.[0],
+    x: validation.pathMessages?.x?.[0]?.message,
+    y: validation.pathMessages?.y?.[0]?.message,
+    general: validation.pathMessages?._root?.[0]?.message ?? validation.messages?.[0]?.message,
+  };
+};
+
+const getLocationErrorDetails = (
+  validation: FieldValidationError | null | undefined,
+): FieldErrorDisplay | null => {
+  if (!validation) return null;
+
+  return {
+    message: validation.pathMessages?._root?.[0]?.message ?? validation.messages?.[0]?.message,
+    detail: validation.pathMessages?._root?.[0]?.detail ?? validation.messages?.[0]?.detail,
   };
 };
 
@@ -167,9 +186,28 @@ const getLinkErrors = (
   if (!validation) return null;
 
   return {
-    link: validation.pathMessages?.link?.[0],
-    linkTxt: validation.pathMessages?.linkTxt?.[0],
-    general: validation.pathMessages?._root?.[0],
+    link: validation.pathMessages?.link?.[0]?.message,
+    linkTxt: validation.pathMessages?.linkTxt?.[0]?.message,
+    general: validation.pathMessages?._root?.[0]?.message,
+  };
+};
+
+const getLinkErrorDetails = (
+  validation: FieldValidationError | null | undefined,
+): FieldErrorDisplay | null => {
+  if (!validation) return null;
+
+  return {
+    message:
+      validation.pathMessages?.link?.[0]?.message ??
+      validation.pathMessages?.linkTxt?.[0]?.message ??
+      validation.pathMessages?._root?.[0]?.message ??
+      validation.messages?.[0]?.message,
+    detail:
+      validation.pathMessages?.link?.[0]?.detail ??
+      validation.pathMessages?.linkTxt?.[0]?.detail ??
+      validation.pathMessages?._root?.[0]?.detail ??
+      validation.messages?.[0]?.detail,
   };
 };
 
@@ -211,6 +249,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 
   const validation = formFieldsValidMap.get(fieldId);
   const validationMessage = getValidationMessage(validation);
+  const validationDetail = getValidationDetail(validation);
 
   let input: any = null;
 
@@ -230,6 +269,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           }}
           value={formFieldValue}
           validationMessage={validationMessage}
+          validationDetail={validationDetail}
           multiline
           isTabularEdit={isTabularEdit}
         />
@@ -251,6 +291,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           }}
           value={formFieldValue}
           validationMessage={validationMessage}
+          validationDetail={validationDetail}
           isTabularEdit={isTabularEdit}
         />
       );
@@ -504,6 +545,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           options={availableOptions}
           optionLabels={optionLabels}
           validationMessage={validationMessage}
+          validationDetail={validationDetail}
           isTabularEdit={isTabularEdit}
         />
       );
@@ -517,6 +559,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           label={formField.displayName}
           isRequired={formField.isRequired}
           errors={getLinkErrors(validation)}
+          errorDetail={getLinkErrorDetails(validation)}
           isDisabled={viewMode}
           onChangeHandler={(value: LinkValue) => {
             onChangeHandler(value, fieldId);
@@ -547,6 +590,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           dateAndTime={formFieldExtra.includeTime}
           defaultValue={formFieldExtra.defaultValue}
           validationMessage={validationMessage}
+          validationDetail={validationDetail}
           isTabularEdit={isTabularEdit}
         />
       );
@@ -569,6 +613,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           includeSeconds={formFieldExtra.includeSeconds}
           defaultValue={formFieldExtra.defaultValue}
           validationMessage={validationMessage}
+          validationDetail={validationDetail}
           isTabularEdit={isTabularEdit}
         />
       );
@@ -581,6 +626,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           label={formField.displayName}
           isRequired={formField.isRequired}
           errors={getLocationErrors(validation)}
+          errorDetail={getLocationErrorDetails(validation)}
           isDisabled={viewMode}
           locationFormat={formFieldExtra.locationFormat}
           onChangeHandler={(value: any) => {
@@ -627,6 +673,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           }}
           value={formFieldValue}
           validationMessage={validationMessage}
+          validationDetail={validationDetail}
           isTabularEdit={isTabularEdit}
         />
       );
@@ -650,6 +697,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           min={formFieldExtra.min}
           max={formFieldExtra.max}
           validationMessage={validationMessage}
+          validationDetail={validationDetail}
           isTabularEdit={isTabularEdit}
         />
       );
@@ -668,6 +716,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           }}
           value={formFieldValue}
           validationMessage={validationMessage}
+          validationDetail={validationDetail}
           isTabularEdit={isTabularEdit}
           formId={formId}
         />

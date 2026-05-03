@@ -16,6 +16,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import "./CustomMultiInputField.scss";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
+import FieldErrorText from "../FieldErrorText/FieldErrorText";
 
 type ListItem = {
   index: number;
@@ -32,6 +33,7 @@ interface CustomMultiInputFieldProps {
   isRequired: boolean;
   isTabularEdit?: boolean;
   validationMessage?: string | null;
+  validationDetail?: string | null;
 }
 
 const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
@@ -43,6 +45,7 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
   isRequired,
   isTabularEdit = false,
   validationMessage,
+  validationDetail,
 }) => {
   const theme = useTheme();
 
@@ -159,7 +162,8 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
     }
   }, [value]);
 
-  const helperText = localErrorMessage || validationMessage || "";
+  const helperMessage = localErrorMessage || validationMessage;
+  const helperDetail = localErrorMessage ? undefined : validationDetail;
 
   return (
     <div
@@ -180,8 +184,8 @@ const CustomMultiInputField: React.FC<CustomMultiInputFieldProps> = ({
         value={inputValue}
         onChange={onChangeValueHandler}
         onBlur={onBlurHandler}
-        error={Boolean(helperText)}
-        helperText={helperText || " "}
+        error={Boolean(helperMessage)}
+        helperText={<FieldErrorText message={helperMessage} detail={helperDetail} />}
         disabled={isDisabled}
         onKeyUp={handleKeyUp}
         size={isTabularEdit ? "medium" : undefined}

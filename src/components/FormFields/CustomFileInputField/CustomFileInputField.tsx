@@ -15,6 +15,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { FileIcon, defaultStyles } from "react-file-icon";
 import UploadIcon from "../../../images/Upload-icon.svg";
 import { downloadFileFromResponse } from "../../../api/filesApi";
+import FieldErrorText from "../FieldErrorText/FieldErrorText";
 
 interface CustomFileInputFieldProps {
   value: any;
@@ -27,6 +28,7 @@ interface CustomFileInputFieldProps {
   isTabularEdit?: boolean;
   formId?: number | string;
   validationMessage?: string | null;
+  validationDetail?: string | null;
 }
 
 type FileItem = {
@@ -75,6 +77,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   isTabularEdit = false,
   formId,
   validationMessage,
+  validationDetail,
 }) => {
   const theme = useTheme();
   const [files, setFiles] = useState<FileItem[]>(() => normalizeIncomingValue(value));
@@ -216,7 +219,9 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
         </>
       )}
 
-      <FormHelperText>{validationMessage || " "}</FormHelperText>
+      <FormHelperText>
+        <FieldErrorText message={validationMessage} detail={validationDetail} />
+      </FormHelperText>
     </FormControl>
   );
 };

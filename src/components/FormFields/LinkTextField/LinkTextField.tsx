@@ -2,6 +2,12 @@ import React, { useEffect, useState } from "react";
 import classes from "./LinkTextField.module.scss";
 import { LinkValue, LinkValueError } from "../../../utils/interfaces";
 import BaseFieldInput from "../BaseFieldInput/BaseFieldInput";
+import FieldErrorText from "../FieldErrorText/FieldErrorText";
+
+type FieldErrorDisplay = {
+  message?: string;
+  detail?: string;
+};
 
 type LinkTextFieldProps = {
   value: LinkValue | null;
@@ -9,6 +15,7 @@ type LinkTextFieldProps = {
   onChangeHandler: (value: LinkValue) => void;
   onBlurHandler?: () => void;
   errors?: LinkValueError | null;
+  errorDetail?: FieldErrorDisplay | null;
   isRequired: boolean;
   label: string;
   isTabularEdit?: boolean;
@@ -20,6 +27,7 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
   onChangeHandler,
   onBlurHandler,
   errors,
+  errorDetail,
   label,
   isRequired,
   isTabularEdit = false,
@@ -63,7 +71,7 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
         onChange={handleUrlChange}
         onBlur={onBlurHandler}
         error={Boolean(errors?.link)}
-        helperText={errors?.link || " "}
+        helperText={<FieldErrorText message={errors?.link} detail={errorDetail?.detail} />}
         disabled={isDisabled}
         size={isTabularEdit ? "medium" : undefined}
       />
@@ -77,12 +85,16 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
         onChange={handlePreviewTextChange}
         onBlur={onBlurHandler}
         error={Boolean(errors?.linkTxt)}
-        helperText={errors?.linkTxt || " "}
+        helperText={<FieldErrorText message={errors?.linkTxt} detail={errorDetail?.detail} />}
         disabled={isDisabled}
         size={isTabularEdit ? "medium" : undefined}
       />
 
-      {errors?.general ? <div className={classes["general-error"]}>{errors.general}</div> : null}
+      {errors?.general ? (
+        <div className={classes["general-error"]}>
+          <FieldErrorText message={errors.general} detail={errorDetail?.detail} />
+        </div>
+      ) : null}
     </div>
   );
 };

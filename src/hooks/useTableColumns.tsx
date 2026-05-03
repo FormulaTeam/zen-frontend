@@ -9,10 +9,11 @@ import CustomCarousel from "../components/FilePreview/CustomCarousel";
 import ZoomCell from "../components/formInForm/ZoomCell";
 import FormFieldRenderer from "../components/Responses/FormFieldRenderer";
 import { ViewColumn } from "../types/interfaces/tableViews.types";
+import type { FieldValidationMessage } from "formula-gear";
 
 type TableFieldValidationError = {
-  messages: string[];
-  pathMessages: Record<string, string[]>;
+  messages: FieldValidationMessage[];
+  pathMessages: Record<string, FieldValidationMessage[]>;
 };
 
 export const useTableColumns = (
@@ -24,7 +25,7 @@ export const useTableColumns = (
   responsesHaveParents,
   isQuickEditMode = false,
   onCellValueChange?: (rowId: string, fieldId: string, value: any) => void,
-  validationErrors?: Record<string, Record<string, string>>,
+  validationErrors?: Record<string, Record<string, FieldValidationMessage>>,
   rowSelection?: Record<string, boolean>,
   editedData?: Record<string, Record<string, any>>,
   isRowInEditMode?: (rowId: string) => boolean,
@@ -160,6 +161,7 @@ export const useTableColumns = (
               formFieldsValuesMap.set(uniqueId, currentValue);
 
               const validationMessage = validationErrors?.[row.original.id]?.[uniqueId];
+
               formFieldsValidMap.set(
                 uniqueId,
                 validationMessage
