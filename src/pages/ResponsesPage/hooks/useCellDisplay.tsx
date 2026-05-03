@@ -214,6 +214,9 @@ export const useCellDisplay = ({
       if (value === null || value === undefined || value === "")
         return <Box component="span" className="cell-box"></Box>;
 
+      const extra = getFieldExtra(field);
+      const dateAndTime = extra.dateAndTime;
+
       switch (field.fieldType) {
         case fieldType.Link:
           return formatLinkCell(value as LinkValue);
@@ -222,7 +225,7 @@ export const useCellDisplay = ({
           return formatFileCell(value);
 
         case fieldType.Date:
-          return formatDateCell(value, getFieldExtra(field).dateAndTime);
+          return formatDateCell(value, dateAndTime);
 
         case fieldType.Time:
           return formatTimeCell(value);

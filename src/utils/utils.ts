@@ -590,7 +590,7 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
         const currentFieldMetaData = formFields.find((fieldData) => fieldData.id === item.fieldId);
 
         if (currentFieldMetaData) {
-          const extra = ((currentFieldMetaData.extra ?? {}) as { dateAndTime?: boolean }) || {};
+          const extra = (currentFieldMetaData.extra || {}) as { dateAndTime?: boolean };
           const { displayName, fieldType: currentFieldType } = currentFieldMetaData;
 
           acc.push({

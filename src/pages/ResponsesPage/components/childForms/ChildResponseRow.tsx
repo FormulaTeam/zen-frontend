@@ -105,7 +105,10 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
       case fieldType.Date:
         if (!moment(value).isValid()) return "";
 
-        return getFieldExtra(field).dateAndTime
+        const extra = getFieldExtra(field);
+        const includeTime = extra.dateAndTime;
+
+        return includeTime
           ? moment(value).format(DEFAULT_DATE_TIME_FORMAT)
           : moment(value).format(DEFAULT_DATE_FORMAT);
 
