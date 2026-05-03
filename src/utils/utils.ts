@@ -505,7 +505,14 @@ type ExcelExportCell = {
   hyperlink?: string;
 };
 
-const RESPONSE_META_COLUMNS = ["מזהה תגובה", "אינדקס", "נוצר בתאריך", "עודכן בתאריך"] as const;
+const SYNC_STATUS_COLUMN = "האם סונכרן למטרו";
+
+const RESPONSE_META_COLUMNS = [
+  "נוצר בתאריך",
+  "נוצר על ידי",
+  "עודכן בתאריך",
+  "עודכן על ידי",
+] as const;
 
 export function createExcelExport(form: FormDto, rows: Row[] = []) {
   const formFields = form.sections
@@ -514,7 +521,7 @@ export function createExcelExport(form: FormDto, rows: Row[] = []) {
     .sort((a, b) => a.index - b.index);
 
   const fieldHeaders = formFields.map((field) => field.displayName);
-  const headers = [...fieldHeaders, ...RESPONSE_META_COLUMNS];
+  const headers = [SYNC_STATUS_COLUMN, ...fieldHeaders, ...RESPONSE_META_COLUMNS];
 
   const sortedRows = [...rows].sort((a, b) => getRowIndex(a) - getRowIndex(b));
 
@@ -522,13 +529,16 @@ export function createExcelExport(form: FormDto, rows: Row[] = []) {
     const fieldCells = formFields.map((field) => formatExcelExportCell(row[field.id]));
 
     const metaCells: ExcelExportCell[] = [
-      { value: safeString(row.id) },
-      { value: getRowIndex(row) || "" },
       { value: formatDateValue(row.created) },
+      { value: safeString(row.createdByName) },
       { value: formatDateValue(row.edited) },
+      { value: safeString(row.editedByName) },
     ];
 
-    return [...fieldCells, ...metaCells];
+    const syncStatusCell: ExcelExportCell = { value: "לא סונכרן" };
+    // row.pushed_to_metro ? "סונכרן" : "לא סונכרן";
+
+    return [syncStatusCell, ...fieldCells, ...metaCells];
   });
 
   const sheetData = [headers, ...dataRows.map((row) => row.map((cell) => cell.value))];
@@ -624,7 +634,11 @@ const formatExcelExportCell = (value: unknown): ExcelExportCell => {
     return { value: "" };
   }
 
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+  if (typeof value === "boolean") {
+    return { value: value ? "כן" : "לא" };
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
     return { value };
   }
 
