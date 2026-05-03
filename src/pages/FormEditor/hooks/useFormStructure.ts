@@ -25,8 +25,7 @@ import {
 import { ValueOf } from "../../../types/utils";
 import type { FormDto, FormSectionDto } from "../../../types/shared";
 
-export type ExtendedFormDto = Partial<Omit<FormDto, 'sections'>> & {
-  conditions?: FormConditions;
+type ExtendedFormDto = Partial<Omit<FormDto, 'sections'>> & {
   sections?: Partial<FormSectionDto>[];
 };
 
