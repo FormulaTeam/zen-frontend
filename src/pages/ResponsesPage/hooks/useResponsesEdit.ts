@@ -1,16 +1,18 @@
 import { useMemo, useRef, useState, useCallback } from "react";
 import { GridRowModel } from "@mui/x-data-grid-pro";
 import { showSuccessNotification, showErrorNotification, DEFAULT_DATE_FORMAT } from "@utils/utils";
-import { useBatchUpdateResponses, useCreateResponse } from "@api/responsesApi";
+import { useUpdateResponses, useCreateResponse } from "@api/responsesApi";
 import { uploadFilesToS3 } from "@api/filesApi";
 import { useFormStore } from "../stores/form.store";
 import { useAuth } from "@contexts/AuthContext";
 import {
+  BulkUpdateResponsesDto,
   CreateResponseDto,
   FormDto,
   FormFieldDto,
   ResponseDto,
   ResponseFieldValueDto,
+  UpdateOneResponseDto,
   UserPersonalDto,
 } from "src/types/shared";
 import { fieldType } from "formula-gear";
@@ -40,11 +42,6 @@ type EditorFieldExtra = {
   minValue?: number;
   maxValue?: number;
   numberType?: string;
-};
-
-type ResponseUpdatePayload = {
-  id: string;
-  responseData: ResponseDto;
 };
 
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
@@ -117,7 +114,7 @@ const getEditedFileValueParts = (editedValue: unknown) => {
 };
 
 export const useResponsesEdit = () => {
-  const { form, rows, setRows, filter, responses } = useFormStore();
+  const { form, rows, setRows, filter, responses, setForm } = useFormStore();
   const { user } = useAuth();
 
   const [isInEditMode, setIsInEditMode] = useState(false);
@@ -140,9 +137,7 @@ export const useResponsesEdit = () => {
 
   const fullResponses = useMemo(() => (responses as unknown as ResponseDto[]) || undefined, [responses]);
 
-  const { mutateAsync: batchUpdateResponses, isPending: isUpdating } = useBatchUpdateResponses({
-    formId: dtoForm?.id || 0,
-  });
+  const { mutateAsync: updateResponses, isPending: isUpdating } = useUpdateResponses(dtoForm?.id);
 
   const { mutateAsync: createResponse } = useCreateResponse(dtoForm?.id);
 
@@ -330,7 +325,7 @@ export const useResponsesEdit = () => {
   const buildResponseUpdatePayload = useCallback(async (
     rowId: string,
     editedRow: Partial<Row>,
-  ): Promise<ResponseUpdatePayload | null> => {
+  ): Promise<UpdateOneResponseDto | null> => {
     const original = (fullResponses as ResponseDto[] | undefined)?.find(
       (response) => String(response?.id) === String(rowId),
     );
@@ -392,17 +387,11 @@ export const useResponsesEdit = () => {
       }),
     );
 
-    const personalUser = getAuthPersonalUser(user);
-
     return {
-      id: String(rowId),
-      responseData: {
-        ...original,
-        updatedBy: personalUser ?? original.updatedBy,
-        fieldValues: updatedFieldValues,
-      },
+      responseId: String(rowId),
+      fieldValues: updatedFieldValues,
     };
-  }, [fullResponses, formFields, user, dtoForm?.id]);
+  }, [fullResponses, formFields, dtoForm?.id]);
 
   const addNewResponse = useCallback((): void => {
     if (!isInEditMode || !dtoForm || formFields.length === 0) return;
@@ -410,7 +399,7 @@ export const useResponsesEdit = () => {
     newRowCounterRef.current += 1;
     const tempId = `new_${newRowCounterRef.current}`;
 
-    const now = moment().format(DEFAULT_DATE_FORMAT);
+    const now = moment().toISOString();
     const displayName = getAuthDisplayName(user);
 
     const newRow: Row = {
@@ -526,7 +515,7 @@ export const useResponsesEdit = () => {
       );
 
       const updatesToSend = updatesToSendResults.filter(
-        (updatedRow): updatedRow is ResponseUpdatePayload => updatedRow !== null,
+        (updatedRow): updatedRow is UpdateOneResponseDto => updatedRow !== null,
       );
 
       const sortedNewRowEntries = [...newRowEntries].sort(([idA], [idB]) => {
@@ -541,10 +530,13 @@ export const useResponsesEdit = () => {
 
       if (updatesToSend.length > 0) {
         try {
-          await batchUpdateResponses(updatesToSend as any);
-        } catch (batchError) {
-          console.error("batchUpdateResponses failed:", batchError);
-          throw batchError;
+          const bulkUpdatePayload: BulkUpdateResponsesDto = {
+            responses: updatesToSend,
+          };
+          await updateResponses(bulkUpdatePayload);
+        } catch (updateError) {
+          console.error("updateResponses failed:", updateError);
+          throw updateError;
         }
       }
 
@@ -592,6 +584,15 @@ export const useResponsesEdit = () => {
       }
 
       if (newResponsesPayloads.length > 0) {
+        // Optimistic UI for responsesCount
+        if (dtoForm) {
+          setForm({
+            ...dtoForm,
+            responsesCount: (dtoForm.responsesCount ?? 0) + newResponsesPayloads.length,
+            lastInteractionAt: moment().toISOString(),
+          } as any);
+        }
+
         await createResponse(newResponsesPayloads);
       }
 
@@ -624,10 +625,11 @@ export const useResponsesEdit = () => {
     dtoForm,
     fullResponses,
     buildResponseUpdatePayload,
-    batchUpdateResponses,
+    updateResponses,
     createResponse,
     localRows,
     setRows,
+    setForm,
   ]);
 
   return {

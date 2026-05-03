@@ -6,8 +6,7 @@ import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { EditButtonWrapper } from "../styled";
 import { useFormStore } from "../stores/form.store";
 import { useSuperAdmin } from "../../../contexts/SuperAdminContext";
-import { softDeleteResponses } from "../../../api";
-import { queryClient } from "../../../api/queryClient";
+import { useSoftDeleteResponses } from "../../../api";
 import { showSuccessNotification, showErrorNotification } from "../../../utils/utils";
 import { permission } from "formula-gear";
 
@@ -21,8 +20,10 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
   onDeleted,
 }) => {
   const navigate = useNavigate();
-  const { form, permissions, rows } = useFormStore();
+  const { form, permissions, rows, setForm } = useFormStore();
   const { isSuperAdmin } = useSuperAdmin();
+
+  const { mutateAsync: softDeleteResponses } = useSoftDeleteResponses(Number(form?.id ?? 0));
 
   if (!form || !permissions) return null;
 
@@ -74,9 +75,14 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
 
       if (responseIds.length === 0) return;
 
-      await softDeleteResponses(Number(form.id), responseIds);
+      // Optimistic UI for responsesCount
+      setForm({
+        ...form,
+        responsesCount: Math.max(0, (form.responsesCount ?? 0) - responseIds.length),
+      } as any);
 
-      queryClient.invalidateQueries({ queryKey: ["rows"] });
+      await softDeleteResponses(responseIds);
+
       showSuccessNotification("מחיקת התגובות בוצעה בהצלחה");
       onDeleted();
     } catch {

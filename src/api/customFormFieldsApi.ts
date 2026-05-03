@@ -44,7 +44,7 @@ export const updateFormField = async (
   updatedData: Partial<CustomFormField>,
 ): Promise<CustomFormField> => {
   try {
-    const response = await apiClient.put<CustomFormField>(`/form-fields/edit/${id}`, {
+    const response = await apiClient.patch<CustomFormField>(`/form-fields/edit/${id}`, {
       updatedData,
     });
     return response?.data;

@@ -10,6 +10,7 @@ export type StoreForm = FormDto & {
   fields: FormFieldDto[];
   columns?: GridColDef[];
   responsesCount?: number;
+  lastInteractionAt?: string | null;
   metro_access_url?: string | null;
   oasisSourceKey?: string | null;
 };
