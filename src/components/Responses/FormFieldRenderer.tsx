@@ -19,7 +19,6 @@ import CustomTextField from "../FormFields/CustomTextField/CustomTextField";
 import CustomTimePicker from "../FormFields/CustomTimePicker/CustomTimePicker";
 import LinkTextField from "../FormFields/LinkTextField/LinkTextField";
 import { FormFieldWrapper, StyledBox } from "./FormFieldRenderer.styled";
-import { texts } from "../../utils/texts";
 
 type OptionItem = {
   id: string;
@@ -28,11 +27,10 @@ type OptionItem = {
 };
 
 type FormFieldExtra = {
-  options?:
-    | {
-        items?: OptionItem[];
-      }
-    | any[];
+  options?: {
+    items?: OptionItem[];
+    defaultOptionId?: string | string[];
+  };
   value?: any;
   validationRegex?: string;
   linkedFormId?: number;
@@ -499,17 +497,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         }
       }
 
-      if (!formField.isRequired && !multiSelect) {
-        if (!availableOptions.includes(texts.heb.emptyValue)) {
-          availableOptions = [texts.heb.emptyValue, ...availableOptions];
-        }
-
-        if (formFieldValue === texts.heb.emptyValue) {
-          formFieldValue = "";
-        }
-      }
-
-      const defaultValue = formFieldExtra.defaultValue;
+      const defaultValue = formFieldExtra.options?.defaultOptionId ?? formFieldExtra.defaultValue;
       const value = multiSelect
         ? Array.isArray(formFieldValue)
           ? formFieldValue

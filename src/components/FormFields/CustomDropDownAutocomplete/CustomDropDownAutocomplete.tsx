@@ -1,7 +1,6 @@
 import { Chip, FormControl } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import { texts } from "../../../utils/texts";
-import { v4 as uuidv4 } from "uuid";
 import FieldErrorText from "../FieldErrorText/FieldErrorText";
 import {
   StyledFormHelperText,
@@ -43,33 +42,12 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   onBlurHandler,
   label,
   isRequired,
-  defaultValue,
   isTabularEdit = false,
   validationMessage,
   validationDetail,
 }) => {
   const [selectedValues, setSelectedValues] = useState<string[]>(normalizeToArray(value));
   const hasTriggeredBlurRef = useRef(false);
-  const didApplyDefaultRef = useRef(false);
-
-  useEffect(() => {
-    if (
-      !didApplyDefaultRef.current &&
-      defaultValue !== undefined &&
-      location.pathname.includes("create")
-    ) {
-      const initialValues = normalizeToArray(defaultValue);
-      didApplyDefaultRef.current = true;
-      setSelectedValues(initialValues);
-
-      if (multipleOptions) {
-        onChangeHandler(initialValues);
-      } else {
-        onChangeHandler(initialValues[0] ?? "");
-      }
-    }
-    // intentionally not depending on onChangeHandler to avoid render loops
-  }, [defaultValue, multipleOptions]);
 
   useEffect(() => {
     setSelectedValues(normalizeToArray(value));
@@ -118,12 +96,19 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
 
   return (
     <FormControl
+      fullWidth
       variant="standard"
       sx={{
+        direction: "rtl",
+        gap: "6px",
+
         ...(isTabularEdit && {
+          gap: 0,
+
           "& .MuiInputLabel-root": {
             display: "none",
           },
+
           "& .MuiFormHelperText-root": {
             display: "none",
           },
@@ -141,7 +126,42 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
 
       <StyledAutocomplete
         slotProps={{
-          listbox: { component: StyledListbox },
+          listbox: {
+            component: StyledListbox,
+            sx: {
+              p: "6px",
+              direction: "rtl",
+
+              "& .MuiAutocomplete-option": {
+                minHeight: "36px",
+                borderRadius: "8px",
+                px: "10px",
+                py: "7px",
+                fontSize: "0.95rem",
+                justifyContent: "flex-start",
+
+                '&[aria-selected="true"]': {
+                  fontWeight: 600,
+                },
+              },
+            },
+          },
+          paper: {
+            sx: {
+              mt: "6px",
+              borderRadius: "12px",
+              boxShadow: "0 10px 30px rgba(15, 23, 42, 0.14)",
+              border: "1px solid",
+              borderColor: "divider",
+              overflow: "hidden",
+            },
+          },
+          clearIndicator: {
+            title: "",
+          },
+          popupIndicator: {
+            title: "",
+          },
         }}
         disabled={isDisabled}
         multiple={multipleOptions}
@@ -157,16 +177,118 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         getOptionLabel={(option: any) => getLabel(String(option))}
         isOptionEqualToValue={(option, currentValue) => option === currentValue}
         size={isTabularEdit ? "small" : "medium"}
+        sx={{
+          width: "100%",
+
+          "& .MuiAutocomplete-inputRoot": {
+            minHeight: isTabularEdit ? "40px" : "46px",
+            borderRadius: isTabularEdit ? "0" : "12px",
+            backgroundColor: isTabularEdit ? "transparent" : "background.paper",
+            border: isTabularEdit ? "none" : "1px solid",
+            borderColor: validationMessage ? "error.main" : "divider",
+            px: isTabularEdit ? "6px" : "12px",
+            py: multipleOptions ? "6px" : "0",
+            transition:
+              "border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease",
+
+            "&:before, &:after": {
+              display: "none",
+            },
+
+            "&:hover": {
+              borderColor: isTabularEdit
+                ? "transparent"
+                : validationMessage
+                  ? "error.main"
+                  : "text.secondary",
+              backgroundColor: isTabularEdit ? "transparent" : "action.hover",
+            },
+
+            "&.Mui-focused": {
+              borderColor: validationMessage ? "error.main" : "primary.main",
+              boxShadow: isTabularEdit
+                ? "none"
+                : validationMessage
+                  ? "0 0 0 3px rgba(211, 47, 47, 0.12)"
+                  : "0 0 0 3px rgba(25, 118, 210, 0.14)",
+              backgroundColor: "background.paper",
+            },
+
+            "&.Mui-disabled": {
+              backgroundColor: isTabularEdit ? "transparent" : "action.disabledBackground",
+              opacity: 0.75,
+            },
+          },
+
+          "& .MuiAutocomplete-input": {
+            textAlign: isTabularEdit ? "center" : "right",
+            fontSize: isTabularEdit ? "1rem" : "0.98rem",
+            color: "text.primary",
+            py: "8px !important",
+          },
+
+          "& .MuiAutocomplete-endAdornment": {
+            left: "8px",
+            right: "auto",
+          },
+
+          "& .MuiAutocomplete-clearIndicator, & .MuiAutocomplete-popupIndicator": {
+            color: "text.secondary",
+            p: "4px",
+
+            "&:hover": {
+              backgroundColor: "action.hover",
+            },
+          },
+
+          ...(isTabularEdit && {
+            "& .MuiAutocomplete-inputRoot": {
+              minHeight: "40px !important",
+              border: "none !important",
+              borderRadius: "0 !important",
+              boxShadow: "none !important",
+              backgroundColor: "transparent !important",
+            },
+
+            "& .MuiInputBase-input": {
+              textAlign: "center",
+              padding: "8px 12px !important",
+            },
+          }),
+        }}
         renderTags={(tagValue: any, getTagProps) =>
-          tagValue.map((option: string, index: number) => (
-            <Chip
-              label={option === texts.heb.emptyValue ? "" : getLabel(option)}
-              {...getTagProps({ index })}
-              key={uuidv4()}
-              onDelete={() => onDeleteHandler(index)}
-              size={isTabularEdit ? "small" : "medium"}
-            />
-          ))
+          tagValue.map((option: string, index: number) => {
+            const { key, ...tagProps } = getTagProps({ index });
+
+            return (
+              <Chip
+                key={key}
+                label={option === texts.heb.emptyValue ? "" : getLabel(option)}
+                {...tagProps}
+                onDelete={() => onDeleteHandler(index)}
+                size={isTabularEdit ? "small" : "medium"}
+                sx={{
+                  borderRadius: "8px",
+                  fontSize: isTabularEdit ? "0.82rem" : "0.9rem",
+                  fontWeight: 500,
+                  height: isTabularEdit ? "24px" : "28px",
+                  backgroundColor: "action.selected",
+                  maxWidth: "140px",
+
+                  "& .MuiChip-label": {
+                    px: "8px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  },
+
+                  "& .MuiChip-deleteIcon": {
+                    mx: "2px",
+                    fontSize: "18px",
+                  },
+                }}
+              />
+            );
+          })
         }
         renderInput={(params) => (
           <StyledTextField
@@ -177,51 +299,6 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
             size={isTabularEdit ? "medium" : undefined}
             onBlur={() => {
               triggerBlurValidation();
-            }}
-            sx={{
-              ...(isTabularEdit && {
-                "& .MuiInputBase-root": {
-                  fontSize: "1rem",
-                  minHeight: "40px !important",
-                  border: "none !important",
-                  borderRadius: "0 !important",
-                  backgroundColor: "transparent !important",
-                  display: "flex",
-                  alignItems: "center",
-                  "&:before": {
-                    display: "none !important",
-                    border: "none !important",
-                  },
-                  "&:after": {
-                    display: "none !important",
-                    border: "none !important",
-                  },
-                  "&:hover:not(.Mui-disabled):before": {
-                    display: "none !important",
-                    border: "none !important",
-                  },
-                },
-                "& .MuiInputBase-input": {
-                  textAlign: "center",
-                  padding: "8px 12px !important",
-                },
-                "& .MuiAutocomplete-inputRoot": {
-                  border: "none !important",
-                  borderRadius: "0 !important",
-                  minHeight: "40px !important",
-                },
-                "& .MuiInput-underline": {
-                  "&:before": {
-                    display: "none !important",
-                  },
-                  "&:after": {
-                    display: "none !important",
-                  },
-                  "&:hover:not(.Mui-disabled):before": {
-                    display: "none !important",
-                  },
-                },
-              }),
             }}
             inputProps={{
               ...params.inputProps,
@@ -234,9 +311,20 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         )}
       />
 
-      <StyledFormHelperText>
-        <FieldErrorText message={validationMessage} detail={validationDetail} />
-      </StyledFormHelperText>
+      {!isTabularEdit && (
+        <StyledFormHelperText
+          sx={{
+            minHeight: validationMessage || validationDetail ? "18px" : 0,
+            mt: "2px",
+            mx: 0,
+            fontSize: "0.82rem",
+            lineHeight: 1.35,
+            color: "error.main",
+            textAlign: "right",
+          }}>
+          <FieldErrorText message={validationMessage} detail={validationDetail} />
+        </StyledFormHelperText>
+      )}
     </FormControl>
   );
 };
