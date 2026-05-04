@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { IPath } from "../types/enums/global.enums";
 import { isDifferent } from "../utils/responses";
 import { ConditionUtils } from "../utils/interfaces";
+import { getOptionResponseRawValue } from "../utils/optionResponseValue";
 
 type FieldExtra = {
   options?: any[];
@@ -323,6 +324,8 @@ export const useResponseState = (
               break;
 
             case fieldType.Options:
+              value = getOptionResponseRawValue(value);
+
               if (extra.multiple && value && !Array.isArray(value)) {
                 value = [value];
               } else if (!extra.multiple && Array.isArray(value)) {
@@ -532,15 +535,6 @@ export const useResponseState = (
         return next;
       });
 
-      if (!valuesMapOverride) {
-        setFormFieldsValuesMap((prev) => {
-          const next = new Map(prev);
-          next.set(normalizedFieldId, result.data);
-          formFieldsValuesMapRef.current = next;
-          return next;
-        });
-      }
-
       return true;
     }
 
@@ -714,11 +708,6 @@ export const useResponseState = (
 
     setFormFieldsTouchedMap(nextTouchedMap);
     setFormFieldsValidMap(nextValidMap);
-
-    if (isValidForm) {
-      formFieldsValuesMapRef.current = nextParsedValuesMap;
-      setFormFieldsValuesMap(nextParsedValuesMap);
-    }
 
     return {
       isValid: isValidForm,
