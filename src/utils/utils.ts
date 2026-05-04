@@ -23,6 +23,7 @@ import {
   Role,
   RoleId,
   User,
+  Row,
 } from "./interfaces";
 
 import examDefault from "../images/examDefault.png";
@@ -131,7 +132,6 @@ export const decodeCursor = (cursor: string): DecodedCursor | null => {
     return null;
   }
 };
-
 
 export function makePermSet(perms?: number[] | null) {
   return new Set<number>(perms ?? []);
@@ -499,6 +499,232 @@ export function createExcelMold(form: FormDto) {
   const name = `${form.name}.${fileExtension}`;
   FileSaver.saveAs(finalData, name);
 }
+
+type ExcelExportCell = {
+  value: string | number | boolean;
+  hyperlink?: string;
+};
+
+const SYNC_STATUS_COLUMN = "האם סונכרן למטרו";
+
+const RESPONSE_META_COLUMNS = [
+  "נוצר בתאריך",
+  "נוצר על ידי",
+  "עודכן בתאריך",
+  "עודכן על ידי",
+] as const;
+
+export function createExcelExport(form: FormDto, rows: Row[] = []) {
+  const formFields = form.sections
+    .flatMap((section) => section.fields)
+    .filter((field) => field.fieldType !== fieldType.Form)
+    .sort((a, b) => a.index - b.index);
+
+  const fieldHeaders = formFields.map((field) => field.displayName);
+  const headers = [SYNC_STATUS_COLUMN, ...fieldHeaders, ...RESPONSE_META_COLUMNS];
+
+  const sortedRows = [...rows].sort((a, b) => getRowIndex(a) - getRowIndex(b));
+
+  const dataRows = sortedRows.map((row) => {
+    const fieldCells = formFields.map((field) => formatExcelExportCell(row[field.id]));
+
+    const metaCells: ExcelExportCell[] = [
+      { value: formatDateValue(row.created) },
+      { value: safeString(row.createdByName) },
+      { value: formatDateValue(row.edited) },
+      { value: safeString(row.editedByName) },
+    ];
+
+    const syncStatusCell: ExcelExportCell = { value: "לא סונכרן" };
+    // row.pushed_to_metro ? "סונכרן" : "לא סונכרן";
+
+    return [syncStatusCell, ...fieldCells, ...metaCells];
+  });
+
+  const sheetData = [headers, ...dataRows.map((row) => row.map((cell) => cell.value))];
+
+  const fileType =
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
+  const fileExtension = "xlsx";
+
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+  dataRows.forEach((row, rowIndex) => {
+    row.forEach((cell, columnIndex) => {
+      if (!cell.hyperlink) return;
+
+      const cellRef = XLSX.utils.encode_cell({
+        r: rowIndex + 1,
+        c: columnIndex,
+      });
+
+      if (!ws[cellRef]) return;
+
+      ws[cellRef].l = {
+        Target: cell.hyperlink,
+        Tooltip: cell.hyperlink,
+      };
+
+      ws[cellRef].s = cellLinkStyle;
+    });
+  });
+
+  const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1");
+
+  Array.from({ length: range.e.r - range.s.r + 1 }).forEach((_, rowOffset) => {
+    const rowIndex = range.s.r + rowOffset;
+
+    Array.from({ length: range.e.c - range.s.c + 1 }).forEach((__, columnOffset) => {
+      const columnIndex = range.s.c + columnOffset;
+      const cellRef = XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex });
+
+      if (!ws[cellRef]) {
+        ws[cellRef] = { t: "s", v: "" };
+      }
+
+      if (rowIndex === 0) {
+        ws[cellRef].s = titleBgStyle;
+        return;
+      }
+
+      if (!ws[cellRef].s) {
+        ws[cellRef].s = cellBorderStyle;
+      }
+    });
+  });
+
+  ws["!cols"] = headers.map(() => ({ wch: 24 }));
+
+  const wb = {
+    Sheets: { data: ws },
+    SheetNames: ["data"],
+    Workbook: {
+      Views: [{ RTL: true }],
+    },
+  };
+
+  const excelBuffer = XLSX.write(wb, {
+    bookType: fileExtension,
+    type: "array",
+  });
+
+  const finalData = new Blob([excelBuffer], { type: fileType });
+  const name = `${form.name}-תגובות.${fileExtension}`;
+
+  FileSaver.saveAs(finalData, name);
+}
+
+const getRowIndex = (row: Row): number => {
+  const value = row.index;
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  return 0;
+};
+
+const formatExcelExportCell = (value: unknown): ExcelExportCell => {
+  if (value === undefined || value === null) {
+    return { value: "" };
+  }
+
+  if (typeof value === "boolean") {
+    return { value: value ? "כן" : "לא" };
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
+    return { value };
+  }
+
+  if (value instanceof Date) {
+    return { value: formatDateValue(value) };
+  }
+
+  if (Array.isArray(value)) {
+    return {
+      value: value
+        .map((item) => formatExcelExportCell(item).value)
+        .filter((item) => item !== "")
+        .join(", "),
+    };
+  }
+
+  if (typeof value === "object") {
+    const objectValue = value as Record<string, unknown>;
+
+    if (typeof objectValue.link === "string" && objectValue.link.trim()) {
+      return {
+        value:
+          typeof objectValue.linkTxt === "string" && objectValue.linkTxt.trim()
+            ? objectValue.linkTxt.trim()
+            : objectValue.link.trim(),
+        hyperlink: normalizeHyperlink(objectValue.link),
+      };
+    }
+
+    if (objectValue.x !== undefined && objectValue.y !== undefined) {
+      return {
+        value: `${safeString(objectValue.x)}, ${safeString(objectValue.y)}`,
+      };
+    }
+
+    if (Array.isArray(objectValue.files)) {
+      return {
+        value: objectValue.files
+          .map((file) => {
+            if (!file || typeof file !== "object") return "";
+
+            const fileValue = file as Record<string, unknown>;
+
+            return safeString(fileValue.name ?? fileValue.fileName);
+          })
+          .filter(Boolean)
+          .join(", "),
+      };
+    }
+  }
+
+  return { value: safeString(value) };
+};
+
+const normalizeHyperlink = (value: string): string => {
+  const trimmed = value.trim();
+
+  if (/^https?:\/\//i.test(trimmed) || /^mailto:/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
+};
+
+const formatDateValue = (value: unknown): string => {
+  if (!value) return "";
+
+  const date =
+    value instanceof Date
+      ? value
+      : typeof value === "string" || typeof value === "number"
+        ? new Date(value)
+        : null;
+
+  if (!date || Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleString("he-IL");
+};
+
+const safeString = (value: unknown): string => {
+  if (value === undefined || value === null) return "";
+
+  return String(value);
+};
 
 /** there are old forms and responses without fieldType in DB. need to have one so date will work. can know it by the typeId */
 export function getFieldType(field: FormField) {
@@ -916,8 +1142,8 @@ export function checkUserAccessForResponse(
       }
     } else if (!response?.id && !viewMode) {
       // if its a new response and not in view mode, check for roles
-      const hasPermissionToCreateResponse = permissionTypes.some((type) =>
-        (permission.CreateResponse === type),
+      const hasPermissionToCreateResponse = permissionTypes.some(
+        (type) => permission.CreateResponse === type,
       );
       if (!hasPermissionToCreateResponse) {
         return false;
