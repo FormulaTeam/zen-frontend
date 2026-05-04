@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef } from "react";
 import { useGetForm, useGetResponsesRows } from "../../../api";
 import { useInitiateFormStore } from "../stores/form.store";
 import { Row } from "../../../utils/interfaces";
+import {
+  getOptionResponseDisplayValue,
+  getOptionResponseRawValue,
+} from "../../../utils/optionResponseValue";
 
 export function useFormLoader(formId: string) {
   const { form, setForm, setPermissions, setRows, filter, setResponses } = useInitiateFormStore();
@@ -116,10 +120,10 @@ export function useFormLoader(formId: string) {
 
           const displayName = fieldIdToDisplayName.get(fieldId);
 
-          row[fieldId] = fv.value;
+          row[fieldId] = getOptionResponseRawValue(fv.value);
 
           if (displayName && row[displayName] === undefined) {
-            row[displayName] = fv.value;
+            row[displayName] = getOptionResponseDisplayValue(fv.value);
           }
         });
 
