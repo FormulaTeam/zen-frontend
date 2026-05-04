@@ -14,6 +14,7 @@ interface ChildResponsesPanelProps {
   title: string;
   parentFormId?: number;
   isInEditMode?: boolean;
+  searchQuery?: string;
 }
 
 export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
@@ -22,6 +23,7 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
   parentFormId,
   title,
   isInEditMode = false,
+  searchQuery,
 }) => {
   const displayFields = useMemo(
     () =>
@@ -59,6 +61,7 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
                 key={response.id}
                 formFields={displayFields}
                 parentFormId={parentFormId}
+                searchQuery={searchQuery}
               />
             ))}
           </TableBody>
@@ -67,3 +70,4 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
     </DetailsRowContainer>
   );
 };
+

@@ -626,3 +626,10 @@ export const PaginationButton = styled(IconButton)(({ theme }) => ({
     color: "#4a5568",
   },
 }));
+
+export const HighlightedText = styled("mark")({
+  backgroundColor: "#fff59d",
+  color: "inherit",
+  padding: 0,
+  borderRadius: "2px",
+});

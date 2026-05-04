@@ -53,6 +53,7 @@ import {
   PaginationContainer,
   FooterInfoContainer,
   PaginationButton,
+  HighlightedText,
 } from "../styled";
 import { useChildForms } from "../hooks/useChildForms";
 import { useDetailPanel } from "../hooks/useDetailPanel";
@@ -297,6 +298,7 @@ export const ResponsesTable = React.memo(
         isInEditMode,
         getChildFormData,
         currentViewConfig,
+        searchQuery: filter?.query,
       });
 
     const { renderEditCell } = useCellEditors({
@@ -316,6 +318,7 @@ export const ResponsesTable = React.memo(
     const { formatCellValue } = useCellDisplay({
       formId: form?.id,
       onFileClick: handleFileClick,
+      searchQuery: filter?.query,
     });
 
     const handleCellClick = useCallback(
