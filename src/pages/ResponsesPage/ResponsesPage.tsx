@@ -137,14 +137,11 @@ const ResponsesPageContent = (): JSX.Element => {
       return undefined;
     }
 
-    const flattenedFields = (form.sections ?? [])
-      .flatMap((section) => section.fields ?? [])
-      .sort((a, b) => a.index - b.index);
-
+    // Use form.fields which is already hierarchically sorted by useFormLoader
     return {
       id: form.id,
       name: form.name ?? "",
-      fields: flattenedFields,
+      fields: form.fields,
     };
   }, [form]);
 

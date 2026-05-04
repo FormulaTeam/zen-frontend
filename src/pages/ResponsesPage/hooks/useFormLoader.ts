@@ -158,9 +158,17 @@ export function useFormLoader(formId: string) {
 
       if (isNewForm) {
         lastFormIdRef.current = formData.id;
-        const flattenedFields = (formData.sections ?? [])
-          .flatMap((section) => section.fields ?? [])
-          .sort((a, b) => a.index - b.index);
+
+        // Sort sections by index, and for each section, sort its fields by index
+        const sortedSections = [...(formData.sections ?? [])]
+          .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+          .map((section) => ({
+            ...section,
+            fields: [...(section.fields ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)),
+          }));
+
+        // Hierarchical flattening: sections first, then fields within each section
+        const flattenedFields = sortedSections.flatMap((section) => section.fields);
 
         const columns = flattenedFields.map((field) => ({
           field: field.displayName,
@@ -170,6 +178,7 @@ export function useFormLoader(formId: string) {
 
         setForm({
           ...formData,
+          sections: sortedSections,
           fields: flattenedFields,
           columns,
         } as any);

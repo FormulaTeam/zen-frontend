@@ -132,7 +132,7 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
           targetSortBy = isMeta ? `meta:${legacySort.columnId}` : `field:${legacySort.columnId}`;
         }
       }
-      targetOrderBy = (currentView.sortDirection || "asc").toUpperCase() as any;
+      targetOrderBy = (currentView.sortDirection || "desc").toUpperCase() as any;
     }
 
     // 2. Check if a view selection change occurred

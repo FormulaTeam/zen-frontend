@@ -754,7 +754,7 @@ export const ResponsesTable = React.memo(
           }
 
           if (gridField) {
-            return [{ field: gridField, sort: currentView.sortDirection || "asc" }];
+            return [{ field: gridField, sort: currentView.sortDirection || "desc" }];
           }
         }
       }
