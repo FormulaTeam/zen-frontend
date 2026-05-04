@@ -16,13 +16,13 @@ interface SystemViewColumn {
 
 export const PRE_SYSTEM_COLUMNS: SystemViewColumn[] = [
   { columnId: "index", displayName: "מזהה", defaultVisible: true },
-  { columnId: "created_by", displayName: "נוצר ע״י", defaultVisible: true },
-  { columnId: "created_at", displayName: "תאריך יצירה", defaultVisible: true },
-  { columnId: "pushed_to_metro", displayName: "סטטוס סנכרון", defaultVisible: true },
 ];
 export const POST_SYSTEM_VIEW_COLUMNS: SystemViewColumn[] = [
+  { columnId: "pushed_to_metro", displayName: "סטטוס סנכרון", defaultVisible: true },
+  { columnId: "created_by", displayName: "נוצר ע״י", defaultVisible: true },
+  { columnId: "created_at", displayName: "תאריך יצירה", defaultVisible: true },
   { columnId: "updated_by", displayName: "השתנה ע״י", defaultVisible: true },
-  { columnId: "updated_at", displayName: "תאריך עדכון", defaultVisible: true },
+  { columnId: "updated_at", displayName: "תאריך שינוי", defaultVisible: true },
 ];
 
 /* ------------------------------------------------------------------ */
