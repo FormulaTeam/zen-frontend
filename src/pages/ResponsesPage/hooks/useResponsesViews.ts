@@ -34,6 +34,7 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
 
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const lastSyncedViewId = useRef<string | number | undefined>(undefined);
+  const lastViewSortDef = useRef({ sortBy: "", orderBy: "" });
 
   const viewManagerForm = useMemo<ViewManagerForm | undefined>(() => {
     if (!form) {
@@ -102,20 +103,22 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
     let targetOrderBy = IOrderBy.DESC;
 
     if (currentView) {
-      if (currentView.sortColumnId) {
-        const sortedColumn = currentView.columns?.find((col) => col.id === currentView.sortColumnId);
-        if (sortedColumn) {
-          if (sortedColumn.fieldId) {
-            targetSortBy = `field:${sortedColumn.fieldId}`;
-          } else if (sortedColumn.metaColumnId) {
-            const metaName = Object.keys(MetaColumnIds).find(
-              (key) =>
-                MetaColumnIds[key as keyof typeof MetaColumnIds] === sortedColumn.metaColumnId,
-            );
-            if (metaName) targetSortBy = `meta:${metaName}`;
-          }
+      // Find the intended sort column
+      const sortedColumn = currentView.columns?.find(
+        (col) => col.id === currentView.sortColumnId || col.isSortColumn,
+      );
+
+      if (sortedColumn) {
+        if (sortedColumn.fieldId) {
+          targetSortBy = `field:${sortedColumn.fieldId}`;
+        } else if (sortedColumn.metaColumnId) {
+          const metaName = Object.keys(MetaColumnIds).find(
+            (key) => MetaColumnIds[key as keyof typeof MetaColumnIds] === sortedColumn.metaColumnId,
+          );
+          if (metaName) targetSortBy = `meta:${metaName}`;
         }
       } else {
+        // Legacy fallback
         const legacySort = currentView.config?.columns?.find(
           (col) => col.sortDirection && col.sortOrder === 1,
         );
@@ -135,40 +138,26 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
       targetOrderBy = (currentView.sortDirection || "desc").toUpperCase() as any;
     }
 
-    // 2. Check if a view selection change occurred
+    // 2. Check if the view or its sort definition changed
     const isNewViewSelection = currentView?.id !== lastSyncedViewId.current;
+    const viewSortChanged =
+      targetSortBy !== lastViewSortDef.current.sortBy ||
+      targetOrderBy !== lastViewSortDef.current.orderBy;
 
-    if (isNewViewSelection) {
-      // If the view changed (or switched to All Fields), we MUST reset pagination
+    if (isNewViewSelection || viewSortChanged) {
       lastSyncedViewId.current = currentView?.id;
-      setFilter({
-        ...filter,
+      lastViewSortDef.current = { sortBy: targetSortBy, orderBy: targetOrderBy };
+
+      setFilter((prev) => ({
+        ...prev,
         sortBy: targetSortBy,
         orderBy: targetOrderBy,
         before: undefined,
         after: undefined,
         pageNumber: 1,
-      });
-      return;
+      }));
     }
-
-    // 3. If the view is the same, but the sort state is out of sync (e.g., from manual grid sorting)
-    // we sync the sort but PRESERVE the current page/cursors if they were intended.
-    // However, usually manual sorting resets page anyway.
-    const isSortOutOfSync = filter?.sortBy !== targetSortBy || filter?.orderBy !== targetOrderBy;
-    
-    if (isSortOutOfSync) {
-      // Note: We only reach here if isNewViewSelection is false.
-      // This means currentView.id matches lastSyncedViewId.
-      // If the filter sort changed but view didn't, it might be a manual grid sort.
-      // We don't want to fight the user's manual sort here.
-    }
-    
-    // Fallback: Clear loading if nothing triggered
-    if (isRowsLoading) {
-      setIsRowsLoading(false);
-    }
-  }, [currentView, setFilter, isRowsLoading, setIsRowsLoading]);
+    }, [currentView, setFilter]);
 
   return {
     isSidePanelOpen,

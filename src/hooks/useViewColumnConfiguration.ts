@@ -223,6 +223,8 @@ export function useViewColumnConfiguration({
         displayName: c.displayName,
         visible: c.defaultVisible,
         order: order++,
+        // Explicitly default to Index DESC
+        ...(c.columnId === "index" && { sortDirection: "desc" as const, sortOrder: 1 }),
       })),
       ...form.fields.map((f) => ({
         columnId: f.id,
