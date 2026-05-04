@@ -300,7 +300,7 @@ export const useResponsesEdit = () => {
                 fieldExtra.numberType === "integer" ? parseInt(valStr, 10) : parseFloat(valStr);
 
               if (Number.isNaN(parsed)) {
-                rowErrs[errorKey] =
+                rowErrors[errorKey] =
                   fieldExtra.numberType === "integer"
                     ? "חובה להזין מספר שלם"
                     : "חובה להזין מספר עשרוני";
