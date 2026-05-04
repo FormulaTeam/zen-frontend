@@ -250,6 +250,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     fontSize: "1.2rem",
     fontWeight: 600,
   },
+  "& .MuiDataGrid-iconButtonContainer": {
+    marginLeft: "12px",
+  },
   "& .MuiDataGrid-columnHeaderTitleContainer": {
     justifyContent: "flex-start",
   },
