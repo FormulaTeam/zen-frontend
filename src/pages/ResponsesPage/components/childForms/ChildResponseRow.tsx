@@ -11,17 +11,22 @@ import { FormFieldDto } from "../../../../types/shared";
 import { fieldType } from "formula-gear";
 import { DEFAULT_DATE_FORMAT, DEFAULT_DATE_TIME_FORMAT } from "@utils/utils";
 import { Row } from "@utils/interfaces";
+import { HighlightedText } from "../../styled";
 import { ResponseCell } from "./styled";
+
+import { highlightTextUtil } from "../../utils/highlighting";
 
 interface ChildResponseRowProps {
   response: Row;
   linkedFormId: number;
   formFields: FormFieldDto[];
   parentFormId?: number;
+  searchQuery?: string;
 }
 
 type EditorFieldExtra = {
   dateAndTime?: boolean;
+  includeTime?: boolean;
 };
 
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
@@ -60,8 +65,16 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
   linkedFormId,
   formFields,
   parentFormId,
+  searchQuery,
 }) => {
   const navigate = useNavigate();
+
+  const highlightText = useCallback(
+    (text: string | number | null | undefined): React.ReactNode => {
+      return highlightTextUtil(text, searchQuery);
+    },
+    [searchQuery],
+  );
 
   const formatCreatedDate = new Date(response.created || "").toLocaleDateString("he-IL", {
     year: "numeric",
@@ -75,28 +88,28 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
     });
   }, [navigate, linkedFormId, response.id, parentFormId]);
 
-  const getResponseFieldStringValue = (field: FormFieldDto, value: unknown): string => {
+  const getResponseFieldStringValue = (field: FormFieldDto, value: unknown): React.ReactNode => {
     if (value === undefined || value === null) return "";
 
     switch (field.fieldType) {
       case fieldType.LongText:
       case fieldType.ShortText:
-        return String(value);
+        return highlightText(String(value));
 
       case fieldType.Number:
-        return String(value);
+        return highlightText(String(value));
 
       case fieldType.Time: {
         const validTimeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/;
 
-        if (typeof value === "string" && validTimeRegex.test(value)) return value;
+        if (typeof value === "string" && validTimeRegex.test(value)) return highlightText(value);
 
         if (value instanceof Date) {
           const hours = value.getHours().toString().padStart(2, "0");
           const minutes = value.getMinutes().toString().padStart(2, "0");
           const seconds = value.getSeconds().toString().padStart(2, "0");
 
-          return `${hours}:${minutes}:${seconds}`;
+          return highlightText(`${hours}:${minutes}:${seconds}`);
         }
 
         return "";
@@ -105,23 +118,41 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
       case fieldType.Date:
         if (!moment(value).isValid()) return "";
 
-        return getFieldExtra(field).dateAndTime
-          ? moment(value).format(DEFAULT_DATE_TIME_FORMAT)
-          : moment(value).format(DEFAULT_DATE_FORMAT);
+        const extra = getFieldExtra(field);
+        const includeTime =
+          (field as any).dateAndTime ||
+          extra.dateAndTime ||
+          (field as any).includeTime ||
+          extra.includeTime;
+
+        const datePart = moment(value).format(DEFAULT_DATE_FORMAT);
+        const timePart = includeTime ? ` ${moment(value).format("HH:mm:ss")}` : "";
+
+        return (
+          <>
+            {highlightText(datePart)}
+            {timePart}
+          </>
+        );
 
       case fieldType.Boolean:
-        return value === "true" || value === true ? "כן" : "לא";
+        return highlightText(value === "true" || value === true ? "כן" : "לא");
 
       case fieldType.Location:
-        if (typeof value === "string" && value.startsWith("POINT")) return value;
+        if (typeof value === "string" && value.startsWith("POINT")) return highlightText(value);
 
         if (value && typeof value === "object") {
           const locationValue = value as { x?: string; y?: string; utm?: string };
 
           if (locationValue.x && locationValue.y)
-            return `x: ${locationValue.x}, y: ${locationValue.y}`;
+            return (
+              <>
+                x: {highlightText(String(locationValue.x))}, y:{" "}
+                {highlightText(String(locationValue.y))}
+              </>
+            );
 
-          if (locationValue.utm) return `UTM: ${locationValue.utm}`;
+          if (locationValue.utm) return highlightText(`UTM: ${locationValue.utm}`);
         }
 
         return "";
@@ -130,7 +161,7 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
         if (value && typeof value === "object") {
           const linkValue = value as { linkTxt?: string; link?: string };
 
-          return linkValue.linkTxt || linkValue.link || "";
+          return highlightText(linkValue.linkTxt || linkValue.link || "");
         }
 
         return "";
@@ -143,7 +174,9 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
           };
 
           if (Array.isArray(fileValue.files))
-            return fileValue.files.map((file) => file.name || file.fileName || "קובץ").join(", ");
+            return highlightText(
+              fileValue.files.map((file) => file.name || file.fileName || "קובץ").join(", "),
+            );
         }
 
         return "";
@@ -152,9 +185,9 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
         break;
     }
 
-    if (typeof value === "string") return value;
+    if (typeof value === "string") return highlightText(value);
 
-    if (Array.isArray(value)) return value.join(", ");
+    if (Array.isArray(value)) return highlightText(value.join(", "));
 
     return "";
   };
@@ -213,12 +246,12 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
             <WiderResponseCell key={field.id}>
               {locationValue.x && (
                 <Box sx={{ mb: 0.5 }}>
-                  <label>{`x: ${locationValue.x}`}</label>
+                  <label>x: {highlightText(String(locationValue.x))}</label>
                 </Box>
               )}
               {locationValue.y && (
                 <Box>
-                  <label>{`y: ${locationValue.y}`}</label>
+                  <label>y: {highlightText(String(locationValue.y))}</label>
                 </Box>
               )}
             </WiderResponseCell>
@@ -245,5 +278,6 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
     </TableRow>
   );
 };
+
 
 export const ChildResponseRow = memo(ChildResponseRowComponent);

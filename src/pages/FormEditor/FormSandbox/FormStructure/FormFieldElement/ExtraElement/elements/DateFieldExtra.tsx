@@ -8,15 +8,15 @@ type Props = ExtraElementProps<typeof FieldTypeIds.date>;
 function DateFieldExtra({ extra, onChange, disabled }: Props) {
   const {
     defaultValue = DefaultDateValue.EMPTY,
-    includeTime = false,
+    dateAndTime = false,
   } = extra;
 
   return (
     <>
       <FormControlLabel disabled={disabled}
-                        control={<Checkbox checked={includeTime}
+                        control={<Checkbox checked={dateAndTime}
                                            onChange={(e) => {
-                                             onChange({ includeTime: e.target.checked });
+                                             onChange({ dateAndTime: e.target.checked });
                                            }} />}
                         label="תאריך ושעה" />
       <FormControl disabled={disabled}>

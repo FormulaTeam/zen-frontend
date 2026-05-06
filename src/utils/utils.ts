@@ -425,9 +425,10 @@ export const getResponsesAndExportToExcel = async (form: FormDto) => {
 
 /** create excel file with only titles based on the form fields */
 export function createExcelMold(form: FormDto) {
-  const formFields = form.sections
-    .flatMap((section) => section.fields)
-    .sort((a, b) => a.index - b.index);
+  const formFields = (form.sections ?? [])
+    .slice()
+    .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+    .flatMap((section) => [...(section.fields ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)));
 
   const formFieldsIds: string[] = [];
   const data: any[] = [];
@@ -515,10 +516,11 @@ const RESPONSE_META_COLUMNS = [
 ] as const;
 
 export function createExcelExport(form: FormDto, rows: Row[] = []) {
-  const formFields = form.sections
-    .flatMap((section) => section.fields)
-    .filter((field) => field.fieldType !== fieldType.Form)
-    .sort((a, b) => a.index - b.index);
+  const formFields = (form.sections ?? [])
+    .slice()
+    .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+    .flatMap((section) => [...(section.fields ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)))
+    .filter((field) => field.fieldType !== fieldType.Form);
 
   const fieldHeaders = formFields.map((field) => field.displayName);
   const headers = [SYNC_STATUS_COLUMN, ...fieldHeaders, ...RESPONSE_META_COLUMNS];
@@ -816,14 +818,14 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
         const currentFieldMetaData = formFields.find((fieldData) => fieldData.id === item.fieldId);
 
         if (currentFieldMetaData) {
-          const extra = ((currentFieldMetaData.extra ?? {}) as { dateAndTime?: boolean }) || {};
+          const extra = (currentFieldMetaData.extra || {}) as { dateAndTime?: boolean };
           const { displayName, fieldType: currentFieldType } = currentFieldMetaData;
 
           acc.push({
             displayName,
             value: item.value,
             fieldId: item.fieldId,
-            dateAndTime: extra.dateAndTime,
+            dateAndTime: (currentFieldMetaData as any).dateAndTime || extra.dateAndTime,
             fieldType: currentFieldType as FieldType,
           });
         }

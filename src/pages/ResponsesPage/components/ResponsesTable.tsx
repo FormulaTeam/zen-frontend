@@ -53,6 +53,7 @@ import {
   PaginationContainer,
   FooterInfoContainer,
   PaginationButton,
+  HighlightedText,
 } from "../styled";
 import { useChildForms } from "../hooks/useChildForms";
 import { useDetailPanel } from "../hooks/useDetailPanel";
@@ -297,6 +298,7 @@ export const ResponsesTable = React.memo(
         isInEditMode,
         getChildFormData,
         currentViewConfig,
+        searchQuery: filter?.query,
       });
 
     const { renderEditCell } = useCellEditors({
@@ -316,6 +318,7 @@ export const ResponsesTable = React.memo(
     const { formatCellValue } = useCellDisplay({
       formId: form?.id,
       onFileClick: handleFileClick,
+      searchQuery: filter?.query,
     });
 
     const handleCellClick = useCallback(
@@ -751,7 +754,7 @@ export const ResponsesTable = React.memo(
           }
 
           if (gridField) {
-            return [{ field: gridField, sort: currentView.sortDirection || "asc" }];
+            return [{ field: gridField, sort: currentView.sortDirection || "desc" }];
           }
         }
       }
@@ -903,6 +906,8 @@ export const ResponsesTable = React.memo(
             localeText={{
               ...heIL.components.MuiDataGrid.defaultProps.localeText,
               columnMenuLabel: "פעולות",
+              pinToLeft: "נעץ מימין",
+              pinToRight: "נעץ משמאל",
             }}
             columns={getFormColumns}
             sortModel={sortModel}
@@ -910,12 +915,13 @@ export const ResponsesTable = React.memo(
             slots={{
               footer: CustomFooter,
             }}
-            {...(hasFormInFormFields && {
-              getDetailPanelContent,
-              getDetailPanelHeight,
-              detailPanelExpandedRowIds,
-            })}
             slotProps={{
+              columnMenu: {
+                slots: {
+                  columnMenuColumnsItem: null,
+                  columnMenuFilterItem: null,
+                },
+              },
               row: {
                 onContextMenu: handleContextMenu,
                 style: { cursor: "context-menu" },

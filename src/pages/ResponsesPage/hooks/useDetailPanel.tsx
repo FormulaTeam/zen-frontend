@@ -30,6 +30,7 @@ interface UseDetailPanelProps {
     isInEditMode: boolean;
     getChildFormData: (formId: number | string) => ChildFormData | undefined;
     currentViewConfig?: ResponsesViewColumn[];
+    searchQuery?: string;
 }
 
 interface UseDetailPanelReturn {
@@ -50,6 +51,7 @@ export const useDetailPanel = ({
     isInEditMode,
     getChildFormData,
     currentViewConfig,
+    searchQuery,
 }: UseDetailPanelProps): UseDetailPanelReturn => {
     const formFields = useMemo<FormFieldDto[]>(
         () => (form?.sections ?? []).flatMap((section) => section.fields ?? []),
@@ -271,6 +273,7 @@ export const useDetailPanel = ({
                     childrenFormsData={childrenFormsData}
                     getChildRowsForParent={getChildRowsForParent}
                     isInEditMode={isInEditMode}
+                    searchQuery={searchQuery}
                 />
             );
         },
@@ -281,8 +284,10 @@ export const useDetailPanel = ({
             childrenFormsData,
             isInEditMode,
             visibleFormInFormFieldIds,
+            searchQuery,
         ],
     );
+
 
     const getDetailPanelHeight = useCallback(() => {
         return "auto" as const;
