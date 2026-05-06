@@ -1,5 +1,5 @@
 import { useQuery, UseQueryOptions, UseQueryResult, useMutation } from "@tanstack/react-query";
-import { CreateFormSchema, FormIdentifierSchema, getLinkableFormsQuerySchema, formsScopeOption } from "formula-gear";
+import { CreateFormSchema, formsScopeOption } from "formula-gear";
 import { useMemo } from "react";
 import { z } from "zod";
 import { FormDto, FormOverviewDto } from "../types/shared";
@@ -8,9 +8,6 @@ import { useCreate } from "../utils/useCreate";
 import { useFetch } from "../utils/useFetch";
 import apiClient from "./config";
 import queryClient from "./queryClient";
-
-export type FormIdentifierDto = z.infer<typeof FormIdentifierSchema>;
-export type GetLinkableFormsQueryDto = z.infer<typeof getLinkableFormsQuerySchema>;
 
 const stringifyQuery = (query: any): string => {
   if (query && typeof query === "object") return JSON.stringify(query);
@@ -70,16 +67,14 @@ export const getFormById = async (formId?: number): Promise<FormDto | null> => {
 export const getLinkableForms = async (
   formId: number,
   search?: string,
-): Promise<FormIdentifierDto[]> => {
+): Promise<FormOverviewDto[]> => {
   try {
-    const params: GetLinkableFormsQueryDto & { formId?: number } = {
-      search: search || "",
-      sortBy: "name",
-      sortDirection: "asc",
-      includePermissions: false,
+    const params = {
+      scope: formsScopeOption.LinkableForms,
       formId,
+      search: search || "",
     };
-    const response = await apiClient.get<FormIdentifierDto[]>(`/forms/linkable`, {
+    const response = await apiClient.get<FormOverviewDto[]>(`/forms`, {
       params,
     });
     return response?.data || [];
@@ -290,16 +285,14 @@ export const useRestoreForm = ({ id }: { id: string }) => {
 };
 
 export const useGetLinkableForms = ({ formId, search }: { formId?: string; search?: string }) => {
-  const params: GetLinkableFormsQueryDto & { formId?: number } = useMemo(() => ({
-    search: search || "",
-    sortBy: "name",
-    sortDirection: "asc",
-    includePermissions: false,
+  const params = {
+    scope: formsScopeOption.LinkableForms,
     formId: formId ? Number(formId) : undefined,
-  }), [search, formId]);
+    search: search || "",
+  };
 
-  return useFetch<GetLinkableFormsQueryDto & { formId?: number }, FormIdentifierDto[]>({
-    endpoint: `/forms/linkable`,
+  return useFetch<any, FormOverviewDto[]>({
+    endpoint: `/forms`,
     queryKey: (p) => ["linkable", formId, p?.search],
     params,
     queryOptions: {
