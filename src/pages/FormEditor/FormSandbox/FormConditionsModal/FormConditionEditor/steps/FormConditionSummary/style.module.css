@@ -1,0 +1,182 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 100%;
+    gap: 20px;
+    padding: 20px;
+    direction: rtl;
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px 0 rgba(153, 177, 202, 0.5);
+}
+
+.nameInputWrapper {
+    max-width: 300px;
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.borderedSection {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.sectionTitle {
+    font-size: 22px !important;
+    font-weight: 600 !important;
+    color: #1a1a1a !important;
+    text-align: right;
+}
+
+.groupsRow {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.groupWrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+}
+
+.operatorBadge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    background-color: #f0f0f0;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.operatorBadgeAnd {
+    color: #757575 !important;
+}
+
+.operatorBadgeOr {
+    color: #3b3b3b !important;
+}
+
+.groupCard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    min-width: 220px;
+    max-width: 280px;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.groupTitle {
+    font-size: 17px !important;
+    font-weight: 800 !important;
+    text-align: right;
+    text-align: center;
+}
+
+.groupSubtitle {
+    font-size: 15px !important;
+    color: #1a1a1a !important;
+    font-weight: 600 !important;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.predicatesList {
+    display: flex;
+    flex-direction: column;
+}
+
+.predicateRow {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.predicateOperator {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    text-align: center;
+}
+
+.predicateText {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 4px;
+    font-size: 15px !important;
+    line-height: 1.5;
+    color: #1a1a1a !important;
+}
+
+.ellipsisText {
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.dependantRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    justify-content: flex-start;
+}
+
+.dependantLabel {
+    font-size: 18px !important;
+    color: #5c5c5c !important;
+    white-space: nowrap;
+    min-width: 60px;
+    text-align: right;
+}
+
+.chipsRow {
+    display: flex;
+    flex-direction: row-reverse;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.sectionChip {
+    direction: rtl;
+    font-size: 16px !important;
+}
+
+.fieldChip {
+    direction: rtl;
+    font-size: 16px !important;
+    background-color: white !important;
+}
+
+.chipIcon {
+    font-size: 15px !important;
+    color: #757575 !important;
+    margin-left: 2px;
+}

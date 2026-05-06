@@ -6,7 +6,7 @@ import { TextComparator } from "./comparators/TextComparator";
 const shortTextConditionSchema = baseConditionFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.shortText),
   comparator: zod_enum(TextComparator),
-  targetValue: string().optional(),
+  targetValue: string().nullable().optional(),
 });
 
 export default shortTextConditionSchema;

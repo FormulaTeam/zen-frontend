@@ -1,4 +1,4 @@
-import { Button, Step, StepLabel, Stepper } from "@mui/material";
+import { Button, Step, StepLabel, Stepper, Tooltip } from "@mui/material";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import styles from "./style.module.css";
 import { useFormStructureContext } from "../../../context/FormStructureContext";
@@ -92,6 +92,14 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
 
   const isFirstStepActive = useMemo(() => activeStepIndex === 0, [activeStepIndex]);
   const isLastStepActive = useMemo(() => activeStepIndex === ConditionEditorSteps.length - 1, [activeStepIndex]);
+  const isDependencyPickerStep = useMemo(() => ConditionEditorSteps[activeStepIndex].id === ConditionEditorStepId.DEPENDENCY_PICKER, [activeStepIndex]);
+
+  const hasDependencies = useMemo(() => {
+    if (!conditionData.dependantComponents) return false;
+    return Object.values(conditionData.dependantComponents).some((arr) => arr && arr.length > 0);
+  }, [conditionData.dependantComponents]);
+
+  const disableNext = isDependencyPickerStep && !hasDependencies;
 
   const validateSteps = useCallback(() => {
     let activeStepErrors: ValueOf<ConditionEditorValidationErrors> = null;
@@ -126,7 +134,7 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
     // validateSteps();
 
     !isFirstStepActive &&
-    setActiveStepIndex((prev) => prev - 1);
+      setActiveStepIndex((prev) => prev - 1);
   }, [isFirstStepActive]);
 
   const StepContent = ConditionEditorSteps[activeStepIndex].content;
@@ -138,23 +146,23 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
           {
             ConditionEditorSteps.map(({ id, label }, index) => (
               <Step key={id}
-                    completed={completedSteps[id]}
+                completed={completedSteps[id]}
 
-                    sx={{
-                      "& .MuiStepLabel-label": {
-                        transition: "all 100ms ease-in-out",
-                        lineHeight: "21px",
-                        ...(completedSteps[id] && { color: "#1976D2 !important" }),
-                        ...(
-                          index === activeStepIndex ? {
-                            fontSize: 21,
-                            fontWeight: "bold !important",
-                          } : {
-                            fontWeight: 500,
-                            fontSize: 20,
-                          }),
-                      },
-                    }}>
+                sx={{
+                  "& .MuiStepLabel-label": {
+                    transition: "all 100ms ease-in-out",
+                    lineHeight: "21px",
+                    ...(completedSteps[id] && { color: "#1976D2 !important" }),
+                    ...(
+                      index === activeStepIndex ? {
+                        fontSize: 21,
+                        fontWeight: "bold !important",
+                      } : {
+                        fontWeight: 500,
+                        fontSize: 20,
+                      }),
+                  },
+                }}>
                 <StepLabel error={!!validationErrors[id]}>{label}</StepLabel>
               </Step>
             ))
@@ -173,18 +181,23 @@ function FormConditionEditor({ modifiedCondition, onSubmit }: Props) {
         </FormConditionEditorContext.Provider>
       </div>
       <div className={styles.footer}>
-        <Button variant={isLastStepActive ? "contained" : "outlined"}
-                className={styles.button}
-                size={"large"}
-                onClick={handleNext}>
-          {isLastStepActive ? "שמור" : "הבא"}
-        </Button>
+        <Tooltip title={disableNext ? "יש לבחור לפחות שדה אחד או מקטע אחד שיוצגו כאשר התנאים מתקיימים" : ""} placement="top">
+          <span>
+            <Button variant={isLastStepActive ? "contained" : "outlined"}
+              className={styles.button}
+              size={"large"}
+              disabled={disableNext}
+              onClick={handleNext}>
+              {isLastStepActive ? "שמור" : "הבא"}
+            </Button>
+          </span>
+        </Tooltip>
         {
           activeStepIndex !== 0 &&
           <Button variant={"outlined"}
-                  className={styles.button}
-                  size={"large"}
-                  onClick={handlePrev}>
+            className={styles.button}
+            size={"large"}
+            onClick={handlePrev}>
             הקודם
           </Button>
         }

@@ -26,13 +26,13 @@ interface Props {
 }
 
 function FormConditionPredicateGroupElement({
-                                              group,
-                                              index,
-                                              hasSiblings,
-                                              shouldScrollIntoView,
-                                              setData,
-                                              validationErrors,
-                                            }: Props) {
+  group,
+  index,
+  hasSiblings,
+  shouldScrollIntoView,
+  setData,
+  validationErrors,
+}: Props) {
   const { formStructure: { fields } } = useFormStructureContext();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,25 +42,25 @@ function FormConditionPredicateGroupElement({
 
   useEffect(() => {
     shouldScrollIntoView &&
-    containerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      containerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [shouldScrollIntoView]);
 
   return (
     <>
       {
-        group.operator &&
+        group.operator && index > 0 &&
         <div>
           <div />
           <ConditionOperationToggle value={group.operator}
-                                    type={"group"}
-                                    onChange={
-                                      (operator) => setData((prev) => {
-                                        const group = { ...prev[index] };
-                                        group.operator = operator;
+            type={"group"}
+            onChange={
+              (operator) => setData((prev) => {
+                const group = { ...prev[index] };
+                group.operator = operator;
 
-                                        return prev.toSpliced(index, 1, group);
-                                      })
-                                    } />
+                return prev.toSpliced(index, 1, group);
+              })
+            } />
           <div />
         </div>
       }
@@ -69,21 +69,21 @@ function FormConditionPredicateGroupElement({
           {`קבוצה ${index + 1}`}
           <div className={styles.deleteGroupButtonContainer}>
             <Button className={styles.deleteGroupButton}
-                    disabled={!hasSiblings}
-                    color={"error"}
-                    onClick={(_) => {
-                      hasSiblings &&
-                      setData((prev) => {
-                        const groups = [...prev];
-                        groups.splice(index, 1);
+              disabled={!hasSiblings}
+              color={"error"}
+              onClick={(_) => {
+                hasSiblings &&
+                  setData((prev) => {
+                    const groups = [...prev];
+                    groups.splice(index, 1);
 
-                        if (index === 0 && groups.length) {
-                          groups[0] = { ...groups[0], operator: undefined };
-                        }
+                    if (index === 0 && groups.length) {
+                      groups[0] = { ...groups[0], operator: undefined };
+                    }
 
-                        return groups;
-                      });
-                    }}>
+                    return groups;
+                  });
+              }}>
               <DeleteOutlined sx={{ fontSize: 25, color: hasSiblings ? "#b53442" : "#85878D" }} />
             </Button>
           </div>
@@ -93,31 +93,31 @@ function FormConditionPredicateGroupElement({
             group.predicates?.map((predicate, conditionIndex) => (
               predicate &&
               <FormConditionPredicateElement key={predicate.id}
-                                               condition={predicate}
-                                               index={conditionIndex}
-                                               parentGroupIndex={index}
-                                               setData={setData}
-                                               isLastCondition={conditionIndex === group.predicates!.length - 1}
-                                               hasSiblings={group.predicates!.length > 1}
-                                               fields={fields}
-                                               availableFieldIds={availableFieldIds}
-                                               shouldScrollIntoView={shouldScrollIntoView}
-                                               validationErrors={validationErrors?.["properties"]?.["conditions"]?.items?.[conditionIndex]?.properties ?? null} />
+                condition={predicate}
+                index={conditionIndex}
+                parentGroupIndex={index}
+                setData={setData}
+                isLastCondition={conditionIndex === group.predicates!.length - 1}
+                hasSiblings={group.predicates!.length > 1}
+                fields={fields}
+                availableFieldIds={availableFieldIds}
+                shouldScrollIntoView={shouldScrollIntoView}
+                validationErrors={validationErrors?.["properties"]?.["predicates"]?.items?.[conditionIndex]?.properties ?? null} />
             ))
           }
           <div className={styles.addConditionButtonContainer}>
             <Button className={styles.addConditionButton}
-                    color={"primary"}
-                    variant={"contained"}
-                    onClick={() => setData((prev) => {
-                      const group = { ...prev[index] };
-                      group.predicates = [...group.predicates ?? [], {
-                        id: generateConditionId(),
-                        operator: FormConditionBooleanOperator.AND,
-                      }];
+              color={"primary"}
+              variant={"contained"}
+              onClick={() => setData((prev) => {
+                const group = { ...prev[index] };
+                group.predicates = [...group.predicates ?? [], {
+                  id: generateConditionId(),
+                  operator: FormConditionBooleanOperator.AND,
+                }];
 
-                      return prev.toSpliced(index, 1, group);
-                    })}>
+                return prev.toSpliced(index, 1, group);
+              })}>
               <AddOutlined />
             </Button>
           </div>

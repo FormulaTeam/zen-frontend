@@ -41,7 +41,7 @@ const baseConditionFieldSchema = strictObject({
   id: string(fieldNotDefinedErrorMessage).min(1, fieldNotDefinedErrorMessage),
   typeId: literalConditionFieldTypeId,
   comparator: number(),
-  targetValue: unknown().optional(),
+  targetValue: unknown().nullable().optional(),
 });
 
 export { ConditionFieldTypeIds, FieldTypeIdToComparator, CONDITION_FIELD_TYPE_IDS, fieldNotDefinedErrorMessage };

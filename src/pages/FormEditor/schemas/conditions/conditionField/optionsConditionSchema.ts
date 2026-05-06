@@ -6,7 +6,7 @@ import { OptionsComparator } from "./comparators/OptionsComparator";
 const optionsConditionSchema = baseConditionFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.options),
   comparator: zod_enum(OptionsComparator),
-  targetValue: string().optional(),
+  targetValue: string().nullable().optional(),
 });
 
 export default optionsConditionSchema;

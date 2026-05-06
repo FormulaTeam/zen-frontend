@@ -6,7 +6,7 @@ import { DateComparator } from "./comparators/DateComparator";
 const dateConditionSchema = baseConditionFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.date),
   comparator: zod_enum(DateComparator),
-  targetValue: date().optional(),
+  targetValue: date().nullable().optional(),
 });
 
 export default dateConditionSchema;

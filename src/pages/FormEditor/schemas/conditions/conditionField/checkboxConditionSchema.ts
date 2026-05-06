@@ -6,7 +6,7 @@ import { CheckboxComparator } from "./comparators/CheckboxComparator";
 const checkboxConditionSchema = baseConditionFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.checkbox),
   comparator: zod_enum(CheckboxComparator),
-  targetValue: boolean().optional(),
+  targetValue: boolean().nullable().optional(),
 });
 
 export default checkboxConditionSchema;

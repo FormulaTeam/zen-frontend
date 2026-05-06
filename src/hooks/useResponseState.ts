@@ -11,8 +11,8 @@ import {
   FieldType,
   validateFormFieldValue,
   type FormFieldLike,
-  getFieldValidationMessage,
   type FieldValidationMessage,
+  getFieldValidationMessage,
 } from "formula-gear";
 import { getResponseById, useGetForm } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
@@ -266,9 +266,8 @@ export const useResponseState = (
     }
 
     const effectiveResponseId = response?.id ?? responseId;
-    const stateKey = `${form.id}:${effectiveResponseId ?? "new"}:${
-      copyMode ? "copy" : "regular"
-    }:${viewMode ? "view" : "edit"}`;
+    const stateKey = `${form.id}:${effectiveResponseId ?? "new"}:${copyMode ? "copy" : "regular"
+      }:${viewMode ? "view" : "edit"}`;
 
     if (!effectiveResponseId && initializedStateKeyRef.current === stateKey) {
       setLoading(false);

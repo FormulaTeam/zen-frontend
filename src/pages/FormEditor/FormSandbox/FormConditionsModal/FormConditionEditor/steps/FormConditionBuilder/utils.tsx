@@ -122,23 +122,23 @@ const ComparatorValueProperties = {
   [FieldTypeIds.date]: {
     valueTransformer: (value) => !!value ? (value as Moment).toISOString() : undefined,
     inputComponent: ({
-                       label: _,
-                       value,
-                       onChange,
-                       disabled,
-                       error,
-                       helperText,
-                       ...restProps
-                     }: ComparatorValueComponentProps) => (
+      label: _,
+      value,
+      onChange,
+      disabled,
+      error,
+      helperText,
+      ...restProps
+    }: ComparatorValueComponentProps) => (
       <FormControl disabled={disabled}
-                   error={error}
-                   sx={{ width: "100%", marginTop: 1 }}>
+        error={error}
+        sx={{ width: "100%", marginTop: 1 }}>
         <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale="he">
           <DatePicker value={!!value ? moment(String(value)) : null}
-                      disabled={disabled}
-                      sx={{ "& .MuiInputBase-root": { borderRadius: 2 } }}
-                      onChange={(date) => onChange({ target: { value: date } })}
-                      {...restProps} />
+            disabled={disabled}
+            sx={{ "& .MuiInputBase-root": { borderRadius: 2 } }}
+            onChange={(date) => onChange({ target: { value: date } })}
+            {...restProps} />
         </LocalizationProvider>
         <FormHelperText id="options-value-helper-text">
           {helperText}
@@ -149,22 +149,22 @@ const ComparatorValueProperties = {
   [FieldTypeIds.options]: {
     valueTransformer: String,
     inputComponent: ({
-                       disabled,
-                       error,
-                       label,
-                       items,
-                       helperText,
-                       ...restProps
-                     }: ComparatorValueComponentProps & {
+      disabled,
+      error,
+      label,
+      items,
+      helperText,
+      ...restProps
+    }: ComparatorValueComponentProps & {
       items?: Pick<ArrayElement<ManualItems>, "id" | "text">[],
     }) => (
-      <FormControl disabled={disabled} error={error} fullWidth sx={{marginTop: 1}}>
+      <FormControl disabled={disabled} error={error} fullWidth sx={{ marginTop: 1 }}>
         <InputLabel id="options-value-label">{label}</InputLabel>
         <Select labelId="options-value-label"
-                fullWidth
-                aria-describedby={"options-value-helper-text"}
-                label={label}
-                {...restProps}>
+          fullWidth
+          aria-describedby={"options-value-helper-text"}
+          label={label}
+          {...restProps}>
           {
             items?.map((item) => (
               <MenuItem key={item.id} value={item.id}>{item.text}</MenuItem>
@@ -181,12 +181,12 @@ const ComparatorValueProperties = {
     valueTransformer: Boolean,
     inputComponent: ({ helperText, disabled, error, value, ...restProps }) => (
       <FormControl disabled={disabled} error={error} fullWidth>
-        <InputLabel id="checkbox-value-label" sx={{marginTop: 1}}>ערך</InputLabel>
+        <InputLabel id="checkbox-value-label" sx={{ marginTop: 1 }}>ערך</InputLabel>
         <Select labelId="checkbox-value-label"
-                fullWidth
-                variant={"standard"}
-                value={value != undefined ? +(value as boolean) : ""}
-                {...restProps}>
+          fullWidth
+          variant={"standard"}
+          value={value != undefined ? +(value as boolean) : ""}
+          {...restProps}>
           <MenuItem value={+false}>לא</MenuItem>
           <MenuItem value={+true}>כן</MenuItem>
         </Select>

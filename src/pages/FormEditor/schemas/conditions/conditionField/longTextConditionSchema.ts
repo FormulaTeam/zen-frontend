@@ -6,7 +6,7 @@ import { TextComparator } from "./comparators/TextComparator";
 const longTextConditionSchema = baseConditionFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.longText),
   comparator: zod_enum(TextComparator),
-  targetValue: string().optional(),
+  targetValue: string().nullable().optional(),
 });
 
 export default longTextConditionSchema;

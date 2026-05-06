@@ -31,7 +31,7 @@ function FormConditionsBuilder() {
       (previousGroupCount !== undefined && (previousGroupCount < (groups?.length ?? 0))) ||
       (previousTotalConditionCount !== undefined && (previousTotalConditionCount < (totalConditionsCount ?? 0)))
     ) &&
-    setScrollNewGroupIntoView(true);
+      setScrollNewGroupIntoView(true);
   }, [groups?.length, totalConditionsCount]);
 
   return (
@@ -41,27 +41,27 @@ function FormConditionsBuilder() {
           groups?.map((group, groupIndex) => (
             group &&
             <FormConditionPredicateGroupElement key={group.id}
-                                       group={group}
-                                       index={groupIndex}
-                                       hasSiblings={hasMultipleGroups}
-                                       shouldScrollIntoView={scrollNewGroupIntoView}
-                                       validationErrors={errors?.[groupIndex] ?? null}
-                                       setData={setData} />
+              group={group}
+              index={groupIndex}
+              hasSiblings={hasMultipleGroups}
+              shouldScrollIntoView={scrollNewGroupIntoView}
+              validationErrors={errors?.[groupIndex] ?? null}
+              setData={setData} />
           ))
         }
       </div>
       <div className={styles.floatingFooter}>
         <Button startIcon={<Add />}
-                variant={"contained"}
-                size={"medium"}
-                onClick={() => {
-                  setData((prev) => {
-                    const groups = [...prev];
-                    groups.push({ ...generateEmptyConditionPredicateGroup(), operator: FormConditionBooleanOperator.AND });
+          variant={"contained"}
+          size={"medium"}
+          onClick={() => {
+            setData((prev) => {
+              const groups = [...prev];
+              groups.push({ ...generateEmptyConditionPredicateGroup(), operator: FormConditionBooleanOperator.AND });
 
-                    return groups;
-                  });
-                }}>
+              return groups;
+            });
+          }}>
           הוספת קבוצת תנאים חדשה
         </Button>
       </div>
