@@ -6,7 +6,7 @@ import { NumberComparator } from "./comparators/NumberComparator";
 const numberConditionSchema = baseConditionFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.number),
   comparator: zod_enum(NumberComparator),
-  targetValue: number().optional(),
+  targetValue: number().nullable().optional(),
 });
 
 export default numberConditionSchema;
