@@ -29,12 +29,15 @@ export const useValidationErrors = ({
   childForms,
   childFormsValidate,
 }: UseValidationErrorsParams) => {
-  const generateValidationErrorMessages = (): ValidationDisplayError[] => {
+  const generateValidationErrorMessages = (
+    validationMapOverride?: Map<string, FieldValidationError | null>,
+  ): ValidationDisplayError[] => {
     const errors: ValidationDisplayError[] = [];
+    const validationMap = validationMapOverride ?? formFieldsValidMap;
 
     formFields.forEach((field) => {
       const fieldId = String(field.id);
-      const validation = formFieldsValidMap.get(fieldId);
+      const validation = validationMap.get(fieldId);
 
       if (!validation || validation.messages.length === 0) {
         return;
@@ -63,7 +66,7 @@ export const useValidationErrors = ({
           const childFormName =
             childFormField?.displayName ||
             childFormField?.name ||
-            `טופס משובץ ${childFormIndex + 1}`;
+            `טופס מקושר ${childFormIndex + 1}`;
 
           childForm.children.forEach((_child: any, childIndex: number) => {
             if (

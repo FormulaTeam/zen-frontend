@@ -24,9 +24,13 @@ import { isDifferent } from "../utils/responses";
 import { ConditionUtils } from "../utils/interfaces";
 import { getOptionResponseRawValue } from "../utils/optionResponseValue";
 
-type FieldExtra = {
-  options?: any[];
+export type FieldExtra = {
+  options?: {
+    items?: any[];
+    defaultOptionId?: string | string[];
+  };
   multiple?: boolean;
+  multiSelect?: boolean;
   value?: any;
   validationRegex?: string;
   linkedFormId?: number;
@@ -37,7 +41,7 @@ type FieldExtra = {
   max?: number;
   numberFormat?: string;
   initialNumberValue?: number;
-  defaultValue?: boolean;
+  defaultValue?: any;
   conditions?: any[];
   sectionDescription?: string;
 };
@@ -73,6 +77,10 @@ const getFieldType = (field: FormFieldDto): FieldType => {
   return field.fieldType as FieldType;
 };
 
+const getOptionIds = (extra: FieldExtra): string[] => {
+  return extra.options?.items?.map((item) => item.id).filter(Boolean) ?? [];
+};
+
 const flattenFields = (form: FormDto): FormFieldWithSectionDto[] => {
   return (form.sections ?? [])
     .slice()
@@ -94,9 +102,30 @@ const flattenFields = (form: FormDto): FormFieldWithSectionDto[] => {
     );
 };
 
+const getDefaultOptionsValue = (field: FormFieldWithSectionDto) => {
+  const extra = getFieldExtra(field);
+  const defaultOptionId = extra.options?.defaultOptionId;
+
+  if (defaultOptionId === undefined) {
+    return extra.value;
+  }
+
+  const isMultiple = Boolean(extra.multiSelect ?? extra.multiple);
+
+  if (isMultiple) {
+    return Array.isArray(defaultOptionId) ? defaultOptionId : [defaultOptionId];
+  }
+
+  return Array.isArray(defaultOptionId) ? (defaultOptionId[0] ?? "") : defaultOptionId;
+};
+
 const getDefaultFieldValue = (field: FormFieldWithSectionDto) => {
   const extra = getFieldExtra(field);
   const currentFieldType = getFieldType(field);
+
+  if (currentFieldType === fieldType.Options) {
+    return getDefaultOptionsValue(field);
+  }
 
   if (currentFieldType === fieldType.Number && extra.defaultValue !== undefined) {
     return extra.defaultValue;
@@ -288,9 +317,10 @@ export const useResponseState = (
 
     nextFormFields.forEach((field) => {
       const currentFieldId = String(field.id);
+      const defaultFieldValue = getDefaultFieldValue(field);
 
       nextFieldsByIdMap.set(currentFieldId, field);
-      nextValuesMap.set(currentFieldId, getDefaultFieldValue(field));
+      nextValuesMap.set(currentFieldId, defaultFieldValue);
       nextValidMap.set(currentFieldId, null);
       nextTouchedMap.set(currentFieldId, false);
     });
@@ -587,27 +617,30 @@ export const useResponseState = (
             if (!parentField) return;
 
             const parentExtra = getFieldExtra(parentField);
-            if (!parentExtra.options) return;
+            const parentOptions = getOptionIds(parentExtra);
+            const childOptions = getOptionIds(childExtra);
+
+            if (parentOptions.length === 0 || childOptions.length === 0) return;
 
             const parentValues = Array.isArray(value) ? value : [value];
-            const allowedOptions = new Set<any>();
+            const allowedOptions = new Set<string>();
 
             parentValues.forEach((parentValue) => {
-              const parentOptionIndex = parentExtra.options?.indexOf(parentValue);
+              const parentOptionIndex = parentOptions.indexOf(String(parentValue));
 
-              if (parentOptionIndex !== -1) {
-                const dependency = childExtra.parentDependencies?.find(
-                  (dep: any) => dep.parentOptionIndex === parentOptionIndex,
-                );
+              if (parentOptionIndex === -1) return;
 
-                if (dependency) {
-                  dependency.childOptionIndices.forEach((childOptionIndex: number) => {
-                    if (childExtra.options && childOptionIndex < childExtra.options.length) {
-                      allowedOptions.add(childExtra.options[childOptionIndex]);
-                    }
-                  });
+              const dependency = childExtra.parentDependencies?.find(
+                (dep: any) => dep.parentOptionIndex === parentOptionIndex,
+              );
+
+              dependency?.childOptionIndices.forEach((childOptionIndex: number) => {
+                const childOptionId = childOptions[childOptionIndex];
+
+                if (childOptionId) {
+                  allowedOptions.add(childOptionId);
                 }
-              }
+              });
             });
 
             if (allowedOptions.size > 0) {

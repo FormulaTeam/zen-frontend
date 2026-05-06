@@ -21,6 +21,21 @@ type LinkTextFieldProps = {
   isTabularEdit?: boolean;
 };
 
+const getMatchingDetail = (
+  message: string | undefined,
+  errorDetail?: FieldErrorDisplay | null,
+): string | undefined => {
+  if (!message || !errorDetail?.detail) {
+    return undefined;
+  }
+
+  if (!errorDetail.message || errorDetail.message === message) {
+    return errorDetail.detail;
+  }
+
+  return undefined;
+};
+
 const LinkTextField: React.FC<LinkTextFieldProps> = ({
   value,
   isDisabled,
@@ -42,7 +57,9 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
 
   const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextUrl = event.target.value;
+
     setUrl(nextUrl);
+
     onChangeHandler({
       link: nextUrl,
       linkTxt: previewText,
@@ -51,12 +68,20 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
 
   const handlePreviewTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextPreviewText = event.target.value;
+
     setPreviewText(nextPreviewText);
+
     onChangeHandler({
       link: url,
       linkTxt: nextPreviewText,
     });
   };
+
+  const linkMessage = errors?.link ?? errors?.general;
+  const linkTextMessage = errors?.linkTxt;
+
+  const linkDetail = getMatchingDetail(linkMessage, errorDetail);
+  const linkTextDetail = getMatchingDetail(linkTextMessage, errorDetail);
 
   return (
     <div className={classes["link-text-field-container"]}>
@@ -64,14 +89,14 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
         isTabularEdit={isTabularEdit}
         fullWidth={true}
         className={classes["url-input"]}
-        label={isTabularEdit ? "" : label + " "}
+        label={isTabularEdit ? "" : `${label} `}
         placeholder="https://example.co.il"
         required={isRequired}
         value={url}
         onChange={handleUrlChange}
         onBlur={onBlurHandler}
-        error={Boolean(errors?.link)}
-        helperText={<FieldErrorText message={errors?.link} detail={errorDetail?.detail} />}
+        error={Boolean(linkMessage)}
+        helperText={<FieldErrorText message={linkMessage} detail={linkDetail} />}
         disabled={isDisabled}
         size={isTabularEdit ? "medium" : undefined}
       />
@@ -80,21 +105,15 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
         isTabularEdit={isTabularEdit}
         fullWidth={true}
         label={isTabularEdit ? "" : "טקסט להיפר-קישור"}
-        required={isRequired}
+        required={false}
         value={previewText}
         onChange={handlePreviewTextChange}
         onBlur={onBlurHandler}
-        error={Boolean(errors?.linkTxt)}
-        helperText={<FieldErrorText message={errors?.linkTxt} detail={errorDetail?.detail} />}
+        error={Boolean(linkTextMessage)}
+        helperText={<FieldErrorText message={linkTextMessage} detail={linkTextDetail} />}
         disabled={isDisabled}
         size={isTabularEdit ? "medium" : undefined}
       />
-
-      {errors?.general ? (
-        <div className={classes["general-error"]}>
-          <FieldErrorText message={errors.general} detail={errorDetail?.detail} />
-        </div>
-      ) : null}
     </div>
   );
 };
