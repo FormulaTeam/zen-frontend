@@ -282,7 +282,8 @@ export const useTableColumns = (
 
             if (field.typeId === FieldTypeIds.date) {
               if (value && value !== "" && moment(value).isValid()) {
-                value = field.dateAndTime
+                const dateAndTime = field.dateAndTime || field.extra?.dateAndTime || field.includeTime || field.extra?.includeTime;
+                value = dateAndTime
                   ? moment(value).format(DEFAULT_DATE_TIME_FORMAT)
                   : moment(value).format(DEFAULT_DATE_FORMAT);
 

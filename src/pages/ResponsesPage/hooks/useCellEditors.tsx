@@ -175,11 +175,12 @@ export const useCellEditors = ({
           break;
 
         case fieldType.Date:
+          const finalDateAndTime = (formField as any).dateAndTime || fieldExtra.dateAndTime || (formField as any).includeTime || (fieldExtra as any).includeTime;
           editor = (
             <DateCellEditor
               value={params.value as string | null}
               onChange={handleChange}
-              dateAndTime={dateAndTime}
+              dateAndTime={finalDateAndTime}
               isRequired={formField.isRequired}
               errorMessage={errorMessage}
             />

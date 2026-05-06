@@ -296,7 +296,10 @@ export const useCreateResponse = (formId?: number) => {
     onSuccess: (_, variables) => {
       const dataArray = Array.isArray(variables) ? variables : [variables];
       const targetFormId = formId || (dataArray[0] as any).form_id;
-      queryClient.invalidateQueries({ queryKey: ["responses", String(targetFormId)] });
+      const targetFormIdStr = String(targetFormId);
+      
+      queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
+      queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
     },
   });
 };
@@ -308,7 +311,9 @@ export const useUpdateResponse = (formId?: number, responseId?: string) => {
       return apiClient.patch<ResponseDto>(`/forms/${formId}/responses/${responseId}`, responseData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
+      const targetFormIdStr = String(formId);
+      queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
+      queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
     },
   });
 };
@@ -325,7 +330,9 @@ export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
       return results.map((r) => r.data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
+      const targetFormIdStr = String(formId);
+      queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
+      queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
     },
   });
 };
@@ -334,7 +341,9 @@ export const useSoftDeleteResponses = (formId: number) => {
   return useMutation({
     mutationFn: (responseIds: string[]) => softDeleteResponses(formId, responseIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
+      const targetFormIdStr = String(formId);
+      queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
+      queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
     },
   });
 };
@@ -346,6 +355,9 @@ export const useUpdateResponses = (formId?: number) => {
     mutationOptions: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["responses"] });
+        if (formId) {
+          queryClient.invalidateQueries({ queryKey: [String(formId)] });
+        }
       },
       onError: (error) => {
         console.error("Failed to update responses:", error);
@@ -358,7 +370,9 @@ export const useRestoreResponses = (formId: number) => {
   return useMutation({
     mutationFn: (responseIds: string[]) => restoreResponses(formId, responseIds),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
+      const targetFormIdStr = String(formId);
+      queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
+      queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
     },
   });
 };
@@ -372,7 +386,9 @@ export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
       console.warn("useDeleteAllFormsResponses not fully implemented in Engine yet");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["responses", formId] });
+      const targetFormIdStr = String(formId);
+      queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
+      queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
     },
   });
 };
@@ -386,7 +402,9 @@ export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["responses", formId] });
+      const targetFormIdStr = String(formId);
+      queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
+      queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
     },
   });
 };

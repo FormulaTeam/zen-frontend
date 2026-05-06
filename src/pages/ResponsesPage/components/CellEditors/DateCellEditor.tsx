@@ -73,7 +73,7 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
     const handleChange = (newValue: Dayjs | null) => {
         setLocalValue(newValue);
         if (newValue && newValue.isValid()) {
-            onChange(newValue.format("YYYY-MM-DD[T]HH:mm:ss.000"), true);
+            onChange(newValue.utc().toISOString(), true);
         } else {
             onChange("", !(isRequired ?? false));
         }
@@ -86,7 +86,7 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
                 .minute(newValue.minute())
                 .second(newValue.second());
             setLocalValue(updatedValue);
-            onChange(updatedValue.format("YYYY-MM-DD[T]HH:mm:ss.000"));
+            onChange(updatedValue.utc().toISOString(), true);
         }
     };
 

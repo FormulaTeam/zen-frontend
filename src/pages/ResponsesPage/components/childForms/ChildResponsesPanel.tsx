@@ -14,6 +14,7 @@ interface ChildResponsesPanelProps {
   title: string;
   parentFormId?: number;
   isInEditMode?: boolean;
+  searchQuery?: string;
 }
 
 export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
@@ -22,14 +23,20 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
   parentFormId,
   title,
   isInEditMode = false,
+  searchQuery,
 }) => {
-  const displayFields = useMemo(
-    () =>
-      (form.sections ?? [])
-        .flatMap((section) => section.fields ?? [])
-        .filter((field) => field.fieldType !== fieldType.Form),
-    [form.sections],
-  );
+  const displayFields = useMemo(() => {
+    const sortedSections = [...(form.sections ?? [])]
+      .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+      .map((section) => ({
+        ...section,
+        fields: [...(section.fields ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)),
+      }));
+
+    return sortedSections
+      .flatMap((section) => section.fields ?? [])
+      .filter((field) => field.fieldType !== fieldType.Form);
+  }, [form.sections]);
 
   const sortedResponses = useMemo(() => [...responses], [responses]);
 
@@ -59,6 +66,7 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
                 key={response.id}
                 formFields={displayFields}
                 parentFormId={parentFormId}
+                searchQuery={searchQuery}
               />
             ))}
           </TableBody>
@@ -67,3 +75,4 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
     </DetailsRowContainer>
   );
 };
+

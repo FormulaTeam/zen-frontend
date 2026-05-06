@@ -6,10 +6,14 @@ import CustomCarousel from "../../../components/FilePreview/CustomCarousel";
 import { FormFieldDto } from "../../../types/shared";
 import { fieldType } from "formula-gear";
 import { DEFAULT_DATE_FORMAT, DEFAULT_DATE_TIME_FORMAT } from "../../../utils/utils";
+import { HighlightedText } from "../styled";
+
+import { highlightTextUtil } from "../utils/highlighting";
 
 interface UseCellDisplayParams {
   formId?: number;
   onFileClick?: (file: any) => void;
+  searchQuery?: string;
 }
 
 interface UseCellDisplayReturn {
@@ -18,6 +22,7 @@ interface UseCellDisplayReturn {
 
 type EditorFieldExtra = {
   dateAndTime?: boolean;
+  includeTime?: boolean;
 };
 
 type LocationValue = {
@@ -54,33 +59,44 @@ const CenteredBox = styled(Box)({
 export const useCellDisplay = ({
   formId,
   onFileClick,
+  searchQuery,
 }: UseCellDisplayParams): UseCellDisplayReturn => {
-  const formatLinkCell = useCallback((value: LinkValue): React.ReactElement => {
-    if (!value || !value.link) return <Box component="span" className="cell-box"></Box>;
+  const highlightText = useCallback(
+    (text: string | number | null | undefined): React.ReactNode => {
+      return highlightTextUtil(text, searchQuery);
+    },
+    [searchQuery],
+  );
 
-    const href = /^https?:\/\//.test(value.link) ? value.link : `https://${value.link}`;
-    const displayText = value.linkTxt || value.link;
+  const formatLinkCell = useCallback(
+    (value: LinkValue): React.ReactElement => {
+      if (!value || !value.link) return <Box component="span" className="cell-box"></Box>;
 
-    return (
-      <Box component="span" className="cell-box">
-        <MuiLink
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={value.link}
-          sx={{
-            color: "primary.main",
-            textDecoration: "underline",
-            cursor: "pointer",
-            "&:hover": {
+      const href = /^https?:\/\//.test(value.link) ? value.link : `https://${value.link}`;
+      const displayText = value.linkTxt || value.link;
+
+      return (
+        <Box component="span" className="cell-box">
+          <MuiLink
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={value.link}
+            sx={{
+              color: "primary.main",
               textDecoration: "underline",
-            },
-          }}>
-          {displayText}
-        </MuiLink>
-      </Box>
-    );
-  }, []);
+              cursor: "pointer",
+              "&:hover": {
+                textDecoration: "underline",
+              },
+            }}>
+            {highlightText(displayText)}
+          </MuiLink>
+        </Box>
+      );
+    },
+    [highlightText],
+  );
 
   const formatFileCell = useCallback(
     (value: any): React.ReactElement => {
@@ -113,79 +129,101 @@ export const useCellDisplay = ({
     [formId, onFileClick],
   );
 
-  const formatDateCell = useCallback((value: any, includeTime?: boolean): React.ReactElement => {
-    if (!value || !moment(value).isValid())
+  const formatDateCell = useCallback(
+    (value: any, includeTime?: boolean): React.ReactElement => {
+      if (!value || !moment(value).isValid())
+        return <Box component="span" className="cell-box-date"></Box>;
+
+      const datePart = moment(value).format(DEFAULT_DATE_FORMAT);
+      const timePart = includeTime ? ` ${moment(value).format("HH:mm:ss")}` : "";
+
+      return (
+        <Box component="span" className="cell-box-date">
+          <label>
+            {highlightText(datePart)}
+            {timePart}
+          </label>
+        </Box>
+      );
+    },
+    [highlightText],
+  );
+
+  const formatTimeCell = useCallback(
+    (value: any): React.ReactElement => {
+      if (!value || value === "") return <Box component="span" className="cell-box-date"></Box>;
+
+      if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(value)) {
+        return (
+          <Box component="span" className="cell-box-date">
+            <label>{highlightText(value)}</label>
+          </Box>
+        );
+      }
+
+      if (value instanceof Date) {
+        const hours = value.getHours().toString().padStart(2, "0");
+        const minutes = value.getMinutes().toString().padStart(2, "0");
+        const seconds = value.getSeconds().toString().padStart(2, "0");
+        const timeString = `${hours}:${minutes}:${seconds}`;
+
+        return (
+          <Box component="span" className="cell-box-date">
+            <label>{highlightText(timeString)}</label>
+          </Box>
+        );
+      }
+
       return <Box component="span" className="cell-box-date"></Box>;
+    },
+    [highlightText],
+  );
 
-    const format = includeTime ? DEFAULT_DATE_TIME_FORMAT : DEFAULT_DATE_FORMAT;
-    const formattedDate = moment(value).format(format);
-
-    return (
-      <Box component="span" className="cell-box-date">
-        <label>{formattedDate}</label>
-      </Box>
-    );
-  }, []);
-
-  const formatTimeCell = useCallback((value: any): React.ReactElement => {
-    if (!value || value === "") return <Box component="span" className="cell-box-date"></Box>;
-
-    if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(value)) {
-      return (
-        <Box component="span" className="cell-box-date">
-          <label>{value}</label>
-        </Box>
-      );
-    }
-
-    if (value instanceof Date) {
-      const hours = value.getHours().toString().padStart(2, "0");
-      const minutes = value.getMinutes().toString().padStart(2, "0");
-      const seconds = value.getSeconds().toString().padStart(2, "0");
-      const timeString = `${hours}:${minutes}:${seconds}`;
+  const formatLocationCell = useCallback(
+    (value: LocationValue): React.ReactElement | null => {
+      if (!value || !value.x || !value.y) return null;
 
       return (
-        <Box component="span" className="cell-box-date">
-          <label>{timeString}</label>
+        <Box className="cell-box" sx={{ lineHeight: 1.2 }}>
+          <Box>
+            <label>
+              x: {highlightText(String(value.x))}
+            </label>
+          </Box>
+          <Box>
+            <label>
+              y: {highlightText(String(value.y))}
+            </label>
+          </Box>
         </Box>
       );
-    }
+    },
+    [highlightText],
+  );
 
-    return <Box component="span" className="cell-box-date"></Box>;
-  }, []);
+  const formatCheckboxCell = useCallback(
+    (value: boolean): React.ReactElement => {
+      return <Box component="span">{highlightText(value ? "כן" : "לא")}</Box>;
+    },
+    [highlightText],
+  );
 
-  const formatLocationCell = useCallback((value: LocationValue): React.ReactElement | null => {
-    if (!value || !value.x || !value.y) return null;
+  const formatListCell = useCallback(
+    (value: any): React.ReactElement => {
+      if (!Array.isArray(value)) return <Box component="span" className="cell-box"></Box>;
 
-    return (
-      <Box className="cell-box" sx={{ lineHeight: 1.2 }}>
-        <Box>
-          <label>{`x: ${value.x}`}</label>
-        </Box>
-        <Box>
-          <label>{`y: ${value.y}`}</label>
-        </Box>
-      </Box>
-    );
-  }, []);
+      const stringValue = value.join(", ");
 
-  const formatCheckboxCell = useCallback((value: boolean): React.ReactElement => {
-    return <Box component="span">{value ? "כן" : "לא"}</Box>;
-  }, []);
-
-  const formatListCell = useCallback((value: any): React.ReactElement => {
-    if (!Array.isArray(value)) return <Box component="span" className="cell-box"></Box>;
-
-    const stringValue = value.join(", ");
-
-    return (
-      <Tooltip title={stringValue} arrow>
-        <EllipsisBox>
-          <label>{stringValue}</label>
-        </EllipsisBox>
-      </Tooltip>
-    );
-  }, []);
+      return (
+        <Tooltip title={stringValue} arrow>
+          <EllipsisBox>
+            <label>{highlightText(stringValue)}</label>
+          </EllipsisBox>
+        </Tooltip>
+      );
+    },
+    [highlightText],
+  );
 
   const formatDefaultCell = useCallback(
     (value: any): React.ReactElement => {
@@ -196,7 +234,11 @@ export const useCellDisplay = ({
         return (
           <Tooltip title={displayValue} arrow>
             <EllipsisBox>
-              {isNumber ? <span dir="ltr">{displayValue}</span> : <label>{displayValue}</label>}
+              {isNumber ? (
+                <span dir="ltr">{highlightText(displayValue)}</span>
+              ) : (
+                <label>{highlightText(displayValue)}</label>
+              )}
             </EllipsisBox>
           </Tooltip>
         );
@@ -206,13 +248,20 @@ export const useCellDisplay = ({
 
       return <Box component="span" className="cell-box"></Box>;
     },
-    [formatListCell],
+    [formatListCell, highlightText],
   );
 
   const formatCellValue = useCallback(
     (value: any, field: FormFieldDto): React.ReactElement | null => {
       if (value === null || value === undefined || value === "")
         return <Box component="span" className="cell-box"></Box>;
+
+      const extra = getFieldExtra(field);
+      const dateAndTime =
+        (field as any).dateAndTime ||
+        extra.dateAndTime ||
+        (field as any).includeTime ||
+        extra.includeTime;
 
       switch (field.fieldType) {
         case fieldType.Link:
@@ -222,7 +271,7 @@ export const useCellDisplay = ({
           return formatFileCell(value);
 
         case fieldType.Date:
-          return formatDateCell(value, getFieldExtra(field).dateAndTime);
+          return formatDateCell(value, dateAndTime);
 
         case fieldType.Time:
           return formatTimeCell(value);
@@ -250,3 +299,4 @@ export const useCellDisplay = ({
 
   return { formatCellValue };
 };
+

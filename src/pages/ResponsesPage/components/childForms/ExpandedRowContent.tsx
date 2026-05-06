@@ -26,6 +26,7 @@ interface ExpandedRowContentProps {
     childrenFormsData: ChildFormData[];
     getChildRowsForParent: (parentRowId: string | number, connectedFormId: number | string) => Row[];
     isInEditMode?: boolean;
+    searchQuery?: string;
 }
 
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
@@ -38,6 +39,7 @@ export const ExpandedRowContent: React.FC<ExpandedRowContentProps> = ({
     childrenFormsData,
     getChildRowsForParent,
     isInEditMode = false,
+    searchQuery,
 }) => {
     const formInFormFields: FormFieldDto[] = useMemo(
         () =>
@@ -94,6 +96,7 @@ export const ExpandedRowContent: React.FC<ExpandedRowContentProps> = ({
                         title={item.field.displayName}
                         parentFormId={parentFormId}
                         isInEditMode={isInEditMode}
+                        searchQuery={searchQuery}
                     />
                 );
             })}

@@ -11,7 +11,7 @@ const dateSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.date),
 
   extra: strictObject({
-    includeTime: boolean().optional(),
+    dateAndTime: boolean().optional(),
     defaultValue: zod_enum(DefaultDateValue).default(DefaultDateValue.EMPTY),
   }).optional(),
 });
