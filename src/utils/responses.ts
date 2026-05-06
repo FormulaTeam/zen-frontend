@@ -29,7 +29,8 @@ export function getResponseFieldStringValue(field: FormField, value: any) {
       return "";
     case FieldTypeIds.date:
       if (!moment(value).isValid()) return "";
-      if (field.dateAndTime) return moment(value).format(DEFAULT_DATE_TIME_FORMAT);
+      const includeTime = field.dateAndTime;
+      if (includeTime) return moment(value).format(DEFAULT_DATE_TIME_FORMAT);
       return moment(value).format(DEFAULT_DATE_FORMAT);
 
     case FieldTypeIds.checkbox:

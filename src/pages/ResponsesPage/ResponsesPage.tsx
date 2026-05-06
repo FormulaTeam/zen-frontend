@@ -105,21 +105,19 @@ const ResponsesPageContent = (): JSX.Element => {
     handleSaveView,
     isSaving,
   } = useResponsesViews();
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setFilter((prev) => ({
+      ...prev,
+      query: search,
+      before: undefined,
+      after: undefined,
+      pageNumber: 1,
+    }));
+  }, 500);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setFilter({
-        ...filter,
-        query: search,
-        before: undefined,
-        after: undefined,
-        pageNumber: 1,
-        sortBy: filter?.sortBy || "meta:index",
-        orderBy: filter?.orderBy || IOrderBy.DESC,
-      });
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [search]);
+  return () => clearTimeout(timer);
+}, [search, setFilter]);
 
   const displayedRows = useMemo<ResponsePageRow[]>(() => {
     return (isInEditMode ? localRows : storeRows) as ResponsePageRow[];
@@ -137,14 +135,11 @@ const ResponsesPageContent = (): JSX.Element => {
       return undefined;
     }
 
-    const flattenedFields = (form.sections ?? [])
-      .flatMap((section) => section.fields ?? [])
-      .sort((a, b) => a.index - b.index);
-
+    // Use form.fields which is already hierarchically sorted by useFormLoader
     return {
       id: form.id,
       name: form.name ?? "",
-      fields: flattenedFields,
+      fields: form.fields,
     };
   }, [form]);
 

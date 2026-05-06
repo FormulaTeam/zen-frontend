@@ -2,7 +2,7 @@ import { FieldTypeIds } from "@utils/interfaces";
 import React, { useState, useMemo } from "react";
 import { FormControl, CircularProgress, Autocomplete, TextField } from "@mui/material";
 import { ExtraElementProps } from "../index";
-import { FormIdentifierDto, useGetForm, useGetLinkableForms } from "@api/formsApi";
+import { useGetForm, useGetLinkableForms } from "@api/formsApi";
 import { useFormStructureContext } from "@pages/FormEditor/context/FormStructureContext";
 import { LoaderContainer, WarningText } from "./styled";
 import { useParams } from "react-router-dom";

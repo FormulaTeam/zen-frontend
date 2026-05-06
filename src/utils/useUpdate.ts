@@ -7,7 +7,7 @@ interface UseUpdateOptions<TData = unknown, TResponse = unknown> {
   mutationOptions?: Omit<UseMutationOptions<TResponse, Error, TData, unknown>, "mutationFn">;
 }
 
-// Generic useUpdate hook for PUT requests
+// Generic useUpdate hook for PATCH requests
 export function useUpdate<TData = unknown, TResponse = unknown>({
   endpoint,
   mutationOptions,
@@ -15,7 +15,7 @@ export function useUpdate<TData = unknown, TResponse = unknown>({
 }: UseUpdateOptions<TData, TResponse>): UseMutationResult<TResponse, Error, TData, unknown> {
   return useMutation({
     mutationFn: async (data: TData) => {
-      const response = await apiClient.put<TResponse>(endpoint, data);
+      const response = await apiClient.patch<TResponse>(endpoint, data);
       return response.data;
     },
     mutationKey,

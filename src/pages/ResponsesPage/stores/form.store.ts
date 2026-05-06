@@ -10,6 +10,7 @@ export type StoreForm = FormDto & {
   fields: FormFieldDto[];
   columns?: GridColDef[];
   responsesCount?: number;
+  lastInteractionAt?: string | null;
   metro_access_url?: string | null;
   oasisSourceKey?: string | null;
 };
@@ -22,7 +23,7 @@ interface FormsState {
   responses: ResponseForm[] | null;
   setResponses: (responses: ResponseForm[] | null) => void;
   filter: Filter | null;
-  setFilter: (filter: Filter | null) => void;
+  setFilter: (update: Filter | null | ((prev: Filter | null) => Filter | null)) => void;
   rows: Row[];
   setRows: (rows: Row[]) => void;
   isRowsLoading: boolean;
@@ -39,7 +40,11 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
   responses: null,
   setResponses: (responses: ResponseForm[] | null) => set({ responses }),
   filter: { pageSize: 25, pageNumber: 1, sortBy: "meta:index", orderBy: IOrderBy.DESC },
-  setFilter: (filter: Filter | null) => set({ filter, isRowsLoading: true }),
+  setFilter: (update: Filter | null | ((prev: Filter | null) => Filter | null)) =>
+    set((state) => ({
+      filter: typeof update === "function" ? update(state.filter) : update,
+      isRowsLoading: true,
+    })),
   rows: [],
   setRows: (rows: Row[]) => set({ rows }),
   isRowsLoading: false,

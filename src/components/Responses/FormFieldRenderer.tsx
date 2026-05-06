@@ -47,7 +47,7 @@ type FormFieldExtra = {
   defaultValue?: any;
   conditions?: any[];
   sectionDescription?: string;
-  includeTime?: boolean;
+  dateAndTime?: boolean;
   includeSeconds?: boolean;
   multiSelect?: boolean;
   multiple?: boolean;
@@ -587,7 +587,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             onBlurHandler(fieldId);
           }}
           value={formFieldValue}
-          dateAndTime={formFieldExtra.includeTime}
+          dateAndTime={(formField as any).dateAndTime || formFieldExtra.dateAndTime || (formField as any).includeTime || (formFieldExtra as any).includeTime}
           defaultValue={formFieldExtra.defaultValue}
           validationMessage={validationMessage}
           validationDetail={validationDetail}

@@ -157,33 +157,60 @@ export function useFormLoader(formId: string) {
   const lastFormIdRef = useRef<string | number | undefined>(undefined);
 
   useEffect(() => {
-    if (formData && isSuccess && formData.id !== lastFormIdRef.current) {
-      lastFormIdRef.current = formData.id;
+    if (formData && isSuccess) {
+      const isNewForm = formData.id !== lastFormIdRef.current;
 
-      const flattenedFields = (formData.sections ?? [])
-        .flatMap((section) => section.fields ?? [])
-        .sort((a, b) => a.index - b.index);
+      if (isNewForm) {
+        lastFormIdRef.current = formData.id;
 
-      const columns = flattenedFields.map((field) => ({
-        field: field.displayName,
-        headerName: field.displayName,
-        editable: true,
-      }));
+        // Sort sections by index, and for each section, sort its fields by index
+        const sortedSections = [...(formData.sections ?? [])]
+          .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+          .map((section) => ({
+            ...section,
+            fields: [...(section.fields ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)),
+          }));
 
-      setForm({
-        ...formData,
-        fields: flattenedFields,
-        columns,
-      } as any);
+        // Hierarchical flattening: sections first, then fields within each section
+        const flattenedFields = sortedSections.flatMap((section) => section.fields);
 
-      const permissions =
-        "permissions" in formData && Array.isArray(formData.permissions)
-          ? formData.permissions
-          : [];
+        const columns = flattenedFields.map((field) => ({
+          field: field.displayName,
+          headerName: field.displayName,
+          editable: true,
+        }));
 
-      setPermissions(permissions as Parameters<typeof setPermissions>[0]);
+        setForm({
+          ...formData,
+          sections: sortedSections,
+          fields: flattenedFields,
+          columns,
+        } as any);
+
+        const permissions =
+          "permissions" in formData && Array.isArray(formData.permissions)
+            ? formData.permissions
+            : [];
+
+        setPermissions(permissions as Parameters<typeof setPermissions>[0]);
+      } else if (form) {
+        // Update metadata if changed
+        const anyFormData = formData as any;
+        if (
+          form.responsesCount !== anyFormData.responsesCount ||
+          form.lastInteractionAt !== anyFormData.lastInteractionAt ||
+          form.name !== anyFormData.name
+        ) {
+          setForm({
+            ...form,
+            responsesCount: anyFormData.responsesCount,
+            lastInteractionAt: anyFormData.lastInteractionAt,
+            name: anyFormData.name,
+          });
+        }
+      }
     }
-  }, [formData, setForm, setPermissions, isSuccess]);
+  }, [formData, setForm, setPermissions, isSuccess, form]);
 
   return {
     isLoading: isLoading || (!form && !isError),

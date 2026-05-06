@@ -250,6 +250,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     fontSize: "1.2rem",
     fontWeight: 600,
   },
+  "& .MuiDataGrid-iconButtonContainer": {
+    marginLeft: "12px",
+  },
   "& .MuiDataGrid-columnHeaderTitleContainer": {
     justifyContent: "flex-start",
   },
@@ -626,3 +629,10 @@ export const PaginationButton = styled(IconButton)(({ theme }) => ({
     color: "#4a5568",
   },
 }));
+
+export const HighlightedText = styled("mark")({
+  backgroundColor: "#fff59d",
+  color: "inherit",
+  padding: 0,
+  borderRadius: "2px",
+});

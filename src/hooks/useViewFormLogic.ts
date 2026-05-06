@@ -144,10 +144,14 @@ export const useViewFormLogic = ({
     const restoredColumns = cloneColumns(originalState.columns);
     resetToOriginalColumns(restoredColumns);
     
-    if (currentView) {
+    // If we were creating a new view, revert to "All Fields" (undefined)
+    // If we were editing, revert to the original saved view
+    if (isCreatingNew) {
+      onApplyView?.(undefined as any);
+    } else if (currentView) {
       onApplyView?.(currentView);
     }
-  }, [originalState, resetToOriginalColumns, onApplyView, currentView]);
+  }, [originalState, resetToOriginalColumns, onApplyView, currentView, isCreatingNew]);
 
   const handleApply = useCallback(() => {
     if (!form) return;
@@ -161,7 +165,7 @@ export const useViewFormLogic = ({
       createdBy: (user as any)?.upn || (user as any)?.UPN || "unknown",
       isPublic,
       isDefault,
-      sortDirection: sortedCol?.sortDirection || "asc",
+      sortDirection: sortedCol?.sortDirection || "desc",
       columns: columns.map((c, i) => {
         const isSystem = PRE_SYSTEM_COLUMNS.some(sc => sc.columnId === c.columnId) || 
                         POST_SYSTEM_VIEW_COLUMNS.some(sc => sc.columnId === c.columnId);
@@ -202,7 +206,7 @@ export const useViewFormLogic = ({
       createdByName: getViewUserDisplayName(user),
       isPublic,
       isDefault,
-      sortDirection: sortedCol?.sortDirection || "asc",
+      sortDirection: sortedCol?.sortDirection || "desc",
       columns: columns.map((c, i) => {
         const isSystem = PRE_SYSTEM_COLUMNS.some(sc => sc.columnId === c.columnId) || 
                         POST_SYSTEM_VIEW_COLUMNS.some(sc => sc.columnId === c.columnId);
