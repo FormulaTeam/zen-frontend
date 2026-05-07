@@ -1,5 +1,12 @@
+import { keepPreviousData, useMutation } from "@tanstack/react-query";
 import { useMemo } from "react";
+
+import { responsesScopeOption, SortDirection } from "formula-gear";
+
 import apiClient from "./config";
+import queryClient from "./queryClient";
+import { useFetch } from "../utils/useFetch";
+import { useUpdate } from "../utils/useUpdate";
 import {
   FieldTypeIds,
   FieldValue,
@@ -7,27 +14,20 @@ import {
   FormField,
   LinkValue,
   LocationValue,
-  NewResponse,
   ResponseFieldValue,
-  ResponseForm,
   Row,
 } from "../utils/interfaces";
-import { ResponseCount } from "../types/interfaces/responses.types";
-import { useDelete } from "../utils/useDelete";
-import queryClient from "./queryClient";
-import { useCreate } from "../utils/useCreate";
-import { ExcelImportResult } from "../types/interfaces/forms.types";
-import { useFetch } from "../utils/useFetch";
-import { useMutation, keepPreviousData } from "@tanstack/react-query";
-import { useUpdate } from "../utils/useUpdate";
-import { BulkUpdateResponsesDto, CreateResponseDto, ResponseDto, FormDto } from "../types/shared";
-import { z } from "zod";
-import { GetResponsesQuerySchema } from "formula-gear/dist/validators/responses/index";
-import { SortDirection } from "formula-gear";
+import { BulkUpdateResponsesDto, CreateResponseDto, FormDto, ResponseDto } from "../types/shared";
 
 const stringifyQuery = (query: any): string => {
   if (query && typeof query === "object") return JSON.stringify(query);
+
   return query || "";
+};
+
+type SoftDeleteResponsesDto = {
+  scope?: (typeof responsesScopeOption)[keyof typeof responsesScopeOption];
+  responsesIds?: string[];
 };
 
 /**
@@ -46,8 +46,10 @@ export const getResponses = async (formId: number, filter?: Filter): Promise<any
     before: filter?.before,
     after: filter?.after,
   };
+
   try {
     const response = await apiClient.get(`/forms/${formId}/responses`, { params });
+
     return response?.data ?? [];
   } catch (error) {
     console.error("Failed to fetch responses:", error);
@@ -65,6 +67,7 @@ export const getResponses = async (formId: number, filter?: Filter): Promise<any
 export const getResponseById = async (formId: number, responseId: string): Promise<ResponseDto> => {
   try {
     const response = await apiClient.get<ResponseDto>(`/forms/${formId}/responses/${responseId}`);
+
     return response.data;
   } catch (error) {
     console.error("Failed to fetch response:", error);
@@ -84,7 +87,11 @@ export const createResponse = async (
   responseData: CreateResponseDto[],
 ): Promise<ResponseDto[]> => {
   try {
-    const response = await apiClient.post<ResponseDto[]>(`/forms/${formId}/responses`, responseData);
+    const response = await apiClient.post<ResponseDto[]>(
+      `/forms/${formId}/responses`,
+      responseData,
+    );
+
     return response.data;
   } catch (error) {
     console.error("Failed to create responses:", error);
@@ -93,15 +100,14 @@ export const createResponse = async (
 };
 
 /**
- * Soft delete multiple responses.
- *
- * @param formId - The ID of the form.
- * @param responseIds - The IDs of the responses to delete.
- * @returns A promise that resolves to the result of the deletion.
+ * Soft delete responses by IDs or by scope.
  */
-export const softDeleteResponses = async (formId: number, responseIds: string[]): Promise<void> => {
+export const softDeleteResponses = async (
+  formId: number,
+  dto: SoftDeleteResponsesDto,
+): Promise<void> => {
   try {
-    await apiClient.post(`/forms/${formId}/responses/soft-delete`, { responseIds });
+    await apiClient.post(`/forms/${formId}/responses/soft-delete`, dto);
   } catch (error) {
     console.error("Failed to soft-delete responses:", error);
     throw error;
@@ -140,6 +146,7 @@ export const searchResponses = async (filter: Filter): Promise<any> => {
     };
 
     const response = await apiClient.get(`/forms/${formId}/responses`, { params });
+
     return response?.data || [];
   } catch (error) {
     console.error("Failed to search responses:", error);
@@ -151,7 +158,7 @@ export const searchResponses = async (filter: Filter): Promise<any> => {
  * Delete a single response.
  */
 export const deleteResponse = async (formId: number, responseId: string): Promise<void> => {
-  return softDeleteResponses(formId, [responseId]);
+  return softDeleteResponses(formId, { responsesIds: [responseId] });
 };
 
 /**
@@ -171,6 +178,7 @@ export const getAllDeletedResponses = async (filter: Filter): Promise<any> => {
     };
 
     const response = await apiClient.get(`/forms/${formId}/responses`, { params });
+
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch deleted responses:", error);
@@ -195,6 +203,7 @@ export const getResponseWithFlatFields = (
 ): Record<string, FieldValue> => {
   const fieldsNameValueObj = responseData.reduce((acc, field) => {
     const fieldMetaData = fieldsMetaData.find((metaData) => metaData.uniqueId === field.field_id);
+
     if (fieldMetaData && fieldMetaData.name) {
       const fieldName = fieldMetaData.name;
 
@@ -232,18 +241,17 @@ export const getResponseWithFlatFields = (
           acc[fieldName] = field.value;
       }
     }
+
     return acc;
   }, {});
+
   return fieldsNameValueObj;
 };
 
 // Hooks
 // ============================================================
 
-export const useGetResponsesRows = (
-  formId: string,
-  params: any,
-) => {
+export const useGetResponsesRows = (formId: string, params: any) => {
   const safeParams = useMemo(
     () => ({
       ...params,
@@ -291,13 +299,14 @@ export const useCreateResponse = (formId?: number) => {
       const dataArray = Array.isArray(responseData) ? responseData : [responseData];
       const targetFormId = formId || (dataArray[0] as any).form_id;
       if (!targetFormId) throw new Error("formId is required for createResponse");
+
       return createResponse(targetFormId, dataArray);
     },
     onSuccess: (_, variables) => {
       const dataArray = Array.isArray(variables) ? variables : [variables];
       const targetFormId = formId || (dataArray[0] as any).form_id;
       const targetFormIdStr = String(targetFormId);
-      
+
       queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
       queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
     },
@@ -308,10 +317,12 @@ export const useUpdateResponse = (formId?: number, responseId?: string) => {
   return useMutation({
     mutationFn: (responseData: Partial<ResponseDto>) => {
       if (!formId || !responseId) throw new Error("formId and responseId are required");
+
       return apiClient.patch<ResponseDto>(`/forms/${formId}/responses/${responseId}`, responseData);
     },
     onSuccess: () => {
       const targetFormIdStr = String(formId);
+
       queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
       queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
     },
@@ -327,21 +338,24 @@ export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
         apiClient.patch<ResponseDto>(`/forms/${formId}/responses/${id}`, responseData),
       );
       const results = await Promise.all(promises);
-      return results.map((r) => r.data);
+
+      return results.map((response) => response.data);
     },
     onSuccess: () => {
       const targetFormIdStr = String(formId);
+
       queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
       queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
     },
   });
 };
 
-export const useSoftDeleteResponses = (formId: number) => {
+export const useSoftDeleteResponses = (formId: number | string) => {
   return useMutation({
-    mutationFn: (responseIds: string[]) => softDeleteResponses(formId, responseIds),
+    mutationFn: (dto: SoftDeleteResponsesDto) => softDeleteResponses(Number(formId), dto),
     onSuccess: () => {
       const targetFormIdStr = String(formId);
+
       queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
       queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
     },
@@ -371,22 +385,7 @@ export const useRestoreResponses = (formId: number) => {
     mutationFn: (responseIds: string[]) => restoreResponses(formId, responseIds),
     onSuccess: () => {
       const targetFormIdStr = String(formId);
-      queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
-      queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
-    },
-  });
-};
 
-export const useDeleteAllFormsResponses = ({ formId }: { formId: string }) => {
-  return useMutation({
-    mutationFn: async () => {
-      // If there's no explicit "delete all" endpoint, we might need to fetch all and delete,
-      // but let's assume Engine might add it or we use a filter.
-      // For now, let's keep the hook signature but it might need implementation.
-      console.warn("useDeleteAllFormsResponses not fully implemented in Engine yet");
-    },
-    onSuccess: () => {
-      const targetFormIdStr = String(formId);
       queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
       queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
     },
@@ -399,10 +398,12 @@ export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
       const response = await apiClient.post(`/forms/${formId}/responses/import`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
       return response.data;
     },
     onSuccess: () => {
       const targetFormIdStr = String(formId);
+
       queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
       queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
     },
@@ -424,10 +425,13 @@ export const getResponsesRows = async ({
 }): Promise<Row[]> => {
   try {
     const formId = filter?.form_id || form?.id;
+
     if (!formId) {
       console.error("Form ID is required to fetch rows.");
+
       return [];
     }
+
     const params: any = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
@@ -436,6 +440,7 @@ export const getResponsesRows = async ({
       before: filter?.before,
       after: filter?.after,
     };
+
     const response = await apiClient.get(`/forms/${formId}/responses`, {
       params,
     });
@@ -443,9 +448,10 @@ export const getResponsesRows = async ({
     const rawData = response?.data;
     const responses: any[] = Array.isArray(rawData)
       ? rawData
-      : (rawData as any)?.edges?.map((e: any) => e.node) || (rawData as any)?.responses || [];
+      : (rawData as any)?.edges?.map((edge: any) => edge.node) || (rawData as any)?.responses || [];
 
     const fieldIdToDisplayName = new Map<string, string>();
+
     if (form) {
       (form.sections ?? []).forEach((section) => {
         (section.fields ?? []).forEach((field) => {
@@ -466,13 +472,15 @@ export const getResponsesRows = async ({
       };
 
       const fieldValues = node.fieldValues || node.field_values || node.data || [];
-      fieldValues.forEach((fv: any) => {
-        const fieldId = fv.field_id || fv.fieldId;
+
+      fieldValues.forEach((fieldValue: any) => {
+        const fieldId = fieldValue.field_id || fieldValue.fieldId;
         const displayName = fieldIdToDisplayName.get(fieldId);
+
         if (displayName) {
-          row[displayName] = fv.value;
+          row[displayName] = fieldValue.value;
         } else {
-          row[fieldId] = fv.value;
+          row[fieldId] = fieldValue.value;
         }
       });
 

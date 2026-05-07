@@ -11,9 +11,9 @@ import { Button, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mu
 import { FC, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { permission } from "formula-gear";
+import { permission, responsesScopeOption } from "formula-gear";
 
-import { useDeleteAllFormsResponses, useDeleteForm } from "../../../api";
+import { useDeleteForm, useSoftDeleteResponses } from "../../../api";
 import deleteResponseImg from "../../../images/delete_response.png";
 import ConfirmPopup from "../../../popups/ConfirmPopup/ConfirmPopup";
 import { CustomIcon } from "../../../theme/icons";
@@ -44,7 +44,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
   const [showImportFromExcelPopup, setShowImportFromExcelPopup] = useState(false);
 
   const { mutate: deleteForm } = useDeleteForm({ id: formId ?? "" });
-  const { mutate: deleteAllResponses } = useDeleteAllFormsResponses({ formId: formId ?? "" });
+  const { mutate: softDeleteResponses } = useSoftDeleteResponses(formId ?? "");
 
   if (!permissions || !form || !formId) return null;
 
@@ -219,7 +219,16 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           image={deleteResponseImg}
           msg={"האם אתה בטוח שברצונך למחוק את כל התגובות לטופס?"}
           okFunc={() => {
-            deleteAllResponses(undefined);
+            softDeleteResponses(
+              {
+                scope: responsesScopeOption.AllResponses,
+              },
+              {
+                onSuccess: () => {
+                  setShowDeleteResponsesPopup(false);
+                },
+              },
+            );
           }}
           closePopup={() => setShowDeleteResponsesPopup(false)}
           okBtnText={"מחק תגובות"}
