@@ -227,9 +227,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       prev.map((childForm) =>
         childForm.shown
           ? {
-              ...childForm,
-              valid: [],
-            }
+            ...childForm,
+            valid: [],
+          }
           : childForm,
       ),
     );
@@ -257,9 +257,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
     const parentResponse: ParentResponseRef | undefined = savedParentResponseId
       ? {
-          formId: Number(formId),
-          responseId: savedParentResponseId,
-        }
+        formId: Number(formId),
+        responseId: savedParentResponseId,
+      }
       : undefined;
 
     return (

@@ -169,7 +169,7 @@ export const ResponsesTable = React.memo(
       if (pageInfo?.hasNextPage && pageInfo.endCursor && !isRowsLoading && !transitionInProgress.current) {
         transitionInProgress.current = true;
         setIsNavigating(true);
-        
+
         const nextPage = lastIntendedPageNumber.current + 1;
         lastIntendedPageNumber.current = nextPage;
 
@@ -193,7 +193,7 @@ export const ResponsesTable = React.memo(
       ) {
         transitionInProgress.current = true;
         setIsNavigating(true);
-        
+
         const prevPage = Math.max(currentPage - 1, 1);
         lastIntendedPageNumber.current = prevPage;
 
@@ -893,7 +893,7 @@ export const ResponsesTable = React.memo(
             getCellClassName={getCellClassName}
             density="comfortable"
             rowHeight={isInEditMode ? 140 : 65}
-            loading={isRowsLoading && rows.length === 0}
+            loading={isRowsLoading && rows.length === 0 && form?.responsesCount !== 0}
             checkboxSelection
             disableRowSelectionOnClick
             onRowSelectionModelChange={onRowSelectionModelChange}
@@ -905,6 +905,7 @@ export const ResponsesTable = React.memo(
             getRowId={(row) => row?.id}
             localeText={{
               ...heIL.components.MuiDataGrid.defaultProps.localeText,
+              noRowsLabel: "אין תגובות",
               columnMenuLabel: "פעולות",
               pinToLeft: "נעץ מימין",
               pinToRight: "נעץ משמאל",

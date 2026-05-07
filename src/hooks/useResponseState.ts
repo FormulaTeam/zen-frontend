@@ -13,6 +13,10 @@ import {
   type FormFieldLike,
   type FieldValidationMessage,
   getFieldValidationMessage,
+  FormCondition,
+  FormConditionBooleanOperator,
+  FormConditionGroup,
+  FormConditionPredicate,
 } from "formula-gear";
 import { getResponseById, useGetForm } from "../api";
 import { useConnectedFormOptions } from "./useConnectedFormOptions";
@@ -21,7 +25,12 @@ import { NOT_A_SECTION_ID } from "../utils/sections/consts";
 import { useNavigate } from "react-router-dom";
 import { IPath } from "../types/enums/global.enums";
 import { isDifferent } from "../utils/responses";
-import { ConditionUtils } from "../utils/interfaces";
+import { FieldTypeIds } from "../utils/interfaces";
+import { TextComparator } from "../pages/FormEditor/schemas/conditions/conditionField/comparators/TextComparator";
+import { NumberComparator } from "../pages/FormEditor/schemas/conditions/conditionField/comparators/NumberComparator";
+import { DateComparator } from "../pages/FormEditor/schemas/conditions/conditionField/comparators/DateComparator";
+import { OptionsComparator } from "../pages/FormEditor/schemas/conditions/conditionField/comparators/OptionsComparator";
+import { CheckboxComparator } from "../pages/FormEditor/schemas/conditions/conditionField/comparators/CheckboxComparator";
 import { getOptionResponseRawValue } from "../utils/optionResponseValue";
 
 export type FieldExtra = {
@@ -166,6 +175,146 @@ const toFieldValidationError = (
     pathMessages,
   };
 };
+const evaluatePredicate = (
+  predicate: FormConditionPredicate,
+  dataObject: Record<string, unknown>,
+): boolean => {
+  const field = predicate.field;
+  if (!field) return false;
+
+  const rawFieldValue = dataObject[field.id];
+  const targetValue = field.targetValue;
+  const typeId = field.typeId;
+  const comparator = field.comparator;
+
+  const fieldValue: unknown[] | string = Array.isArray(rawFieldValue)
+    ? rawFieldValue
+    : rawFieldValue === undefined || rawFieldValue === null
+      ? ""
+      : String(rawFieldValue);
+
+  const isArrayField = Array.isArray(fieldValue);
+  const isArrayTarget = Array.isArray(targetValue);
+  const isEmptyValue = fieldValue === "" || (isArrayField && fieldValue.length === 0);
+
+  if (typeId === FieldTypeIds.number) {
+    const numericFieldValue = Number(fieldValue);
+    const numericTargetValue = Number(targetValue);
+
+    switch (comparator) {
+      case NumberComparator.EQUAL: return numericFieldValue === numericTargetValue;
+      case NumberComparator.NOT_EQUAL: return numericFieldValue !== numericTargetValue;
+      case NumberComparator.LARGER: return numericFieldValue > numericTargetValue;
+      case NumberComparator.SMALLER: return numericFieldValue < numericTargetValue;
+      case NumberComparator.LARGER_OR_EQUAL: return numericFieldValue >= numericTargetValue;
+      case NumberComparator.SMALLER_OR_EQUAL: return numericFieldValue <= numericTargetValue;
+      case NumberComparator.EMPTY: return isEmptyValue;
+      case NumberComparator.NOT_EMPTY: return !isEmptyValue;
+      default: return false;
+    }
+  }
+
+  if (typeId === FieldTypeIds.date) {
+    const dateFieldValue = new Date(String(fieldValue)).getTime();
+    const dateTargetValue = new Date(String(targetValue)).getTime();
+
+    switch (comparator) {
+      case DateComparator.EQUAL: return dateFieldValue === dateTargetValue;
+      case DateComparator.NOT_EQUAL: return dateFieldValue !== dateTargetValue;
+      case DateComparator.BEFORE: return dateFieldValue < dateTargetValue;
+      case DateComparator.AFTER: return dateFieldValue > dateTargetValue;
+      case DateComparator.BEFORE_OR_EQUAL: return dateFieldValue <= dateTargetValue;
+      case DateComparator.AFTER_OR_EQUAL: return dateFieldValue >= dateTargetValue;
+      case DateComparator.EMPTY: return isEmptyValue;
+      case DateComparator.NOT_EMPTY: return !isEmptyValue;
+      default: return false;
+    }
+  }
+
+  if (typeId === FieldTypeIds.options) {
+    const hasIntersection = (sourceArray: unknown[], targetArray: unknown[]) =>
+      sourceArray.some((sourceItem) => targetArray.includes(sourceItem));
+
+    const fieldValuesArray = isArrayField ? fieldValue : [fieldValue].filter(Boolean);
+    const targetValuesArray = isArrayTarget
+      ? (targetValue as unknown[])
+      : [targetValue].filter(Boolean);
+
+    switch (comparator) {
+      case OptionsComparator.ONLY:
+        if (fieldValuesArray.length !== targetValuesArray.length) return false;
+        return fieldValuesArray.every((fieldValueItem) => targetValuesArray.includes(fieldValueItem));
+      case OptionsComparator.OTHER_THAN: return !hasIntersection(fieldValuesArray, targetValuesArray);
+      case OptionsComparator.INCLUDES: return hasIntersection(fieldValuesArray, targetValuesArray);
+      case OptionsComparator.NOT_INCLUDES: return !hasIntersection(fieldValuesArray, targetValuesArray);
+      case OptionsComparator.NONE: return isEmptyValue;
+      case OptionsComparator.ANY: return !isEmptyValue;
+      default: return false;
+    }
+  }
+
+  if (typeId === FieldTypeIds.checkbox) {
+    const isChecked = rawFieldValue === true || rawFieldValue === "true";
+    const isTargetChecked = targetValue === true || targetValue === "true";
+
+    switch (comparator) {
+      case CheckboxComparator.EQUAL: return isChecked === isTargetChecked;
+      default: return false;
+    }
+  }
+
+  const stringFieldValue = String(fieldValue);
+  const stringTargetValue = String(targetValue);
+
+  switch (comparator) {
+    case TextComparator.EQUAL: return stringFieldValue === stringTargetValue;
+    case TextComparator.NOT_EQUAL: return stringFieldValue !== stringTargetValue;
+    case TextComparator.CONTAINS: return stringFieldValue.includes(stringTargetValue);
+    case TextComparator.NOT_CONTAINS: return !stringFieldValue.includes(stringTargetValue);
+    case TextComparator.EMPTY: return isEmptyValue;
+    case TextComparator.NOT_EMPTY: return !isEmptyValue;
+    default: return false;
+  }
+};
+
+const evaluateFormCondition = (
+  condition: FormCondition,
+  dataObject: Record<string, unknown>,
+): boolean => {
+  if (!condition.groups || condition.groups.length === 0) return true;
+
+  let finalResult = true;
+
+  condition.groups.forEach((group: FormConditionGroup, groupIndex: number) => {
+    if (!group.predicates || group.predicates.length === 0) return;
+
+    let currentGroupResult = true;
+
+    group.predicates.forEach((predicate: FormConditionPredicate, predicateIndex: number) => {
+      const currentPredicateResult = evaluatePredicate(predicate, dataObject);
+
+      if (predicateIndex === 0) {
+        currentGroupResult = currentPredicateResult;
+      } else {
+        const isOrOperator = predicate.operator === FormConditionBooleanOperator.OR;
+        currentGroupResult = isOrOperator
+          ? currentGroupResult || currentPredicateResult
+          : currentGroupResult && currentPredicateResult;
+      }
+    });
+
+    if (groupIndex === 0) {
+      finalResult = currentGroupResult;
+    } else {
+      const isOrOperator = group.operator === FormConditionBooleanOperator.OR;
+      finalResult = isOrOperator
+        ? finalResult || currentGroupResult
+        : finalResult && currentGroupResult;
+    }
+  });
+
+  return finalResult;
+};
 
 type UseResponseStateInitialResponse = ResponseDto | null | undefined;
 
@@ -296,8 +445,7 @@ export const useResponseState = (
     }
 
     const effectiveResponseId = response?.id ?? responseId;
-    const stateKey = `${form.id}:${effectiveResponseId ?? "new"}:${copyMode ? "copy" : "regular"
-      }:${viewMode ? "view" : "edit"}`;
+    const stateKey = `${form.id}:${effectiveResponseId ?? "new"}:${copyMode ? "copy" : "regular"}:${viewMode ? "view" : "edit"}`;
 
     if (!effectiveResponseId && initializedStateKeyRef.current === stateKey) {
       setLoading(false);
@@ -410,35 +558,65 @@ export const useResponseState = (
     fields: FormFieldWithSectionDto[],
     valuesMap: Map<string, any>,
   ): boolean => {
-    const extra = getFieldExtra(field);
+    const formConditions: FormCondition[] = (form?.conditions as FormCondition[]) ?? [];
 
-    if (!extra.conditions || extra.conditions.length === 0) {
+    const affectingFieldConditions = formConditions.filter((condition: FormCondition) =>
+      condition.dependantComponents?.field?.includes(String(field.id)),
+    );
+
+    const affectingSectionConditions = field.sectionId
+      ? formConditions.filter((condition: FormCondition) =>
+        condition.dependantComponents?.section?.includes(String(field.sectionId)),
+      )
+      : [];
+
+    if (affectingFieldConditions.length === 0 && affectingSectionConditions.length === 0) {
       return true;
     }
 
-    const dataObject: Record<string, any> = {};
+    const dataObject: Record<string, unknown> = {};
     valuesMap.forEach((value, currentFieldId) => {
       dataObject[currentFieldId] = value;
     });
 
-    const conditionsRoot = {
-      groups: extra.conditions,
-      affectedTargets: [],
-    };
+    if (affectingSectionConditions.length > 0) {
+      const isSectionVisible = affectingSectionConditions.some((condition: FormCondition) => {
+        try {
+          return evaluateFormCondition(condition, dataObject);
+        } catch (error) {
+          console.error("Error evaluating form condition:", condition.name, error);
+          return false;
+        }
+      });
 
-    try {
-      return ConditionUtils.evaluateConditionsRoot(conditionsRoot, dataObject, fields as any);
-    } catch (error) {
-      console.error("Error evaluating conditions for field:", field.displayName, error);
-      return true;
+      if (!isSectionVisible) {
+        return false;
+      }
     }
+
+    if (affectingFieldConditions.length > 0) {
+      const isFieldVisible = affectingFieldConditions.some((condition: FormCondition) => {
+        try {
+          return evaluateFormCondition(condition, dataObject);
+        } catch (error) {
+          console.error("Error evaluating form condition:", condition.name, error);
+          return false;
+        }
+      });
+
+      if (!isFieldVisible) {
+        return false;
+      }
+    }
+
+    return true;
   };
 
   const visibleFormFields = useMemo(() => {
     return formFields.filter((field) =>
       evaluateFieldVisibility(field, formFields, formFieldsValuesMap),
     );
-  }, [formFields, formFieldsValuesMap]);
+  }, [formFields, formFieldsValuesMap, form]);
 
   useEffect(() => {
     if (formFields.length === 0) return;

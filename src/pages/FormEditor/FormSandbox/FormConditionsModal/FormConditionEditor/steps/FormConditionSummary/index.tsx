@@ -87,12 +87,14 @@ function FormConditionsSummary() {
                             <OverflowTooltip title={fieldDisplayName}>
                               <span className={summaryStyles.ellipsisText}>{fieldDisplayName}</span>
                             </OverflowTooltip>
-                            <span>{comparatorLabel}</span>
-                            {targetValue != null && (
-                              <OverflowTooltip title={String(targetValue)}>
-                                <span className={summaryStyles.ellipsisText}>{String(targetValue)}</span>
-                              </OverflowTooltip>
-                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: (comparatorLabel.endsWith(" ל") || comparatorLabel.endsWith(" מ")) ? 0 : 4 }}>
+                              <span>{comparatorLabel}</span>
+                              {targetValue != null && (
+                                <OverflowTooltip title={String(targetValue)}>
+                                  <span className={summaryStyles.ellipsisText}>{String(targetValue)}</span>
+                                </OverflowTooltip>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );

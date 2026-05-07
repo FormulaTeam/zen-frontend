@@ -76,7 +76,6 @@ function FormConditionPredicateElement({
           undefined
         ),
         onChange: (e) => setData((prev) => {
-          console.log("Target value change", e.target.value);
           const group = { ...prev[parentGroupIndex] };
           const modifiedCondition = { ...condition };
 
