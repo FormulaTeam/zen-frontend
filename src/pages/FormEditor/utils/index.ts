@@ -39,7 +39,7 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
     typeId: elementTypeId,
     name: generateFieldName(elementTypeId),
     displayName: "",
-    required: elementTypeId === FieldTypeIds.checkbox ? true : false,
+    required: false,
   };
 
   if (elementTypeId === FieldTypeIds.location) {

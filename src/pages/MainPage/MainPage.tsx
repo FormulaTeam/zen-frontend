@@ -6,7 +6,7 @@ import { Box, IconButton, Tab, Tabs, Tooltip, Typography, useTheme } from "@mui/
 import { useGetFormsData } from "../../hooks/useGetFormsData";
 import { useActiveTabFilter } from "../../hooks/useActiveTabFilter";
 import { FormsSortOption, SortDirection, formsSortOption, sortDirectionOption } from "../../types/enums/filtersAndSorts.enum";
-import { FormOverview, FormsTab } from "../../utils/interfaces";
+import { FormsTab } from "../../utils/interfaces";
 import CreateNew from "../../components/MainPage/CreateNew";
 import mGif from "../../images/m.gif";
 import syncGif from "../../images/sync.gif";
@@ -22,6 +22,7 @@ import { AutoDelete } from "@mui/icons-material";
 import MainSortSelect from "../../components/MainSortSelect/MainSortSelect";
 import { useGetMyPersonal } from "../../api/usersApi";
 import { RowBox, StyledTypography, GreetingBox, TabsBox, SortControlsBox } from "./styled";
+import { FormOverviewDto } from "@src/types/shared";
 
 function MainPage({
   user,
@@ -115,7 +116,7 @@ function MainPage({
           className="forms-grid"
           id="forms-grid"
           spacing={3}>
-          {formsData.map((form: FormOverview, index: number) => (
+          {formsData.map((form: FormOverviewDto, index: number) => (
             <Grid key={form.id ?? index} size={{ xs: 4, sm: 4, md: 6, lg: 4, xl: 3 }}>
               <FormCard
                 form={form}

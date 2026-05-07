@@ -6,7 +6,6 @@ import { responsesScopeOption, SortDirection } from "formula-gear";
 import apiClient from "./config";
 import queryClient from "./queryClient";
 import { useFetch } from "../utils/useFetch";
-import { useUpdate } from "../utils/useUpdate";
 import {
   FieldTypeIds,
   FieldValue,
@@ -76,7 +75,7 @@ export const getResponseById = async (formId: number, responseId: string): Promi
 };
 
 /**
- * Create responses for a form (Bulk submission).
+ * Create responses for a form.
  *
  * @param formId - The ID of the form.
  * @param responseData - An array of data for the new responses.
@@ -95,6 +94,25 @@ export const createResponse = async (
     return response.data;
   } catch (error) {
     console.error("Failed to create responses:", error);
+    throw error;
+  }
+};
+
+/**
+ * Update responses.
+ *
+ * Always uses the bulk update endpoint, even for a single response.
+ */
+export const updateResponses = async (
+  formId: number,
+  dto: BulkUpdateResponsesDto,
+): Promise<ResponseDto[]> => {
+  try {
+    const response = await apiClient.put<ResponseDto[]>(`/forms/${formId}/responses`, dto);
+
+    return response.data;
+  } catch (error) {
+    console.error("Failed to update responses:", error);
     throw error;
   }
 };
@@ -313,39 +331,33 @@ export const useCreateResponse = (formId?: number) => {
   });
 };
 
-export const useUpdateResponse = (formId?: number, responseId?: string) => {
+/**
+ * Update one or more responses.
+ *
+ * For a single response, call:
+ * mutate({
+ *   responses: [{ responseId, fieldValues }]
+ * })
+ *
+ * For multiple responses, pass multiple items in the responses array.
+ */
+export const useUpdateResponses = (formId?: number) => {
   return useMutation({
-    mutationFn: (responseData: Partial<ResponseDto>) => {
-      if (!formId || !responseId) throw new Error("formId and responseId are required");
+    mutationFn: (dto: BulkUpdateResponsesDto) => {
+      if (!formId) throw new Error("formId is required for updateResponses");
 
-      return apiClient.patch<ResponseDto>(`/forms/${formId}/responses/${responseId}`, responseData);
+      return updateResponses(formId, dto);
     },
     onSuccess: () => {
-      const targetFormIdStr = String(formId);
+      queryClient.invalidateQueries({ queryKey: ["responses"] });
 
-      queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
-      queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
+      if (formId) {
+        queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
+        queryClient.invalidateQueries({ queryKey: [String(formId)] });
+      }
     },
-  });
-};
-
-export const useBatchUpdateResponses = ({ formId }: { formId: number }) => {
-  return useMutation({
-    mutationFn: async (
-      responses: Array<{ id: string | number; responseData: Partial<ResponseDto> }>,
-    ) => {
-      const promises = responses.map(({ id, responseData }) =>
-        apiClient.patch<ResponseDto>(`/forms/${formId}/responses/${id}`, responseData),
-      );
-      const results = await Promise.all(promises);
-
-      return results.map((response) => response.data);
-    },
-    onSuccess: () => {
-      const targetFormIdStr = String(formId);
-
-      queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
-      queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
+    onError: (error) => {
+      console.error("Failed to update responses:", error);
     },
   });
 };
@@ -358,24 +370,6 @@ export const useSoftDeleteResponses = (formId: number | string) => {
 
       queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
       queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
-    },
-  });
-};
-
-export const useUpdateResponses = (formId?: number) => {
-  return useUpdate<BulkUpdateResponsesDto, ResponseDto[]>({
-    endpoint: `/forms/${formId}/responses`,
-    mutationKey: ["update-responses", formId],
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["responses"] });
-        if (formId) {
-          queryClient.invalidateQueries({ queryKey: [String(formId)] });
-        }
-      },
-      onError: (error) => {
-        console.error("Failed to update responses:", error);
-      },
     },
   });
 };
