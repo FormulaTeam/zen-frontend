@@ -1,4 +1,12 @@
-import { DeleteForever, FileDownload, MoreVert } from "@mui/icons-material";
+import {
+  CloudOutlined,
+  DeleteOutline,
+  DeleteSweepOutlined,
+  MoreVert,
+  SyncOutlined,
+  TableView,
+  UploadOutlined,
+} from "@mui/icons-material";
 import { Button, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import { FC, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -72,7 +80,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
         }
         onClick={pushToMetro}>
         <ListItemIcon>
-          <CustomIcon iconName={"sync"} style={{ padding: 2 }} />
+          <SyncOutlined sx={{ fontSize: 22 }} />
         </ListItemIcon>
         <ListItemText>סנכרון נתונים</ListItemText>
       </MenuItem>
@@ -123,7 +131,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           ) : (
             <MenuItem onClick={(event) => setAnchorElSourceType(event.currentTarget)}>
               <ListItemIcon>
-                <CustomIcon iconName={"source"} />
+                <CloudOutlined sx={{ fontSize: 22 }} />
               </ListItemIcon>
               <ListItemText>יצירת מקור</ListItemText>
             </MenuItem>
@@ -140,7 +148,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
               closeMoreActionsMenu();
             }}>
             <ListItemIcon>
-              <CustomIcon iconName="import" />
+              <UploadOutlined sx={{ fontSize: 22 }} />{" "}
             </ListItemIcon>
             <ListItemText>ייבוא נתונים</ListItemText>
           </MenuItem>
@@ -154,7 +162,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
         <PermissionGate permissions={[permission.ReadForm]} userPermissions={permissions}>
           <MenuItem disabled={!hasFormFields} onClick={handleExportToExcel}>
             <ListItemIcon>
-              <FileDownload sx={{ fontSize: 22 }} />
+              <TableView sx={{ fontSize: 22 }} />
             </ListItemIcon>
             <ListItemText>ייצוא לאקסל</ListItemText>
           </MenuItem>
@@ -167,7 +175,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
               closeMoreActionsMenu();
             }}>
             <ListItemIcon>
-              <DeleteForever sx={{ color: "red", fontSize: 22 }} />
+              <DeleteOutline sx={{ color: "red", fontSize: 22 }} />
             </ListItemIcon>
             <ListItemText sx={{ color: "red" }}>מחיקת הטופס</ListItemText>
           </MenuItem>
@@ -197,7 +205,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
             }}
             disabled={rows.length === 0}>
             <ListItemIcon>
-              <DeleteForever sx={{ color: "red", fontSize: 22 }} />
+              <DeleteSweepOutlined sx={{ color: "red", fontSize: 22 }} />
             </ListItemIcon>
             <ListItemText sx={{ color: "red" }}>מחיקת כל התגובות</ListItemText>
           </MenuItem>
