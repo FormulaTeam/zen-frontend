@@ -166,10 +166,15 @@ export const ResponsesTable = React.memo(
     }, [isRowsLoading, pageInfo, rows]);
 
     const handleNextPage = useCallback(() => {
-      if (pageInfo?.hasNextPage && pageInfo.endCursor && !isRowsLoading && !transitionInProgress.current) {
+      if (
+        pageInfo?.hasNextPage &&
+        pageInfo.endCursor &&
+        !isRowsLoading &&
+        !transitionInProgress.current
+      ) {
         transitionInProgress.current = true;
         setIsNavigating(true);
-        
+
         const nextPage = lastIntendedPageNumber.current + 1;
         lastIntendedPageNumber.current = nextPage;
 
@@ -193,7 +198,7 @@ export const ResponsesTable = React.memo(
       ) {
         transitionInProgress.current = true;
         setIsNavigating(true);
-        
+
         const prevPage = Math.max(currentPage - 1, 1);
         lastIntendedPageNumber.current = prevPage;
 
@@ -590,27 +595,27 @@ export const ResponsesTable = React.memo(
         ...(expandColumn ? [expandColumn] : []),
         ...(hasFormInFormFields
           ? [
-            {
-              ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
-              field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
-              renderHeader: (params: any) => (
-                <div aria-label={params?.colDef?.headerName ?? ""} />
-              ),
-            },
-          ]
+              {
+                ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
+                field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
+                renderHeader: (params: any) => (
+                  <div aria-label={params?.colDef?.headerName ?? ""} />
+                ),
+              },
+            ]
           : []),
       ];
 
       const parentResponseColumns = hasParentResponses
         ? [
-          {
-            field: "parentResponse",
-            headerName: "תגובת אב",
-            flex: 1,
-            editable: false,
-            renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
-          },
-        ]
+            {
+              field: "parentResponse",
+              headerName: "תגובת אב",
+              flex: 1,
+              editable: false,
+              renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
+            },
+          ]
         : [];
 
       // 2. Resolve columns based on view config or default
@@ -893,7 +898,7 @@ export const ResponsesTable = React.memo(
             getCellClassName={getCellClassName}
             density="comfortable"
             rowHeight={isInEditMode ? 140 : 65}
-            loading={isRowsLoading && rows.length === 0}
+            loading={!isInEditMode && isRowsLoading && localRows.length === 0}
             checkboxSelection
             disableRowSelectionOnClick
             onRowSelectionModelChange={onRowSelectionModelChange}

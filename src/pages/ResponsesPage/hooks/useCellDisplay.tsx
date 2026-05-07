@@ -5,10 +5,10 @@ import moment from "moment";
 import CustomCarousel from "../../../components/FilePreview/CustomCarousel";
 import { FormFieldDto } from "../../../types/shared";
 import { fieldType } from "formula-gear";
-import { DEFAULT_DATE_FORMAT, DEFAULT_DATE_TIME_FORMAT } from "../../../utils/utils";
-import { HighlightedText } from "../styled";
+import { DEFAULT_DATE_FORMAT } from "../../../utils/utils";
 
 import { highlightTextUtil } from "../utils/highlighting";
+import { getOptionResponseDisplayValue, OptionResponseValue } from "../../../utils/optionResponseValue";
 
 interface UseCellDisplayParams {
   formId?: number;
@@ -23,6 +23,11 @@ interface UseCellDisplayReturn {
 type EditorFieldExtra = {
   dateAndTime?: boolean;
   includeTime?: boolean;
+  options?:
+    | string[]
+    | {
+        items?: OptionResponseValue[];
+      };
 };
 
 type LocationValue = {
@@ -37,6 +42,45 @@ type LinkValue = {
 
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
+
+const getOptionLabelMap = (field: FormFieldDto): Record<string, string> => {
+  const extra = getFieldExtra(field);
+
+  if (
+    extra.options &&
+    typeof extra.options === "object" &&
+    !Array.isArray(extra.options) &&
+    Array.isArray(extra.options.items)
+  ) {
+    return Object.fromEntries(
+      extra.options.items
+        .filter(
+          (option) => option && typeof option.id === "string" && typeof option.text === "string",
+        )
+        .map((option) => [option.id, option.text]),
+    );
+  }
+
+  return {};
+};
+
+const getOptionDisplayText = (value: unknown, field: FormFieldDto): string => {
+  const displayValue = getOptionResponseDisplayValue(value);
+  const labelMap = getOptionLabelMap(field);
+
+  if (Array.isArray(displayValue)) {
+    return displayValue
+      .map((item) => {
+        const optionId = String(item);
+        return labelMap[optionId] ?? optionId;
+      })
+      .join(", ");
+  }
+
+  const stringValue = String(displayValue ?? "");
+
+  return labelMap[stringValue] ?? stringValue;
+};
 
 const EllipsisBox = styled(Box)({
   overflow: "hidden",
@@ -131,8 +175,9 @@ export const useCellDisplay = ({
 
   const formatDateCell = useCallback(
     (value: any, includeTime?: boolean): React.ReactElement => {
-      if (!value || !moment(value).isValid())
+      if (!value || !moment(value).isValid()) {
         return <Box component="span" className="cell-box-date"></Box>;
+      }
 
       const datePart = moment(value).format(DEFAULT_DATE_FORMAT);
       const timePart = includeTime ? ` ${moment(value).format("HH:mm:ss")}` : "";
@@ -186,14 +231,10 @@ export const useCellDisplay = ({
       return (
         <Box className="cell-box" sx={{ lineHeight: 1.2 }}>
           <Box>
-            <label>
-              x: {highlightText(String(value.x))}
-            </label>
+            <label>x: {highlightText(String(value.x))}</label>
           </Box>
           <Box>
-            <label>
-              y: {highlightText(String(value.y))}
-            </label>
+            <label>y: {highlightText(String(value.y))}</label>
           </Box>
         </Box>
       );
@@ -218,6 +259,25 @@ export const useCellDisplay = ({
         <Tooltip title={stringValue} arrow>
           <EllipsisBox>
             <label>{highlightText(stringValue)}</label>
+          </EllipsisBox>
+        </Tooltip>
+      );
+    },
+    [highlightText],
+  );
+
+  const formatOptionsCell = useCallback(
+    (value: any, field: FormFieldDto): React.ReactElement => {
+      const displayValue = getOptionDisplayText(value, field);
+
+      if (!displayValue) {
+        return <Box component="span" className="cell-box"></Box>;
+      }
+
+      return (
+        <Tooltip title={displayValue} arrow>
+          <EllipsisBox>
+            <label>{highlightText(displayValue)}</label>
           </EllipsisBox>
         </Tooltip>
       );
@@ -253,17 +313,22 @@ export const useCellDisplay = ({
 
   const formatCellValue = useCallback(
     (value: any, field: FormFieldDto): React.ReactElement | null => {
-      if (value === null || value === undefined || value === "")
+      if (value === null || value === undefined || value === "") {
         return <Box component="span" className="cell-box"></Box>;
+      }
 
       const extra = getFieldExtra(field);
-      const dateAndTime =
-        (field as any).dateAndTime ||
-        extra.dateAndTime ||
-        (field as any).includeTime ||
-        extra.includeTime;
+      const dateAndTime = Boolean(
+        (field as any).dateAndTime ??
+        extra.dateAndTime ??
+        (field as any).includeTime ??
+        extra.includeTime,
+      );
 
       switch (field.fieldType) {
+        case fieldType.Options:
+          return formatOptionsCell(value, field);
+
         case fieldType.Link:
           return formatLinkCell(value as LinkValue);
 
@@ -287,6 +352,7 @@ export const useCellDisplay = ({
       }
     },
     [
+      formatOptionsCell,
       formatLinkCell,
       formatFileCell,
       formatDateCell,
@@ -299,4 +365,3 @@ export const useCellDisplay = ({
 
   return { formatCellValue };
 };
-

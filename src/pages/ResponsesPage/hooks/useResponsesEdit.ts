@@ -151,7 +151,7 @@ export const useResponsesEdit = () => {
 
   const { mutateAsync: updateResponses, isPending: isUpdating } = useUpdateResponses(dtoForm?.id);
 
-  const { mutateAsync: createResponse } = useCreateResponse(dtoForm?.id);
+  const { mutateAsync: createResponse, isPending: isCreating } = useCreateResponse(dtoForm?.id);
 
   const responseRows: Row[] = useMemo(
     () => (rows?.filter((row) => row != null) as Row[]) || [],
@@ -665,7 +665,7 @@ export const useResponsesEdit = () => {
     localRows,
     validationErrors,
     handleCellLiveChange,
-    isUpdating,
+    isUpdating: isUpdating || isCreating,
     showCancelDialog,
     handleToggleEditMode: toggleEditMode,
     handleCellEditStart: startCellEdit,

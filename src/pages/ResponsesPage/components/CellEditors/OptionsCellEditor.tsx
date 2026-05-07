@@ -1,132 +1,234 @@
-import React, { useEffect, useState } from "react";
-import { Autocomplete, TextField, Chip, styled } from "@mui/material";
-
-const StyledTextField = styled(TextField)({
-    "& .MuiInputBase-root": {
-        fontSize: "1rem",
-        padding: "4px 8px",
-        minHeight: "40px",
-    },
-});
-
-const StyledAutocomplete = styled(Autocomplete)({
-    "& .MuiAutocomplete-inputRoot": {
-        padding: "2px 8px",
-        paddingRight: "65px !important",
-    },
-}) as typeof Autocomplete;
-
-const StyledChip = styled(Chip)({
-    margin: "2px",
-    fontSize: "1rem",
-});
+import React, { useEffect, useMemo, useState } from "react";
+import { Autocomplete, Box, TextField } from "@mui/material";
 
 interface OptionsCellEditorProps {
-    value: string | string[];
-    onChange: (value: string | string[], isValid: boolean) => void;
-    options: string[];
-    multiSelect?: boolean;
-    isRequired?: boolean;
-    errorMessage?: string;
+  value: string | string[];
+  onChange: (value: string | string[], isValid: boolean) => void;
+  options: string[];
+  optionLabels?: Record<string, string>;
+  multiSelect?: boolean;
+  isRequired?: boolean;
+  errorMessage?: string;
 }
 
 const normalizeValue = (value: string | string[], multiSelect: boolean): string | string[] => {
-    if (multiSelect) {
-        if (Array.isArray(value)) {
-            return value;
-        } else if (value) {
-            return [value];
-        } else {
-            return [];
-        }
-    } else {
-        if (Array.isArray(value)) {
-            return value[0] || "";
-        } else {
-            return value || "";
-        }
+  if (multiSelect) {
+    if (Array.isArray(value)) {
+      return value.filter((item) => typeof item === "string");
     }
+
+    return value ? [value] : [];
+  }
+
+  if (Array.isArray(value)) {
+    return value[0] || "";
+  }
+
+  return value || "";
 };
 
+const editorSx = {
+  "& .MuiInputBase-root": {
+    minHeight: "42px",
+    borderRadius: "10px",
+    border: "1px solid #d7deea",
+    backgroundColor: "#fff",
+    padding: "2px 10px",
+    fontSize: "0.95rem",
+    boxShadow: "0 1px 2px rgba(16, 24, 40, 0.04)",
+    transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
+
+    "&:hover": {
+      borderColor: "#b8c4d6",
+      backgroundColor: "#fbfcfe",
+    },
+
+    "&.Mui-focused": {
+      borderColor: "#7c9cc9",
+      boxShadow: "0 0 0 3px rgba(124, 156, 201, 0.16)",
+    },
+
+    "&::before, &::after": {
+      display: "none",
+    },
+  },
+
+  "& .MuiInputBase-input": {
+    padding: "6px 0 !important",
+  },
+};
+
+const autocompleteSx = {
+  "& .MuiAutocomplete-inputRoot": {
+    paddingRight: "36px !important",
+  },
+
+  "& .MuiAutocomplete-tag": {
+    height: 26,
+    borderRadius: "8px",
+    fontSize: "0.85rem",
+    fontWeight: 500,
+    backgroundColor: "#eef4ff",
+    border: "1px solid #d4e3ff",
+
+    "& .MuiChip-deleteIcon": {
+      fontSize: "16px",
+    },
+  },
+};
+
+const slotProps = {
+  clearIndicator: {
+    title: "",
+  },
+  popupIndicator: {
+    title: "",
+  },
+  popper: {
+    sx: {
+      "& .MuiAutocomplete-paper": {
+        mt: "6px",
+        borderRadius: "12px",
+        border: "1px solid #d7deea",
+        boxShadow: "0 12px 32px rgba(15, 23, 42, 0.12)",
+        overflow: "hidden",
+      },
+
+      "& .MuiAutocomplete-listbox": {
+        p: "6px",
+      },
+
+      "& .MuiAutocomplete-option": {
+        minHeight: "38px",
+        borderRadius: "8px",
+        mx: 0,
+        my: "2px",
+        fontSize: "0.95rem",
+
+        "&[aria-selected='true']": {
+          backgroundColor: "#eaf2ff",
+          fontWeight: 600,
+        },
+
+        "&.Mui-focused": {
+          backgroundColor: "#f3f7fd",
+        },
+      },
+    },
+  },
+} as const;
+
 export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
-    value,
-    onChange,
-    options,
-    multiSelect = false,
-    isRequired = false,
-    errorMessage,
+  value,
+  onChange,
+  options,
+  optionLabels = {},
+  multiSelect = false,
+  isRequired = false,
+  errorMessage,
 }) => {
-    const [localValue, setLocalValue] = useState<string | string[]>(() =>
-        normalizeValue(value, multiSelect)
-    );
+  const [localValue, setLocalValue] = useState<string | string[]>(() =>
+    normalizeValue(value, multiSelect),
+  );
 
-    useEffect(() => {
-        const normalized = normalizeValue(value, multiSelect);
-        setLocalValue(normalized);
-    }, [value, multiSelect]);
+  useEffect(() => {
+    setLocalValue(normalizeValue(value, multiSelect));
+  }, [value, multiSelect]);
 
-    const handleChange = (_event: React.SyntheticEvent, newValue: string | string[] | null) => {
-        let normalized: string | string[];
+  const normalizedOptions = useMemo(
+    () => options.filter((option): option is string => typeof option === "string"),
+    [options],
+  );
 
-        if (newValue == null) {
-            normalized = multiSelect ? [] : "";
-        } else {
-            normalized = newValue;
-        }
+  const getOptionLabel = (option: string): string => optionLabels[option] ?? option;
 
-        setLocalValue(normalized);
-        const isEmpty = (multiSelect ? (Array.isArray(normalized) && normalized.length === 0) : (!normalized || normalized === ""));
-        const isValid = !(isRequired && isEmpty);
-        onChange(normalized, isValid);
-    };
+  const emitChange = (nextValue: string | string[]) => {
+    setLocalValue(nextValue);
+
+    const isEmpty = multiSelect
+      ? Array.isArray(nextValue) && nextValue.length === 0
+      : !nextValue || nextValue === "";
+
+    onChange(nextValue, !(isRequired && isEmpty));
+  };
+
+  if (multiSelect) {
+    const multiValue = Array.isArray(localValue) ? localValue : localValue ? [localValue] : [];
 
     return (
-        <StyledAutocomplete
-            fullWidth
-            multiple={multiSelect}
-            value={localValue}
-            onChange={handleChange}
-            options={options}
-            disableCloseOnSelect={multiSelect}
-            autoHighlight
-            openOnFocus
-            slotProps={{
-                clearIndicator: {
-                    title: "",
+      <Box sx={{ width: "100%" }}>
+        <Autocomplete<string, true, false, false>
+          fullWidth
+          multiple
+          value={multiValue}
+          onChange={(_event, newValue) => {
+            emitChange(newValue);
+          }}
+          options={normalizedOptions}
+          getOptionLabel={getOptionLabel}
+          isOptionEqualToValue={(option, currentValue) => option === currentValue}
+          disableCloseOnSelect
+          autoHighlight
+          openOnFocus
+          slotProps={slotProps}
+          sx={autocompleteSx}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              variant="standard"
+              autoFocus
+              error={!!errorMessage}
+              helperText={undefined}
+              placeholder="בחר אפשרויות"
+              slotProps={{
+                input: {
+                  ...params.InputProps,
+                  disableUnderline: true,
                 },
-                popupIndicator: {
-                    title: "",
-                },
-            }}
-            renderInput={(params) => (
-                <StyledTextField
-                    {...params}
-                    variant="standard"
-                    autoFocus
-                    slotProps={{
-                        input: {
-                            ...params.InputProps,
-                            disableUnderline: true,
-                        },
-                    }}
-                    error={!!errorMessage}
-                    helperText={undefined}
-                />
-            )}
-            renderTags={(tagValue, getTagProps) =>
-                tagValue.map((option, index) => {
-                    const { key, ...chipProps } = getTagProps({ index });
-
-                    return (
-                        <StyledChip
-                            key={key}
-                            {...chipProps}
-                            label={option}
-                            size="small"
-                        />
-                    );
-                })
-            }
+              }}
+              sx={editorSx}
+            />
+          )}
         />
+      </Box>
     );
+  }
+
+  const singleValue = typeof localValue === "string" ? localValue : localValue[0] || null;
+
+  return (
+    <Box sx={{ width: "100%" }}>
+      <Autocomplete<string, false, false, false>
+        fullWidth
+        value={singleValue || null}
+        onChange={(_event, newValue) => {
+          emitChange(newValue ?? "");
+        }}
+        options={normalizedOptions}
+        getOptionLabel={getOptionLabel}
+        isOptionEqualToValue={(option, currentValue) => option === currentValue}
+        autoHighlight
+        openOnFocus
+        slotProps={slotProps}
+        sx={autocompleteSx}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            variant="standard"
+            autoFocus
+            error={!!errorMessage}
+            helperText={undefined}
+            placeholder="בחר אפשרות"
+            slotProps={{
+              input: {
+                ...params.InputProps,
+                disableUnderline: true,
+              },
+            }}
+            sx={editorSx}
+          />
+        )}
+      />
+    </Box>
+  );
 };
