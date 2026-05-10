@@ -1,0 +1,37 @@
+# -- Dependencies --
+node_modules
+npm-debug.log*
+
+# -- Build output --
+build
+
+# -- Version control --
+.git
+.gitignore
+
+# -- Environment & secrets --
+.env
+.env.*
+
+# -- Docker files --
+Dockerfile
+.dockerignore
+
+# -- Documentation --
+README.md
+
+# -- Dev tooling --
+.prettierrc
+.browserslistrc
+.vscode
+.idea
+.gemini
+.github
+
+# -- CI/CD --
+azure-static-web-apps-wonderful-ocean-045f2930f.yml
+
+# -- Archives --
+*.zip
+*.tar
+*.7z
