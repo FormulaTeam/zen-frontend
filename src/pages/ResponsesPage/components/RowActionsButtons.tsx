@@ -1,14 +1,16 @@
 import React from "react";
 import { Tooltip, IconButton } from "@mui/material";
 import { Visibility, Edit, Delete } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
 import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
+import { useNavigate } from "react-router-dom";
+
+import { permission } from "formula-gear";
+
+import { useSoftDeleteResponses } from "../../../api";
+import { useSuperAdmin } from "../../../contexts/SuperAdminContext";
+import { showSuccessNotification, showErrorNotification } from "../../../utils/utils";
 import { EditButtonWrapper } from "../styled";
 import { useFormStore } from "../stores/form.store";
-import { useSuperAdmin } from "../../../contexts/SuperAdminContext";
-import { useSoftDeleteResponses } from "../../../api";
-import { showSuccessNotification, showErrorNotification } from "../../../utils/utils";
-import { permission } from "formula-gear";
 
 interface RowActionsButtonsProps {
   rowSelectionModel: GridRowSelectionModel;
@@ -37,12 +39,8 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
   const isSingleSelection = selectedIds.length === 1;
   const hasSelection = selectedIds.length > 0;
 
-  const canView =
-    permissions.includes(permission.ReadAnyResponse) ||
-    !!isSuperAdmin;
-
+  const canView = permissions.includes(permission.ReadAnyResponse) || !!isSuperAdmin;
   const canEdit = permissions.includes(permission.UpdateAnyResponse) || !!isSuperAdmin;
-
   const canDelete = permissions.includes(permission.DeleteAnyResponse) || !!isSuperAdmin;
 
   const handleView = () => {
@@ -70,22 +68,23 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
   const handleDelete = async () => {
     if (!hasSelection) return;
 
+    const responseIds = selectedIds.map((id) => String(id)).filter((id) => id.trim().length > 0);
+
+    if (responseIds.length === 0) return;
+
     try {
-      const responseIds = selectedIds.map((id) => String(id)).filter((id) => id.trim().length > 0);
-
-      if (responseIds.length === 0) return;
-
-      // Optimistic UI for responsesCount
       setForm({
         ...form,
         responsesCount: Math.max(0, (form.responsesCount ?? 0) - responseIds.length),
       } as any);
 
-      await softDeleteResponses(responseIds);
+      await softDeleteResponses({ responsesIds: responseIds });
 
       showSuccessNotification("מחיקת התגובות בוצעה בהצלחה");
       onDeleted();
     } catch {
+      setForm(form);
+
       showErrorNotification("מחיקת התגובות נכשלה");
     }
   };

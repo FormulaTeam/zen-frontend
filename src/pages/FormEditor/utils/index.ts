@@ -39,7 +39,7 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
     typeId: elementTypeId,
     name: generateFieldName(elementTypeId),
     displayName: "",
-    required: elementTypeId === FieldTypeIds.checkbox ? true : false,
+    required: false,
   };
 
   if (elementTypeId === FieldTypeIds.location) {
@@ -50,11 +50,11 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
 }
 
 function generateOptionItemId() {
-  return nanoid5();
+  return uuid4();
 }
 
 function generateConditionId() {
-  return nanoid5();
+  return uuid4();
 }
 
 export { generateSectionId, generateFieldId, generateFieldName, generateNewFieldData, generateOptionItemId, generateConditionId };

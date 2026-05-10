@@ -6,7 +6,6 @@ import { permission } from "formula-gear";
 import UserPicker from "../UserPicker/UserPicker";
 import ShareIcon from "../../icons/share.svg";
 import formX from "../../images/form_x.png";
-import { FormOverview } from "../../utils/interfaces";
 import { CustomIcon } from "../../theme/icons";
 import { getFormIconByName } from "../../utils/utils";
 import CardCreationDetails from "./CardCreationDetails";
@@ -27,6 +26,7 @@ import {
   StyledCard,
 } from "./styled";
 import { CustomStyledIcon, GrayShareIcon } from "./styled";
+import { FormOverviewDto } from "@src/types/shared";
 
 const FormCard = ({
   form,
@@ -35,7 +35,7 @@ const FormCard = ({
   resetSearchValue,
   isCreator,
 }: {
-  form: FormOverview;
+  form: FormOverviewDto;
   isSuperAdmin: boolean | null;
   navigate: any;
   resetSearchValue: () => void;

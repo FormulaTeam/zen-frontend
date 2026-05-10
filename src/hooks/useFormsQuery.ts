@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../api/config";
-import { FormOverview } from "../utils/interfaces";
 import { FormsScopeOption, FormsSortOption, SortDirection } from "../types/enums/filtersAndSorts.enum";
+import { FormOverviewDto } from "@src/types/shared";
 
 export interface FormsQueryParams {
   scope: FormsScopeOption;
@@ -18,10 +18,10 @@ export function useGetFormsQuery({ enabled = true, searchQuery, ...rest }: Forms
     ...(searchQuery ? { search: searchQuery } : {}),
   };
 
-  return useQuery<FormOverview[]>({
+  return useQuery<FormOverviewDto[]>({
     queryKey: ["forms", queryParams],
     queryFn: async () => {
-      const response = await apiClient.get<FormOverview[]>("/forms", { params: queryParams });
+      const response = await apiClient.get<FormOverviewDto[]>("/forms", { params: queryParams });
       return response.data;
     },
     enabled,

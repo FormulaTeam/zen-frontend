@@ -37,17 +37,17 @@ function FormConditionsModal() {
       <div className={styles.content}>
         <div className={styles.header}>
           <div className={styles.conditionsListButtonContainer}
-               style={{ display: modifiedCondition ? "block" : "none" }}>
+            style={{ display: modifiedCondition ? "block" : "none" }}>
             <Button className={styles.headerButton}
-                    variant={"outlined"}
-                    onClick={handleReturnToOverview}>
+              variant={"outlined"}
+              onClick={handleReturnToOverview}>
               <List sx={{ fontSize: 26, transform: "scaleX(-1)" }} />
             </Button>
           </div>
           <div className={styles.closeButtonContainer}>
             <Button className={styles.headerButton}
-                    variant={"outlined"}
-                    onClick={handleClose}>
+              variant={"outlined"}
+              onClick={handleClose}>
               <Close sx={{ fontSize: 25 }} />
             </Button>
           </div>
@@ -56,8 +56,8 @@ function FormConditionsModal() {
           modifiedCondition !== null ? (
             <div className={styles.editorContainer}>
               <FormConditionEditor modifiedCondition={modifiedCondition}
-                                   onSubmit={handleSubmit}
-                                   onReturn={handleReturnToOverview} />
+                onSubmit={handleSubmit}
+                onReturn={handleReturnToOverview} />
             </div>
           ) : (
             <div className={styles.overviewContainer}>
@@ -67,9 +67,9 @@ function FormConditionsModal() {
                 )} />
               </div>
               <Button startIcon={<Add />}
-                      variant={"contained"}
-                      size={"large"}
-                      onClick={() => setModifiedCondition({ status: "new" })}>
+                variant={"contained"}
+                size={"large"}
+                onClick={() => setModifiedCondition({ status: "new" })}>
                 הוספת התנייה חדשה
               </Button>
             </div>

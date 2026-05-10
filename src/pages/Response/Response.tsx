@@ -64,7 +64,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   const { saveResponse, isSaving } = useResponseSave(form, response, undefined, copyMode);
 
   const parentCreatePromiseRef = useRef<Promise<ResponseDto> | null>(null);
-  const generateValidationErrorMessagesRef = useRef<() => ValidationDisplayError[]>(() => []);
+  const generateValidationErrorMessagesRef = useRef<
+    (validationMapOverride?: Map<string, any>) => ValidationDisplayError[]
+  >(() => []);
 
   useEffect(() => {
     if (id) {
@@ -76,7 +78,8 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     const validationResult = validateAllFieldsBeforeSubmit();
 
     if (!validationResult.isValid || !form) {
-      const errorMessages = generateValidationErrorMessagesRef.current?.() || [];
+      const errorMessages =
+        generateValidationErrorMessagesRef.current?.(validationResult.validationMap) || [];
 
       if (errorMessages.length > 0) {
         setValidationErrors(errorMessages);
@@ -224,9 +227,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       prev.map((childForm) =>
         childForm.shown
           ? {
-              ...childForm,
-              valid: [],
-            }
+            ...childForm,
+            valid: [],
+          }
           : childForm,
       ),
     );
@@ -254,9 +257,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
     const parentResponse: ParentResponseRef | undefined = savedParentResponseId
       ? {
-          formId: Number(formId),
-          responseId: savedParentResponseId,
-        }
+        formId: Number(formId),
+        responseId: savedParentResponseId,
+      }
       : undefined;
 
     return (
