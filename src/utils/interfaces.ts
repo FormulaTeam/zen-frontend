@@ -2,6 +2,7 @@ import { IOrderBy } from "../types/enums/filtersAndSorts.enum";
 import { formsTabs } from "./utils";
 import { z } from "zod";
 import { FormOverviewSchema } from "formula-gear";
+import { GridColDef } from "@mui/x-data-grid";
 
 export type FormOverviewType = z.infer<typeof FormOverviewSchema>;
 
@@ -64,11 +65,6 @@ declare module "@mui/material/Button" {
   }
 }
 
-// conditionTypes.ts (optional, if you want to separate conditionTypes)
-export interface RouteContextType {
-  path: string;
-  changePath: (newPath: string) => void;
-}
 
 export interface RequestConfig {
   Querytext: string;
@@ -165,7 +161,6 @@ export interface FormField {
   sectionName?: string; // Name of the section this field belongs to
   sectionDescription?: string; // Description of the section this field belongs to
   sectionOrder: number; // Order of the section this field belongs to
-  conditions?: ConditionGroup[]; // Conditional display rules for this field
 }
 
 export interface ParentDependencies {
@@ -842,70 +837,6 @@ export const DEFAULT_FORM_ICONS: IconNameObj[] = [
     name: "directions_airplane",
     searchKeywords: ["מטוס", "נתיב מטוס", "נסיעה במטוס"],
   },
-];
-
-// Import condition-related conditionTypes and utilities from conditionUtils
-import type { ConditionOperatorType, LogicalOperatorType } from "./conditionUtils";
-import { GridColDef } from "@mui/x-data-grid";
-
-// Re-export condition utilities for backward compatibility
-export type {
-  ConditionOperatorType,
-  LogicalOperatorType,
-  ConditionDisplayMode,
-} from "./conditionUtils";
-export {
-  ConditionUtils,
-  ConditionOperators,
-  LogicalOperators,
-  conditionOperatorLabels,
-  logicalOperatorLabels,
-  DEFAULT_OPERATOR,
-  DEFAULT_LOGICAL_OPERATOR,
-  conditionDisplayModes,
-} from "./conditionUtils";
-
-// Updated condition group interface to support logical operators
-export interface ConditionGroup {
-  id: string;
-  conditionSetId?: string; // Identifies which condition set this group belongs to (for supporting multiple independent condition sets per field)
-  conditions: Condition[];
-  logicalOperator: LogicalOperatorType; // How conditions within this group are combined
-  parentLogicalOperator?: LogicalOperatorType; // How this group relates to the previous group/condition
-  name?: string; // Optional name for the condition group
-}
-
-// Interface for defining what sections/fields are affected by conditions
-export interface AffectedTarget {
-  type: "section" | "field";
-  id: string; // section ID or field uniqueId
-  name: string; // section name or field displayName
-}
-
-// Root interface for all conditions
-export interface ConditionsRoot {
-  groups: ConditionGroup[];
-  affectedTargets: AffectedTarget[]; // Sections/fields that will be affected when conditions are met
-  name?: string; // Optional name for the condition set
-}
-
-// Condition value conditionTypes for better type safety
-export type ConditionValue = string | string[] | boolean | number | null;
-
-export interface Condition {
-  field: string; // Unique ID of the field
-  operator: ConditionOperatorType; // Single operator, not array
-  value: ConditionValue; // Value to compare against - can be various conditionTypes
-  id?: string; // Optional ID for the condition, useful for editing or deleting
-}
-
-export const ALLOWED_FIELD_TYPES_FOR_CONDITION: number[] = [
-  FieldTypeIds.shortText,
-  FieldTypeIds.longText,
-  FieldTypeIds.number,
-  FieldTypeIds.date,
-  FieldTypeIds.options,
-  FieldTypeIds.checkbox,
 ];
 
 export interface Row {

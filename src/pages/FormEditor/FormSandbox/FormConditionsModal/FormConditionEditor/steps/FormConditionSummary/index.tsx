@@ -8,6 +8,8 @@ import { OverflowTooltip } from "@components/OverflowTooltip";
 import { FormComponentType, FormConditionBooleanOperator } from "../../../../../schemas/conditions";
 import styles from "../../../../../FormEditorHeader/style.module.css";
 import summaryStyles from "./style.module.css";
+import { ConditionFieldTypeId } from "@src/pages/FormEditor/schemas/conditions/conditionField/baseConditionFieldSchema";
+import { FieldTypeIds } from "@src/utils/interfaces";
 
 function FormConditionsSummary() {
   const {
@@ -18,6 +20,18 @@ function FormConditionsSummary() {
 
   const dependantFields = dependantComponents[FormComponentType.FIELD] ?? [];
   const dependantSections = dependantComponents[FormComponentType.SECTION] ?? [];
+
+  const formatTargetValue = (typeId: ConditionFieldTypeId, targetValue: unknown): string => {
+    if (typeId === FieldTypeIds.date && typeof targetValue === "string") {
+      return new Date(targetValue).toLocaleDateString("he-IL", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    }
+
+    return String(targetValue ?? "");
+  };
 
   return (
     <div className={summaryStyles.container}>
@@ -87,12 +101,28 @@ function FormConditionsSummary() {
                             <OverflowTooltip title={fieldDisplayName}>
                               <span className={summaryStyles.ellipsisText}>{fieldDisplayName}</span>
                             </OverflowTooltip>
-                            <span>{comparatorLabel}</span>
-                            {targetValue != null && (
-                              <OverflowTooltip title={String(targetValue)}>
-                                <span className={summaryStyles.ellipsisText}>{String(targetValue)}</span>
-                              </OverflowTooltip>
-                            )}
+                            <div className={summaryStyles.conditionValue}>
+                              <span>
+                                {comparatorLabel}
+                                {field?.typeId === FieldTypeIds.date && targetValue != null ? "-" : ""}
+                              </span>
+
+                              {targetValue != null && (
+                                <OverflowTooltip
+                                  title={formatTargetValue(
+                                    field?.typeId ?? FieldTypeIds.shortText,
+                                    targetValue
+                                  )}
+                                >
+                                  <span className={summaryStyles.ellipsisText}>
+                                    {formatTargetValue(
+                                      field?.typeId ?? FieldTypeIds.shortText,
+                                      targetValue
+                                    )}
+                                  </span>
+                                </OverflowTooltip>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );

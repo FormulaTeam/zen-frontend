@@ -76,7 +76,6 @@ function FormConditionPredicateElement({
           undefined
         ),
         onChange: (e) => setData((prev) => {
-          console.log("Target value change", e.target.value);
           const group = { ...prev[parentGroupIndex] };
           const modifiedCondition = { ...condition };
 
@@ -105,7 +104,7 @@ function FormConditionPredicateElement({
             <div className={styles.firstOperationToggleTopConnector} />
           </div>
         ) : (
-          condition.operator &&
+          condition.operator && index > 0 &&
           <div className={styles.conditionOperationToggleContainer}>
             <div className={styles.conditionOperationToggleWrapper}>
               <ConditionOperationToggle value={condition.operator}
