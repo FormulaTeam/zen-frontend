@@ -194,28 +194,27 @@ const evaluatePredicate = (
       : String(rawFieldValue);
 
   const isArrayField = Array.isArray(fieldValue);
-  const isArrayTarget = Array.isArray(targetValue);
   const isEmptyValue = fieldValue === "" || (isArrayField && fieldValue.length === 0);
 
   if (typeId === FieldTypeIds.number) {
-    const numericFieldValue = Number(fieldValue);
+    const numericFieldValue = Number(rawFieldValue);
     const numericTargetValue = Number(targetValue);
 
     switch (comparator) {
-      case NumberComparator.EQUAL: return numericFieldValue === numericTargetValue;
-      case NumberComparator.NOT_EQUAL: return numericFieldValue !== numericTargetValue;
-      case NumberComparator.LARGER: return numericFieldValue > numericTargetValue;
-      case NumberComparator.SMALLER: return numericFieldValue < numericTargetValue;
-      case NumberComparator.LARGER_OR_EQUAL: return numericFieldValue >= numericTargetValue;
-      case NumberComparator.SMALLER_OR_EQUAL: return numericFieldValue <= numericTargetValue;
       case NumberComparator.EMPTY: return isEmptyValue;
       case NumberComparator.NOT_EMPTY: return !isEmptyValue;
+      case NumberComparator.EQUAL: return !isEmptyValue && numericFieldValue === numericTargetValue;
+      case NumberComparator.NOT_EQUAL: return !isEmptyValue && numericFieldValue !== numericTargetValue;
+      case NumberComparator.LARGER: return !isEmptyValue && numericFieldValue > numericTargetValue;
+      case NumberComparator.SMALLER: return !isEmptyValue && numericFieldValue < numericTargetValue;
+      case NumberComparator.LARGER_OR_EQUAL: return !isEmptyValue && numericFieldValue >= numericTargetValue;
+      case NumberComparator.SMALLER_OR_EQUAL: return !isEmptyValue && numericFieldValue <= numericTargetValue;
       default: return false;
     }
   }
 
   if (typeId === FieldTypeIds.date) {
-    const dateFieldValue = new Date(String(fieldValue)).getTime();
+    const dateFieldValue = new Date(String(rawFieldValue)).getTime();
     const dateTargetValue = new Date(String(targetValue)).getTime();
 
     switch (comparator) {
@@ -235,6 +234,7 @@ const evaluatePredicate = (
     const hasIntersection = (sourceArray: unknown[], targetArray: unknown[]) =>
       sourceArray.some((sourceItem) => targetArray.includes(sourceItem));
 
+    const isArrayTarget = Array.isArray(targetValue);
     const fieldValuesArray = isArrayField ? fieldValue : [fieldValue].filter(Boolean);
     const targetValuesArray = isArrayTarget
       ? (targetValue as unknown[])
@@ -283,17 +283,21 @@ const evaluateFormCondition = (
 ): boolean => {
   if (!condition.groups || condition.groups.length === 0) return true;
 
-  let finalResult = true;
+  const nonEmptyGroups = condition.groups.filter(
+    (group) => group.predicates && group.predicates.length > 0,
+  );
 
-  condition.groups.forEach((group: FormConditionGroup, groupIndex: number) => {
-    if (!group.predicates || group.predicates.length === 0) return;
+  if (nonEmptyGroups.length === 0) return true;
 
-    let currentGroupResult = true;
+  let finalResult: boolean | null = null;
 
-    group.predicates.forEach((predicate: FormConditionPredicate, predicateIndex: number) => {
+  for (const [groupIndex, group] of nonEmptyGroups.entries()) {
+    let currentGroupResult: boolean | null = null;
+
+    for (const [predicateIndex, predicate] of group.predicates.entries()) {
       const currentPredicateResult = evaluatePredicate(predicate, dataObject);
 
-      if (predicateIndex === 0) {
+      if (currentGroupResult === null) {
         currentGroupResult = currentPredicateResult;
       } else {
         const isOrOperator = predicate.operator === FormConditionBooleanOperator.OR;
@@ -301,19 +305,21 @@ const evaluateFormCondition = (
           ? currentGroupResult || currentPredicateResult
           : currentGroupResult && currentPredicateResult;
       }
-    });
+    }
 
-    if (groupIndex === 0) {
-      finalResult = currentGroupResult;
+    const resolvedGroupResult = currentGroupResult ?? true;
+
+    if (finalResult === null) {
+      finalResult = resolvedGroupResult;
     } else {
       const isOrOperator = group.operator === FormConditionBooleanOperator.OR;
       finalResult = isOrOperator
-        ? finalResult || currentGroupResult
-        : finalResult && currentGroupResult;
+        ? finalResult || resolvedGroupResult
+        : finalResult && resolvedGroupResult;
     }
-  });
+  }
 
-  return finalResult;
+  return finalResult ?? true;
 };
 
 type UseResponseStateInitialResponse = ResponseDto | null | undefined;
