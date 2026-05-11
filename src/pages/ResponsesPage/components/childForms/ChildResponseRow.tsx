@@ -6,12 +6,11 @@ import moment from "moment";
 import { useNavigate } from "react-router-dom";
 
 import CustomCarousel from "@components/FilePreview/CustomCarousel";
-import { downloadFileFromResponse } from "@api/filesApi";
+import { downloadFileFromResponse, type StoredFile } from "@api/filesApi";
 import { FormFieldDto } from "../../../../types/shared";
 import { fieldType } from "formula-gear";
-import { DEFAULT_DATE_FORMAT, DEFAULT_DATE_TIME_FORMAT } from "@utils/utils";
+import { DEFAULT_DATE_FORMAT } from "@utils/utils";
 import { Row } from "@utils/interfaces";
-import { HighlightedText } from "../../styled";
 import { ResponseCell } from "./styled";
 
 import { highlightTextUtil } from "../../utils/highlighting";
@@ -27,10 +26,75 @@ interface ChildResponseRowProps {
 type EditorFieldExtra = {
   dateAndTime?: boolean;
   includeTime?: boolean;
+  includeSeconds?: boolean;
 };
+
+type FileFieldValue = {
+  files: StoredFile[];
+};
+
+type LocalDisplayFile = {
+  name: string;
+  file: File;
+};
+
+type CarouselFile = StoredFile | LocalDisplayFile;
 
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
+
+const isStoredFile = (value: unknown): value is StoredFile => {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "name" in value &&
+    "path" in value &&
+    typeof value.name === "string" &&
+    typeof value.path === "string"
+  );
+};
+
+const isFileFieldValue = (value: unknown): value is FileFieldValue => {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "files" in value &&
+    Array.isArray(value.files) &&
+    value.files.every(isStoredFile)
+  );
+};
+
+const formatTimeValue = (value: unknown, includeSeconds: boolean): string => {
+  const format = includeSeconds ? "HH:mm:ss" : "HH:mm";
+
+  if (value instanceof Date) {
+    return moment(value).format(format);
+  }
+
+  if (typeof value === "string") {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) return "";
+
+    const timeOnlyMatch = trimmedValue.match(/^([0-1]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/);
+
+    if (timeOnlyMatch) {
+      const hours = timeOnlyMatch[1].padStart(2, "0");
+      const minutes = timeOnlyMatch[2];
+      const seconds = timeOnlyMatch[3] ?? "00";
+
+      return includeSeconds ? `${hours}:${minutes}:${seconds}` : `${hours}:${minutes}`;
+    }
+
+    const parsedMoment = moment(trimmedValue);
+
+    if (parsedMoment.isValid()) {
+      return parsedMoment.format(format);
+    }
+  }
+
+  return "";
+};
 
 const WiderResponseCell = styled(ResponseCell)(({ theme }) => ({
   minWidth: 180,
@@ -88,6 +152,36 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
     });
   }, [navigate, linkedFormId, response.id, parentFormId]);
 
+  const onFileClick = useCallback(
+    (file: CarouselFile) => {
+      downloadFileFromResponse(file, String(linkedFormId));
+    },
+    [linkedFormId],
+  );
+
+  const formatFileCell = useCallback(
+    (value: unknown): React.ReactElement => {
+      if (!isFileFieldValue(value) || value.files.length === 0) {
+        return <Box component="span" className="cell-box" />;
+      }
+
+      return (
+        <FileCellWrapper>
+          {value.files.map((file) => (
+            <FileRow key={file.path}>
+              <CarouselNoPad
+                formId={linkedFormId}
+                items={[file]}
+                onItemClickHandler={onFileClick}
+              />
+            </FileRow>
+          ))}
+        </FileCellWrapper>
+      );
+    },
+    [linkedFormId, onFileClick],
+  );
+
   const getResponseFieldStringValue = (field: FormFieldDto, value: unknown): React.ReactNode => {
     if (value === undefined || value === null) return "";
 
@@ -100,33 +194,25 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
         return highlightText(String(value));
 
       case fieldType.Time: {
-        const validTimeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/;
+        const extra = getFieldExtra(field);
+        const displayValue = formatTimeValue(value, Boolean(extra.includeSeconds));
 
-        if (typeof value === "string" && validTimeRegex.test(value)) return highlightText(value);
-
-        if (value instanceof Date) {
-          const hours = value.getHours().toString().padStart(2, "0");
-          const minutes = value.getMinutes().toString().padStart(2, "0");
-          const seconds = value.getSeconds().toString().padStart(2, "0");
-
-          return highlightText(`${hours}:${minutes}:${seconds}`);
-        }
-
-        return "";
+        return displayValue ? highlightText(displayValue) : "";
       }
 
-      case fieldType.Date:
+      case fieldType.Date: {
         if (!moment(value).isValid()) return "";
 
         const extra = getFieldExtra(field);
-        const includeTime =
-          (field as any).dateAndTime ||
-          extra.dateAndTime ||
-          (field as any).includeTime ||
-          extra.includeTime;
+        const includeTime = Boolean(
+          (field as any).dateAndTime ??
+          extra.dateAndTime ??
+          (field as any).includeTime ??
+          extra.includeTime,
+        );
 
         const datePart = moment(value).format(DEFAULT_DATE_FORMAT);
-        const timePart = includeTime ? ` ${moment(value).format("HH:mm:ss")}` : "";
+        const timePart = includeTime ? ` ${moment(value).format("HH:mm")}` : "";
 
         return (
           <>
@@ -134,6 +220,7 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
             {timePart}
           </>
         );
+      }
 
       case fieldType.Boolean:
         return highlightText(value === "true" || value === true ? "כן" : "לא");
@@ -144,20 +231,21 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
         if (value && typeof value === "object") {
           const locationValue = value as { x?: string; y?: string; utm?: string };
 
-          if (locationValue.x && locationValue.y)
+          if (locationValue.x && locationValue.y) {
             return (
               <>
                 x: {highlightText(String(locationValue.x))}, y:{" "}
                 {highlightText(String(locationValue.y))}
               </>
             );
+          }
 
           if (locationValue.utm) return highlightText(`UTM: ${locationValue.utm}`);
         }
 
         return "";
 
-      case fieldType.Link: {
+      case fieldType.Link:
         if (value && typeof value === "object") {
           const linkValue = value as { linkTxt?: string; link?: string };
 
@@ -165,18 +253,10 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
         }
 
         return "";
-      }
 
       case fieldType.File:
-        if (value && typeof value === "object") {
-          const fileValue = value as {
-            files?: Array<{ name?: string; fileName?: string }>;
-          };
-
-          if (Array.isArray(fileValue.files))
-            return highlightText(
-              fileValue.files.map((file) => file.name || file.fileName || "קובץ").join(", "),
-            );
+        if (isFileFieldValue(value)) {
+          return highlightText(value.files.map((file) => file.name).join(", "));
         }
 
         return "";
@@ -192,39 +272,6 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
     return "";
   };
 
-  const onFileClick = useCallback(
-    (file: File) => {
-      downloadFileFromResponse(file, String(linkedFormId));
-    },
-    [linkedFormId],
-  );
-
-  const formatFileCell = useCallback(
-    (value: unknown): React.ReactElement => {
-      if (!value || typeof value !== "object") return <Box component="span" className="cell-box" />;
-
-      const fileValue = value as { files?: unknown[] };
-
-      if (!Array.isArray(fileValue.files) || fileValue.files.length === 0)
-        return <Box component="span" className="cell-box" />;
-
-      return (
-        <FileCellWrapper>
-          {fileValue.files.map((file, index: number) => (
-            <FileRow key={index}>
-              <CarouselNoPad
-                formId={linkedFormId}
-                items={[file]}
-                onItemClickHandler={onFileClick}
-              />
-            </FileRow>
-          ))}
-        </FileCellWrapper>
-      );
-    },
-    [linkedFormId, onFileClick],
-  );
-
   return (
     <TableRow>
       <WiderResponseCell align="center">
@@ -232,8 +279,9 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
           <OpenInNew />
         </IconButton>
       </WiderResponseCell>
+
       {formFields.map((field) => {
-        const fieldValue = response[field.displayName] || "";
+        const fieldValue = response[field.displayName] ?? "";
 
         if (
           field.fieldType === fieldType.Location &&
@@ -258,12 +306,7 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
           );
         }
 
-        if (
-          field.fieldType === fieldType.File &&
-          fieldValue &&
-          typeof fieldValue === "object" &&
-          Array.isArray((fieldValue as { files?: unknown[] }).files)
-        ) {
+        if (field.fieldType === fieldType.File && isFileFieldValue(fieldValue)) {
           return <WiderResponseCell key={field.id}>{formatFileCell(fieldValue)}</WiderResponseCell>;
         }
 
@@ -273,11 +316,11 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
           </WiderResponseCell>
         );
       })}
+
       <WiderResponseCell>{formatCreatedDate}</WiderResponseCell>
       <WiderResponseCell>{response.createdByName}</WiderResponseCell>
     </TableRow>
   );
 };
-
 
 export const ChildResponseRow = memo(ChildResponseRowComponent);

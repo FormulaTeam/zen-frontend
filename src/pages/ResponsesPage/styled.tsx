@@ -302,13 +302,13 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     boxShadow: `0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus-within":
-  {
-    backgroundImage: "none",
-    boxShadow: `inset 0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
-    borderRadius: "4px",
-    outline: "none",
-    borderColor: "transparent",
-  },
+    {
+      backgroundImage: "none",
+      boxShadow: `inset 0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
+      borderRadius: "4px",
+      outline: "none",
+      borderColor: "transparent",
+    },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--editing": {
     backgroundImage: "none",
     boxShadow: `inset 0 0 0 2px ${theme.palette.grid?.editModeBorder}`,
@@ -318,9 +318,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   },
 
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus::after, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus-within::after":
-  {
-    display: "none",
-  },
+    {
+      display: "none",
+    },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--has-error": {
     backgroundColor: "#ffebee",
     border: `1px solid ${theme.palette.error.main}`,
@@ -350,23 +350,23 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     },
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cellCheckbox.MuiDataGrid-cell--non-editable-in-edit-mode":
-  {
-    pointerEvents: "auto",
-    cursor: "pointer",
-  },
+    {
+      pointerEvents: "auto",
+      cursor: "pointer",
+    },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cellCheckbox.MuiDataGrid-cell--non-editable-in-edit-mode *":
-  {
-    pointerEvents: "auto",
-  },
+    {
+      pointerEvents: "auto",
+    },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell[data-field='expand'].MuiDataGrid-cell--non-editable-in-edit-mode":
-  {
-    pointerEvents: "auto",
-    cursor: "pointer",
-  },
+    {
+      pointerEvents: "auto",
+      cursor: "pointer",
+    },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell[data-field='expand'].MuiDataGrid-cell--non-editable-in-edit-mode *":
-  {
-    pointerEvents: "auto",
-  },
+    {
+      pointerEvents: "auto",
+    },
   "& .MuiDataGrid-scrollbar--vertical": {
     right: "0",
     left: "auto",
@@ -561,16 +561,40 @@ export const CellErrorWrapper = styled("div")({
   overflow: "hidden",
 });
 
+export const CellErrorHeader = styled("div")({
+  display: "flex",
+  alignItems: "center",
+  direction: "rtl",
+  width: "100%",
+  minWidth: 0,
+  padding: "2px 8px 0",
+  gap: "12px",
+  flexShrink: 0,
+});
+
 export const CellErrorText = styled("span")({
   color: "#d32f2f",
   fontSize: "1rem",
-  fontWeight: 500,
+  fontWeight: 600,
   lineHeight: 1.2,
-  padding: "2px 8px 0",
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
+  minWidth: 0,
+  flex: 1,
+  textAlign: "start",
+  unicodeBidi: "plaintext",
+});
+
+export const CellErrorInfoIcon = styled("span")({
+  color: "#6b7280",
+  fontSize: "0.95rem",
+  fontWeight: 700,
+  lineHeight: 1,
+  cursor: "help",
   flexShrink: 0,
+  display: "inline-flex",
+  alignItems: "center",
 });
 
 export const CellValueFlex = styled("div")({

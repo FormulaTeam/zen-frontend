@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { downloadFileFromResponse } from "../../api/filesApi";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { downloadFileFromResponse, type StoredFile } from "../../api/filesApi";
 import { useParams } from "react-router-dom";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
@@ -16,20 +16,38 @@ export function DownloadPage() {
   const { fileName, formId } = useParams();
 
   const theme = useTheme();
-  useEffect(() => {
-    if (fileName && formId) {
-      console.log(fileName);
 
-      downloadFileFromResponse({ name: fileName }, formId)
-        .catch((error) => {
-          console.error("Error downloading file:", error);
-          setError(true);
-        })
-        .finally(() => {
-          setWaitingForDownload(false);
-        });
-    }
-  }, [fileName, formId]);
+  const storedFile = useMemo<StoredFile | null>(() => {
+    if (!fileName) return null;
+
+    return {
+      name: fileName,
+      path: fileName,
+    };
+  }, [fileName]);
+
+  const handleDownload = useCallback(() => {
+    if (!storedFile || !formId) return;
+
+    setError(false);
+    setWaitingForDownload(true);
+
+    downloadFileFromResponse(storedFile, formId)
+      .catch((error) => {
+        console.error("Error downloading file:", error);
+        setError(true);
+      })
+      .finally(() => {
+        setWaitingForDownload(false);
+      });
+  }, [storedFile, formId]);
+
+  useEffect(() => {
+    handleDownload();
+  }, [handleDownload]);
+
+  const decodedFileName = fileName ? decodeFileName(fileName) : "";
+  const fileExtension = decodedFileName.split(".").pop() || "";
 
   return (
     <Container
@@ -43,10 +61,12 @@ export function DownloadPage() {
       }}>
       {error ? (
         <>
-          <img style={{ width: 60 }} src={errorImage}></img>
+          <img style={{ width: 60 }} src={errorImage} alt="download error" />
+
           <Typography className="download-text" variant="h4">
             שגיאה בהורדה
           </Typography>
+
           <Typography color={theme.palette.text.secondary} className="download-text" variant="h6">
             הקובץ לא קיים או שהטופס אינו שותף איתך
           </Typography>
@@ -58,25 +78,22 @@ export function DownloadPage() {
               מוריד את הקובץ...
             </Typography>
           )}
+
           {!waitingForDownload && (
             <>
-              <Box justifyItems={"center"}>
+              <Box justifyItems="center">
                 <Box width={120}>
-                  <FileIcon
-                    extension={fileName?.split(".").pop()}
-                    {...(defaultStyles[fileName?.split(".").pop()] || {})}
-                  />
+                  <FileIcon extension={fileExtension} {...(defaultStyles[fileExtension] || {})} />
                 </Box>
-                {fileName && (
-                  <Typography variant="subtitle1">{decodeFileName(fileName)}</Typography>
-                )}
+
+                {fileName && <Typography variant="subtitle1">{decodedFileName}</Typography>}
               </Box>
+
               <Typography className="download-text" variant="h4">
                 מוריד את הקובץ...
               </Typography>
-              <Button
-                onClick={() => downloadFileFromResponse({ name: fileName }, formId)}
-                variant="text">
+
+              <Button onClick={handleDownload} variant="text">
                 במידה וההורדה לא התחילה, לחץ כאן
               </Button>
             </>

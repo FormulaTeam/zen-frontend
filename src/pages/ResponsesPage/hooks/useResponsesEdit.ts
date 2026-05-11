@@ -1,8 +1,8 @@
 import { useMemo, useRef, useState, useCallback } from "react";
 import { GridRowModel } from "@mui/x-data-grid-pro";
-import { showSuccessNotification, showErrorNotification, DEFAULT_DATE_FORMAT } from "@utils/utils";
+import { showSuccessNotification, showErrorNotification } from "@utils/utils";
 import { useUpdateResponses, useCreateResponse } from "@api/responsesApi";
-import { uploadFilesToS3 } from "@api/filesApi";
+import { type StoredFile } from "@api/filesApi";
 import { useFormStore } from "../stores/form.store";
 import { useAuth } from "@contexts/AuthContext";
 import {
@@ -15,7 +15,13 @@ import {
   UpdateOneResponseDto,
   UserPersonalDto,
 } from "src/types/shared";
-import { fieldType } from "formula-gear";
+import {
+  fieldType,
+  validateFormFieldValue,
+  type FieldValidationMessage,
+  type FormFieldLike,
+  getFieldValidationMessage,
+} from "formula-gear";
 import {
   CustomError,
   NoUnsavedChangesError,
@@ -25,7 +31,10 @@ import {
   SaveFailedError,
 } from "../../../errors";
 import moment from "moment";
-import { getOptionResponseSubmitValue } from "../../../utils/optionResponseValue";
+import {
+  getOptionResponseSubmitValue,
+  OptionResponseValue,
+} from "../../../utils/optionResponseValue";
 
 type RowId = string | number;
 
@@ -38,25 +47,258 @@ type Row = GridRowModel & {
   [key: string]: unknown;
 };
 
+export type QuickEditValidationError = {
+  message: string;
+  detail?: string;
+};
+
+type FieldValidationError = {
+  messages: FieldValidationMessage[];
+  pathMessages: Record<string, FieldValidationMessage[]>;
+};
+
+type FileFieldValue = {
+  files: StoredFile[];
+};
+
+type FileDraftValue = {
+  files: {
+    newFiles: File[];
+    attachedFiles: StoredFile[];
+  };
+  deletedFiles: StoredFile[];
+};
+
 type EditorFieldExtra = {
   validationRegex?: string;
   minValue?: number;
   maxValue?: number;
   numberType?: string;
+  multiple?: boolean;
+  defaultValue?: unknown;
+  options?:
+    | string[]
+    | {
+        items?: OptionResponseValue[];
+        defaultOptionId?: string;
+      };
 };
 
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
 
-const getSubmitFieldValue = (field: FormFieldDto, value: unknown): unknown => {
-  if (field.fieldType !== fieldType.Options) {
-    return value;
+const isStoredFile = (value: unknown): value is StoredFile => {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "name" in value &&
+    "path" in value &&
+    typeof value.name === "string" &&
+    typeof value.path === "string"
+  );
+};
+
+const isFileFieldValue = (value: unknown): value is FileFieldValue => {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "files" in value &&
+    Array.isArray(value.files) &&
+    value.files.every(isStoredFile)
+  );
+};
+
+const isFileDraftValue = (value: unknown): value is FileDraftValue => {
+  if (typeof value !== "object" || value === null || !("files" in value)) {
+    return false;
   }
 
-  return getOptionResponseSubmitValue(value);
+  const typedValue = value as FileDraftValue;
+
+  return (
+    typeof typedValue.files === "object" &&
+    typedValue.files !== null &&
+    Array.isArray(typedValue.files.newFiles) &&
+    Array.isArray(typedValue.files.attachedFiles) &&
+    typedValue.files.attachedFiles.every(isStoredFile) &&
+    Array.isArray(typedValue.deletedFiles) &&
+    typedValue.deletedFiles.every(isStoredFile)
+  );
+};
+
+const toStoredFileFromBrowserFile = (file: File): StoredFile => ({
+  name: file.name,
+  path: file.name,
+});
+
+const getFileDraftParts = (
+  value: unknown,
+): {
+  newFiles: File[];
+  attachedFiles: StoredFile[];
+} => {
+  if (isFileFieldValue(value)) {
+    return {
+      newFiles: [],
+      attachedFiles: value.files,
+    };
+  }
+
+  if (isFileDraftValue(value)) {
+    return {
+      newFiles: value.files.newFiles,
+      attachedFiles: value.files.attachedFiles,
+    };
+  }
+
+  return {
+    newFiles: [],
+    attachedFiles: [],
+  };
+};
+
+const buildFileFieldValue = (value: unknown): FileFieldValue | null => {
+  const { newFiles, attachedFiles } = getFileDraftParts(value);
+
+  const newStoredFiles = newFiles.map(toStoredFileFromBrowserFile);
+  const allFiles = [...attachedFiles, ...newStoredFiles];
+
+  return allFiles.length > 0 ? { files: allFiles } : null;
+};
+
+const toValidatorField = (field: FormFieldDto): FormFieldLike => ({
+  typeId: field.fieldType as FormFieldLike["typeId"],
+  required: field.isRequired,
+  extra: field.extra,
+});
+
+const toFieldValidationError = (
+  issues: readonly { path: readonly PropertyKey[]; message: string }[],
+): FieldValidationError => {
+  const pathMessages: Record<string, FieldValidationMessage[]> = {};
+  const messages = issues.map((issue) => getFieldValidationMessage(issue.message));
+
+  issues.forEach((issue, index) => {
+    const key = issue.path.length > 0 ? String(issue.path[0]) : "_root";
+
+    if (!pathMessages[key]) {
+      pathMessages[key] = [];
+    }
+
+    pathMessages[key].push(messages[index]);
+  });
+
+  return {
+    messages,
+    pathMessages,
+  };
+};
+
+const toQuickEditValidationError = (
+  validationMessage: FieldValidationMessage | undefined,
+): QuickEditValidationError | undefined => {
+  if (!validationMessage) {
+    return undefined;
+  }
+
+  const possibleDetail =
+    "detail" in validationMessage && typeof validationMessage.detail === "string"
+      ? validationMessage.detail
+      : undefined;
+
+  return {
+    message: validationMessage.message,
+    detail: possibleDetail,
+  };
+};
+
+const getSubmitFieldValue = (field: FormFieldDto, value: unknown): unknown => {
+  if (field.fieldType === fieldType.Options) {
+    return getOptionResponseSubmitValue(value);
+  }
+
+  if (field.fieldType === fieldType.File) {
+    return buildFileFieldValue(value);
+  }
+
+  return value;
+};
+
+const getFieldValidationError = (
+  field: FormFieldDto,
+  value: unknown,
+): QuickEditValidationError | undefined => {
+  const valueForValidation = getSubmitFieldValue(field, value);
+  const result = validateFormFieldValue(toValidatorField(field), valueForValidation);
+
+  if (result.success) {
+    return undefined;
+  }
+
+  const validationError = toFieldValidationError(result.error.issues);
+
+  const selectedMessage =
+    validationError.pathMessages.link?.[0] ??
+    validationError.pathMessages.linkTxt?.[0] ??
+    validationError.pathMessages.x?.[0] ??
+    validationError.pathMessages.y?.[0] ??
+    validationError.pathMessages.files?.[0] ??
+    validationError.pathMessages._root?.[0] ??
+    validationError.messages[0];
+
+  return toQuickEditValidationError(selectedMessage);
 };
 
 const isTempRowId = (rowId: RowId): boolean => String(rowId).startsWith("new_");
+
+const isMultipleOptionsField = (field: FormFieldDto): boolean => {
+  if (field.fieldType !== fieldType.Options) {
+    return false;
+  }
+
+  return Boolean(getFieldExtra(field).multiple);
+};
+
+const getEmptyFieldValue = (field: FormFieldDto): unknown => {
+  if (field.fieldType === fieldType.File) {
+    return {
+      files: [],
+    };
+  }
+
+  if (field.fieldType === fieldType.Link) {
+    return null;
+  }
+
+  if (field.fieldType === fieldType.Options && isMultipleOptionsField(field)) {
+    return [];
+  }
+
+  return "";
+};
+
+const getDefaultFieldValue = (field: FormFieldDto): unknown => {
+  const extra = getFieldExtra(field);
+
+  if (field.fieldType === fieldType.Options) {
+    if (
+      extra.options &&
+      typeof extra.options === "object" &&
+      !Array.isArray(extra.options) &&
+      typeof extra.options.defaultOptionId === "string"
+    ) {
+      return extra.options.defaultOptionId;
+    }
+
+    return getEmptyFieldValue(field);
+  }
+
+  if (extra.defaultValue !== undefined) {
+    return extra.defaultValue;
+  }
+
+  return getEmptyFieldValue(field);
+};
 
 const getAuthPersonalUser = (user: unknown): UserPersonalDto | undefined => {
   if (!user || typeof user !== "object") {
@@ -87,52 +329,21 @@ const getAuthPersonalUser = (user: unknown): UserPersonalDto | undefined => {
 
 const getAuthDisplayName = (user: unknown): string => {
   const personalUser = getAuthPersonalUser(user);
+
   return personalUser?.name ?? "";
 };
 
-const normalizeUploadedFile = (fileItem: any) => ({
-  name: fileItem?.name || fileItem?.fileName || "",
-  url: fileItem?.url || fileItem?.fileUrl || fileItem?.downloadUrl || "",
-});
-
-const getEditedFileValueParts = (editedValue: unknown) => {
-  let newFilesToUpload: File[] = [];
-  let attachedFiles: any[] = [];
-
-  if (Array.isArray(editedValue)) {
-    attachedFiles = editedValue;
-  } else if (editedValue && typeof editedValue === "object") {
-    const typedValue = editedValue as {
-      files?: any;
-      deletedFiles?: any[];
-    };
-
-    if (
-      typedValue.files &&
-      typeof typedValue.files === "object" &&
-      !Array.isArray(typedValue.files)
-    ) {
-      newFilesToUpload = typedValue.files.newFiles || [];
-      attachedFiles = typedValue.files.attachedFiles || [];
-    } else if (Array.isArray(typedValue.files)) {
-      attachedFiles = typedValue.files;
-    }
-  }
-
-  return { newFilesToUpload, attachedFiles };
-};
-
 export const useResponsesEdit = () => {
-  const { form, rows, setRows, filter, responses, setForm } = useFormStore();
+  const { form, rows, setRows, responses, setForm } = useFormStore();
   const { user } = useAuth();
 
   const [isInEditMode, setIsInEditMode] = useState(false);
   const [editedRows, setEditedRows] = useState<Map<RowId, Row>>(new Map());
   const [localRows, setLocalRows] = useState<Row[]>([]);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<RowId, Record<string, string>>>(
-    {},
-  );
+  const [validationErrors, setValidationErrors] = useState<
+    Record<RowId, Record<string, QuickEditValidationError>>
+  >({});
 
   const newRowCounterRef = useRef(0);
 
@@ -150,29 +361,65 @@ export const useResponsesEdit = () => {
   );
 
   const { mutateAsync: updateResponses, isPending: isUpdating } = useUpdateResponses(dtoForm?.id);
-
-  const { mutateAsync: createResponse } = useCreateResponse(dtoForm?.id);
+  const { mutateAsync: createResponse, isPending: isCreating } = useCreateResponse(dtoForm?.id);
 
   const responseRows: Row[] = useMemo(
     () => (rows?.filter((row) => row != null) as Row[]) || [],
     [rows],
   );
+
   const hasUnsavedChanges = useMemo(() => editedRows.size > 0, [editedRows]);
+
+  const getMergedRow = useCallback(
+    (rowId: RowId, editedRow: Partial<Row>): Row => {
+      const baseRow =
+        localRows.find((row) => String(row.id) === String(rowId)) ??
+        responseRows.find((row) => String(row.id) === String(rowId)) ??
+        ({} as Row);
+
+      return {
+        ...baseRow,
+        ...editedRow,
+        id: rowId,
+      } as Row;
+    },
+    [localRows, responseRows],
+  );
+
+  const getRowValidationErrors = useCallback(
+    (row: Partial<Row>): Record<string, QuickEditValidationError> => {
+      const rowErrors: Record<string, QuickEditValidationError> = {};
+
+      formFields.forEach((field) => {
+        const errorKey = field.displayName;
+        const value = row[field.displayName];
+        const validationError = getFieldValidationError(field, value);
+
+        if (validationError) {
+          rowErrors[errorKey] = validationError;
+        }
+      });
+
+      return rowErrors;
+    },
+    [formFields],
+  );
 
   const toggleEditMode = useCallback((): void => {
     if (isInEditMode && hasUnsavedChanges) {
       setShowCancelDialog(true);
-    } else {
-      const nextEditMode = !isInEditMode;
+      return;
+    }
 
-      setIsInEditMode(nextEditMode);
-      setEditedRows(new Map());
-      setLocalRows(nextEditMode ? [...responseRows] : responseRows);
+    const nextEditMode = !isInEditMode;
 
-      if (!nextEditMode) {
-        setValidationErrors({});
-        newRowCounterRef.current = 0;
-      }
+    setIsInEditMode(nextEditMode);
+    setEditedRows(new Map());
+    setLocalRows(nextEditMode ? [...responseRows] : responseRows);
+
+    if (!nextEditMode) {
+      setValidationErrors({});
+      newRowCounterRef.current = 0;
     }
   }, [isInEditMode, hasUnsavedChanges, responseRows]);
 
@@ -197,232 +444,137 @@ export const useResponsesEdit = () => {
   }, [isInEditMode, responseRows]);
 
   const handleCellLiveChange = useCallback(
-    <T>(rowId: RowId, columnName: string, value: T, isValid?: boolean): void => {
-      try {
-        const field = formFields.find(
-          (f) => f.displayName === columnName || f.name === columnName || f.id === columnName,
-        );
-        if (!field) return;
+    <T>(rowId: RowId, columnName: string, value: T): void => {
+      const field = formFields.find(
+        (candidateField) =>
+          candidateField.displayName === columnName ||
+          candidateField.name === columnName ||
+          candidateField.id === columnName,
+      );
 
-        const fieldExtra = getFieldExtra(field);
-        const errorKey = field.displayName;
-        const isString = (v: unknown): v is string => typeof v === "string";
+      if (!field) return;
 
-        setValidationErrors((prev) => {
-          const next = { ...prev };
-          const rowErrors = { ...(next[rowId] || {}) };
+      setEditedRows((prev) => {
+        const next = new Map(prev);
+        const existing = next.get(rowId) || ({} as Row);
 
-          delete rowErrors[errorKey];
+        next.set(rowId, {
+          ...existing,
+          [field.displayName]: value,
+        } as Row);
 
-          if (fieldExtra.validationRegex && value != null && isString(value) && value !== "") {
-            const reg = new RegExp(fieldExtra.validationRegex);
-            if (!reg.test(value)) {
-              rowErrors[errorKey] = `${field.displayName} - ערך לא תקין`;
-            }
-          }
-
-          if (field.fieldType === fieldType.Number) {
-            const valStr = typeof value === "number" || isString(value) ? String(value) : "";
-
-            if (valStr !== "") {
-              const parsed =
-                fieldExtra.numberType === "integer" ? parseInt(valStr, 10) : parseFloat(valStr);
-
-              if (Number.isNaN(parsed)) {
-                rowErrors[errorKey] =
-                  fieldExtra.numberType === "integer"
-                    ? "חובה להזין מספר שלם"
-                    : "חובה להזין מספר עשרוני";
-              } else {
-                if (fieldExtra.minValue !== undefined && parsed < fieldExtra.minValue) {
-                  rowErrors[errorKey] = `המספר חייב להיות גדול מ- ${fieldExtra.minValue}`;
-                }
-                if (fieldExtra.maxValue !== undefined && parsed > fieldExtra.maxValue) {
-                  rowErrors[errorKey] = `המספר חייב להיות קטן מ- ${fieldExtra.maxValue}`;
-                }
-              }
-            }
-          }
-
-          if (Object.keys(rowErrors).length === 0) {
-            delete next[rowId];
-          } else {
-            next[rowId] = rowErrors;
-          }
-
-          return next;
-        });
-
-        setEditedRows((prev) => {
-          const next = new Map(prev);
-          const existing = next.get(rowId) || ({} as Row);
-          next.set(rowId, { ...existing, [field.displayName]: value } as Row);
-          return next;
-        });
-      } catch {
-        // ignore
-      }
+        return next;
+      });
     },
     [formFields],
   );
 
   const processRowUpdate = useCallback(
-    (newRow: GridRowModel, oldRow: GridRowModel): GridRowModel => {
-      const newRowId = newRow.id as RowId;
+    (newRow: GridRowModel): GridRowModel => {
+      const rowId = newRow.id as RowId;
+      const typedNewRow = newRow as Row;
+
+      const previousRow =
+        localRows.find((row) => String(row.id) === String(rowId)) ??
+        responseRows.find((row) => String(row.id) === String(rowId));
+
+      const changedFieldNames = formFields
+        .filter((field) => {
+          const fieldName = field.displayName;
+          return previousRow?.[fieldName] !== typedNewRow[fieldName];
+        })
+        .map((field) => field.displayName);
 
       setLocalRows((prevRows) =>
         prevRows.map((row) =>
-          String(row?.id) === String(newRowId) ? ({ ...row, ...newRow } as Row) : row,
+          String(row.id) === String(rowId)
+            ? ({
+                ...row,
+                ...typedNewRow,
+              } as Row)
+            : row,
         ),
       );
 
-      setEditedRows((prevEditedRows) => new Map(prevEditedRows).set(newRowId, newRow as Row));
+      setEditedRows((prev) => {
+        const next = new Map(prev);
+        const existing = next.get(rowId) || ({} as Row);
 
-      try {
-        const rowErrors: Record<string, string> = {};
+        next.set(rowId, {
+          ...existing,
+          ...typedNewRow,
+        } as Row);
 
-        formFields.forEach((field) => {
-          const fieldExtra = getFieldExtra(field);
-          const errorKey = field.displayName;
-          const value = (newRow as Record<string, unknown>)[field.displayName];
+        return next;
+      });
 
-          if (fieldExtra.validationRegex && value) {
-            const reg = new RegExp(fieldExtra.validationRegex);
-            if (!reg.test(String(value))) {
-              rowErrors[errorKey] = `${field.displayName} - ערך לא תקין`;
-            }
-          }
+      setValidationErrors((prev) => {
+        const next = { ...prev };
+        const rowErrors = { ...(next[rowId] || {}) };
 
-          if (field.fieldType === fieldType.Number) {
-            const valStr = value === undefined || value === null ? "" : String(value);
-            if (valStr !== "") {
-              const parsed =
-                fieldExtra.numberType === "integer" ? parseInt(valStr, 10) : parseFloat(valStr);
+        changedFieldNames.forEach((fieldName) => {
+          const field = formFields.find(
+            (candidateField) => candidateField.displayName === fieldName,
+          );
 
-              if (Number.isNaN(parsed)) {
-                rowErrors[errorKey] =
-                  fieldExtra.numberType === "integer"
-                    ? "חובה להזין מספר שלם"
-                    : "חובה להזין מספר עשרוני";
-              } else {
-                if (fieldExtra.minValue !== undefined && parsed < fieldExtra.minValue) {
-                  rowErrors[errorKey] = `המספר חייב להיות גדול מ- ${fieldExtra.minValue}`;
-                }
-                if (fieldExtra.maxValue !== undefined && parsed > fieldExtra.maxValue) {
-                  rowErrors[errorKey] = `המספר חייב להיות קטן מ- ${fieldExtra.maxValue}`;
-                }
-              }
-            }
+          if (!field) return;
+
+          delete rowErrors[field.displayName];
+
+          const validationError = getFieldValidationError(field, typedNewRow[field.displayName]);
+
+          if (validationError) {
+            rowErrors[field.displayName] = validationError;
           }
         });
 
-        setValidationErrors((prev) => {
-          const next = { ...prev };
-          const existingRowErrors = prev[newRowId] || {};
-          const merged = { ...existingRowErrors, ...rowErrors };
+        if (Object.keys(rowErrors).length === 0) {
+          delete next[rowId];
+        } else {
+          next[rowId] = rowErrors;
+        }
 
-          if (Object.keys(merged).length === 0) {
-            delete next[newRowId];
-          } else {
-            next[newRowId] = merged;
-          }
-
-          return next;
-        });
-      } catch {
-        // ignore validation errors
-      }
+        return next;
+      });
 
       return newRow;
     },
-    [formFields],
+    [formFields, localRows, responseRows],
   );
 
   const buildResponseUpdatePayload = useCallback(
     async (rowId: string, editedRow: Partial<Row>): Promise<UpdateOneResponseDto | null> => {
-      const original = (fullResponses as ResponseDto[] | undefined)?.find(
-        (response) => String(response?.id) === String(rowId),
-      );
+      const original = fullResponses?.find((response) => String(response?.id) === String(rowId));
 
-      if (!original) {
+      if (!original || !dtoForm) {
         return null;
       }
 
-      const updatedFieldValues: ResponseFieldValueDto[] = await Promise.all(
-        formFields.map(async (formField) => {
-          const existingFieldValue = original.fieldValues?.find(
-            (fieldValue) => fieldValue.fieldId === formField.id,
-          );
+      const rowForSubmit = getMergedRow(rowId, editedRow);
 
-          const hasEditedValue = Object.prototype.hasOwnProperty.call(
-            editedRow,
-            formField.displayName,
-          );
+      const updatedFieldValues: ResponseFieldValueDto[] = formFields.map((formField) => {
+        const rawValue = rowForSubmit[formField.displayName];
 
-          if (!hasEditedValue) {
-            return existingFieldValue
-              ? {
-                  fieldId: formField.id,
-                  value: getSubmitFieldValue(formField, existingFieldValue.value),
-                }
-              : {
-                  fieldId: formField.id,
-                  value: null,
-                };
-          }
-
-          const rawValue = editedRow[formField.displayName];
-
-          if (formField.fieldType === fieldType.File) {
-            try {
-              const { newFilesToUpload, attachedFiles } = getEditedFileValueParts(rawValue);
-
-              const uploadedFiles =
-                newFilesToUpload.length > 0
-                  ? await uploadFilesToS3({ newFiles: newFilesToUpload }, dtoForm?.id || 0)
-                  : [];
-
-              const normalizedAttachedFiles = attachedFiles.map(normalizeUploadedFile);
-              const combinedFiles = [...uploadedFiles, ...normalizedAttachedFiles];
-
-              return {
-                fieldId: formField.id,
-                value: combinedFiles.length > 0 ? { files: combinedFiles } : null,
-              };
-            } catch {
-              return {
-                fieldId: formField.id,
-                value: getSubmitFieldValue(
-                  formField,
-                  rawValue ?? existingFieldValue?.value ?? null,
-                ),
-              };
-            }
-          }
-
-          return {
-            fieldId: formField.id,
-            value: getSubmitFieldValue(formField, rawValue ?? null),
-          };
-        }),
-      );
-
-      const personalUser = getAuthPersonalUser(user);
+        return {
+          fieldId: formField.id,
+          value: getSubmitFieldValue(formField, rawValue ?? null),
+        };
+      });
 
       return {
         responseId: String(rowId),
         fieldValues: updatedFieldValues,
       };
     },
-    [fullResponses, formFields, user, dtoForm?.id],
+    [fullResponses, formFields, dtoForm, getMergedRow],
   );
 
   const addNewResponse = useCallback((): void => {
     if (!isInEditMode || !dtoForm || formFields.length === 0) return;
 
     newRowCounterRef.current += 1;
-    const tempId = `new_${newRowCounterRef.current}`;
 
+    const tempId = `new_${newRowCounterRef.current}`;
     const now = moment().toISOString();
     const displayName = getAuthDisplayName(user);
 
@@ -435,11 +587,7 @@ export const useResponsesEdit = () => {
     };
 
     formFields.forEach((field) => {
-      if (field.fieldType === fieldType.Link || field.fieldType === fieldType.File) {
-        newRow[field.displayName] = null;
-      } else {
-        newRow[field.displayName] = "";
-      }
+      newRow[field.displayName] = getDefaultFieldValue(field);
     });
 
     setLocalRows((prev) => [newRow, ...prev]);
@@ -448,74 +596,6 @@ export const useResponsesEdit = () => {
 
   const saveChanges = useCallback(async (): Promise<void> => {
     try {
-      const newValidationErrors: Record<RowId, Record<string, string>> = {};
-
-      editedRows.forEach((editedRow, rowId) => {
-        try {
-          const rowErrs: Record<string, string> = {};
-
-          formFields.forEach((field) => {
-            const fieldExtra = getFieldExtra(field);
-            const errorKey = field.displayName;
-            const value = editedRow[field.displayName];
-
-            if (field.isRequired) {
-              const isEmpty =
-                value === undefined ||
-                value === null ||
-                (typeof value === "string" && value.trim() === "") ||
-                (Array.isArray(value) && value.length === 0);
-
-              if (isEmpty) {
-                rowErrs[errorKey] = "שדה זה הינו חובה";
-                return;
-              }
-            }
-
-            if (fieldExtra.validationRegex && value) {
-              const reg = new RegExp(fieldExtra.validationRegex);
-              if (!reg.test(String(value))) {
-                rowErrs[errorKey] = `${field.displayName} - ערך לא תקין`;
-              }
-            }
-
-            if (field.fieldType === fieldType.Number) {
-              const valStr = value === undefined || value === null ? "" : String(value);
-              if (valStr !== "") {
-                const parsed =
-                  fieldExtra.numberType === "integer" ? parseInt(valStr, 10) : parseFloat(valStr);
-
-                if (Number.isNaN(parsed)) {
-                  rowErrs[errorKey] =
-                    fieldExtra.numberType === "integer"
-                      ? "חובה להזין מספר שלם"
-                      : "חובה להזין מספר עשרוני";
-                } else {
-                  if (fieldExtra.minValue !== undefined && parsed < fieldExtra.minValue) {
-                    rowErrs[errorKey] = `המספר חייב להיות גדול מ- ${fieldExtra.minValue}`;
-                  }
-                  if (fieldExtra.maxValue !== undefined && parsed > fieldExtra.maxValue) {
-                    rowErrs[errorKey] = `המספר חייב להיות קטן מ- ${fieldExtra.maxValue}`;
-                  }
-                }
-              }
-            }
-          });
-
-          if (Object.keys(rowErrs).length > 0) {
-            newValidationErrors[rowId] = rowErrs;
-          }
-        } catch {
-          // ignore
-        }
-      });
-
-      if (Object.keys(newValidationErrors).length > 0) {
-        setValidationErrors((prev) => ({ ...prev, ...newValidationErrors }));
-        showErrorNotification("יש לתקן את השגיאות לפני השמירה");
-        return;
-      }
-
       if (!hasUnsavedChanges) {
         throw new NoUnsavedChangesError();
       }
@@ -525,10 +605,27 @@ export const useResponsesEdit = () => {
       }
 
       const editedEntries = Array.from(editedRows.entries());
+      const newValidationErrors: Record<RowId, Record<string, QuickEditValidationError>> = {};
+
+      editedEntries.forEach(([rowId, editedRow]) => {
+        const rowForValidation = getMergedRow(rowId, editedRow);
+        const rowErrors = getRowValidationErrors(rowForValidation);
+
+        if (Object.keys(rowErrors).length > 0) {
+          newValidationErrors[rowId] = rowErrors;
+        }
+      });
+
+      if (Object.keys(newValidationErrors).length > 0) {
+        setValidationErrors(newValidationErrors);
+        showErrorNotification("יש לתקן את השגיאות לפני השמירה");
+        return;
+      }
+
       const newRowEntries = editedEntries.filter(([rowId]) => isTempRowId(rowId));
       const existingRowEntries = editedEntries.filter(([rowId]) => !isTempRowId(rowId));
 
-      if (existingRowEntries.length > 0 && !(fullResponses as ResponseDto[] | undefined)?.length) {
+      if (existingRowEntries.length > 0 && !fullResponses?.length) {
         throw new NoResponsesFoundError();
       }
 
@@ -545,6 +642,7 @@ export const useResponsesEdit = () => {
       const sortedNewRowEntries = [...newRowEntries].sort(([idA], [idB]) => {
         const numA = parseInt(String(idA).replace("new_", ""), 10);
         const numB = parseInt(String(idB).replace("new_", ""), 10);
+
         return numA - numB;
       });
 
@@ -553,72 +651,38 @@ export const useResponsesEdit = () => {
       }
 
       if (updatesToSend.length > 0) {
-        try {
-          const bulkUpdatePayload: BulkUpdateResponsesDto = {
-            responses: updatesToSend,
-          };
-          await updateResponses(bulkUpdatePayload);
-        } catch (updateError) {
-          console.error("updateResponses failed:", updateError);
-          throw updateError;
-        }
+        const bulkUpdatePayload: BulkUpdateResponsesDto = {
+          responses: updatesToSend,
+        };
+
+        await updateResponses(bulkUpdatePayload);
       }
 
-      const newResponsesPayloads: CreateResponseDto[] = [];
+      const newResponsesPayloads: CreateResponseDto[] = sortedNewRowEntries.map(
+        ([rowId, editedRow]) => {
+          const rowForCreate = getMergedRow(rowId, editedRow);
 
-      for (const [, editedRow] of sortedNewRowEntries) {
-        const fieldValues: ResponseFieldValueDto[] = await Promise.all(
-          formFields.map(async (field) => {
-            const rawValue = editedRow[field.displayName];
-
-            if (field.fieldType === fieldType.File) {
-              try {
-                const { newFilesToUpload, attachedFiles } = getEditedFileValueParts(rawValue);
-
-                const uploadedFiles =
-                  newFilesToUpload.length > 0
-                    ? await uploadFilesToS3({ newFiles: newFilesToUpload }, dtoForm.id)
-                    : [];
-
-                const normalizedAttached = attachedFiles.map(normalizeUploadedFile);
-                const allFiles = [...uploadedFiles, ...normalizedAttached];
-
-                return {
-                  fieldId: field.id,
-                  value: allFiles.length > 0 ? { files: allFiles } : null,
-                };
-              } catch {
-                return {
-                  fieldId: field.id,
-                  value: null,
-                };
-              }
-            }
+          const fieldValues: ResponseFieldValueDto[] = formFields.map((field) => {
+            const rawValue = rowForCreate[field.displayName];
 
             return {
               fieldId: field.id,
-              value: getSubmitFieldValue(
-                field,
-                rawValue !== undefined && rawValue !== null ? rawValue : "",
-              ),
+              value: getSubmitFieldValue(field, rawValue ?? getDefaultFieldValue(field)),
             };
-          }),
-        );
+          });
 
-        newResponsesPayloads.push({
-          fieldValues,
-        });
-      }
+          return {
+            fieldValues,
+          };
+        },
+      );
 
       if (newResponsesPayloads.length > 0) {
-        // Optimistic UI for responsesCount
-        if (dtoForm) {
-          setForm({
-            ...dtoForm,
-            responsesCount: (dtoForm.responsesCount ?? 0) + newResponsesPayloads.length,
-            lastInteractionAt: moment().toISOString(),
-          } as any);
-        }
+        setForm({
+          ...dtoForm,
+          responsesCount: (dtoForm.responsesCount ?? 0) + newResponsesPayloads.length,
+          lastInteractionAt: moment().toISOString(),
+        } as any);
 
         await createResponse(newResponsesPayloads);
       }
@@ -626,13 +690,13 @@ export const useResponsesEdit = () => {
       newRowCounterRef.current = 0;
 
       const persistedLocalRows = localRows.filter((row) => !isTempRowId(row.id));
-      setRows(persistedLocalRows as unknown as Parameters<typeof setRows>[0]);
 
+      setRows(persistedLocalRows as unknown as Parameters<typeof setRows>[0]);
       setEditedRows(new Map());
       setIsInEditMode(false);
       setValidationErrors({});
 
-      showSuccessNotification(`נשמרו ${editedRows.size} שינויים בהצלחה!`);
+      showSuccessNotification(`נשמרו ${editedEntries.length} שינויים בהצלחה!`);
     } catch (error) {
       if (error instanceof CustomError) {
         if (error instanceof NoUnsavedChangesError) {
@@ -647,7 +711,6 @@ export const useResponsesEdit = () => {
     }
   }, [
     editedRows,
-    formFields,
     hasUnsavedChanges,
     dtoForm,
     fullResponses,
@@ -657,6 +720,9 @@ export const useResponsesEdit = () => {
     localRows,
     setRows,
     setForm,
+    getMergedRow,
+    getRowValidationErrors,
+    formFields,
   ]);
 
   return {
@@ -665,7 +731,7 @@ export const useResponsesEdit = () => {
     localRows,
     validationErrors,
     handleCellLiveChange,
-    isUpdating,
+    isUpdating: isUpdating || isCreating,
     showCancelDialog,
     handleToggleEditMode: toggleEditMode,
     handleCellEditStart: startCellEdit,

@@ -1,11 +1,11 @@
-import { TextField } from "@mui/material";
+import { TextField, Tooltip } from "@mui/material";
 import { GridRenderEditCellParams } from "@mui/x-data-grid-pro";
 import { GridApiPro } from "@mui/x-data-grid-pro/models/gridApiPro";
 import { useCallback } from "react";
 
-import { FormFieldDto } from "../../../types/shared";
 import { fieldType } from "formula-gear";
 
+import { FormFieldDto } from "../../../types/shared";
 import {
   CheckboxCellEditor,
   DateCellEditor,
@@ -18,24 +18,41 @@ import {
   TextCellEditor,
   TimeCellEditor,
 } from "../components/CellEditors";
-import { CellErrorText, CellErrorWrapper, CellValueFlex } from "../styled";
+import {
+  CellErrorHeader,
+  CellErrorInfoIcon,
+  CellErrorText,
+  CellErrorWrapper,
+  CellValueFlex,
+} from "../styled";
+import { getOptionResponseRawValue, OptionResponseValue } from "../../../utils/optionResponseValue";
+
+type QuickEditValidationError = {
+  message: string;
+  detail?: string;
+};
 
 type EditorFieldExtra = {
-  options?: string[];
-  multiSelect?: boolean;
+  options?:
+    | string[]
+    | {
+        items?: OptionResponseValue[];
+      };
+  multiple?: boolean;
   validationRegex?: string;
-  coordinateType?: string;
+  locationFormat?: string;
   minValue?: number;
   maxValue?: number;
   numberType?: string;
   dateAndTime?: boolean;
-  showSeconds?: boolean;
+  includeTime?: boolean;
+  includeSeconds?: boolean;
 };
 
 interface UseCellEditorsParams {
   apiRef: React.MutableRefObject<GridApiPro | null>;
   formFields: FormFieldDto[] | undefined;
-  validationErrors?: Record<number | string, Record<string, string>>;
+  validationErrors?: Record<number | string, Record<string, QuickEditValidationError>>;
   onLiveChange?: <T>(
     rowId: number | string,
     columnName: string,
@@ -50,6 +67,39 @@ interface UseCellEditorsReturn {
 
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
+
+const getOptionIds = (extra: EditorFieldExtra): string[] => {
+  if (Array.isArray(extra.options)) {
+    return extra.options.map((option) => String(option));
+  }
+
+  if (extra.options && Array.isArray(extra.options.items)) {
+    return extra.options.items
+      .filter((option) => option && typeof option.id === "string")
+      .map((option) => option.id);
+  }
+
+  return [];
+};
+
+const getOptionLabelMap = (extra: EditorFieldExtra): Record<string, string> => {
+  if (
+    extra.options &&
+    typeof extra.options === "object" &&
+    !Array.isArray(extra.options) &&
+    Array.isArray(extra.options.items)
+  ) {
+    return Object.fromEntries(
+      extra.options.items
+        .filter(
+          (option) => option && typeof option.id === "string" && typeof option.text === "string",
+        )
+        .map((option) => [option.id, option.text]),
+    );
+  }
+
+  return {};
+};
 
 export const useCellEditors = ({
   apiRef,
@@ -97,21 +147,22 @@ export const useCellEditors = ({
     (params: GridRenderEditCellParams): React.ReactElement => {
       const formField = findFormFieldByColumnName(params.field);
       const rowId = params.id;
-      const errorMessage = validationErrors?.[rowId]?.[params.field as string];
+      const error = validationErrors?.[rowId]?.[params.field as string];
+      const errorMessage = error?.message;
 
       if (!formField) return renderFallbackTextField(params);
 
       const fieldExtra = getFieldExtra(formField);
       const {
         validationRegex,
-        options,
-        multiSelect,
+        multiple,
         numberType,
         minValue,
         maxValue,
         dateAndTime,
-        coordinateType,
-        showSeconds,
+        includeTime,
+        locationFormat,
+        includeSeconds,
       } = fieldExtra;
 
       const handleChange = <T,>(newValue: T, isValid?: boolean): void => {
@@ -142,7 +193,7 @@ export const useCellEditors = ({
               validationRegex={validationRegex}
               isRequired={formField.isRequired}
               errorMessage={errorMessage}
-              multiline={true}
+              multiline
             />
           );
           break;
@@ -150,10 +201,11 @@ export const useCellEditors = ({
         case fieldType.Options:
           editor = (
             <OptionsCellEditor
-              value={params.value as string | string[]}
+              value={getOptionResponseRawValue(params.value) as string | string[]}
               onChange={handleChange}
-              options={options || []}
-              multiSelect={multiSelect}
+              options={getOptionIds(fieldExtra)}
+              optionLabels={getOptionLabelMap(fieldExtra)}
+              multiSelect={multiple}
               isRequired={formField.isRequired}
               errorMessage={errorMessage}
             />
@@ -175,12 +227,16 @@ export const useCellEditors = ({
           break;
 
         case fieldType.Date:
-          const finalDateAndTime = (formField as any).dateAndTime || fieldExtra.dateAndTime || (formField as any).includeTime || (fieldExtra as any).includeTime;
           editor = (
             <DateCellEditor
               value={params.value as string | null}
               onChange={handleChange}
-              dateAndTime={finalDateAndTime}
+              dateAndTime={Boolean(
+                (formField as any).dateAndTime ??
+                dateAndTime ??
+                (formField as any).includeTime ??
+                includeTime,
+              )}
               isRequired={formField.isRequired}
               errorMessage={errorMessage}
             />
@@ -191,7 +247,7 @@ export const useCellEditors = ({
           editor = (
             <TimeCellEditor
               value={params.value as string | null}
-              showSeconds={showSeconds || false}
+              showSeconds={Boolean(includeSeconds)}
               onChange={handleChange}
               isRequired={formField.isRequired}
               errorMessage={errorMessage}
@@ -238,7 +294,7 @@ export const useCellEditors = ({
             <LocationCellEditor
               value={params.value}
               onChange={handleChange}
-              coordinateType={coordinateType}
+              locationFormat={locationFormat}
               isRequired={formField.isRequired}
               errorMessage={errorMessage}
             />
@@ -263,7 +319,16 @@ export const useCellEditors = ({
       if (errorMessage) {
         return (
           <CellErrorWrapper>
-            <CellErrorText>{errorMessage}</CellErrorText>
+            <CellErrorHeader>
+              <CellErrorText title={errorMessage}>{errorMessage}</CellErrorText>
+
+              {error?.detail && (
+                <Tooltip title={error.detail} arrow placement="top">
+                  <CellErrorInfoIcon aria-label="פירוט שגיאה">ⓘ</CellErrorInfoIcon>
+                </Tooltip>
+              )}
+            </CellErrorHeader>
+
             <CellValueFlex>{editor}</CellValueFlex>
           </CellErrorWrapper>
         );
