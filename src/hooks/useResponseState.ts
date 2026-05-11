@@ -37,6 +37,8 @@ export type FieldExtra = {
   options?: {
     items?: any[];
     defaultOptionId?: string | string[];
+    formId?: string | number;
+    fieldId?: string;
   };
   multiple?: boolean;
   multiSelect?: boolean;

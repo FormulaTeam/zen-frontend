@@ -487,3 +487,24 @@ export const getResponsesRows = async ({
     throw error;
   }
 };
+
+export const getFieldValues = async (
+  formId: number,
+  fieldId: string,
+  params?: { limit?: number; offset?: number; search?: string },
+): Promise<{ total: number; limit: number; offset: number; data: { responseId: string; value: unknown }[] }> => {
+  try {
+    const response = await apiClient.get(`/forms/${formId}/responses/fields/${fieldId}`, {
+      params: {
+        limit: params?.limit ?? 50,
+        offset: params?.offset ?? 0,
+        search: params?.search ?? "",
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch field values:", error);
+    throw error;
+  }
+};

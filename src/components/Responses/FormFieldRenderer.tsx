@@ -19,6 +19,7 @@ import CustomTextField from "../FormFields/CustomTextField/CustomTextField";
 import CustomTimePicker from "../FormFields/CustomTimePicker/CustomTimePicker";
 import LinkTextField from "../FormFields/LinkTextField/LinkTextField";
 import { FormFieldWrapper, StyledBox } from "./FormFieldRenderer.styled";
+import { OptionsSource } from "@src/pages/FormEditor/schemas/fields/optionsSchema";
 
 type OptionItem = {
   id: string;
@@ -30,6 +31,8 @@ type FormFieldExtra = {
   options?: {
     items?: OptionItem[];
     defaultOptionId?: string | string[];
+    formId?: string | number;
+    fieldId?: string;
   };
   value?: any;
   validationRegex?: string;
@@ -95,9 +98,9 @@ const isConnectedToForm = (field: FormFieldDto) => {
   const extra = getFieldExtra(field);
 
   return (
-    extra.connectionType === connectionTypes.form &&
-    !!extra.linkedFormId &&
-    !!extra.connectedFieldId
+    extra.source === OptionsSource.FORM_FIELD_RESPONSES &&
+    !!extra.options?.formId &&
+    !!extra.options?.fieldId
   );
 };
 
@@ -507,13 +510,6 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           : "";
 
       availableOptions = availableOptions.filter((option) => !!option);
-
-      if (connectedToForm) {
-        field.extra = {
-          ...fieldExtra,
-          options: availableOptions,
-        };
-      }
 
       input = (
         <CustomDropDownAutocomplete

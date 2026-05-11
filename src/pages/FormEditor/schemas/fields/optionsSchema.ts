@@ -10,11 +10,6 @@ import {
   record,
   string,
 } from "zod";
-import * as Gear from "formula-gear";
-
-// Use bracket notation to bypass potential bundler export issues if cache is stale
-const GearAny = Gear as any;
-const gearOptionsSource = GearAny["optionsSource"] || { Manual: 1, FormFieldResponses: 2 };
 
 enum OptionsSource {
   MANUAL = 1,
