@@ -428,7 +428,9 @@ export function createExcelMold(form: FormDto) {
   const formFields = (form.sections ?? [])
     .slice()
     .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
-    .flatMap((section) => [...(section.fields ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)));
+    .flatMap((section) =>
+      [...(section.fields ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)),
+    );
 
   const formFieldsIds: string[] = [];
   const data: any[] = [];
@@ -519,7 +521,9 @@ export function createExcelExport(form: FormDto, rows: Row[] = []) {
   const formFields = (form.sections ?? [])
     .slice()
     .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
-    .flatMap((section) => [...(section.fields ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)))
+    .flatMap((section) =>
+      [...(section.fields ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)),
+    )
     .filter((field) => field.fieldType !== fieldType.Form);
 
   const fieldHeaders = formFields.map((field) => field.displayName);
@@ -1091,7 +1095,7 @@ export function generateNewFormFieldData(item: Partial<CustomFormField>) {
   }
 
   if (item.typeId === FieldTypeIds.location) {
-    newField.coordinateType = "UTM";
+    newField.locationFormat = "UTM";
   }
 
   return newField;

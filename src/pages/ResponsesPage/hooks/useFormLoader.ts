@@ -2,10 +2,8 @@ import { useEffect, useMemo, useRef } from "react";
 import { useGetForm, useGetResponsesRows } from "../../../api";
 import { useInitiateFormStore } from "../stores/form.store";
 import { Row } from "../../../utils/interfaces";
-import {
-  getOptionResponseDisplayValue,
-  getOptionResponseRawValue,
-} from "../../../utils/optionResponseValue";
+import { getOptionResponseRawValue } from "../../../utils/optionResponseValue";
+import { fieldType } from "formula-gear";
 
 export function useFormLoader(formId: string) {
   const { form, setForm, setPermissions, setRows, filter, setResponses } = useInitiateFormStore();
@@ -91,11 +89,11 @@ export function useFormLoader(formId: string) {
           }
         : null;
 
-      const fieldIdToDisplayName = new Map<string, string>();
+      const fieldIdToField = new Map<string, any>();
 
       formData.sections.forEach((section) => {
         section.fields.forEach((field) => {
-          fieldIdToDisplayName.set(field.id, field.displayName);
+          fieldIdToField.set(String(field.id), field);
         });
       });
 
@@ -118,12 +116,16 @@ export function useFormLoader(formId: string) {
 
           if (!fieldId) return;
 
-          const displayName = fieldIdToDisplayName.get(fieldId);
+          const field = fieldIdToField.get(String(fieldId));
+          const displayName = field?.displayName;
 
-          row[fieldId] = getOptionResponseRawValue(fv.value);
+          const rawValue =
+            field?.fieldType === fieldType.Options ? getOptionResponseRawValue(fv.value) : fv.value;
+
+          row[fieldId] = rawValue;
 
           if (displayName && row[displayName] === undefined) {
-            row[displayName] = getOptionResponseDisplayValue(fv.value);
+            row[displayName] = rawValue;
           }
         });
 
@@ -163,7 +165,6 @@ export function useFormLoader(formId: string) {
       if (isNewForm) {
         lastFormIdRef.current = formData.id;
 
-        // Sort sections by index, and for each section, sort its fields by index
         const sortedSections = [...(formData.sections ?? [])]
           .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
           .map((section) => ({
@@ -171,7 +172,6 @@ export function useFormLoader(formId: string) {
             fields: [...(section.fields ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)),
           }));
 
-        // Hierarchical flattening: sections first, then fields within each section
         const flattenedFields = sortedSections.flatMap((section) => section.fields);
 
         const columns = flattenedFields.map((field) => ({
@@ -194,8 +194,8 @@ export function useFormLoader(formId: string) {
 
         setPermissions(permissions as Parameters<typeof setPermissions>[0]);
       } else if (form) {
-        // Update metadata if changed
         const anyFormData = formData as any;
+
         if (
           form.responsesCount !== anyFormData.responsesCount ||
           form.lastInteractionAt !== anyFormData.lastInteractionAt ||

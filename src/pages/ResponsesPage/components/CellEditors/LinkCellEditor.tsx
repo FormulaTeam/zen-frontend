@@ -1,104 +1,146 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Box, TextField } from "@mui/material";
+
 import { LinkValue } from "../../../../utils/interfaces";
 import { preventEnterKeyNavigation } from "../../../../utils/utils";
 
 interface LinkCellEditorProps {
-    value: LinkValue | string | null;
-    onChange: (value: LinkValue, isValid?: boolean) => void;
-    isRequired?: boolean;
-    errorMessage?: string;
+  value: LinkValue | string | null;
+  onChange: (value: LinkValue, isValid?: boolean) => void;
+  isRequired?: boolean;
+  errorMessage?: string;
 }
 
-const toLinkValue = (value: LinkValue | string | null): LinkValue | null => {
-    if (!value || typeof value !== "object") return null;
-    return value;
+const toLinkValue = (value: LinkValue | string | null): LinkValue => {
+  if (!value) {
+    return {
+      link: "",
+      linkTxt: "",
+    };
+  }
+
+  if (typeof value === "string") {
+    return {
+      link: value,
+      linkTxt: "",
+    };
+  }
+
+  return {
+    link: value.link || "",
+    linkTxt: value.linkTxt || "",
+  };
+};
+
+const linkInputSx = {
+  "& .MuiInputBase-root": {
+    minHeight: 38,
+    borderRadius: "8px",
+    border: "1px solid #d7deea",
+    backgroundColor: "#ffffff",
+    padding: "2px 10px",
+    fontSize: "0.95rem",
+    transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
+
+    "&:hover": {
+      borderColor: "#b8c4d6",
+      backgroundColor: "#fbfcfe",
+    },
+
+    "&.Mui-focused": {
+      borderColor: "#7c9cc9",
+      boxShadow: "0 0 0 3px rgba(124, 156, 201, 0.14)",
+    },
+
+    "&::before, &::after": {
+      display: "none",
+    },
+  },
+
+  "& .MuiInputBase-input": {
+    padding: "6px 0 !important",
+  },
 };
 
 export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
-    value,
-    onChange,
-    isRequired = false,
-    errorMessage,
+  value,
+  onChange,
+  errorMessage,
 }) => {
-    const linkValue = toLinkValue(value);
-    const [url, setUrl] = useState(linkValue?.link || "");
-    const [linkText, setLinkText] = useState(linkValue?.linkTxt || "");
-    const [urlError, setUrlError] = useState(false);
+  const initialValue = useMemo(() => toLinkValue(value), [value]);
 
-    const urlRegex = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,6})([/\w .-]*)*\/?$/i;
+  const [url, setUrl] = useState(initialValue.link);
+  const [linkText, setLinkText] = useState(initialValue.linkTxt);
 
-    useEffect(() => {
-        const lv = toLinkValue(value);
-        setUrl(lv?.link || "");
-        setLinkText(lv?.linkTxt || "");
-    }, [value]);
+  useEffect(() => {
+    const nextValue = toLinkValue(value);
 
-    const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const newUrl = event.target.value;
-        setUrl(newUrl);
+    setUrl(nextValue.link);
+    setLinkText(nextValue.linkTxt);
+  }, [value]);
 
-        // Validate URL
-        const isValid = newUrl === "" || urlRegex.test(newUrl);
-        setUrlError(!isValid && newUrl !== "");
+  const emitChange = (nextUrl: string, nextLinkText: string) => {
+    onChange({
+      link: nextUrl,
+      linkTxt: nextLinkText,
+    });
+  };
 
-        const overallValid = !(isRequired && (!newUrl || newUrl === ""));
-        onChange({ link: newUrl, linkTxt: linkText }, overallValid);
-    };
+  const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newUrl = event.target.value;
 
-    const handleLinkTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const newLinkText = event.target.value;
-        setLinkText(newLinkText);
-        const overallValid = !(isRequired && (!url || url === ""));
-        onChange({ link: url, linkTxt: newLinkText }, overallValid);
-    };
+    setUrl(newUrl);
+    emitChange(newUrl, linkText);
+  };
 
-    return (
-        <Box
-            sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-                padding: "8px",
-            }}
-        >
-            <TextField
-                fullWidth
-                placeholder="https://example.co.il"
-                value={url}
-                onChange={handleUrlChange}
-                onKeyDown={(e) => preventEnterKeyNavigation(e)}
-                error={urlError}
-                helperText={urlError ? "היפר-קישור לא תקין" : ""}
-                variant="standard"
-                autoFocus
-                InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                        fontSize: "1rem",
-                        padding: "4px 8px",
-                    },
-                }}
-                sx={{ marginBottom: urlError ? 0 : 1 }}
-            />
-            <TextField
-                fullWidth
-                placeholder="טקסט להיפר-קישור"
-                value={linkText}
-                onChange={handleLinkTextChange}
-                onKeyDown={(e) => preventEnterKeyNavigation(e)}
-                variant="standard"
-                InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                        fontSize: "1rem",
-                        padding: "4px 8px",
-                    },
-                }}
-            />
-            {errorMessage && (
-                <div style={{ color: "#d32f2f", fontSize: "0.75rem", marginTop: 4 }}>{errorMessage}</div>
-            )}
-        </Box>
-    );
+  const handleLinkTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newLinkText = event.target.value;
+
+    setLinkText(newLinkText);
+    emitChange(url, newLinkText);
+  };
+
+  return (
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: 0.75,
+        padding: "6px 8px",
+        boxSizing: "border-box",
+      }}>
+      <TextField
+        fullWidth
+        placeholder="https://example.co.il"
+        value={url}
+        onChange={handleUrlChange}
+        onKeyDown={preventEnterKeyNavigation}
+        error={!!errorMessage}
+        variant="standard"
+        slotProps={{
+          input: {
+            disableUnderline: true,
+          },
+        }}
+        sx={linkInputSx}
+      />
+
+      <TextField
+        fullWidth
+        placeholder="טקסט להיפר-קישור"
+        value={linkText}
+        onChange={handleLinkTextChange}
+        onKeyDown={preventEnterKeyNavigation}
+        error={!!errorMessage}
+        variant="standard"
+        slotProps={{
+          input: {
+            disableUnderline: true,
+          },
+        }}
+        sx={linkInputSx}
+      />
+    </Box>
+  );
 };

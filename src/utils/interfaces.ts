@@ -153,7 +153,7 @@ export interface FormField {
   showSeconds?: boolean;
   dateAndTime?: boolean;
   numberType?: string;
-  coordinateType?: string;
+  locationFormat?: string;
   maxValue?: number;
   minValue?: number;
   initialNumberValue?: number;

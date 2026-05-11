@@ -19,8 +19,6 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { heIL } from "@mui/x-data-grid/locales";
@@ -39,7 +37,7 @@ import {
 } from "@mui/material";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
-import { downloadFileFromResponse } from "@api/filesApi";
+import { downloadFileFromResponse, type StoredFile } from "@api/filesApi";
 import {
   ContentContainer,
   MainContent,
@@ -49,11 +47,12 @@ import {
   HeaderFlex,
   CellErrorWrapper,
   CellErrorText,
+  CellErrorInfoIcon,
   CellValueFlex,
   PaginationContainer,
   FooterInfoContainer,
   PaginationButton,
-  HighlightedText,
+  CellErrorHeader,
 } from "../styled";
 import { useChildForms } from "../hooks/useChildForms";
 import { useDetailPanel } from "../hooks/useDetailPanel";
@@ -65,17 +64,6 @@ import { FieldTypeIds, MetaColumnIds } from "../../../utils/interfaces";
 import { DEFAULT_DATE_TIME_FORMAT } from "../../../utils/utils";
 import * as Gear from "formula-gear";
 
-const VIEW_COLUMN_ID_TO_GRID_FIELD: Record<string, string> = {
-  id: "id",
-  index: "index",
-  pushed_to_metro: "sync",
-  updated_by_name: "editedByName",
-  updated: "edited",
-  created_at: "created",
-  created_by_name: "createdByName",
-};
-
-// Use bracket notation to bypass static analysis of bundlers which might have stale cache
 const getGearConstant = (key: string) => {
   const g = Gear as any;
   return g[key];
@@ -92,7 +80,7 @@ const gearComparableFieldTypes = getGearConstant("comparable" + "FieldTypes") ||
 ];
 
 const isSortable = (typeId?: number): boolean => {
-  if (typeId === undefined) return true; // Meta columns are always sortable
+  if (typeId === undefined) return true;
   return (gearComparableFieldTypes as number[]).includes(typeId);
 };
 
@@ -105,12 +93,24 @@ type Row = GridRowModel & {
   [key: string]: unknown;
 };
 
+type LocalDisplayFile = {
+  name: string;
+  file: File;
+};
+
+type ResponseDisplayFile = StoredFile | LocalDisplayFile;
+
+type QuickEditValidationError = {
+  message: string;
+  detail?: string;
+};
+
 interface ResponsesTableProps {
   isInEditMode: boolean;
   localRows: Row[];
   handleProcessRowUpdate: (newRow: GridRowModel, oldRow: GridRowModel) => GridRowModel;
   onCellEditStart: () => void;
-  validationErrors?: Record<number | string, Record<string, string>>;
+  validationErrors?: Record<number | string, Record<string, QuickEditValidationError>>;
   onCellLiveChange?: (rowId: number | string, columnName: string, value: unknown) => void;
   onRowSelectionModelChange?: (model: GridRowSelectionModel) => void;
   currentView?: ResponsesView;
@@ -145,19 +145,15 @@ export const ResponsesTable = React.memo(
     const lastIntendedPageNumber = useRef(filter?.pageNumber ?? 1);
     const lastFetchStartedRef = useRef(false);
 
-    // Sync ref with store filter
     useEffect(() => {
       lastIntendedPageNumber.current = filter?.pageNumber ?? 1;
     }, [filter?.pageNumber]);
 
-    // Robust loading reset logic
     useEffect(() => {
       if (isRowsLoading) {
         lastFetchStartedRef.current = true;
       }
 
-      // If we are not loading, OR if the data/pageInfo has changed, reset navigation guards.
-      // This covers both network fetches and immediate cache returns.
       if (!isRowsLoading) {
         transitionInProgress.current = false;
         setIsNavigating(false);
@@ -189,6 +185,7 @@ export const ResponsesTable = React.memo(
 
     const handlePreviousPage = useCallback(() => {
       const currentPage = lastIntendedPageNumber.current;
+
       if (
         pageInfo?.hasPreviousPage &&
         pageInfo.startCursor &&
@@ -226,12 +223,14 @@ export const ResponsesTable = React.memo(
             Field: "field:",
             Meta: "meta:",
           };
+
           const prefixes = {
             Field: columnPrefix.Field,
             Meta: columnPrefix.Meta,
           };
 
           const fieldObj = formFields.find((f) => f.displayName === field);
+
           if (fieldObj) {
             sortBy = `${prefixes.Field}${fieldObj.id}`;
           } else {
@@ -285,6 +284,7 @@ export const ResponsesTable = React.memo(
     );
 
     const apiRef = useGridApiRef();
+
     const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
     const [contextMenu, setContextMenu] = useState<{
       mouseX: number;
@@ -314,7 +314,7 @@ export const ResponsesTable = React.memo(
     });
 
     const handleFileClick = useCallback(
-      (file: File) => {
+      (file: ResponseDisplayFile) => {
         downloadFileFromResponse(file, String(form?.id));
       },
       [form?.id],
@@ -324,6 +324,7 @@ export const ResponsesTable = React.memo(
       formId: form?.id,
       onFileClick: handleFileClick,
       searchQuery: filter?.query,
+      isInEditMode,
     });
 
     const handleCellClick = useCallback(
@@ -335,9 +336,11 @@ export const ResponsesTable = React.memo(
         if (isInEditMode && !params.isEditable) {
           event?.preventDefault?.();
           event?.stopPropagation?.();
+
           if (event) {
             event.defaultMuiPrevented = true;
           }
+
           return;
         }
 
@@ -347,15 +350,13 @@ export const ResponsesTable = React.memo(
 
         onCellEditStart();
 
-        setCellModesModel((prevModel: GridCellModesModel) => {
-          return {
-            ...prevModel,
-            [params.id]: {
-              ...prevModel[params.id],
-              [params.field]: { mode: GridCellModes.Edit },
-            },
-          };
-        });
+        setCellModesModel((prevModel: GridCellModesModel) => ({
+          ...prevModel,
+          [params.id]: {
+            ...prevModel[params.id],
+            [params.field]: { mode: GridCellModes.Edit },
+          },
+        }));
       },
       [isInEditMode, onCellEditStart],
     );
@@ -411,13 +412,16 @@ export const ResponsesTable = React.memo(
     const handleContextMenu = useCallback(
       (event: React.MouseEvent) => {
         event.preventDefault();
+
         const target = event.target as HTMLElement;
         const row = target.closest(".MuiDataGrid-row");
+
         if (!row) {
           return;
         }
 
         const rowId = row.getAttribute("data-id");
+
         if (!rowId) {
           return;
         }
@@ -445,6 +449,7 @@ export const ResponsesTable = React.memo(
       if (contextMenu?.row) {
         navigateToCreateResponseCopy(contextMenu.row);
       }
+
       handleCloseContextMenu();
     }, [contextMenu, navigateToCreateResponseCopy, handleCloseContextMenu]);
 
@@ -454,14 +459,15 @@ export const ResponsesTable = React.memo(
         Meta: "meta:",
       };
 
-      // 1. Build all possible columns
       const dynamicColumnsMap = new Map<string, GridColDef>();
+
       formFields.forEach((field) => {
         if (
           (field as any).typeId === FieldTypeIds.linkedForm ||
           field.fieldType === FieldTypeIds.linkedForm
-        )
+        ) {
           return;
+        }
 
         const columnId = `${prefixes.Field}${field.id}`;
         const gridField = field.displayName || field.name || field.id;
@@ -484,23 +490,36 @@ export const ResponsesTable = React.memo(
           renderCell: (params: GridRenderCellParams) => {
             const rowId = params.id;
             const cellError = validationErrors?.[rowId]?.[gridField];
+
             const content =
               params.value !== undefined && params.value !== null
                 ? formatCellValue(params.value, field)
                 : null;
+
             const display = content ?? <Box component="span" className="cell-box" />;
 
             if (isInEditMode && cellError) {
               return (
                 <CellErrorWrapper>
-                  <CellErrorText>{cellError}</CellErrorText>
+                  <CellErrorHeader>
+                    <CellErrorText title={cellError.message}>{cellError.message}</CellErrorText>
+
+                    {cellError.detail && (
+                      <Tooltip title={cellError.detail} arrow placement="top">
+                        <CellErrorInfoIcon aria-label="פירוט שגיאה">ⓘ</CellErrorInfoIcon>
+                      </Tooltip>
+                    )}
+                  </CellErrorHeader>
+
                   <CellValueFlex>{display}</CellValueFlex>
                 </CellErrorWrapper>
               );
             }
+
             return display;
           },
         };
+
         dynamicColumnsMap.set(columnId, col);
       });
 
@@ -581,7 +600,6 @@ export const ResponsesTable = React.memo(
           ) : null,
       });
 
-      // Special meta columns that are not in the standard list
       metaColumnsMap.set(`${prefixes.Meta}id`, {
         field: "id",
         headerName: "ID",
@@ -590,7 +608,6 @@ export const ResponsesTable = React.memo(
         sortable: true,
       });
 
-      // Structural columns
       const structuralColumns: GridColDef[] = [
         ...(expandColumn ? [expandColumn] : []),
         ...(hasFormInFormFields
@@ -618,7 +635,6 @@ export const ResponsesTable = React.memo(
           ]
         : [];
 
-      // 2. Resolve columns based on view config or default
       let resultColumns: GridColDef[] = [];
 
       if (currentViewConfig && currentViewConfig.length > 0) {
@@ -627,13 +643,17 @@ export const ResponsesTable = React.memo(
           .sort((a, b) => a.index - b.index)
           .map((vc) => {
             let columnId = "";
+
             if (vc.fieldId) {
               columnId = `${prefixes.Field}${vc.fieldId}`;
             } else if (vc.metaColumnId) {
               const metaName = Object.keys(MetaColumnIds).find(
                 (key) => MetaColumnIds[key as keyof typeof MetaColumnIds] === vc.metaColumnId,
               );
-              if (metaName) columnId = `${prefixes.Meta}${metaName}`;
+
+              if (metaName) {
+                columnId = `${prefixes.Meta}${metaName}`;
+              }
             }
 
             if (dynamicColumnsMap.has(columnId)) return dynamicColumnsMap.get(columnId);
@@ -643,7 +663,6 @@ export const ResponsesTable = React.memo(
           })
           .filter((col): col is GridColDef => col !== undefined);
       } else {
-        // Default columns if no view config
         resultColumns = [
           metaColumnsMap.get(`${prefixes.Meta}index`)!,
           ...Array.from(dynamicColumnsMap.values()),
@@ -675,15 +694,17 @@ export const ResponsesTable = React.memo(
         Meta: "meta:",
       };
 
-      // 1. If we have an active filter.sortBy, use it (highest priority)
       if (filter?.sortBy) {
         let gridField: string | undefined;
+
         if (filter.sortBy.startsWith(prefixes.Field)) {
           const fieldId = filter.sortBy.replace(prefixes.Field, "");
           const fieldObj = formFields.find((f) => String(f.id) === String(fieldId));
+
           gridField = fieldObj?.displayName || fieldObj?.name || fieldId;
         } else if (filter.sortBy.startsWith(prefixes.Meta)) {
           const metaName = filter.sortBy.replace(prefixes.Meta, "");
+
           switch (metaName) {
             case "index":
               gridField = "index";
@@ -716,21 +737,24 @@ export const ResponsesTable = React.memo(
         }
       }
 
-      // 2. If we have a current view with a primary sort, use it
       if (currentView?.sortColumnId) {
         const sortedColumn = currentView.columns?.find(
           (col) => col.id === currentView.sortColumnId,
         );
+
         if (sortedColumn) {
           let gridField: string | undefined;
+
           if (sortedColumn.fieldId) {
             const fieldObj = formFields.find((f) => String(f.id) === String(sortedColumn.fieldId));
+
             gridField = fieldObj?.displayName || fieldObj?.name || sortedColumn.fieldId;
           } else if (sortedColumn.metaColumnId) {
             const metaName = Object.keys(MetaColumnIds).find(
               (key) =>
                 MetaColumnIds[key as keyof typeof MetaColumnIds] === sortedColumn.metaColumnId,
             );
+
             switch (metaName) {
               case "index":
                 gridField = "index";
@@ -767,23 +791,28 @@ export const ResponsesTable = React.memo(
       const legacySort = currentView?.config?.columns?.find(
         (col) => col.sortDirection && col.sortOrder === 1,
       );
+
       if (legacySort) {
         let gridField = legacySort.columnId;
+
         const fieldObj = formFields.find(
           (f) => f.id === legacySort.columnId || (f as any).uniqueId === legacySort.columnId,
         );
-        if (fieldObj) gridField = fieldObj.displayName || fieldObj.name || fieldObj.id;
+
+        if (fieldObj) {
+          gridField = fieldObj.displayName || fieldObj.name || fieldObj.id;
+        }
 
         return [{ field: gridField, sort: legacySort.sortDirection as "asc" | "desc" }];
       }
 
-      // Default fallback
       return [{ field: "index", sort: "desc" }];
     }, [currentView, formFields, filter]);
 
     const handlePageSizeChange = useCallback(
       (event: any) => {
         const newSize = Number(event.target.value);
+
         setFilter({
           ...filter,
           pageSize: newSize,
@@ -833,6 +862,7 @@ export const ResponsesTable = React.memo(
                   </MenuItem>
                 ))}
               </Select>
+
               <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
                 תגובות בעמוד
               </Typography>
@@ -933,6 +963,7 @@ export const ResponsesTable = React.memo(
               },
             }}
           />
+
           <Menu
             open={contextMenu !== null}
             onClose={handleCloseContextMenu}

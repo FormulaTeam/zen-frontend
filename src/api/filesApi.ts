@@ -1,14 +1,18 @@
 import { decodeFileName } from "../utils/utils";
 import apiClient from "./config";
 
-/**
- * Upload a file for a specific response.
- *
- * @param formId - The ID of the form.
- * @param responseId - The ID of the response.
- * @param file - The file to upload.
- * @returns A promise that resolves to the upload response.
- */
+export type StoredFile = {
+  name: string;
+  path: string;
+};
+
+export type LocalDisplayFile = {
+  name: string;
+  file: File;
+};
+
+export type ResponseDisplayFile = StoredFile | LocalDisplayFile;
+
 export const uploadFile = async (
   formId: number | string,
   responseId: string,
@@ -30,14 +34,6 @@ export const uploadFile = async (
   return response.data;
 };
 
-/**
- * Download a file for a specific response.
- *
- * @param formId - The ID of the form.
- * @param responseId - The ID of the response.
- * @param fileId - The ID of the file to download.
- * @param fileName - The name of the file for the downloaded blob.
- */
 export const downloadFile = async (
   formId: number | string,
   responseId: string,
@@ -54,50 +50,57 @@ export const downloadFile = async (
 
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement("a");
+
     link.href = url;
     link.setAttribute("download", decodeFileName(fileName));
     document.body.appendChild(link);
     link.click();
     link.remove();
+
+    window.URL.revokeObjectURL(url);
   } catch (error) {
     console.error("Failed to download file:", error);
     throw error;
   }
 };
 
-// Legacy methods (kept for backward compatibility during transition)
-// ============================================================
-
-export const uploadFilesToS3 = async (files: any, formId: number): Promise<any> => {
-  const formData = new FormData();
-  files.newFiles.forEach((file) => formData.append("files", file));
-
-  const response = await apiClient.post<{ files: any }>(
-    `/responses/upload-file-to-s3?form_id=${formId}`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    },
-  );
-  return response?.data.files;
+const isLocalDisplayFile = (file: ResponseDisplayFile): file is LocalDisplayFile => {
+  return "file" in file;
 };
 
-export const downloadFileFromResponse = async (file, formId?: string): Promise<void> => {
+export const downloadFileFromResponse = async (
+  file: ResponseDisplayFile,
+  formId?: string,
+): Promise<void> => {
   try {
-    const params = { fileName: file.name, form_id: formId };
+    if (isLocalDisplayFile(file)) {
+      const url = URL.createObjectURL(file.file);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = decodeFileName(file.file.name);
+      link.click();
+
+      URL.revokeObjectURL(url);
+      return;
+    }
+
     const response = await apiClient.get(`/responses/download-file`, {
-      params,
+      params: {
+        fileName: file.name,
+        form_id: formId,
+      },
       responseType: "blob",
     });
 
-    const blob = response.data;
-    const fileName = file.name;
+    const url = URL.createObjectURL(response.data);
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = decodeFileName(fileName);
+
+    link.href = url;
+    link.download = decodeFileName(file.name);
     link.click();
+
+    URL.revokeObjectURL(url);
   } catch (error) {
     console.error("Failed to download file from response:", error);
     return Promise.reject(error);
@@ -106,5 +109,6 @@ export const downloadFileFromResponse = async (file, formId?: string): Promise<v
 
 export const deleteFilesFromS3 = async (fileKeys: string[]): Promise<{ message: string }> => {
   const response = await apiClient.post<{ message: string }>("/delete-files-from-s3", { fileKeys });
-  return response?.data;
+
+  return response.data;
 };

@@ -1,19 +1,27 @@
 import { FieldTypeIds } from "./interfaces";
 import { getKeyByValue } from "./utils";
+import { getOptionResponseRawValue } from "./optionResponseValue";
 
 export const normalizeFieldValue = (field: any, value: any): any => {
   let newValue = value;
   const key = getKeyByValue(FieldTypeIds, field.typeId);
 
   if (key) {
-    if (!["date", "hour", "checkbox", "number"].includes(key) && newValue === undefined)
+    if (!["date", "hour", "checkbox", "number"].includes(key) && newValue === undefined) {
       newValue = "";
+    }
   }
 
   if (field.typeId === FieldTypeIds.options) {
-    const multiSelect = Boolean(field.multiSelect ?? field.extra?.multiSelect ?? field.extra?.multiple);
-    if (multiSelect && newValue && !Array.isArray(newValue)) newValue = [newValue];
-    else if (!multiSelect && Array.isArray(newValue)) newValue = newValue[0];
+    const isMultiple = Boolean(field.extra?.multiple);
+
+    newValue = getOptionResponseRawValue(newValue);
+
+    if (isMultiple) {
+      return Array.isArray(newValue) ? newValue : newValue ? [newValue] : [];
+    }
+
+    return Array.isArray(newValue) ? (newValue[0] ?? "") : (newValue ?? "");
   }
 
   return newValue;
