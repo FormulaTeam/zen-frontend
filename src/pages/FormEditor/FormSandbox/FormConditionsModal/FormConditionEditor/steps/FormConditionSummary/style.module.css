@@ -180,3 +180,10 @@
     color: #757575 !important;
     margin-left: 2px;
 }
+
+.conditionValue {
+    display: flex;
+    align-items: center;
+    gap: 4;
+    min-width: 0;
+}

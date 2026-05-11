@@ -928,7 +928,9 @@ export const ResponsesTable = React.memo(
             getCellClassName={getCellClassName}
             density="comfortable"
             rowHeight={isInEditMode ? 140 : 65}
-            loading={!isInEditMode && isRowsLoading && localRows.length === 0}
+            loading={
+              !isInEditMode && isRowsLoading && rows.length === 0 && form?.responsesCount !== 0
+            }
             checkboxSelection
             disableRowSelectionOnClick
             onRowSelectionModelChange={onRowSelectionModelChange}
@@ -940,6 +942,7 @@ export const ResponsesTable = React.memo(
             getRowId={(row) => row?.id}
             localeText={{
               ...heIL.components.MuiDataGrid.defaultProps.localeText,
+              noRowsLabel: "אין תגובות",
               columnMenuLabel: "פעולות",
               pinToLeft: "נעץ מימין",
               pinToRight: "נעץ משמאל",
