@@ -24,6 +24,12 @@ interface CustomDropDownAutocompleteProps {
   onBlurHandler?: () => void;
   validationMessage?: string | null;
   validationDetail?: string | null;
+  onInputChange?: (event: React.SyntheticEvent, value: string, reason: string) => void;
+  onScrollToBottom?: () => void;
+  loading?: boolean;
+  inputValue?: string;
+  filterOptions?: (options: unknown[], state: any) => unknown[];
+  noOptionsText?: string;
 }
 
 const normalizeToArray = (value: string | string[] | null | undefined): string[] => {
@@ -45,6 +51,12 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   isTabularEdit = false,
   validationMessage,
   validationDetail,
+  onInputChange,
+  onScrollToBottom,
+  loading,
+  inputValue,
+  filterOptions,
+  noOptionsText
 }) => {
   const [selectedValues, setSelectedValues] = useState<string[]>(normalizeToArray(value));
   const hasTriggeredBlurRef = useRef(false);
@@ -94,6 +106,16 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
     }
   };
 
+  const handleListboxScroll = (event: React.UIEvent<HTMLUListElement>) => {
+    const listboxNode = event.currentTarget;
+    if (
+      onScrollToBottom &&
+      listboxNode.scrollTop + listboxNode.clientHeight >= listboxNode.scrollHeight - 10
+    ) {
+      onScrollToBottom();
+    }
+  };
+
   return (
     <FormControl
       fullWidth
@@ -128,12 +150,13 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         slotProps={{
           listbox: {
             component: StyledListbox,
+            onScroll: handleListboxScroll,
             sx: {
               p: "6px",
               direction: "rtl",
 
               "& .MuiAutocomplete-option": {
-                minHeight: "36px",
+                minHeight: "40px",
                 borderRadius: "8px",
                 px: "10px",
                 py: "7px",
@@ -166,7 +189,12 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         disabled={isDisabled}
         multiple={multipleOptions}
         options={options}
+        noOptionsText={noOptionsText}
+        loading={loading}
+        onInputChange={onInputChange}
         value={autocompleteValue}
+        {...(inputValue !== undefined ? { inputValue } : {})}
+        {...(filterOptions ? { filterOptions } : {})}
         onChange={(event: any, nextValue: any) => {
           hasTriggeredBlurRef.current = false;
           onSelectHandler(event, nextValue);

@@ -1,6 +1,6 @@
 import { fieldConnectionTooltipTexts, FieldTypeIds } from "@utils/interfaces";
 import { ExtraElementProps } from "../../index";
-import { OptionsSource } from "@pages/FormEditor/schemas/fields/optionsSchema";
+
 import {
   SpecificDiscriminatedUnionSubObject,
   SpecificDiscriminatedUnionSubObjectErrorTree,
@@ -11,6 +11,7 @@ import { FormFieldResponsesOptions } from "./FormFieldResponsesOptions";
 import { Checkbox, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Tooltip } from "@mui/material";
 import { ManualOptions } from "./ManualOptions";
 import { Info } from "@mui/icons-material";
+import { OptionsSource, optionsSource } from "formula-gear";
 
 type FieldTypeId = typeof FieldTypeIds.options;
 
@@ -23,30 +24,22 @@ interface Props extends ExtraElementProps<FieldTypeId> {
 
 function OptionsFieldExtra({ fieldId, extra, onChange, validationErrors, disabled }: Props) {
   const {
-    source = OptionsSource.MANUAL,
+    source = optionsSource.Manual,
     multiple = false,
   } = extra;
 
   let optionsElement: ReactElement | null = null;
-  let options: SpecificOptions<OptionsSource>;
-  let optionsValidationErrors: SpecificOptionsErrors<OptionsSource> | undefined;
 
   switch (source) {
-    case OptionsSource.FORM_FIELD_RESPONSES:
-      options = extra.options as SpecificOptions<OptionsSource.FORM_FIELD_RESPONSES>;
-      optionsValidationErrors = validationErrors?.properties?.options as SpecificOptionsErrors<OptionsSource.FORM_FIELD_RESPONSES> | undefined;
-
-      optionsElement = <FormFieldResponsesOptions options={options}
-        validationErrors={optionsValidationErrors}
+    case optionsSource.FormFieldResponses:
+      optionsElement = <FormFieldResponsesOptions options={extra.options as SpecificOptions<typeof optionsSource.FormFieldResponses>}
+        validationErrors={validationErrors?.properties?.options as SpecificOptionsErrors<typeof optionsSource.FormFieldResponses> | undefined}
         onChange={onChange} />;
       break;
-    case OptionsSource.MANUAL:
-      options = extra.options as SpecificOptions<OptionsSource.MANUAL>;
-      optionsValidationErrors = validationErrors?.properties?.options as SpecificOptionsErrors<OptionsSource.MANUAL> | undefined;
-
+    case optionsSource.Manual:
       optionsElement = <ManualOptions fieldId={fieldId}
-        options={options}
-        validationErrors={optionsValidationErrors}
+        options={extra.options as SpecificOptions<typeof optionsSource.Manual>}
+        validationErrors={validationErrors?.properties?.options as SpecificOptionsErrors<typeof optionsSource.Manual> | undefined}
         onChange={onChange} />;
       break;
   }
@@ -58,8 +51,8 @@ function OptionsFieldExtra({ fieldId, extra, onChange, validationErrors, disable
         <RadioGroup row value={source} onChange={(e) => {
           onChange({ source: +e.target.value as OptionsSource, options: undefined });
         }}>
-          <FormControlLabel value={OptionsSource.MANUAL} control={<Radio />} label="ידני" />
-          <FormControlLabel value={OptionsSource.FORM_FIELD_RESPONSES} control={<Radio />} label={
+          <FormControlLabel value={optionsSource.Manual} control={<Radio />} label="ידני" />
+          <FormControlLabel value={optionsSource.FormFieldResponses} control={<Radio />} label={
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <span>מטופס</span>
               <Tooltip title={fieldConnectionTooltipTexts.FormConnection}>

@@ -1,4 +1,3 @@
-import { OptionsSource } from "@pages/FormEditor/schemas/fields/optionsSchema";
 import React, { useEffect, useState, useMemo } from "react";
 import { FormControl, CircularProgress, Autocomplete, TextField, Tooltip } from "@mui/material";
 import { ExtraElementProps } from "../../../index";
@@ -10,11 +9,11 @@ import { FormSectionDto, FormFieldDto } from "@src/types/shared";
 import { useFormStructureContext } from "@pages/FormEditor/context/FormStructureContext";
 import { FormOption } from "@utils/interfaces";
 import { LoaderContainer, Container, FieldControl } from "./styled";
-import { fieldType } from "formula-gear";
+import { fieldType, optionsSource } from "formula-gear";
 
 interface Props extends Omit<ExtraElementProps<OptionsFieldTypeId>, "extra" | "validationErrors" | "disabled"> {
-  options: SpecificOptions<OptionsSource.FORM_FIELD_RESPONSES>;
-  validationErrors: SpecificOptionsErrors<OptionsSource.FORM_FIELD_RESPONSES> | undefined;
+  options: SpecificOptions<typeof optionsSource.FormFieldResponses>;
+  validationErrors: SpecificOptionsErrors<typeof optionsSource.FormFieldResponses> | undefined;
 }
 
 interface ValidField {
@@ -86,7 +85,7 @@ function FormFieldResponsesOptions(props: Props) {
   }, [availableFields, options?.fieldId]);
 
   useEffect(() => {
-    onChange({ source: OptionsSource.FORM_FIELD_RESPONSES, options });
+    onChange({ source: optionsSource.FormFieldResponses, options });
   }, []);
 
   if (isInitializing) {
@@ -111,7 +110,7 @@ function FormFieldResponsesOptions(props: Props) {
         }}
         onChange={(_, newValue) => {
           onChange({
-            source: OptionsSource.FORM_FIELD_RESPONSES,
+            source: optionsSource.FormFieldResponses,
             options: { ...options, formId: newValue ? newValue.id.toString() : "", fieldId: "" }
           });
         }}
@@ -149,7 +148,7 @@ function FormFieldResponsesOptions(props: Props) {
             onOpen={() => setFieldTouchAttempted(true)}
             onChange={(_, newValue) => {
               onChange({
-                source: OptionsSource.FORM_FIELD_RESPONSES,
+                source: optionsSource.FormFieldResponses,
                 options: { ...options, fieldId: newValue ? newValue.id : "" }
               });
             }}

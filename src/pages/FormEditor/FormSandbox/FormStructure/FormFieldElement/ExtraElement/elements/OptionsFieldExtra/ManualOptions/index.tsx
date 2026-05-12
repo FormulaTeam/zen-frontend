@@ -1,5 +1,4 @@
-import { OptionsSource } from "../../../../../../../schemas/fields/optionsSchema";
-import { Button, FormControl, FormHelperText, InputLabel, MenuItem, Select, Tooltip, Autocomplete, TextField } from "@mui/material";
+import { Button, FormControl, Tooltip, Autocomplete, TextField } from "@mui/material";
 import { ExtraElementProps } from "../../../index";
 import { OptionsFieldTypeId, SpecificOptions, SpecificOptionsErrors } from "../index";
 import { Close } from "@mui/icons-material";
@@ -12,14 +11,15 @@ import { FormFieldExtra } from "../../../../../../../schemas/fields";
 import styles from "./style.module.css";
 import { ManualOptionsItemField } from "./ManualOptionsItemField";
 import { ManualOptionsControllingItemsList } from "./ManualOptionsControllingItemsList";
+import { optionsSource } from "formula-gear";
 
 interface Props extends Omit<ExtraElementProps<OptionsFieldTypeId>, "extra" | "validationErrors" | "disabled"> {
   fieldId: string;
-  options: SpecificOptions<OptionsSource.MANUAL>;
-  validationErrors: SpecificOptionsErrors<OptionsSource.MANUAL> | undefined;
+  options: SpecificOptions<typeof optionsSource.Manual>;
+  validationErrors: SpecificOptionsErrors<typeof optionsSource.Manual> | undefined;
 }
 
-type ManualOptions = SpecificOptions<OptionsSource.MANUAL>;
+type ManualOptions = SpecificOptions<typeof optionsSource.Manual>;
 type ManualItems = ManualOptions["items"];
 
 function generateEmptyItem(): ArrayElement<ManualItems> {
@@ -52,7 +52,7 @@ function ManualOptions(props: Props) {
     return (
       fieldId !== id &&
       fieldData.typeId === FieldTypeIds.options &&
-      fieldData.extra?.source === OptionsSource.MANUAL &&
+      fieldData.extra?.source === optionsSource.Manual &&
       fieldData.displayName
     );
   }), [formStructure.fields, id]);
@@ -60,7 +60,7 @@ function ManualOptions(props: Props) {
   const definedItems = useMemo(() => items?.filter((item) => !!item.text), [items]);
 
   useEffect(() => {
-    onChange({ source: OptionsSource.MANUAL as const, options: { ...options, items } });
+    onChange({ source: optionsSource.Manual, options: { ...options, items } });
   }, []);
 
   useEffect(() => {

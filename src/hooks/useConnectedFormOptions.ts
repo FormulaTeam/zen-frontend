@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import { connectionTypes } from "../utils/interfaces";
-import { getResponses } from "../api";
-import { v4 as uuidv4 } from "uuid";
-import { FormFieldDto, ResponseDto } from "../types/shared";
+import { getFieldValues, OPTIONS_PAGINATION_LIMIT } from "../api/responsesApi";
+import { FormFieldDto } from "../types/shared";
+import { optionsSource } from "formula-gear";
 
 type ConnectedFieldExtra = {
-  connectionType?: string | number;
-  linkedFormId?: number;
-  connectedFieldId?: string;
+  source?: number;
+  options?: {
+    formId?: string | number;
+    fieldId?: string;
+  };
+  multiple?: boolean;
 };
 
 type ConnectedFormField = FormFieldDto & {
@@ -27,131 +29,84 @@ interface UseConnectedFormOptionsReturn {
   fieldOptions: Record<string, FieldOptionValue[]>;
   isLoading: boolean;
   error: string | null;
+  loadMoreOptions: (fieldId: string, search?: string) => Promise<void>;
 }
 
 const getFieldExtra = (field: ConnectedFormField): ConnectedFieldExtra =>
   (field.extra as ConnectedFieldExtra | undefined) ?? {};
 
-/**
- * Custom hook to load options for form fields that are connected to other forms
- */
+const isConnectedToForm = (field: ConnectedFormField): boolean => {
+  const extra = getFieldExtra(field);
+  return (
+    extra.source === optionsSource.FormFieldResponses &&
+    !!extra.options?.formId &&
+    !!extra.options?.fieldId
+  );
+};
+
+const getLinkedFormId = (field: ConnectedFormField): number | undefined => {
+  const extra = getFieldExtra(field);
+  const formId = extra.options?.formId;
+  return formId !== undefined ? Number(formId) : undefined;
+};
+
+const getLinkedFieldId = (field: ConnectedFormField): string | undefined => {
+  return getFieldExtra(field).options?.fieldId;
+};
+
 export const useConnectedFormOptions = ({
   formFields,
 }: UseConnectedFormOptionsProps): UseConnectedFormOptionsReturn => {
   const [fieldOptions, setFieldOptions] = useState<Record<string, FieldOptionValue[]>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const offsetRef = useRef<Record<string, number>>({});
   const loadedFieldsRef = useRef<Set<string>>(new Set());
 
-  /**
-   * Filters form fields to get only those connected to other forms
-   */
-  const getConnectedToFormFields = (fields: ConnectedFormField[]): ConnectedFormField[] => {
-    return fields.filter((field) => {
-      const extra = getFieldExtra(field);
+  const loadOptionsForField = async (
+    field: ConnectedFormField,
+    search?: string,
+    offset = 0,
+  ): Promise<void> => {
+    const linkedFormId = getLinkedFormId(field);
+    const linkedFieldId = getLinkedFieldId(field);
 
-      return (
-        extra.connectionType === connectionTypes.form &&
-        !!extra.linkedFormId &&
-        !!extra.connectedFieldId &&
-        !loadedFieldsRef.current.has(field.id)
-      );
+    if (!linkedFormId || !linkedFieldId) return;
+
+    const result = await getFieldValues(linkedFormId, linkedFieldId, {
+      limit: OPTIONS_PAGINATION_LIMIT,
+      offset,
+      search,
     });
-  };
 
-  /**
-   * Extracts unique form IDs from connected fields
-   */
-  const getUniqueFormIds = (connectedFields: ConnectedFormField[]): number[] => {
-    return [
-      ...new Set<number>(
-        connectedFields
-          .map((field) => getFieldExtra(field).linkedFormId)
-          .filter((id): id is number => id !== undefined),
-      ),
-    ];
-  };
-
-  /**
-   * Formats response options for a field
-   */
-  const formatFieldOptions = (
-    options: Array<{ value?: unknown; fieldId?: string }>,
-  ): FieldOptionValue[] => {
-    return options.map((option) => ({
-      value: option?.value,
-      fieldId: option?.fieldId || `generated-${uuidv4()}`,
+    const formattedOptions: FieldOptionValue[] = result.data.map((item) => ({
+      value: item.value,
+      fieldId: item.responseId,
     }));
+
+    setFieldOptions((prev) => ({
+      ...prev,
+      [field.id]: offset === 0
+        ? formattedOptions
+        : [...(prev[field.id] ?? []), ...formattedOptions],
+    }));
+
+    offsetRef.current[field.id] = offset + result.data.length;
   };
 
-  /**
-   * Removes duplicate options based on value
-   */
-  const removeDuplicateOptions = (
-    newOptions: FieldOptionValue[],
-    existingOptions: FieldOptionValue[],
-  ): FieldOptionValue[] => {
-    const existingValues = new Set(existingOptions.map((opt) => opt.value));
-    return newOptions.filter((option) => !existingValues.has(option.value));
-  };
+  const loadMoreOptions = async (fieldId: string, search?: string): Promise<void> => {
+    const field = formFields.find((f) => f.id === fieldId);
+    if (!field || !isConnectedToForm(field)) return;
 
-  /**
-   * Processes responses and updates field options
-   */
-  const processResponses = (
-    responses: ResponseDto[][],
-    connectedFields: ConnectedFormField[],
-  ): Record<string, FieldOptionValue[]> => {
-    const newFieldOptions: Record<string, FieldOptionValue[]> = {};
-
-    responses.forEach((responseList) => {
-      connectedFields.forEach((field) => {
-        const extra = getFieldExtra(field);
-        loadedFieldsRef.current.add(field.id);
-
-        const options = responseList
-          .map((response) =>
-            response.fieldValues.find((value) => value.fieldId === extra.connectedFieldId),
-          )
-          .filter((value): value is NonNullable<typeof value> => Boolean(value));
-
-        if (options.length > 0) {
-          const formattedOptions = formatFieldOptions(options);
-          const existingOptions = newFieldOptions[field.id] || [];
-          const uniqueOptions = removeDuplicateOptions(formattedOptions, existingOptions);
-
-          if (uniqueOptions.length > 0) {
-            newFieldOptions[field.id] = [...existingOptions, ...uniqueOptions];
-          }
-        }
-      });
-    });
-
-    return newFieldOptions;
-  };
-
-  /**
-   * Loads options for connected form fields
-   */
-  const loadConnectedFormOptions = async (connectedFields: ConnectedFormField[]): Promise<void> => {
-    const formIds = getUniqueFormIds(connectedFields);
-    const promises = formIds.map((formId) => getResponses(formId, { form_id: formId }));
+    const currentOffset = search !== undefined ? 0 : (offsetRef.current[fieldId] ?? 0);
 
     try {
       setIsLoading(true);
       setError(null);
-
-      const responses = (await Promise.all(promises)) as ResponseDto[][];
-      const newFieldOptions = processResponses(responses, connectedFields);
-
-      if (Object.keys(newFieldOptions).length > 0) {
-        setFieldOptions((prev) => ({
-          ...prev,
-          ...newFieldOptions,
-        }));
-      }
+      await loadOptionsForField(field, search, currentOffset);
     } catch (err) {
-      const errorMessage = `Error loading options for connected fields: ${err}`;
+      const errorMessage = `Error loading options for field ${fieldId}: ${err}`;
       console.error(errorMessage);
       setError(errorMessage);
     } finally {
@@ -160,17 +115,41 @@ export const useConnectedFormOptions = ({
   };
 
   useEffect(() => {
-    if (!formFields) return;
+    if (!formFields || formFields.length === 0) return;
 
-    const connectedToFormFields = getConnectedToFormFields(formFields);
-    if (connectedToFormFields.length === 0) return;
+    const connectedFields = formFields.filter(
+      (field) => isConnectedToForm(field) && !loadedFieldsRef.current.has(field.id),
+    );
 
-    loadConnectedFormOptions(connectedToFormFields);
+    if (connectedFields.length === 0) return;
+
+    const loadAll = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        await Promise.all(
+          connectedFields.map((field) => {
+            loadedFieldsRef.current.add(field.id);
+            return loadOptionsForField(field, undefined, 0);
+          }),
+        );
+      } catch (err) {
+        const errorMessage = `Error loading connected form options: ${err}`;
+        console.error(errorMessage);
+        setError(errorMessage);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadAll();
   }, [formFields]);
 
   return {
     fieldOptions,
     isLoading,
     error,
+    loadMoreOptions,
   };
 };
