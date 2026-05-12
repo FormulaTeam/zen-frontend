@@ -24,6 +24,9 @@ interface CustomDropDownAutocompleteProps {
   onBlurHandler?: () => void;
   validationMessage?: string | null;
   validationDetail?: string | null;
+  onInputChange?: (event: React.SyntheticEvent, value: string, reason: string) => void;
+  onScrollToBottom?: () => void;
+  loading?: boolean;
 }
 
 const normalizeToArray = (value: string | string[] | null | undefined): string[] => {
@@ -45,6 +48,9 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   isTabularEdit = false,
   validationMessage,
   validationDetail,
+  onInputChange,
+  onScrollToBottom,
+  loading,
 }) => {
   const [selectedValues, setSelectedValues] = useState<string[]>(normalizeToArray(value));
   const hasTriggeredBlurRef = useRef(false);
@@ -94,6 +100,16 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
     }
   };
 
+  const handleListboxScroll = (event: React.UIEvent<HTMLUListElement>) => {
+    const listboxNode = event.currentTarget;
+    if (
+      onScrollToBottom &&
+      listboxNode.scrollTop + listboxNode.clientHeight >= listboxNode.scrollHeight - 10
+    ) {
+      onScrollToBottom();
+    }
+  };
+
   return (
     <FormControl
       fullWidth
@@ -128,9 +144,11 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         slotProps={{
           listbox: {
             component: StyledListbox,
+            onScroll: handleListboxScroll,
             sx: {
               p: "6px",
               direction: "rtl",
+              maxHeight: "300px",
 
               "& .MuiAutocomplete-option": {
                 minHeight: "36px",
@@ -166,6 +184,8 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         disabled={isDisabled}
         multiple={multipleOptions}
         options={options}
+        loading={loading}
+        onInputChange={onInputChange}
         value={autocompleteValue}
         onChange={(event: any, nextValue: any) => {
           hasTriggeredBlurRef.current = false;

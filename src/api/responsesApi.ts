@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 import { responsesScopeOption, SortDirection } from "formula-gear";
@@ -488,6 +488,8 @@ export const getResponsesRows = async ({
   }
 };
 
+export const OPTIONS_PAGINATION_LIMIT = 10;
+
 export const getFieldValues = async (
   formId: number,
   fieldId: string,
@@ -507,4 +509,32 @@ export const getFieldValues = async (
     console.error("Failed to fetch field values:", error);
     throw error;
   }
+};
+
+export const useGetInfiniteFieldValues = (
+  formId?: number,
+  fieldId?: string,
+  search: string = ""
+) => {
+  return useInfiniteQuery({
+    queryKey: ["fieldValues", formId, fieldId, search],
+    queryFn: async ({ pageParam = 0 }) => {
+      if (!formId || !fieldId) {
+        throw new Error("Missing formId or fieldId");
+      }
+      return getFieldValues(formId, fieldId, {
+        limit: OPTIONS_PAGINATION_LIMIT,
+        offset: pageParam,
+        search,
+      });
+    },
+    enabled: !!formId && !!fieldId,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.data.length < lastPage.limit) {
+        return undefined;
+      }
+      return lastPage.offset + lastPage.limit;
+    },
+  });
 };

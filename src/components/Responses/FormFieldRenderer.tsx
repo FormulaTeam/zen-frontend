@@ -19,6 +19,7 @@ import CustomTextField from "../FormFields/CustomTextField/CustomTextField";
 import CustomTimePicker from "../FormFields/CustomTimePicker/CustomTimePicker";
 import LinkTextField from "../FormFields/LinkTextField/LinkTextField";
 import { FormFieldWrapper, StyledBox } from "./FormFieldRenderer.styled";
+import { useGetInfiniteFieldValues } from "../../api/responsesApi";
 
 type OptionItem = {
   id: string;
@@ -211,6 +212,51 @@ const getLinkErrorDetails = (
   };
 };
 
+const ConnectedDropDownAutocomplete = (props: any) => {
+  const { connectedFormId, connectedFieldId, selectedValues, onInputChange, ...rest } = props;
+  const [searchTerm, setSearchTerm] = React.useState("");
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useGetInfiniteFieldValues(
+    connectedFormId,
+    connectedFieldId,
+    searchTerm
+  );
+
+  const availableOptions = React.useMemo(() => {
+    const fetchedOptions = data?.pages.flatMap((page) => page.data.map(item => String(item.value))) || [];
+    const combined = [...new Set([...fetchedOptions, ...(Array.isArray(selectedValues) ? selectedValues : [selectedValues]).filter(Boolean)])];
+    return combined;
+  }, [data, selectedValues]);
+
+  const handleInputChange = (event: React.SyntheticEvent, value: string, reason: string) => {
+    if (reason === "input") {
+      setSearchTerm(value);
+    } else if (reason === "clear") {
+      setSearchTerm("");
+    }
+    if (onInputChange) {
+      onInputChange(event, value, reason);
+    }
+  };
+
+  const handleScrollToBottom = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  return (
+    <CustomDropDownAutocomplete
+      {...rest}
+      value={selectedValues}
+      options={availableOptions}
+      onInputChange={handleInputChange}
+      onScrollToBottom={handleScrollToBottom}
+      loading={isLoading || isFetchingNextPage}
+    />
+  );
+};
+
 const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   formField,
   formFieldsByIdMap,
@@ -313,35 +359,18 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         }
       }
 
-      let availableOptions: string[] = [];
       const connectedToForm = isConnectedToForm(formField);
+      let connectedFormId: number | undefined;
+      let connectedFieldId: string | undefined;
 
       if (connectedToForm) {
-        availableOptions =
-          fieldOptions[fieldId]?.map((optionField) => String(optionField.value)) || [];
+        connectedFormId = Number(formFieldExtra.options?.formId);
+        connectedFieldId = formFieldExtra.options?.fieldId;
+      }
 
-        if (
-          formFields.some(
-            (candidateField) => getFieldExtra(candidateField).parentFieldId === fieldId,
-          )
-        ) {
-          const uniqueOptions = new Set<string>();
-          const filteredOptions = fieldOptions[fieldId]
-            ?.map((optionField) => String(optionField.value))
-            .filter((value) => {
-              if (!uniqueOptions.has(value)) {
-                uniqueOptions.add(value);
-                return true;
-              }
+      let availableOptions: string[] = [];
 
-              return false;
-            });
-
-          availableOptions = filteredOptions || [];
-        } else {
-          availableOptions = Array.from(new Set(availableOptions));
-        }
-      } else {
+      if (!connectedToForm) {
         availableOptions = getFieldOptions(formField);
       }
 
@@ -510,28 +539,54 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 
       availableOptions = availableOptions.filter((option) => !!option);
 
-      input = (
-        <CustomDropDownAutocomplete
-          key={index}
-          defaultValue={defaultValue}
-          label={formField.displayName}
-          isRequired={formField.isRequired}
-          isDisabled={viewMode}
-          onChangeHandler={(nextValue: string[] | string) => {
-            onChangeHandler(nextValue, fieldId);
-          }}
-          onBlurHandler={() => {
-            onBlurHandler(fieldId);
-          }}
-          value={value}
-          multipleOptions={multiSelect}
-          options={availableOptions}
-          optionLabels={optionLabels}
-          validationMessage={validationMessage}
-          validationDetail={validationDetail}
-          isTabularEdit={isTabularEdit}
-        />
-      );
+      if (connectedToForm && connectedFormId && connectedFieldId) {
+        input = (
+          <ConnectedDropDownAutocomplete
+            key={index}
+            connectedFormId={connectedFormId}
+            connectedFieldId={connectedFieldId}
+            selectedValues={value}
+            defaultValue={defaultValue}
+            label={formField.displayName}
+            isRequired={formField.isRequired}
+            isDisabled={viewMode}
+            onChangeHandler={(nextValue: string[] | string) => {
+              onChangeHandler(nextValue, fieldId);
+            }}
+            onBlurHandler={() => {
+              onBlurHandler(fieldId);
+            }}
+            multipleOptions={multiSelect}
+            optionLabels={optionLabels}
+            validationMessage={validationMessage}
+            validationDetail={validationDetail}
+            isTabularEdit={isTabularEdit}
+          />
+        );
+      } else {
+        input = (
+          <CustomDropDownAutocomplete
+            key={index}
+            defaultValue={defaultValue}
+            label={formField.displayName}
+            isRequired={formField.isRequired}
+            isDisabled={viewMode}
+            onChangeHandler={(nextValue: string[] | string) => {
+              onChangeHandler(nextValue, fieldId);
+            }}
+            onBlurHandler={() => {
+              onBlurHandler(fieldId);
+            }}
+            value={value}
+            multipleOptions={multiSelect}
+            options={availableOptions}
+            optionLabels={optionLabels}
+            validationMessage={validationMessage}
+            validationDetail={validationDetail}
+            isTabularEdit={isTabularEdit}
+          />
+        );
+      }
       break;
     }
 

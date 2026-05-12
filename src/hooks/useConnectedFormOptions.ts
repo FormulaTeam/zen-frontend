@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { getFieldValues } from "../api";
+import { getFieldValues, OPTIONS_PAGINATION_LIMIT } from "../api/responsesApi";
 import { FormFieldDto } from "../types/shared";
 import { optionsSource } from "formula-gear";
 
@@ -74,10 +74,8 @@ export const useConnectedFormOptions = ({
 
     if (!linkedFormId || !linkedFieldId) return;
 
-    const LIMIT = 50;
-
     const result = await getFieldValues(linkedFormId, linkedFieldId, {
-      limit: LIMIT,
+      limit: OPTIONS_PAGINATION_LIMIT,
       offset,
       search,
     });
