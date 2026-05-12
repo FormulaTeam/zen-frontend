@@ -15,7 +15,7 @@ import {
   getFieldValidationMessage,
   FormCondition,
   FormConditionBooleanOperator,
-  FormConditionGroup,
+  optionsSource,
   FormConditionPredicate,
 } from "formula-gear";
 import { getResponseById, useGetForm } from "../api";
@@ -149,11 +149,66 @@ const getDefaultFieldValue = (field: FormFieldWithSectionDto) => {
   return extra.value;
 };
 
-const toValidatorField = (field: FormFieldDto): FormFieldLike => ({
-  typeId: field.fieldType,
-  required: field.isRequired,
-  extra: field.extra,
-});
+const toValidatorField = (
+  field: FormFieldDto,
+  fieldOptions?: Record<string, any[]>,
+  submittedValue?: any
+): FormFieldLike => {
+  if (field.fieldType === FieldTypeIds.options) {
+    const extra = (field.extra ?? {}) as any;
+    const isMultiSelect = Boolean(extra?.multiSelect ?? extra?.multiple);
+
+    let items: { id: string; text: string }[] = [];
+
+    if (extra?.source === optionsSource.FormFieldResponses) {
+      if (fieldOptions?.[field.id]) {
+        items = fieldOptions[field.id].map((opt: any) => ({
+          id: String(opt.value),
+          text: String(opt.value),
+        }));
+      }
+
+      if (submittedValue != null) {
+        const vals = Array.isArray(submittedValue) ? submittedValue : [submittedValue];
+        vals.forEach((val: any) => {
+          const strVal = String(val);
+          if (!items.find((i) => i.id === strVal)) {
+            items.push({ id: strVal, text: strVal });
+          }
+        });
+      }
+    } else if (extra?.options?.items) {
+      items = extra.options.items.map((item: any) => ({
+        id: String(item.id),
+        text: String(item.text || item.id),
+      }));
+    } else if (Array.isArray(extra?.options)) {
+      items = extra.options.map((opt: any) => ({
+        id: String(opt),
+        text: String(opt),
+      }));
+    }
+
+    return {
+      typeId: field.fieldType,
+      required: field.isRequired,
+      extra: {
+        source: extra.source,
+        multiple: isMultiSelect,
+        options: {
+          items,
+        },
+        ...(extra.dependencies ? { dependencies: extra.dependencies } : {}),
+      },
+    } as unknown as FormFieldLike;
+  }
+
+  return {
+    typeId: field.fieldType,
+    required: field.isRequired,
+    extra: field.extra,
+  } as unknown as FormFieldLike;
+};
 
 const toFieldValidationError = (
   issues: readonly { path: readonly PropertyKey[]; message: string }[],
@@ -733,7 +788,7 @@ export const useResponseState = (
 
     const valuesMap = valuesMapOverride ?? formFieldsValuesMapRef.current;
     const rawValue = valuesMap.get(normalizedFieldId);
-    const result = validateFormFieldValue(toValidatorField(field), rawValue);
+    const result = validateFormFieldValue(toValidatorField(field, fieldOptions, rawValue), rawValue);
 
     if (markTouched) {
       setFormFieldsTouchedMap((prev) => {
@@ -912,7 +967,7 @@ export const useResponseState = (
       nextTouchedMap.set(currentFieldId, true);
 
       const rawValue = nextParsedValuesMap.get(currentFieldId);
-      const result = validateFormFieldValue(toValidatorField(field), rawValue);
+      const result = validateFormFieldValue(toValidatorField(field, fieldOptions, rawValue), rawValue);
 
       if (result.success) {
         nextParsedValuesMap.set(currentFieldId, result.data);

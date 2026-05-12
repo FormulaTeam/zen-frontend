@@ -17,11 +17,11 @@ import { ArrayElement, DeepPartial } from "../../../../../../../../../types/util
 import styles from "./style.module.scss";
 import { FormStructure } from "../../../../../../../context/FormStructureContext";
 import { FormFieldExtra } from "../../../../../../../schemas/fields";
-import { OptionsSource } from "../../../../../../../schemas/fields/optionsSchema";
 import {
   SpecificOptions,
 } from "../../../../../../FormStructure/FormFieldElement/ExtraElement/elements/OptionsFieldExtra";
 import { GroupItemValidationErrors } from "../../types";
+import { optionsSource } from "formula-gear";
 
 
 interface Props {
@@ -70,7 +70,7 @@ function FormConditionPredicateElement({
             items: (
               (
                 fields[condition.field.id].data.extra as FormFieldExtra<typeof FieldTypeIds.options>
-              )?.options as SpecificOptions<typeof OptionsSource.MANUAL>
+              )?.options as SpecificOptions<typeof optionsSource.Manual>
             ).items,
           } :
           undefined

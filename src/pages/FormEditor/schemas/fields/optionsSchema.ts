@@ -10,11 +10,7 @@ import {
   record,
   string,
 } from "zod";
-
-enum OptionsSource {
-  MANUAL = 1,
-  FORM_FIELD_RESPONSES = 2,
-}
+import { optionsSource } from "formula-gear";
 
 const noFormSelectedErrorMessage = "לא נבחר טופס";
 const noFieldSelectedErrorMessage = "לא נבחר שדה";
@@ -28,7 +24,7 @@ const baseOptionsExtraSchema = object({
 });
 
 const manualOptionsSchema = baseOptionsExtraSchema.extend({
-  source: literal(OptionsSource.MANUAL),
+  source: literal(optionsSource.Manual),
 
   options: object({
     items: array(
@@ -74,7 +70,7 @@ const manualOptionsSchema = baseOptionsExtraSchema.extend({
 });
 
 const formFieldResponsesOptionsSchema = baseOptionsExtraSchema.extend({
-  source: literal(OptionsSource.FORM_FIELD_RESPONSES),
+  source: literal(optionsSource.FormFieldResponses),
 
   options: object({
     formId: string(noFormSelectedErrorMessage).min(1, noFormSelectedErrorMessage),
@@ -88,5 +84,4 @@ const optionsSchema = baseFormFieldSchema.extend({
   extra: discriminatedUnion("source", [manualOptionsSchema, formFieldResponsesOptionsSchema]).optional(),
 });
 
-export { OptionsSource };
 export default optionsSchema;

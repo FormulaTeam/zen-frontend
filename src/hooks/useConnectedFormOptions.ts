@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { getFieldValues } from "../api";
 import { FormFieldDto } from "../types/shared";
-import { OptionsSource } from "@src/pages/FormEditor/schemas/fields/optionsSchema";
+import { optionsSource } from "formula-gear";
 
 type ConnectedFieldExtra = {
   source?: number;
@@ -38,7 +38,7 @@ const getFieldExtra = (field: ConnectedFormField): ConnectedFieldExtra =>
 const isConnectedToForm = (field: ConnectedFormField): boolean => {
   const extra = getFieldExtra(field);
   return (
-    extra.source === OptionsSource.FORM_FIELD_RESPONSES &&
+    extra.source === optionsSource.FormFieldResponses &&
     !!extra.options?.formId &&
     !!extra.options?.fieldId
   );
@@ -74,8 +74,10 @@ export const useConnectedFormOptions = ({
 
     if (!linkedFormId || !linkedFieldId) return;
 
+    const LIMIT = 50;
+
     const result = await getFieldValues(linkedFormId, linkedFieldId, {
-      limit: 50,
+      limit: LIMIT,
       offset,
       search,
     });
