@@ -27,6 +27,8 @@ interface CustomDropDownAutocompleteProps {
   onInputChange?: (event: React.SyntheticEvent, value: string, reason: string) => void;
   onScrollToBottom?: () => void;
   loading?: boolean;
+  inputValue?: string;
+  filterOptions?: (options: unknown[], state: any) => unknown[];
 }
 
 const normalizeToArray = (value: string | string[] | null | undefined): string[] => {
@@ -51,6 +53,8 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   onInputChange,
   onScrollToBottom,
   loading,
+  inputValue,
+  filterOptions,
 }) => {
   const [selectedValues, setSelectedValues] = useState<string[]>(normalizeToArray(value));
   const hasTriggeredBlurRef = useRef(false);
@@ -148,10 +152,9 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
             sx: {
               p: "6px",
               direction: "rtl",
-              maxHeight: "300px",
 
               "& .MuiAutocomplete-option": {
-                minHeight: "36px",
+                minHeight: "40px",
                 borderRadius: "8px",
                 px: "10px",
                 py: "7px",
@@ -187,6 +190,8 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         loading={loading}
         onInputChange={onInputChange}
         value={autocompleteValue}
+        {...(inputValue !== undefined ? { inputValue } : {})}
+        {...(filterOptions ? { filterOptions } : {})}
         onChange={(event: any, nextValue: any) => {
           hasTriggeredBlurRef.current = false;
           onSelectHandler(event, nextValue);

@@ -223,16 +223,14 @@ const ConnectedDropDownAutocomplete = (props: any) => {
   );
 
   const availableOptions = React.useMemo(() => {
-    const fetchedOptions = data?.pages.flatMap((page) => page.data.map(item => String(item.value))) || [];
+    const fetchedOptions = data?.pages.flatMap((page) => page.data.map((item: any) => String(item.value))) || [];
     const combined = [...new Set([...fetchedOptions, ...(Array.isArray(selectedValues) ? selectedValues : [selectedValues]).filter(Boolean)])];
     return combined;
   }, [data, selectedValues]);
 
   const handleInputChange = (event: React.SyntheticEvent, value: string, reason: string) => {
-    if (reason === "input") {
+    if (reason === "input" || reason === "clear") {
       setSearchTerm(value);
-    } else if (reason === "clear") {
-      setSearchTerm("");
     }
     if (onInputChange) {
       onInputChange(event, value, reason);
@@ -253,6 +251,8 @@ const ConnectedDropDownAutocomplete = (props: any) => {
       onInputChange={handleInputChange}
       onScrollToBottom={handleScrollToBottom}
       loading={isLoading || isFetchingNextPage}
+      inputValue={searchTerm}
+      filterOptions={(options: unknown[]) => options}
     />
   );
 };
