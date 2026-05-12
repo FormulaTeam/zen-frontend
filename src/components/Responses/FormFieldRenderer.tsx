@@ -20,6 +20,7 @@ import CustomTimePicker from "../FormFields/CustomTimePicker/CustomTimePicker";
 import LinkTextField from "../FormFields/LinkTextField/LinkTextField";
 import { FormFieldWrapper, StyledBox } from "./FormFieldRenderer.styled";
 import { useGetInfiniteFieldValues } from "../../api/responsesApi";
+import { StatusCodes } from "http-status-codes";
 
 type OptionItem = {
   id: string;
@@ -216,11 +217,13 @@ const ConnectedDropDownAutocomplete = (props: any) => {
   const { connectedFormId, connectedFieldId, selectedValues, onInputChange, ...rest } = props;
   const [searchTerm, setSearchTerm] = React.useState("");
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useGetInfiniteFieldValues(
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, error } = useGetInfiniteFieldValues(
     connectedFormId,
     connectedFieldId,
     searchTerm
   );
+
+  const isPermissionError: boolean = (error as any)?.response?.status === StatusCodes.FORBIDDEN;
 
   const availableOptions = React.useMemo(() => {
     const fetchedOptions = data?.pages.flatMap((page) => page.data.map((item: any) => String(item.value))) || [];
@@ -253,6 +256,7 @@ const ConnectedDropDownAutocomplete = (props: any) => {
       loading={isLoading || isFetchingNextPage}
       inputValue={searchTerm}
       filterOptions={(options: unknown[]) => options}
+      noOptionsText={isPermissionError ? "אין לך הרשאה למקור האפשרויות" : "אין תוצאות"}
     />
   );
 };

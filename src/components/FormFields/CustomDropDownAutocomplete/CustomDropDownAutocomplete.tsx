@@ -29,6 +29,7 @@ interface CustomDropDownAutocompleteProps {
   loading?: boolean;
   inputValue?: string;
   filterOptions?: (options: unknown[], state: any) => unknown[];
+  noOptionsText?: string;
 }
 
 const normalizeToArray = (value: string | string[] | null | undefined): string[] => {
@@ -55,6 +56,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   loading,
   inputValue,
   filterOptions,
+  noOptionsText
 }) => {
   const [selectedValues, setSelectedValues] = useState<string[]>(normalizeToArray(value));
   const hasTriggeredBlurRef = useRef(false);
@@ -187,6 +189,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         disabled={isDisabled}
         multiple={multipleOptions}
         options={options}
+        noOptionsText={noOptionsText}
         loading={loading}
         onInputChange={onInputChange}
         value={autocompleteValue}
