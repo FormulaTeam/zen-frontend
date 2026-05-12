@@ -135,11 +135,17 @@ export const useCellEditors = ({
   );
 
   const findFormFieldByColumnName = useCallback(
-    (columnName: string): FormFieldDto | undefined =>
-      formFields?.find(
-        (field) =>
-          field.id === columnName || field.name === columnName || field.displayName === columnName,
-      ),
+    (columnName: string): FormFieldDto | undefined => {
+      const fieldPrefix = "field:";
+
+      if (columnName.startsWith(fieldPrefix)) {
+        const fieldId = columnName.slice(fieldPrefix.length);
+
+        return formFields?.find((field) => String(field.id) === fieldId);
+      }
+
+      return formFields?.find((field) => String(field.id) === columnName);
+    },
     [formFields],
   );
 

@@ -18,6 +18,10 @@ import {
 } from "../utils/interfaces";
 import { BulkUpdateResponsesDto, CreateResponseDto, FormDto, ResponseDto } from "../types/shared";
 
+const FIELD_COLUMN_PREFIX = "field:";
+
+export const getFieldColumnKey = (fieldId: string): string => `${FIELD_COLUMN_PREFIX}${fieldId}`;
+
 const stringifyQuery = (query: any): string => {
   if (query && typeof query === "object") return JSON.stringify(query);
 
@@ -233,28 +237,37 @@ export const getResponseWithFlatFields = (
             acc[fieldName] = null;
           }
           break;
-        case FieldTypeIds.link:
+
+        case FieldTypeIds.link: {
           const linkValue = field.value as LinkValue | null;
           if (linkValue && linkValue.linkTxt) {
             acc[fieldName] = linkValue.linkTxt;
           }
           break;
-        case FieldTypeIds.location:
+        }
+
+        case FieldTypeIds.location: {
           const locationValue = field.value as LocationValue | null;
           if (locationValue && locationValue.x && locationValue.y) {
             acc[fieldName] = `${locationValue.x},${locationValue.y}`;
           }
           break;
-        case FieldTypeIds.file:
+        }
+
+        case FieldTypeIds.file: {
           const deletedFilesForField = deletedFiles?.filter(
             (deletedFile) => deletedFile.field_id === field.field_id,
           );
+
           if (deletedFilesForField && deletedFilesForField.length > 0) {
             acc[fieldName] = { ...field.value, deletedFiles: deletedFilesForField[0].value };
           } else {
             acc[fieldName] = field.value;
           }
+
           break;
+        }
+
         default:
           acc[fieldName] = field.value;
       }
@@ -306,7 +319,7 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
   return useFetch<typeof params | undefined, any>({
     endpoint: `/forms/${formId}/responses`,
     queryKey: () => ["responses", filter],
-    params: params,
+    params,
     queryOptions: { enabled: !!formId },
   });
 };
@@ -444,16 +457,6 @@ export const getResponsesRows = async ({
       ? rawData
       : (rawData as any)?.edges?.map((edge: any) => edge.node) || (rawData as any)?.responses || [];
 
-    const fieldIdToDisplayName = new Map<string, string>();
-
-    if (form) {
-      (form.sections ?? []).forEach((section) => {
-        (section.fields ?? []).forEach((field) => {
-          fieldIdToDisplayName.set(field.id, field.displayName);
-        });
-      });
-    }
-
     const rows: Row[] = responses.map((node: any) => {
       const row: Row = {
         id: node.id,
@@ -469,13 +472,10 @@ export const getResponsesRows = async ({
 
       fieldValues.forEach((fieldValue: any) => {
         const fieldId = fieldValue.field_id || fieldValue.fieldId;
-        const displayName = fieldIdToDisplayName.get(fieldId);
 
-        if (displayName) {
-          row[displayName] = fieldValue.value;
-        } else {
-          row[fieldId] = fieldValue.value;
-        }
+        if (!fieldId) return;
+
+        row[getFieldColumnKey(String(fieldId))] = fieldValue.value;
       });
 
       return row;

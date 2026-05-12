@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef } from "react";
 import { useGetForm, useGetResponsesRows } from "../../../api";
 import { useInitiateFormStore } from "../stores/form.store";
 import { Row } from "../../../utils/interfaces";
-import { getOptionResponseRawValue } from "../../../utils/optionResponseValue";
-import { fieldType } from "formula-gear";
+
+const FIELD_COLUMN_PREFIX = "field:";
+
+const getFieldColumnKey = (fieldId: string): string => `${FIELD_COLUMN_PREFIX}${fieldId}`;
 
 export function useFormLoader(formId: string) {
   const { form, setForm, setPermissions, setRows, filter, setResponses } = useInitiateFormStore();
@@ -73,9 +75,12 @@ export function useFormLoader(formId: string) {
 
       const findPageInfo = (obj: any): any | null => {
         if (!obj || typeof obj !== "object") return null;
+
         const pi = obj.pageInfo || obj.page_info;
+
         if (pi) return pi;
         if (obj.data) return findPageInfo(obj.data);
+
         return null;
       };
 
@@ -88,14 +93,6 @@ export function useFormLoader(formId: string) {
             endCursor: rawPageInfo.endCursor ?? rawPageInfo.end_cursor ?? null,
           }
         : null;
-
-      const fieldIdToField = new Map<string, any>();
-
-      formData.sections.forEach((section) => {
-        section.fields.forEach((field) => {
-          fieldIdToField.set(String(field.id), field);
-        });
-      });
 
       const rows: Row[] = responses.map((node: any) => {
         const row: Row = {
@@ -111,22 +108,12 @@ export function useFormLoader(formId: string) {
 
         const fieldValues = node.fieldValues || node.field_values || node.data || [];
 
-        fieldValues.forEach((fv: any) => {
-          const fieldId = fv.field_id || fv.fieldId;
+        fieldValues.forEach((fieldValue: any) => {
+          const fieldId = fieldValue.field_id || fieldValue.fieldId;
 
           if (!fieldId) return;
 
-          const field = fieldIdToField.get(String(fieldId));
-          const displayName = field?.displayName;
-
-          const rawValue =
-            field?.fieldType === fieldType.Options ? getOptionResponseRawValue(fv.value) : fv.value;
-
-          row[fieldId] = rawValue;
-
-          if (displayName && row[displayName] === undefined) {
-            row[displayName] = rawValue;
-          }
+          row[getFieldColumnKey(String(fieldId))] = fieldValue.value;
         });
 
         return row;
@@ -175,7 +162,7 @@ export function useFormLoader(formId: string) {
         const flattenedFields = sortedSections.flatMap((section) => section.fields);
 
         const columns = flattenedFields.map((field) => ({
-          field: field.displayName,
+          field: getFieldColumnKey(String(field.id)),
           headerName: field.displayName,
           editable: true,
         }));

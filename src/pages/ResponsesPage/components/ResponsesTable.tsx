@@ -229,10 +229,8 @@ export const ResponsesTable = React.memo(
             Meta: columnPrefix.Meta,
           };
 
-          const fieldObj = formFields.find((f) => f.displayName === field);
-
-          if (fieldObj) {
-            sortBy = `${prefixes.Field}${fieldObj.id}`;
+          if (field.startsWith(prefixes.Field)) {
+            sortBy = field;
           } else {
             switch (field) {
               case "index":
@@ -470,7 +468,7 @@ export const ResponsesTable = React.memo(
         }
 
         const columnId = `${prefixes.Field}${field.id}`;
-        const gridField = field.displayName || field.name || field.id;
+        const gridField = columnId;
 
         const col: GridColDef = {
           field: gridField,
@@ -698,10 +696,7 @@ export const ResponsesTable = React.memo(
         let gridField: string | undefined;
 
         if (filter.sortBy.startsWith(prefixes.Field)) {
-          const fieldId = filter.sortBy.replace(prefixes.Field, "");
-          const fieldObj = formFields.find((f) => String(f.id) === String(fieldId));
-
-          gridField = fieldObj?.displayName || fieldObj?.name || fieldId;
+          gridField = filter.sortBy;
         } else if (filter.sortBy.startsWith(prefixes.Meta)) {
           const metaName = filter.sortBy.replace(prefixes.Meta, "");
 
@@ -746,9 +741,7 @@ export const ResponsesTable = React.memo(
           let gridField: string | undefined;
 
           if (sortedColumn.fieldId) {
-            const fieldObj = formFields.find((f) => String(f.id) === String(sortedColumn.fieldId));
-
-            gridField = fieldObj?.displayName || fieldObj?.name || sortedColumn.fieldId;
+            gridField = `${prefixes.Field}${sortedColumn.fieldId}`;
           } else if (sortedColumn.metaColumnId) {
             const metaName = Object.keys(MetaColumnIds).find(
               (key) =>
@@ -800,7 +793,7 @@ export const ResponsesTable = React.memo(
         );
 
         if (fieldObj) {
-          gridField = fieldObj.displayName || fieldObj.name || fieldObj.id;
+          gridField = `${prefixes.Field}${fieldObj.id}`;
         }
 
         return [{ field: gridField, sort: legacySort.sortDirection as "asc" | "desc" }];

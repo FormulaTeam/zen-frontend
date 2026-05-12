@@ -87,6 +87,18 @@ type EditorFieldExtra = {
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
 
+const FIELD_COLUMN_PREFIX = "field:";
+
+const getFieldColumnKey = (field: FormFieldDto): string => `${FIELD_COLUMN_PREFIX}${field.id}`;
+
+const getFieldIdFromColumnKey = (columnName: string): string => {
+  if (columnName.startsWith(FIELD_COLUMN_PREFIX)) {
+    return columnName.slice(FIELD_COLUMN_PREFIX.length);
+  }
+
+  return columnName;
+};
+
 const isStoredFile = (value: unknown): value is StoredFile => {
   return (
     typeof value === "object" &&
@@ -391,12 +403,12 @@ export const useResponsesEdit = () => {
       const rowErrors: Record<string, QuickEditValidationError> = {};
 
       formFields.forEach((field) => {
-        const errorKey = field.displayName;
-        const value = row[field.displayName];
+        const fieldKey = getFieldColumnKey(field);
+        const value = row[fieldKey];
         const validationError = getFieldValidationError(field, value);
 
         if (validationError) {
-          rowErrors[errorKey] = validationError;
+          rowErrors[fieldKey] = validationError;
         }
       });
 
@@ -445,12 +457,8 @@ export const useResponsesEdit = () => {
 
   const handleCellLiveChange = useCallback(
     <T>(rowId: RowId, columnName: string, value: T): void => {
-      const field = formFields.find(
-        (candidateField) =>
-          candidateField.displayName === columnName ||
-          candidateField.name === columnName ||
-          candidateField.id === columnName,
-      );
+      const fieldId = getFieldIdFromColumnKey(columnName);
+      const field = formFields.find((candidateField) => String(candidateField.id) === fieldId);
 
       if (!field) return;
 
@@ -460,7 +468,7 @@ export const useResponsesEdit = () => {
 
         next.set(rowId, {
           ...existing,
-          [field.displayName]: value,
+          [getFieldColumnKey(field)]: value,
         } as Row);
 
         return next;
@@ -478,12 +486,9 @@ export const useResponsesEdit = () => {
         localRows.find((row) => String(row.id) === String(rowId)) ??
         responseRows.find((row) => String(row.id) === String(rowId));
 
-      const changedFieldNames = formFields
-        .filter((field) => {
-          const fieldName = field.displayName;
-          return previousRow?.[fieldName] !== typedNewRow[fieldName];
-        })
-        .map((field) => field.displayName);
+      const changedFieldKeys = formFields
+        .map((field) => getFieldColumnKey(field))
+        .filter((fieldKey) => previousRow?.[fieldKey] !== typedNewRow[fieldKey]);
 
       setLocalRows((prevRows) =>
         prevRows.map((row) =>
@@ -512,19 +517,18 @@ export const useResponsesEdit = () => {
         const next = { ...prev };
         const rowErrors = { ...(next[rowId] || {}) };
 
-        changedFieldNames.forEach((fieldName) => {
-          const field = formFields.find(
-            (candidateField) => candidateField.displayName === fieldName,
-          );
+        changedFieldKeys.forEach((fieldKey) => {
+          const fieldId = getFieldIdFromColumnKey(fieldKey);
+          const field = formFields.find((candidateField) => String(candidateField.id) === fieldId);
 
           if (!field) return;
 
-          delete rowErrors[field.displayName];
+          delete rowErrors[fieldKey];
 
-          const validationError = getFieldValidationError(field, typedNewRow[field.displayName]);
+          const validationError = getFieldValidationError(field, typedNewRow[fieldKey]);
 
           if (validationError) {
-            rowErrors[field.displayName] = validationError;
+            rowErrors[fieldKey] = validationError;
           }
         });
 
@@ -553,7 +557,7 @@ export const useResponsesEdit = () => {
       const rowForSubmit = getMergedRow(rowId, editedRow);
 
       const updatedFieldValues: ResponseFieldValueDto[] = formFields.map((formField) => {
-        const rawValue = rowForSubmit[formField.displayName];
+        const rawValue = rowForSubmit[getFieldColumnKey(formField)];
 
         return {
           fieldId: formField.id,
@@ -587,7 +591,7 @@ export const useResponsesEdit = () => {
     };
 
     formFields.forEach((field) => {
-      newRow[field.displayName] = getDefaultFieldValue(field);
+      newRow[getFieldColumnKey(field)] = getDefaultFieldValue(field);
     });
 
     setLocalRows((prev) => [newRow, ...prev]);
@@ -663,7 +667,7 @@ export const useResponsesEdit = () => {
           const rowForCreate = getMergedRow(rowId, editedRow);
 
           const fieldValues: ResponseFieldValueDto[] = formFields.map((field) => {
-            const rawValue = rowForCreate[field.displayName];
+            const rawValue = rowForCreate[getFieldColumnKey(field)];
 
             return {
               fieldId: field.id,
