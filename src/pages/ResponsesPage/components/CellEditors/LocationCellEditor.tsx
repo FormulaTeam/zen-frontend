@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Box, TextField } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
 import { LocationValue } from "@utils/interfaces";
-import { preventEnterKeyNavigation } from "@utils/utils";
 
 const LocationEditorRoot = styled(Box)({
   width: "100%",
@@ -93,6 +92,9 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
   const [x, setX] = useState(normalizedValue.x || "");
   const [y, setY] = useState(normalizedValue.y || "");
 
+  const xInputRef = useRef<HTMLInputElement>(null);
+  const yInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const nextValue = toLocationValue(value);
 
@@ -104,6 +106,7 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
     const nextX = event.target.value;
 
     setX(nextX);
+
     onChange({
       x: nextX,
       y,
@@ -114,10 +117,27 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
     const nextY = event.target.value;
 
     setY(nextY);
+
     onChange({
       x,
       y: nextY,
     });
+  };
+
+  const handleXKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Tab" && !event.shiftKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      yInputRef.current?.focus();
+    }
+  };
+
+  const handleYKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Tab" && event.shiftKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      xInputRef.current?.focus();
+    }
   };
 
   const getPlaceholder = (axis: "x" | "y") => {
@@ -135,7 +155,8 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
         placeholder={getPlaceholder("x")}
         value={x}
         onChange={handleXChange}
-        onKeyDown={preventEnterKeyNavigation}
+        onKeyDown={handleXKeyDown}
+        inputRef={xInputRef}
         error={!!errorMessage}
         variant="standard"
         slotProps={{
@@ -151,7 +172,8 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
         placeholder={getPlaceholder("y")}
         value={y}
         onChange={handleYChange}
-        onKeyDown={preventEnterKeyNavigation}
+        onKeyDown={handleYKeyDown}
+        inputRef={yInputRef}
         error={!!errorMessage}
         variant="standard"
         slotProps={{

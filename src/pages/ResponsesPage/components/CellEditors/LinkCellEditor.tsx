@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Box, TextField } from "@mui/material";
 
 import { LinkValue } from "../../../../utils/interfaces";
-import { preventEnterKeyNavigation } from "../../../../utils/utils";
 
 interface LinkCellEditorProps {
   value: LinkValue | string | null;
@@ -72,6 +71,9 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
   const [url, setUrl] = useState(initialValue.link);
   const [linkText, setLinkText] = useState(initialValue.linkTxt);
 
+  const urlInputRef = useRef<HTMLInputElement>(null);
+  const linkTextInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const nextValue = toLinkValue(value);
 
@@ -100,6 +102,22 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
     emitChange(url, newLinkText);
   };
 
+  const handleUrlKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Tab" && !event.shiftKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      linkTextInputRef.current?.focus();
+    }
+  };
+
+  const handleLinkTextKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Tab" && event.shiftKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      urlInputRef.current?.focus();
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -115,7 +133,8 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
         placeholder="https://example.co.il"
         value={url}
         onChange={handleUrlChange}
-        onKeyDown={preventEnterKeyNavigation}
+        onKeyDown={handleUrlKeyDown}
+        inputRef={urlInputRef}
         error={!!errorMessage}
         variant="standard"
         slotProps={{
@@ -131,7 +150,8 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
         placeholder="טקסט להיפר-קישור"
         value={linkText}
         onChange={handleLinkTextChange}
-        onKeyDown={preventEnterKeyNavigation}
+        onKeyDown={handleLinkTextKeyDown}
+        inputRef={linkTextInputRef}
         error={!!errorMessage}
         variant="standard"
         slotProps={{

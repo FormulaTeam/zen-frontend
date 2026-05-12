@@ -29,7 +29,6 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-  IconButton,
   Stack,
   Typography,
   Select,
@@ -105,6 +104,8 @@ type QuickEditValidationError = {
   detail?: string;
 };
 
+type KeyboardNavigationAction = "nextCell" | "previousCell" | "nextRow" | "previousRow";
+
 interface ResponsesTableProps {
   isInEditMode: boolean;
   localRows: Row[];
@@ -121,6 +122,22 @@ const SyncStatusIcon: React.FC<{ pushedToMetro?: string | null }> = ({ pushedToM
     {pushedToMetro ? <CloudDoneIcon fontSize="small" /> : <CloudOffIcon fontSize="small" />}
   </SyncStatusIconBox>
 );
+
+const isInputLikeTarget = (target: EventTarget | null): boolean => {
+  const element = target as HTMLElement | null;
+
+  if (!element) return false;
+
+  return !!element.closest("input, textarea, [contenteditable='true']");
+};
+
+const isTextAreaTarget = (target: EventTarget | null): boolean => {
+  const element = target as HTMLElement | null;
+
+  if (!element) return false;
+
+  return !!element.closest("textarea");
+};
 
 export const ResponsesTable = React.memo(
   ({
@@ -686,6 +703,218 @@ export const ResponsesTable = React.memo(
       currentViewConfig,
     ]);
 
+    const editableColumnFields = useMemo(
+      () =>
+        getFormColumns
+          .filter((column) => Boolean(column.editable))
+          .map((column) => column.field)
+          .filter(
+            (field) =>
+              field !== "__check__" &&
+              field !== "expand" &&
+              field !== GRID_DETAIL_PANEL_TOGGLE_FIELD,
+          ),
+      [getFormColumns],
+    );
+
+    const getKeyboardNavigationTarget = useCallback(
+      (
+        rowId: string | number,
+        field: string,
+        action: KeyboardNavigationAction,
+      ): { id: string | number; field: string } | null => {
+        const rowIndex = localRows.findIndex((row) => String(row.id) === String(rowId));
+        const columnIndex = editableColumnFields.indexOf(field);
+
+        if (rowIndex === -1 || columnIndex === -1) {
+          return null;
+        }
+
+        let nextRowIndex = rowIndex;
+        let nextColumnIndex = columnIndex;
+
+        const moveCell = (direction: 1 | -1) => {
+          nextColumnIndex += direction;
+
+          if (nextColumnIndex >= editableColumnFields.length) {
+            nextColumnIndex = 0;
+            nextRowIndex += 1;
+          }
+
+          if (nextColumnIndex < 0) {
+            nextColumnIndex = editableColumnFields.length - 1;
+            nextRowIndex -= 1;
+          }
+        };
+
+        switch (action) {
+          case "nextCell":
+            moveCell(1);
+            break;
+
+          case "previousCell":
+            moveCell(-1);
+            break;
+
+          case "nextRow":
+            nextRowIndex += 1;
+            break;
+
+          case "previousRow":
+            nextRowIndex -= 1;
+            break;
+
+          default:
+            return null;
+        }
+
+        if (
+          nextRowIndex < 0 ||
+          nextRowIndex >= localRows.length ||
+          nextColumnIndex < 0 ||
+          nextColumnIndex >= editableColumnFields.length
+        ) {
+          return null;
+        }
+
+        return {
+          id: localRows[nextRowIndex].id,
+          field: editableColumnFields[nextColumnIndex],
+        };
+      },
+      [editableColumnFields, localRows],
+    );
+
+    const openCellForEdit = useCallback(
+      (rowId: string | number, field: string) => {
+        const rowIndex = localRows.findIndex((row) => String(row.id) === String(rowId));
+        const columnIndex = getFormColumns.findIndex((column) => column.field === field);
+
+        requestAnimationFrame(() => {
+          if (rowIndex !== -1 && columnIndex !== -1) {
+            apiRef.current?.scrollToIndexes({
+              rowIndex,
+              colIndex: columnIndex,
+            });
+          }
+
+          apiRef.current?.setCellFocus(rowId, field);
+
+          setCellModesModel((prevModel) => {
+            const nextModel: GridCellModesModel = {};
+
+            Object.entries(prevModel).forEach(([modelRowId, fields]) => {
+              nextModel[modelRowId] = {};
+
+              Object.keys(fields).forEach((modelField) => {
+                nextModel[modelRowId][modelField] = { mode: GridCellModes.View };
+              });
+            });
+
+            return {
+              ...nextModel,
+              [rowId]: {
+                ...(nextModel[rowId] || {}),
+                [field]: { mode: GridCellModes.Edit },
+              },
+            };
+          });
+        });
+      },
+      [apiRef, getFormColumns, localRows],
+    );
+
+    const handleCellKeyDown = useCallback(
+      (params: GridCellParams, event: any) => {
+        if (!isInEditMode || !params.isEditable) {
+          return;
+        }
+
+        if (
+          params.field === "__check__" ||
+          params.field === "expand" ||
+          params.field === GRID_DETAIL_PANEL_TOGGLE_FIELD
+        ) {
+          return;
+        }
+
+        const isTextarea = isTextAreaTarget(event.target);
+        let action: KeyboardNavigationAction | null = null;
+
+        if (event.key === "Tab") {
+          action = event.shiftKey ? "previousCell" : "nextCell";
+        }
+
+        if (event.key === "Enter") {
+          if (isTextarea && !event.metaKey && !event.ctrlKey) {
+            event.defaultMuiPrevented = true;
+            return;
+          }
+
+          if (isTextarea && (event.metaKey || event.ctrlKey)) {
+            action = event.shiftKey ? "previousRow" : "nextRow";
+          }
+
+          if (!isTextarea) {
+            if (event.altKey || event.metaKey || event.ctrlKey) {
+              return;
+            }
+
+            action = event.shiftKey ? "previousRow" : "nextRow";
+          }
+        }
+
+        if (!isInputLikeTarget(event.target)) {
+          if (event.key === "ArrowDown") {
+            action = "nextRow";
+          }
+
+          if (event.key === "ArrowUp") {
+            action = "previousRow";
+          }
+
+          if (event.key === "ArrowLeft") {
+            action = "nextCell";
+          }
+
+          if (event.key === "ArrowRight") {
+            action = "previousCell";
+          }
+        }
+
+        if (!action) {
+          return;
+        }
+
+        const targetCell = getKeyboardNavigationTarget(
+          params.id as string | number,
+          params.field,
+          action,
+        );
+
+        if (!targetCell) {
+          return;
+        }
+
+        event.preventDefault?.();
+        event.stopPropagation?.();
+        event.defaultMuiPrevented = true;
+
+        try {
+          apiRef.current?.stopCellEditMode({
+            id: params.id,
+            field: params.field,
+          });
+        } catch {
+          // The cell may already be in view mode.
+        }
+
+        onCellEditStart();
+        openCellForEdit(targetCell.id, targetCell.field);
+      },
+      [apiRef, getKeyboardNavigationTarget, isInEditMode, onCellEditStart, openCellForEdit],
+    );
+
     const sortModel = useMemo((): GridSortModel => {
       const prefixes = {
         Field: "field:",
@@ -914,6 +1143,7 @@ export const ResponsesTable = React.memo(
             onCellModesModelChange={handleCellModesModelChange}
             onCellClick={handleCellClick}
             onCellDoubleClick={handleCellDoubleClick}
+            onCellKeyDown={handleCellKeyDown}
             processRowUpdate={handleProcessRowUpdate}
             onProcessRowUpdateError={(error) => {
               console.error("Error updating row:", error);
