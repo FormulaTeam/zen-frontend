@@ -1,5 +1,15 @@
 import React from "react";
 
+import { Chip, FormControl } from "@mui/material";
+import {
+  StyledAutocomplete,
+  StyledFormHelperText,
+  StyledInputLabel,
+  StyledListbox,
+  StyledTextField,
+} from "../FormFields/CustomDropDownAutocomplete/styled";
+import FieldErrorText from "../FormFields/FieldErrorText/FieldErrorText";
+
 import type { FormFieldDto } from "../../types/shared";
 import {
   connectionTypes,
@@ -19,8 +29,7 @@ import CustomTextField from "../FormFields/CustomTextField/CustomTextField";
 import CustomTimePicker from "../FormFields/CustomTimePicker/CustomTimePicker";
 import LinkTextField from "../FormFields/LinkTextField/LinkTextField";
 import { FormFieldWrapper, StyledBox } from "./FormFieldRenderer.styled";
-import { useGetInfiniteFieldValues } from "../../api/responsesApi";
-import { StatusCodes } from "http-status-codes";
+import { ConnectedDropDownAutocomplete } from "./ConnectedDropDownAutocomplete";
 
 type OptionItem = {
   id: string;
@@ -213,54 +222,6 @@ const getLinkErrorDetails = (
   };
 };
 
-const ConnectedDropDownAutocomplete = (props: any) => {
-  const { connectedFormId, connectedFieldId, selectedValues, onInputChange, ...rest } = props;
-  const [searchTerm, setSearchTerm] = React.useState("");
-
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, error } = useGetInfiniteFieldValues(
-    connectedFormId,
-    connectedFieldId,
-    searchTerm
-  );
-
-  const isPermissionError: boolean = (error as any)?.response?.status === StatusCodes.FORBIDDEN;
-
-  const availableOptions = React.useMemo(() => {
-    const fetchedOptions = data?.pages.flatMap((page) => page.data.map((item: any) => String(item.value))) || [];
-    const combined = [...new Set([...fetchedOptions, ...(Array.isArray(selectedValues) ? selectedValues : [selectedValues]).filter(Boolean)])];
-    return combined;
-  }, [data, selectedValues]);
-
-  const handleInputChange = (event: React.SyntheticEvent, value: string, reason: string) => {
-    if (reason === "input" || reason === "clear") {
-      setSearchTerm(value);
-    }
-    if (onInputChange) {
-      onInputChange(event, value, reason);
-    }
-  };
-
-  const handleScrollToBottom = () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  };
-
-  return (
-    <CustomDropDownAutocomplete
-      {...rest}
-      value={selectedValues}
-      options={availableOptions}
-      onInputChange={handleInputChange}
-      onScrollToBottom={handleScrollToBottom}
-      loading={isLoading || isFetchingNextPage}
-      inputValue={searchTerm}
-      filterOptions={(options: unknown[]) => options}
-      noOptionsText={isPermissionError ? "אין לך הרשאה למקור האפשרויות" : "אין תוצאות"}
-    />
-  );
-};
-
 const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   formField,
   formFieldsByIdMap,
@@ -278,7 +239,6 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   const fieldId = formField.id;
   const field = formFieldsByIdMap.get(fieldId) ?? formField;
   const formFieldExtra = getFieldExtra(formField);
-  const fieldExtra = getFieldExtra(field);
 
   field.name = formField.name;
 
@@ -565,6 +525,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             validationMessage={validationMessage}
             validationDetail={validationDetail}
             isTabularEdit={isTabularEdit}
+            isFormFieldResponseOptions={formFieldExtra.source === optionsSource.FormFieldResponses}
           />
         );
       } else {

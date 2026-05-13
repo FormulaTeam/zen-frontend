@@ -195,7 +195,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         value={autocompleteValue}
         {...(inputValue !== undefined ? { inputValue } : {})}
         {...(filterOptions ? { filterOptions } : {})}
-        onChange={(event: any, nextValue: any) => {
+        onChange={(event: any, nextValue: any, reason: string) => {
           hasTriggeredBlurRef.current = false;
           onSelectHandler(event, nextValue);
         }}
@@ -330,8 +330,9 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
             }}
             inputProps={{
               ...params.inputProps,
-              value:
-                multipleOptions || params.inputProps.value !== texts.heb.emptyValue
+              value: inputValue !== undefined
+                ? String(params.inputProps.value)
+                : multipleOptions || params.inputProps.value !== texts.heb.emptyValue
                   ? String(params.inputProps.value)
                   : "",
             }}

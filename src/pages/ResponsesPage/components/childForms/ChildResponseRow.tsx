@@ -12,6 +12,7 @@ import { fieldType } from "formula-gear";
 import { DEFAULT_DATE_FORMAT } from "@utils/utils";
 import { Row } from "@utils/interfaces";
 import { ResponseCell } from "./styled";
+import { getOptionResponseDisplayValue } from "../../../../utils/optionResponseValue";
 
 import { highlightTextUtil } from "../../utils/highlighting";
 
@@ -224,6 +225,14 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
 
       case fieldType.Boolean:
         return highlightText(value === "true" || value === true ? "כן" : "לא");
+
+      case fieldType.Options: {
+        const displayValue = getOptionResponseDisplayValue(value);
+        if (Array.isArray(displayValue)) {
+          return highlightText(displayValue.join(", "));
+        }
+        return highlightText(String(displayValue ?? ""));
+      }
 
       case fieldType.Location:
         if (typeof value === "string" && value.startsWith("POINT")) return highlightText(value);

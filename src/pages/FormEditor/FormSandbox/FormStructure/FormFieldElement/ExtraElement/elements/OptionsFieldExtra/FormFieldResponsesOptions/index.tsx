@@ -33,7 +33,7 @@ function FormFieldResponsesOptions(props: Props) {
   const [fieldTouchAttempted, setFieldTouchAttempted] = useState(false);
   const { formsData: allForms, isLoading: isLoadingForms } = useGetFormsData({
     searchQuery: searchText.length >= 2 ? searchText : undefined,
-    scope: formsScopeOption.AccessibleForms,
+    scope: formsScopeOption.LinkableForms,
     enabled: searchText.length >= 2,
   });
 

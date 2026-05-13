@@ -227,8 +227,16 @@ export const useUpdateForm = () => {
       return response.data;
     },
     mutationKey: ["update-form"],
-    onSuccess: (data: FormDto) => {
-      queryClient.invalidateQueries({ queryKey: [data.id.toString()] });
+    onSuccess: (data: FormDto, variables) => {
+      const stringId = variables.id.toString();
+      queryClient.setQueryData([stringId, null], data);
+
+      const existingWithPermissions = queryClient.getQueryData<FormDto>([stringId, true]);
+      queryClient.setQueryData([stringId, true], {
+        ...data,
+        permissions: existingWithPermissions?.permissions,
+      });
+
       queryClient.invalidateQueries({ queryKey: ["forms"] });
     },
     onError: (error) => {
@@ -258,7 +266,7 @@ export const useGetForm = ({
 
   return useFetch<undefined, FormDto | null>({
     endpoint: `/forms/${formId}${queryString}`,
-    queryKey: () => [formId, includePermissions],
+    queryKey: () => [formId, includePermissions ?? null],
     queryOptions: {
       enabled: !!formId,
       ...config,
