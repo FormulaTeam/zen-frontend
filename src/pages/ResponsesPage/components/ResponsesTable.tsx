@@ -627,27 +627,27 @@ export const ResponsesTable = React.memo(
         ...(expandColumn ? [expandColumn] : []),
         ...(hasFormInFormFields
           ? [
-              {
-                ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
-                field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
-                renderHeader: (params: any) => (
-                  <div aria-label={params?.colDef?.headerName ?? ""} />
-                ),
-              },
-            ]
+            {
+              ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
+              field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
+              renderHeader: (params: any) => (
+                <div aria-label={params?.colDef?.headerName ?? ""} />
+              ),
+            },
+          ]
           : []),
       ];
 
       const parentResponseColumns = hasParentResponses
         ? [
-            {
-              field: "parentResponse",
-              headerName: "תגובת אב",
-              flex: 1,
-              editable: false,
-              renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
-            },
-          ]
+          {
+            field: "parentResponse",
+            headerName: "תגובת אב",
+            flex: 1,
+            editable: false,
+            renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
+          },
+        ]
         : [];
 
       let resultColumns: GridColDef[] = [];
@@ -1176,6 +1176,11 @@ export const ResponsesTable = React.memo(
             slots={{
               footer: CustomFooter,
             }}
+            {...(hasFormInFormFields && {
+              getDetailPanelContent,
+              getDetailPanelHeight,
+              detailPanelExpandedRowIds,
+            })}
             slotProps={{
               columnMenu: {
                 slots: {

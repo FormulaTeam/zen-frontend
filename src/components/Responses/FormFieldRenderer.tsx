@@ -232,7 +232,7 @@ const ConnectedDropDownAutocomplete = (props: any) => {
   }, [data, selectedValues]);
 
   const handleInputChange = (event: React.SyntheticEvent, value: string, reason: string) => {
-    if (reason === "input" || reason === "clear") {
+    if (reason === "input" || reason === "clear" || reason === "reset") {
       setSearchTerm(value);
     }
     if (onInputChange) {
