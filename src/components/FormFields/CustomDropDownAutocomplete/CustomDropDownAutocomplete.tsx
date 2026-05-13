@@ -330,8 +330,9 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
             }}
             inputProps={{
               ...params.inputProps,
-              value:
-                multipleOptions || params.inputProps.value !== texts.heb.emptyValue
+              value: inputValue !== undefined
+                ? String(params.inputProps.value)
+                : multipleOptions || params.inputProps.value !== texts.heb.emptyValue
                   ? String(params.inputProps.value)
                   : "",
             }}
