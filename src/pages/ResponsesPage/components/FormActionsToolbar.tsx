@@ -8,10 +8,10 @@ import SyncTypeMenu from "@components/ResponseToolbar/Menus/SyncTypeMenu";
 import UserPicker from "../../../components/UserPicker/UserPicker";
 import { useMetro } from "@hooks/useMetro";
 import { CustomIcon } from "../../../theme/icons";
-import { PermissionGate } from "../PermissionGate";
 import { useFormStore } from "../stores/form.store";
 import { MoreOptions } from "./MoreOptions";
 import { permission } from "formula-gear";
+import { PermissionGate } from "@src/components/PermissionGate";
 
 export const SourceOperationStatus = {
   NOT_IN_PROGRESS: "not_in_progress",
@@ -71,7 +71,7 @@ export const FormActionsToolbar = () => {
 
   return (
     <Box>
-      <PermissionGate permissions={[permission.SyncForm]} userPermissions={permissions}>
+      <PermissionGate requiredPermissions={[permission.SyncForm, permission.DeleteForm, permission.ShareForm, permission.ExportForm, permission.ImportResponses, permission.DeleteAnyResponse]} userPermissions={permissions}>
         <MoreOptions
           setAnchorElSourceType={setAnchorElSourceType}
           pushToMetro={pushToMetro}
@@ -79,7 +79,7 @@ export const FormActionsToolbar = () => {
         />
       </PermissionGate>
 
-      <PermissionGate permissions={[permission.UpdateForm]} userPermissions={permissions}>
+      <PermissionGate requiredPermissions={[permission.UpdateForm]} userPermissions={permissions}>
         <Tooltip title="עריכת הטופס">
           <Button
             variant="customIcon"
@@ -91,7 +91,7 @@ export const FormActionsToolbar = () => {
         </Tooltip>
       </PermissionGate>
 
-      <PermissionGate permissions={[permission.ShareForm]} userPermissions={permissions}>
+      <PermissionGate requiredPermissions={[permission.ShareForm]} userPermissions={permissions}>
         <Tooltip title="שיתוף הטופס">
           <Button
             variant="customIcon"

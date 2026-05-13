@@ -15,11 +15,13 @@ import { useFormStore } from "../stores/form.store";
 interface RowActionsButtonsProps {
   rowSelectionModel: GridRowSelectionModel;
   onDeleted: () => void;
+  currentUserUpn?: string;
 }
 
 export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
   rowSelectionModel,
   onDeleted,
+  currentUserUpn,
 }) => {
   const navigate = useNavigate();
   const { form, permissions, rows, setForm } = useFormStore();
@@ -39,9 +41,19 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
   const isSingleSelection = selectedIds.length === 1;
   const hasSelection = selectedIds.length > 0;
 
-  const canView = permissions.includes(permission.ReadAnyResponse) || !!isSuperAdmin;
-  const canEdit = permissions.includes(permission.UpdateAnyResponse) || !!isSuperAdmin;
-  const canDelete = permissions.includes(permission.DeleteAnyResponse) || !!isSuperAdmin;
+  const singleSelectedResponse = isSingleSelection
+    ? rows.find((row) => String(row?.id) === String(selectedIds[0]))
+    : undefined;
+
+  const responseCreatedByCurrentUser = !!(
+    currentUserUpn &&
+    singleSelectedResponse &&
+    (singleSelectedResponse.upn === currentUserUpn || singleSelectedResponse.createdByUpn === currentUserUpn)
+  );
+
+  const canView = !!isSuperAdmin || permissions.some(p => p === permission.ReadAnyResponse || p === permission.ReadForm);
+  const canEdit = !!isSuperAdmin || permissions.includes(permission.UpdateAnyResponse) || (permissions.includes(permission.UpdateMyResponse) && responseCreatedByCurrentUser);
+  const canDelete = !!isSuperAdmin || permissions.includes(permission.DeleteAnyResponse);
 
   const handleView = () => {
     if (!isSingleSelection) return;

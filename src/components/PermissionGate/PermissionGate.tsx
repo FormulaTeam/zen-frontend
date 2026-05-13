@@ -2,11 +2,9 @@ import React from "react";
 import { Permission } from "formula-gear";
 import { useSuperAdmin } from "@contexts/SuperAdminContext";
 
-
 type PermissionGateProps = {
     userPermissions: number[];
     requiredPermissions: Permission[];
-    requireAny?: boolean;
     fallback?: React.ReactNode;
     children: React.ReactNode;
 };
@@ -14,7 +12,6 @@ type PermissionGateProps = {
 export const PermissionGate: React.FC<PermissionGateProps> = ({
     userPermissions,
     requiredPermissions,
-    requireAny = false,
     fallback = null,
     children,
 }) => {
@@ -26,9 +23,8 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
 
     const safeUserPerms = Array.isArray(userPermissions) ? userPermissions : [];
 
-    const hasPermission = requireAny
-        ? requiredPermissions.some((perm) => safeUserPerms.includes(perm))
-        : requiredPermissions.every((perm) => safeUserPerms.includes(perm));
+    const hasPermission: boolean = requiredPermissions.some((perm: Permission) => safeUserPerms.includes(perm))
+
 
     if (!hasPermission) {
         return <>{fallback}</>;
