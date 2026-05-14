@@ -116,35 +116,30 @@ const FormCard = ({
       </ItemImgAndTitles>
 
       <ItemBottomDiv>
-        <PermissionGate
-          userPermissions={userPermissions}
-          requiredPermissions={[permission.UpdateForm, permission.ShareForm]}
-          requireAny>
-          <ItemIconsDiv>
-            <PermissionGate userPermissions={userPermissions} requiredPermissions={[permission.UpdateForm]}>
-              <Tooltip title="עריכת טופס">
-                <div>
-                  <CustomIcon
-                    testClassName="form-edit-button"
-                    forcePointer
-                    iconName="pencil"
-                    onClick={() =>
-                      navigate(`/form/edit/${form.id}`, { state: { from: location.pathname } })
-                    }
-                  />
-                </div>
-              </Tooltip>
-            </PermissionGate>
+        <ItemIconsDiv>
+          <PermissionGate userPermissions={userPermissions} requiredPermissions={[permission.UpdateForm]}>
+            <Tooltip title="עריכת טופס">
+              <div>
+                <CustomIcon
+                  testClassName="form-edit-button"
+                  forcePointer
+                  iconName="pencil"
+                  onClick={() =>
+                    navigate(`/form/edit/${form.id}`, { state: { from: location.pathname } })
+                  }
+                />
+              </div>
+            </Tooltip>
+          </PermissionGate>
 
-            <PermissionGate userPermissions={userPermissions} requiredPermissions={[permission.ShareForm]}>
-              <Tooltip title="שיתוף טופס">
-                <div>
-                  <GrayShareIcon src={ShareIcon} onClick={handleShareClick} />
-                </div>
-              </Tooltip>
-            </PermissionGate>
-          </ItemIconsDiv>
-        </PermissionGate>
+          <PermissionGate userPermissions={userPermissions} requiredPermissions={[permission.ShareForm]}>
+            <Tooltip title="שיתוף טופס">
+              <div>
+                <GrayShareIcon src={ShareIcon} onClick={handleShareClick} />
+              </div>
+            </Tooltip>
+          </PermissionGate>
+        </ItemIconsDiv>
 
         {showSharePopup && (
           <UserPicker
@@ -176,8 +171,8 @@ const FormCard = ({
 
           <PermissionGate
             userPermissions={userPermissions}
-            requiredPermissions={[permission.ReadAnyResponse]}
-            requireAny>
+            requiredPermissions={[permission.ReadAnyResponse, permission.ReadForm]}
+          >
             <ItemButton
               className="form-watch-responses-button"
               onClick={goToResponsesPage}

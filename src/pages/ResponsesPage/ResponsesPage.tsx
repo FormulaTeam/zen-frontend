@@ -19,8 +19,9 @@ import { useResponsesEdit } from "./hooks/useResponsesEdit";
 import { useResponsesViews } from "./hooks/useResponsesViews";
 import { useFormStore } from "./stores/form.store";
 import { ActionsRow, CenteredBox, MainContentWrapper, PageWrapper, TopSection } from "./styled";
-import { FormDto, FormFieldDto, UserPersonalDto } from "../../types/shared";
-import { IOrderBy } from "@src/types/enums/filtersAndSorts.enum";
+import { FormDto, FormFieldDto } from "../../types/shared";
+import { PermissionGate } from "@src/components/PermissionGate";
+import { permission } from "formula-gear";
 
 type ResponsePageRow = GridRowModel & {
   id: string | number;
@@ -105,19 +106,19 @@ const ResponsesPageContent = (): JSX.Element => {
     handleSaveView,
     isSaving,
   } = useResponsesViews();
-useEffect(() => {
-  const timer = setTimeout(() => {
-    setFilter((prev) => ({
-      ...prev,
-      query: search,
-      before: undefined,
-      after: undefined,
-      pageNumber: 1,
-    }));
-  }, 500);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilter((prev) => ({
+        ...prev,
+        query: search,
+        before: undefined,
+        after: undefined,
+        pageNumber: 1,
+      }));
+    }, 500);
 
-  return () => clearTimeout(timer);
-}, [search, setFilter]);
+    return () => clearTimeout(timer);
+  }, [search, setFilter]);
 
   const displayedRows = useMemo<ResponsePageRow[]>(() => {
     return (isInEditMode ? localRows : storeRows) as ResponsePageRow[];
@@ -183,6 +184,7 @@ useEffect(() => {
               <RowActionsButtons
                 rowSelectionModel={rowSelectionModel}
                 onDeleted={handleRowDeleted}
+                currentUserUpn={sidePanelUser?.upn}
               />
             ) : (
               <>
@@ -194,20 +196,23 @@ useEffect(() => {
                   onToggleEditMode={handleToggleEditMode}
                   onSaveChanges={handleSaveChanges}
                   onAddNewResponse={handleAddNewResponse}
+                  permissions={permissions}
                 />
               </>
             )}
           </ActionsRow>
           <SearchInfo search={search} setSearch={setSearch} />
-          <ViewsButton
-            isSidePanelOpen={isSidePanelOpen}
-            setIsSidePanelOpen={setIsSidePanelOpen}
-            hasSavedViews={hasSavedViews}
-            savedViews={savedViews}
-            selectedViewId={selectedViewId}
-            defaultViewId={defaultViewId}
-            handleViewDropdownChange={handleViewDropdownChange}
-          />
+          <PermissionGate requiredPermissions={[permission.MarkMyResponsesViewPublic]} userPermissions={permissions ?? []}>
+            <ViewsButton
+              isSidePanelOpen={isSidePanelOpen}
+              setIsSidePanelOpen={setIsSidePanelOpen}
+              hasSavedViews={hasSavedViews}
+              savedViews={savedViews}
+              selectedViewId={selectedViewId}
+              defaultViewId={defaultViewId}
+              handleViewDropdownChange={handleViewDropdownChange}
+            />
+          </PermissionGate>
         </TopSection>
         <ResponsesTable
           isInEditMode={isInEditMode}

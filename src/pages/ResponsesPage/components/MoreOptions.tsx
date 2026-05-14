@@ -18,10 +18,10 @@ import deleteResponseImg from "../../../images/delete_response.png";
 import ConfirmPopup from "../../../popups/ConfirmPopup/ConfirmPopup";
 import { CustomIcon } from "../../../theme/icons";
 import { createExcelExport } from "../../../utils/utils";
-import { PermissionGate } from "../PermissionGate";
 import { useFormStore } from "../stores/form.store";
 import { SourceOperationStatus, SourceOperationStatusType } from "./FormActionsToolbar";
 import { UploadResponses } from "./UploadResponses";
+import { PermissionGate } from "@src/components/PermissionGate";
 
 interface MoreOptionsProps {
   setAnchorElSourceType: React.Dispatch<React.SetStateAction<HTMLElement | null>>;
@@ -128,7 +128,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           vertical: "top",
           horizontal: "left",
         }}>
-        <PermissionGate permissions={[permission.SyncForm]} userPermissions={permissions}>
+        <PermissionGate requiredPermissions={[permission.SyncForm]} userPermissions={permissions}>
           {sourceOperationStatus === SourceOperationStatus.NOT_IN_PROGRESS ? (
             syncingDataMenuItem
           ) : (
@@ -155,7 +155,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
         </PermissionGate>
 
         <PermissionGate
-          permissions={[permission.CreateResponse, permission.UpdateAnyResponse]}
+          requiredPermissions={[permission.ImportResponses]}
           userPermissions={permissions}>
           <MenuItem disabled={!hasFormFields} onClick={handleImportFromExcel}>
             <ListItemIcon>
@@ -165,7 +165,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           </MenuItem>
         </PermissionGate>
 
-        <PermissionGate permissions={[permission.ReadForm]} userPermissions={permissions}>
+        <PermissionGate requiredPermissions={[permission.ExportForm]} userPermissions={permissions}>
           <MenuItem disabled={!hasFormFields} onClick={handleExportToExcel}>
             <ListItemIcon>
               <TableView sx={{ fontSize: 22 }} />
@@ -174,7 +174,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           </MenuItem>
         </PermissionGate>
 
-        <PermissionGate permissions={[permission.UpdateForm]} userPermissions={permissions}>
+        <PermissionGate requiredPermissions={[permission.DeleteForm]} userPermissions={permissions}>
           <MenuItem onClick={handleDeleteForm}>
             <ListItemIcon>
               <DeleteOutline sx={{ color: "red", fontSize: 22 }} />
@@ -183,7 +183,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           </MenuItem>
         </PermissionGate>
 
-        <PermissionGate permissions={[permission.UpdateForm]} userPermissions={permissions}>
+        <PermissionGate requiredPermissions={[permission.DeleteAnyResponse]} userPermissions={permissions}>
           <MenuItem onClick={handleDeleteResponses} disabled={rows.length === 0}>
             <ListItemIcon>
               <DeleteSweepOutlined sx={{ color: "red", fontSize: 22 }} />

@@ -464,6 +464,7 @@ export const getResponsesRows = async ({
         editedByName: node.updated_by?.name || node.updatedBy?.name,
         created: node.created_at || node.createdAt,
         createdByName: node.created_by?.name || node.createdBy?.name,
+        createdByUpn: node.created_by?.upn || node.createdBy?.upn,
         index: node.index,
         form_id: node.form_id || node.formId,
       };

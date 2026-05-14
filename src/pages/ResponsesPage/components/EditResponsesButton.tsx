@@ -4,6 +4,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import { EditButtonWrapper, StyledEditButton } from "../styled";
 import TableEditIconSvg from "../../../icons/tableEdit.svg";
 import { CustomIcon } from "@theme/icons";
+import { PermissionGate } from "@components/PermissionGate/PermissionGate";
+import { Permission, permission } from "formula-gear";
 
 interface EditResponsesButtonProps {
     isInEditMode: boolean;
@@ -12,6 +14,7 @@ interface EditResponsesButtonProps {
     onToggleEditMode: () => void;
     onSaveChanges: () => void;
     onAddNewResponse: () => void;
+    permissions: Permission[] | undefined;
 }
 
 export const EditResponsesButton = ({
@@ -21,6 +24,7 @@ export const EditResponsesButton = ({
     onToggleEditMode,
     onSaveChanges,
     onAddNewResponse,
+    permissions
 }: EditResponsesButtonProps) => {
     const enterEditModeButton: JSX.Element = (
         <Tooltip title="עריכה מהירה">
@@ -69,8 +73,10 @@ export const EditResponsesButton = ({
     );
 
     return (
-        <EditButtonWrapper>
-            {isInEditMode ? editModeActions : enterEditModeButton}
-        </EditButtonWrapper>
+        <PermissionGate userPermissions={permissions ?? []} requiredPermissions={[permission.UpdateAnyResponse]}>
+            <EditButtonWrapper>
+                {isInEditMode ? editModeActions : enterEditModeButton}
+            </EditButtonWrapper>
+        </PermissionGate>
     );
 };
