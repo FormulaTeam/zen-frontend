@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { z } from "zod";
 import { $ZodErrorTree } from "zod/v4/core";
-import { isEqual } from "lodash";
+import { cloneDeep, isEqual } from "lodash";
 
 import { FormField, FormMetadata, FormStructure, Section } from "../context/FormStructureContext";
 import { getEmptyForm } from "../context/utils";
@@ -309,12 +309,15 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
       const orderedSectionIds = [...prev.orderedSectionIds];
 
       if (Object.keys(sections).length > 1) {
-        sections[sectionId].fieldIds.forEach((fieldId) => delete fields[fieldId]);
+        let conditions = cloneDeep(prev.conditions);
+        conditions = applyComponentDeletionToConditions("section", sectionId, conditions);
+
+        sections[sectionId].fieldIds.forEach((fieldId) => {
+          conditions = applyComponentDeletionToConditions("field", fieldId, conditions);
+          delete fields[fieldId];
+        });
         delete sections[sectionId];
-
         orderedSectionIds.splice(orderedSectionIds.indexOf(sectionId), 1);
-
-        const conditions = applyComponentDeletionToConditions("section", sectionId, prev.conditions);
 
         return {
           ...prev,

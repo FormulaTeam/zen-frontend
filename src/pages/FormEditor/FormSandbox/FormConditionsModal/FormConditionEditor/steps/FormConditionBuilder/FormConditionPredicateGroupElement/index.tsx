@@ -33,12 +33,15 @@ function FormConditionPredicateGroupElement({
   setData,
   validationErrors,
 }: Props) {
-  const { formStructure: { fields } } = useFormStructureContext();
+  const { formStructure: { fields, sections, orderedSectionIds } } = useFormStructureContext();
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const availableFields = Object.keys(fields).filter((fieldId) => fields[fieldId].data.displayName && (CONDITION_FIELD_TYPE_IDS as FormFieldTypeId[]).includes(fields[fieldId].data.typeId)).map((fieldId) => fields[fieldId]);
-  const availableFieldIds = availableFields.map((field) => field.id);
+  const orderedAllFieldIds = orderedSectionIds.flatMap(sectionId => sections[sectionId]?.fieldIds || []);
+  const availableFieldIds = orderedAllFieldIds.filter((fieldId) => {
+    const field = fields[fieldId];
+    return field?.data?.displayName && (CONDITION_FIELD_TYPE_IDS as FormFieldTypeId[]).includes(field.data.typeId);
+  });
 
   useEffect(() => {
     shouldScrollIntoView &&

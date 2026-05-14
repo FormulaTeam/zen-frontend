@@ -28,8 +28,8 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
     transition,
     isDragging,
     active,
-  } = useSortable({ 
-    id: field.id, 
+  } = useSortable({
+    id: field.id,
     data: { elementType: "field" } as DraggableElementData,
     resizeObserverConfig: undefined as any
   });
