@@ -28,8 +28,6 @@ const TooltipContent = () => (
     במידה ושדה או מקטע מושפע מתנאים אחרים, הוא יוצג רק אם כל התנאים מתקיימים -
     <br />
     יש לוודא שהתנאים לא מתנגשים כדי להימנע ממצבים בהם הם לא יוצגו.
-    <br /> <br />
-    יודגש, לא ניתן להגדיר התניות על שדות חובה או על המקטעים שמכילים שדות חובה בטופס
   </div>
 );
 
@@ -80,58 +78,58 @@ function FormConditionsDependencyPicker() {
       <div className={styles.inputsContainer}>
         {
           Object.values(FormComponentType).map((componentType) => (
-              <Autocomplete key={componentType}
-                            fullWidth
-                            multiple
-                            disableCloseOnSelect
-                            options={availableComponents[componentType].ids ?? []}
-                            value={dependantComponents[componentType] ?? []}
-                            getOptionLabel={(componentId) => componentId ? availableComponents[componentType].getLabel(componentId) : "שגיאה - שדה אינו קיים"}
-                            noOptionsText={`אין ${ComponentTypeLabels[componentType]} מתאימים בטופס`}
-                            onChange={
-                              (_, ids) => setData((prev) => {
-                                return {
-                                  ...prev,
-                                  [componentType]: ids ?? [],
-                                };
-                              })
-                            }
-                            renderOption={
-                              ({ key, ...restProps }, componentId, { selected }) => {
-                                if (!componentId) return;
+            <Autocomplete key={componentType}
+              fullWidth
+              multiple
+              disableCloseOnSelect
+              options={availableComponents[componentType].ids ?? []}
+              value={dependantComponents[componentType] ?? []}
+              getOptionLabel={(componentId) => componentId ? availableComponents[componentType].getLabel(componentId) : "שגיאה - שדה אינו קיים"}
+              noOptionsText={`אין ${ComponentTypeLabels[componentType]} מתאימים בטופס`}
+              onChange={
+                (_, ids) => setData((prev) => {
+                  return {
+                    ...prev,
+                    [componentType]: ids ?? [],
+                  };
+                })
+              }
+              renderOption={
+                ({ key, ...restProps }, componentId, { selected }) => {
+                  if (!componentId) return;
 
-                                const icon = availableComponents[componentType].getIcon?.(componentId);
-                                const label = availableComponents[componentType].getLabel(componentId);
+                  const icon = availableComponents[componentType].getIcon?.(componentId);
+                  const label = availableComponents[componentType].getLabel(componentId);
 
-                                return (
-                                  <Box key={key} component={"li"} sx={{ fontSize: 20 }} {...restProps}>
-                                    {icon && <div className={styles.fieldOptionIcon}>{icon}</div>}
-                                    {label}
-                                    <Checkbox
-                                      style={{ marginRight: "auto" }}
-                                      checked={selected}
-                                    />
-                                  </Box>
-                                );
-                              }
-                            }
-                            renderInput={(params) => (
-                              <TextField {...params}
-                                         label={ComponentTypeLabels[componentType]}
-                                         slotProps={{
-                                           htmlInput: {
-                                             ...params.inputProps,
-                                             autoComplete: "new-password",
-                                             dir: "rtl",
-                                             style: {
-                                               ...params.inputProps.style,
-                                               height: 60,
-                                             },
-                                           },
-                                         }} />
-                            )}
-              />
-            ),
+                  return (
+                    <Box key={key} component={"li"} sx={{ fontSize: 20 }} {...restProps}>
+                      {icon && <div className={styles.fieldOptionIcon}>{icon}</div>}
+                      {label}
+                      <Checkbox
+                        style={{ marginRight: "auto" }}
+                        checked={selected}
+                      />
+                    </Box>
+                  );
+                }
+              }
+              renderInput={(params) => (
+                <TextField {...params}
+                  label={ComponentTypeLabels[componentType]}
+                  slotProps={{
+                    htmlInput: {
+                      ...params.inputProps,
+                      autoComplete: "new-password",
+                      dir: "rtl",
+                      style: {
+                        ...params.inputProps.style,
+                        height: 60,
+                      },
+                    },
+                  }} />
+              )}
+            />
+          ),
           )
         }
       </div>

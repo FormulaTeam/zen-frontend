@@ -88,13 +88,15 @@ export const getResponseById = async (formId: number, responseId: string): Promi
 export const createResponse = async (
   formId: number,
   responseData: CreateResponseDto[],
+  hiddenFieldIds?: string[],
 ): Promise<ResponseDto[]> => {
   try {
+    const params = hiddenFieldIds?.length ? { hiddenFieldIds: hiddenFieldIds.join(',') } : undefined;
     const response = await apiClient.post<ResponseDto[]>(
       `/forms/${formId}/responses`,
       responseData,
+      { params },
     );
-
     return response.data;
   } catch (error) {
     console.error("Failed to create responses:", error);
@@ -110,10 +112,15 @@ export const createResponse = async (
 export const updateResponses = async (
   formId: number,
   dto: BulkUpdateResponsesDto,
+  hiddenFieldIds?: string[],
 ): Promise<ResponseDto[]> => {
   try {
-    const response = await apiClient.put<ResponseDto[]>(`/forms/${formId}/responses`, dto);
-
+    const params = hiddenFieldIds?.length ? { hiddenFieldIds: hiddenFieldIds.join(',') } : undefined;
+    const response = await apiClient.put<ResponseDto[]>(
+      `/forms/${formId}/responses`,
+      dto,
+      { params },
+    );
     return response.data;
   } catch (error) {
     console.error("Failed to update responses:", error);
@@ -324,14 +331,14 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
   });
 };
 
-export const useCreateResponse = (formId?: number) => {
+export const useCreateResponse = (formId?: number, hiddenFieldIds?: string[]) => {
   return useMutation({
     mutationFn: (responseData: CreateResponseDto | CreateResponseDto[]) => {
       const dataArray = Array.isArray(responseData) ? responseData : [responseData];
       const targetFormId = formId || (dataArray[0] as any).form_id;
       if (!targetFormId) throw new Error("formId is required for createResponse");
 
-      return createResponse(targetFormId, dataArray);
+      return createResponse(targetFormId, dataArray, hiddenFieldIds);
     },
     onSuccess: (_, variables) => {
       const dataArray = Array.isArray(variables) ? variables : [variables];
@@ -354,12 +361,12 @@ export const useCreateResponse = (formId?: number) => {
  *
  * For multiple responses, pass multiple items in the responses array.
  */
-export const useUpdateResponses = (formId?: number) => {
+export const useUpdateResponses = (formId?: number, hiddenFieldIds?: string[]) => {
   return useMutation({
     mutationFn: (dto: BulkUpdateResponsesDto) => {
       if (!formId) throw new Error("formId is required for updateResponses");
 
-      return updateResponses(formId, dto);
+      return updateResponses(formId, dto, hiddenFieldIds);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["responses"] });

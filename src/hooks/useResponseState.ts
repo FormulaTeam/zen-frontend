@@ -681,6 +681,14 @@ export const useResponseState = (
     );
   }, [formFields, formFieldsValuesMap, form]);
 
+  const hiddenFieldIds = useMemo(() => {
+    const visibleIds = new Set(visibleFormFields.map((field) => String(field.id)));
+    return formFields
+      .filter((field) => !visibleIds.has(String(field.id)))
+      .map((field) => String(field.id));
+  }, [formFields, visibleFormFields]);
+
+
   useEffect(() => {
     if (formFields.length === 0) return;
 
@@ -1026,5 +1034,6 @@ export const useResponseState = (
     responsSections,
     collapsedSections,
     toggleSectionCollapse,
+    hiddenFieldIds
   };
 };

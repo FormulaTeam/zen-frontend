@@ -104,13 +104,14 @@ export const useResponseSave = (
   response: ExistingResponseLike | null | undefined,
   parentResponse?: ParentResponseRef,
   copyMode?: boolean,
+  hiddenFieldIds?: string[],
 ) => {
   const formId = form?.id;
 
   const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } =
-    useCreateResponse(formId!);
+    useCreateResponse(formId!, hiddenFieldIds);
   const { mutateAsync: mutateUpdateResponsesAsync, isPending: isUpdateResponsePending } =
-    useUpdateResponses(formId);
+    useUpdateResponses(formId, hiddenFieldIds);
 
   const saveResponse = async (
     formFieldsByIdMap: Map<string, SaveField>,

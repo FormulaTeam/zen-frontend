@@ -59,9 +59,10 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     responsSections,
     collapsedSections,
     toggleSectionCollapse,
+    hiddenFieldIds
   } = useResponseState(formId, id, viewMode, copyMode, undefined, user, isSuperAdmin ?? undefined);
 
-  const { saveResponse, isSaving } = useResponseSave(form, response, undefined, copyMode);
+  const { saveResponse, isSaving } = useResponseSave(form, response, undefined, copyMode, hiddenFieldIds);
 
   const parentCreatePromiseRef = useRef<Promise<ResponseDto> | null>(null);
   const generateValidationErrorMessagesRef = useRef<
