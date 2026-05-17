@@ -42,8 +42,7 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
   filter: { pageSize: 25, pageNumber: 1, sortBy: "meta:index", orderBy: IOrderBy.DESC },
   setFilter: (update: Filter | null | ((prev: Filter | null) => Filter | null)) =>
     set((state) => ({
-      filter: typeof update === "function" ? update(state.filter) : update,
-      isRowsLoading: true,
+      filter: typeof update === "function" ? update(state.filter) : update
     })),
   rows: [],
   setRows: (rows: Row[]) => set({ rows }),
