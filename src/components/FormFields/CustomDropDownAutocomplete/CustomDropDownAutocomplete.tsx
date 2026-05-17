@@ -121,7 +121,6 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
       fullWidth
       variant="standard"
       sx={{
-        direction: "rtl",
         gap: "6px",
 
         ...(isTabularEdit && {
@@ -153,8 +152,6 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
             onScroll: handleListboxScroll,
             sx: {
               p: "6px",
-              direction: "rtl",
-
               "& .MuiAutocomplete-option": {
                 minHeight: "40px",
                 borderRadius: "8px",

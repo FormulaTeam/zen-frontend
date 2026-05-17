@@ -70,7 +70,6 @@ const palette = {
 };
 
 export let theme = createTheme({
-  direction: "rtl",
   typography: {
     fontFamily: "assistant, sans-serif",
     fontSize: 19,
@@ -299,7 +298,7 @@ theme.components = {
     styleOverrides: {
       root: {
         zIndex: 1000,
-        "&.MuiInputBase-input": { direction: "rtl", marginTop: "5px" },
+        "&.MuiInputBase-input": { marginTop: "5px" },
         "&.MuiAutocomplete-root .MuiOutlinedInput-root": {
           borderRadius: "8px",
           fontWeight: 600,

@@ -5,7 +5,6 @@
     min-height: 100%;
     gap: 20px;
     padding: 20px;
-    direction: rtl;
     background-color: white;
     border-radius: 16px;
     box-shadow: 0 4px 10px 0 rgba(153, 177, 202, 0.5);
@@ -165,12 +164,10 @@
 }
 
 .sectionChip {
-    direction: rtl;
     font-size: 16px !important;
 }
 
 .fieldChip {
-    direction: rtl;
     font-size: 16px !important;
     background-color: white !important;
 }

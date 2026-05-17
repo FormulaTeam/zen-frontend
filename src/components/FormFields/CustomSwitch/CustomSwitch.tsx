@@ -49,7 +49,6 @@ const CustomSwitch: React.FC<CustomSwitchProps> = ({
         }
         label={isTabularEdit ? "" : label}
         labelPlacement="start"
-        dir="rtl"
       />
     </StyledFormControl>
   );

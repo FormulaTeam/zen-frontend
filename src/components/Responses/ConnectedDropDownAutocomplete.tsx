@@ -60,7 +60,7 @@ export const ConnectedDropDownAutocomplete = (props: any) => {
     };
 
     return (
-        <FormControl fullWidth variant="standard" sx={{ direction: "rtl", gap: "6px" }}>
+        <FormControl fullWidth variant="standard" sx={{ gap: "6px" }}>
             {!isTabularEdit && (
                 <StyledInputLabel
                     shrink
@@ -102,7 +102,6 @@ export const ConnectedDropDownAutocomplete = (props: any) => {
                         onScroll: handleListboxScroll,
                         sx: {
                             p: "6px",
-                            direction: "rtl",
                             "& .MuiAutocomplete-option": {
                                 minHeight: "40px",
                                 borderRadius: "8px",

@@ -15,7 +15,6 @@ export const StatusWrapper = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
-  direction: rtl;
   text-align: center;
 `;
 

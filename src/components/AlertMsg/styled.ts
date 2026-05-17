@@ -30,7 +30,6 @@ export const Popup = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  direction: rtl;
 `;
 
 export const CloseBtn = styled(Close)`

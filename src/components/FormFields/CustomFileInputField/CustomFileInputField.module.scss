@@ -4,6 +4,7 @@
   display: flex;
   justify-content: center;
   padding: 0.5rem 1rem;
+
   img {
     width: 25px;
   }
@@ -23,6 +24,7 @@ section {
     text-decoration: underline;
   }
 }
+
 .items-preview {
   .file-item {
     width: 23%;
@@ -38,10 +40,12 @@ section {
       gap: 8px;
       direction: ltr;
       overflow: hidden;
+
       svg {
         width: 15px;
         flex-shrink: 0;
       }
+
       p {
         font-size: 14px;
         overflow: hidden;

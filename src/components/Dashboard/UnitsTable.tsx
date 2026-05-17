@@ -20,12 +20,12 @@ import ReactLoading from "react-loading";
 
 const getComparator =
   (field: keyof IMirageUser, asc: boolean) =>
-  (a: IMirageUser, b: IMirageUser): number => {
-    const v1 = a[field] ?? "";
-    const v2 = b[field] ?? "";
-    if (v1 === v2) return 0;
-    return asc ? (v1 > v2 ? 1 : -1) : v1 > v2 ? -1 : 1;
-  };
+    (a: IMirageUser, b: IMirageUser): number => {
+      const v1 = a[field] ?? "";
+      const v2 = b[field] ?? "";
+      if (v1 === v2) return 0;
+      return asc ? (v1 > v2 ? 1 : -1) : v1 > v2 ? -1 : 1;
+    };
 
 const UnitsTable: React.FC = () => {
   const [sortField, setSortField] = useState<keyof IMirageUser>("loginAt");
@@ -74,7 +74,7 @@ const UnitsTable: React.FC = () => {
   );
 
   return (
-    <Box dir="rtl" sx={{ display: "flex", flexDirection: "column", minHeight: 200 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: 200 }}>
       <ChartFromToPicker
         range={range}
         handleDateChange={handleDateChange}
