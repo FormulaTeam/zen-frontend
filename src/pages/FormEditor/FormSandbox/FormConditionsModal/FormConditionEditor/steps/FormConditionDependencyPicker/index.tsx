@@ -23,7 +23,7 @@ const ComponentTypeLabels: Record<ValueOf<typeof FormComponentType>, string> = {
 };
 
 const TooltipContent = () => (
-  <div dir={"rtl"}>
+  <div>
     בחר את השדות והמקטעים <b>שיופיעו</b> כאשר התנאים יתקיימו
     במידה ושדה או מקטע מושפע מתנאים אחרים, הוא יוצג רק אם כל התנאים מתקיימים -
     <br />
@@ -120,7 +120,6 @@ function FormConditionsDependencyPicker() {
                     htmlInput: {
                       ...params.inputProps,
                       autoComplete: "new-password",
-                      dir: "rtl",
                       style: {
                         ...params.inputProps.style,
                         height: 60,

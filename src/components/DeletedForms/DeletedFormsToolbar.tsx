@@ -46,20 +46,18 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
       alignItems="flex-end"
       mb={2}
       gap={2}
-      flexWrap="wrap"
-      dir="rtl">
+      flexWrap="wrap">
       {allowSearch && (
         <SearchAndFilter
           variant="standard"
           placeholder="חפש תגובה שנמחקה"
           searchValue={searchValue ?? ""}
-          handleSearch={handleSearch ?? (() => {})}
+          handleSearch={handleSearch ?? (() => { })}
           borderType=""
         />
       )}
       <Box display="flex" gap={2}>
         <BaseFormInput
-          dir="rtl"
           size="small"
           label="נמחק ע״י"
           value={deletedBy}
@@ -75,7 +73,6 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
           }}
         />
         <BaseFormInput
-          dir="rtl"
           size="small"
           label="נוצר ע״י"
           value={createdBy}

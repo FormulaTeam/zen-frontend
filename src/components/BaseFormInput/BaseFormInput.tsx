@@ -9,11 +9,6 @@ const BaseFormInput: React.FC<TextFieldProps> = (props) => {
         ...props.slotProps,
         inputLabel: {
           ...props.slotProps?.inputLabel,
-          sx: {
-            right: 0,
-            left: "unset",
-            transformOrigin: "top right",
-          },
         },
       }}
       variant={props.variant || "standard"}
@@ -21,14 +16,12 @@ const BaseFormInput: React.FC<TextFieldProps> = (props) => {
         ...props.sx,
         "& .MuiInputBase-root": {},
         "& .MuiFormHelperText-root": {
-          direction: "rtl",
           textAlign: "right",
           ml: 0,
         },
       }}
       FormHelperTextProps={{
         sx: {
-          direction: "rtl",
           textAlign: "right",
           ml: 0,
         },

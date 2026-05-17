@@ -18,7 +18,6 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  direction: rtl;
   padding: 15px 45px;
 
   .share-form-popup-loading {
@@ -29,6 +28,7 @@
     width: 100%;
     min-height: 400px;
   }
+
   .x-btn {
     position: absolute;
     top: 15px;
@@ -50,24 +50,26 @@
     min-height: 220px;
     overflow-y: auto;
     overflow-x: hidden;
+
     .user-shared-div {
       width: 100%;
       display: grid !important;
       grid-template-columns: 7fr 4fr 1fr !important;
       min-height: 55px !important;
 
-      .roles-select {
-      }
+      .roles-select {}
+
       .x-div {
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: flex-end;
-        .delete-btn {
-        }
+
+        .delete-btn {}
       }
     }
   }
+
   .save-btn {
     width: 100%;
     background-color: $medium_green !important;
@@ -78,6 +80,7 @@
     padding-right: 15px !important;
     border-radius: 10px !important;
     height: 40px;
+
     .MuiButtonBase-root {
       background-color: $medium_green !important;
       color: white !important;
@@ -89,22 +92,23 @@
   }
 
   .MuiAutocomplete-root {
-    .MuiAutocomplete-input {
-    }
+    .MuiAutocomplete-input {}
   }
+
   .share-with-autocomplete {
     margin-top: 10px;
     width: 100%;
 
-    .MuiOutlinedInput-root {
-    }
+    .MuiOutlinedInput-root {}
   }
+
   .user-option {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
     justify-content: flex-start !important;
     cursor: pointer !important;
+
     .user-img {
       width: 50px !important;
       cursor: pointer !important;
@@ -117,6 +121,7 @@
       flex-direction: column !important;
       align-items: flex-start !important;
       justify-content: flex-start !important;
+
       .user-name {
         color: black !important;
         font-size: 18px !important;
@@ -137,8 +142,8 @@
         border: 1px solid red !important;
       }
     }
-    .permissions-autocomplete {
-    }
+
+    .permissions-autocomplete {}
 
     .user-name-img {
       display: flex;
@@ -151,11 +156,13 @@
       width: 38px !important;
       cursor: pointer !important;
     }
+
     .user-lbls {
       display: flex !important;
       flex-direction: column !important;
       align-items: flex-start !important;
       justify-content: flex-start !important;
+
       .user-name {
         color: black !important;
         font-size: 14px !important;
@@ -168,10 +175,12 @@
       }
     }
   }
+
   .role-option {
     padding: 5px;
     font-size: 16px !important;
     cursor: pointer;
+
     &:hover {
       background-color: $light_green;
       color: $medium_green;

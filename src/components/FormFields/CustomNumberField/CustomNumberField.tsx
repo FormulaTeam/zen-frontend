@@ -52,7 +52,6 @@ const CustomNumberField: React.FC<CustomNumberFieldProps> = ({
       }}
       onBlur={onBlurHandler}
       size={isTabularEdit ? "medium" : undefined}
-      dir="rtl"
       sx={{
         ...(isTabularEdit && {
           "& .MuiInputBase-root": {

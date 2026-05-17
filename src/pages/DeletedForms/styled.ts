@@ -22,13 +22,12 @@ export const EmptyMessage = styled(Typography)`
   margin-top: 16px;
 `;
 
-export const PageContainer = styled(Box)<{ $bgColor?: string }>`
+export const PageContainer = styled(Box) <{ $bgColor?: string }>`
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  direction: rtl;
   padding: 2%;
   background-color: ${(props) => props.$bgColor || "white"};
 `;

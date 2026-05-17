@@ -1,9 +1,5 @@
 import { useState } from "react";
 import { sortByOptions, SortOption } from "../../utils/utils";
-import { CacheProvider } from "@emotion/react";
-import createCache from "@emotion/cache";
-import { prefixer } from "stylis";
-import rtlPlugin from "stylis-plugin-rtl";
 import { StyledAutocomplete, StyledTextField } from "./styled";
 import { formsSortOption, FormsSortOption, sortDirectionOption, SortDirection } from "../../types/enums/filtersAndSorts.enum";
 
@@ -20,10 +16,6 @@ interface MainSortSelectProps {
 }
 
 const MainSortSelect: React.FC<MainSortSelectProps> = ({ onSortChange, dataTestId }) => {
-  const cacheRtl = createCache({
-    key: "muirtl",
-    stylisPlugins: [prefixer, rtlPlugin],
-  });
   const [sortByOption, setSortByOption] = useState<SortOption | null>(null);
   const DEFAULT_INPUT_WIDTH = 125;
   const FONT_SIZE = 16;
@@ -58,7 +50,6 @@ const MainSortSelect: React.FC<MainSortSelectProps> = ({ onSortChange, dataTestI
       multiple={false}
       disablePortal //so options dropdown will show in popup
       getOptionLabel={(option) => option.label}
-      style={{ direction: "rtl" }}
       renderInput={(params) => (
         <StyledTextField
           {...params}

@@ -1,4 +1,5 @@
 @import "../../utils/variables.scss";
+
 .share-link-page-container {
   width: 100vw;
   height: 70vh;
@@ -7,20 +8,22 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
+
   .share-link-top {
     margin: 50px;
     width: 40%;
     border-radius: 50px;
   }
+
   .share-link-lbls-div {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+
     .share-link-lbl {
       font-size: 2.5rem;
       text-align: right;
-      direction: rtl;
     }
   }
 }

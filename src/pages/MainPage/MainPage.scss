@@ -17,7 +17,6 @@
   align-items: center;
   justify-content: flex-start;
   overflow: hidden;
-  direction: rtl;
   padding: 2%;
 
   .no-data-div {
@@ -42,7 +41,6 @@
     margin-left: 24px;
 
     .MuiAutocomplete-root {
-      direction: rtl !important;
       padding: 2.5px 8px 5px 4px !important;
     }
   }
