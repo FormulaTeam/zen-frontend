@@ -59,8 +59,7 @@ function DeletedForms({ user }) {
           <Tabs
             value={tabValue}
             onChange={handleTabChange}
-            aria-label="deleted content tabs"
-            sx={{ direction: "rtl" }}>
+            aria-label="deleted content tabs">
             <CustomTab label="טפסים שנמחקו" />
             <CustomTab label="תגובות שנמחקו" />
           </Tabs>

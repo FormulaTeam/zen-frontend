@@ -27,7 +27,6 @@ export const StyledAutocomplete = styled(Autocomplete<SortOption, false, false, 
   maxWidth: '250px',
   borderRadius: '8px',
   fontSize: '15px',
-  direction: 'rtl',
 
   '& .MuiInputBase-root': {
     borderRadius: '8px',
@@ -47,9 +46,8 @@ export const StyledTextField = styled(TextField)(({ theme }) => ({
   ".MuiAutocomplete-input": {
     marginTop: "5px",
   },
-   '& .MuiInputLabel-root': {
+  '& .MuiInputLabel-root': {
     color: theme.palette.primary.main,
     fontWeight: 600,
-    direction: 'rtl',
   },
 }));

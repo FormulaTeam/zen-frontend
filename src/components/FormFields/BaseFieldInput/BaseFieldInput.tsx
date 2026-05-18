@@ -27,10 +27,9 @@ const BaseFieldInput = React.forwardRef<HTMLDivElement, BaseFieldInputProps>(
           inputLabel: {
             shrink: true,
             sx: {
-              right: 0,
-              left: "unset",
-              transformOrigin: "top right",
+              left: '5px',
               display: isTabularEdit ? "none" : "block",
+              top: '-5px'
             },
             ...(slotProps as any)?.inputLabel,
           },

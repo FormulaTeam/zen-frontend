@@ -29,7 +29,6 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    direction: rtl;
 
     .x-btn {
       position: absolute;
@@ -37,9 +36,11 @@
       right: 15px;
       cursor: pointer;
     }
+
     .confirm-popup-img {
       width: 100px;
     }
+
     .confirm-popup-msg {
       width: 100%;
       margin-top: 30px;
@@ -47,6 +48,7 @@
       font-size: 1.5rem;
     }
   }
+
   .confirm-popup-btns-div {
     display: flex;
     flex-direction: row;

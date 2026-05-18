@@ -186,7 +186,6 @@ function FormConditionPredicateElement({
                 htmlInput: {
                   ...params.inputProps,
                   autoComplete: "new-password",
-                  dir: "rtl",
                 },
               }} />
           )}
@@ -220,7 +219,6 @@ function FormConditionPredicateElement({
                 htmlInput: {
                   ...params.inputProps,
                   autoComplete: "new-password",
-                  dir: "rtl",
                 },
               }} />
           )}

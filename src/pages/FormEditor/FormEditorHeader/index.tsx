@@ -199,7 +199,6 @@ function FormEditorHeader() {
     <Dialog
       open={showAlertMsg}
       onClose={() => setShowAlertMsg(false)}
-      sx={{ direction: 'rtl' }}
       slotProps={{
         paper: {
           component: ExitAlertMsgDialog,

@@ -6,7 +6,6 @@ import { styled } from "@mui/material/styles";
 
 export const StyledFormHelperText = styled(FormHelperText)`
   color: ${({ theme }) => theme.palette.error.main};
-  direction: rtl;
   text-align: right;
   margin-top: 15px;
 `;
@@ -19,9 +18,8 @@ export const StyledListbox = styled("ul")`
 `;
 
 export const StyledInputLabel = styled(InputLabel)`
-  right: 0;
-  left: unset;
-  transform-origin: top right;
+  top: -5px;
+  left: 5px;
 `;
 
 export const StyledAutocomplete = styled(Autocomplete)`

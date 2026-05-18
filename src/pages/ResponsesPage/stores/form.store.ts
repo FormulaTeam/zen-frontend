@@ -54,8 +54,7 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
 
   setFilter: (update: Filter | null | ((prev: Filter | null) => Filter | null)) =>
     set((state) => ({
-      filter: typeof update === "function" ? update(state.filter) : update,
-      isRowsLoading: true,
+      filter: typeof update === "function" ? update(state.filter) : update
     })),
 
   setResponseFilters: (responseFilters: ResponseFiltersDto | null) =>
