@@ -3,6 +3,7 @@ import { formsTabs } from "./utils";
 import { z } from "zod";
 import { FormOverviewSchema } from "formula-gear";
 import { GridColDef } from "@mui/x-data-grid";
+import { ResponseFiltersDto } from "@src/types/shared";
 
 export type FormOverviewType = z.infer<typeof FormOverviewSchema>;
 
@@ -64,7 +65,6 @@ declare module "@mui/material/Button" {
     base: true;
   }
 }
-
 
 export interface RequestConfig {
   Querytext: string;
@@ -323,6 +323,7 @@ export interface Filter {
   pageSize?: number;
   pageNumber?: number;
   searchFilters?: any[];
+  responseFilters?: ResponseFiltersDto;
   signal?: AbortSignal;
   deleted?: boolean;
   isDeletedForm?: boolean;
