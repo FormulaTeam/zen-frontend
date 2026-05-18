@@ -25,6 +25,11 @@ export function useFormLoader(formId: string) {
     () => ({
       limit: filter?.pageSize ?? 25,
       search: filter?.query ?? "",
+      filters: filter?.responseFilters?.items?.length
+        ? JSON.stringify({
+            items: filter.responseFilters.items,
+          })
+        : undefined,
       sortBy: filter?.sortBy,
       sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
       before: filter?.before,

@@ -11,7 +11,6 @@ import {
   GridRowSelectionModel,
   GRID_DETAIL_PANEL_TOGGLE_FIELD,
   GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
-  GridSortModel,
 } from "@mui/x-data-grid-pro";
 import { useFormStore } from "../stores/form.store";
 import clsx from "clsx";
@@ -36,6 +35,7 @@ import {
 } from "@mui/material";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
+import { useResponsesTableSorting } from "../hooks/useResponsesTableSorting";
 import { downloadFileFromResponse, type StoredFile } from "@api/filesApi";
 import {
   ContentContainer,
@@ -59,12 +59,56 @@ import { useNavigate } from "react-router-dom";
 import moment from "moment";
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { FormFieldDto } from "../../../types/shared";
-import { FieldTypeIds, MetaColumnIds } from "../../../utils/interfaces";
+import { MetaColumnIds } from "../../../utils/interfaces";
 import { DEFAULT_DATE_TIME_FORMAT } from "../../../utils/utils";
 import * as Gear from "formula-gear";
+import {
+  getResponseFilterColumnProps,
+  ResponsesColumnMenu,
+  useResponsesTableFilters,
+} from "./ResponsesFilters";
+
+const responseHeaderFilterLocaleText = {
+  headerFilterOperatorContains: "מכיל",
+  headerFilterOperatorNotContains: "לא מכיל",
+  headerFilterOperatorEquals: "שווה ל",
+  headerFilterOperatorNotEquals: "שונה מ",
+
+  headerFilterOperatorGreaterThan: "גדול מ",
+  headerFilterOperatorGreaterThanOrEqual: "גדול או שווה ל",
+  headerFilterOperatorLessThan: "קטן מ",
+  headerFilterOperatorLessThanOrEqual: "קטן או שווה ל",
+
+  headerFilterOperatorBetween: "בין",
+  headerFilterOperatorNotBetween: "לא בין",
+
+  headerFilterOperatorOn: "בתאריך",
+  headerFilterOperatorNotOn: "לא בתאריך",
+  headerFilterOperatorBefore: "לפני",
+  headerFilterOperatorBeforeOrEqual: "לפני או שווה ל",
+  headerFilterOperatorAfter: "אחרי",
+  headerFilterOperatorAfterOrEqual: "אחרי או שווה ל",
+
+  headerFilterOperatorContainsAny: "מכיל אחד מתוך",
+  headerFilterOperatorNotContainsAny: "לא מכיל אף אחד מתוך",
+  headerFilterOperatorContainsAll: "מכיל את כולם",
+  headerFilterOperatorNotContainsAll: "לא מכיל את כולם",
+
+  headerFilterOperatorIsEmpty: "ריק",
+  headerFilterOperatorIsNotEmpty: "לא ריק",
+
+  headerFilterOperatorIsTrue: "כן",
+  headerFilterOperatorIsFalse: "לא",
+
+  headerFilterOperatorHasFiles: "יש קבצים",
+  headerFilterOperatorHasNoFiles: "אין קבצים",
+  headerFilterOperatorFileNameContains: "שם קובץ מכיל",
+  headerFilterOperatorFileNameNotContains: "שם קובץ לא מכיל",
+};
 
 const getGearConstant = (key: string) => {
   const g = Gear as any;
+
   return g[key];
 };
 
@@ -80,8 +124,12 @@ const gearComparableFieldTypes = getGearConstant("comparable" + "FieldTypes") ||
 
 const isSortable = (typeId?: number): boolean => {
   if (typeId === undefined) return true;
+
   return (gearComparableFieldTypes as number[]).includes(typeId);
 };
+
+const EmptyColumnHeaderFilterIconButton = () => null;
+const EmptyColumnFilteredIcon = () => null;
 
 type Row = GridRowModel & {
   id: string | number;
@@ -150,7 +198,9 @@ export const ResponsesTable = React.memo(
     onRowSelectionModelChange,
     currentView,
   }: ResponsesTableProps) => {
-    const { form, rows, pageInfo, filter, setFilter, isRowsLoading } = useFormStore();
+    const { form, rows, pageInfo, filter, setFilter, setResponseFilters, isRowsLoading } =
+      useFormStore();
+
     const navigate = useNavigate();
 
     const currentViewConfig = useMemo(() => currentView?.columns || [], [currentView]);
@@ -158,9 +208,25 @@ export const ResponsesTable = React.memo(
     if (!form) return null;
 
     const [isNavigating, setIsNavigating] = useState(false);
+    const [showFilters, setShowFilters] = useState(false);
+
     const transitionInProgress = useRef(false);
     const lastIntendedPageNumber = useRef(filter?.pageNumber ?? 1);
     const lastFetchStartedRef = useRef(false);
+
+    const activeFiltersCount = filter?.responseFilters?.items?.length ?? 0;
+
+    useEffect(() => {
+      if (activeFiltersCount > 0) {
+        setShowFilters(true);
+      }
+    }, [activeFiltersCount]);
+
+    useEffect(() => {
+      if (isInEditMode) {
+        setShowFilters(false);
+      }
+    }, [isInEditMode]);
 
     useEffect(() => {
       lastIntendedPageNumber.current = filter?.pageNumber ?? 1;
@@ -225,80 +291,35 @@ export const ResponsesTable = React.memo(
       }
     }, [pageInfo, filter, setFilter, isRowsLoading]);
 
+    const handleToggleFilters = useCallback(() => {
+      setShowFilters((prev) => !prev);
+    }, []);
+
+    const handleClearFilters = useCallback(() => {
+      setResponseFilters(null);
+    }, [setResponseFilters]);
+
     const formFields = useMemo<FormFieldDto[]>(
       () => (form?.sections ?? []).flatMap((section) => section.fields ?? []),
       [form],
     );
 
-    const handleSortModelChange = useCallback(
-      (newSortModel: GridSortModel) => {
-        if (newSortModel.length > 0) {
-          const { field, sort } = newSortModel[0];
-          let sortBy: string;
+    const { sortModel, handleSortModelChange } = useResponsesTableSorting({
+      filter,
+      setFilter,
+      currentView,
+      formFields,
+    });
 
-          const columnPrefix = getGearConstant("column" + "Prefix") || {
-            Field: "field:",
-            Meta: "meta:",
-          };
-
-          const prefixes = {
-            Field: columnPrefix.Field,
-            Meta: columnPrefix.Meta,
-          };
-
-          if (field.startsWith(prefixes.Field)) {
-            sortBy = field;
-          } else {
-            switch (field) {
-              case "index":
-                sortBy = `${prefixes.Meta}index`;
-                break;
-              case "created":
-                sortBy = `${prefixes.Meta}created_at`;
-                break;
-              case "edited":
-                sortBy = `${prefixes.Meta}updated_at`;
-                break;
-              case "createdByName":
-                sortBy = `${prefixes.Meta}created_by`;
-                break;
-              case "editedByName":
-                sortBy = `${prefixes.Meta}updated_by`;
-                break;
-              case "sync":
-                sortBy = `${prefixes.Meta}pushed_to_metro`;
-                break;
-              case "id":
-                sortBy = `${prefixes.Meta}id`;
-                break;
-              default:
-                sortBy = `${prefixes.Meta}${field}`;
-            }
-          }
-
-          setFilter({
-            ...filter,
-            sortBy,
-            orderBy: sort?.toUpperCase() as any,
-            before: undefined,
-            after: undefined,
-            pageNumber: 1,
-          });
-        } else {
-          setFilter({
-            ...filter,
-            sortBy: undefined,
-            orderBy: undefined,
-            before: undefined,
-            after: undefined,
-            pageNumber: 1,
-          });
-        }
-      },
-      [formFields, filter, setFilter],
-    );
+    const { filterModel, handleFilterModelChange } = useResponsesTableFilters({
+      filter,
+      formFields,
+      setResponseFilters,
+    });
 
     const apiRef = useGridApiRef();
+
+    const shouldUseHeaderFilters = showFilters && !isInEditMode;
 
     const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
     const [contextMenu, setContextMenu] = useState<{
@@ -478,8 +499,8 @@ export const ResponsesTable = React.memo(
 
       formFields.forEach((field) => {
         if (
-          (field as any).typeId === FieldTypeIds.linkedForm ||
-          field.fieldType === FieldTypeIds.linkedForm
+          (field as any).typeId === Gear.fieldType.Form ||
+          field.fieldType === Gear.fieldType.Form
         ) {
           return;
         }
@@ -495,6 +516,7 @@ export const ResponsesTable = React.memo(
           width: 400,
           editable: true,
           sortable: isSortable(field.fieldType),
+          ...getResponseFilterColumnProps(field),
           renderEditCell,
           renderHeader: () => (
             <HeaderFlex>
@@ -547,6 +569,7 @@ export const ResponsesTable = React.memo(
         minWidth: 80,
         editable: false,
         sortable: true,
+        filterable: false,
       });
 
       metaColumnsMap.set(`${prefixes.Meta}created_by`, {
@@ -557,6 +580,7 @@ export const ResponsesTable = React.memo(
         minWidth: 150,
         editable: false,
         sortable: true,
+        filterable: false,
       });
 
       metaColumnsMap.set(`${prefixes.Meta}created_at`, {
@@ -567,6 +591,7 @@ export const ResponsesTable = React.memo(
         minWidth: 150,
         editable: false,
         sortable: true,
+        filterable: false,
         renderCell: (params: GridRenderCellParams) =>
           params.value ? (
             <Box component="span" className="cell-box-date">
@@ -582,6 +607,7 @@ export const ResponsesTable = React.memo(
         minWidth: 150,
         editable: false,
         sortable: true,
+        filterable: false,
         align: "center",
         headerAlign: "center",
         renderCell: (params: GridRenderCellParams) => (
@@ -597,6 +623,7 @@ export const ResponsesTable = React.memo(
         minWidth: 150,
         editable: false,
         sortable: true,
+        filterable: false,
       });
 
       metaColumnsMap.set(`${prefixes.Meta}updated_at`, {
@@ -607,6 +634,7 @@ export const ResponsesTable = React.memo(
         minWidth: 150,
         editable: false,
         sortable: true,
+        filterable: false,
         renderCell: (params: GridRenderCellParams) =>
           params.value ? (
             <Box component="span" className="cell-box-date">
@@ -621,33 +649,38 @@ export const ResponsesTable = React.memo(
         width: 150,
         editable: false,
         sortable: true,
+        filterable: false,
       });
 
       const structuralColumns: GridColDef[] = [
-        ...(expandColumn ? [expandColumn] : []),
+        ...(expandColumn ? [{ ...expandColumn, filterable: false }] : []),
         ...(hasFormInFormFields
           ? [
-            {
-              ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
-              field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
-              renderHeader: (params: any) => (
-                <div aria-label={params?.colDef?.headerName ?? ""} />
-              ),
-            },
-          ]
+              {
+                ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
+                field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
+                filterable: false,
+                sortable: false,
+                renderHeader: (params: any) => (
+                  <div aria-label={params?.colDef?.headerName ?? ""} />
+                ),
+              },
+            ]
           : []),
       ];
 
-      const parentResponseColumns = hasParentResponses
+      const parentResponseColumns: GridColDef[] = hasParentResponses
         ? [
-          {
-            field: "parentResponse",
-            headerName: "תגובת אב",
-            flex: 1,
-            editable: false,
-            renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
-          },
-        ]
+            {
+              field: "parentResponse",
+              headerName: "תגובת אב",
+              flex: 1,
+              editable: false,
+              filterable: false,
+              sortable: false,
+              renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
+            },
+          ]
         : [];
 
       let resultColumns: GridColDef[] = [];
@@ -807,7 +840,9 @@ export const ResponsesTable = React.memo(
               nextModel[modelRowId] = {};
 
               Object.keys(fields).forEach((modelField) => {
-                nextModel[modelRowId][modelField] = { mode: GridCellModes.View };
+                nextModel[modelRowId][modelField] = {
+                  mode: GridCellModes.View,
+                };
               });
             });
 
@@ -915,122 +950,6 @@ export const ResponsesTable = React.memo(
       [apiRef, getKeyboardNavigationTarget, isInEditMode, onCellEditStart, openCellForEdit],
     );
 
-    const sortModel = useMemo((): GridSortModel => {
-      const prefixes = {
-        Field: "field:",
-        Meta: "meta:",
-      };
-
-      if (filter?.sortBy) {
-        let gridField: string | undefined;
-
-        if (filter.sortBy.startsWith(prefixes.Field)) {
-          gridField = filter.sortBy;
-        } else if (filter.sortBy.startsWith(prefixes.Meta)) {
-          const metaName = filter.sortBy.replace(prefixes.Meta, "");
-
-          switch (metaName) {
-            case "index":
-              gridField = "index";
-              break;
-            case "created_at":
-              gridField = "created";
-              break;
-            case "updated_at":
-              gridField = "edited";
-              break;
-            case "created_by":
-              gridField = "createdByName";
-              break;
-            case "updated_by":
-              gridField = "editedByName";
-              break;
-            case "pushed_to_metro":
-              gridField = "sync";
-              break;
-            case "id":
-              gridField = "id";
-              break;
-            default:
-              gridField = metaName;
-          }
-        }
-
-        if (gridField) {
-          return [{ field: gridField, sort: filter.orderBy?.toLowerCase() as "asc" | "desc" }];
-        }
-      }
-
-      if (currentView?.sortColumnId) {
-        const sortedColumn = currentView.columns?.find(
-          (col) => col.id === currentView.sortColumnId,
-        );
-
-        if (sortedColumn) {
-          let gridField: string | undefined;
-
-          if (sortedColumn.fieldId) {
-            gridField = `${prefixes.Field}${sortedColumn.fieldId}`;
-          } else if (sortedColumn.metaColumnId) {
-            const metaName = Object.keys(MetaColumnIds).find(
-              (key) =>
-                MetaColumnIds[key as keyof typeof MetaColumnIds] === sortedColumn.metaColumnId,
-            );
-
-            switch (metaName) {
-              case "index":
-                gridField = "index";
-                break;
-              case "created_at":
-                gridField = "created";
-                break;
-              case "updated_at":
-                gridField = "edited";
-                break;
-              case "created_by":
-                gridField = "createdByName";
-                break;
-              case "updated_by":
-                gridField = "editedByName";
-                break;
-              case "pushed_to_metro":
-                gridField = "sync";
-                break;
-              case "id":
-                gridField = "id";
-                break;
-              default:
-                gridField = metaName;
-            }
-          }
-
-          if (gridField) {
-            return [{ field: gridField, sort: currentView.sortDirection || "desc" }];
-          }
-        }
-      }
-
-      const legacySort = currentView?.config?.columns?.find(
-        (col) => col.sortDirection && col.sortOrder === 1,
-      );
-
-      if (legacySort) {
-        let gridField = legacySort.columnId;
-
-        const fieldObj = formFields.find(
-          (f) => f.id === legacySort.columnId || (f as any).uniqueId === legacySort.columnId,
-        );
-
-        if (fieldObj) {
-          gridField = `${prefixes.Field}${fieldObj.id}`;
-        }
-
-        return [{ field: gridField, sort: legacySort.sortDirection as "asc" | "desc" }];
-      }
-
-      return [{ field: "index", sort: "desc" }];
-    }, [currentView, formFields, filter]);
-
     const handlePageSizeChange = useCallback(
       (event: any) => {
         const newSize = Number(event.target.value);
@@ -1055,7 +974,12 @@ export const ResponsesTable = React.memo(
 
       return (
         <GridFooterContainer
-          sx={{ justifyContent: "space-between", px: 3, py: 1.5, minHeight: "60px" }}>
+          sx={{
+            justifyContent: "space-between",
+            px: 3,
+            py: 1.5,
+            minHeight: "60px",
+          }}>
           <FooterInfoContainer>
             <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
               {`מציג ${endRange}-${startRange} תגובות מתוך ${totalCount}`}
@@ -1135,9 +1059,15 @@ export const ResponsesTable = React.memo(
             disableColumnMenu={isInEditMode}
             disableColumnSorting={isInEditMode}
             disableColumnResize={isInEditMode}
+            disableColumnFilter={isInEditMode}
+            headerFilters={shouldUseHeaderFilters}
+            columnBufferPx={150}
             sortingMode="server"
             sortingOrder={["asc", "desc"]}
             onSortModelChange={handleSortModelChange}
+            filterMode="server"
+            filterModel={filterModel}
+            onFilterModelChange={handleFilterModelChange}
             editMode="cell"
             cellModesModel={cellModesModel}
             onCellModesModelChange={handleCellModesModelChange}
@@ -1165,6 +1095,7 @@ export const ResponsesTable = React.memo(
             getRowId={(row) => row?.id}
             localeText={{
               ...heIL.components.MuiDataGrid.defaultProps.localeText,
+              ...responseHeaderFilterLocaleText,
               noRowsLabel: "אין תגובות",
               columnMenuLabel: "פעולות",
               pinToLeft: "נעץ מימין",
@@ -1174,6 +1105,9 @@ export const ResponsesTable = React.memo(
             sortModel={sortModel}
             rows={localRows}
             slots={{
+              columnMenu: ResponsesColumnMenu,
+              columnHeaderFilterIconButton: EmptyColumnHeaderFilterIconButton,
+              columnFilteredIcon: EmptyColumnFilteredIcon,
               footer: CustomFooter,
             }}
             {...(hasFormInFormFields && {
@@ -1183,14 +1117,38 @@ export const ResponsesTable = React.memo(
             })}
             slotProps={{
               columnMenu: {
-                slots: {
-                  columnMenuColumnsItem: null,
-                  columnMenuFilterItem: null,
-                },
-              },
+                showFilters,
+                activeFiltersCount,
+                disabled: isInEditMode,
+                onToggleFilters: handleToggleFilters,
+                onClearFilters: handleClearFilters,
+              } as any,
               row: {
                 onContextMenu: handleContextMenu,
                 style: { cursor: "context-menu" },
+              },
+            }}
+            sx={{
+              "& .MuiDataGrid-headerFilterCell": {
+                overflow: "hidden",
+                px: 0.5,
+                minWidth: 0,
+              },
+              "& .MuiDataGrid-headerFilterCell .MuiInputBase-root": {
+                backgroundColor: "transparent",
+                width: "100%",
+                minWidth: 0,
+              },
+              "& .MuiDataGrid-headerFilterCell .MuiFormControl-root": {
+                width: "100%",
+                minWidth: 0,
+              },
+              "& .MuiDataGrid-headerFilterCell .MuiStack-root": {
+                minWidth: 0,
+              },
+              "& .MuiDataGrid-headerFilterCell input": {
+                backgroundColor: "transparent",
+                minWidth: 0,
               },
             }}
           />

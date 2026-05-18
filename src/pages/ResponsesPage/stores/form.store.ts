@@ -1,7 +1,7 @@
 import { GridColDef } from "@mui/x-data-grid-pro";
 import { create } from "zustand";
 
-import { FormDto, FormFieldDto } from "../../../types/shared";
+import { FormDto, FormFieldDto, ResponseFiltersDto } from "../../../types/shared";
 import { Filter, PageInfo, ResponseForm, Row } from "../../../utils/interfaces";
 import { Permission } from "formula-gear";
 import { IOrderBy } from "../../../types/enums/filtersAndSorts.enum";
@@ -15,6 +15,13 @@ export type StoreForm = FormDto & {
   oasisSourceKey?: string | null;
 };
 
+const defaultFilter: Filter = {
+  pageSize: 25,
+  pageNumber: 1,
+  sortBy: "meta:index",
+  orderBy: IOrderBy.DESC,
+};
+
 interface FormsState {
   form: StoreForm | null;
   setForm: (form: StoreForm | null) => void;
@@ -24,6 +31,7 @@ interface FormsState {
   setResponses: (responses: ResponseForm[] | null) => void;
   filter: Filter | null;
   setFilter: (update: Filter | null | ((prev: Filter | null) => Filter | null)) => void;
+  setResponseFilters: (responseFilters: ResponseFiltersDto | null) => void;
   rows: Row[];
   setRows: (rows: Row[]) => void;
   isRowsLoading: boolean;
@@ -35,19 +43,38 @@ interface FormsState {
 export const useInitiateFormStore = create<FormsState>((set) => ({
   form: null,
   setForm: (form: StoreForm | null) => set({ form }),
+
   permissions: [],
   setPermissions: (permissions: Permission[]) => set({ permissions }),
+
   responses: null,
   setResponses: (responses: ResponseForm[] | null) => set({ responses }),
-  filter: { pageSize: 25, pageNumber: 1, sortBy: "meta:index", orderBy: IOrderBy.DESC },
+
+  filter: defaultFilter,
+
   setFilter: (update: Filter | null | ((prev: Filter | null) => Filter | null)) =>
     set((state) => ({
       filter: typeof update === "function" ? update(state.filter) : update
     })),
+
+  setResponseFilters: (responseFilters: ResponseFiltersDto | null) =>
+    set((state) => ({
+      filter: {
+        ...(state.filter ?? defaultFilter),
+        responseFilters: responseFilters?.items?.length ? responseFilters : undefined,
+        before: undefined,
+        after: undefined,
+        pageNumber: 1,
+      },
+      isRowsLoading: true,
+    })),
+
   rows: [],
   setRows: (rows: Row[]) => set({ rows }),
+
   isRowsLoading: false,
   setIsRowsLoading: (isRowsLoading: boolean) => set({ isRowsLoading }),
+
   pageInfo: null,
   setPageInfo: (pageInfo: PageInfo | null) => set({ pageInfo }),
 }));
@@ -64,6 +91,7 @@ export function useFormStore() {
     setResponses: store.setResponses,
     filter: store.filter,
     setFilter: store.setFilter,
+    setResponseFilters: store.setResponseFilters,
     rows: store.rows,
     setRows: store.setRows,
     isRowsLoading: store.isRowsLoading,
