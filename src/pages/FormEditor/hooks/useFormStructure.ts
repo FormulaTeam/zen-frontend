@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { $ZodErrorTree } from "zod/v4/core";
 import { cloneDeep, isEqual } from "lodash";
@@ -24,6 +24,7 @@ import {
 } from "../schemas/conditions";
 import { ValueOf } from "../../../types/utils";
 import type { FormDto, FormSectionDto } from "../../../types/shared";
+import { saveFormDraft } from "../utils/draftPersistence";
 
 type ExtendedFormDto = Partial<Omit<FormDto, 'sections'>> & {
   sections?: Partial<FormSectionDto>[];
@@ -588,6 +589,13 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
   const checkHasChanges = useCallback(() => {
     return !isEqual(formStructure, initialFormStructure);
   }, [formStructure, initialFormStructure]);
+
+  // Auto-save draft logic
+  useEffect(() => {
+    if (checkHasChanges()) {
+      saveFormDraft(formStructure.metadata.id, formStructure);
+    }
+  }, [formStructure, checkHasChanges]);
 
   return {
     formStructure,

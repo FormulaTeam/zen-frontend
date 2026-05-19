@@ -23,7 +23,7 @@ import AlertMsg from "@components/AlertMsg/AlertMsg";
 
 function FormEditorHeader() {
   const { formStructure, validateForm, setFormMetadata, checkHasChanges } = useFormStructureContext();
-  const { handleSaveForm, handleExit, isLoading } = useFormEditor(formStructure);
+  const { handleSaveForm, handleExit, handleDiscardAndExit, isLoading } = useFormEditor(formStructure);
 
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
   const [editedMetadata, setEditedMetadata] = useState<FormMetadata>({ title: "" });
@@ -223,7 +223,7 @@ function FormEditorHeader() {
         </Button>
         <Button variant="outlined" color="error" onClick={() => {
           setShowAlertMsg(false);
-          handleExit();
+          handleDiscardAndExit();
         }}>
           יציאה ללא שמירה
         </Button>
