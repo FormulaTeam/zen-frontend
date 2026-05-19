@@ -7,12 +7,11 @@ import { Edit } from "@mui/icons-material";
 const Header = styled(Box) <{ backgroundColor: string }>`
   position: sticky;
   top: 0;
-  zindex: 1000;
   background-color: ${({ backgroundColor }) => backgroundColor} !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 1301;
+  z-index: 1100;
 `;
 
 interface ResponseHeaderProps {
