@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { Dialog, Grid, Button, TextField } from "@mui/material";
-import { GridIcon, StyledDialogTitle, SearchContainer, StyledDialogContent, StyledDialogActions, GridIconContainer, IconImage } from "./styled";
+import { Dialog, Grid, Button, TextField, Tooltip } from "@mui/material";
+import { GridIcon, StyledDialogTitle, SearchContainer, StyledDialogContent, StyledDialogActions, GridIconContainer } from "./styled";
 import { formIconsNamesMap, DEFAULT_ICON_NAME } from "../../utils/utils";
 import { hebrewKeywordsMap } from "../../utils/hebrewKeywordsMap";
 
@@ -14,7 +14,7 @@ export default function MuiIconsPicker({ onIconChange, onClosePickIcon }: Props)
   const [query, setQuery] = useState("");
 
   const filteredIcons = useMemo(() => {
-    const allIcons = Array.from(formIconsNamesMap.entries()).filter(([iconName]) => iconName !== DEFAULT_ICON_NAME);
+    const allIcons = Array.from(formIconsNamesMap.entries());
     if (!query.trim()) return allIcons;
 
     const lowerQuery = query.toLowerCase();
@@ -51,14 +51,16 @@ export default function MuiIconsPicker({ onIconChange, onClosePickIcon }: Props)
 
       <StyledDialogContent>
         <Grid container>
-          {filteredIcons.map(([iconName, iconSrc]) => (
+          {filteredIcons.map(([iconName, IconComponent]) => (
             <Grid key={iconName}>
               <GridIconContainer>
-                <GridIcon
-                  selected={selectedIcon === iconName}
-                  onClick={() => setSelectedIcon(String(iconName))}>
-                  <IconImage src={iconSrc} alt={String(iconName)} />
-                </GridIcon>
+                <Tooltip title={hebrewKeywordsMap[iconName]?.[0] || String(iconName)} arrow>
+                  <GridIcon
+                    selected={selectedIcon === iconName}
+                    onClick={() => setSelectedIcon(String(iconName))}>
+                    <IconComponent style={{ fontSize: 40 }} />
+                  </GridIcon>
+                </Tooltip>
               </GridIconContainer>
             </Grid>
           ))}

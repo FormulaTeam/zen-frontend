@@ -17,7 +17,9 @@ export const SearchContainer = styled(Box)(() => ({
 }));
 
 export const StyledDialogContent = styled(DialogContent)(() => ({
-  minHeight: "30vh",
+  height: "400px",
+  minHeight: "400px",
+  overflowY: "auto",
   alignContent: "flex-start",
 }));
 
@@ -35,20 +37,6 @@ export const GridIconContainer = styled(Box)(() => ({
   padding: "8px",
 }));
 
-export const IconImage = styled("img")(() => ({
-  width: 40,
-  height: 40,
-  objectFit: "contain",
-  transition: "all 0.2s ease-in-out",
-}));
-
-export const loadingContainer = styled(Box)(() => ({
-  minHeight: "50vh",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}));
-
 export const GridIcon = styled(Box)<GridIconProps>(({ theme, selected, hidePointer = false }) => ({
   display: "inline-flex",
   padding: "8px",
@@ -56,17 +44,18 @@ export const GridIcon = styled(Box)<GridIconProps>(({ theme, selected, hidePoint
   cursor: hidePointer ? "default" : "pointer",
   backgroundColor: selected ? theme.palette.action.selected : "transparent",
   border: selected ? `1px solid ${theme.palette.primary.main}` : "1px solid transparent",
+  color: selected ? theme.palette.primary.main : theme.palette.text.primary,
   transition: "all 0.2s ease-in-out",
   "&:hover": {
     backgroundColor: theme.palette.action.hover,
     border: `1px solid ${theme.palette.primary.light}`,
-    "& img": {
-      filter: "grayscale(0%)",
+    color: theme.palette.primary.main,
+    "& svg": {
       opacity: 1,
     }
   },
-  "& img": {
-    filter: selected ? "grayscale(0%)" : "grayscale(100%)",
+  "& svg": {
     opacity: selected ? 1 : 0.6,
+    transition: "all 0.2s ease-in-out",
   }
 }));

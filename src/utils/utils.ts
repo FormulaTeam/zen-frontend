@@ -26,33 +26,6 @@ import {
   Row,
 } from "./interfaces";
 
-import examDefault from "../images/examDefault.png";
-import binoculars from "../images/binoculars.png";
-import car from "../images/car.png";
-import check from "../images/check.png";
-import contract from "../images/contract.png";
-import file from "../images/file.png";
-import group from "../images/group.png";
-import hourGlass from "../images/hour-glass.png";
-import idea from "../images/idea.png";
-import magnifyingGlass from "../images/magnifying-glass.png";
-import militaryHat from "../images/military-hat.png";
-import pen from "../images/pen.png";
-import programmer from "../images/programmer.png";
-import searching from "../images/searching.png";
-import smile from "../images/smile.png";
-import soccerBall from "../images/soccer-ball-variant.png";
-import soldier from "../images/soldier.png";
-import tank from "../images/tank.png";
-import target from "../images/target.png";
-import user from "../images/user.png";
-import doc from "../images/doc.png";
-import jpg from "../images/jpg.png";
-import pdf from "../images/pdf.png";
-import png from "../images/png.png";
-import ppt from "../images/ppt.png";
-import txt from "../images/txt.png";
-import xls from "../images/xls.png";
 import formX from "../images/form_x.png";
 import { FormDto, ResponseDto, ResponseFieldValueDto } from "../types/shared";
 
@@ -171,37 +144,113 @@ export const permissionsOptions = [
   { value: 3, label: "רק למי שאני שיתפתי את הטופס" },
 ];
 
-export const DEFAULT_ICON_NAME = formIcon.FormX;
+import * as MuiIcons from "@mui/icons-material";
+
+export const DEFAULT_ICON_NAME = "cropsquare";
 
 export const formIconsNamesMap = new Map<string | number, any>([
-  [formIcon.FormX, formX],
-  [formIcon.ExamDefault, examDefault],
-  [formIcon.Binoculars, binoculars],
-  [formIcon.Car, car],
-  [formIcon.Check, check],
-  [formIcon.Contract, contract],
-  [formIcon.File, file],
-  [formIcon.Group, group],
-  [formIcon.HourGlass, hourGlass],
-  [formIcon.Idea, idea],
-  [formIcon.MagnifyingGlass, magnifyingGlass],
-  [formIcon.MilitaryHat, militaryHat],
-  [formIcon.Pen, pen],
-  [formIcon.Programmer, programmer],
-  [formIcon.Searching, searching],
-  [formIcon.Smile, smile],
-  [formIcon.SoccerBall, soccerBall],
-  [formIcon.Soldier, soldier],
-  [formIcon.Tank, tank],
-  [formIcon.Target, target],
-  [formIcon.User, user],
-  [formIcon.Document, doc],
-  [formIcon.Jpeg, jpg],
-  [formIcon.Pdf, pdf],
-  [formIcon.Png, png],
-  [formIcon.Ppt, ppt],
-  [formIcon.Text, txt],
-  [formIcon.Excel, xls],
+  ["cropsquare", MuiIcons.CropSquareOutlined],
+  ["description", MuiIcons.DescriptionOutlined],
+  ["table_chart", MuiIcons.TableChartOutlined],
+  ["dynamic_form", MuiIcons.DynamicFormOutlined],
+  ["dataset", MuiIcons.DatasetOutlined],
+  ["grid_view", MuiIcons.GridViewOutlined],
+  ["article", MuiIcons.ArticleOutlined],
+  ["folder_open", MuiIcons.FolderOpenOutlined],
+  ["cloud_upload", MuiIcons.CloudUploadOutlined],
+  ["language", MuiIcons.LanguageOutlined],
+  ["dns", MuiIcons.DnsOutlined],
+  ["storage", MuiIcons.StorageOutlined],
+  ["schema", MuiIcons.SchemaOutlined],
+  ["inventory_2", MuiIcons.Inventory2Outlined],
+  ["receipt_long", MuiIcons.ReceiptLongOutlined],
+  ["summarize", MuiIcons.SummarizeOutlined],
+  ["feed", MuiIcons.FeedOutlined],
+  ["view_list", MuiIcons.ViewListOutlined],
+  ["fact_check", MuiIcons.FactCheckOutlined],
+  ["find_in_page", MuiIcons.FindInPageOutlined],
+  ["upload_file", MuiIcons.UploadFileOutlined],
+  ["download", MuiIcons.DownloadOutlined],
+  ["share", MuiIcons.ShareOutlined],
+  ["hub", MuiIcons.HubOutlined],
+  ["public", MuiIcons.PublicOutlined],
+  ["api", MuiIcons.ApiOutlined],
+  ["terminal", MuiIcons.TerminalOutlined],
+  ["database", MuiIcons.StorageOutlined],
+  ["folder_shared", MuiIcons.FolderSharedOutlined],
+  ["snippet_folder", MuiIcons.SnippetFolderOutlined],
+  ["web", MuiIcons.WebOutlined],
+  ["table_rows", MuiIcons.TableRowsOutlined],
+  ["view_column", MuiIcons.ViewColumnOutlined],
+  ["list_alt", MuiIcons.ListAltOutlined],
+  ["newspaper", MuiIcons.NewspaperOutlined],
+  ["source", MuiIcons.SourceOutlined],
+  ["library_books", MuiIcons.LibraryBooksOutlined],
+  ["file_copy", MuiIcons.FileCopyOutlined],
+  ["drive_folder_upload", MuiIcons.DriveFolderUploadOutlined],
+  ["cloud_done", MuiIcons.CloudDoneOutlined],
+  ["lan", MuiIcons.LanOutlined],
+  ["router", MuiIcons.RouterOutlined],
+  ["alt_route", MuiIcons.AltRouteOutlined],
+  ["account_tree", MuiIcons.AccountTreeOutlined],
+  ["integration_instructions", MuiIcons.IntegrationInstructionsOutlined],
+  ["code", MuiIcons.CodeOutlined],
+  ["data_object", MuiIcons.DataObjectOutlined],
+  ["backup", MuiIcons.BackupOutlined],
+  ["sync", MuiIcons.SyncOutlined],
+  ["search", MuiIcons.SearchOutlined],
+  ["travel_explore", MuiIcons.TravelExploreOutlined],
+  ["text_snippet", MuiIcons.TextSnippetOutlined],
+  ["docs", MuiIcons.ArticleOutlined],
+  ["draft", MuiIcons.DraftsOutlined],
+  ["note_alt", MuiIcons.NoteAltOutlined],
+  ["edit_document", MuiIcons.EditNoteOutlined],
+  ["insert_drive_file", MuiIcons.InsertDriveFileOutlined],
+  ["request_page", MuiIcons.RequestPageOutlined],
+  ["topic", MuiIcons.TopicOutlined],
+  ["reorder", MuiIcons.ReorderOutlined],
+  ["view_agenda", MuiIcons.ViewAgendaOutlined],
+  ["view_stream", MuiIcons.ViewStreamOutlined],
+  ["calendar_view_week", MuiIcons.CalendarViewWeekOutlined],
+  ["calendar_view_month", MuiIcons.CalendarViewMonthOutlined],
+  ["dashboard", MuiIcons.DashboardOutlined],
+  ["space_dashboard", MuiIcons.SpaceDashboardOutlined],
+  ["widgets", MuiIcons.WidgetsOutlined],
+  ["select_all", MuiIcons.SelectAllOutlined],
+  ["filter_list", MuiIcons.FilterListOutlined],
+  ["sort", MuiIcons.SortOutlined],
+  ["rule", MuiIcons.RuleOutlined],
+  ["checklist", MuiIcons.ChecklistOutlined],
+  ["assignment", MuiIcons.AssignmentOutlined],
+  ["assignment_turned_in", MuiIcons.AssignmentTurnedInOutlined],
+  ["task", MuiIcons.TaskAltOutlined],
+  ["pending_actions", MuiIcons.PendingActionsOutlined],
+  ["history", MuiIcons.HistoryOutlined],
+  ["manage_search", MuiIcons.ManageSearchOutlined],
+  ["saved_search", MuiIcons.SavedSearchOutlined],
+  ["content_paste", MuiIcons.ContentPasteOutlined],
+  ["content_copy", MuiIcons.ContentCopyOutlined],
+  ["archive", MuiIcons.ArchiveOutlined],
+  ["unarchive", MuiIcons.UnarchiveOutlined],
+  ["folder_zip", MuiIcons.FolderZipOutlined],
+  ["create_new_folder", MuiIcons.CreateNewFolderOutlined],
+  ["file_download_done", MuiIcons.FileDownloadDoneOutlined],
+  ["drive_file_move", MuiIcons.DriveFileMoveOutlined],
+  ["cloud_sync", MuiIcons.CloudSyncOutlined],
+  ["wifi", MuiIcons.WifiOutlined],
+  ["rss_feed", MuiIcons.RssFeedOutlined],
+  ["http", MuiIcons.HttpOutlined],
+  ["cable", MuiIcons.CableOutlined],
+  ["device_hub", MuiIcons.DeviceHubOutlined],
+  ["developer_board", MuiIcons.DeveloperBoardOutlined],
+  ["memory", MuiIcons.MemoryOutlined],
+  ["monitor", MuiIcons.MonitorOutlined],
+  ["desktop_windows", MuiIcons.DesktopWindowsOutlined],
+  ["open_in_browser", MuiIcons.OpenInBrowserOutlined],
+  ["tab", MuiIcons.TabOutlined],
+  ["polyline", MuiIcons.PolylineOutlined],
+  ["merge_type", MuiIcons.MergeTypeOutlined],
+  ["rocket_launch", MuiIcons.RocketLaunchOutlined],
 ]);
 
 export function getFormIconByName(iconName?: string): any {
@@ -1241,7 +1290,7 @@ export const getInitialNewForm = (
   return {
     name: title,
     description: description,
-    icon: "formX",
+    icon: "cropsquare",
     fields: [],
     parentFieldId: undefined,
   };
