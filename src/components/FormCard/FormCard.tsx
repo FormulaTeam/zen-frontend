@@ -12,7 +12,7 @@ import CardCreationDetails from "./CardCreationDetails";
 import { PermissionGate } from "../PermissionGate";
 import {
   DescriptionDiv,
-  Img,
+  FormIconWrapper,
   ItemBottomDiv,
   ItemBtnsDiv,
   ItemButton,
@@ -25,7 +25,7 @@ import {
   ItemTitles,
   StyledCard,
 } from "./styled";
-import { CustomStyledIcon, GrayShareIcon } from "./styled";
+import { GrayShareIcon } from "./styled";
 import { FormOverviewDto } from "@src/types/shared";
 
 const FormCard = ({
@@ -51,17 +51,42 @@ const FormCard = ({
   const renderDynamicIcon = (name: string) => {
     const IconComponent = MuiIcons[name as keyof typeof MuiIcons];
 
-    return IconComponent ? <IconComponent /> : name;
+    return IconComponent ? <IconComponent color="primary" /> : name;
   };
 
   const getIcon = (iconName: string | null) => {
     const iconSrc = getFormIconByName(iconName ?? undefined);
 
-    if (iconSrc) return <Img src={iconSrc} alt={iconName ?? "form icon"} />;
+    if (typeof iconSrc === "string") {
+      return (
+        <FormIconWrapper>
+          <img src={iconSrc} alt={iconName ?? "form icon"} />
+        </FormIconWrapper>
+      );
+    }
 
-    if (!iconName) return <Img src={formX} alt="form icon" />;
+    if (iconSrc) {
+      const IconComponent = iconSrc;
+      return (
+        <FormIconWrapper>
+          <IconComponent color="primary" />
+        </FormIconWrapper>
+      );
+    }
 
-    return <CustomStyledIcon>{renderDynamicIcon(iconName)}</CustomStyledIcon>;
+    if (!iconName) {
+      return (
+        <FormIconWrapper>
+          <img src={formX} alt="form icon" />
+        </FormIconWrapper>
+      );
+    }
+
+    return (
+      <FormIconWrapper>
+        {renderDynamicIcon(iconName)}
+      </FormIconWrapper>
+    );
   };
 
   const goToResponsesPage = (event: React.MouseEvent<HTMLElement>) => {
@@ -82,7 +107,7 @@ const FormCard = ({
       <ItemImgAndTitles>
         <ItemTitles>
           <ItemTitleAndNum>
-            <Box sx={{ display: "flex", alignItems: "center", overflow: "hidden" }}>
+            <Box sx={{ display: "flex", alignItems: "center", overflow: "hidden", gap: "12px" }}>
               {getIcon(form.icon)}
               <ItemTitle onClick={goToResponsesPage} title={form.name} className="form-title">
                 {form.name}

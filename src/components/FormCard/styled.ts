@@ -61,10 +61,23 @@ export const ItemDescription = styled(Typography)`
   font-size: 15px !important;
 `;
 
-export const Img = styled.img`
-  margin-left: 10px;
-  height: 20px;
-`;
+export const FormIconWrapper = muiStyled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "32px",
+  height: "32px",
+  minWidth: "32px",
+  color: theme.palette.primary.main,
+  "& svg": {
+    fontSize: "32px",
+  },
+  "& img": {
+    height: "28px",
+    width: "28px",
+    objectFit: "contain",
+  },
+}));
 
 export const StyledCard = styled(Card)`
   border-radius: 15px;
@@ -179,9 +192,3 @@ export const GrayShareIcon = styled.img`
   opacity: 0.3;
   cursor: pointer;
 `;
-
-export const CustomStyledIcon = muiStyled(Icon)(({ theme }) => ({
-  fontSize: 30,
-  marginLeft: "10px",
-  color: theme.palette.primary.main,
-}));

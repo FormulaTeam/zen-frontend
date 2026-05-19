@@ -47,9 +47,31 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
   const deletedDate = isValidDate ? deletedDateObj.toLocaleDateString("he-IL") : "לא ידוע";
   const deletedTime = isValidDate ? deletedDateObj.toLocaleTimeString("he-IL") : "";
 
-  const formIcon = useMemo(() => {
-    return form?.icon ? formIconsNamesMap.get(form.icon) : formX;
-  }, [form?.icon]);
+  const renderFormIcon = () => {
+    const iconSrc = form?.icon ? formIconsNamesMap.get(form.icon) : formX;
+
+    if (typeof iconSrc === "string") {
+      return (
+        <Img
+          src={iconSrc}
+          alt="form icon"
+          loading="lazy"
+          onError={(e) => {
+            if (e.currentTarget.src !== formX) {
+              e.currentTarget.src = formX;
+            }
+          }}
+        />
+      );
+    }
+
+    if (iconSrc) {
+      const IconComponent = iconSrc;
+      return <IconComponent color="primary" sx={{ fontSize: 24 }} />;
+    }
+
+    return null;
+  };
 
   const responseIndex = response.index;
   const responseId = response.id;
@@ -85,18 +107,7 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
         )}
         <FormInfo>
           <FormTitleBox>
-            {!currentDeletedForm && (
-              <Img
-                src={formIcon}
-                alt="form icon"
-                loading="lazy"
-                onError={(e) => {
-                  if (e.currentTarget.src !== formX) {
-                    e.currentTarget.src = formX;
-                  }
-                }}
-              />
-            )}
+            {!currentDeletedForm && renderFormIcon()}
             <Typography variant="h6">
               תגובה מספר <StrongText color={theme.palette.primary.main}>{responseIndex}</StrongText>{" "}
               שנמחקה מטופס מזהה <StrongText color={theme.palette.primary.main}>{formId}</StrongText>{" "}

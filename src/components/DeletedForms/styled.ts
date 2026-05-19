@@ -37,7 +37,6 @@ export const RestoreButtonWrapper = styled(Box)`
 `;
 
 export const Img = styled.img`
-  margin-left: 10px;
   height: 20px;
 `;
 
