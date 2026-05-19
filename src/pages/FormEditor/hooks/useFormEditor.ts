@@ -7,10 +7,12 @@ import { convertFormStructureToCreateDto } from "../utils/formStructureToDto";
 import { IPath } from "../../../types/enums/global.enums";
 import queryClient from "@api/queryClient";
 import { useFormEditorContext, FORM_EDITOR_MODE } from "../context/FormEditorContext";
+import { clearFormDraft } from "../utils/draftPersistence";
 
 interface UseFormEditorReturn {
     handleSaveForm: () => Promise<void>;
     handleExit: () => void;
+    handleDiscardAndExit: () => void;
     isLoading: boolean;
 }
 
@@ -30,10 +32,12 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
             if (mode === FORM_EDITOR_MODE.EDIT && formStructure.metadata.id) {
                 await mutateUpdateFormAsync({ id: formStructure.metadata.id, payload });
                 showSuccessNotification("הטופס עודכן בהצלחה!");
+                clearFormDraft(formStructure.metadata.id);
                 queryClient.invalidateQueries({ queryKey: [formStructure.metadata.id.toString()] });
             } else {
                 const createdForm = await mutateCreateFormAsync(payload);
                 showSuccessNotification("הטופס נשמר בהצלחה!");
+                clearFormDraft(undefined); // Clear 'new' form draft
 
                 navigate(`/form/edit/${createdForm.id}`, { replace: true });
             }
@@ -45,15 +49,21 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
         } finally {
             setIsLoading(false);
         }
-    }, [formStructure, mutateCreateFormAsync, mutateUpdateFormAsync, mode]);
+    }, [formStructure, mutateCreateFormAsync, mutateUpdateFormAsync, mode, navigate]);
 
     const handleExit = useCallback(() => {
         navigate(IPath.HOME);
     }, [navigate]);
 
+    const handleDiscardAndExit = useCallback(() => {
+        clearFormDraft(formStructure.metadata.id);
+        navigate(IPath.HOME);
+    }, [formStructure.metadata.id, navigate]);
+
     return {
         handleSaveForm,
         handleExit,
+        handleDiscardAndExit,
         isLoading,
     };
 }

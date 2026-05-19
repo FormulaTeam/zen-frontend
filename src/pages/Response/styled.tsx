@@ -62,7 +62,7 @@ export const PageContainer = styled(Container)`
 export const Header = styled(Box)<{ backgroundColor: string }>`
   position: sticky;
   top: 0;
-  z-index: 1301;
+  z-index: 1100;
   background-color: ${({ backgroundColor }) => backgroundColor} !important;
   display: flex;
   align-items: center;

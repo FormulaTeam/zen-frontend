@@ -32,6 +32,7 @@ import { DateComparator } from "../pages/FormEditor/schemas/conditions/condition
 import { OptionsComparator } from "../pages/FormEditor/schemas/conditions/conditionField/comparators/OptionsComparator";
 import { CheckboxComparator } from "../pages/FormEditor/schemas/conditions/conditionField/comparators/CheckboxComparator";
 import { getOptionResponseRawValue } from "../utils/optionResponseValue";
+import { saveResponseDraft, clearResponseDraft } from "../pages/FormEditor/utils/draftPersistence";
 
 export type FieldExtra = {
   options?: {
@@ -390,6 +391,7 @@ export const useResponseState = (
   user?: any,
   isSuperAdmin?: boolean,
   setHasUnsavedChanges?: (hasUnsavedChanges: boolean) => void,
+  hasUnsavedChanges?: boolean,
   initialResponse?: UseResponseStateInitialResponse,
 ) => {
   const [formTitle, setFormTitle] = useState("");
@@ -687,6 +689,17 @@ export const useResponseState = (
       .filter((field) => !visibleIds.has(String(field.id)))
       .map((field) => String(field.id));
   }, [formFields, visibleFormFields]);
+
+  // Auto-save response draft logic
+  useEffect(() => {
+    if (viewMode) return;
+
+    if (hasUnsavedChanges && formFieldsValuesMap.size > 0) {
+      saveResponseDraft(formId, responseId, formFieldsValuesMap);
+    } else if (hasUnsavedChanges === false) {
+      clearResponseDraft(formId, responseId);
+    }
+  }, [formFieldsValuesMap, hasUnsavedChanges, viewMode, formId, responseId]);
 
 
   useEffect(() => {
@@ -1022,7 +1035,7 @@ export const useResponseState = (
     formFieldsByIdMap,
     formFieldsValuesMap,
     formFieldsValidMap,
-    formFieldsTouchedMap,
+    setFormFieldsTouchedMap,
     onChangeHandler,
     onBlurHandler,
     validateAllFieldsBeforeSubmit,
@@ -1034,6 +1047,8 @@ export const useResponseState = (
     responsSections,
     collapsedSections,
     toggleSectionCollapse,
-    hiddenFieldIds
-  };
-};
+    hiddenFieldIds,
+    setFormFieldsValuesMap
+    };
+    };
+

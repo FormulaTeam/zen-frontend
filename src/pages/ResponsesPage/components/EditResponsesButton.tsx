@@ -9,7 +9,7 @@ import { Permission, permission } from "formula-gear";
 
 interface EditResponsesButtonProps {
     isInEditMode: boolean;
-    editedRowsCount: number;
+    hasUnsavedChanges: boolean;
     isUpdating: boolean;
     onToggleEditMode: () => void;
     onSaveChanges: () => void;
@@ -19,7 +19,7 @@ interface EditResponsesButtonProps {
 
 export const EditResponsesButton = ({
     isInEditMode,
-    editedRowsCount,
+    hasUnsavedChanges,
     isUpdating,
     onToggleEditMode,
     onSaveChanges,
@@ -45,7 +45,7 @@ export const EditResponsesButton = ({
                 <IconButton
                     size="small"
                     onClick={onSaveChanges}
-                    disabled={editedRowsCount === 0 || isUpdating}
+                    disabled={!hasUnsavedChanges || isUpdating}
                 >
                     <CheckIcon />
                 </IconButton>

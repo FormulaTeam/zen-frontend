@@ -22,6 +22,8 @@ import { ActionsRow, CenteredBox, MainContentWrapper, PageWrapper, TopSection } 
 import { FormDto, FormFieldDto } from "../../types/shared";
 import { PermissionGate } from "@src/components/PermissionGate";
 import { permission } from "formula-gear";
+import DraftRecoveryDialog from "../../components/BasePopup/DraftRecoveryDialog";
+import { clearQuickEditDraft, getQuickEditDraft } from "../FormEditor/utils/draftPersistence";
 
 type ResponsePageRow = GridRowModel & {
   id: string | number;
@@ -75,10 +77,18 @@ const ResponsesPageContent = (): JSX.Element => {
 
   const {
     isInEditMode,
+    setIsInEditMode,
+    editedRows,
+    setEditedRows,
+    deletedRowIds,
+    setDeletedRowIds,
+    hasUnsavedChanges,
     editedRowsCount,
     localRows,
+    setLocalRows,
     validationErrors,
     handleCellLiveChange,
+    handleDeleteResponses,
     isUpdating,
     showCancelDialog,
     handleToggleEditMode,
@@ -89,6 +99,34 @@ const ResponsesPageContent = (): JSX.Element => {
     handleCancelDialogClose,
     handleAddNewResponse,
   } = useResponsesEdit();
+
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState<any>(null);
+
+  useEffect(() => {
+    const draft = getQuickEditDraft(form?.id);
+    if (draft && (draft.editedRows.length > 0 || draft.deletedRowIds?.length > 0)) {
+      setPendingDraft(draft);
+      setShowRestoreDialog(true);
+    }
+  }, [form?.id]);
+
+  const handleRestore = () => {
+    if (pendingDraft) {
+      setIsInEditMode(true);
+      setEditedRows(new Map(pendingDraft.editedRows));
+      setLocalRows(pendingDraft.localRows);
+      setDeletedRowIds(pendingDraft.deletedRowIds || []);
+    }
+    setShowRestoreDialog(false);
+    setPendingDraft(null);
+  };
+
+  const handleDiscardDraft = () => {
+    clearQuickEditDraft(form?.id);
+    setShowRestoreDialog(false);
+    setPendingDraft(null);
+  };
 
   const {
     isSidePanelOpen,
@@ -184,6 +222,7 @@ const ResponsesPageContent = (): JSX.Element => {
               <RowActionsButtons
                 rowSelectionModel={rowSelectionModel}
                 onDeleted={handleRowDeleted}
+                onDeleteResponses={handleDeleteResponses}
                 currentUserUpn={sidePanelUser?.upn}
               />
             ) : (
@@ -191,7 +230,7 @@ const ResponsesPageContent = (): JSX.Element => {
                 {!isInEditMode && <AddResponseButton />}
                 <EditResponsesButton
                   isInEditMode={isInEditMode}
-                  editedRowsCount={editedRowsCount}
+                  hasUnsavedChanges={hasUnsavedChanges}
                   isUpdating={isUpdating}
                   onToggleEditMode={handleToggleEditMode}
                   onSaveChanges={handleSaveChanges}
@@ -245,6 +284,13 @@ const ResponsesPageContent = (): JSX.Element => {
         savedViews={savedViews}
         permissionTypes={permissions}
         isSaving={isSaving}
+      />
+
+      <DraftRecoveryDialog
+        open={showRestoreDialog}
+        description="מצאנו טיוטה של עריכה מהירה עם שינויים שלא נשמרו. האם תרצה לשחזר אותם?"
+        onRestore={handleRestore}
+        onDiscard={handleDiscardDraft}
       />
     </PageWrapper>
   );
