@@ -80,11 +80,15 @@ const ResponsesPageContent = (): JSX.Element => {
     setIsInEditMode,
     editedRows,
     setEditedRows,
+    deletedRowIds,
+    setDeletedRowIds,
+    hasUnsavedChanges,
     editedRowsCount,
     localRows,
     setLocalRows,
     validationErrors,
     handleCellLiveChange,
+    handleDeleteResponses,
     isUpdating,
     showCancelDialog,
     handleToggleEditMode,
@@ -101,7 +105,7 @@ const ResponsesPageContent = (): JSX.Element => {
 
   useEffect(() => {
     const draft = getQuickEditDraft(form?.id);
-    if (draft && draft.editedRows.length > 0) {
+    if (draft && (draft.editedRows.length > 0 || draft.deletedRowIds?.length > 0)) {
       setPendingDraft(draft);
       setShowRestoreDialog(true);
     }
@@ -112,6 +116,7 @@ const ResponsesPageContent = (): JSX.Element => {
       setIsInEditMode(true);
       setEditedRows(new Map(pendingDraft.editedRows));
       setLocalRows(pendingDraft.localRows);
+      setDeletedRowIds(pendingDraft.deletedRowIds || []);
     }
     setShowRestoreDialog(false);
     setPendingDraft(null);
@@ -217,6 +222,7 @@ const ResponsesPageContent = (): JSX.Element => {
               <RowActionsButtons
                 rowSelectionModel={rowSelectionModel}
                 onDeleted={handleRowDeleted}
+                onDeleteResponses={handleDeleteResponses}
                 currentUserUpn={sidePanelUser?.upn}
               />
             ) : (
@@ -224,7 +230,7 @@ const ResponsesPageContent = (): JSX.Element => {
                 {!isInEditMode && <AddResponseButton />}
                 <EditResponsesButton
                   isInEditMode={isInEditMode}
-                  editedRowsCount={editedRowsCount}
+                  hasUnsavedChanges={hasUnsavedChanges}
                   isUpdating={isUpdating}
                   onToggleEditMode={handleToggleEditMode}
                   onSaveChanges={handleSaveChanges}

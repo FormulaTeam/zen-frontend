@@ -17,6 +17,7 @@ export interface ResponseDraft {
 export interface QuickEditDraft {
   editedRows: [any, any][]; // Map serialized as entries
   localRows: any[];
+  deletedRowIds: (string | number)[];
   timestamp: number;
 }
 
@@ -48,10 +49,16 @@ export const saveResponseDraft = (formId: number | string | undefined, responseI
   localStorage.setItem(getResponseDraftKey(formId, responseId), JSON.stringify(draft));
 };
 
-export const saveQuickEditDraft = (formId: number | string | undefined, editedRows: Map<any, any>, localRows: any[]) => {
+export const saveQuickEditDraft = (
+  formId: number | string | undefined,
+  editedRows: Map<any, any>,
+  localRows: any[],
+  deletedRowIds: (string | number)[],
+) => {
   const draft: QuickEditDraft = {
     editedRows: Array.from(editedRows.entries()),
     localRows,
+    deletedRowIds,
     timestamp: Date.now(),
   };
   localStorage.setItem(getQuickEditDraftKey(formId), JSON.stringify(draft));

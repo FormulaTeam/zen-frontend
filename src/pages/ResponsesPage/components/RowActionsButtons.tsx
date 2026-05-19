@@ -15,12 +15,14 @@ import { useFormStore } from "../stores/form.store";
 interface RowActionsButtonsProps {
   rowSelectionModel: GridRowSelectionModel;
   onDeleted: () => void;
+  onDeleteResponses?: (ids: GridRowId[]) => Promise<void>;
   currentUserUpn?: string;
 }
 
 export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
   rowSelectionModel,
   onDeleted,
+  onDeleteResponses,
   currentUserUpn,
 }) => {
   const navigate = useNavigate();
@@ -85,12 +87,16 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
     if (responseIds.length === 0) return;
 
     try {
-      setForm({
-        ...form,
-        responsesCount: Math.max(0, (form.responsesCount ?? 0) - responseIds.length),
-      } as any);
+      if (onDeleteResponses) {
+        await onDeleteResponses(selectedIds);
+      } else {
+        setForm({
+          ...form,
+          responsesCount: Math.max(0, (form.responsesCount ?? 0) - responseIds.length),
+        } as any);
 
-      await softDeleteResponses({ responsesIds: responseIds });
+        await softDeleteResponses({ responsesIds: responseIds });
+      }
 
       showSuccessNotification("מחיקת התגובות בוצעה בהצלחה");
       onDeleted();
