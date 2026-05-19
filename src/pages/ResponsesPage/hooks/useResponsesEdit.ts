@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useCallback } from "react";
+import { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import { GridRowModel } from "@mui/x-data-grid-pro";
 import { showSuccessNotification, showErrorNotification } from "@utils/utils";
 import { useUpdateResponses, useCreateResponse } from "@api/responsesApi";
@@ -35,6 +35,7 @@ import {
   getOptionResponseSubmitValue,
   OptionResponseValue,
 } from "../../../utils/optionResponseValue";
+import { saveQuickEditDraft, clearQuickEditDraft } from "../../FormEditor/utils/draftPersistence";
 
 type RowId = string | number;
 
@@ -440,9 +441,10 @@ export const useResponsesEdit = () => {
     setLocalRows(responseRows);
     setIsInEditMode(false);
     setShowCancelDialog(false);
+    clearQuickEditDraft(dtoForm?.id);
     setValidationErrors({});
     newRowCounterRef.current = 0;
-  }, [responseRows]);
+  }, [responseRows, dtoForm?.id]);
 
   const closeCancelDialog = useCallback((): void => {
     setShowCancelDialog(false);
@@ -462,13 +464,26 @@ export const useResponsesEdit = () => {
 
       if (!field) return;
 
+      const fieldKey = getFieldColumnKey(field);
+
+      setLocalRows((prevRows) =>
+        prevRows.map((row) =>
+          String(row.id) === String(rowId)
+            ? ({
+                ...row,
+                [fieldKey]: value,
+              } as Row)
+            : row,
+        ),
+      );
+
       setEditedRows((prev) => {
         const next = new Map(prev);
         const existing = next.get(rowId) || ({} as Row);
 
         next.set(rowId, {
           ...existing,
-          [getFieldColumnKey(field)]: value,
+          [fieldKey]: value,
         } as Row);
 
         return next;
@@ -698,6 +713,7 @@ export const useResponsesEdit = () => {
       setRows(persistedLocalRows as unknown as Parameters<typeof setRows>[0]);
       setEditedRows(new Map());
       setIsInEditMode(false);
+      clearQuickEditDraft(dtoForm?.id);
       setValidationErrors({});
 
       showSuccessNotification(`נשמרו ${editedEntries.length} שינויים בהצלחה!`);
@@ -729,10 +745,21 @@ export const useResponsesEdit = () => {
     formFields,
   ]);
 
+  // Auto-save quick edit draft logic
+  useEffect(() => {
+    if (isInEditMode && hasUnsavedChanges) {
+      saveQuickEditDraft(dtoForm?.id, editedRows, localRows);
+    }
+  }, [isInEditMode, hasUnsavedChanges, editedRows, localRows, dtoForm?.id]);
+
   return {
     isInEditMode,
+    setIsInEditMode,
     editedRowsCount: editedRows.size,
     localRows,
+    setLocalRows,
+    editedRows,
+    setEditedRows,
     validationErrors,
     handleCellLiveChange,
     isUpdating: isUpdating || isCreating,
