@@ -96,9 +96,9 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
         } as any);
 
         await softDeleteResponses({ responsesIds: responseIds });
+        showSuccessNotification("מחיקת התגובות בוצעה בהצלחה");
       }
 
-      showSuccessNotification("מחיקת התגובות בוצעה בהצלחה");
       onDeleted();
     } catch {
       setForm(form);
