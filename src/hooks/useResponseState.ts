@@ -32,6 +32,7 @@ import { DateComparator } from "../pages/FormEditor/schemas/conditions/condition
 import { OptionsComparator } from "../pages/FormEditor/schemas/conditions/conditionField/comparators/OptionsComparator";
 import { CheckboxComparator } from "../pages/FormEditor/schemas/conditions/conditionField/comparators/CheckboxComparator";
 import { getOptionResponseRawValue } from "../utils/optionResponseValue";
+import { saveResponseDraft } from "../pages/FormEditor/utils/draftPersistence";
 
 export type FieldExtra = {
   options?: {
@@ -688,6 +689,13 @@ export const useResponseState = (
       .map((field) => String(field.id));
   }, [formFields, visibleFormFields]);
 
+  // Auto-save response draft logic
+  useEffect(() => {
+    if (!viewMode && formFieldsValuesMap.size > 0) {
+      saveResponseDraft(formId, responseId, formFieldsValuesMap);
+    }
+  }, [formFieldsValuesMap, viewMode, formId, responseId]);
+
 
   useEffect(() => {
     if (formFields.length === 0) return;
@@ -1022,7 +1030,7 @@ export const useResponseState = (
     formFieldsByIdMap,
     formFieldsValuesMap,
     formFieldsValidMap,
-    formFieldsTouchedMap,
+    setFormFieldsTouchedMap,
     onChangeHandler,
     onBlurHandler,
     validateAllFieldsBeforeSubmit,
@@ -1034,6 +1042,8 @@ export const useResponseState = (
     responsSections,
     collapsedSections,
     toggleSectionCollapse,
-    hiddenFieldIds
-  };
-};
+    hiddenFieldIds,
+    setFormFieldsValuesMap
+    };
+    };
+

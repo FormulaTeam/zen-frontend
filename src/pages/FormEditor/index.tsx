@@ -6,8 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useFormStructure } from "./hooks/useFormStructure";
 import { FormStructureContext } from "./context/FormStructureContext";
 import type { FormDto } from "../../types/shared";
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import { clearFormDraft, getFormDraft } from "./utils/draftPersistence";
+import DraftRecoveryDialog from "../../components/BasePopup/DraftRecoveryDialog";
 
 interface EditorProps {
   mode: FormEditorMode;
@@ -84,27 +84,12 @@ function FormEditor({ mode, editedForm }: Props) {
         </FormStructureContext.Provider>
       </FormEditorContext.Provider>
 
-      <Dialog
+      <DraftRecoveryDialog
         open={showRestoreDialog}
-        onClose={handleDiscardDraft}
-        aria-labelledby="restore-draft-title"
-        aria-describedby="restore-draft-description"
-      >
-        <DialogTitle id="restore-draft-title">שחזור שינויים שלא נשמרו</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="restore-draft-description">
-            מצאנו טיוטה של הטופס הזה עם שינויים שלא נשמרו. האם תרצה לשחזר את ההתקדמות שלך?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDiscardDraft} color="inherit">
-            התעלם והסר טיוטה
-          </Button>
-          <Button onClick={handleRestore} color="primary" variant="contained" autoFocus>
-            שחזר טיוטה
-          </Button>
-        </DialogActions>
-      </Dialog>
+        description="מצאנו טיוטה של הטופס הזה עם שינויים שלא נשמרו. האם תרצה לשחזר אותם?"
+        onRestore={handleRestore}
+        onDiscard={handleDiscardDraft}
+      />
     </div>
   );
 }
