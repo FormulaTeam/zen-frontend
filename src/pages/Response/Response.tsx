@@ -67,7 +67,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     toggleSectionCollapse,
     hiddenFieldIds,
     setFormFieldsValuesMap
-  } = useResponseState(formId, id, viewMode, copyMode, undefined, user, isSuperAdmin ?? undefined, setHasUnsavedChanges);
+  } = useResponseState(formId, id, viewMode, copyMode, undefined, user, isSuperAdmin ?? undefined, setHasUnsavedChanges, hasUnsavedChanges);
 
   useEffect(() => {
     if (!viewMode) {
@@ -95,6 +95,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   };
 
   const onBack = () => {
+    clearResponseDraft(formId, id);
     location.state?.parentFormId
       ? navigate(`/responses/${location.state.parentFormId}`, {})
       : form && navigate(`/responses/${form.id}`);

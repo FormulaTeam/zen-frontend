@@ -748,7 +748,13 @@ export const useResponsesEdit = () => {
   // Auto-save quick edit draft logic
   useEffect(() => {
     if (isInEditMode && hasUnsavedChanges) {
-      saveQuickEditDraft(dtoForm?.id, editedRows, localRows);
+      const timer = setTimeout(() => {
+        saveQuickEditDraft(dtoForm?.id, editedRows, localRows);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    } else if (isInEditMode && !hasUnsavedChanges) {
+      clearQuickEditDraft(dtoForm?.id);
     }
   }, [isInEditMode, hasUnsavedChanges, editedRows, localRows, dtoForm?.id]);
 
