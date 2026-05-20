@@ -1,14 +1,22 @@
 import { GridFilterItem } from "@mui/x-data-grid-pro";
-import { fieldType, ResponseFilterOperator } from "formula-gear";
+import {
+  fieldType,
+  ResponseFilterOperator,
+  ResponseMetaFieldSchema,
+} from "formula-gear";
 
-import { FormFieldDto, ResponseFieldFilterDto, ResponseFiltersDto } from "../../../../types/shared";
-import type { FilterOptionItem } from "./responseFilterInputs";
+import { FormFieldDto, ResponseFieldFilterDto, ResponseFiltersDto, ResponseMetaField } from "../../../../types/shared";
+import { OptionResponseValue } from "@src/utils/optionResponseValue";
 
 export const FIELD_COLUMN_PREFIX = "field:";
+export const META_COLUMN_PREFIX = "meta:";
 
 export const NO_VALUE_FILTER_VALUE = "__NO_VALUE_FILTER__";
 
 export const getFieldColumnKey = (fieldId: string): string => `${FIELD_COLUMN_PREFIX}${fieldId}`;
+
+export const getMetaColumnKey = (metaField: ResponseMetaField): string =>
+  `${META_COLUMN_PREFIX}${metaField}`;
 
 export const getFieldIdFromGridColumnField = (gridField: string | undefined): string | null => {
   if (!gridField?.startsWith(FIELD_COLUMN_PREFIX)) {
@@ -16,6 +24,20 @@ export const getFieldIdFromGridColumnField = (gridField: string | undefined): st
   }
 
   return gridField.slice(FIELD_COLUMN_PREFIX.length);
+};
+
+export const getMetaFieldFromGridColumnField = (
+  gridField: string | undefined,
+): ResponseMetaField | null => {
+  if (!gridField?.startsWith(META_COLUMN_PREFIX)) {
+    return null;
+  }
+
+  const metaField = gridField.slice(META_COLUMN_PREFIX.length);
+
+  return ResponseMetaFieldSchema.options.includes(metaField as ResponseMetaField)
+    ? (metaField as ResponseMetaField)
+    : null;
 };
 
 export const isNoValueFilterOperator = (
@@ -55,12 +77,26 @@ export const getGridFilterModelFromResponseFilters = (
 ): { items: GridFilterItem[] } => {
   return {
     items:
-      responseFilters?.items?.map((filter, index) => ({
-        id: `${filter.fieldId}-${index}`,
-        field: getFieldColumnKey(filter.fieldId),
-        operator: filter.operator,
-        value: isNoValueFilterOperator(filter.operator) ? NO_VALUE_FILTER_VALUE : filter.value,
-      })) ?? [],
+      responseFilters?.items?.flatMap((filter, index) => {
+        const field = filter.fieldId
+          ? getFieldColumnKey(filter.fieldId)
+          : filter.metaField
+            ? getMetaColumnKey(filter.metaField as ResponseMetaField)
+            : null;
+
+        if (!field) {
+          return [];
+        }
+
+        return [
+          {
+            id: `${filter.fieldId ?? filter.metaField}-${index}`,
+            field,
+            operator: filter.operator,
+            value: isNoValueFilterOperator(filter.operator) ? NO_VALUE_FILTER_VALUE : filter.value,
+          },
+        ];
+      }) ?? [],
   };
 };
 
@@ -143,6 +179,22 @@ const normalizeValueByField = (
   return value;
 };
 
+const normalizeValueByMetaField = (
+  metaField: ResponseMetaField,
+  operator: ResponseFilterOperator,
+  value: unknown,
+): unknown => {
+  if (metaField === "index" && isNumberComparisonOperator(operator)) {
+    return normalizeNumber(value);
+  }
+
+  if (metaField === "index" && isRangeOperator(operator)) {
+    return normalizeNumberRange(value);
+  }
+
+  return value;
+};
+
 const shouldKeepFilter = (operator: ResponseFilterOperator, value: unknown): boolean => {
   if (isNoValueFilterOperator(operator)) {
     return value === NO_VALUE_FILTER_VALUE;
@@ -169,15 +221,10 @@ export const buildResponseFiltersFromGridFilterModel = (
 
   const responseFilterItems: ResponseFieldFilterDto[] = items.flatMap((item) => {
     const fieldId = getFieldIdFromGridColumnField(item.field);
+    const metaField = getMetaFieldFromGridColumnField(item.field);
 
-    if (!fieldId || !item.operator) {
+    if ((!fieldId && !metaField) || !item.operator) {
       hasIncompleteItems = true;
-      return [];
-    }
-
-    const field = fieldsById.get(fieldId);
-
-    if (!field) {
       return [];
     }
 
@@ -192,11 +239,29 @@ export const buildResponseFiltersFromGridFilterModel = (
       return [];
     }
 
+    if (metaField) {
+      const normalizedValue = normalizeValueByMetaField(metaField, operator, item.value);
+
+      return [
+        {
+          metaField,
+          operator,
+          ...(isNoValueFilterOperator(operator) ? {} : { value: normalizedValue }),
+        } as ResponseFieldFilterDto,
+      ];
+    }
+
+    const field = fieldsById.get(fieldId!);
+
+    if (!field) {
+      return [];
+    }
+
     const normalizedValue = normalizeValueByField(field, operator, item.value);
 
     return [
       {
-        fieldId,
+        fieldId: fieldId!,
         operator,
         ...(isNoValueFilterOperator(operator) ? {} : { value: normalizedValue }),
       },
@@ -209,11 +274,11 @@ export const buildResponseFiltersFromGridFilterModel = (
   };
 };
 
-const normalizeOption = (option: unknown): FilterOptionItem | null => {
+const normalizeOption = (option: unknown): OptionResponseValue | null => {
   if (typeof option === "string" || typeof option === "number") {
     return {
-      value: String(option),
-      label: String(option),
+      id: String(option),
+      text: String(option),
     };
   }
 
@@ -230,12 +295,12 @@ const normalizeOption = (option: unknown): FilterOptionItem | null => {
   }
 
   return {
-    value: String(id),
-    label: String(text),
+    id: String(id),
+    text: String(text),
   };
 };
 
-export const getFieldOptions = (field: FormFieldDto): FilterOptionItem[] => {
+export const getFieldOptions = (field: FormFieldDto): OptionResponseValue[] => {
   const extra = field.extra as any;
 
   const rawOptions = extra?.options?.items ?? extra?.options ?? extra?.items ?? extra?.values ?? [];
@@ -246,5 +311,5 @@ export const getFieldOptions = (field: FormFieldDto): FilterOptionItem[] => {
 
   return rawOptions
     .map(normalizeOption)
-    .filter((option): option is FilterOptionItem => option !== null);
+    .filter((option): option is OptionResponseValue => option !== null);
 };
