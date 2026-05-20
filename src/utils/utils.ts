@@ -334,19 +334,19 @@ export const toastInfo = (msg: string) => toast.info(msg);
 
 export function showErrorNotification(error: string, autoCloseTime?: number) {
   toast.error(error + "", {
-    duration: autoCloseTime ?? 2000,
+    duration: autoCloseTime ?? 2500,
   });
 }
 
 export function showSuccessNotification(msg: string) {
   toast.success(msg + "", {
-    duration: 2000,
+    duration: 2500,
   });
 }
 
 export function showWarningNotification(msg: string) {
   toast.warning(msg + "", {
-    duration: 2000,
+    duration: 2500,
   });
 }
 

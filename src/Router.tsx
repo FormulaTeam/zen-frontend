@@ -91,7 +91,7 @@ const AppRouter = () => {
             <Route path={IPath.DELETED_FORMS} element={<DeletedForms user={user} />} />
           </Route>
         </Routes>
-        <Toaster richColors position="top-right" />
+        <Toaster richColors position="bottom-right" expand={true} closeButton />
         {/* <HelpBtn showHelpCard={() => setShowHelpCard(true)} />
         {showHelpCard && <HelpDiv hideHelpCard={() => setShowHelpCard(false)} />} */}
       </Box>
