@@ -50,7 +50,6 @@ export const MainContentWrapper = styled(Box)<BoxProps>(() => ({
   flex: 1,
   minWidth: 0,
   minHeight: 0,
-  overflow: "hidden",
 }));
 
 export const TopSection = styled(Box)<BoxProps>(() => ({
@@ -58,6 +57,7 @@ export const TopSection = styled(Box)<BoxProps>(() => ({
   justifyContent: "space-between",
   alignItems: "flex-start",
   marginBottom: "5px",
+  flexShrink: 0,
 }));
 
 export const CenteredBox = styled(Box)<BoxProps>(() => ({
@@ -97,7 +97,7 @@ export const ContentContainer = styled(Box)<BoxProps>(() => ({
   display: "flex",
   flex: 1,
   minHeight: 0,
-  overflow: "hidden",
+  minWidth: 0,
 }));
 
 interface MainContentProps extends BoxProps {
@@ -109,12 +109,12 @@ export const MainContent = styled(Box)<MainContentProps>(() => ({
   display: "flex",
   flexDirection: "column",
   minWidth: 0,
-  overflow: "hidden",
 }));
 
 export const TableContainer = styled(Box)<BoxProps>(() => ({
   flex: 1,
-  overflow: "hidden",
+  minHeight: 0,
+  minWidth: 0,
 }));
 
 export const PageWrapper = styled(Box)<BoxProps>(() => ({
@@ -141,6 +141,8 @@ export const LoadingBtnBox = styled(Box)<LoadingBtnBoxProps>(({ $bgColor }) => (
 
 export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   "&.MuiDataGrid-root": {
+    width: "100%",
+    maxWidth: "100%",
     fontSize: "18px",
     transition: "all 0.3s ease",
     border: "none",
@@ -165,15 +167,15 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
       display: "none",
     },
     "& .MuiDataGrid-row--even": {
-      backgroundColor: "transparent",
+      backgroundColor: "#ffffff",
     },
     "& .MuiDataGrid-row--odd": {
-      backgroundColor: "#f0f7ff",
+      backgroundColor: "#f5f5f5",
     },
     "& .MuiDataGrid-row": {
       borderBottom: "none",
       "&:hover": {
-        backgroundColor: "rgba(0, 0, 0, 0.04) !important",
+        backgroundColor: "#f0f7ff !important",
       },
     },
     "& .active-editing-row": {
@@ -200,6 +202,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     "& .MuiDataGrid-columnHeaders": {
       borderBottom: "none",
       backgroundImage: "none",
+      backgroundColor: "#e1f0ff",
     },
     "& .MuiDataGrid-columnHeaderRow": {
       borderBottom: "none",
@@ -211,15 +214,15 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     },
   },
   "& .MuiDataGrid-columnHeaders": {
-    backgroundColor: "transparent",
+    backgroundColor: "#e1f0ff",
     borderBottom: "none",
     "& .MuiDataGrid-filler": {
-      backgroundColor: "transparent",
+      backgroundColor: "#e1f0ff",
       borderBottom: "none",
     },
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-columnHeaders": {
-    backgroundColor: "transparent",
+    backgroundColor: "#e1f0ff",
     color: "#000000",
     "& .MuiDataGrid-columnHeaderTitle": {
       color: "#000000",
@@ -249,12 +252,6 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   },
   "& .MuiDataGrid-columnHeaderDraggableContainer": {
     justifyContent: "center",
-  },
-  "& .MuiDataGrid-row--even": {
-    backgroundColor: "transparent",
-  },
-  "& .MuiDataGrid-row--odd": {
-    backgroundColor: "transparent",
   },
   "& .MuiDataGrid-cell": {
     fontSize: "1rem",
@@ -355,14 +352,26 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     borderTop: "none",
     justifyContent: "flex-start",
   },
-  "& .MuiDataGrid-columnHeader:focus-within, & .MuiDataGrid-cell:focus-within": {
-    outline: "none !important",
-  },
   "& .MuiDataGrid-columnHeaderDraggableContainer:focus-within": {
     outline: "none !important",
   },
-  "& .MuiDataGrid-sortIcon": {
-    display: "none !important",
+  "& .MuiDataGrid-virtualScroller": {
+    overflowX: "auto !important",
+    "&::-webkit-scrollbar": {
+      height: "10px",
+      width: "10px",
+    },
+    "&::-webkit-scrollbar-track": {
+      backgroundColor: "#f1f1f1",
+      borderRadius: "10px",
+    },
+    "&::-webkit-scrollbar-thumb": {
+      backgroundColor: "#cbd5e0",
+      borderRadius: "10px",
+      "&:hover": {
+        backgroundColor: "#a0aec0",
+      },
+    },
   },
 }));
 

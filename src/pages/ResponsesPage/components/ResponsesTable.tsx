@@ -534,7 +534,6 @@ export const ResponsesTable = React.memo(
         const col: GridColDef = {
           field: gridField,
           headerName: field.displayName,
-          flex: 2,
           minWidth: 200,
           width: 400,
           editable: true,
@@ -599,7 +598,6 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}created_by`, {
         field: `${prefixes.Meta}created_by`,
         headerName: "נוצר ע״י",
-        flex: 1,
         width: 200,
         minWidth: 150,
         editable: false,
@@ -611,7 +609,6 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}created_at`, {
         field: `${prefixes.Meta}created_at`,
         headerName: "תאריך יצירה",
-        flex: 1,
         width: 200,
         minWidth: 150,
         editable: false,
@@ -631,6 +628,7 @@ export const ResponsesTable = React.memo(
         headerName: "",
         renderHeader: () => <CloudUploadIcon fontSize="large" />,
         minWidth: 150,
+        width: 150,
         editable: false,
         sortable: true,
         filterable: false,
@@ -644,7 +642,6 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}updated_by`, {
         field: `${prefixes.Meta}updated_by`,
         headerName: "השתנה ע״י",
-        flex: 1,
         width: 200,
         minWidth: 150,
         editable: false,
@@ -656,7 +653,6 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}updated_at`, {
         field: `${prefixes.Meta}updated_at`,
         headerName: "תאריך שינוי",
-        flex: 1,
         width: 200,
         minWidth: 150,
         editable: false,
@@ -681,61 +677,8 @@ export const ResponsesTable = React.memo(
         ...getResponseMetaFilterColumnProps("id"),
       });
 
-      const actionsColumn: GridColDef = {
-        field: "actions",
-        headerName: "פעולות",
-        width: 160,
-        sortable: false,
-        filterable: false,
-        renderCell: (params: GridRenderCellParams) => {
-          const row = params.row as Row;
-          return (
-            <Stack direction="row" spacing={0.5}>
-              <Tooltip title="צפייה">
-                <IconButton
-                  size="small"
-                  onClick={() => navigate(`/response/view/${form.id}/${row.id}`)}
-                >
-                  <Visibility fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              {!isInEditMode && (
-                <>
-                  <Tooltip title="עריכה">
-                    <IconButton
-                      size="small"
-                      onClick={() => navigate(`/response/edit/${form.id}/${row.id}`)}
-                    >
-                      <Edit fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="שכפול">
-                    <IconButton
-                      size="small"
-                      onClick={() => navigateToCreateResponseCopy(row)}
-                    >
-                      <ContentCopyIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="מחיקה">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleDeleteResponse(row.id)}
-                    >
-                      <Delete fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </>
-              )}
-            </Stack>
-          );
-        },
-      };
-
       const structuralColumns: GridColDef[] = [
         ...(expandColumn ? [{ ...expandColumn, filterable: false }] : []),
-        { ...actionsColumn },
         ...(hasFormInFormFields
           ? [
               {
@@ -756,7 +699,7 @@ export const ResponsesTable = React.memo(
             {
               field: "parentResponse",
               headerName: "תגובת אב",
-              flex: 1,
+              width: 200,
               editable: false,
               filterable: false,
               sortable: false,
@@ -1053,8 +996,9 @@ export const ResponsesTable = React.memo(
       const pageNumber = filter?.pageNumber ?? 1;
       const pageSize = filter?.pageSize ?? 25;
       const totalCount = form?.responsesCount ?? 0;
+      const currentRowsCount = localRows.length;
       const startRange = totalCount === 0 ? 0 : (pageNumber - 1) * pageSize + 1;
-      const endRange = Math.min(pageNumber * pageSize, totalCount);
+      const endRange = totalCount === 0 ? 0 : (pageNumber - 1) * pageSize + currentRowsCount;
 
       return (
         <GridFooterContainer
@@ -1068,6 +1012,19 @@ export const ResponsesTable = React.memo(
           }}>
           <Stack direction="row" spacing={3} alignItems="center">
             <PaginationContainer>
+              <Tooltip title="עמוד הבא">
+                <span>
+                  <PaginationButton
+                    onClick={handleNextPage}
+                    disabled={
+                      !pageInfo?.hasNextPage || isInEditMode || isRowsLoading || isNavigating
+                    }
+                    size="small">
+                    <ArrowForwardIosIcon />
+                  </PaginationButton>
+                </span>
+              </Tooltip>
+
               <Tooltip title="עמוד קודם">
                 <span>
                   <PaginationButton
@@ -1084,20 +1041,15 @@ export const ResponsesTable = React.memo(
                   </PaginationButton>
                 </span>
               </Tooltip>
-
-              <Tooltip title="עמוד הבא">
-                <span>
-                  <PaginationButton
-                    onClick={handleNextPage}
-                    disabled={
-                      !pageInfo?.hasNextPage || isInEditMode || isRowsLoading || isNavigating
-                    }
-                    size="small">
-                    <ArrowForwardIosIcon />
-                  </PaginationButton>
-                </span>
-              </Tooltip>
             </PaginationContainer>
+
+            <FooterInfoContainer>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
+                endRange > 0 ? {`מציג ${endRange}-${startRange} תגובות מתוך ${totalCount}`} : מציג 0 תצובות במות ${totalCount}
+              </Typography>
+            </FooterInfoContainer>
 
             <FooterInfoContainer>
               <Select
@@ -1121,14 +1073,10 @@ export const ResponsesTable = React.memo(
                 ))}
               </Select>
 
-              <Typography variant="body2" sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
                 תגובות בעמוד
-              </Typography>
-            </FooterInfoContainer>
-
-            <FooterInfoContainer>
-              <Typography variant="body2" sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
-                {`מציג ${startRange}-${endRange} תגובות מתוך ${totalCount}`}
               </Typography>
             </FooterInfoContainer>
           </Stack>
@@ -1147,7 +1095,7 @@ export const ResponsesTable = React.memo(
             disableColumnResize={isInEditMode}
             disableColumnFilter={isInEditMode}
             headerFilters={shouldUseHeaderFilters}
-            columnBufferPx={150}
+            columnBufferPx={3000}
             sortingMode="server"
             sortingOrder={["asc", "desc"]}
             onSortModelChange={handleSortModelChange}

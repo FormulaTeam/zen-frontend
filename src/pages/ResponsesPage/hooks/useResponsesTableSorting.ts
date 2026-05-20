@@ -105,7 +105,7 @@ const getMetaNameById = (metaColumnId?: number): string | undefined => {
 };
 
 const getBackendSortByFromGridField = (field: string, prefixes: ColumnPrefixes): string => {
-  if (field.startsWith(prefixes.Field)) {
+  if (field.startsWith(prefixes.Field) || field.startsWith(prefixes.Meta)) {
     return field;
   }
 
