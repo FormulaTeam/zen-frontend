@@ -6,6 +6,7 @@ import {
   ResponseSchema,
   ResponseFieldFilterSchema,
   ResponseFiltersSchema,
+  ResponseMetaFieldSchema,
 } from "formula-gear";
 
 export type ParentResponseDto = {
@@ -24,6 +25,7 @@ export type ResponseFieldValueDto = z.infer<typeof ResponseFieldValueSchema>;
 
 export type ResponseFieldFilterDto = z.infer<typeof ResponseFieldFilterSchema>;
 export type ResponseFiltersDto = z.infer<typeof ResponseFiltersSchema>;
+export type ResponseMetaField = z.infer<typeof ResponseMetaFieldSchema>;
 
 export type UpdateOneResponseDto = {
   responseId: string;

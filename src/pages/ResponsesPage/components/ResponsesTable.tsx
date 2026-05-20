@@ -64,6 +64,7 @@ import { DEFAULT_DATE_TIME_FORMAT } from "../../../utils/utils";
 import * as Gear from "formula-gear";
 import {
   getResponseFilterColumnProps,
+  getResponseMetaFilterColumnProps,
   ResponsesColumnMenu,
   useResponsesTableFilters,
 } from "./ResponsesFilters";
@@ -563,35 +564,38 @@ export const ResponsesTable = React.memo(
       const metaColumnsMap = new Map<string, GridColDef>();
 
       metaColumnsMap.set(`${prefixes.Meta}index`, {
-        field: "index",
+        field: `${prefixes.Meta}index`,
         headerName: "מזהה",
         width: 100,
         minWidth: 80,
         editable: false,
         sortable: true,
-        filterable: false,
+        valueGetter: (_value, row: Row) => row.index,
+        ...getResponseMetaFilterColumnProps("index"),
       });
 
       metaColumnsMap.set(`${prefixes.Meta}created_by`, {
-        field: "createdByName",
+        field: `${prefixes.Meta}created_by`,
         headerName: "נוצר ע״י",
         flex: 1,
         width: 200,
         minWidth: 150,
         editable: false,
         sortable: true,
-        filterable: false,
+        valueGetter: (_value, row: Row) => row.createdByName,
+        ...getResponseMetaFilterColumnProps("created_by"),
       });
 
       metaColumnsMap.set(`${prefixes.Meta}created_at`, {
-        field: "created",
+        field: `${prefixes.Meta}created_at`,
         headerName: "תאריך יצירה",
         flex: 1,
         width: 200,
         minWidth: 150,
         editable: false,
         sortable: true,
-        filterable: false,
+        valueGetter: (_value, row: Row) => row.created,
+        ...getResponseMetaFilterColumnProps("created_at"),
         renderCell: (params: GridRenderCellParams) =>
           params.value ? (
             <Box component="span" className="cell-box-date">
@@ -616,25 +620,27 @@ export const ResponsesTable = React.memo(
       });
 
       metaColumnsMap.set(`${prefixes.Meta}updated_by`, {
-        field: "editedByName",
+        field: `${prefixes.Meta}updated_by`,
         headerName: "השתנה ע״י",
         flex: 1,
         width: 200,
         minWidth: 150,
         editable: false,
         sortable: true,
-        filterable: false,
+        valueGetter: (_value, row: Row) => row.editedByName,
+        ...getResponseMetaFilterColumnProps("updated_by"),
       });
 
       metaColumnsMap.set(`${prefixes.Meta}updated_at`, {
-        field: "edited",
+        field: `${prefixes.Meta}updated_at`,
         headerName: "תאריך שינוי",
         flex: 1,
         width: 200,
         minWidth: 150,
         editable: false,
         sortable: true,
-        filterable: false,
+        valueGetter: (_value, row: Row) => row.edited,
+        ...getResponseMetaFilterColumnProps("updated_at"),
         renderCell: (params: GridRenderCellParams) =>
           params.value ? (
             <Box component="span" className="cell-box-date">
@@ -644,12 +650,13 @@ export const ResponsesTable = React.memo(
       });
 
       metaColumnsMap.set(`${prefixes.Meta}id`, {
-        field: "id",
+        field: `${prefixes.Meta}id`,
         headerName: "ID",
         width: 150,
         editable: false,
         sortable: true,
-        filterable: false,
+        valueGetter: (_value, row: Row) => row.id,
+        ...getResponseMetaFilterColumnProps("id"),
       });
 
       const structuralColumns: GridColDef[] = [

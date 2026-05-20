@@ -1,8 +1,7 @@
 import React from "react";
 import { GridFilterOperator } from "@mui/x-data-grid-pro";
 import { fieldType, ResponseFilterOperator, type FieldType } from "formula-gear";
-
-import { FormFieldDto } from "../../../../types/shared";
+import { FormFieldDto, ResponseMetaField } from "../../../../types/shared";
 import {
   DateFilterInput,
   DateRangeFilterInput,
@@ -174,6 +173,56 @@ export const getFilterOperatorsForField = (field: FormFieldDto): GridFilterOpera
 
     case fieldType.Location:
       return locationOperators();
+
+    default:
+      return [];
+  }
+};
+
+const metaTextOperators = (): GridFilterOperator[] => [
+  makeOperator(ResponseFilterOperator.Contains, "מכיל", TextFilterInput),
+  makeOperator(ResponseFilterOperator.NotContains, "לא מכיל", TextFilterInput),
+  makeOperator(ResponseFilterOperator.Equals, "שווה ל", TextFilterInput),
+  makeOperator(ResponseFilterOperator.NotEquals, "שונה מ", TextFilterInput),
+];
+
+const metaNumberOperators = (): GridFilterOperator[] => [
+  makeOperator(ResponseFilterOperator.Equals, "שווה ל", NumberFilterInput),
+  makeOperator(ResponseFilterOperator.NotEquals, "שונה מ", NumberFilterInput),
+  makeOperator(ResponseFilterOperator.GreaterThan, "גדול מ", NumberFilterInput),
+  makeOperator(ResponseFilterOperator.GreaterThanOrEqual, "גדול או שווה ל", NumberFilterInput),
+  makeOperator(ResponseFilterOperator.LessThan, "קטן מ", NumberFilterInput),
+  makeOperator(ResponseFilterOperator.LessThanOrEqual, "קטן או שווה ל", NumberFilterInput),
+  makeOperator(ResponseFilterOperator.Between, "בין", NumberRangeFilterInput),
+  makeOperator(ResponseFilterOperator.NotBetween, "לא בין", NumberRangeFilterInput),
+];
+
+const metaDateOperators = (): GridFilterOperator[] => [
+  makeOperator(ResponseFilterOperator.On, "בתאריך", DateFilterInput),
+  makeOperator(ResponseFilterOperator.NotOn, "לא בתאריך", DateFilterInput),
+  makeOperator(ResponseFilterOperator.Before, "לפני", DateFilterInput),
+  makeOperator(ResponseFilterOperator.BeforeOrEqual, "לפני או בתאריך", DateFilterInput),
+  makeOperator(ResponseFilterOperator.After, "אחרי", DateFilterInput),
+  makeOperator(ResponseFilterOperator.AfterOrEqual, "אחרי או בתאריך", DateFilterInput),
+  makeOperator(ResponseFilterOperator.Between, "בין", DateRangeFilterInput),
+  makeOperator(ResponseFilterOperator.NotBetween, "לא בין", DateRangeFilterInput),
+];
+
+export const getFilterOperatorsForMetaField = (
+  metaField: ResponseMetaField,
+): GridFilterOperator[] => {
+  switch (metaField) {
+    case "index":
+      return metaNumberOperators();
+
+    case "created_at":
+    case "updated_at":
+      return metaDateOperators();
+
+    case "id":
+    case "created_by":
+    case "updated_by":
+      return metaTextOperators();
 
     default:
       return [];
