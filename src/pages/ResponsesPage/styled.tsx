@@ -164,10 +164,16 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     "& .MuiDataGrid-columnSeparator": {
       display: "none",
     },
+    "& .MuiDataGrid-row--even": {
+      backgroundColor: "transparent",
+    },
+    "& .MuiDataGrid-row--odd": {
+      backgroundColor: "#f0f7ff",
+    },
     "& .MuiDataGrid-row": {
       borderBottom: "none",
       "&:hover": {
-        backgroundColor: "rgba(0, 0, 0, 0.04)",
+        backgroundColor: "rgba(0, 0, 0, 0.04) !important",
       },
     },
     "& .active-editing-row": {
