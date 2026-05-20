@@ -95,7 +95,6 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   };
 
   const onBack = () => {
-    clearResponseDraft(formId, id);
     location.state?.parentFormId
       ? navigate(`/responses/${location.state.parentFormId}`, {})
       : form && navigate(`/responses/${form.id}`);

@@ -696,8 +696,6 @@ export const useResponseState = (
 
     if (hasUnsavedChanges && formFieldsValuesMap.size > 0) {
       saveResponseDraft(formId, responseId, formFieldsValuesMap);
-    } else if (hasUnsavedChanges === false) {
-      clearResponseDraft(formId, responseId);
     }
   }, [formFieldsValuesMap, hasUnsavedChanges, viewMode, formId, responseId]);
 
