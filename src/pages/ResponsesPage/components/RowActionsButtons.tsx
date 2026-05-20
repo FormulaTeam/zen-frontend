@@ -1,6 +1,6 @@
 import React from "react";
 import { Tooltip, IconButton } from "@mui/material";
-import { Visibility, Edit, Delete } from "@mui/icons-material";
+import { Visibility, Edit, Delete, ContentCopy } from "@mui/icons-material";
 import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { useNavigate } from "react-router-dom";
 
@@ -56,6 +56,7 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
   const canView = !!isSuperAdmin || permissions.some(p => p === permission.ReadAnyResponse || p === permission.ReadForm);
   const canEdit = !!isSuperAdmin || permissions.includes(permission.UpdateAnyResponse) || (permissions.includes(permission.UpdateMyResponse) && responseCreatedByCurrentUser);
   const canDelete = !!isSuperAdmin || permissions.includes(permission.DeleteAnyResponse);
+  const canCreate = !!isSuperAdmin || permissions.includes(permission.CreateResponse);
 
   const handleView = () => {
     if (!isSingleSelection) return;
@@ -76,6 +77,17 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
 
     if (response) {
       navigate(`/response/edit/${form.id}/${response.id}`);
+    }
+  };
+
+  const handleDuplicate = () => {
+    if (!isSingleSelection) return;
+
+    const rowId = String(selectedIds[0]);
+    const response = rows.find((row) => String(row?.id) === rowId);
+
+    if (response) {
+      navigate(`/response/create/${form.id}/${response.id}`);
     }
   };
 
@@ -135,6 +147,21 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
         <span>
           <IconButton size="small" onClick={handleEdit} disabled={!canEdit || !isSingleSelection}>
             <Edit />
+          </IconButton>
+        </span>
+      </Tooltip>
+
+      <Tooltip
+        title={
+          !canCreate
+            ? "אין הרשאה לשכפול"
+            : !isSingleSelection
+              ? "בחר תגובה אחת כדי לשכפל"
+              : "שכפול תגובה"
+        }>
+        <span>
+          <IconButton size="small" onClick={handleDuplicate} disabled={!canCreate || !isSingleSelection}>
+            <ContentCopy />
           </IconButton>
         </span>
       </Tooltip>

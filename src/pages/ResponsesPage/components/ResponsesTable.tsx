@@ -57,6 +57,7 @@ import {
   FooterInfoContainer,
   PaginationButton,
   CellErrorHeader,
+  TableContainer,
 } from "../styled";
 import { useChildForms } from "../hooks/useChildForms";
 import { useDetailPanel } from "../hooks/useDetailPanel";
@@ -1047,7 +1048,9 @@ export const ResponsesTable = React.memo(
               <Typography
                 variant="body2"
                 sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
-                endRange > 0 ? {`מציג ${endRange}-${startRange} תגובות מתוך ${totalCount}`} : מציג 0 תצובות במות ${totalCount}
+                {endRange > 0
+                  ? `מציג ${startRange}-${endRange} תגובות מתוך ${totalCount}`
+                  : `מציג 0 תגובות מתוך ${totalCount}`}
               </Typography>
             </FooterInfoContainer>
 
@@ -1087,115 +1090,122 @@ export const ResponsesTable = React.memo(
     return (
       <ContentContainer>
         <MainContent>
-          <StyledDataGrid
-            apiRef={apiRef}
-            className={clsx({ "MuiDataGrid-root--edit-mode": isInEditMode })}
-            disableColumnMenu={isInEditMode}
-            disableColumnSorting={false}
-            disableColumnResize={isInEditMode}
-            disableColumnFilter={isInEditMode}
-            headerFilters={shouldUseHeaderFilters}
-            columnBufferPx={3000}
-            sortingMode="server"
-            sortingOrder={["asc", "desc"]}
-            onSortModelChange={handleSortModelChange}
-            filterMode="server"
-            filterModel={filterModel}
-            onFilterModelChange={handleFilterModelChange}
-            editMode="cell"
-            cellModesModel={cellModesModel}
-            onCellModesModelChange={handleCellModesModelChange}
-            onCellClick={handleCellClick}
-            onCellDoubleClick={handleCellDoubleClick}
-            onCellKeyDown={handleCellKeyDown}
-            processRowUpdate={handleProcessRowUpdate}
-            onProcessRowUpdateError={(error) => {
-              console.error("Error updating row:", error);
-            }}
-            getCellClassName={getCellClassName}
-            rowHeight={40}
-            columnHeaderHeight={40}
-            loading={
-              !isInEditMode && isRowsLoading && rows.length === 0 && form?.responsesCount !== 0
-            }
-            checkboxSelection
-            disableRowSelectionOnClick
-            onRowSelectionModelChange={onRowSelectionModelChange}
-            getRowClassName={(params) => {
-              const classes: string[] = [];
-              classes.push(params.indexRelativeToCurrentPage % 2 === 0 ? "MuiDataGrid-row--even" : "MuiDataGrid-row--odd");
-              
-              if (isInEditMode) {
-                const isEdited = Object.keys(cellModesModel[params.id] || {}).some(
-                  (field) => cellModesModel[params.id][field].mode === GridCellModes.Edit
-                );
-                if (isEdited) {
-                  classes.push("active-editing-row");
-                }
+          <TableContainer>
+            <StyledDataGrid
+              apiRef={apiRef}
+              className={clsx({ "MuiDataGrid-root--edit-mode": isInEditMode })}
+              disableColumnMenu={isInEditMode}
+              disableColumnSorting={false}
+              disableColumnResize={isInEditMode}
+              disableColumnFilter={isInEditMode}
+              headerFilters={shouldUseHeaderFilters}
+              columnBufferPx={5000}
+              initialState={{
+                pinnedColumns: {
+                  left: ["__check__", "meta:index"],
+                },
+              }}
+              sortingMode="server"
+              sortingOrder={["asc", "desc"]}
+              onSortModelChange={handleSortModelChange}
+              filterMode="server"
+              filterModel={filterModel}
+              onFilterModelChange={handleFilterModelChange}
+              editMode="cell"
+              cellModesModel={cellModesModel}
+              onCellModesModelChange={handleCellModesModelChange}
+              onCellClick={handleCellClick}
+              onCellDoubleClick={handleCellDoubleClick}
+              onCellKeyDown={handleCellKeyDown}
+              processRowUpdate={handleProcessRowUpdate}
+              onProcessRowUpdateError={(error) => {
+                console.error("Error updating row:", error);
+              }}
+              getCellClassName={getCellClassName}
+              rowHeight={40}
+              columnHeaderHeight={40}
+              loading={
+                !isInEditMode && isRowsLoading && rows.length === 0 && form?.responsesCount !== 0
               }
-              
-              return classes.join(" ");
-            }}
-            getRowId={(row) => row?.id}
-            localeText={{
-              ...heIL.components.MuiDataGrid.defaultProps.localeText,
-              ...responseHeaderFilterLocaleText,
-              noRowsLabel: "אין תגובות",
-              columnMenuLabel: "פעולות",
-              pinToLeft: "נעץ מימין",
-              pinToRight: "נעץ משמאל",
-            }}
-            columns={getFormColumns}
-            sortModel={sortModel}
-            rows={localRows}
-            slots={{
-              columnMenu: ResponsesColumnMenu,
-              columnHeaderFilterIconButton: EmptyColumnHeaderFilterIconButton,
-              columnFilteredIcon: EmptyColumnFilteredIcon,
-              footer: CustomFooter,
-            }}
-            {...(hasFormInFormFields && {
-              getDetailPanelContent,
-              getDetailPanelHeight,
-              detailPanelExpandedRowIds,
-            })}
-            slotProps={{
-              columnMenu: {
-                showFilters,
-                activeFiltersCount,
-                disabled: isInEditMode,
-                onToggleFilters: handleToggleFilters,
-                onClearFilters: handleClearFilters,
-              } as any,
-              row: {
-                onContextMenu: handleContextMenu,
-                style: { cursor: "context-menu" },
-              },
-            }}
-            sx={{
-              "& .MuiDataGrid-headerFilterCell": {
-                overflow: "hidden",
-                px: 0.5,
-                minWidth: 0,
-              },
-              "& .MuiDataGrid-headerFilterCell .MuiInputBase-root": {
-                backgroundColor: "transparent",
-                width: "100%",
-                minWidth: 0,
-              },
-              "& .MuiDataGrid-headerFilterCell .MuiFormControl-root": {
-                width: "100%",
-                minWidth: 0,
-              },
-              "& .MuiDataGrid-headerFilterCell .MuiStack-root": {
-                minWidth: 0,
-              },
-              "& .MuiDataGrid-headerFilterCell input": {
-                backgroundColor: "transparent",
-                minWidth: 0,
-              },
-            }}
-          />
+              checkboxSelection
+              disableRowSelectionOnClick
+              onRowSelectionModelChange={onRowSelectionModelChange}
+              getRowClassName={(params) => {
+                const classes: string[] = [];
+                classes.push(params.indexRelativeToCurrentPage % 2 === 0 ? "MuiDataGrid-row--even" : "MuiDataGrid-row--odd");
+                
+                if (isInEditMode) {
+                  const isEdited = Object.keys(cellModesModel[params.id] || {}).some(
+                    (field) => cellModesModel[params.id][field].mode === GridCellModes.Edit
+                  );
+                  if (isEdited) {
+                    classes.push("active-editing-row");
+                  }
+                }
+                
+                return classes.join(" ");
+              }}
+              getRowId={(row) => row?.id}
+              localeText={{
+                ...heIL.components.MuiDataGrid.defaultProps.localeText,
+                ...responseHeaderFilterLocaleText,
+                noRowsLabel: "אין תגובות",
+                columnMenuLabel: "פעולות",
+                pinToLeft: "נעץ מימין",
+                pinToRight: "נעץ משמאל",
+              }}
+              columns={getFormColumns}
+              sortModel={sortModel}
+              rows={localRows}
+              slots={{
+                columnMenu: ResponsesColumnMenu,
+                columnHeaderFilterIconButton: EmptyColumnHeaderFilterIconButton,
+                columnFilteredIcon: EmptyColumnFilteredIcon,
+                footer: CustomFooter,
+              }}
+              {...(hasFormInFormFields && {
+                getDetailPanelContent,
+                getDetailPanelHeight,
+                detailPanelExpandedRowIds,
+              })}
+              slotProps={{
+                columnMenu: {
+                  showFilters,
+                  activeFiltersCount,
+                  disabled: isInEditMode,
+                  onToggleFilters: handleToggleFilters,
+                  onClearFilters: handleClearFilters,
+                } as any,
+                row: {
+                  onContextMenu: handleContextMenu,
+                  style: { cursor: "context-menu" },
+                },
+              }}
+              sx={{
+                "& .MuiDataGrid-headerFilterCell": {
+                  overflow: "hidden",
+                  px: 0.5,
+                  minWidth: 0,
+                },
+                "& .MuiDataGrid-headerFilterCell .MuiInputBase-root": {
+                  backgroundColor: "transparent",
+                  width: "100%",
+                  minWidth: 0,
+                },
+                "& .MuiDataGrid-headerFilterCell .MuiFormControl-root": {
+                  width: "100%",
+                  minWidth: 0,
+                },
+                "& .MuiDataGrid-headerFilterCell .MuiStack-root": {
+                  minWidth: 0,
+                },
+                "& .MuiDataGrid-headerFilterCell input": {
+                  backgroundColor: "transparent",
+                  minWidth: 0,
+                },
+              }}
+            />
+          </TableContainer>
 
           <Menu
             open={contextMenu !== null}
