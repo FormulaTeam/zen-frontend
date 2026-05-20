@@ -212,8 +212,9 @@ const ResponsesPageContent = (): JSX.Element => {
   return (
     <PageWrapper>
       <MainContentWrapper>
-        <TopSection>
+        <TopSection sx={{ alignItems: "center", gap: 3 }}>
           <Header />
+          <SearchInfo search={search} setSearch={setSearch} />
           <FormActionsToolbar />
         </TopSection>
         <TopSection>
@@ -240,7 +241,6 @@ const ResponsesPageContent = (): JSX.Element => {
               </>
             )}
           </ActionsRow>
-          <SearchInfo search={search} setSearch={setSearch} />
           <PermissionGate requiredPermissions={[permission.MarkMyResponsesViewPublic]} userPermissions={permissions ?? []}>
             <ViewsButton
               isSidePanelOpen={isSidePanelOpen}

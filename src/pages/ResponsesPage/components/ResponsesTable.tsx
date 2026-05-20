@@ -18,6 +18,9 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import Visibility from "@mui/icons-material/Visibility";
+import Edit from "@mui/icons-material/Edit";
+import Delete from "@mui/icons-material/Delete";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { heIL } from "@mui/x-data-grid/locales";
@@ -32,11 +35,13 @@ import {
   Typography,
   Select,
   Tooltip,
+  IconButton,
 } from "@mui/material";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
 import { useResponsesTableSorting } from "../hooks/useResponsesTableSorting";
 import { downloadFileFromResponse, type StoredFile } from "@api/filesApi";
+import { useSoftDeleteResponses } from "../../../api";
 import {
   ContentContainer,
   MainContent,
@@ -60,7 +65,7 @@ import moment from "moment";
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { FormFieldDto } from "../../../types/shared";
 import { MetaColumnIds } from "../../../utils/interfaces";
-import { DEFAULT_DATE_TIME_FORMAT } from "../../../utils/utils";
+import { DEFAULT_DATE_TIME_FORMAT, showErrorNotification, showSuccessNotification } from "../../../utils/utils";
 import * as Gear from "formula-gear";
 import {
   getResponseFilterColumnProps,
@@ -199,7 +204,7 @@ export const ResponsesTable = React.memo(
     onRowSelectionModelChange,
     currentView,
   }: ResponsesTableProps) => {
-    const { form, rows, pageInfo, filter, setFilter, setResponseFilters, isRowsLoading } =
+    const { form, setForm, rows, pageInfo, filter, setFilter, setResponseFilters, isRowsLoading } =
       useFormStore();
 
     const navigate = useNavigate();
@@ -490,6 +495,23 @@ export const ResponsesTable = React.memo(
       handleCloseContextMenu();
     }, [contextMenu, navigateToCreateResponseCopy, handleCloseContextMenu]);
 
+    const { mutateAsync: softDeleteResponses } = useSoftDeleteResponses(Number(form?.id ?? 0));
+
+    const handleDeleteResponse = useCallback(async (rowId: string | number) => {
+      try {
+        setForm({
+          ...form,
+          responsesCount: Math.max(0, (form.responsesCount ?? 0) - 1),
+        } as any);
+
+        await softDeleteResponses({ responsesIds: [String(rowId)] });
+        showSuccessNotification("מחיקת התגובה בוצעה בהצלחה");
+      } catch {
+        setForm(form);
+        showErrorNotification("מחיקת התגובה נכשלה");
+      }
+    }, [form, setForm, softDeleteResponses]);
+
     const getFormColumns = useMemo((): GridColDef[] => {
       const prefixes = {
         Field: "field:",
@@ -659,8 +681,61 @@ export const ResponsesTable = React.memo(
         ...getResponseMetaFilterColumnProps("id"),
       });
 
+      const actionsColumn: GridColDef = {
+        field: "actions",
+        headerName: "פעולות",
+        width: 160,
+        sortable: false,
+        filterable: false,
+        renderCell: (params: GridRenderCellParams) => {
+          const row = params.row as Row;
+          return (
+            <Stack direction="row" spacing={0.5}>
+              <Tooltip title="צפייה">
+                <IconButton
+                  size="small"
+                  onClick={() => navigate(`/response/view/${form.id}/${row.id}`)}
+                >
+                  <Visibility fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              {!isInEditMode && (
+                <>
+                  <Tooltip title="עריכה">
+                    <IconButton
+                      size="small"
+                      onClick={() => navigate(`/response/edit/${form.id}/${row.id}`)}
+                    >
+                      <Edit fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="שכפול">
+                    <IconButton
+                      size="small"
+                      onClick={() => navigateToCreateResponseCopy(row)}
+                    >
+                      <ContentCopyIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="מחיקה">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleDeleteResponse(row.id)}
+                    >
+                      <Delete fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              )}
+            </Stack>
+          );
+        },
+      };
+
       const structuralColumns: GridColDef[] = [
         ...(expandColumn ? [{ ...expandColumn, filterable: false }] : []),
+        { ...actionsColumn },
         ...(hasFormInFormFields
           ? [
               {
@@ -741,6 +816,8 @@ export const ResponsesTable = React.memo(
       renderEditCell,
       formatCellValue,
       currentViewConfig,
+      navigateToCreateResponseCopy,
+      navigate,
     ]);
 
     const editableColumnFields = useMemo(
@@ -982,45 +1059,14 @@ export const ResponsesTable = React.memo(
       return (
         <GridFooterContainer
           sx={{
-            justifyContent: "space-between",
+            justifyContent: "flex-start",
             px: 3,
             py: 1.5,
-            minHeight: "60px",
+            minHeight: "50px",
+            borderTop: "none",
+            direction: "ltr",
           }}>
-          <FooterInfoContainer>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
-              {`מציג ${endRange}-${startRange} תגובות מתוך ${totalCount}`}
-            </Typography>
-          </FooterInfoContainer>
-
-          <Stack direction="row" spacing={2} alignItems="center">
-            <FooterInfoContainer>
-              <Select
-                value={filter?.pageSize ?? 25}
-                onChange={handlePageSizeChange}
-                size="small"
-                variant="standard"
-                disableUnderline
-                sx={{
-                  minWidth: 40,
-                  fontSize: "0.875rem",
-                  textAlign: "center",
-                  fontWeight: 600,
-                  color: "#4a5568",
-                }}
-                disabled={isInEditMode}>
-                {[10, 25, 50, 100].map((size) => (
-                  <MenuItem key={size} value={size}>
-                    {size}
-                  </MenuItem>
-                ))}
-              </Select>
-
-              <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
-                תגובות בעמוד
-              </Typography>
-            </FooterInfoContainer>
-
+          <Stack direction="row" spacing={3} alignItems="center">
             <PaginationContainer>
               <Tooltip title="עמוד קודם">
                 <span>
@@ -1034,7 +1080,7 @@ export const ResponsesTable = React.memo(
                       isNavigating
                     }
                     size="small">
-                    <ArrowForwardIosIcon />
+                    <ArrowBackIosNewIcon />
                   </PaginationButton>
                 </span>
               </Tooltip>
@@ -1047,11 +1093,44 @@ export const ResponsesTable = React.memo(
                       !pageInfo?.hasNextPage || isInEditMode || isRowsLoading || isNavigating
                     }
                     size="small">
-                    <ArrowBackIosNewIcon />
+                    <ArrowForwardIosIcon />
                   </PaginationButton>
                 </span>
               </Tooltip>
             </PaginationContainer>
+
+            <FooterInfoContainer>
+              <Select
+                value={filter?.pageSize ?? 25}
+                onChange={handlePageSizeChange}
+                size="small"
+                variant="standard"
+                disableUnderline
+                sx={{
+                  minWidth: 30,
+                  fontSize: "0.875rem",
+                  textAlign: "center",
+                  fontWeight: 400,
+                  color: "#4a5568",
+                }}
+                disabled={isInEditMode}>
+                {[10, 25, 50, 100].map((size) => (
+                  <MenuItem key={size} value={size}>
+                    {size}
+                  </MenuItem>
+                ))}
+              </Select>
+
+              <Typography variant="body2" sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
+                תגובות בעמוד
+              </Typography>
+            </FooterInfoContainer>
+
+            <FooterInfoContainer>
+              <Typography variant="body2" sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
+                {`מציג ${startRange}-${endRange} תגובות מתוך ${totalCount}`}
+              </Typography>
+            </FooterInfoContainer>
           </Stack>
         </GridFooterContainer>
       );
@@ -1064,7 +1143,7 @@ export const ResponsesTable = React.memo(
             apiRef={apiRef}
             className={clsx({ "MuiDataGrid-root--edit-mode": isInEditMode })}
             disableColumnMenu={isInEditMode}
-            disableColumnSorting={isInEditMode}
+            disableColumnSorting={false}
             disableColumnResize={isInEditMode}
             disableColumnFilter={isInEditMode}
             headerFilters={shouldUseHeaderFilters}
@@ -1086,19 +1165,29 @@ export const ResponsesTable = React.memo(
               console.error("Error updating row:", error);
             }}
             getCellClassName={getCellClassName}
-            density="comfortable"
-            rowHeight={isInEditMode ? 140 : 65}
+            rowHeight={40}
+            columnHeaderHeight={40}
             loading={
               !isInEditMode && isRowsLoading && rows.length === 0 && form?.responsesCount !== 0
             }
             checkboxSelection
             disableRowSelectionOnClick
             onRowSelectionModelChange={onRowSelectionModelChange}
-            getRowClassName={(params) =>
-              params.indexRelativeToCurrentPage % 2 === 0
-                ? "MuiDataGrid-row--even"
-                : "MuiDataGrid-row--odd"
-            }
+            getRowClassName={(params) => {
+              const classes: string[] = [];
+              classes.push(params.indexRelativeToCurrentPage % 2 === 0 ? "MuiDataGrid-row--even" : "MuiDataGrid-row--odd");
+              
+              if (isInEditMode) {
+                const isEdited = Object.keys(cellModesModel[params.id] || {}).some(
+                  (field) => cellModesModel[params.id][field].mode === GridCellModes.Edit
+                );
+                if (isEdited) {
+                  classes.push("active-editing-row");
+                }
+              }
+              
+              return classes.join(" ");
+            }}
             getRowId={(row) => row?.id}
             localeText={{
               ...heIL.components.MuiDataGrid.defaultProps.localeText,
