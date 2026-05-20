@@ -12,7 +12,6 @@ import mGif from "../../images/m.gif";
 import syncGif from "../../images/sync.gif";
 import noData from "../../images/noData2.png";
 import { formsTabs } from "../../utils/utils";
-import "react-toastify/dist/ReactToastify.css";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import FormCard from "../../components/FormCard/FormCard";
 import wavingHand from "../../images/waving_hand.png";

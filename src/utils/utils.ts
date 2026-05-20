@@ -1,4 +1,4 @@
-import { Slide, toast } from "react-toastify";
+import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import * as XLSX from "sheetjs-style";
 import * as FileSaver from "file-saver";
@@ -327,41 +327,33 @@ export function setWebTitleAndFavicon(config) {
     webTitleHTML.innerHTML = config.webTitle;
   }
 }
-export const notificationProps = {
-  theme: "colored",
-  autoClose: 2000,
-  transition: Slide,
-};
+export const toastSuccess = (msg: string) => toast.success(msg);
+export const toastError = (msg: string) => toast.error(msg);
+export const toastWarning = (msg: string) => toast.warning(msg);
+export const toastInfo = (msg: string) => toast.info(msg);
 
 export function showErrorNotification(error: string, autoCloseTime?: number) {
-  const customProps = {
-    ...notificationProps,
-    autoClose: autoCloseTime ?? notificationProps.autoClose, // use provided time or default
-  };
-
-  toast.error(error + "", customProps);
+  toast.error(error + "", {
+    duration: autoCloseTime ?? 2000,
+  });
 }
 
 export function showSuccessNotification(msg: string) {
-  toast.success(msg + "", notificationProps);
+  toast.success(msg + "", {
+    duration: 2000,
+  });
 }
 
 export function showWarningNotification(msg: string) {
-  toast.warn(msg + "", notificationProps);
+  toast.warning(msg + "", {
+    duration: 2000,
+  });
 }
 
 export function showLoadingNotification(msg: string, icon?: JSX.Element) {
-  const toastId = toast.loading(msg, {
-    style: {
-      background: "#d5e6f6",
-      color: "#000000",
-    },
-    closeButton: false,
-    hideProgressBar: true,
+  return toast.loading(msg, {
     icon: icon,
   });
-
-  return toastId;
 }
 
 export const titleBgStyle = {
