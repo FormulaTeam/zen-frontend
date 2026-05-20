@@ -38,10 +38,13 @@ const getColumnPrefixes = (): ColumnPrefixes => {
   };
 };
 
-const getGridFieldFromMetaName = (metaName?: string): string | undefined => {
+const getGridFieldFromMetaName = (metaName?: string, prefixes?: ColumnPrefixes): string | undefined => {
+  if (!metaName) return undefined;
+  const prefix = prefixes?.Meta ?? "meta:";
+
   switch (metaName) {
     case "index":
-      return "index";
+      return `${prefix}index`;
 
     case "created_at":
       return "created";
@@ -123,7 +126,7 @@ const getGridFieldFromBackendSortBy = (
   if (sortBy.startsWith(prefixes.Meta)) {
     const metaName = sortBy.replace(prefixes.Meta, "");
 
-    return getGridFieldFromMetaName(metaName);
+    return getGridFieldFromMetaName(metaName, prefixes);
   }
 
   return undefined;
@@ -197,7 +200,7 @@ export const useResponsesTableSorting = ({
         } else if (sortedColumn.metaColumnId) {
           const metaName = getMetaNameById(sortedColumn.metaColumnId);
 
-          gridField = getGridFieldFromMetaName(metaName);
+          gridField = getGridFieldFromMetaName(metaName, prefixes);
         }
 
         if (gridField) {
@@ -236,7 +239,7 @@ export const useResponsesTableSorting = ({
       ];
     }
 
-    return [{ field: "index", sort: "desc" }];
+    return [{ field: `${prefixes.Meta}index`, sort: "desc" }];
   }, [currentView, formFields, filter]);
 
   return {

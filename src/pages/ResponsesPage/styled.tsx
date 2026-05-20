@@ -50,6 +50,7 @@ export const MainContentWrapper = styled(Box)<BoxProps>(() => ({
   flex: 1,
   minWidth: 0,
   minHeight: 0,
+  overflow: "hidden",
 }));
 
 export const TopSection = styled(Box)<BoxProps>(() => ({
@@ -98,6 +99,7 @@ export const ContentContainer = styled(Box)<BoxProps>(() => ({
   flex: 1,
   minHeight: 0,
   minWidth: 0,
+  overflow: "hidden",
 }));
 
 interface MainContentProps extends BoxProps {
@@ -109,12 +111,16 @@ export const MainContent = styled(Box)<MainContentProps>(() => ({
   display: "flex",
   flexDirection: "column",
   minWidth: 0,
+  overflow: "hidden",
 }));
 
 export const TableContainer = styled(Box)<BoxProps>(() => ({
   flex: 1,
   minHeight: 0,
   minWidth: 0,
+  overflow: "hidden",
+  display: "flex",
+  flexDirection: "column",
 }));
 
 export const PageWrapper = styled(Box)<BoxProps>(() => ({
@@ -171,6 +177,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     },
     "& .MuiDataGrid-row--odd": {
       backgroundColor: "#f5f5f5",
+    },
+    "& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight": {
+      backgroundColor: "inherit",
     },
     "& .MuiDataGrid-row": {
       borderBottom: "none",
@@ -356,10 +365,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     outline: "none !important",
   },
   "& .MuiDataGrid-virtualScroller": {
-    overflowX: "auto !important",
     "&::-webkit-scrollbar": {
-      height: "10px",
-      width: "10px",
+      height: "14px",
+      width: "12px",
     },
     "&::-webkit-scrollbar-track": {
       backgroundColor: "#f1f1f1",
@@ -368,6 +376,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     "&::-webkit-scrollbar-thumb": {
       backgroundColor: "#cbd5e0",
       borderRadius: "10px",
+      border: "3px solid #f1f1f1",
       "&:hover": {
         backgroundColor: "#a0aec0",
       },
