@@ -1,8 +1,9 @@
 import { useCallback } from "react";
-import { Box, Chip, Link as MuiLink, Tooltip, Typography, styled } from "@mui/material";
+import { Box, Chip, Link as MuiLink, Typography, styled } from "@mui/material";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import moment from "moment";
 
+import { OverflowTooltip } from "@components/OverflowTooltip";
 import CustomCarousel from "../../../components/FilePreview/CustomCarousel";
 import { FormFieldDto } from "../../../types/shared";
 import { fieldType } from "formula-gear";
@@ -333,21 +334,22 @@ export const useCellDisplay = ({
 
       return (
         <Box component="span" className="cell-box">
-          <MuiLink
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={value.link}
-            sx={{
-              color: "primary.main",
-              textDecoration: "underline",
-              cursor: "pointer",
-              "&:hover": {
+          <OverflowTooltip title={value.link} arrow>
+            <MuiLink
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                color: "primary.main",
                 textDecoration: "underline",
-              },
-            }}>
-            {highlightText(displayText)}
-          </MuiLink>
+                cursor: "pointer",
+                "&:hover": {
+                  textDecoration: "underline",
+                },
+              }}>
+              {highlightText(displayText)}
+            </MuiLink>
+          </OverflowTooltip>
         </Box>
       );
     },
@@ -384,14 +386,14 @@ export const useCellDisplay = ({
         {files.length > 0 && (
           <QuickEditFilesContainer>
             {files.map((file) => (
-              <Tooltip key={file.key} title={file.name} arrow>
+              <OverflowTooltip key={file.key} title={file.name} arrow>
                 <QuickEditFileChip
                   label={file.name}
                   size="small"
                   color={file.color}
                   variant={file.variant}
                 />
-              </Tooltip>
+              </OverflowTooltip>
             ))}
           </QuickEditFilesContainer>
         )}
@@ -501,11 +503,11 @@ export const useCellDisplay = ({
       const stringValue = value.join(", ");
 
       return (
-        <Tooltip title={stringValue} arrow>
+        <OverflowTooltip title={stringValue} arrow>
           <EllipsisBox>
             <label>{highlightText(stringValue)}</label>
           </EllipsisBox>
-        </Tooltip>
+        </OverflowTooltip>
       );
     },
     [highlightText],
@@ -520,11 +522,11 @@ export const useCellDisplay = ({
       }
 
       return (
-        <Tooltip title={displayValue} arrow>
+        <OverflowTooltip title={displayValue} arrow>
           <EllipsisBox>
             <label>{highlightText(displayValue)}</label>
           </EllipsisBox>
-        </Tooltip>
+        </OverflowTooltip>
       );
     },
     [highlightText],
@@ -537,7 +539,7 @@ export const useCellDisplay = ({
         const isNumber = typeof value === "number" || /^-?\d+(\.\d)?$/.test(displayValue);
 
         return (
-          <Tooltip title={displayValue} arrow>
+          <OverflowTooltip title={displayValue} arrow>
             <EllipsisBox>
               {isNumber ? (
                 <span dir="ltr">{highlightText(displayValue)}</span>
@@ -545,7 +547,7 @@ export const useCellDisplay = ({
                 <label>{highlightText(displayValue)}</label>
               )}
             </EllipsisBox>
-          </Tooltip>
+          </OverflowTooltip>
         );
       }
 

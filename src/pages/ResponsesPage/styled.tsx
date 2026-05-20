@@ -611,6 +611,7 @@ export const FooterInfoContainer = styled(Box)(({ theme }) => ({
   gap: theme.spacing(1),
   color: "#4a5568",
   fontSize: "0.875rem",
+  direction: "rtl",
 }));
 
 export const PaginationButton = styled(IconButton)(({ theme }) => ({

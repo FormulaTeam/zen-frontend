@@ -66,7 +66,11 @@ import moment from "moment";
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { FormFieldDto } from "../../../types/shared";
 import { MetaColumnIds } from "../../../utils/interfaces";
-import { DEFAULT_DATE_TIME_FORMAT, showErrorNotification, showSuccessNotification } from "../../../utils/utils";
+import {
+  DEFAULT_DATE_TIME_FORMAT,
+  showErrorNotification,
+  showSuccessNotification,
+} from "../../../utils/utils";
 import * as Gear from "formula-gear";
 import {
   getResponseFilterColumnProps,
@@ -498,20 +502,23 @@ export const ResponsesTable = React.memo(
 
     const { mutateAsync: softDeleteResponses } = useSoftDeleteResponses(Number(form?.id ?? 0));
 
-    const handleDeleteResponse = useCallback(async (rowId: string | number) => {
-      try {
-        setForm({
-          ...form,
-          responsesCount: Math.max(0, (form.responsesCount ?? 0) - 1),
-        } as any);
+    const handleDeleteResponse = useCallback(
+      async (rowId: string | number) => {
+        try {
+          setForm({
+            ...form,
+            responsesCount: Math.max(0, (form.responsesCount ?? 0) - 1),
+          } as any);
 
-        await softDeleteResponses({ responsesIds: [String(rowId)] });
-        showSuccessNotification("מחיקת התגובה בוצעה בהצלחה");
-      } catch {
-        setForm(form);
-        showErrorNotification("מחיקת התגובה נכשלה");
-      }
-    }, [form, setForm, softDeleteResponses]);
+          await softDeleteResponses({ responsesIds: [String(rowId)] });
+          showSuccessNotification("מחיקת התגובה בוצעה בהצלחה");
+        } catch {
+          setForm(form);
+          showErrorNotification("מחיקת התגובה נכשלה");
+        }
+      },
+      [form, setForm, softDeleteResponses],
+    );
 
     const getFormColumns = useMemo((): GridColDef[] => {
       const prefixes = {
@@ -1004,85 +1011,84 @@ export const ResponsesTable = React.memo(
       return (
         <GridFooterContainer
           sx={{
-            justifyContent: "flex-start",
+            display: "flex",
+            alignItems: "center",
             px: 3,
             py: 1.5,
             minHeight: "50px",
             borderTop: "none",
-            direction: "ltr",
+            direction: "rtl",
+            gap: 4, // <- adds spacing between the 3 main segments
           }}>
-          <Stack direction="row" spacing={3} alignItems="center">
-            <PaginationContainer>
-              <Tooltip title="עמוד הבא">
-                <span>
-                  <PaginationButton
-                    onClick={handleNextPage}
-                    disabled={
-                      !pageInfo?.hasNextPage || isInEditMode || isRowsLoading || isNavigating
-                    }
-                    size="small">
-                    <ArrowForwardIosIcon />
-                  </PaginationButton>
-                </span>
-              </Tooltip>
+          {/* 1. Pagination controls */}
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Tooltip title="עמוד הבא">
+              <span>
+                <PaginationButton
+                  onClick={handleNextPage}
+                  disabled={!pageInfo?.hasNextPage || isInEditMode || isRowsLoading || isNavigating}
+                  size="small">
+                  <ArrowBackIosNewIcon />
+                </PaginationButton>
+              </span>
+            </Tooltip>
 
-              <Tooltip title="עמוד קודם">
-                <span>
-                  <PaginationButton
-                    onClick={handlePreviousPage}
-                    disabled={
-                      !pageInfo?.hasPreviousPage ||
-                      (filter?.pageNumber ?? 1) <= 1 ||
-                      isInEditMode ||
-                      isRowsLoading ||
-                      isNavigating
-                    }
-                    size="small">
-                    <ArrowBackIosNewIcon />
-                  </PaginationButton>
-                </span>
-              </Tooltip>
-            </PaginationContainer>
-
-            <FooterInfoContainer>
-              <Typography
-                variant="body2"
-                sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
-                {endRange > 0
-                  ? `מציג ${startRange}-${endRange} תגובות מתוך ${totalCount}`
-                  : `מציג 0 תגובות מתוך ${totalCount}`}
-              </Typography>
-            </FooterInfoContainer>
-
-            <FooterInfoContainer>
-              <Select
-                value={filter?.pageSize ?? 25}
-                onChange={handlePageSizeChange}
-                size="small"
-                variant="standard"
-                disableUnderline
-                sx={{
-                  minWidth: 30,
-                  fontSize: "0.875rem",
-                  textAlign: "center",
-                  fontWeight: 400,
-                  color: "#4a5568",
-                }}
-                disabled={isInEditMode}>
-                {[10, 25, 50, 100].map((size) => (
-                  <MenuItem key={size} value={size}>
-                    {size}
-                  </MenuItem>
-                ))}
-              </Select>
-
-              <Typography
-                variant="body2"
-                sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
-                תגובות בעמוד
-              </Typography>
-            </FooterInfoContainer>
+            <Tooltip title="עמוד קודם">
+              <span>
+                <PaginationButton
+                  onClick={handlePreviousPage}
+                  disabled={
+                    !pageInfo?.hasPreviousPage ||
+                    (filter?.pageNumber ?? 1) <= 1 ||
+                    isInEditMode ||
+                    isRowsLoading ||
+                    isNavigating
+                  }
+                  size="small">
+                  <ArrowForwardIosIcon />
+                </PaginationButton>
+              </span>
+            </Tooltip>
           </Stack>
+
+          {/* 2. Showing responses */}
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
+            {endRange > 0
+              ? `מציג ${endRange}-${startRange} תגובות מתוך ${totalCount}`
+              : `מציג 0 תגובות מתוך ${totalCount}`}
+          </Typography>
+
+          {/* 3. Page size selector */}
+          <FooterInfoContainer sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
+              תגובות בעמוד
+            </Typography>
+
+            <Select
+              value={filter?.pageSize ?? 25}
+              onChange={handlePageSizeChange}
+              size="small"
+              variant="standard"
+              disableUnderline
+              sx={{
+                minWidth: 30,
+                fontSize: "0.875rem",
+                textAlign: "center",
+                fontWeight: 400,
+                color: "#4a5568",
+              }}
+              disabled={isInEditMode}>
+              {[10, 25, 50, 100].map((size) => (
+                <MenuItem key={size} value={size}>
+                  {size}
+                </MenuItem>
+              ))}
+            </Select>
+          </FooterInfoContainer>
         </GridFooterContainer>
       );
     };
@@ -1132,17 +1138,21 @@ export const ResponsesTable = React.memo(
               onRowSelectionModelChange={onRowSelectionModelChange}
               getRowClassName={(params) => {
                 const classes: string[] = [];
-                classes.push(params.indexRelativeToCurrentPage % 2 === 0 ? "MuiDataGrid-row--even" : "MuiDataGrid-row--odd");
-                
+                classes.push(
+                  params.indexRelativeToCurrentPage % 2 === 0
+                    ? "MuiDataGrid-row--even"
+                    : "MuiDataGrid-row--odd",
+                );
+
                 if (isInEditMode) {
                   const isEdited = Object.keys(cellModesModel[params.id] || {}).some(
-                    (field) => cellModesModel[params.id][field].mode === GridCellModes.Edit
+                    (field) => cellModesModel[params.id][field].mode === GridCellModes.Edit,
                   );
                   if (isEdited) {
                     classes.push("active-editing-row");
                   }
                 }
-                
+
                 return classes.join(" ");
               }}
               getRowId={(row) => row?.id}
