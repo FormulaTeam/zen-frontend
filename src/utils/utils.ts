@@ -146,15 +146,15 @@ export const permissionsOptions = [
 
 import * as MuiIcons from "@mui/icons-material";
 
-export const DEFAULT_ICON_NAME = "cropsquare";
+export const DEFAULT_ICON_NAME = "grid_view";
 
 export const formIconsNamesMap = new Map<string | number, any>([
+  ["grid_view", MuiIcons.GridViewOutlined],
   ["cropsquare", MuiIcons.CropSquareOutlined],
   ["description", MuiIcons.DescriptionOutlined],
   ["table_chart", MuiIcons.TableChartOutlined],
   ["dynamic_form", MuiIcons.DynamicFormOutlined],
   ["dataset", MuiIcons.DatasetOutlined],
-  ["grid_view", MuiIcons.GridViewOutlined],
   ["article", MuiIcons.ArticleOutlined],
   ["folder_open", MuiIcons.FolderOpenOutlined],
   ["cloud_upload", MuiIcons.CloudUploadOutlined],
@@ -1290,7 +1290,7 @@ export const getInitialNewForm = (
   return {
     name: title,
     description: description,
-    icon: "cropsquare",
+    icon: DEFAULT_ICON_NAME,
     fields: [],
     parentFieldId: undefined,
   };
