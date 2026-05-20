@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState, useCallback } from "react";
+import { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import { GridRowModel } from "@mui/x-data-grid-pro";
 import { showSuccessNotification, showErrorNotification } from "@utils/utils";
-import { useUpdateResponses, useCreateResponse } from "@api/responsesApi";
+import { useUpdateResponses, useCreateResponse, useSoftDeleteResponses } from "@api/responsesApi";
 import { type StoredFile } from "@api/filesApi";
 import { useFormStore } from "../stores/form.store";
 import { useAuth } from "@contexts/AuthContext";
@@ -35,6 +35,7 @@ import {
   getOptionResponseSubmitValue,
   OptionResponseValue,
 } from "../../../utils/optionResponseValue";
+import { saveQuickEditDraft, clearQuickEditDraft } from "../../FormEditor/utils/draftPersistence";
 
 type RowId = string | number;
 
@@ -352,6 +353,7 @@ export const useResponsesEdit = () => {
   const [isInEditMode, setIsInEditMode] = useState(false);
   const [editedRows, setEditedRows] = useState<Map<RowId, Row>>(new Map());
   const [localRows, setLocalRows] = useState<Row[]>([]);
+  const [deletedRowIds, setDeletedRowIds] = useState<RowId[]>([]);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
     Record<RowId, Record<string, QuickEditValidationError>>
@@ -374,13 +376,17 @@ export const useResponsesEdit = () => {
 
   const { mutateAsync: updateResponses, isPending: isUpdating } = useUpdateResponses(dtoForm?.id);
   const { mutateAsync: createResponse, isPending: isCreating } = useCreateResponse(dtoForm?.id);
+  const { mutateAsync: softDeleteResponses } = useSoftDeleteResponses(Number(dtoForm?.id ?? 0));
 
   const responseRows: Row[] = useMemo(
     () => (rows?.filter((row) => row != null) as Row[]) || [],
     [rows],
   );
 
-  const hasUnsavedChanges = useMemo(() => editedRows.size > 0, [editedRows]);
+  const hasUnsavedChanges = useMemo(
+    () => editedRows.size > 0 || deletedRowIds.length > 0,
+    [editedRows, deletedRowIds],
+  );
 
   const getMergedRow = useCallback(
     (rowId: RowId, editedRow: Partial<Row>): Row => {
@@ -427,6 +433,7 @@ export const useResponsesEdit = () => {
 
     setIsInEditMode(nextEditMode);
     setEditedRows(new Map());
+    setDeletedRowIds([]);
     setLocalRows(nextEditMode ? [...responseRows] : responseRows);
 
     if (!nextEditMode) {
@@ -438,11 +445,13 @@ export const useResponsesEdit = () => {
   const confirmCancel = useCallback((): void => {
     setEditedRows(new Map());
     setLocalRows(responseRows);
+    setDeletedRowIds([]);
     setIsInEditMode(false);
     setShowCancelDialog(false);
+    clearQuickEditDraft(dtoForm?.id);
     setValidationErrors({});
     newRowCounterRef.current = 0;
-  }, [responseRows]);
+  }, [responseRows, dtoForm?.id]);
 
   const closeCancelDialog = useCallback((): void => {
     setShowCancelDialog(false);
@@ -455,6 +464,39 @@ export const useResponsesEdit = () => {
     }
   }, [isInEditMode, responseRows]);
 
+  const handleDeleteResponses = useCallback(
+    async (ids: RowId[]): Promise<void> => {
+      const stringIds = ids.map((id) => String(id));
+
+      if (isInEditMode) {
+        // Local defer
+        setDeletedRowIds((prev) => [...new Set([...prev, ...stringIds])]);
+        setLocalRows((prev) => prev.filter((row) => !stringIds.includes(String(row.id))));
+        setEditedRows((prev) => {
+          const next = new Map(prev);
+          stringIds.forEach((id) => next.delete(id));
+          return next;
+        });
+        return;
+      }
+
+      // Immediate delete
+      try {
+        setForm({
+          ...dtoForm,
+          responsesCount: Math.max(0, (dtoForm?.responsesCount ?? 0) - stringIds.length),
+        } as any);
+
+        await softDeleteResponses({ responsesIds: stringIds });
+        showSuccessNotification("מחיקת התגובות בוצעה בהצלחה");
+      } catch {
+        setForm(dtoForm as any);
+        showErrorNotification("מחיקת התגובות נכשלה");
+      }
+    },
+    [isInEditMode, dtoForm, setForm, softDeleteResponses],
+  );
+
   const handleCellLiveChange = useCallback(
     <T>(rowId: RowId, columnName: string, value: T): void => {
       const fieldId = getFieldIdFromColumnKey(columnName);
@@ -462,13 +504,26 @@ export const useResponsesEdit = () => {
 
       if (!field) return;
 
+      const fieldKey = getFieldColumnKey(field);
+
+      setLocalRows((prevRows) =>
+        prevRows.map((row) =>
+          String(row.id) === String(rowId)
+            ? ({
+                ...row,
+                [fieldKey]: value,
+              } as Row)
+            : row,
+        ),
+      );
+
       setEditedRows((prev) => {
         const next = new Map(prev);
         const existing = next.get(rowId) || ({} as Row);
 
         next.set(rowId, {
           ...existing,
-          [getFieldColumnKey(field)]: value,
+          [fieldKey]: value,
         } as Row);
 
         return next;
@@ -650,10 +705,16 @@ export const useResponsesEdit = () => {
         return numA - numB;
       });
 
-      if (updatesToSend.length === 0 && sortedNewRowEntries.length === 0) {
+      if (updatesToSend.length === 0 && sortedNewRowEntries.length === 0 && deletedRowIds.length === 0) {
         throw new NoValidChangesError();
       }
 
+      // 1. Bulk Deletion
+      if (deletedRowIds.length > 0) {
+        await softDeleteResponses({ responsesIds: deletedRowIds.map(String) });
+      }
+
+      // 2. Bulk Updates
       if (updatesToSend.length > 0) {
         const bulkUpdatePayload: BulkUpdateResponsesDto = {
           responses: updatesToSend,
@@ -662,6 +723,7 @@ export const useResponsesEdit = () => {
         await updateResponses(bulkUpdatePayload);
       }
 
+      // 3. Create New Responses
       const newResponsesPayloads: CreateResponseDto[] = sortedNewRowEntries.map(
         ([rowId, editedRow]) => {
           const rowForCreate = getMergedRow(rowId, editedRow);
@@ -682,13 +744,17 @@ export const useResponsesEdit = () => {
       );
 
       if (newResponsesPayloads.length > 0) {
+        await createResponse(newResponsesPayloads);
+      }
+
+      // Update responsesCount in store
+      const netCountChange = newResponsesPayloads.length - deletedRowIds.length;
+      if (netCountChange !== 0) {
         setForm({
           ...dtoForm,
-          responsesCount: (dtoForm.responsesCount ?? 0) + newResponsesPayloads.length,
+          responsesCount: Math.max(0, (dtoForm.responsesCount ?? 0) + netCountChange),
           lastInteractionAt: moment().toISOString(),
         } as any);
-
-        await createResponse(newResponsesPayloads);
       }
 
       newRowCounterRef.current = 0;
@@ -697,10 +763,12 @@ export const useResponsesEdit = () => {
 
       setRows(persistedLocalRows as unknown as Parameters<typeof setRows>[0]);
       setEditedRows(new Map());
+      setDeletedRowIds([]);
       setIsInEditMode(false);
+      clearQuickEditDraft(dtoForm?.id);
       setValidationErrors({});
 
-      showSuccessNotification(`נשמרו ${editedEntries.length} שינויים בהצלחה!`);
+      showSuccessNotification("כל השינויים נשמרו בהצלחה!");
     } catch (error) {
       if (error instanceof CustomError) {
         if (error instanceof NoUnsavedChangesError) {
@@ -715,12 +783,14 @@ export const useResponsesEdit = () => {
     }
   }, [
     editedRows,
+    deletedRowIds,
     hasUnsavedChanges,
     dtoForm,
     fullResponses,
     buildResponseUpdatePayload,
     updateResponses,
     createResponse,
+    softDeleteResponses,
     localRows,
     setRows,
     setForm,
@@ -729,12 +799,34 @@ export const useResponsesEdit = () => {
     formFields,
   ]);
 
+  // Auto-save quick edit draft logic
+  useEffect(() => {
+    if (isInEditMode && hasUnsavedChanges) {
+      const timer = setTimeout(() => {
+        saveQuickEditDraft(dtoForm?.id, editedRows, localRows, deletedRowIds);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    } else if (isInEditMode && !hasUnsavedChanges) {
+      clearQuickEditDraft(dtoForm?.id);
+    }
+  }, [isInEditMode, hasUnsavedChanges, editedRows, localRows, deletedRowIds, dtoForm?.id]);
+
   return {
     isInEditMode,
+    setIsInEditMode,
+    hasUnsavedChanges,
     editedRowsCount: editedRows.size,
+    deletedRowsCount: deletedRowIds.length,
     localRows,
+    setLocalRows,
+    editedRows,
+    setEditedRows,
+    deletedRowIds,
+    setDeletedRowIds,
     validationErrors,
     handleCellLiveChange,
+    handleDeleteResponses,
     isUpdating: isUpdating || isCreating,
     showCancelDialog,
     handleToggleEditMode: toggleEditMode,

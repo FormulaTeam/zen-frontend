@@ -3,7 +3,7 @@ import { Typography, Button, Tooltip, Checkbox, Box } from "@mui/material";
 import { StyledListItem, FormInfo, FormTitleBox, RestoreButtonWrapper, Img } from "./styled";
 import formX from "../../images/form_x.png";
 import { formIconsNamesMap } from "../../utils/utils";
-import { CustomStyledIcon } from "../FormCard/styled";
+import { FormIconWrapper } from "../FormCard/styled";
 import * as MuiIcons from "@mui/icons-material";
 
 interface DeletedFormItemProps {
@@ -27,17 +27,42 @@ const DeletedFormItem: React.FC<DeletedFormItemProps> = ({
 
   const renderDynamicIcon = (name: string) => {
     const IconComponent = MuiIcons[name as keyof typeof MuiIcons];
-    return IconComponent ? <IconComponent /> : name;
+    return IconComponent ? <IconComponent color="primary" /> : name;
   };
 
   const getIcon = (iconName: string | null) => {
     if (!iconName) {
-      return <Img src={formX} alt="form icon" />;
+      return (
+        <FormIconWrapper>
+          <img src={formX} alt="form icon" />
+        </FormIconWrapper>
+      );
     }
-    if (formIconsNamesMap.get(iconName)) {
-      return <Img src={formIconsNamesMap.get(iconName)} alt={iconName} />;
+
+    const iconSrc = formIconsNamesMap.get(iconName);
+
+    if (typeof iconSrc === "string") {
+      return (
+        <FormIconWrapper>
+          <img src={iconSrc} alt={iconName} />
+        </FormIconWrapper>
+      );
     }
-    return <CustomStyledIcon>{renderDynamicIcon(iconName)}</CustomStyledIcon>;
+
+    if (iconSrc) {
+      const IconComponent = iconSrc;
+      return (
+        <FormIconWrapper>
+          <IconComponent color="primary" />
+        </FormIconWrapper>
+      );
+    }
+
+    return (
+      <FormIconWrapper>
+        {renderDynamicIcon(iconName)}
+      </FormIconWrapper>
+    );
   };
 
   useEffect(() => {

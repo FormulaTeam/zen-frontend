@@ -23,7 +23,7 @@ import AlertMsg from "@components/AlertMsg/AlertMsg";
 
 function FormEditorHeader() {
   const { formStructure, validateForm, setFormMetadata, checkHasChanges } = useFormStructureContext();
-  const { handleSaveForm, handleExit, isLoading } = useFormEditor(formStructure);
+  const { handleSaveForm, handleExit, handleDiscardAndExit, isLoading } = useFormEditor(formStructure);
 
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
   const [editedMetadata, setEditedMetadata] = useState<FormMetadata>({ title: "" });
@@ -80,27 +80,25 @@ function FormEditorHeader() {
     setIsEditingMetadata(false);
   };
 
+  const renderIcon = (id: string | null | undefined) => {
+    const IconComponent = formIconsNamesMap.get(id ?? "") || formIconsNamesMap.get(DEFAULT_ICON_NAME);
+    
+    if (typeof IconComponent === "string") {
+      return <img src={IconComponent} alt="icon" className={styles.formIcon} onClick={() => setShowPickIcon(true)} />;
+    }
+
+    return (
+      <div onClick={() => setShowPickIcon(true)} style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
+        <IconComponent color="primary" style={{ fontSize: 40 }} />
+      </div>
+    );
+  };
+
   const formIcon: JSX.Element = (
     <div className={styles.formIconWrapper}>
-      {isEditingMetadata ? (
-        <Tooltip title="לחץ על מנת לשנות אייקון">
-          <img
-            src={formIconsNamesMap.get(editedMetadata.iconId ?? "") || formIconsNamesMap.get(DEFAULT_ICON_NAME)}
-            alt={"icon"}
-            className={styles.formIcon}
-            onClick={() => setShowPickIcon(true)}
-          />
-        </Tooltip>
-      ) : (
-        <Tooltip title="לחץ על מנת לשנות אייקון">
-          <img
-            src={formIconsNamesMap.get(iconId ?? "") || formIconsNamesMap.get(DEFAULT_ICON_NAME)}
-            alt={"icon"}
-            className={styles.formIcon}
-            onClick={() => setShowPickIcon(true)}
-          />
-        </Tooltip>
-      )}
+      <Tooltip title="לחץ על מנת לשנות אייקון">
+        {isEditingMetadata ? renderIcon(editedMetadata.iconId) : renderIcon(iconId)}
+      </Tooltip>
     </div>
   );
 
@@ -225,7 +223,7 @@ function FormEditorHeader() {
         </Button>
         <Button variant="outlined" color="error" onClick={() => {
           setShowAlertMsg(false);
-          handleExit();
+          handleDiscardAndExit();
         }}>
           יציאה ללא שמירה
         </Button>
