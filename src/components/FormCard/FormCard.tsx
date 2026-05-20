@@ -82,11 +82,7 @@ const FormCard = ({
       );
     }
 
-    return (
-      <FormIconWrapper>
-        {renderDynamicIcon(iconName)}
-      </FormIconWrapper>
-    );
+    return <FormIconWrapper>{renderDynamicIcon(iconName)}</FormIconWrapper>;
   };
 
   const goToResponsesPage = (event: React.MouseEvent<HTMLElement>) => {
@@ -97,7 +93,8 @@ const FormCard = ({
 
   if (!form) return null;
 
-  const userPermissions = ((isSuperAdmin || isCreator) ? Object.values(permission) : form.permissions) ?? [];
+  const userPermissions =
+    (isSuperAdmin || isCreator ? Object.values(permission) : form.permissions) ?? [];
 
   return (
     <StyledCard
@@ -108,7 +105,7 @@ const FormCard = ({
         <ItemTitles>
           <ItemTitleAndNum>
             <Box sx={{ display: "flex", alignItems: "center", overflow: "hidden", gap: "12px" }}>
-              {getIcon(form.icon)}
+              {getIcon(form.icon ?? null)}
               <ItemTitle onClick={goToResponsesPage} title={form.name} className="form-title">
                 {form.name}
               </ItemTitle>
@@ -142,7 +139,9 @@ const FormCard = ({
 
       <ItemBottomDiv>
         <ItemIconsDiv>
-          <PermissionGate userPermissions={userPermissions} requiredPermissions={[permission.UpdateForm]}>
+          <PermissionGate
+            userPermissions={userPermissions}
+            requiredPermissions={[permission.UpdateForm]}>
             <Tooltip title="עריכת טופס">
               <div>
                 <CustomIcon
@@ -157,7 +156,9 @@ const FormCard = ({
             </Tooltip>
           </PermissionGate>
 
-          <PermissionGate userPermissions={userPermissions} requiredPermissions={[permission.ShareForm]}>
+          <PermissionGate
+            userPermissions={userPermissions}
+            requiredPermissions={[permission.ShareForm]}>
             <Tooltip title="שיתוף טופס">
               <div>
                 <GrayShareIcon src={ShareIcon} onClick={handleShareClick} />
@@ -176,7 +177,9 @@ const FormCard = ({
         )}
 
         <ItemBtnsDiv>
-          <PermissionGate userPermissions={userPermissions} requiredPermissions={[permission.CreateResponse]}>
+          <PermissionGate
+            userPermissions={userPermissions}
+            requiredPermissions={[permission.CreateResponse]}>
             <ItemButton
               className="form-add-response-button"
               onClick={() => navigate(`/response/create/${form.id}`)}
@@ -196,8 +199,7 @@ const FormCard = ({
 
           <PermissionGate
             userPermissions={userPermissions}
-            requiredPermissions={[permission.ReadAnyResponse, permission.ReadForm]}
-          >
+            requiredPermissions={[permission.ReadAnyResponse, permission.ReadForm]}>
             <ItemButton
               className="form-watch-responses-button"
               onClick={goToResponsesPage}
