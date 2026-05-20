@@ -32,10 +32,13 @@ export function convertFormStructureToCreateDto(formStructure: FormStructure): C
     const payload: any = {
         name: formStructure.metadata.title,
         description: formStructure.metadata.description ?? "",
-        icon: formStructure.metadata.iconId ?? DEFAULT_ICON_NAME,
         sections,
         conditions: formStructure.conditions ?? [],
     };
+
+    if (formStructure.metadata.iconId && formStructure.metadata.iconId !== DEFAULT_ICON_NAME) {
+        payload.icon = formStructure.metadata.iconId;
+    }
 
     return payload as CreateFormDto;
 }

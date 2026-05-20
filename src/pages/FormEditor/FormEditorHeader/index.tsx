@@ -1,5 +1,5 @@
 import styles from "./style.module.css";
-import { DEFAULT_ICON_NAME, formIconsNamesMap } from "@utils/utils";
+import { DEFAULT_ICON_NAME, formIconsNamesMap, getFormIconByName } from "@utils/utils";
 import { Button, TextField, Tooltip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
 import { FormMetadata, useFormStructureContext } from "../context/FormStructureContext";
 import { Check, Close, DriveFileRenameOutline, Error as ErrorIcon } from "@mui/icons-material";
@@ -81,7 +81,7 @@ function FormEditorHeader() {
   };
 
   const renderIcon = (id: string | null | undefined) => {
-    const IconComponent = formIconsNamesMap.get(id ?? "") || formIconsNamesMap.get(DEFAULT_ICON_NAME);
+    const IconComponent = getFormIconByName(id ?? undefined);
     
     if (typeof IconComponent === "string") {
       return <img src={IconComponent} alt="icon" className={styles.formIcon} onClick={() => setShowPickIcon(true)} />;

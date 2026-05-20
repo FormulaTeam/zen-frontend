@@ -10,7 +10,7 @@ import {
   CheckboxWrapper,
   FlexRowItem,
 } from "./styled";
-import { formIconsNamesMap } from "../../utils/utils";
+import { formIconsNamesMap, getFormIconByName } from "../../utils/utils";
 import formX from "../../images/form_x.png";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import { FormDto } from "../../types/shared";
@@ -48,7 +48,7 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
   const deletedTime = isValidDate ? deletedDateObj.toLocaleTimeString("he-IL") : "";
 
   const renderFormIcon = () => {
-    const iconSrc = form?.icon ? formIconsNamesMap.get(form.icon) : formX;
+    const iconSrc = getFormIconByName(form?.icon ?? undefined);
 
     if (typeof iconSrc === "string") {
       return (
