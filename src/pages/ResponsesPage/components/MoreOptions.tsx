@@ -136,22 +136,6 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
               <span style={{ display: "block" }}>{syncingDataMenuItem}</span>
             </Tooltip>
           )}
-
-          {hasMetroSource ? (
-            <MenuItem onClick={(event) => setAnchorElSourceType(event.currentTarget)}>
-              <ListItemIcon>
-                <CustomIcon iconName={"source"} />
-              </ListItemIcon>
-              <ListItemText>עריכת מקור</ListItemText>
-            </MenuItem>
-          ) : (
-            <MenuItem onClick={(event) => setAnchorElSourceType(event.currentTarget)}>
-              <ListItemIcon>
-                <CloudOutlined sx={{ fontSize: 22 }} />
-              </ListItemIcon>
-              <ListItemText>יצירת מקור</ListItemText>
-            </MenuItem>
-          )}
         </PermissionGate>
 
         <PermissionGate
@@ -183,7 +167,9 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           </MenuItem>
         </PermissionGate>
 
-        <PermissionGate requiredPermissions={[permission.DeleteAnyResponse]} userPermissions={permissions}>
+        <PermissionGate
+          requiredPermissions={[permission.DeleteAnyResponse]}
+          userPermissions={permissions}>
           <MenuItem onClick={handleDeleteResponses} disabled={rows.length === 0}>
             <ListItemIcon>
               <DeleteSweepOutlined sx={{ color: "red", fontSize: 22 }} />

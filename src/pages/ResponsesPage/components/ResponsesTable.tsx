@@ -333,11 +333,6 @@ export const ResponsesTable = React.memo(
     const shouldUseHeaderFilters = showFilters && !isInEditMode;
 
     const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
-    const [contextMenu, setContextMenu] = useState<{
-      mouseX: number;
-      mouseY: number;
-      row: Row | null;
-    } | null>(null);
 
     const { childrenFormsData, hasFormInFormFields, getChildFormData } = useChildForms({ form });
 
@@ -456,50 +451,6 @@ export const ResponsesTable = React.memo(
       [form?.id, navigate],
     );
 
-    const handleContextMenu = useCallback(
-      (event: React.MouseEvent) => {
-        event.preventDefault();
-
-        const target = event.target as HTMLElement;
-        const row = target.closest(".MuiDataGrid-row");
-
-        if (!row) {
-          return;
-        }
-
-        const rowId = row.getAttribute("data-id");
-
-        if (!rowId) {
-          return;
-        }
-
-        const rowData = (localRows.length > 0 ? localRows : responsesRows).find(
-          (r) => String(r.id) === rowId,
-        );
-
-        if (rowData) {
-          setContextMenu({
-            mouseX: event.clientX - 2,
-            mouseY: event.clientY - 4,
-            row: rowData,
-          });
-        }
-      },
-      [localRows, responsesRows],
-    );
-
-    const handleCloseContextMenu = useCallback(() => {
-      setContextMenu(null);
-    }, []);
-
-    const handleDuplicateResponse = useCallback(() => {
-      if (contextMenu?.row) {
-        navigateToCreateResponseCopy(contextMenu.row);
-      }
-
-      handleCloseContextMenu();
-    }, [contextMenu, navigateToCreateResponseCopy, handleCloseContextMenu]);
-
     const { mutateAsync: softDeleteResponses } = useSoftDeleteResponses(Number(form?.id ?? 0));
 
     const handleDeleteResponse = useCallback(
@@ -595,8 +546,13 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}index`, {
         field: `${prefixes.Meta}index`,
         headerName: "מזהה",
-        width: 100,
-        minWidth: 80,
+        renderHeader: () => (
+          <HeaderFlex>
+            <span>מזהה</span>
+          </HeaderFlex>
+        ),
+        width: 160,
+        minWidth: 100,
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.index,
@@ -640,8 +596,6 @@ export const ResponsesTable = React.memo(
         editable: false,
         sortable: true,
         filterable: false,
-        align: "center",
-        headerAlign: "center",
         renderCell: (params: GridRenderCellParams) => (
           <SyncStatusIcon pushedToMetro={params.row?.pushed_to_metro} />
         ),
@@ -1128,7 +1082,7 @@ export const ResponsesTable = React.memo(
                 console.error("Error updating row:", error);
               }}
               getCellClassName={getCellClassName}
-              rowHeight={40}
+              rowHeight={45}
               columnHeaderHeight={40}
               loading={
                 !isInEditMode && isRowsLoading && rows.length === 0 && form?.responsesCount !== 0
@@ -1186,10 +1140,7 @@ export const ResponsesTable = React.memo(
                   onToggleFilters: handleToggleFilters,
                   onClearFilters: handleClearFilters,
                 } as any,
-                row: {
-                  onContextMenu: handleContextMenu,
-                  style: { cursor: "context-menu" },
-                },
+                row: {},
               }}
               sx={{
                 "& .MuiDataGrid-headerFilterCell": {
@@ -1216,23 +1167,6 @@ export const ResponsesTable = React.memo(
               }}
             />
           </TableContainer>
-
-          <Menu
-            open={contextMenu !== null}
-            onClose={handleCloseContextMenu}
-            anchorReference="anchorPosition"
-            anchorPosition={
-              contextMenu !== null
-                ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-                : undefined
-            }>
-            <MenuItem onClick={handleDuplicateResponse}>
-              <ListItemIcon>
-                <ContentCopyIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>שכפול תגובה</ListItemText>
-            </MenuItem>
-          </Menu>
         </MainContent>
       </ContentContainer>
     );

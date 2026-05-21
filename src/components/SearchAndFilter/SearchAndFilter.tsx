@@ -34,7 +34,7 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
         value={searchValue}
         onChange={(e: any) => handleSearch(e?.target?.value || "")}
         sx={{
-          width: "350px",
+          width: "250px",
           "& .MuiOutlinedInput-root, & fieldset": {
             border: borderType ? borderType : "none",
             borderRadius: "6px",

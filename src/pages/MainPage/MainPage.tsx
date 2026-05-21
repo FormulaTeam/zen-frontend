@@ -5,7 +5,12 @@ import Grid from "@mui/material/Grid";
 import { Box, IconButton, Tab, Tabs, Tooltip, Typography, useTheme } from "@mui/material";
 import { useGetFormsData } from "../../hooks/useGetFormsData";
 import { useActiveTabFilter } from "../../hooks/useActiveTabFilter";
-import { FormsSortOption, SortDirection, formsSortOption, sortDirectionOption } from "../../types/enums/filtersAndSorts.enum";
+import {
+  FormsSortOption,
+  SortDirection,
+  formsSortOption,
+  sortDirectionOption,
+} from "../../types/enums/filtersAndSorts.enum";
 import { FormsTab } from "../../utils/interfaces";
 import CreateNew from "../../components/MainPage/CreateNew";
 import mGif from "../../images/m.gif";
@@ -73,8 +78,9 @@ function MainPage({
       <Box className="tabs-and-select-div">
         <RowBox>
           <GreetingBox>
-            <StyledTypography id="greeting">{myPersonal?.name ? `היי ${myPersonal.name}` : "היי"}</StyledTypography>
-            <img src={wavingHand} />
+            <StyledTypography id="greeting">
+              {myPersonal?.name ? `היי ${myPersonal.name}` : "היי"}
+            </StyledTypography>
           </GreetingBox>
 
           <TabsBox>
@@ -84,9 +90,19 @@ function MainPage({
               onChange={handleTabValueChange}
               aria-label="tabs for forms"
               sx={{ borderBottom: `1px solid ${theme.palette.white}` }}>
-              <Tab label="הטפסים שאני יצרתי" sx={{ fontSize: "20px" }} data-testid="my-forms-button" />
-              <Tab label="הטפסים ששותפו איתי" sx={{ fontSize: "20px" }} data-testid="shared-forms-button" />
-              {isSuperAdmin && <Tab label="כל הטפסים" sx={{ fontSize: "20px" }} data-testid="all-forms-button" />}
+              <Tab
+                label="הטפסים שאני יצרתי"
+                sx={{ fontSize: "20px" }}
+                data-testid="my-forms-button"
+              />
+              <Tab
+                label="הטפסים ששותפו איתי"
+                sx={{ fontSize: "20px" }}
+                data-testid="shared-forms-button"
+              />
+              {isSuperAdmin && (
+                <Tab label="כל הטפסים" sx={{ fontSize: "20px" }} data-testid="all-forms-button" />
+              )}
             </Tabs>
           </TabsBox>
 
@@ -137,7 +153,7 @@ function MainPage({
 
       <BasePopup
         open={false}
-        onClose={() => { }}
+        onClose={() => {}}
         title="סנכרון נתונים למטרו"
         content={
           <Box className="gifs-div">

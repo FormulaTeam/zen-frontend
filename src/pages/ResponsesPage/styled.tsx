@@ -160,7 +160,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
       borderRight: "none",
       display: "flex",
       alignItems: "center",
-      justifyContent: "center",
+      justifyContent: "flex-start",
     },
     "& .MuiDataGrid-columnHeader": {
       borderBottom: "none",
@@ -178,10 +178,22 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     "& .MuiDataGrid-row--odd": {
       backgroundColor: "#f5f5f5",
     },
-    "& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight": {
-      backgroundColor: "inherit",
+  "& .MuiDataGrid-columnHeaderCheckbox": {
+    "& .MuiDataGrid-columnHeaderTitleContainer": {
+      justifyContent: "flex-start !important",
     },
-    "& .MuiDataGrid-row": {
+  },
+  "& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight": {
+    backgroundColor: "inherit",
+    justifyContent: "flex-start !important",
+  },
+  "& .MuiDataGrid-columnHeader--pinnedLeft, & .MuiDataGrid-columnHeader--pinnedRight": {
+    "& .MuiDataGrid-columnHeaderTitleContainer": {
+      justifyContent: "flex-start !important",
+      flexDirection: "row !important",
+    },
+  },
+  "& .MuiDataGrid-row": {
       borderBottom: "none",
       "&:hover": {
         backgroundColor: "#f0f7ff !important",
@@ -249,27 +261,28 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   },
   "& .MuiDataGrid-columnHeaderTitle": {
     width: "100%",
-    fontSize: "1.1rem",
-    fontWeight: 600,
-    textAlign: "center",
+    fontSize: "1.2rem",
+    fontWeight: 700,
+    textAlign: "right",
   },
   "& .MuiDataGrid-iconButtonContainer": {
     marginLeft: "4px",
   },
   "& .MuiDataGrid-columnHeaderTitleContainer": {
-    justifyContent: "center",
+    justifyContent: "flex-start",
   },
   "& .MuiDataGrid-columnHeaderDraggableContainer": {
-    justifyContent: "center",
+    justifyContent: "flex-start",
   },
   "& .MuiDataGrid-cell": {
-    fontSize: "1rem",
+    fontSize: "1.2rem",
     display: "flex",
     alignItems: "center",
+    justifyContent: "flex-start",
   },
   "& .MuiDataGrid-cellContent": {
     width: "100%",
-    textAlign: "center",
+    textAlign: "right",
   },
   "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
     outline: "none",
@@ -546,6 +559,7 @@ export const HeaderFlex = styled("div")({
   alignItems: "center",
   gap: 6,
   position: "relative",
+  fontWeight: 700,
 });
 
 export const CellErrorWrapper = styled("div")({

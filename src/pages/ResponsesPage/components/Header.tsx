@@ -31,7 +31,7 @@ const Header = () => {
 
       <FormInfoSectionBox>
         <FormDescriptionTypography variant="body2">
-          {form.description || "ללא תיאור"}
+          {form.description}
         </FormDescriptionTypography>
       </FormInfoSectionBox>
 

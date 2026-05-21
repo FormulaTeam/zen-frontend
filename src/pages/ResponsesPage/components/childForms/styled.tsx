@@ -33,6 +33,9 @@ interface StyledTableProps extends TableProps {
 export const StyledTable = styled(Table, {
     shouldForwardProp: (prop) => prop !== 'isInEditMode',
 })<StyledTableProps>(({ isInEditMode }) => ({
+    "& .MuiTableHead-root .MuiTableCell-root": {
+        fontWeight: 700,
+    },
     ...(isInEditMode && {
         "& .MuiTableCell-root": {
             border: "1px solid rgba(224, 224, 224, 1)",
