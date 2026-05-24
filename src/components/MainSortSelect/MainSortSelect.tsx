@@ -1,14 +1,9 @@
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Box } from "@mui/material";
+import SortIcon from "@mui/icons-material/Sort";
+import { sortByOptions } from "../../utils/utils";
+import { FormsSortOption, SortDirection, sortValueToEnums } from "./sortUtils";
+import { StyledFormControl, StyledSelect } from "./styled";
 import { useState } from "react";
-import { sortByOptions, SortOption } from "../../utils/utils";
-import { StyledAutocomplete, StyledTextField } from "./styled";
-import { formsSortOption, FormsSortOption, sortDirectionOption, SortDirection } from "../../types/enums/filtersAndSorts.enum";
-
-const sortValueToEnums: Record<number, { sortBy: FormsSortOption; sortDirection: SortDirection }> = {
-  1: { sortBy: formsSortOption.Name, sortDirection: sortDirectionOption.Ascending },
-  2: { sortBy: formsSortOption.Name, sortDirection: sortDirectionOption.Descending },
-  5: { sortBy: formsSortOption.CreatedAt, sortDirection: sortDirectionOption.Descending },
-  6: { sortBy: formsSortOption.CreatedAt, sortDirection: sortDirectionOption.Ascending },
-};
 
 interface MainSortSelectProps {
   onSortChange: (sortBy: FormsSortOption, sortDirection: SortDirection) => void;
@@ -16,46 +11,41 @@ interface MainSortSelectProps {
 }
 
 const MainSortSelect: React.FC<MainSortSelectProps> = ({ onSortChange, dataTestId }) => {
-  const [sortByOption, setSortByOption] = useState<SortOption | null>(null);
+  const [sortValue, setSortValue] = useState<number>(5); // Default to "מועד יצירה (חדש-ישן)"
 
-  const handleSortByChange = (event: React.SyntheticEvent, newValue: SortOption | null) => {
-    setSortByOption(newValue);
+  const handleChange = (event: SelectChangeEvent<number>) => {
+    const value = event.target.value as number;
+    setSortValue(value);
 
-    const sortEnums = sortValueToEnums[newValue?.value ?? 0];
+    const sortEnums = sortValueToEnums[value];
     if (sortEnums) {
       onSortChange(sortEnums.sortBy, sortEnums.sortDirection);
     }
   };
 
   return (
-    <StyledAutocomplete
-      isOptionEqualToValue={(option, value) => {
-        return option?.label === value?.label;
-      }}
-      className="sort-by-autocomplete"
-      value={sortByOption}
-      options={sortByOptions}
-      id="sortByAutocomplete"
-      onChange={handleSortByChange}
-      multiple={false}
-      disablePortal
-      getOptionLabel={(option) => option.label}
-      renderInput={(params) => (
-        <StyledTextField
-          {...params}
-          label="מיון לפי"
-          variant="outlined"
-          fullWidth
-          size="small"
-          name="placeholder"
-          inputProps={{
-            ...params.inputProps,
-            "data-testid": dataTestId,
-            readOnly: true,
-          }}
-        />
-      )}
-    />
+    <StyledFormControl size="small" variant="outlined">
+      <InputLabel id="main-sort-select-label">מיון לפי</InputLabel>
+      <StyledSelect
+        labelId="main-sort-select-label"
+        id="main-sort-select"
+        value={sortValue}
+        label="מיון לפי"
+        onChange={handleChange}
+        inputProps={{ "data-testid": dataTestId }}
+        startAdornment={
+          <Box sx={{ display: "flex", mr: 1, ml: -0.5, color: "primary.main" }}>
+            <SortIcon fontSize="small" />
+          </Box>
+        }
+      >
+        {sortByOptions.map((option) => (
+          <MenuItem key={option.value} value={option.value} sx={{ fontSize: "14px" }}>
+            {option.label}
+          </MenuItem>
+        ))}
+      </StyledSelect>
+    </StyledFormControl>
   );
 };
 
