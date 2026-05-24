@@ -35,9 +35,14 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
   onSaveAndClose,
 }) => {
   const theme = useTheme();
+
+  const canEdit =
+    permissionTypes.includes(permission.UpdateAnyResponse) ||
+    permissionTypes.includes(permission.UpdateMyResponse);
+
   return (
     <Header p={2} backgroundColor={theme.palette.background.default}>
-      {viewMode && permissionTypes.includes(permission.UpdateAnyResponse) && (
+      {viewMode && canEdit && (
         <div className="edit-btn">
           <IconButton onClick={onEdit}>
             <Edit />
