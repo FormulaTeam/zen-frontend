@@ -19,7 +19,11 @@ export const DetailsContainer = styled(Box)<BoxProps>(({ theme }) => ({
   overflowY: "auto",
   width: "100%",
   gap: theme.spacing(1),
-  padding: theme.spacing(2),
+  padding: theme.spacing(2, 4),
+  backgroundColor: "#f1f5f9",
+  borderTop: "1px solid #e2e8f0",
+  borderBottom: "1px solid #e2e8f0",
+  boxShadow: "inset 0 2px 4px 0 rgba(0, 0, 0, 0.02)",
 }));
 
 export const FormActionsContainer = styled(Box)<BoxProps>(({ theme }) => ({

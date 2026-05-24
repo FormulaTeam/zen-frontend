@@ -12,6 +12,7 @@ interface ButtonProps {
 
 export const NavAppBar = styled(AppBar)<AppBarProps>`
   background-color: ${(props) => props.$bgColor};
+  height: 80px;
 `;
 
 export const NavToolbar = styled(Toolbar)`

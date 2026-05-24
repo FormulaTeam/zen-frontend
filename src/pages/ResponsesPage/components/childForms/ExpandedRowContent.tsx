@@ -95,7 +95,7 @@ export const ExpandedRowContent: React.FC<ExpandedRowContentProps> = ({
 
     if (!hasChildResponses) {
         return (
-            <DetailsContainer sx={{ p: 4, textAlign: "center" }}>
+            <DetailsContainer sx={{ py: 3, textAlign: "center" }}>
                 <Typography variant="body2" color="text.secondary">
                     אין תגובות מקושרות להצגה
                 </Typography>

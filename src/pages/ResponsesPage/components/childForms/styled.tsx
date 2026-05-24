@@ -9,20 +9,27 @@ export const DetailsRowContainer = styled(Box)<BoxProps>(({ theme }) => ({
     alignItems: "start",
     flexDirection: "column",
     width: "100%",
-    gap: theme.spacing(1),
+    maxWidth: "1200px",
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(1, 0),
 }));
 
 export const ResponseTitle = styled(Typography)<TypographyProps>(({ theme }) => ({
-    fontSize: theme.typography.body1.fontSize,
-    color: "inherit",
+    fontSize: "0.95rem",
+    fontWeight: 600,
+    color: "#475569",
     display: "flex",
     alignItems: "center",
+    width: "100%",
+    paddingBottom: theme.spacing(0.5),
 }));
 
 export const ResponseCell = styled(TableCell)<TableCellProps>(() => ({
     textAlign: "start",
+    padding: "8px 12px",
+    fontSize: "0.9rem",
     "&:first-of-type": {
-        width: '90px',
+        width: '80px',
     },
 }));
 
@@ -35,10 +42,19 @@ export const StyledTable = styled(Table, {
 })<StyledTableProps>(({ isInEditMode }) => ({
     "& .MuiTableHead-root .MuiTableCell-root": {
         fontWeight: 700,
+        backgroundColor: "#ffffff",
+        color: "#1e293b",
+        borderBottom: "2px solid #e2e8f0",
+    },
+    "& .MuiTableBody-root .MuiTableRow-root": {
+        backgroundColor: "#ffffff",
+        "&:hover": {
+            backgroundColor: "#f8fafc",
+        },
     },
     ...(isInEditMode && {
         "& .MuiTableCell-root": {
-            border: "1px solid rgba(224, 224, 224, 1)",
+            border: "1px solid #e2e8f0",
         },
     }),
 }));
