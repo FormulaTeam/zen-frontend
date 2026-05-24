@@ -34,18 +34,36 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
         value={searchValue}
         onChange={(e: any) => handleSearch(e?.target?.value || "")}
         sx={{
-          width: "250px",
-          "& .MuiOutlinedInput-root, & fieldset": {
-            border: borderType ? borderType : "none",
-            borderRadius: "6px",
+          width: "220px",
+          "& .MuiOutlinedInput-root": {
+            height: "40px",
+            fontSize: "16px",
+            fontWeight: 600,
+            borderRadius: "8px",
+            "& fieldset": {
+              borderColor: "#D1D1D1 !important",
+              borderWidth: "1px !important",
+            },
+            "&:hover fieldset": {
+              borderColor: "#62748E !important",
+            },
+            "&.Mui-focused fieldset": {
+              borderColor: "#020618 !important",
+              borderWidth: "2px !important",
+            },
           },
         }}
         size="small"
         onKeyUp={handleKeyUp}
         inputProps={{
-          'data-testid': dataTestId,
+          "data-testid": dataTestId,
         }}
         InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Search sx={{ color: "#020618", fontSize: "22px" }} />
+            </InputAdornment>
+          ),
           endAdornment: (
             <>
               {searchValue && (
@@ -55,12 +73,9 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
                   size="small"
                   sx={{ color: theme.palette.text.secondary }}
                   onClick={() => handleSearch("")}>
-                  <Close />
+                  <Close sx={{ fontSize: "18px" }} />
                 </IconButton>
               )}
-              <InputAdornment position="end">
-                <Search sx={{ color: theme.palette.text.secondary }} />
-              </InputAdornment>
             </>
           ),
         }}

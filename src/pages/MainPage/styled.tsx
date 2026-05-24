@@ -13,13 +13,13 @@ export const GreetingBox = styled(Box)({
   display: "flex",
   flexDirection: "row",
   alignItems: "center",
-  flexShrink: 0,
+  flex: 1,
 });
 
 export const TabsBox = styled(Box)({
-  flex: 1,
   display: "flex",
   justifyContent: "center",
+  flexShrink: 0,
 });
 
 export const SortControlsBox = styled(Box)({
@@ -27,14 +27,13 @@ export const SortControlsBox = styled(Box)({
   flexDirection: "row",
   alignItems: "center",
   gap: "16px",
-  flexShrink: 0,
+  flex: 1,
+  justifyContent: "flex-end",
 });
 
 export const StyledTypography = styled(Typography)(({ theme }) => ({
-  fontSize: "24px !important",
+  fontSize: "20px !important",
   fontWeight: 600,
-  marginLeft: "10px",
-  marginRight: "5px",
 }));
 
 export const CreateFormButton = styled("button") <{ $bgc?: string }>`
@@ -50,3 +49,22 @@ export const CreateFormButton = styled("button") <{ $bgc?: string }>`
   justify-content: space-between;
   width: 140px;
 `;
+
+export const PrimaryBlueButton = styled("button")(({ theme }) => ({
+  backgroundColor: theme.palette.primary.main,
+  color: "white",
+  height: "40px",
+  padding: "0 30px",
+  fontSize: "16px",
+  fontWeight: 600,
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  transition: "background-color 0.2s",
+  "&:hover": {
+    backgroundColor: theme.palette.primary.dark || "#1565c0",
+  },
+}));

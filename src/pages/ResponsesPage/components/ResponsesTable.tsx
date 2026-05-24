@@ -310,10 +310,11 @@ export const ResponsesTable = React.memo(
       setResponseFilters(null);
     }, [setResponseFilters]);
 
-    const formFields = useMemo<FormFieldDto[]>(
-      () => (form?.sections ?? []).flatMap((section) => section.fields ?? []),
-      [form],
-    );
+    const formFields = useMemo<FormFieldDto[]>(() => {
+      const sectionsFields = (form?.sections ?? []).flatMap((section) => section.fields ?? []);
+      if (sectionsFields.length > 0) return sectionsFields;
+      return form?.fields ?? [];
+    }, [form]);
 
     const { sortModel, handleSortModelChange } = useResponsesTableSorting({
       filter,

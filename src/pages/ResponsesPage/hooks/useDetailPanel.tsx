@@ -53,10 +53,11 @@ export const useDetailPanel = ({
     currentViewConfig,
     searchQuery,
 }: UseDetailPanelProps): UseDetailPanelReturn => {
-    const formFields = useMemo<FormFieldDto[]>(
-        () => (form?.sections ?? []).flatMap((section) => section.fields ?? []),
-        [form],
-    );
+    const formFields = useMemo<FormFieldDto[]>(() => {
+        const sectionsFields = (form?.sections ?? []).flatMap((section) => section.fields ?? []);
+        if (sectionsFields.length > 0) return sectionsFields;
+        return (form as any)?.fields ?? [];
+    }, [form]);
 
     const visibleFormInFormFieldIds = useMemo((): Set<string> | null => {
         if (!currentViewConfig || currentViewConfig.length === 0) {
@@ -96,12 +97,14 @@ export const useDetailPanel = ({
                     form_id: node.formId,
                 };
 
-                // Map field IDs to displayNames using the form's sections
+                // Map field IDs to displayNames using the form's fields or sections
                 const fieldIdToDisplayName = new Map<string, string>();
-                childFormData.form.sections?.forEach((section) => {
-                    section.fields?.forEach((field) => {
-                        fieldIdToDisplayName.set(field.id, field.displayName);
-                    });
+                const childFormFields = (childFormData.form as any).fields?.length
+                    ? (childFormData.form as any).fields
+                    : (childFormData.form.sections ?? []).flatMap(s => s.fields ?? []);
+
+                childFormFields.forEach((field) => {
+                    fieldIdToDisplayName.set(field.id, field.displayName);
                 });
 
                 const fieldValues = node.fieldValues || node.data || [];

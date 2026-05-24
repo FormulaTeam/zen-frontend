@@ -22,11 +22,16 @@ export const NavToolbar = styled(Toolbar)`
 
 export const LogoContainer = styled.div<{ disabled: boolean }>`
   cursor: ${({ disabled }) => (disabled ? "default" : "pointer")};
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
 `;
 
 export const ButtonsContainer = styled.div`
   display: flex;
   gap: 15px;
+  flex: 1;
+  justify-content: flex-end;
 `;
 
 export const NavButton = styled(Button)<ButtonProps>`

@@ -27,6 +27,7 @@ export const getForms = async (filter?: Filter): Promise<FormDto[]> => {
     orderBy: filter?.orderBy,
     pageSize: filter?.pageSize,
     pageNumber: filter?.pageNumber,
+    onlyDeleted: filter?.onlyDeleted,
   };
 
   try {

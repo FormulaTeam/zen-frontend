@@ -20,32 +20,32 @@ const fontBold = {
 const palette = {
   type: "light",
   primary: {
-    main: "#1976D2",
+    main: "#1E88E5",
   },
   secondary: {
     main: "#1976D224",
     contrastText: "#000000",
   },
   background: {
-    default: "#FAFAFA",
+    default: "#F1F5F9",
     paper: "#FFFFFF",
     success: "#00B050",
   },
-  white: "#f9f9f9",
+  white: "#F1F5F9",
   text: {
-    primary: "#000000",
-    secondary: "#85878D",
+    primary: "#020618",
+    secondary: "#62748E",
   },
   hint: "#BDBDBD",
-  divider: "#85878D",
+  divider: "#62748E",
   input: {
-    primaryText: "#666666",
-    secondaryText: "#85878D",
-    darkText: "#000000DE",
+    primaryText: "#020618",
+    secondaryText: "#62748E",
+    darkText: "#020618",
     border: "#D9D9D9",
   },
   button: {
-    primaryText: "#666666",
+    primaryText: "#020618",
     disabled: "#cccccc",
   },
   error: {
@@ -202,10 +202,10 @@ theme.components = {
   MuiTab: {
     styleOverrides: {
       root: {
-        color: "black",
+        color: "#62748E",
         "&:hover": {},
         "&.Mui-selected": {
-          color: palette.primary.main,
+          color: "#020618",
           fontWeight: 600,
         },
       },

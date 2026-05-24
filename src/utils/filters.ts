@@ -12,19 +12,19 @@ export const getSortedFilter = (newValueInt: number, filter: Filter) => {
       filter.orderBy = IOrderBy.DESC;
       break;
     case 5: // "טפסים שנוצרו מהחדש לישן"
-      filter.sortBy = "created";
+      filter.sortBy = "created_at";
       filter.orderBy = IOrderBy.DESC;
       break;
     case 6: // "טפסים שנוצרו מהישן לחדש"
-      filter.sortBy = "created";
+      filter.sortBy = "created_at";
       filter.orderBy = IOrderBy.ASC;
       break;
     case 7: // "תגובות שנמחקו מהחדש לישן"
-      filter.sortBy = "deleted";
+      filter.sortBy = "created_at";
       filter.orderBy = IOrderBy.DESC;
       break;
     case 8: // "תגובות שנמחקו מהישן לחדש"
-      filter.sortBy = "deleted";
+      filter.sortBy = "created_at";
       filter.orderBy = IOrderBy.ASC;
       break;
     default:

@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import logo from "../../images/zen_logo.png";
-import SearchAndFilter from "../SearchAndFilter/SearchAndFilter";
 import { IOperationEndpoint, IPath } from "../../types/enums/global.enums";
 import { useLocation, useNavigate } from "react-router-dom";
 import { NavAppBar, NavToolbar, LogoContainer, ButtonsContainer } from "./styled";
-import NavbarButton from "./NavbarButton";
 
-const Navbar = ({ handleSearch, searchValue }) => {
+const Navbar = () => {
   const [showMainStuff, setShowMainStuff] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,28 +33,7 @@ const Navbar = ({ handleSearch, searchValue }) => {
           <img src={logo} height={40} />
         </LogoContainer>
 
-        {showMainStuff && (
-          <SearchAndFilter
-            searchValue={searchValue}
-            handleSearch={handleSearch}
-            placeholder="חיפוש טופס"
-            dataTestId="search-form-input"
-          />
-        )}
-
-        <ButtonsContainer>
-          {showMainStuff && (
-            <NavbarButton
-              onClick={() => navigate(IPath.FORM_CREATE)}
-              bgColor={theme.palette.background.paper}
-              hoverColor={theme.palette.background.paper}
-              icon={<AddIcon />}
-              title="טופס חדש"
-              dataTestId="create-form-button"
-            />
-          )}
-
-        </ButtonsContainer>
+        <ButtonsContainer />
       </NavToolbar>
     </NavAppBar>
   );

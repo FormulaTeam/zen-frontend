@@ -42,7 +42,7 @@ const AppRouter = () => {
           gridTemplateRows: "auto 1fr",
           height: "100vh",
         }}>
-        <Navbar searchValue={searchValue} handleSearch={(val) => setSearchValue(val)} />
+        <Navbar />
         <Routes>
           <Route path={IPath.ERROR} element={<ErrorPage />} />
           <Route path={IPath.LOGIN} element={<Login />} />
@@ -62,6 +62,7 @@ const AppRouter = () => {
                 <MainPage
                   user={user}
                   searchValue={searchValue}
+                  handleSearch={(val) => setSearchValue(val)}
                   shouldRefreshPage={shouldRefreshPage}
                   setShouldRefreshPage={setShouldRefreshPage}
                   resetSearchValue={resetSearchValue}

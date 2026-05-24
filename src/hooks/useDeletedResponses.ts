@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Filter, ResponseForm } from "../utils/interfaces";
+import { IOrderBy } from "../types/enums/filtersAndSorts.enum";
 import type { FormDto } from "../types/shared";
 import { getResponses, restoreResponses } from "../api";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
@@ -67,22 +68,19 @@ export const useDeletedResponses = (
 
     try {
       const trimmedSearch = search.trim();
-      const sort = customSort === 8 ? "deletedAtAsc" : "deletedAtDesc";
+      const sortBy = "meta:created_at"; // Use creation time as fallback if deleted_at not supported
+      const orderBy = customSort === 8 ? IOrderBy.ASC : IOrderBy.DESC;
 
       const filter: Filter = {
         pageSize: PAGE_SIZE,
         pageNumber,
-        deleted: true,
+        onlyDeleted: true,
+        sortBy,
+        orderBy,
         query: {
-          sort,
           deletedByText: customFilters.deletedBy?.trim() || undefined,
           createdByText: customFilters.createdBy?.trim() || undefined,
           search: trimmedSearch || undefined,
-          ...(currentDeletedForm
-            ? {
-                isDeletedForm: true,
-              }
-            : {}),
         },
       };
 
@@ -154,16 +152,29 @@ export const useDeletedResponses = (
   };
 
   const restoreSelectedResponses = async () => {
-    for (const response of responses) {
-      const formId = response.form_id;
-      const responseId = response.id;
+    if (!currentDeletedForm || selectedResponseKeys.length === 0) return;
 
-      const key = getResponseKey(formId, response.index);
-      if (selectedResponseKeys.includes(key)) {
-        await restoreResponseById(formId, responseId);
+    setIsLoading(true);
+    try {
+      const responseIdsToRestore = responses
+        .filter((r) => selectedResponseKeys.includes(getResponseKey(r.form_id, r.index)))
+        .map((r) => r.id);
+
+      if (responseIdsToRestore.length > 0) {
+        await restoreResponses(currentDeletedForm.id, responseIdsToRestore);
+        showSuccessNotification(`${responseIdsToRestore.length} תגובות שוחזרו בהצלחה`);
+
+        setResponses((prev) =>
+          prev.filter((r) => !responseIdsToRestore.includes(r.id)),
+        );
       }
+    } catch (err) {
+      console.error("Failed to restore responses:", err);
+      showErrorNotification("שחזור התגובות נכשל");
+    } finally {
+      setIsLoading(false);
+      cancelSelection();
     }
-    cancelSelection();
   };
 
   const handleSelect = (formId: number, responseId: string) => {

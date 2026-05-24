@@ -19,16 +19,18 @@ export const TextTitleValueDiv = styled(Box)`
   margin-left: 5%;
 `;
 
-export const TextTitle = styled.span`
-  font-weight: 400;
-  font-size: 14px !important;
-  min-width: max-content;
-`;
+export const TextTitle = muiStyled("span")(({ theme }) => ({
+  fontWeight: 400,
+  fontSize: "14px !important",
+  minWidth: "max-content",
+  color: "#62748E",
+}));
 
-export const TextValue = styled.span`
-  font-weight: 400;
-  font-size: 14px !important;
-`;
+export const TextValue = muiStyled("span")(({ theme }) => ({
+  fontWeight: 400,
+  fontSize: "14px !important",
+  color: "#62748E",
+}));
 
 export const DescriptionDiv = styled(Box)`
   display: flex;
@@ -57,7 +59,7 @@ export const DeatailsDiv = styled(Box)`
 
 export const ItemDescription = styled(Typography)`
   font-weight: 400;
-  color: black;
+  color: #020618;
   font-size: 15px !important;
 `;
 
@@ -68,7 +70,7 @@ export const FormIconWrapper = muiStyled(Box)(({ theme }) => ({
   width: "32px",
   height: "32px",
   minWidth: "32px",
-  color: theme.palette.primary.main,
+  color: "#020618",
   "& svg": {
     fontSize: "32px",
   },
@@ -84,9 +86,10 @@ export const StyledCard = styled(Card)`
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: flex-start;
-  padding: 20px;
+  justify-content: space-between;
+  padding: 24px;
   width: 100%;
+  min-height: 220px;
 `;
 
 export const ItemImgAndTitles = styled(Box)`

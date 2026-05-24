@@ -364,9 +364,12 @@ export const useResponsesEdit = () => {
   const dtoForm = form as FormDto | null | undefined;
 
   const formFields = useMemo<FormFieldDto[]>(() => {
-    return (dtoForm?.sections ?? [])
+    const sectionsFields = (dtoForm?.sections ?? [])
       .flatMap((section) => section.fields ?? [])
-      .sort((a, b) => a.index - b.index);
+      .sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+
+    if (sectionsFields.length > 0) return sectionsFields;
+    return ((dtoForm as any)?.fields ?? []).sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
   }, [dtoForm]);
 
   const fullResponses = useMemo(

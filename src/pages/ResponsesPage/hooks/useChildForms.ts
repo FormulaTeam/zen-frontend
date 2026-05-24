@@ -34,10 +34,13 @@ const getFieldExtra = (field: FormFieldDto): FieldExtra => {
 const getFormFields = (form: FormDto | null): FormFieldDto[] => {
     if (!form) return [];
 
-    return (form.sections ?? [])
+    const sectionsFields = (form.sections ?? [])
         .slice()
         .sort((a, b) => a.index - b.index)
         .flatMap((section) => (section.fields ?? []).slice().sort((a, b) => a.index - b.index));
+
+    if (sectionsFields.length > 0) return sectionsFields;
+    return (form as any).fields ?? [];
 };
 
 const fetchChildFormData = async (

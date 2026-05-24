@@ -2,45 +2,51 @@ import { FormControl, Select } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
 export const StyledFormControl = styled(FormControl)(({ theme }) => ({
-  width: "220px",
+  width: 220,
   backgroundColor: theme.palette.background.paper,
+
   "& .MuiInputLabel-root": {
-    color: theme.palette.primary.main,
-    fontWeight: 800,
-    fontSize: "16px",
+    color: "#62748E",
+    fontWeight: 600,
+    fontSize: "1.1rem",
     backgroundColor: theme.palette.background.paper,
     padding: "0 6px",
+
     "&.Mui-focused": {
-      color: theme.palette.primary.main,
+      color: "#020618",
     },
   },
 }));
 
 export const StyledSelect = styled(Select<number>)(({ theme }) => ({
-  borderRadius: "8px",
-  fontSize: "12px",
-  fontWeight: 600,
-  height: "40px",
+  borderRadius: 8,
+  height: 40,
   color: theme.palette.text.primary,
+
   "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: theme.palette.primary.main,
-    borderWidth: "1px",
+    borderColor: "#D1D1D1",
+    borderWidth: 1,
   },
+
   "&:hover .MuiOutlinedInput-notchedOutline": {
-    borderColor: theme.palette.primary.main,
+    borderColor: "#62748E",
   },
+
   "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-    borderColor: theme.palette.primary.main,
-    borderWidth: "2px",
+    borderColor: "#020618",
+    borderWidth: 2,
   },
+
   "& .MuiSelect-select": {
     display: "flex",
     alignItems: "center",
-    paddingTop: "8px",
-    paddingBottom: "8px",
-    cursor: "pointer",
+    fontSize: "16px",
+    fontWeight: 600,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
+
   "& .MuiSvgIcon-root": {
-    color: theme.palette.primary.main,
+    color: "#020618",
   },
 }));

@@ -98,7 +98,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
         <ListItemIcon>
           <SyncOutlined sx={{ fontSize: 22 }} />
         </ListItemIcon>
-        <ListItemText>סנכרון נתונים</ListItemText>
+        <ListItemText>סנכרון לאואזיס</ListItemText>
       </MenuItem>
     ),
     [rows.length, sourceOperationStatus, hasMetroSource, pushToMetro],

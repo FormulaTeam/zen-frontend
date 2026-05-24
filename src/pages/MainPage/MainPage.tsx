@@ -22,15 +22,25 @@ import FormCard from "../../components/FormCard/FormCard";
 import wavingHand from "../../images/waving_hand.png";
 import "./MainPage.scss";
 import BasePopup from "../../components/BasePopup/BasePopup";
-import { AutoDelete } from "@mui/icons-material";
+import { AutoDelete, Add as AddIcon } from "@mui/icons-material";
 import MainSortSelect from "../../components/MainSortSelect/MainSortSelect";
+import SearchAndFilter from "../../components/SearchAndFilter/SearchAndFilter";
 import { useGetMyPersonal } from "../../api/usersApi";
-import { RowBox, StyledTypography, GreetingBox, TabsBox, SortControlsBox } from "./styled";
+import {
+  RowBox,
+  StyledTypography,
+  GreetingBox,
+  TabsBox,
+  SortControlsBox,
+  PrimaryBlueButton,
+} from "./styled";
 import { FormOverviewDto } from "@src/types/shared";
+import { IPath } from "../../types/enums/global.enums";
 
 function MainPage({
   user,
   searchValue,
+  handleSearch,
   shouldRefreshPage,
   setShouldRefreshPage,
   resetSearchValue,
@@ -74,48 +84,106 @@ function MainPage({
   };
 
   return (
-    <Box className="main-page-container" style={{ backgroundColor: theme.palette.white }}>
+    <Box className="main-page-container">
       <Box className="tabs-and-select-div">
+        <TabsBox sx={{ mb: 3, mt: 2 }}>
+          <Tabs
+            className="form-tabs"
+            value={tabValue}
+            onChange={handleTabValueChange}
+            aria-label="tabs for forms"
+            TabIndicatorProps={{
+              style: { display: "none" },
+            }}
+            sx={{
+              minHeight: "auto",
+              backgroundColor: "transparent",
+              "& .MuiTabs-flexContainer": {
+                gap: "8px",
+              },
+            }}>
+            <Tab
+              label="הטפסים שאני יצרתי"
+              sx={{
+                fontSize: "16px",
+                minHeight: "auto",
+                padding: "4px 12px",
+                borderRadius: "5px",
+                color: theme.palette.text.secondary,
+                fontWeight: 600,
+                "&.Mui-selected": {
+                  backgroundColor: "#FFFFFF",
+                  color: "#020618",
+                  boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.5)",
+                },
+              }}
+              disableRipple
+              data-testid="my-forms-button"
+            />
+            <Tab
+              label="הטפסים ששותפו איתי"
+              sx={{
+                fontSize: "16px",
+                minHeight: "auto",
+                padding: "4px 12px",
+                borderRadius: "5px",
+                color: theme.palette.text.secondary,
+                fontWeight: 600,
+                "&.Mui-selected": {
+                  backgroundColor: "#FFFFFF",
+                  color: "#020618",
+                  boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.5)",
+                },
+              }}
+              disableRipple
+              data-testid="shared-forms-button"
+            />
+            {isSuperAdmin && (
+              <Tab
+                label="כל הטפסים"
+                sx={{
+                  fontSize: "16px",
+                minHeight: "auto",
+                padding: "4px 12px",
+                borderRadius: "5px",
+                color: theme.palette.text.secondary,
+                fontWeight: 600,
+                "&.Mui-selected": {
+                  backgroundColor: "#FFFFFF",
+                  color: "#020618",
+                  boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.5)",
+                },                }}
+                disableRipple
+                data-testid="all-forms-button"
+              />
+            )}
+          </Tabs>
+        </TabsBox>
+
         <RowBox>
           <GreetingBox>
             <StyledTypography id="greeting">
-              {myPersonal?.name ? `היי ${myPersonal.name}` : "היי"}
+              {myPersonal?.name ? `היי ${myPersonal.name.split(" ")[0]}` : "היי"}
             </StyledTypography>
           </GreetingBox>
 
-          <TabsBox>
-            <Tabs
-              className="form-tabs"
-              value={tabValue}
-              onChange={handleTabValueChange}
-              aria-label="tabs for forms"
-              sx={{ borderBottom: `1px solid ${theme.palette.white}` }}>
-              <Tab
-                label="הטפסים שאני יצרתי"
-                sx={{ fontSize: "20px" }}
-                data-testid="my-forms-button"
-              />
-              <Tab
-                label="הטפסים ששותפו איתי"
-                sx={{ fontSize: "20px" }}
-                data-testid="shared-forms-button"
-              />
-              {isSuperAdmin && (
-                <Tab label="כל הטפסים" sx={{ fontSize: "20px" }} data-testid="all-forms-button" />
-              )}
-            </Tabs>
-          </TabsBox>
-
           <SortControlsBox>
+            <SearchAndFilter
+              searchValue={searchValue}
+              handleSearch={handleSearch}
+              placeholder="חיפוש טופס"
+              dataTestId="search-form-input"
+            />
             <MainSortSelect onSortChange={handleSortChange} dataTestId="sort-forms" />
-            <Tooltip title="סל המיחזור">
-              <IconButton
-                sx={{ color: theme.palette.primary.main }}
-                onClick={() => navigate("/deleted-forms")}
-                data-testid="recycle-bin-button">
-                <AutoDelete />
-              </IconButton>
-            </Tooltip>
+            <PrimaryBlueButton
+              onClick={() => navigate(IPath.FORM_CREATE)}
+              data-testid="create-form-button">
+              <AddIcon sx={{ mr: 1, fontSize: "22px" }} />
+              יצירת טופס חדש
+            </PrimaryBlueButton>
           </SortControlsBox>
         </RowBox>
       </Box>

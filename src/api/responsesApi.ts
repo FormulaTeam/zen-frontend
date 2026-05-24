@@ -44,10 +44,11 @@ export const getResponses = async (formId: number, filter?: Filter): Promise<any
   const params: any = {
     limit: filter?.pageSize ?? 25,
     search: stringifyQuery(filter?.query),
-    sortBy: filter?.sortBy ?? "meta:index",
+    sortBy: filter?.sortBy ?? "created_at",
     sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     before: filter?.before,
     after: filter?.after,
+    onlyDeleted: filter?.onlyDeleted,
   };
 
   try {
@@ -147,12 +148,17 @@ export const softDeleteResponses = async (
  * Restore multiple soft-deleted responses.
  *
  * @param formId - The ID of the form.
- * @param responseIds - The IDs of the responses to restore.
+ * @param responsesIds - The IDs of the responses to restore.
+ * @param scope - Optional scope (e.g., "all") for restoration.
  * @returns A promise that resolves to the result of the restoration.
  */
-export const restoreResponses = async (formId: number, responseIds: string[]): Promise<void> => {
+export const restoreResponses = async (
+  formId: number,
+  responsesIds: string[],
+  scope?: string,
+): Promise<void> => {
   try {
-    await apiClient.post(`/forms/${formId}/responses/restore`, { responseIds });
+    await apiClient.post(`/forms/${formId}/responses/restore`, { responsesIds, scope });
   } catch (error) {
     console.error("Failed to restore responses:", error);
     throw error;
@@ -170,8 +176,9 @@ export const searchResponses = async (filter: Filter): Promise<any> => {
     const params: any = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
-      sortBy: filter?.sortBy ?? "meta:index",
+      sortBy: filter?.sortBy ?? "created_at",
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+      onlyDeleted: filter?.onlyDeleted,
     };
 
     const response = await apiClient.get(`/forms/${formId}/responses`, { params });
@@ -203,7 +210,7 @@ export const getAllDeletedResponses = async (filter: Filter): Promise<any> => {
       search: stringifyQuery(filter?.query),
       sortBy: filter?.sortBy,
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
-      deleted: true,
+      onlyDeleted: true,
     };
 
     const response = await apiClient.get(`/forms/${formId}/responses`, { params });
@@ -315,7 +322,7 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
     () => ({
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
-      sortBy: filter?.sortBy ?? "meta:index",
+      sortBy: filter?.sortBy ?? "created_at",
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,
@@ -449,7 +456,7 @@ export const getResponsesRows = async ({
     const params: any = {
       limit: filter?.pageSize ?? 25,
       search: stringifyQuery(filter?.query),
-      sortBy: filter?.sortBy ?? "meta:index",
+      sortBy: filter?.sortBy ?? "created_at",
       sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
       before: filter?.before,
       after: filter?.after,

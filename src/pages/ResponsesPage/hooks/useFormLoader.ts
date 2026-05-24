@@ -165,7 +165,12 @@ export function useFormLoader(formId: string) {
             fields: [...(section.fields ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)),
           }));
 
-        const flattenedFields = sortedSections.flatMap((section) => section.fields);
+        const flattenedFields =
+          sortedSections.length > 0
+            ? sortedSections.flatMap((section) => section.fields)
+            : [...((formData as any).fields || [])].sort(
+                (a, b) => (a.index ?? 0) - (b.index ?? 0),
+              );
 
         const columns = flattenedFields.map((field) => ({
           field: getFieldColumnKey(String(field.id)),
