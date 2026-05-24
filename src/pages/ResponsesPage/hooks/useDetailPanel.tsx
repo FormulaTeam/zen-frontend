@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
-import { Box, IconButton, Tooltip } from "@mui/material";
-import { GridColDef, GridRowId, GridRowParams } from "@mui/x-data-grid-pro";
+import { Box, IconButton, Tooltip, Stack, Typography } from "@mui/material";
+import { GridColDef, GridRowId, GridRowParams, GRID_DETAIL_PANEL_TOGGLE_FIELD } from "@mui/x-data-grid-pro";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
@@ -219,20 +219,20 @@ export const useDetailPanel = ({
         }
 
         return (
-            <Tooltip title={allExpanded ? "כיווץ הכל" : "הרחב הכל"}>
-                <IconButton
-                    size="small"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        toggleAllExpanded();
-                    }}>
-                    {allExpanded ? (
-                        <KeyboardDoubleArrowUpIcon fontSize="small" />
-                    ) : (
-                        <KeyboardDoubleArrowDownIcon fontSize="small" />
-                    )}
-                </IconButton>
-            </Tooltip>
+                <Tooltip title={allExpanded ? "כיווץ הכל" : "הרחב הכל"}>
+                    <IconButton
+                        size="small"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            toggleAllExpanded();
+                        }}>
+                        {allExpanded ? (
+                            <KeyboardDoubleArrowUpIcon fontSize="small" />
+                        ) : (
+                            <KeyboardDoubleArrowDownIcon fontSize="small" />
+                        )}
+                    </IconButton>
+                </Tooltip>
         );
     }, [hasFormInFormFields, allExpanded, toggleAllExpanded]);
 
@@ -242,10 +242,10 @@ export const useDetailPanel = ({
         }
 
         return {
-            field: "expand",
+            field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
             headerName: "",
-            minWidth: 120,
-            width: 150,
+            minWidth: 80,
+            width: 80,
             sortable: false,
             filterable: false,
             disableColumnMenu: true,

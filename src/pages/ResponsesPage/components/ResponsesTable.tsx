@@ -10,7 +10,6 @@ import {
   GridRenderCellParams,
   GridRowSelectionModel,
   GRID_DETAIL_PANEL_TOGGLE_FIELD,
-  GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
 } from "@mui/x-data-grid-pro";
 import { useFormStore } from "../stores/form.store";
 import clsx from "clsx";
@@ -372,7 +371,7 @@ export const ResponsesTable = React.memo(
 
     const handleCellClick = useCallback(
       (params: GridCellParams, event: any) => {
-        if (params.field === "__check__" || params.field === "expand") {
+        if (params.field === "__check__" || params.field === GRID_DETAIL_PANEL_TOGGLE_FIELD) {
           return;
         }
 
@@ -642,19 +641,6 @@ export const ResponsesTable = React.memo(
 
       const structuralColumns: GridColDef[] = [
         ...(expandColumn ? [{ ...expandColumn, filterable: false }] : []),
-        ...(hasFormInFormFields
-          ? [
-              {
-                ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
-                field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
-                filterable: false,
-                sortable: false,
-                renderHeader: (params: any) => (
-                  <div aria-label={params?.colDef?.headerName ?? ""} />
-                ),
-              },
-            ]
-          : []),
       ];
 
       const parentResponseColumns: GridColDef[] = hasParentResponses
@@ -734,7 +720,6 @@ export const ResponsesTable = React.memo(
           .filter(
             (field) =>
               field !== "__check__" &&
-              field !== "expand" &&
               field !== GRID_DETAIL_PANEL_TOGGLE_FIELD,
           ),
       [getFormColumns],
@@ -1063,7 +1048,7 @@ export const ResponsesTable = React.memo(
               columnBufferPx={5000}
               initialState={{
                 pinnedColumns: {
-                  left: ["__check__", "meta:index"],
+                  left: ["__check__", "meta:index", GRID_DETAIL_PANEL_TOGGLE_FIELD],
                 },
               }}
               sortingMode="server"

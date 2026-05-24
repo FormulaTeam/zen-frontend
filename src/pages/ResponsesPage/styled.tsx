@@ -171,9 +171,6 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     fontSize: "18px",
     transition: "all 0.3s ease",
     border: "none",
-    "& [data-field='__detail_panel_toggle__']": {
-      display: "none",
-    },
     "& .MuiDataGrid-cell": {
       borderBottom: "none",
       borderRight: "none",
@@ -211,11 +208,17 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
       justifyContent: "flex-start !important",
       flexDirection: "row !important",
     },
+    "&[data-field='__detail_panel_toggle__'] .MuiDataGrid-columnHeaderTitleContainer": {
+      justifyContent: "center !important",
+    },
   },
   "& .MuiDataGrid-row": {
       borderBottom: "none",
       "&:hover": {
         backgroundColor: "#f0f7ff !important",
+        "& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight": {
+          backgroundColor: "#f0f7ff !important",
+        },
       },
     },
     "& .active-editing-row": {
