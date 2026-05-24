@@ -12,14 +12,14 @@ interface ButtonProps {
 
 export const NavAppBar = styled(AppBar)<AppBarProps>`
   background-color: ${(props) => props.$bgColor};
-  height: 70px;
+  height: 60px;
 `;
 
 export const NavToolbar = styled(Toolbar)`
   display: flex;
   justify-content: space-between;
-  height: 70px;
-  min-height: 70px !important;
+  height: 60px;
+  min-height: 60px !important;
   align-items: center;
 `;
 
