@@ -19,12 +19,8 @@ interface StyledAutocompleteProps {
     2nd	        DisableClearable	false	    The clear icon (❌) is enabled, so users can clear the selection.
     3rd	        FreeSolo	        false	    The user can’t type custom values not in the list of options.
  */
-export const StyledAutocomplete = styled(Autocomplete<SortOption, false, false, false>, {
-  shouldForwardProp: (prop) => prop !== 'sortInputWidth',
-})<StyledAutocompleteProps>(({ theme, sortInputWidth }) => ({
-  width: `${sortInputWidth}px`,
-  minWidth: '125px',
-  maxWidth: '250px',
+export const StyledAutocomplete = styled(Autocomplete<SortOption, false, false, false>)(({ theme }) => ({
+  width: '180px',
   borderRadius: '8px',
   fontSize: '15px',
 

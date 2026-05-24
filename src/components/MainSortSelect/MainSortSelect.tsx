@@ -17,9 +17,6 @@ interface MainSortSelectProps {
 
 const MainSortSelect: React.FC<MainSortSelectProps> = ({ onSortChange, dataTestId }) => {
   const [sortByOption, setSortByOption] = useState<SortOption | null>(null);
-  const DEFAULT_INPUT_WIDTH = 125;
-  const FONT_SIZE = 16;
-  const [sortInputWidth, setSortInputWidth] = useState(DEFAULT_INPUT_WIDTH);
 
   const handleSortByChange = (event: React.SyntheticEvent, newValue: SortOption | null) => {
     setSortByOption(newValue);
@@ -28,17 +25,10 @@ const MainSortSelect: React.FC<MainSortSelectProps> = ({ onSortChange, dataTestI
     if (sortEnums) {
       onSortChange(sortEnums.sortBy, sortEnums.sortDirection);
     }
-
-    if (newValue && newValue.label.length !== 1) {
-      setSortInputWidth(Math.max(DEFAULT_INPUT_WIDTH, newValue.label.length * FONT_SIZE));
-    } else {
-      setSortInputWidth(DEFAULT_INPUT_WIDTH);
-    }
   };
 
   return (
     <StyledAutocomplete
-      sortInputWidth={sortInputWidth}
       isOptionEqualToValue={(option, value) => {
         return option?.label === value?.label;
       }}
@@ -48,7 +38,7 @@ const MainSortSelect: React.FC<MainSortSelectProps> = ({ onSortChange, dataTestI
       id="sortByAutocomplete"
       onChange={handleSortByChange}
       multiple={false}
-      disablePortal //so options dropdown will show in popup
+      disablePortal
       getOptionLabel={(option) => option.label}
       renderInput={(params) => (
         <StyledTextField
@@ -58,7 +48,6 @@ const MainSortSelect: React.FC<MainSortSelectProps> = ({ onSortChange, dataTestI
           fullWidth
           size="small"
           name="placeholder"
-          value={sortByOption || ""}
           inputProps={{
             ...params.inputProps,
             "data-testid": dataTestId,
