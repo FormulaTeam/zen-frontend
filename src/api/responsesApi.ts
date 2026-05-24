@@ -28,6 +28,47 @@ const stringifyQuery = (query: any): string => {
   return query || "";
 };
 
+const formatParams = (filter?: Filter) => {
+  const sortBy = filter?.sortBy;
+  const formattedSortBy = sortBy ? (sortBy.includes(":") ? sortBy : `meta:${sortBy}`) : "meta:created_at";
+
+  const responseFilters = filter?.responseFilters;
+  const query = filter?.query;
+
+  let filtersParam: string | undefined;
+  let searchParam: string | undefined;
+
+  if (responseFilters && responseFilters.items && responseFilters.items.length > 0) {
+    filtersParam = JSON.stringify(responseFilters);
+  }
+
+  if (typeof query === "string" && query.trim() !== "") {
+    searchParam = query;
+  } else if (query && typeof query === "object") {
+    // If it's an object but not responseFilters, it might be legacy search params.
+    // If it has 'items', treat it as filters.
+    if (Array.isArray((query as any).items)) {
+      filtersParam = JSON.stringify(query);
+    } else {
+      // Otherwise, it might be legacy search object, we'll try to stringify it for 'search'
+      // but usually the new Engine expects 'filters' for structured data.
+      // For now, let's keep it safe.
+      searchParam = JSON.stringify(query);
+    }
+  }
+
+  return {
+    limit: filter?.pageSize ?? 25,
+    filters: filtersParam,
+    search: searchParam,
+    sortBy: formattedSortBy,
+    sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+    before: filter?.before,
+    after: filter?.after,
+    onlyDeleted: filter?.onlyDeleted,
+  };
+};
+
 type SoftDeleteResponsesDto = {
   scope?: (typeof responsesScopeOption)[keyof typeof responsesScopeOption];
   responsesIds?: string[];
@@ -41,15 +82,7 @@ type SoftDeleteResponsesDto = {
  * @returns A promise that resolves to an array of responses or a paginated response object.
  */
 export const getResponses = async (formId: number, filter?: Filter): Promise<any> => {
-  const params: any = {
-    limit: filter?.pageSize ?? 25,
-    search: stringifyQuery(filter?.query),
-    sortBy: filter?.sortBy ?? "created_at",
-    sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
-    before: filter?.before,
-    after: filter?.after,
-    onlyDeleted: filter?.onlyDeleted,
-  };
+  const params = formatParams(filter);
 
   try {
     const response = await apiClient.get(`/forms/${formId}/responses`, { params });
@@ -173,13 +206,7 @@ export const searchResponses = async (filter: Filter): Promise<any> => {
     const formId = filter?.form_id;
     if (!formId) throw new Error("form_id is required for searchResponses");
 
-    const params: any = {
-      limit: filter?.pageSize ?? 25,
-      search: stringifyQuery(filter?.query),
-      sortBy: filter?.sortBy ?? "created_at",
-      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
-      onlyDeleted: filter?.onlyDeleted,
-    };
+    const params = formatParams(filter);
 
     const response = await apiClient.get(`/forms/${formId}/responses`, { params });
 
@@ -205,11 +232,8 @@ export const getAllDeletedResponses = async (filter: Filter): Promise<any> => {
     const formId = filter?.form_id;
     if (!formId) throw new Error("form_id is required for getAllDeletedResponses");
 
-    const params: any = {
-      limit: filter?.pageSize ?? 25,
-      search: stringifyQuery(filter?.query),
-      sortBy: filter?.sortBy,
-      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
+    const params = {
+      ...formatParams(filter),
       onlyDeleted: true,
     };
 
@@ -296,19 +320,13 @@ export const getResponseWithFlatFields = (
 // Hooks
 // ============================================================
 
-export const useGetResponsesRows = (formId: string, params: any) => {
-  const safeParams = useMemo(
-    () => ({
-      ...params,
-      search: stringifyQuery(params.search),
-    }),
-    [params],
-  );
+export const useGetResponsesRows = (formId: string, filter?: Filter) => {
+  const params = useMemo(() => formatParams(filter), [filter]);
 
-  return useFetch<typeof safeParams, any>({
+  return useFetch<typeof params, any>({
     endpoint: `/forms/${formId}/responses`,
-    queryKey: () => ["responses", formId, safeParams],
-    params: safeParams,
+    queryKey: () => ["responses", formId, params],
+    params: params,
     queryOptions: {
       enabled: !!formId,
       placeholderData: keepPreviousData,
@@ -318,17 +336,7 @@ export const useGetResponsesRows = (formId: string, params: any) => {
 
 export const useGetResponses = ({ filter }: { filter?: Filter }) => {
   const formId = filter?.form_id;
-  const params: any = useMemo(
-    () => ({
-      limit: filter?.pageSize ?? 25,
-      search: stringifyQuery(filter?.query),
-      sortBy: filter?.sortBy ?? "created_at",
-      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
-      before: filter?.before,
-      after: filter?.after,
-    }),
-    [filter],
-  );
+  const params = useMemo(() => formatParams(filter), [filter]);
 
   return useFetch<typeof params | undefined, any>({
     endpoint: `/forms/${formId}/responses`,
@@ -453,14 +461,7 @@ export const getResponsesRows = async ({
       return [];
     }
 
-    const params: any = {
-      limit: filter?.pageSize ?? 25,
-      search: stringifyQuery(filter?.query),
-      sortBy: filter?.sortBy ?? "created_at",
-      sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
-      before: filter?.before,
-      after: filter?.after,
-    };
+    const params = formatParams(filter);
 
     const response = await apiClient.get(`/forms/${formId}/responses`, {
       params,
@@ -481,6 +482,8 @@ export const getResponsesRows = async ({
         createdByUpn: node.created_by?.upn || node.createdBy?.upn,
         index: node.index,
         form_id: node.form_id || node.formId,
+        parentResponse: node.parentResponse || node.parent_response,
+        childResponses: node.childResponses || node.child_responses,
       };
 
       const fieldValues = node.fieldValues || node.field_values || node.data || [];

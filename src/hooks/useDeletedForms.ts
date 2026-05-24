@@ -25,11 +25,17 @@ export const useDeletedForms = (
   const fetchDeletedForms = useCallback(async () => {
     setLoading(true);
 
+    const items: any[] = [];
+    if (filters.createdBy?.trim()) {
+      items.push({
+        metaField: "created_by",
+        operator: "contains",
+        value: filters.createdBy.trim(),
+      });
+    }
+
     const filter: Filter = getSortedFilter(filters.sortValue ?? 7, {
-      query: {
-        deletedByText: filters.deletedBy?.trim() || undefined,
-        createdByText: filters.createdBy?.trim() || undefined,
-      },
+      responseFilters: items.length ? { items } : undefined,
     });
 
     filter.onlyDeleted = true;

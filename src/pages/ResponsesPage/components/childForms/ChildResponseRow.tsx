@@ -15,6 +15,7 @@ import { ResponseCell } from "./styled";
 import { getOptionResponseDisplayValue } from "../../../../utils/optionResponseValue";
 
 import { highlightTextUtil } from "../../utils/highlighting";
+import { getFieldColumnKey } from "../../../../api";
 
 interface ChildResponseRowProps {
   response: Row;
@@ -290,7 +291,7 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
       </WiderResponseCell>
 
       {formFields.map((field) => {
-        const fieldValue = response[field.displayName] ?? "";
+        const fieldValue = response[getFieldColumnKey(String(field.id))] ?? "";
 
         if (
           field.fieldType === fieldType.Location &&

@@ -334,19 +334,25 @@ export const ResponsesTable = React.memo(
 
     const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
 
-    const { childrenFormsData, hasFormInFormFields, getChildFormData } = useChildForms({ form });
+    const { childrenFormsData, hasFormInFormFields, loadingChildForms, getChildFormData } = useChildForms({ form });
 
-    const { expandColumn, getDetailPanelContent, getDetailPanelHeight, detailPanelExpandedRowIds } =
-      useDetailPanel({
-        form,
-        rows,
-        hasFormInFormFields,
-        childrenFormsData,
-        isInEditMode,
-        getChildFormData,
-        currentViewConfig,
-        searchQuery: filter?.query,
-      });
+    const {
+      expandColumn,
+      getDetailPanelContent,
+      getDetailPanelHeight,
+      detailPanelExpandedRowIds,
+      handleDetailPanelExpandedRowIdsChange,
+    } = useDetailPanel({
+      form,
+      rows,
+      hasFormInFormFields,
+      loadingChildForms,
+      childrenFormsData,
+      isInEditMode,
+      getChildFormData,
+      currentViewConfig,
+      searchQuery: filter?.query,
+    });
 
     const { renderEditCell } = useCellEditors({
       apiRef,
@@ -1117,6 +1123,7 @@ export const ResponsesTable = React.memo(
                 getDetailPanelContent,
                 getDetailPanelHeight,
                 detailPanelExpandedRowIds,
+                onDetailPanelExpandedRowIdsChange: handleDetailPanelExpandedRowIdsChange,
               })}
               slotProps={{
                 columnMenu: {

@@ -11,6 +11,7 @@ interface UseRowExpansionProps {
 
 interface UseRowExpansionReturn {
   expandedRowIds: Set<string>;
+  setExpandedRowIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   toggleRowExpanded: (rowId: string) => void;
   toggleAllExpanded: () => void;
   isRowExpanded: (rowId: string) => boolean;
@@ -72,6 +73,7 @@ export const useRowExpansion = ({
 
   return {
     expandedRowIds,
+    setExpandedRowIds,
     toggleRowExpanded,
     toggleAllExpanded,
     isRowExpanded,

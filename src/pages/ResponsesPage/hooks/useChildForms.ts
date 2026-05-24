@@ -49,16 +49,9 @@ const fetchChildFormData = async (
 ): Promise<ChildFormData | null> => {
     try {
         const formData = await getFormById(Number(connectedFormId));
-        const rowsData = await getResponsesRows({
-            filter: {
-                form_id: Number(connectedFormId),
-                query: `parentResponse: { $regex: ${parentFormId};`,
-            },
-            form: formData || undefined,
-        });
 
-        if (formData && rowsData) {
-            return { form: formData, rows: rowsData as Row[] };
+        if (formData) {
+            return { form: formData, rows: [] };
         }
 
         return null;
@@ -77,12 +70,11 @@ export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn
         () =>
             formFields.filter((field) => {
                 const extra = getFieldExtra(field);
-                return (
-                    (field.fieldType === fieldType.Form ||
-                        (field as any).typeId === FieldTypeIds.linkedForm ||
-                        (field as any).fieldType === FieldTypeIds.linkedForm) &&
-                    !!(extra.connectedFormId || extra.linkedFormId)
-                );
+                const isFormType = field.fieldType === fieldType.Form ||
+                    (field as any).typeId === FieldTypeIds.linkedForm ||
+                    (field as any).fieldType === FieldTypeIds.linkedForm;
+
+                return isFormType && !!(extra.connectedFormId || extra.linkedFormId);
             }),
         [formFields],
     );

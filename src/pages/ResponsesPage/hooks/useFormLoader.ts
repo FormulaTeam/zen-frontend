@@ -1,11 +1,7 @@
-import { useEffect, useMemo, useRef } from "react";
-import { useGetForm, useGetResponsesRows } from "../../../api";
+import { useEffect, useRef } from "react";
+import { useGetForm, useGetResponsesRows, getFieldColumnKey } from "../../../api";
 import { useInitiateFormStore } from "../stores/form.store";
 import { Row } from "../../../utils/interfaces";
-
-const FIELD_COLUMN_PREFIX = "field:";
-
-const getFieldColumnKey = (fieldId: string): string => `${FIELD_COLUMN_PREFIX}${fieldId}`;
 
 export function useFormLoader(formId: string) {
   const { form, setForm, setPermissions, setRows, filter, setResponses } = useInitiateFormStore();
@@ -21,23 +17,6 @@ export function useFormLoader(formId: string) {
     config: { enabled: !!formId },
   });
 
-  const queryParams = useMemo(
-    () => ({
-      limit: filter?.pageSize ?? 25,
-      search: filter?.query ?? "",
-      filters: filter?.responseFilters?.items?.length
-        ? JSON.stringify({
-            items: filter.responseFilters.items,
-          })
-        : undefined,
-      sortBy: filter?.sortBy,
-      sortDirection: filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc",
-      before: filter?.before,
-      after: filter?.after,
-    }),
-    [filter],
-  );
-
   const {
     data: responsesRowsData,
     isSuccess: isResponsesSuccess,
@@ -45,7 +24,7 @@ export function useFormLoader(formId: string) {
     isPlaceholderData,
     isError: isResponsesError,
     isPending: isRowsPending,
-  } = useGetResponsesRows(formId, queryParams as any);
+  } = useGetResponsesRows(formId, filter || undefined);
 
   const { setPageInfo, setIsRowsLoading } = useInitiateFormStore();
 
@@ -109,7 +88,7 @@ export function useFormLoader(formId: string) {
           createdByUpn: node.created_by?.upn || node.createdBy?.upn,
           index: node.index,
           form_id: node.form_id || node.formId,
-          childResponses: node.childResponses || [],
+          childResponses: node.childResponses || node.child_responses || [],
         };
 
         const fieldValues = node.fieldValues || node.field_values || node.data || [];

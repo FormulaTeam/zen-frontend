@@ -71,17 +71,27 @@ export const useDeletedResponses = (
       const sortBy = "meta:created_at"; // Use creation time as fallback if deleted_at not supported
       const orderBy = customSort === 8 ? IOrderBy.ASC : IOrderBy.DESC;
 
+      const items: any[] = [];
+      if (customFilters.createdBy?.trim()) {
+        items.push({
+          metaField: "created_by",
+          operator: "contains",
+          value: customFilters.createdBy.trim(),
+        });
+      }
+
+      // Note: deleted_by is not in the allowed list of metaFields in the error message,
+      // so we might need to skip it or handle it differently if the Engine doesn't support it yet.
+      // For now, let's only send createdBy if it's there.
+
       const filter: Filter = {
         pageSize: PAGE_SIZE,
         pageNumber,
         onlyDeleted: true,
         sortBy,
         orderBy,
-        query: {
-          deletedByText: customFilters.deletedBy?.trim() || undefined,
-          createdByText: customFilters.createdBy?.trim() || undefined,
-          search: trimmedSearch || undefined,
-        },
+        query: trimmedSearch || undefined,
+        responseFilters: items.length ? { items } : undefined,
       };
 
       const result = currentDeletedForm
