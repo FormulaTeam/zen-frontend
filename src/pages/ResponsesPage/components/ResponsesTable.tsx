@@ -969,8 +969,8 @@ export const ResponsesTable = React.memo(
             display: "flex",
             alignItems: "center",
             px: 3,
-            py: 1.5,
-            minHeight: "50px",
+            py: 0.5,
+            minHeight: "40px",
             borderTop: "none",
             direction: "rtl",
             gap: 4, // <- adds spacing between the 3 main segments

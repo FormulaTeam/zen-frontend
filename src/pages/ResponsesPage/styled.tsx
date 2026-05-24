@@ -461,7 +461,9 @@ export const DialogTitleBox = styled(Box)(() => ({
 export const StyledEditButton = styled(Button)(() => ({
   backgroundColor: "#DBE7F4",
   color: "#000000",
-  fontSize: "1.2rem !important",
+  fontSize: "1rem !important",
+  fontWeight: 400,
+  padding: "4px 16px",
   "&:hover": {
     backgroundColor: "#bbdefb",
   },

@@ -87,7 +87,7 @@ export const StyledCard = styled(Card)`
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 24px;
+  padding: 24px 24px 16px 24px;
   width: 100%;
   min-height: 220px;
 `;
@@ -137,8 +137,8 @@ export const ItemResponsesNum = styled(Typography)`
 `;
 
 export const ItemBottomDiv = styled(Box)`
-  margin-top: 2%;
   display: flex;
+  align-items: center;
   justify-content: space-between;
   overflow-x: auto;
   width: 100%;
@@ -149,7 +149,6 @@ export const ItemBtnsDiv = styled(Box)`
   flex-direction: row;
   align-items: center;
   gap: 8px;
-  padding: 1px;
   min-height: 28px;
 `;
 

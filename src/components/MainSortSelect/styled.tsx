@@ -3,13 +3,12 @@ import { styled } from "@mui/material/styles";
 
 export const StyledFormControl = styled(FormControl)(({ theme }) => ({
   width: 220,
-  backgroundColor: theme.palette.background.paper,
+  backgroundColor: "transparent",
 
   "& .MuiInputLabel-root": {
     color: "#62748E",
     fontWeight: 600,
     fontSize: "1.1rem",
-    backgroundColor: theme.palette.background.paper,
     padding: "0 6px",
 
     "&.Mui-focused": {
@@ -21,6 +20,7 @@ export const StyledFormControl = styled(FormControl)(({ theme }) => ({
 export const StyledSelect = styled(Select<number>)(({ theme }) => ({
   borderRadius: 8,
   height: 40,
+  backgroundColor: theme.palette.background.paper,
   color: theme.palette.text.primary,
 
   "& .MuiOutlinedInput-notchedOutline": {

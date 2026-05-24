@@ -216,15 +216,15 @@ const FormCard = ({
       </ItemImgAndTitles>
 
       <Box sx={{ width: "100%", mt: "auto" }}>
-        <Box sx={{ mb: 1.5 }}>
+        <Box sx={{ mb: 1 }}>
           <CardCreationDetails form={form} />
         </Box>
 
-        <Divider sx={{ mb: 1.5, borderColor: "#D1D1D1", opacity: 0.6 }} />
+        <Divider sx={{ mb: 1, borderColor: "#D1D1D1", opacity: 0.6 }} />
 
         <ItemBottomDiv sx={{ marginTop: 0, alignItems: "center" }}>
-          <ItemResponsesNum className="form-responses-count" sx={{ color: "#62748E", gap: 0.5 }}>
-            <ChatBubbleOutline sx={{ fontSize: "20px" }} />
+          <ItemResponsesNum className="form-responses-count" sx={{ color: "#020618", gap: 0.5 }}>
+            <ChatBubbleOutline sx={{ fontSize: "18px" }} />
             {form.responsesCount ?? 0}
           </ItemResponsesNum>
 
@@ -246,11 +246,12 @@ const FormCard = ({
                 onClick={() => navigate(`/response/create/${form.id}`)}
                 variant="outlined"
                 sx={{
-                  height: "40px",
-                  color: "#62748E",
+                  height: "32px",
+                  color: "#020618",
                   borderColor: "#D1D1D1",
                   borderRadius: "8px",
-                  fontWeight: 600,
+                  fontWeight: 400,
+                  fontSize: "14px",
                   textTransform: "none",
                   "&:hover": {
                     borderColor: "#020618",

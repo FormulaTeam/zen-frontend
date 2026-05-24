@@ -12,7 +12,7 @@ const CreateNew = () => {
       </Typography>
 
       <Box sx={{ marginTop: 3 }}>
-        <Button variant="contained" onClick={() => navigate("/form/create")}>
+        <Button variant="contained" onClick={() => navigate("/form/create")} sx={{ fontWeight: 400 }}>
           יצירת טופס חדש
           <AddIcon />
         </Button>
