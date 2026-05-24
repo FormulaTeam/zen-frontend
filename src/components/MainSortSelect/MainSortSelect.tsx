@@ -61,7 +61,8 @@ const MainSortSelect: React.FC<MainSortSelectProps> = ({ onSortChange, dataTestI
           value={sortByOption || ""}
           inputProps={{
             ...params.inputProps,
-            'data-testid': dataTestId,
+            "data-testid": dataTestId,
+            readOnly: true,
           }}
         />
       )}

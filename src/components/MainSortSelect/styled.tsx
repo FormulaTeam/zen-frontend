@@ -36,7 +36,7 @@ export const StyledAutocomplete = styled(Autocomplete<SortOption, false, false, 
 
 export const StyledTextField = styled(TextField)(({ theme }) => ({
   fieldset: { border: "1px solid " + theme.palette.primary.main },
-  ".MuiInputBase-input": { fontSize: "15px", fontWeight: 600 },
+  ".MuiInputBase-input": { fontSize: "15px", fontWeight: 600, cursor: "pointer" },
   "& .MuiSvgIcon-root": {
     color: (theme) => theme.palette.primary.main,
     "&:hover": {
