@@ -121,21 +121,20 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
               if (isLoading) return null;
 
               return (
-                <div key={formField.id || `${sectionId}-${index}`}>
-                  <FormFieldRenderer
-                    formField={formField}
-                    formFieldsByIdMap={formFieldsByIdMap}
-                    formFieldsValuesMap={formFieldsValuesMap}
-                    formFieldsValidMap={formFieldsValidMap}
-                    onChangeHandler={onChangeHandler}
-                    onBlurHandler={onBlurHandler}
-                    viewMode={viewMode}
-                    fieldOptions={fieldOptions}
-                    formFields={formFields}
-                    index={index}
-                    formId={formId}
-                  />
-                </div>
+                <FormFieldRenderer
+                  key={`${formField.id}-${viewMode}`}
+                  formField={formField}
+                  formFieldsByIdMap={formFieldsByIdMap}
+                  formFieldsValuesMap={formFieldsValuesMap}
+                  formFieldsValidMap={formFieldsValidMap}
+                  onChangeHandler={onChangeHandler}
+                  onBlurHandler={onBlurHandler}
+                  viewMode={viewMode}
+                  fieldOptions={fieldOptions}
+                  formFields={formFields}
+                  index={index}
+                  formId={formId}
+                />
               );
             })}
         </GridContainer>
