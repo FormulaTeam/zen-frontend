@@ -74,6 +74,25 @@ export const TitleWrapper = styled(Box)<BoxProps>(() => ({
   gap: "12px",
 }));
 
+export const FormIconWrapper = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "40px",
+  height: "40px",
+  borderRadius: "8px",
+  backgroundColor: "rgba(25, 118, 210, 0.08)",
+  flexShrink: 0,
+  "& img": {
+    width: "24px",
+    height: "24px",
+    objectFit: "contain",
+  },
+  "& svg": {
+    fontSize: "24px",
+  },
+}));
+
 export const QuickEditTableContainer = styled(MuiTableContainer)<{ isQuickEditMode?: boolean }>(
   ({ theme, isQuickEditMode }) => ({
     ...(isQuickEditMode && {
