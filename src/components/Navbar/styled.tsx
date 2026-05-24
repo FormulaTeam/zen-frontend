@@ -18,7 +18,8 @@ export const NavAppBar = styled(AppBar)<AppBarProps>`
 export const NavToolbar = styled(Toolbar)`
   display: flex;
   justify-content: space-between;
-  height: 85px;
+  height: 100%;
+  align-items: center;
 `;
 
 export const LogoContainer = styled.div<{ disabled: boolean }>`
@@ -26,6 +27,7 @@ export const LogoContainer = styled.div<{ disabled: boolean }>`
   flex: 1;
   display: flex;
   justify-content: flex-start;
+  align-items: center;
 `;
 
 export const ButtonsContainer = styled.div`
