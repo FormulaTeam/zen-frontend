@@ -6,10 +6,10 @@ export const StyledFormControl = styled(FormControl)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
   "& .MuiInputLabel-root": {
     color: theme.palette.primary.main,
-    fontWeight: 600,
-    fontSize: "14px",
+    fontWeight: 800,
+    fontSize: "16px",
     backgroundColor: theme.palette.background.paper,
-    padding: "0 4px",
+    padding: "0 6px",
     "&.Mui-focused": {
       color: theme.palette.primary.main,
     },
@@ -18,9 +18,10 @@ export const StyledFormControl = styled(FormControl)(({ theme }) => ({
 
 export const StyledSelect = styled(Select<number>)(({ theme }) => ({
   borderRadius: "8px",
-  fontSize: "14px",
+  fontSize: "12px",
   fontWeight: 600,
   height: "40px",
+  color: theme.palette.text.primary,
   "& .MuiOutlinedInput-notchedOutline": {
     borderColor: theme.palette.primary.main,
     borderWidth: "1px",

@@ -40,7 +40,7 @@ const MainSortSelect: React.FC<MainSortSelectProps> = ({ onSortChange, dataTestI
         }
       >
         {sortByOptions.map((option) => (
-          <MenuItem key={option.value} value={option.value} sx={{ fontSize: "14px" }}>
+          <MenuItem key={option.value} value={option.value} sx={{ fontSize: "12px" }}>
             {option.label}
           </MenuItem>
         ))}
