@@ -35,6 +35,7 @@ import {
   Select,
   Tooltip,
   IconButton,
+  Checkbox,
 } from "@mui/material";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
@@ -172,7 +173,9 @@ interface ResponsesTableProps {
   validationErrors?: Record<number | string, Record<string, QuickEditValidationError>>;
   onCellLiveChange?: (rowId: number | string, columnName: string, value: unknown) => void;
   onRowSelectionModelChange?: (model: GridRowSelectionModel) => void;
+  rowSelectionModel?: GridRowSelectionModel;
   currentView?: ResponsesView;
+  deletedRowIds?: (string | number)[];
 }
 
 const SyncStatusIcon: React.FC<{ pushedToMetro?: string | null }> = ({ pushedToMetro }) => (
@@ -206,7 +209,9 @@ export const ResponsesTable = React.memo(
     validationErrors,
     onCellLiveChange,
     onRowSelectionModelChange,
+    rowSelectionModel,
     currentView,
+    deletedRowIds = [],
   }: ResponsesTableProps) => {
     const { form, setForm, rows, pageInfo, filter, setFilter, setResponseFilters, isRowsLoading } =
       useFormStore();
@@ -382,13 +387,6 @@ export const ResponsesTable = React.memo(
         }
 
         if (isInEditMode && !params.isEditable) {
-          event?.preventDefault?.();
-          event?.stopPropagation?.();
-
-          if (event) {
-            event.defaultMuiPrevented = true;
-          }
-
           return;
         }
 
@@ -415,7 +413,7 @@ export const ResponsesTable = React.memo(
 
     const getCellClassName = useCallback(
       (params: GridCellParams): string => {
-        if (!isInEditMode) {
+        if (!isInEditMode || params.field === "__check__") {
           return "";
         }
 
@@ -499,8 +497,9 @@ export const ResponsesTable = React.memo(
         const col: GridColDef = {
           field: gridField,
           headerName: field.displayName,
-          minWidth: 200,
-          width: 400,
+          minWidth: 150,
+          maxWidth: 800,
+          flex: 1,
           editable: true,
           sortable: isSortable(field.fieldType),
           ...getResponseFilterColumnProps(field),
@@ -1048,9 +1047,14 @@ export const ResponsesTable = React.memo(
               className={clsx({ "MuiDataGrid-root--edit-mode": isInEditMode })}
               disableColumnMenu={isInEditMode}
               disableColumnSorting={false}
-              disableColumnResize={isInEditMode}
               disableColumnFilter={isInEditMode}
               headerFilters={shouldUseHeaderFilters}
+              autosizeOnMount
+              autosizeOptions={{
+                includeHeaders: true,
+                includeOutliers: true,
+                expand: true,
+              }}
               columnBufferPx={5000}
               initialState={{
                 pinnedColumns: {
@@ -1081,6 +1085,8 @@ export const ResponsesTable = React.memo(
               }
               checkboxSelection
               disableRowSelectionOnClick
+              disableColumnResize
+              rowSelectionModel={rowSelectionModel}
               onRowSelectionModelChange={onRowSelectionModelChange}
               getRowClassName={(params) => {
                 const classes: string[] = [];
@@ -1091,6 +1097,10 @@ export const ResponsesTable = React.memo(
                 );
 
                 if (isInEditMode) {
+                  if (deletedRowIds.map(String).includes(String(params.id))) {
+                    classes.push("pending-deletion-row");
+                  }
+
                   const isEdited = Object.keys(cellModesModel[params.id] || {}).some(
                     (field) => cellModesModel[params.id][field].mode === GridCellModes.Edit,
                   );

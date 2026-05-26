@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { getFormById } from "../../../api/formsApi";
 import { getResponsesRows } from "../../../api/responsesApi";
 import type { FormDto, FormFieldDto } from "../../../types/shared";
@@ -122,14 +122,22 @@ export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn
         };
     }, [hasFormInFormFields, form?.id, childFormIds.join(",")]);
 
-    const getChildFormData = (connectedFormId: number | string): ChildFormData | undefined => {
-        return childrenFormsData.find((data) => String(data.form.id) === String(connectedFormId));
-    };
+    const getChildFormData = useCallback(
+        (connectedFormId: number | string): ChildFormData | undefined => {
+            return childrenFormsData.find(
+                (data) => String(data.form.id) === String(connectedFormId),
+            );
+        },
+        [childrenFormsData],
+    );
 
-    return {
-        childrenFormsData,
-        hasFormInFormFields,
-        loadingChildForms,
-        getChildFormData,
-    };
+    return useMemo(
+        () => ({
+            childrenFormsData,
+            hasFormInFormFields,
+            loadingChildForms,
+            getChildFormData,
+        }),
+        [childrenFormsData, hasFormInFormFields, loadingChildForms, getChildFormData],
+    );
 };

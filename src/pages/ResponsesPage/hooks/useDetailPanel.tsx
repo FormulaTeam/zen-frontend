@@ -354,11 +354,21 @@ export const useDetailPanel = ({
     [setExpandedRowIds],
   );
 
-  return {
-    expandColumn,
-    getDetailPanelContent: hasFormInFormFields ? getDetailPanelContent : undefined,
-    getDetailPanelHeight: hasFormInFormFields ? getDetailPanelHeight : undefined,
-    detailPanelExpandedRowIds,
-    handleDetailPanelExpandedRowIdsChange,
-  };
+  return useMemo(
+    () => ({
+      expandColumn,
+      getDetailPanelContent: hasFormInFormFields ? getDetailPanelContent : undefined,
+      getDetailPanelHeight: hasFormInFormFields ? getDetailPanelHeight : undefined,
+      detailPanelExpandedRowIds,
+      handleDetailPanelExpandedRowIdsChange,
+    }),
+    [
+      expandColumn,
+      hasFormInFormFields,
+      getDetailPanelContent,
+      getDetailPanelHeight,
+      detailPanelExpandedRowIds,
+      handleDetailPanelExpandedRowIdsChange,
+    ],
+  );
 };

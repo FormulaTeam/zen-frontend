@@ -17,6 +17,8 @@ interface RowActionsButtonsProps {
   onDeleted: () => void;
   onDeleteResponses?: (ids: GridRowId[]) => Promise<void>;
   currentUserUpn?: string;
+  rows?: any[];
+  isInEditMode?: boolean;
 }
 
 export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
@@ -24,10 +26,14 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
   onDeleted,
   onDeleteResponses,
   currentUserUpn,
+  rows: propsRows,
+  isInEditMode,
 }) => {
   const navigate = useNavigate();
-  const { form, permissions, rows, setForm } = useFormStore();
+  const { form, permissions, rows: storeRows, setForm } = useFormStore();
   const { isSuperAdmin } = useSuperAdmin();
+
+  const rows = propsRows || storeRows;
 
   const { mutateAsync: softDeleteResponses } = useSoftDeleteResponses(Number(form?.id ?? 0));
 
@@ -123,14 +129,19 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
     <EditButtonWrapper>
       <Tooltip
         title={
-          !canView
-            ? "אין הרשאה לצפייה"
-            : !isSingleSelection
-              ? "בחר תגובה אחת כדי לצפות בה"
-              : "צפייה בתגובה"
+          isInEditMode
+            ? "לא ניתן לצפות בזמן עריכה מהירה"
+            : !canView
+              ? "אין הרשאה לצפייה"
+              : !isSingleSelection
+                ? "בחר תגובה אחת כדי לצפות בה"
+                : "צפייה בתגובה"
         }>
         <span>
-          <IconButton size="small" onClick={handleView} disabled={!canView || !isSingleSelection}>
+          <IconButton
+            size="small"
+            onClick={handleView}
+            disabled={!canView || !isSingleSelection || isInEditMode}>
             <Visibility />
           </IconButton>
         </span>
@@ -138,14 +149,19 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
 
       <Tooltip
         title={
-          !canEdit
-            ? "אין הרשאה לעריכה"
-            : !isSingleSelection
-              ? "בחר תגובה אחת כדי לערוך"
-              : "עריכת תגובה"
+          isInEditMode
+            ? "לא ניתן לערוך בזמן עריכה מהירה"
+            : !canEdit
+              ? "אין הרשאה לעריכה"
+              : !isSingleSelection
+                ? "בחר תגובה אחת כדי לערוך"
+                : "עריכת תגובה"
         }>
         <span>
-          <IconButton size="small" onClick={handleEdit} disabled={!canEdit || !isSingleSelection}>
+          <IconButton
+            size="small"
+            onClick={handleEdit}
+            disabled={!canEdit || !isSingleSelection || isInEditMode}>
             <Edit />
           </IconButton>
         </span>
@@ -153,14 +169,19 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
 
       <Tooltip
         title={
-          !canCreate
-            ? "אין הרשאה לשכפול"
-            : !isSingleSelection
-              ? "בחר תגובה אחת כדי לשכפל"
-              : "שכפול תגובה"
+          isInEditMode
+            ? "לא ניתן לשכפל בזמן עריכה מהירה"
+            : !canCreate
+              ? "אין הרשאה לשכפול"
+              : !isSingleSelection
+                ? "בחר תגובה אחת כדי לשכפל"
+                : "שכפול תגובה"
         }>
         <span>
-          <IconButton size="small" onClick={handleDuplicate} disabled={!canCreate || !isSingleSelection}>
+          <IconButton
+            size="small"
+            onClick={handleDuplicate}
+            disabled={!canCreate || !isSingleSelection || isInEditMode}>
             <ContentCopy />
           </IconButton>
         </span>
