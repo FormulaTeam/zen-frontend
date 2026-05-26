@@ -1,71 +1,52 @@
+import { InputLabel, MenuItem, SelectChangeEvent, Box } from "@mui/material";
+import SortIcon from "@mui/icons-material/Sort";
 import { useState } from "react";
-import { sortByOptions, SortOption } from "../../utils/utils";
-import { StyledAutocomplete, StyledTextField } from "./styled";
-import { formsSortOption, FormsSortOption, sortDirectionOption, SortDirection } from "../../types/enums/filtersAndSorts.enum";
 
-const sortValueToEnums: Record<number, { sortBy: FormsSortOption; sortDirection: SortDirection }> = {
-  1: { sortBy: formsSortOption.Name, sortDirection: sortDirectionOption.Ascending },
-  2: { sortBy: formsSortOption.Name, sortDirection: sortDirectionOption.Descending },
-  5: { sortBy: formsSortOption.CreatedAt, sortDirection: sortDirectionOption.Descending },
-  6: { sortBy: formsSortOption.CreatedAt, sortDirection: sortDirectionOption.Ascending },
-};
+import { sortByOptions } from "../../utils/utils";
+import { FormsSortOption, SortDirection, sortValueToEnums } from "./sortUtils";
+import { StyledFormControl, StyledSelect } from "./styled";
 
 interface MainSortSelectProps {
   onSortChange: (sortBy: FormsSortOption, sortDirection: SortDirection) => void;
   dataTestId?: string;
 }
 
-const MainSortSelect: React.FC<MainSortSelectProps> = ({ onSortChange, dataTestId }) => {
-  const [sortByOption, setSortByOption] = useState<SortOption | null>(null);
-  const DEFAULT_INPUT_WIDTH = 125;
-  const FONT_SIZE = 16;
-  const [sortInputWidth, setSortInputWidth] = useState(DEFAULT_INPUT_WIDTH);
+const MainSortSelect = ({ onSortChange, dataTestId }: MainSortSelectProps) => {
+  const [sortValue, setSortValue] = useState<number>(5);
 
-  const handleSortByChange = (event: React.SyntheticEvent, newValue: SortOption | null) => {
-    setSortByOption(newValue);
+  const handleChange = (event: SelectChangeEvent<number>) => {
+    const value = event.target.value as number;
+    setSortValue(value);
 
-    const sortEnums = sortValueToEnums[newValue?.value ?? 0];
-    if (sortEnums) {
-      onSortChange(sortEnums.sortBy, sortEnums.sortDirection);
-    }
-
-    if (newValue && newValue.label.length !== 1) {
-      setSortInputWidth(Math.max(DEFAULT_INPUT_WIDTH, newValue.label.length * FONT_SIZE));
-    } else {
-      setSortInputWidth(DEFAULT_INPUT_WIDTH);
+    const mapped = sortValueToEnums[value];
+    if (mapped) {
+      onSortChange(mapped.sortBy, mapped.sortDirection);
     }
   };
 
   return (
-    <StyledAutocomplete
-      sortInputWidth={sortInputWidth}
-      isOptionEqualToValue={(option, value) => {
-        return option?.label === value?.label;
-      }}
-      className="sort-by-autocomplete"
-      value={sortByOption}
-      options={sortByOptions}
-      id="sortByAutocomplete"
-      onChange={handleSortByChange}
-      multiple={false}
-      disablePortal //so options dropdown will show in popup
-      getOptionLabel={(option) => option.label}
-      renderInput={(params) => (
-        <StyledTextField
-          {...params}
-          label="מיון לפי"
-          variant="outlined"
-          fullWidth
-          size="small"
-          name="placeholder"
-          value={sortByOption || ""}
-          inputProps={{
-            ...params.inputProps,
-            'data-testid': dataTestId,
-          }}
-        />
-      )}
-    />
+    <StyledFormControl size="small" variant="outlined">
+      <InputLabel id="main-sort-select-label">מיון לפי</InputLabel>
+
+      <StyledSelect
+        labelId="main-sort-select-label"
+        id="main-sort-select"
+        value={sortValue}
+        label="מיון לפי"
+        onChange={handleChange}
+        inputProps={{ "data-testid": dataTestId }}
+        startAdornment={
+          <Box sx={{ display: "flex", mr: 1, ml: -0.5, color: "#020618" }}>
+            <SortIcon sx={{ fontSize: "22px" }} />
+          </Box>
+        }>
+        {sortByOptions.map((option) => (
+          <MenuItem key={option.value} value={option.value} sx={{ fontSize: "16px" }}>
+            {option.label}
+          </MenuItem>
+        ))}
+      </StyledSelect>
+    </StyledFormControl>
   );
 };
 

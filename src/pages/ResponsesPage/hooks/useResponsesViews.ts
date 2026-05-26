@@ -41,9 +41,11 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
       return undefined;
     }
 
-    const flattenedFields = (form.sections ?? [])
+    const sectionsFields = (form.sections ?? [])
       .flatMap((section) => section.fields ?? [])
-      .sort((a, b) => a.index - b.index);
+      .sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+
+    const flattenedFields = sectionsFields.length > 0 ? sectionsFields : form.fields ?? [];
 
     return {
       id: form.id,

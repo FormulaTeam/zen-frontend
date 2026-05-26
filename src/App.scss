@@ -1,8 +1,4 @@
 @import "./utils/variables.scss";
-// toast notification text in rtl
-.Toastify__toast-body > div:last-child {
-  direction: rtl;
-}
 
 .MuiTooltip-tooltip {
   direction: rtl !important;

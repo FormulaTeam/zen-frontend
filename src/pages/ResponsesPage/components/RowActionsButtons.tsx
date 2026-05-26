@@ -1,6 +1,6 @@
 import React from "react";
 import { Tooltip, IconButton } from "@mui/material";
-import { Visibility, Edit, Delete } from "@mui/icons-material";
+import { Visibility, Edit, Delete, ContentCopy } from "@mui/icons-material";
 import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { useNavigate } from "react-router-dom";
 
@@ -17,6 +17,8 @@ interface RowActionsButtonsProps {
   onDeleted: () => void;
   onDeleteResponses?: (ids: GridRowId[]) => Promise<void>;
   currentUserUpn?: string;
+  rows?: any[];
+  isInEditMode?: boolean;
 }
 
 export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
@@ -24,10 +26,14 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
   onDeleted,
   onDeleteResponses,
   currentUserUpn,
+  rows: propsRows,
+  isInEditMode,
 }) => {
   const navigate = useNavigate();
-  const { form, permissions, rows, setForm } = useFormStore();
+  const { form, permissions, rows: storeRows, setForm } = useFormStore();
   const { isSuperAdmin } = useSuperAdmin();
+
+  const rows = propsRows || storeRows;
 
   const { mutateAsync: softDeleteResponses } = useSoftDeleteResponses(Number(form?.id ?? 0));
 
@@ -56,6 +62,7 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
   const canView = !!isSuperAdmin || permissions.some(p => p === permission.ReadAnyResponse || p === permission.ReadForm);
   const canEdit = !!isSuperAdmin || permissions.includes(permission.UpdateAnyResponse) || (permissions.includes(permission.UpdateMyResponse) && responseCreatedByCurrentUser);
   const canDelete = !!isSuperAdmin || permissions.includes(permission.DeleteAnyResponse);
+  const canCreate = !!isSuperAdmin || permissions.includes(permission.CreateResponse);
 
   const handleView = () => {
     if (!isSingleSelection) return;
@@ -76,6 +83,17 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
 
     if (response) {
       navigate(`/response/edit/${form.id}/${response.id}`);
+    }
+  };
+
+  const handleDuplicate = () => {
+    if (!isSingleSelection) return;
+
+    const rowId = String(selectedIds[0]);
+    const response = rows.find((row) => String(row?.id) === rowId);
+
+    if (response) {
+      navigate(`/response/create/${form.id}/${response.id}`);
     }
   };
 
@@ -111,14 +129,19 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
     <EditButtonWrapper>
       <Tooltip
         title={
-          !canView
-            ? "אין הרשאה לצפייה"
-            : !isSingleSelection
-              ? "בחר תגובה אחת כדי לצפות בה"
-              : "צפייה בתגובה"
+          isInEditMode
+            ? "לא ניתן לצפות בזמן עריכה מהירה"
+            : !canView
+              ? "אין הרשאה לצפייה"
+              : !isSingleSelection
+                ? "בחר תגובה אחת כדי לצפות בה"
+                : "צפייה בתגובה"
         }>
         <span>
-          <IconButton size="small" onClick={handleView} disabled={!canView || !isSingleSelection}>
+          <IconButton
+            size="small"
+            onClick={handleView}
+            disabled={!canView || !isSingleSelection || isInEditMode}>
             <Visibility />
           </IconButton>
         </span>
@@ -126,15 +149,40 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
 
       <Tooltip
         title={
-          !canEdit
-            ? "אין הרשאה לעריכה"
-            : !isSingleSelection
-              ? "בחר תגובה אחת כדי לערוך"
-              : "עריכת תגובה"
+          isInEditMode
+            ? "לא ניתן לערוך בזמן עריכה מהירה"
+            : !canEdit
+              ? "אין הרשאה לעריכה"
+              : !isSingleSelection
+                ? "בחר תגובה אחת כדי לערוך"
+                : "עריכת תגובה"
         }>
         <span>
-          <IconButton size="small" onClick={handleEdit} disabled={!canEdit || !isSingleSelection}>
+          <IconButton
+            size="small"
+            onClick={handleEdit}
+            disabled={!canEdit || !isSingleSelection || isInEditMode}>
             <Edit />
+          </IconButton>
+        </span>
+      </Tooltip>
+
+      <Tooltip
+        title={
+          isInEditMode
+            ? "לא ניתן לשכפל בזמן עריכה מהירה"
+            : !canCreate
+              ? "אין הרשאה לשכפול"
+              : !isSingleSelection
+                ? "בחר תגובה אחת כדי לשכפל"
+                : "שכפול תגובה"
+        }>
+        <span>
+          <IconButton
+            size="small"
+            onClick={handleDuplicate}
+            disabled={!canCreate || !isSingleSelection || isInEditMode}>
+            <ContentCopy />
           </IconButton>
         </span>
       </Tooltip>

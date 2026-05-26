@@ -2,19 +2,23 @@ import { Box, Button, Typography, useTheme } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
 
-const CreateNew = () => {
+interface CreateNewProps {
+  isFirstForm?: boolean;
+}
+
+const CreateNew = ({ isFirstForm = false }: CreateNewProps) => {
   const navigate = useNavigate();
   const theme = useTheme();
+
   return (
     <>
-      <Typography sx={{ marginTop: 2, fontSize: "1.2rem", textAlign: "center" }}>
-        ליצירת טופס חדש במערכת יש ללחוץ על הכפתור ‘יצירת טופס חדש’
-      </Typography>
-
       <Box sx={{ marginTop: 3 }}>
-        <Button variant="contained" onClick={() => navigate("/form/create")}>
-          יצירת טופס חדש
-          <AddIcon />
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => navigate("/form/create")}
+          sx={{ fontWeight: 400 }}>
+          {isFirstForm ? "ליצירת הטופס הראשון שלך" : "יצירת טופס חדש"}
         </Button>
       </Box>
     </>

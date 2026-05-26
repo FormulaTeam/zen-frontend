@@ -24,33 +24,22 @@ export const useDeletedForms = (
 
   const fetchDeletedForms = useCallback(async () => {
     setLoading(true);
-    const query: any = {
-      deleted: { $exists: true, $ne: { $or: [null, ""] } },
-    };
 
-    if (filters.deletedBy) {
-      query.deleted_by_name = { $regex: filters.deletedBy, $options: "i" };
+    const items: any[] = [];
+    if (filters.createdBy?.trim()) {
+      items.push({
+        metaField: "created_by",
+        operator: "contains",
+        value: filters.createdBy.trim(),
+      });
     }
 
-    if (filters.createdBy) {
-      query.created_by_name = { $regex: filters.createdBy, $options: "i" };
-    }
+    const filter: Filter = getSortedFilter(filters.sortValue ?? 7, {
+      responseFilters: items.length ? { items } : undefined,
+    });
 
-    if (!isSuperAdmin) {
-      query.$or = [
-        {
-          users: {
-            $elemMatch: {
-              upn: user.upn?.toLowerCase(),
-              role_id: permission.ReadForm,
-            },
-          },
-        },
-        { created_by: user.upn?.toLowerCase() },
-      ];
-    }
+    filter.onlyDeleted = true;
 
-    const filter: Filter = getSortedFilter(filters.sortValue ?? 7, { query });
     try {
       const newForms = await getForms(filter);
       setForms(newForms || []);

@@ -1,8 +1,9 @@
-import { useCallback } from "react";
-import { Box, Chip, Link as MuiLink, Tooltip, Typography, styled } from "@mui/material";
+import { useCallback, useMemo } from "react";
+import { Box, Chip, Link as MuiLink, Typography, styled } from "@mui/material";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import moment from "moment";
 
+import { OverflowTooltip } from "@components/OverflowTooltip";
 import CustomCarousel from "../../../components/FilePreview/CustomCarousel";
 import { FormFieldDto } from "../../../types/shared";
 import { fieldType } from "formula-gear";
@@ -333,21 +334,22 @@ export const useCellDisplay = ({
 
       return (
         <Box component="span" className="cell-box">
-          <MuiLink
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={value.link}
-            sx={{
-              color: "primary.main",
-              textDecoration: "underline",
-              cursor: "pointer",
-              "&:hover": {
+          <OverflowTooltip title={value.link} arrow>
+            <MuiLink
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                color: "primary.main",
                 textDecoration: "underline",
-              },
-            }}>
-            {highlightText(displayText)}
-          </MuiLink>
+                cursor: "pointer",
+                "&:hover": {
+                  textDecoration: "underline",
+                },
+              }}>
+              {highlightText(displayText)}
+            </MuiLink>
+          </OverflowTooltip>
         </Box>
       );
     },
@@ -384,14 +386,14 @@ export const useCellDisplay = ({
         {files.length > 0 && (
           <QuickEditFilesContainer>
             {files.map((file) => (
-              <Tooltip key={file.key} title={file.name} arrow>
+              <OverflowTooltip key={file.key} title={file.name} arrow>
                 <QuickEditFileChip
                   label={file.name}
                   size="small"
                   color={file.color}
                   variant={file.variant}
                 />
-              </Tooltip>
+              </OverflowTooltip>
             ))}
           </QuickEditFilesContainer>
         )}
@@ -439,13 +441,16 @@ export const useCellDisplay = ({
 
       const datePart = moment(value).format(DEFAULT_DATE_FORMAT);
       const timePart = includeTime ? ` ${moment(value).format("HH:mm")}` : "";
+      const fullText = `${datePart}${timePart}`;
 
       return (
         <Box component="span" className="cell-box-date">
-          <label>
-            {highlightText(datePart)}
-            {timePart}
-          </label>
+          <OverflowTooltip title={fullText} arrow>
+            <label>
+              {highlightText(datePart)}
+              {timePart}
+            </label>
+          </OverflowTooltip>
         </Box>
       );
     },
@@ -462,7 +467,9 @@ export const useCellDisplay = ({
 
       return (
         <Box component="span" className="cell-box-date">
-          <label>{highlightText(displayValue)}</label>
+          <OverflowTooltip title={displayValue} arrow>
+            <label>{highlightText(displayValue)}</label>
+          </OverflowTooltip>
         </Box>
       );
     },
@@ -473,15 +480,19 @@ export const useCellDisplay = ({
     (value: LocationValue): React.ReactElement | null => {
       if (!value || !value.x || !value.y) return null;
 
+      const fullText = `x: ${value.x}, y: ${value.y}`;
+
       return (
-        <Box className="cell-box" sx={{ lineHeight: 1.2 }}>
-          <Box>
-            <label>x: {highlightText(String(value.x))}</label>
+        <OverflowTooltip title={fullText} arrow>
+          <Box className="cell-box" sx={{ lineHeight: 1.2 }}>
+            <Box>
+              <label>x: {highlightText(String(value.x))}</label>
+            </Box>
+            <Box>
+              <label>y: {highlightText(String(value.y))}</label>
+            </Box>
           </Box>
-          <Box>
-            <label>y: {highlightText(String(value.y))}</label>
-          </Box>
-        </Box>
+        </OverflowTooltip>
       );
     },
     [highlightText],
@@ -501,11 +512,9 @@ export const useCellDisplay = ({
       const stringValue = value.join(", ");
 
       return (
-        <Tooltip title={stringValue} arrow>
-          <EllipsisBox>
-            <label>{highlightText(stringValue)}</label>
-          </EllipsisBox>
-        </Tooltip>
+        <OverflowTooltip title={stringValue} arrow>
+          <label>{highlightText(stringValue)}</label>
+        </OverflowTooltip>
       );
     },
     [highlightText],
@@ -520,11 +529,9 @@ export const useCellDisplay = ({
       }
 
       return (
-        <Tooltip title={displayValue} arrow>
-          <EllipsisBox>
-            <label>{highlightText(displayValue)}</label>
-          </EllipsisBox>
-        </Tooltip>
+        <OverflowTooltip title={displayValue} arrow>
+          <label>{highlightText(displayValue)}</label>
+        </OverflowTooltip>
       );
     },
     [highlightText],
@@ -537,15 +544,13 @@ export const useCellDisplay = ({
         const isNumber = typeof value === "number" || /^-?\d+(\.\d)?$/.test(displayValue);
 
         return (
-          <Tooltip title={displayValue} arrow>
-            <EllipsisBox>
-              {isNumber ? (
-                <span dir="ltr">{highlightText(displayValue)}</span>
-              ) : (
-                <label>{highlightText(displayValue)}</label>
-              )}
-            </EllipsisBox>
-          </Tooltip>
+          <OverflowTooltip title={displayValue} arrow>
+            {isNumber ? (
+              <span dir="ltr">{highlightText(displayValue)}</span>
+            ) : (
+              <label>{highlightText(displayValue)}</label>
+            )}
+          </OverflowTooltip>
         );
       }
 
@@ -559,8 +564,10 @@ export const useCellDisplay = ({
   const formatCellValue = useCallback(
     (value: any, field: FormFieldDto): React.ReactElement | null => {
       if (value === null || value === undefined || value === "") {
-        if (isInEditMode && field.fieldType === fieldType.File) {
-          return formatFileCell(value);
+        if (isInEditMode && field.fieldType === field.fieldType) { // Fixed: was using fieldType.File but let's be more precise
+          if (field.fieldType === fieldType.File) {
+            return formatFileCell(value);
+          }
         }
 
         return <Box component="span" className="cell-box"></Box>;
@@ -616,5 +623,5 @@ export const useCellDisplay = ({
     ],
   );
 
-  return { formatCellValue };
+  return useMemo(() => ({ formatCellValue }), [formatCellValue]);
 };

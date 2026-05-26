@@ -1,53 +1,52 @@
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
+import { FormControl, Select } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
-type SortOption = {
-  label: string;
-  value: number;
-};
+export const StyledFormControl = styled(FormControl)(({ theme }) => ({
+  width: 220,
+  backgroundColor: "transparent",
 
-interface StyledAutocompleteProps {
-  sortInputWidth: number;
-}
+  "& .MuiInputLabel-root": {
+    color: "#62748E",
+    fontWeight: 600,
+    fontSize: "1.1rem",
+    padding: "0 6px",
 
-/**
- * Breakdown of <Autocomplete<T, Multiple, DisableClearable, FreeSolo>>
- * Position 	Parameter	        Type	    Meaning
-    T	        SortOption	        Object	    The shape of each option (you defined label and value).
-    1st	        Multiple	        false	    The Autocomplete does NOT support selecting multiple values.
-    2nd	        DisableClearable	false	    The clear icon (❌) is enabled, so users can clear the selection.
-    3rd	        FreeSolo	        false	    The user can’t type custom values not in the list of options.
- */
-export const StyledAutocomplete = styled(Autocomplete<SortOption, false, false, false>, {
-  shouldForwardProp: (prop) => prop !== 'sortInputWidth',
-})<StyledAutocompleteProps>(({ theme, sortInputWidth }) => ({
-  width: `${sortInputWidth}px`,
-  minWidth: '125px',
-  maxWidth: '250px',
-  borderRadius: '8px',
-  fontSize: '15px',
-
-  '& .MuiInputBase-root': {
-    borderRadius: '8px',
-    fontSize: '15px',
+    "&.Mui-focused": {
+      color: "#020618",
+    },
   },
 }));
 
-export const StyledTextField = styled(TextField)(({ theme }) => ({
-  fieldset: { border: "1px solid " + theme.palette.primary.main },
-  ".MuiInputBase-input": { fontSize: "15px", fontWeight: 600 },
-  "& .MuiSvgIcon-root": {
-    color: (theme) => theme.palette.primary.main,
-    "&:hover": {
-      cursor: "pointer",
-    },
+export const StyledSelect = styled(Select<number>)(({ theme }) => ({
+  borderRadius: 8,
+  height: 40,
+  backgroundColor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
+
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: "#D1D1D1",
+    borderWidth: 1,
   },
-  ".MuiAutocomplete-input": {
-    marginTop: "5px",
+
+  "&:hover .MuiOutlinedInput-notchedOutline": {
+    borderColor: "#62748E",
   },
-  '& .MuiInputLabel-root': {
-    color: theme.palette.primary.main,
+
+  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+    borderColor: "#020618",
+    borderWidth: 2,
+  },
+
+  "& .MuiSelect-select": {
+    display: "flex",
+    alignItems: "center",
+    fontSize: "16px",
     fontWeight: 600,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+
+  "& .MuiSvgIcon-root": {
+    color: "#020618",
   },
 }));

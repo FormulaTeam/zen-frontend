@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Box } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 
 import { Row } from "@utils/interfaces";
 
@@ -27,6 +27,7 @@ interface ExpandedRowContentProps {
     getChildRowsForParent: (parentRowId: string | number, connectedFormId: number | string) => Row[];
     isInEditMode?: boolean;
     searchQuery?: string;
+    isLoading?: boolean;
 }
 
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
@@ -40,6 +41,7 @@ export const ExpandedRowContent: React.FC<ExpandedRowContentProps> = ({
     getChildRowsForParent,
     isInEditMode = false,
     searchQuery,
+    isLoading = false,
 }) => {
     const formInFormFields: FormFieldDto[] = useMemo(
         () =>
@@ -53,7 +55,9 @@ export const ExpandedRowContent: React.FC<ExpandedRowContentProps> = ({
                 return isFormType && !!(fieldExtra.linkedFormId || fieldExtra.connectedFormId);
             }),
         [parentFormFields],
-    ); const childResponsesByForm = useMemo(
+    );
+
+    const childResponsesByForm = useMemo(
         () =>
             formInFormFields.map((field) => {
                 const fieldExtra = getFieldExtra(field);
@@ -81,7 +85,23 @@ export const ExpandedRowContent: React.FC<ExpandedRowContentProps> = ({
 
     const hasChildResponses = childResponsesByForm.some((item) => item.responses.length > 0);
 
-    if (!hasChildResponses) return <Box />;
+    if (isLoading) {
+        return (
+            <DetailsContainer sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+                <CircularProgress size={30} />
+            </DetailsContainer>
+        );
+    }
+
+    if (!hasChildResponses) {
+        return (
+            <DetailsContainer sx={{ py: 3, textAlign: "center" }}>
+                <Typography variant="body2" color="text.secondary">
+                    אין תגובות מקושרות להצגה
+                </Typography>
+            </DetailsContainer>
+        );
+    }
 
     return (
         <DetailsContainer>

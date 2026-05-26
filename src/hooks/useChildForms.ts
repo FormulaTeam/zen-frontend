@@ -221,7 +221,7 @@ export const useChildForms = ({
               );
 
               const matchingResponses = linkedChildResponses.filter(
-                (response) => Number(response.formId) === Number(childFormId),
+                (response) => Number(response.formId || response.form_id) === Number(childFormId),
               );
 
               const children = templateField

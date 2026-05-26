@@ -15,6 +15,7 @@ import { ResponseCell } from "./styled";
 import { getOptionResponseDisplayValue } from "../../../../utils/optionResponseValue";
 
 import { highlightTextUtil } from "../../utils/highlighting";
+import { getFieldColumnKey } from "../../../../api";
 
 interface ChildResponseRowProps {
   response: Row;
@@ -98,10 +99,10 @@ const formatTimeValue = (value: unknown, includeSeconds: boolean): string => {
 };
 
 const WiderResponseCell = styled(ResponseCell)(({ theme }) => ({
-  minWidth: 180,
+  minWidth: 150,
   maxWidth: 320,
-  padding: "12px 16px",
-  fontSize: "1rem",
+  padding: "8px 12px",
+  fontSize: "0.9rem",
   verticalAlign: "top",
   wordBreak: "break-word",
 }));
@@ -290,7 +291,7 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
       </WiderResponseCell>
 
       {formFields.map((field) => {
-        const fieldValue = response[field.displayName] ?? "";
+        const fieldValue = response[getFieldColumnKey(String(field.id))] ?? "";
 
         if (
           field.fieldType === fieldType.Location &&

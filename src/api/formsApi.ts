@@ -21,12 +21,37 @@ const stringifyQuery = (query: any): string => {
  * @returns A promise that resolves to an array of forms.
  */
 export const getForms = async (filter?: Filter): Promise<FormDto[]> => {
+  const sortBy = filter?.sortBy;
+  const formattedSortBy = sortBy ? (sortBy.includes(":") ? sortBy : `meta:${sortBy}`) : undefined;
+
+  const responseFilters = filter?.responseFilters;
+  const query = filter?.query;
+
+  let filtersParam: string | undefined;
+  let searchParam: string | undefined;
+
+  if (responseFilters && responseFilters.items && responseFilters.items.length > 0) {
+    filtersParam = JSON.stringify(responseFilters);
+  }
+
+  if (typeof query === "string" && query.trim() !== "") {
+    searchParam = query;
+  } else if (query && typeof query === "object") {
+    if (Array.isArray((query as any).items)) {
+      filtersParam = JSON.stringify(query);
+    } else {
+      searchParam = JSON.stringify(query);
+    }
+  }
+
   const params = {
-    search: stringifyQuery(filter?.query),
-    sortBy: filter?.sortBy,
+    filters: filtersParam,
+    search: searchParam,
+    sortBy: formattedSortBy,
     orderBy: filter?.orderBy,
     pageSize: filter?.pageSize,
     pageNumber: filter?.pageNumber,
+    onlyDeleted: filter?.onlyDeleted,
   };
 
   try {

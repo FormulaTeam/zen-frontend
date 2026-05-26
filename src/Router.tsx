@@ -1,4 +1,4 @@
-import "./toast.scss";
+import { Toaster } from "sonner";
 import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Box } from "@mui/material";
@@ -8,7 +8,6 @@ import { useAuth } from "./contexts/AuthContext";
 import ResponsesPage from "./pages/ResponsesPage/ResponsesPage";
 import ProtectedRoute from "./components/ProrectedRoute/ProtectedRoute";
 import Navbar from "./components/Navbar/Navbar";
-import { ToastContainer } from "react-toastify";
 import { SSOComeback } from "./pages/Login/SSOCallback";
 import ErrorPage from "./pages/ErrorPage/ErrorPage";
 import EditForm from "./pages/EditForm/EditForm";
@@ -43,7 +42,7 @@ const AppRouter = () => {
           gridTemplateRows: "auto 1fr",
           height: "100vh",
         }}>
-        <Navbar searchValue={searchValue} handleSearch={(val) => setSearchValue(val)} />
+        <Navbar />
         <Routes>
           <Route path={IPath.ERROR} element={<ErrorPage />} />
           <Route path={IPath.LOGIN} element={<Login />} />
@@ -63,6 +62,7 @@ const AppRouter = () => {
                 <MainPage
                   user={user}
                   searchValue={searchValue}
+                  handleSearch={(val) => setSearchValue(val)}
                   shouldRefreshPage={shouldRefreshPage}
                   setShouldRefreshPage={setShouldRefreshPage}
                   resetSearchValue={resetSearchValue}
@@ -92,7 +92,7 @@ const AppRouter = () => {
             <Route path={IPath.DELETED_FORMS} element={<DeletedForms user={user} />} />
           </Route>
         </Routes>
-        <ToastContainer rtl />
+        <Toaster richColors position="bottom-right" expand={true} />
         {/* <HelpBtn showHelpCard={() => setShowHelpCard(true)} />
         {showHelpCard && <HelpDiv hideHelpCard={() => setShowHelpCard(false)} />} */}
       </Box>

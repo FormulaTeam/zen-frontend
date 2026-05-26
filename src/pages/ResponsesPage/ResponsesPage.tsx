@@ -1,6 +1,8 @@
 import { GridRowId, GridRowModel, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
+import { Tooltip, IconButton, Typography } from "@mui/material";
+import Delete from "@mui/icons-material/Delete";
 
 import SidePanel from "../../components/SidePanel/SidePanel";
 import SearchInfo from "../../components/Responses/SearchInfo";
@@ -24,6 +26,7 @@ import { PermissionGate } from "@src/components/PermissionGate";
 import { permission } from "formula-gear";
 import DraftRecoveryDialog from "../../components/BasePopup/DraftRecoveryDialog";
 import { clearQuickEditDraft, getQuickEditDraft } from "../FormEditor/utils/draftPersistence";
+import { showErrorNotification, showSuccessNotification } from "@utils/utils";
 
 type ResponsePageRow = GridRowModel & {
   id: string | number;
@@ -206,14 +209,40 @@ const ResponsesPageContent = (): JSX.Element => {
   }, [user]);
 
   const handleRowSelectionModelChange = useCallback((model: GridRowSelectionModel) => {
-    setRowSelectionModel(model);
+    setRowSelectionModel((prev) => {
+      // Basic check for simple ID arrays (Mui DataGrid basic version)
+      if (Array.isArray(model)) {
+        const nextIds = new Set(model);
+        if (prev.type === "include" && prev.ids.size === nextIds.size) {
+          const allMatch = Array.from(nextIds).every((id) => prev.ids.has(id));
+          if (allMatch) return prev;
+        }
+
+        return {
+          type: "include",
+          ids: nextIds,
+        };
+      }
+
+      // Check for Pro model objects
+      if (
+        prev.type === model.type &&
+        prev.ids.size === model.ids.size &&
+        Array.from(model.ids).every((id) => prev.ids.has(id))
+      ) {
+        return prev;
+      }
+
+      return model;
+    });
   }, []);
 
   return (
     <PageWrapper>
       <MainContentWrapper>
-        <TopSection>
+        <TopSection sx={{ alignItems: "center", gap: 3 }}>
           <Header />
+          <SearchInfo search={search} setSearch={setSearch} />
           <FormActionsToolbar />
         </TopSection>
         <TopSection>
@@ -224,6 +253,8 @@ const ResponsesPageContent = (): JSX.Element => {
                 onDeleted={handleRowDeleted}
                 onDeleteResponses={handleDeleteResponses}
                 currentUserUpn={sidePanelUser?.upn}
+                rows={displayedRows}
+                isInEditMode={isInEditMode}
               />
             ) : (
               <>
@@ -240,7 +271,6 @@ const ResponsesPageContent = (): JSX.Element => {
               </>
             )}
           </ActionsRow>
-          <SearchInfo search={search} setSearch={setSearch} />
           <PermissionGate requiredPermissions={[permission.MarkMyResponsesViewPublic]} userPermissions={permissions ?? []}>
             <ViewsButton
               isSidePanelOpen={isSidePanelOpen}
@@ -261,7 +291,9 @@ const ResponsesPageContent = (): JSX.Element => {
           validationErrors={validationErrors}
           onCellLiveChange={handleCellLiveChange}
           onRowSelectionModelChange={handleRowSelectionModelChange}
+          rowSelectionModel={rowSelectionModel}
           currentView={currentView}
+          deletedRowIds={deletedRowIds}
         />
         <CancelEditDialog
           open={showCancelDialog}

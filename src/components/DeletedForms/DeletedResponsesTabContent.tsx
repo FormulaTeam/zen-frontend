@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo } from "react";
-import { useTheme, Grow } from "@mui/material";
+import { useTheme, Grow, Box } from "@mui/material";
 import ReactLoading from "react-loading";
 import { useLegacyFormsData } from "../../hooks/useGetFormsData";
 import DeletedResponseItem from "./DeletedResponseItem";
@@ -71,7 +71,7 @@ export default function DeletedResponsesTabContent({
     }
 
     if (!mounted) return;
-    getData(1, { query: "" });
+    getData(1, { query: "" }, undefined, false, true);
   }, [responses, searchValue]);
 
   useEffect(() => {
@@ -142,8 +142,12 @@ export default function DeletedResponsesTabContent({
         <LoadingBox>
           <ReactLoading type="spinningBubbles" color={theme.palette.primary.main} />
         </LoadingBox>
-      ) : !isLoading && responses.length === 0 ? (
-        <EmptyMessage variant="subtitle1">לא נמצאו תגובות</EmptyMessage>
+      ) : !currentDeletedForm ? (
+        <Box display="flex" flexDirection="column" alignItems="center" gap={2} mt={10}>
+          <EmptyMessage variant="h5">בחר טופס כדי להציג את התגובות שנמחקו שלו</EmptyMessage>
+        </Box>
+      ) : responses.length === 0 ? (
+        <EmptyMessage variant="subtitle1">לא נמצאו תגובות שנמחקו עבור טופס זה</EmptyMessage>
       ) : (
         <FormsGrid container spacing={3} ref={listRef} onScroll={handleScroll}>
           {responses.map((res) => {

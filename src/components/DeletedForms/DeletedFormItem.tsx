@@ -66,8 +66,9 @@ const DeletedFormItem: React.FC<DeletedFormItemProps> = ({
   };
 
   useEffect(() => {
-    setHasResponses(form.numberOfResponses > 0);
-  }, [form.numberOfResponses]);
+    const responsesCount = form._count?.responses ?? form.numberOfResponses ?? 0;
+    setHasResponses(responsesCount > 0);
+  }, [form.numberOfResponses, form._count?.responses]);
 
   return (
     <StyledListItem key={form.id}>

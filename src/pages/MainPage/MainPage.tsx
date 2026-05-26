@@ -1,32 +1,48 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactLoading from "react-loading";
 import Grid from "@mui/material/Grid";
 import { Box, IconButton, Tab, Tabs, Tooltip, Typography, useTheme } from "@mui/material";
 import { useGetFormsData } from "../../hooks/useGetFormsData";
 import { useActiveTabFilter } from "../../hooks/useActiveTabFilter";
-import { FormsSortOption, SortDirection, formsSortOption, sortDirectionOption } from "../../types/enums/filtersAndSorts.enum";
+import {
+  FormsSortOption,
+  SortDirection,
+  formsSortOption,
+  sortDirectionOption,
+  formsScopeOption,
+} from "../../types/enums/filtersAndSorts.enum";
 import { FormsTab } from "../../utils/interfaces";
 import CreateNew from "../../components/MainPage/CreateNew";
 import mGif from "../../images/m.gif";
 import syncGif from "../../images/sync.gif";
 import noData from "../../images/noData2.png";
 import { formsTabs } from "../../utils/utils";
-import "react-toastify/dist/ReactToastify.css";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import FormCard from "../../components/FormCard/FormCard";
 import wavingHand from "../../images/waving_hand.png";
 import "./MainPage.scss";
 import BasePopup from "../../components/BasePopup/BasePopup";
-import { AutoDelete } from "@mui/icons-material";
+import { AutoDelete, Add as AddIcon } from "@mui/icons-material";
 import MainSortSelect from "../../components/MainSortSelect/MainSortSelect";
+import SearchAndFilter from "../../components/SearchAndFilter/SearchAndFilter";
 import { useGetMyPersonal } from "../../api/usersApi";
-import { RowBox, StyledTypography, GreetingBox, TabsBox, SortControlsBox } from "./styled";
+import {
+  RowBox,
+  StyledTypography,
+  GreetingBox,
+  TabsBox,
+  SortControlsBox,
+  PrimaryBlueButton,
+} from "./styled";
 import { FormOverviewDto } from "@src/types/shared";
+import { IPath } from "../../types/enums/global.enums";
+import { EmptyState } from "../../components/MainPage/EmptyState";
 
 function MainPage({
   user,
   searchValue,
+  handleSearch,
   shouldRefreshPage,
   setShouldRefreshPage,
   resetSearchValue,
@@ -69,76 +85,187 @@ function MainPage({
     setSortDirection(newSortDirection);
   };
 
+  // Queries to determine if the user has NO forms at all in any category
+  const { formsData: myFormsCountData, isLoading: isMyFormsLoading } = useGetFormsData({
+    scope: formsScopeOption.MyForms,
+    enabled: !!user,
+  });
+
+  const { formsData: sharedFormsCountData, isLoading: isSharedFormsLoading } = useGetFormsData({
+    scope: formsScopeOption.SharedWithMeForms,
+    enabled: !!user,
+  });
+
+  const { formsData: allFormsCountData, isLoading: isAllFormsLoading } = useGetFormsData({
+    scope: formsScopeOption.AllForms,
+    enabled: !!user && !!isSuperAdmin,
+  });
+
+  const isFirstForm = useMemo(() => {
+    if (isSuperAdmin) return !isAllFormsLoading && allFormsCountData.length === 0;
+
+    return !isMyFormsLoading && myFormsCountData.length === 0;
+  }, [
+    isSuperAdmin,
+    isAllFormsLoading,
+    allFormsCountData.length,
+    isMyFormsLoading,
+    isSharedFormsLoading,
+    myFormsCountData.length,
+    sharedFormsCountData.length,
+  ]);
+
   return (
-    <Box className="main-page-container" style={{ backgroundColor: theme.palette.white }}>
+    <Box className="main-page-container">
       <Box className="tabs-and-select-div">
+        <TabsBox sx={{ mb: 3, mt: 2 }}>
+          <Tabs
+            className="form-tabs"
+            value={tabValue}
+            onChange={handleTabValueChange}
+            aria-label="tabs for forms"
+            TabIndicatorProps={{
+              style: { display: "none" },
+            }}
+            sx={{
+              minHeight: "auto",
+              backgroundColor: "transparent",
+              "& .MuiTabs-flexContainer": {
+                gap: "8px",
+              },
+            }}>
+            <Tab
+              label="הטפסים שאני יצרתי"
+              sx={{
+                fontSize: "16px",
+                minHeight: "auto",
+                padding: "4px 12px",
+                borderRadius: "5px",
+                color: theme.palette.text.secondary,
+                fontWeight: 600,
+                "&.Mui-selected": {
+                  backgroundColor: "#FFFFFF",
+                  color: "#020618",
+                  boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.5)",
+                },
+              }}
+              disableRipple
+              data-testid="my-forms-button"
+            />
+            <Tab
+              label="הטפסים ששותפו איתי"
+              sx={{
+                fontSize: "16px",
+                minHeight: "auto",
+                padding: "4px 12px",
+                borderRadius: "5px",
+                color: theme.palette.text.secondary,
+                fontWeight: 600,
+                "&.Mui-selected": {
+                  backgroundColor: "#FFFFFF",
+                  color: "#020618",
+                  boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.5)",
+                },
+              }}
+              disableRipple
+              data-testid="shared-forms-button"
+            />
+            {isSuperAdmin && (
+              <Tab
+                label="כל הטפסים"
+                sx={{
+                  fontSize: "16px",
+                  minHeight: "auto",
+                  padding: "4px 12px",
+                  borderRadius: "5px",
+                  color: theme.palette.text.secondary,
+                  fontWeight: 600,
+                  "&.Mui-selected": {
+                    backgroundColor: "#FFFFFF",
+                    color: "#020618",
+                    boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.08)",
+                    border: "1px solid rgba(255, 255, 255, 0.5)",
+                  },
+                }}
+                disableRipple
+                data-testid="all-forms-button"
+              />
+            )}
+          </Tabs>
+        </TabsBox>
+
         <RowBox>
           <GreetingBox>
-            <StyledTypography id="greeting">{myPersonal?.name ? `היי ${myPersonal.name}` : "היי"}</StyledTypography>
-            <img src={wavingHand} />
+            <StyledTypography id="greeting">
+              {myPersonal?.name ? `היי ${myPersonal.name.split(" ")[0]}` : "היי"}
+            </StyledTypography>
           </GreetingBox>
 
-          <TabsBox>
-            <Tabs
-              className="form-tabs"
-              value={tabValue}
-              onChange={handleTabValueChange}
-              aria-label="tabs for forms"
-              sx={{ borderBottom: `1px solid ${theme.palette.white}` }}>
-              <Tab label="הטפסים שאני יצרתי" sx={{ fontSize: "20px" }} data-testid="my-forms-button" />
-              <Tab label="הטפסים ששותפו איתי" sx={{ fontSize: "20px" }} data-testid="shared-forms-button" />
-              {isSuperAdmin && <Tab label="כל הטפסים" sx={{ fontSize: "20px" }} data-testid="all-forms-button" />}
-            </Tabs>
-          </TabsBox>
-
           <SortControlsBox>
+            <SearchAndFilter
+              searchValue={searchValue}
+              handleSearch={handleSearch}
+              placeholder="חיפוש טופס"
+              dataTestId="search-form-input"
+            />
             <MainSortSelect onSortChange={handleSortChange} dataTestId="sort-forms" />
-            <Tooltip title="סל המיחזור">
-              <IconButton
-                sx={{ color: theme.palette.primary.main }}
-                onClick={() => navigate("/deleted-forms")}
-                data-testid="recycle-bin-button">
-                <AutoDelete />
-              </IconButton>
-            </Tooltip>
+            <PrimaryBlueButton
+              onClick={() => navigate(IPath.FORM_CREATE)}
+              data-testid="create-form-button">
+              <AddIcon sx={{ mr: 1, fontSize: "22px" }} />
+              יצירת טופס חדש
+            </PrimaryBlueButton>
           </SortControlsBox>
         </RowBox>
       </Box>
 
-      {isLoading ? (
-        <Box className="main-page-loading" style={{ backgroundColor: theme.palette.white }}>
-          <ReactLoading type="spinningBubbles" color={theme.palette.primary.main} />
-        </Box>
-      ) : formsData.length > 0 ? (
-        <Grid
-          container
-          columns={{ xs: 4, sm: 8, md: 12 }}
-          className="forms-grid"
-          id="forms-grid"
-          spacing={3}>
-          {formsData.map((form: FormOverviewDto, index: number) => (
-            <Grid key={form.id ?? index} size={{ xs: 4, sm: 4, md: 6, lg: 4, xl: 3 }}>
-              <FormCard
-                form={form}
-                resetSearchValue={resetSearchValue}
-                isSuperAdmin={isSuperAdmin}
-                navigate={navigate}
-                isCreator={form.createdBy?.upn?.toLowerCase() === myPersonal?.upn?.toLowerCase()}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      ) : (
-        <Box className="no-data-div">
-          <img src={noData} className="no-data-img" />
-          <Typography className="no-data-lbl">אין טפסים להציג...</Typography>
-          {tabValue === formsTabs.currentUserCreated && <CreateNew />}
-        </Box>
-      )}
+      <Box className="main-page-content-wrapper">
+        {isLoading ? (
+          <Box className="main-page-loading">
+            <ReactLoading type="spinningBubbles" color={theme.palette.primary.main} />
+          </Box>
+        ) : formsData.length > 0 ? (
+          <Grid
+            container
+            columns={{ xs: 4, sm: 8, md: 12 }}
+            className="forms-grid"
+            id="forms-grid"
+            spacing={3}>
+            {formsData.map((form: FormOverviewDto, index: number) => (
+              <Grid key={form.id ?? index} size={{ xs: 4, sm: 4, md: 6, lg: 4, xl: 3 }}>
+                <FormCard
+                  form={form}
+                  resetSearchValue={resetSearchValue}
+                  isSuperAdmin={isSuperAdmin}
+                  navigate={navigate}
+                  isCreator={form.createdBy?.upn?.toLowerCase() === myPersonal?.upn?.toLowerCase()}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <EmptyState
+            image={noData}
+            title={searchValue ? "לא מצאנו את מה שחיפשת" : "אין טפסים להציג..."}
+            subtitle={
+              searchValue
+                ? `לא מצאנו טפסים שתואמים את החיפוש "${searchValue}"`
+                : tabValue === formsTabs.currentUserCreated
+                  ? "נראה שטרם יצרת טפסים במערכת. זה הזמן להתחיל!"
+                  : tabValue === formsTabs.sharedWithUser
+                    ? "טרם שותפו איתך טפסים במערכת."
+                    : "לא נמצאו טפסים במערכת."
+            }
+            actions={<CreateNew isFirstForm={isFirstForm} />}
+          />
+        )}
+      </Box>
 
       <BasePopup
         open={false}
-        onClose={() => { }}
+        onClose={() => {}}
         title="סנכרון נתונים למטרו"
         content={
           <Box className="gifs-div">

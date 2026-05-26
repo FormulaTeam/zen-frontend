@@ -14,6 +14,7 @@ export type IGetFormsData = (
   currentFilter: Filter,
   additionalFilter?: Filter,
   deleted?: boolean,
+  onlyDeleted?: boolean,
 ) => Promise<FormDto[] | undefined>;
 
 /**
@@ -36,7 +37,7 @@ export function useLegacyFormsData(maxInPage = 1000) {
   const [formsData, setFormsData] = useState<FormDto[]>([]);
 
   const getData: IGetFormsData = useCallback(
-    async (nextPage, currentFilter = {}, additionalFilter = {}, deleted = false) => {
+    async (nextPage, currentFilter = {}, additionalFilter = {}, deleted = false, onlyDeleted = false) => {
       const mergedQuery =
         currentFilter.query &&
         typeof currentFilter.query === "object" &&
@@ -53,6 +54,7 @@ export function useLegacyFormsData(maxInPage = 1000) {
         orderBy: (additionalFilter.orderBy ?? currentFilter.orderBy ?? IOrderBy.ASC) as IOrderBy,
         signal: additionalFilter.signal,
         deleted,
+        onlyDeleted,
       };
 
       try {

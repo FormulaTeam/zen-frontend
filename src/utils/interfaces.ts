@@ -326,6 +326,7 @@ export interface Filter {
   responseFilters?: ResponseFiltersDto;
   signal?: AbortSignal;
   deleted?: boolean;
+  onlyDeleted?: boolean;
   isDeletedForm?: boolean;
   before?: string;
   after?: string;

@@ -13,13 +13,13 @@ export const GreetingBox = styled(Box)({
   display: "flex",
   flexDirection: "row",
   alignItems: "center",
-  flexShrink: 0,
+  flex: 1,
 });
 
 export const TabsBox = styled(Box)({
-  flex: 1,
   display: "flex",
   justifyContent: "center",
+  flexShrink: 0,
 });
 
 export const SortControlsBox = styled(Box)({
@@ -27,14 +27,13 @@ export const SortControlsBox = styled(Box)({
   flexDirection: "row",
   alignItems: "center",
   gap: "16px",
-  flexShrink: 0,
+  flex: 1,
+  justifyContent: "flex-end",
 });
 
 export const StyledTypography = styled(Typography)(({ theme }) => ({
-  fontSize: "24px !important",
+  fontSize: "20px !important",
   fontWeight: 600,
-  marginLeft: "10px",
-  marginRight: "5px",
 }));
 
 export const CreateFormButton = styled("button") <{ $bgc?: string }>`
@@ -50,3 +49,78 @@ export const CreateFormButton = styled("button") <{ $bgc?: string }>`
   justify-content: space-between;
   width: 140px;
 `;
+
+export const PrimaryBlueButton = styled("button")(({ theme }) => ({
+  backgroundColor: theme.palette.primary.main,
+  color: "white",
+  height: "40px",
+  padding: "0 30px",
+  fontSize: "16px",
+  fontWeight: 400,
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  transition: "background-color 0.2s",
+  "&:hover": {
+    backgroundColor: theme.palette.primary.dark || "#1565c0",
+  },
+}));
+
+export const EmptyStateContainer = styled(Box)({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "flex-start",
+  width: "100%",
+  padding: "10vh 20px 2vh",
+  boxSizing: "border-box",
+  minHeight: "60vh",
+});
+
+export const EmptyStateImage = styled("img")({
+  margin: "0 0 4vh 0",
+  width: "auto",
+  maxHeight: "35vh",
+  maxWidth: "100%",
+  borderRadius: "40px",
+  objectFit: "contain",
+  flexShrink: 1,
+});
+
+export const EmptyStateTextContent = styled(Box)({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "1vh",
+  padding: "0 10px",
+  width: "100%",
+});
+
+export const EmptyStateTitle = styled(Typography)({
+  textAlign: "center",
+  width: "100%",
+  fontSize: "clamp(1.5rem, 5vh, 3.5rem)",
+  fontWeight: 800,
+  lineHeight: 1.2,
+  color: "#1a237e",
+});
+
+export const EmptyStateSubtitle = styled(Typography)({
+  textAlign: "center",
+  width: "100%",
+  fontSize: "clamp(1rem, 2.5vh, 1.8rem)",
+  fontWeight: 400,
+  lineHeight: 1.4,
+  color: "#666666",
+});
+
+export const EmptyStateActions = styled(Box)({
+  marginTop: "5vh",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  width: "100%",
+});

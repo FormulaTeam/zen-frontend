@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Paper, TableBody, TableContainer, TableHead, TableRow } from "@mui/material";
+import { TableBody, TableContainer, TableHead, TableRow } from "@mui/material";
 
 import { Row } from "@utils/interfaces";
 
@@ -43,19 +43,28 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
   return (
     <DetailsRowContainer>
       <ResponseTitle>
-        {title} - {responses.length} תגובות
+        {title} ({responses.length})
       </ResponseTitle>
 
-      <TableContainer component={Paper}>
-        <StyledTable isInEditMode={isInEditMode}>
+      <TableContainer
+        sx={{
+          border: "1px solid #e2e8f0",
+          borderRadius: "8px",
+          overflow: "hidden",
+          boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        }}
+      >
+        <StyledTable isInEditMode={isInEditMode} size="small">
           <TableHead>
             <TableRow>
-              <ResponseCell>צפייה</ResponseCell>
+              <ResponseCell align="center" sx={{ width: "60px !important" }}>
+                צפייה
+              </ResponseCell>
               {displayFields.map((field: FormFieldDto) => (
                 <ResponseCell key={field.id}>{field.displayName}</ResponseCell>
               ))}
-              <ResponseCell>תאריך יצירה</ResponseCell>
-              <ResponseCell>נוצר על ידי</ResponseCell>
+              <ResponseCell sx={{ minWidth: "120px" }}>תאריך יצירה</ResponseCell>
+              <ResponseCell sx={{ minWidth: "150px" }}>נוצר על ידי</ResponseCell>
             </TableRow>
           </TableHead>
           <TableBody>

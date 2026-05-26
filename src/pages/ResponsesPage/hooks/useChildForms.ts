@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { getFormById } from "../../../api/formsApi";
 import { getResponsesRows } from "../../../api/responsesApi";
 import type { FormDto, FormFieldDto } from "../../../types/shared";
@@ -34,10 +34,13 @@ const getFieldExtra = (field: FormFieldDto): FieldExtra => {
 const getFormFields = (form: FormDto | null): FormFieldDto[] => {
     if (!form) return [];
 
-    return (form.sections ?? [])
+    const sectionsFields = (form.sections ?? [])
         .slice()
         .sort((a, b) => a.index - b.index)
         .flatMap((section) => (section.fields ?? []).slice().sort((a, b) => a.index - b.index));
+
+    if (sectionsFields.length > 0) return sectionsFields;
+    return (form as any).fields ?? [];
 };
 
 const fetchChildFormData = async (
@@ -46,16 +49,9 @@ const fetchChildFormData = async (
 ): Promise<ChildFormData | null> => {
     try {
         const formData = await getFormById(Number(connectedFormId));
-        const rowsData = await getResponsesRows({
-            filter: {
-                form_id: Number(connectedFormId),
-                query: `parentResponse: { $regex: ${parentFormId};`,
-            },
-            form: formData || undefined,
-        });
 
-        if (formData && rowsData) {
-            return { form: formData, rows: rowsData as Row[] };
+        if (formData) {
+            return { form: formData, rows: [] };
         }
 
         return null;
@@ -74,12 +70,11 @@ export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn
         () =>
             formFields.filter((field) => {
                 const extra = getFieldExtra(field);
-                return (
-                    (field.fieldType === fieldType.Form ||
-                        (field as any).typeId === FieldTypeIds.linkedForm ||
-                        (field as any).fieldType === FieldTypeIds.linkedForm) &&
-                    !!(extra.connectedFormId || extra.linkedFormId)
-                );
+                const isFormType = field.fieldType === fieldType.Form ||
+                    (field as any).typeId === FieldTypeIds.linkedForm ||
+                    (field as any).fieldType === FieldTypeIds.linkedForm;
+
+                return isFormType && !!(extra.connectedFormId || extra.linkedFormId);
             }),
         [formFields],
     );
@@ -127,14 +122,22 @@ export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn
         };
     }, [hasFormInFormFields, form?.id, childFormIds.join(",")]);
 
-    const getChildFormData = (connectedFormId: number | string): ChildFormData | undefined => {
-        return childrenFormsData.find((data) => String(data.form.id) === String(connectedFormId));
-    };
+    const getChildFormData = useCallback(
+        (connectedFormId: number | string): ChildFormData | undefined => {
+            return childrenFormsData.find(
+                (data) => String(data.form.id) === String(connectedFormId),
+            );
+        },
+        [childrenFormsData],
+    );
 
-    return {
-        childrenFormsData,
-        hasFormInFormFields,
-        loadingChildForms,
-        getChildFormData,
-    };
+    return useMemo(
+        () => ({
+            childrenFormsData,
+            hasFormInFormFields,
+            loadingChildForms,
+            getChildFormData,
+        }),
+        [childrenFormsData, hasFormInFormFields, loadingChildForms, getChildFormData],
+    );
 };

@@ -10,7 +10,6 @@ import {
   GridRenderCellParams,
   GridRowSelectionModel,
   GRID_DETAIL_PANEL_TOGGLE_FIELD,
-  GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
 } from "@mui/x-data-grid-pro";
 import { useFormStore } from "../stores/form.store";
 import clsx from "clsx";
@@ -18,6 +17,9 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import Visibility from "@mui/icons-material/Visibility";
+import Edit from "@mui/icons-material/Edit";
+import Delete from "@mui/icons-material/Delete";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { heIL } from "@mui/x-data-grid/locales";
@@ -32,11 +34,14 @@ import {
   Typography,
   Select,
   Tooltip,
+  IconButton,
+  Checkbox,
 } from "@mui/material";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
 import { useResponsesTableSorting } from "../hooks/useResponsesTableSorting";
 import { downloadFileFromResponse, type StoredFile } from "@api/filesApi";
+import { useSoftDeleteResponses } from "../../../api";
 import {
   ContentContainer,
   MainContent,
@@ -52,6 +57,7 @@ import {
   FooterInfoContainer,
   PaginationButton,
   CellErrorHeader,
+  TableContainer,
 } from "../styled";
 import { useChildForms } from "../hooks/useChildForms";
 import { useDetailPanel } from "../hooks/useDetailPanel";
@@ -60,7 +66,11 @@ import moment from "moment";
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { FormFieldDto } from "../../../types/shared";
 import { MetaColumnIds } from "../../../utils/interfaces";
-import { DEFAULT_DATE_TIME_FORMAT } from "../../../utils/utils";
+import {
+  DEFAULT_DATE_TIME_FORMAT,
+  showErrorNotification,
+  showSuccessNotification,
+} from "../../../utils/utils";
 import * as Gear from "formula-gear";
 import {
   getResponseFilterColumnProps,
@@ -163,7 +173,9 @@ interface ResponsesTableProps {
   validationErrors?: Record<number | string, Record<string, QuickEditValidationError>>;
   onCellLiveChange?: (rowId: number | string, columnName: string, value: unknown) => void;
   onRowSelectionModelChange?: (model: GridRowSelectionModel) => void;
+  rowSelectionModel?: GridRowSelectionModel;
   currentView?: ResponsesView;
+  deletedRowIds?: (string | number)[];
 }
 
 const SyncStatusIcon: React.FC<{ pushedToMetro?: string | null }> = ({ pushedToMetro }) => (
@@ -197,9 +209,11 @@ export const ResponsesTable = React.memo(
     validationErrors,
     onCellLiveChange,
     onRowSelectionModelChange,
+    rowSelectionModel,
     currentView,
+    deletedRowIds = [],
   }: ResponsesTableProps) => {
-    const { form, rows, pageInfo, filter, setFilter, setResponseFilters, isRowsLoading } =
+    const { form, setForm, rows, pageInfo, filter, setFilter, setResponseFilters, isRowsLoading } =
       useFormStore();
 
     const navigate = useNavigate();
@@ -300,10 +314,11 @@ export const ResponsesTable = React.memo(
       setResponseFilters(null);
     }, [setResponseFilters]);
 
-    const formFields = useMemo<FormFieldDto[]>(
-      () => (form?.sections ?? []).flatMap((section) => section.fields ?? []),
-      [form],
-    );
+    const formFields = useMemo<FormFieldDto[]>(() => {
+      const sectionsFields = (form?.sections ?? []).flatMap((section) => section.fields ?? []);
+      if (sectionsFields.length > 0) return sectionsFields;
+      return form?.fields ?? [];
+    }, [form]);
 
     const { sortModel, handleSortModelChange } = useResponsesTableSorting({
       filter,
@@ -323,25 +338,26 @@ export const ResponsesTable = React.memo(
     const shouldUseHeaderFilters = showFilters && !isInEditMode;
 
     const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
-    const [contextMenu, setContextMenu] = useState<{
-      mouseX: number;
-      mouseY: number;
-      row: Row | null;
-    } | null>(null);
 
-    const { childrenFormsData, hasFormInFormFields, getChildFormData } = useChildForms({ form });
+    const { childrenFormsData, hasFormInFormFields, loadingChildForms, getChildFormData } = useChildForms({ form });
 
-    const { expandColumn, getDetailPanelContent, getDetailPanelHeight, detailPanelExpandedRowIds } =
-      useDetailPanel({
-        form,
-        rows,
-        hasFormInFormFields,
-        childrenFormsData,
-        isInEditMode,
-        getChildFormData,
-        currentViewConfig,
-        searchQuery: filter?.query,
-      });
+    const {
+      expandColumn,
+      getDetailPanelContent,
+      getDetailPanelHeight,
+      detailPanelExpandedRowIds,
+      handleDetailPanelExpandedRowIdsChange,
+    } = useDetailPanel({
+      form,
+      rows,
+      hasFormInFormFields,
+      loadingChildForms,
+      childrenFormsData,
+      isInEditMode,
+      getChildFormData,
+      currentViewConfig,
+      searchQuery: filter?.query,
+    });
 
     const { renderEditCell } = useCellEditors({
       apiRef,
@@ -366,18 +382,11 @@ export const ResponsesTable = React.memo(
 
     const handleCellClick = useCallback(
       (params: GridCellParams, event: any) => {
-        if (params.field === "__check__" || params.field === "expand") {
+        if (params.field === "__check__" || params.field === GRID_DETAIL_PANEL_TOGGLE_FIELD) {
           return;
         }
 
         if (isInEditMode && !params.isEditable) {
-          event?.preventDefault?.();
-          event?.stopPropagation?.();
-
-          if (event) {
-            event.defaultMuiPrevented = true;
-          }
-
           return;
         }
 
@@ -404,7 +413,7 @@ export const ResponsesTable = React.memo(
 
     const getCellClassName = useCallback(
       (params: GridCellParams): string => {
-        if (!isInEditMode) {
+        if (!isInEditMode || params.field === "__check__") {
           return "";
         }
 
@@ -446,49 +455,25 @@ export const ResponsesTable = React.memo(
       [form?.id, navigate],
     );
 
-    const handleContextMenu = useCallback(
-      (event: React.MouseEvent) => {
-        event.preventDefault();
+    const { mutateAsync: softDeleteResponses } = useSoftDeleteResponses(Number(form?.id ?? 0));
 
-        const target = event.target as HTMLElement;
-        const row = target.closest(".MuiDataGrid-row");
+    const handleDeleteResponse = useCallback(
+      async (rowId: string | number) => {
+        try {
+          setForm({
+            ...form,
+            responsesCount: Math.max(0, (form.responsesCount ?? 0) - 1),
+          } as any);
 
-        if (!row) {
-          return;
-        }
-
-        const rowId = row.getAttribute("data-id");
-
-        if (!rowId) {
-          return;
-        }
-
-        const rowData = (localRows.length > 0 ? localRows : responsesRows).find(
-          (r) => String(r.id) === rowId,
-        );
-
-        if (rowData) {
-          setContextMenu({
-            mouseX: event.clientX - 2,
-            mouseY: event.clientY - 4,
-            row: rowData,
-          });
+          await softDeleteResponses({ responsesIds: [String(rowId)] });
+          showSuccessNotification("מחיקת התגובה בוצעה בהצלחה");
+        } catch {
+          setForm(form);
+          showErrorNotification("מחיקת התגובה נכשלה");
         }
       },
-      [localRows, responsesRows],
+      [form, setForm, softDeleteResponses],
     );
-
-    const handleCloseContextMenu = useCallback(() => {
-      setContextMenu(null);
-    }, []);
-
-    const handleDuplicateResponse = useCallback(() => {
-      if (contextMenu?.row) {
-        navigateToCreateResponseCopy(contextMenu.row);
-      }
-
-      handleCloseContextMenu();
-    }, [contextMenu, navigateToCreateResponseCopy, handleCloseContextMenu]);
 
     const getFormColumns = useMemo((): GridColDef[] => {
       const prefixes = {
@@ -512,9 +497,9 @@ export const ResponsesTable = React.memo(
         const col: GridColDef = {
           field: gridField,
           headerName: field.displayName,
-          flex: 2,
-          minWidth: 200,
-          width: 400,
+          minWidth: 150,
+          maxWidth: 800,
+          flex: 1,
           editable: true,
           sortable: isSortable(field.fieldType),
           ...getResponseFilterColumnProps(field),
@@ -566,8 +551,13 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}index`, {
         field: `${prefixes.Meta}index`,
         headerName: "מזהה",
-        width: 100,
-        minWidth: 80,
+        renderHeader: () => (
+          <HeaderFlex>
+            <span>מזהה</span>
+          </HeaderFlex>
+        ),
+        width: 160,
+        minWidth: 100,
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.index,
@@ -577,7 +567,6 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}created_by`, {
         field: `${prefixes.Meta}created_by`,
         headerName: "נוצר ע״י",
-        flex: 1,
         width: 200,
         minWidth: 150,
         editable: false,
@@ -589,7 +578,6 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}created_at`, {
         field: `${prefixes.Meta}created_at`,
         headerName: "תאריך יצירה",
-        flex: 1,
         width: 200,
         minWidth: 150,
         editable: false,
@@ -609,11 +597,10 @@ export const ResponsesTable = React.memo(
         headerName: "",
         renderHeader: () => <CloudUploadIcon fontSize="large" />,
         minWidth: 150,
+        width: 150,
         editable: false,
         sortable: true,
         filterable: false,
-        align: "center",
-        headerAlign: "center",
         renderCell: (params: GridRenderCellParams) => (
           <SyncStatusIcon pushedToMetro={params.row?.pushed_to_metro} />
         ),
@@ -622,7 +609,6 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}updated_by`, {
         field: `${prefixes.Meta}updated_by`,
         headerName: "השתנה ע״י",
-        flex: 1,
         width: 200,
         minWidth: 150,
         editable: false,
@@ -634,7 +620,6 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}updated_at`, {
         field: `${prefixes.Meta}updated_at`,
         headerName: "תאריך שינוי",
-        flex: 1,
         width: 200,
         minWidth: 150,
         editable: false,
@@ -661,19 +646,6 @@ export const ResponsesTable = React.memo(
 
       const structuralColumns: GridColDef[] = [
         ...(expandColumn ? [{ ...expandColumn, filterable: false }] : []),
-        ...(hasFormInFormFields
-          ? [
-              {
-                ...GRID_DETAIL_PANEL_TOGGLE_COL_DEF,
-                field: GRID_DETAIL_PANEL_TOGGLE_FIELD,
-                filterable: false,
-                sortable: false,
-                renderHeader: (params: any) => (
-                  <div aria-label={params?.colDef?.headerName ?? ""} />
-                ),
-              },
-            ]
-          : []),
       ];
 
       const parentResponseColumns: GridColDef[] = hasParentResponses
@@ -681,7 +653,7 @@ export const ResponsesTable = React.memo(
             {
               field: "parentResponse",
               headerName: "תגובת אב",
-              flex: 1,
+              width: 200,
               editable: false,
               filterable: false,
               sortable: false,
@@ -741,6 +713,8 @@ export const ResponsesTable = React.memo(
       renderEditCell,
       formatCellValue,
       currentViewConfig,
+      navigateToCreateResponseCopy,
+      navigate,
     ]);
 
     const editableColumnFields = useMemo(
@@ -751,7 +725,6 @@ export const ResponsesTable = React.memo(
           .filter(
             (field) =>
               field !== "__check__" &&
-              field !== "expand" &&
               field !== GRID_DETAIL_PANEL_TOGGLE_FIELD,
           ),
       [getFormColumns],
@@ -976,83 +949,91 @@ export const ResponsesTable = React.memo(
       const pageNumber = filter?.pageNumber ?? 1;
       const pageSize = filter?.pageSize ?? 25;
       const totalCount = form?.responsesCount ?? 0;
+      const currentRowsCount = localRows.length;
       const startRange = totalCount === 0 ? 0 : (pageNumber - 1) * pageSize + 1;
-      const endRange = Math.min(pageNumber * pageSize, totalCount);
+      const endRange = totalCount === 0 ? 0 : (pageNumber - 1) * pageSize + currentRowsCount;
 
       return (
         <GridFooterContainer
           sx={{
-            justifyContent: "space-between",
+            display: "flex",
+            alignItems: "center",
             px: 3,
-            py: 1.5,
-            minHeight: "60px",
+            py: 0.5,
+            minHeight: "40px",
+            borderTop: "none",
+            direction: "rtl",
+            gap: 4, // <- adds spacing between the 3 main segments
           }}>
-          <FooterInfoContainer>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
-              {`מציג ${endRange}-${startRange} תגובות מתוך ${totalCount}`}
-            </Typography>
-          </FooterInfoContainer>
-
+          {/* 1. Pagination controls */}
           <Stack direction="row" spacing={2} alignItems="center">
-            <FooterInfoContainer>
-              <Select
-                value={filter?.pageSize ?? 25}
-                onChange={handlePageSizeChange}
-                size="small"
-                variant="standard"
-                disableUnderline
-                sx={{
-                  minWidth: 40,
-                  fontSize: "0.875rem",
-                  textAlign: "center",
-                  fontWeight: 600,
-                  color: "#4a5568",
-                }}
-                disabled={isInEditMode}>
-                {[10, 25, 50, 100].map((size) => (
-                  <MenuItem key={size} value={size}>
-                    {size}
-                  </MenuItem>
-                ))}
-              </Select>
+            <Tooltip title="עמוד הבא">
+              <span>
+                <PaginationButton
+                  onClick={handleNextPage}
+                  disabled={!pageInfo?.hasNextPage || isInEditMode || isRowsLoading || isNavigating}
+                  size="small">
+                  <ArrowBackIosNewIcon />
+                </PaginationButton>
+              </span>
+            </Tooltip>
 
-              <Typography variant="body2" sx={{ fontWeight: 600, color: "#4a5568" }}>
-                תגובות בעמוד
-              </Typography>
-            </FooterInfoContainer>
-
-            <PaginationContainer>
-              <Tooltip title="עמוד קודם">
-                <span>
-                  <PaginationButton
-                    onClick={handlePreviousPage}
-                    disabled={
-                      !pageInfo?.hasPreviousPage ||
-                      (filter?.pageNumber ?? 1) <= 1 ||
-                      isInEditMode ||
-                      isRowsLoading ||
-                      isNavigating
-                    }
-                    size="small">
-                    <ArrowForwardIosIcon />
-                  </PaginationButton>
-                </span>
-              </Tooltip>
-
-              <Tooltip title="עמוד הבא">
-                <span>
-                  <PaginationButton
-                    onClick={handleNextPage}
-                    disabled={
-                      !pageInfo?.hasNextPage || isInEditMode || isRowsLoading || isNavigating
-                    }
-                    size="small">
-                    <ArrowBackIosNewIcon />
-                  </PaginationButton>
-                </span>
-              </Tooltip>
-            </PaginationContainer>
+            <Tooltip title="עמוד קודם">
+              <span>
+                <PaginationButton
+                  onClick={handlePreviousPage}
+                  disabled={
+                    !pageInfo?.hasPreviousPage ||
+                    (filter?.pageNumber ?? 1) <= 1 ||
+                    isInEditMode ||
+                    isRowsLoading ||
+                    isNavigating
+                  }
+                  size="small">
+                  <ArrowForwardIosIcon />
+                </PaginationButton>
+              </span>
+            </Tooltip>
           </Stack>
+
+          {/* 2. Showing responses */}
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
+            {endRange > 0
+              ? `מציג ${endRange}-${startRange} תגובות מתוך ${totalCount}`
+              : `מציג 0 תגובות מתוך ${totalCount}`}
+          </Typography>
+
+          {/* 3. Page size selector */}
+          <FooterInfoContainer sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
+              תגובות בעמוד
+            </Typography>
+
+            <Select
+              value={filter?.pageSize ?? 25}
+              onChange={handlePageSizeChange}
+              size="small"
+              variant="standard"
+              disableUnderline
+              sx={{
+                minWidth: 30,
+                fontSize: "0.875rem",
+                textAlign: "center",
+                fontWeight: 400,
+                color: "#4a5568",
+              }}
+              disabled={isInEditMode}>
+              {[10, 25, 50, 100].map((size) => (
+                <MenuItem key={size} value={size}>
+                  {size}
+                </MenuItem>
+              ))}
+            </Select>
+          </FooterInfoContainer>
         </GridFooterContainer>
       );
     };
@@ -1060,122 +1041,135 @@ export const ResponsesTable = React.memo(
     return (
       <ContentContainer>
         <MainContent>
-          <StyledDataGrid
-            apiRef={apiRef}
-            className={clsx({ "MuiDataGrid-root--edit-mode": isInEditMode })}
-            disableColumnMenu={isInEditMode}
-            disableColumnSorting={isInEditMode}
-            disableColumnResize={isInEditMode}
-            disableColumnFilter={isInEditMode}
-            headerFilters={shouldUseHeaderFilters}
-            columnBufferPx={150}
-            sortingMode="server"
-            sortingOrder={["asc", "desc"]}
-            onSortModelChange={handleSortModelChange}
-            filterMode="server"
-            filterModel={filterModel}
-            onFilterModelChange={handleFilterModelChange}
-            editMode="cell"
-            cellModesModel={cellModesModel}
-            onCellModesModelChange={handleCellModesModelChange}
-            onCellClick={handleCellClick}
-            onCellDoubleClick={handleCellDoubleClick}
-            onCellKeyDown={handleCellKeyDown}
-            processRowUpdate={handleProcessRowUpdate}
-            onProcessRowUpdateError={(error) => {
-              console.error("Error updating row:", error);
-            }}
-            getCellClassName={getCellClassName}
-            density="comfortable"
-            rowHeight={isInEditMode ? 140 : 65}
-            loading={
-              !isInEditMode && isRowsLoading && rows.length === 0 && form?.responsesCount !== 0
-            }
-            checkboxSelection
-            disableRowSelectionOnClick
-            onRowSelectionModelChange={onRowSelectionModelChange}
-            getRowClassName={(params) =>
-              params.indexRelativeToCurrentPage % 2 === 0
-                ? "MuiDataGrid-row--even"
-                : "MuiDataGrid-row--odd"
-            }
-            getRowId={(row) => row?.id}
-            localeText={{
-              ...heIL.components.MuiDataGrid.defaultProps.localeText,
-              ...responseHeaderFilterLocaleText,
-              noRowsLabel: "אין תגובות",
-              columnMenuLabel: "פעולות",
-              pinToLeft: "נעץ מימין",
-              pinToRight: "נעץ משמאל",
-            }}
-            columns={getFormColumns}
-            sortModel={sortModel}
-            rows={localRows}
-            slots={{
-              columnMenu: ResponsesColumnMenu,
-              columnHeaderFilterIconButton: EmptyColumnHeaderFilterIconButton,
-              columnFilteredIcon: EmptyColumnFilteredIcon,
-              footer: CustomFooter,
-            }}
-            {...(hasFormInFormFields && {
-              getDetailPanelContent,
-              getDetailPanelHeight,
-              detailPanelExpandedRowIds,
-            })}
-            slotProps={{
-              columnMenu: {
-                showFilters,
-                activeFiltersCount,
-                disabled: isInEditMode,
-                onToggleFilters: handleToggleFilters,
-                onClearFilters: handleClearFilters,
-              } as any,
-              row: {
-                onContextMenu: handleContextMenu,
-                style: { cursor: "context-menu" },
-              },
-            }}
-            sx={{
-              "& .MuiDataGrid-headerFilterCell": {
-                overflow: "hidden",
-                px: 0.5,
-                minWidth: 0,
-              },
-              "& .MuiDataGrid-headerFilterCell .MuiInputBase-root": {
-                backgroundColor: "transparent",
-                width: "100%",
-                minWidth: 0,
-              },
-              "& .MuiDataGrid-headerFilterCell .MuiFormControl-root": {
-                width: "100%",
-                minWidth: 0,
-              },
-              "& .MuiDataGrid-headerFilterCell .MuiStack-root": {
-                minWidth: 0,
-              },
-              "& .MuiDataGrid-headerFilterCell input": {
-                backgroundColor: "transparent",
-                minWidth: 0,
-              },
-            }}
-          />
+          <TableContainer>
+            <StyledDataGrid
+              apiRef={apiRef}
+              className={clsx({ "MuiDataGrid-root--edit-mode": isInEditMode })}
+              disableColumnMenu={isInEditMode}
+              disableColumnSorting={false}
+              disableColumnFilter={isInEditMode}
+              headerFilters={shouldUseHeaderFilters}
+              autosizeOnMount
+              autosizeOptions={{
+                includeHeaders: true,
+                includeOutliers: true,
+                expand: true,
+              }}
+              columnBufferPx={5000}
+              initialState={{
+                pinnedColumns: {
+                  left: ["__check__", "meta:index", GRID_DETAIL_PANEL_TOGGLE_FIELD],
+                },
+              }}
+              sortingMode="server"
+              sortingOrder={["asc", "desc"]}
+              onSortModelChange={handleSortModelChange}
+              filterMode="server"
+              filterModel={filterModel}
+              onFilterModelChange={handleFilterModelChange}
+              editMode="cell"
+              cellModesModel={cellModesModel}
+              onCellModesModelChange={handleCellModesModelChange}
+              onCellClick={handleCellClick}
+              onCellDoubleClick={handleCellDoubleClick}
+              onCellKeyDown={handleCellKeyDown}
+              processRowUpdate={handleProcessRowUpdate}
+              onProcessRowUpdateError={(error) => {
+                console.error("Error updating row:", error);
+              }}
+              getCellClassName={getCellClassName}
+              rowHeight={45}
+              columnHeaderHeight={40}
+              loading={
+                !isInEditMode && isRowsLoading && rows.length === 0 && form?.responsesCount !== 0
+              }
+              checkboxSelection
+              disableRowSelectionOnClick
+              disableColumnResize
+              rowSelectionModel={rowSelectionModel}
+              onRowSelectionModelChange={onRowSelectionModelChange}
+              getRowClassName={(params) => {
+                const classes: string[] = [];
+                classes.push(
+                  params.indexRelativeToCurrentPage % 2 === 0
+                    ? "MuiDataGrid-row--even"
+                    : "MuiDataGrid-row--odd",
+                );
 
-          <Menu
-            open={contextMenu !== null}
-            onClose={handleCloseContextMenu}
-            anchorReference="anchorPosition"
-            anchorPosition={
-              contextMenu !== null
-                ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-                : undefined
-            }>
-            <MenuItem onClick={handleDuplicateResponse}>
-              <ListItemIcon>
-                <ContentCopyIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>שכפול תגובה</ListItemText>
-            </MenuItem>
-          </Menu>
+                if (isInEditMode) {
+                  if (deletedRowIds.map(String).includes(String(params.id))) {
+                    classes.push("pending-deletion-row");
+                  }
+
+                  const isEdited = Object.keys(cellModesModel[params.id] || {}).some(
+                    (field) => cellModesModel[params.id][field].mode === GridCellModes.Edit,
+                  );
+                  if (isEdited) {
+                    classes.push("active-editing-row");
+                  }
+                }
+
+                return classes.join(" ");
+              }}
+              getRowId={(row) => row?.id}
+              localeText={{
+                ...heIL.components.MuiDataGrid.defaultProps.localeText,
+                ...responseHeaderFilterLocaleText,
+                noRowsLabel: "אין תגובות",
+                columnMenuLabel: "פעולות",
+                pinToLeft: "נעץ מימין",
+                pinToRight: "נעץ משמאל",
+              }}
+              columns={getFormColumns}
+              sortModel={sortModel}
+              rows={localRows}
+              slots={{
+                columnMenu: ResponsesColumnMenu,
+                columnHeaderFilterIconButton: EmptyColumnHeaderFilterIconButton,
+                columnFilteredIcon: EmptyColumnFilteredIcon,
+                footer: CustomFooter,
+              }}
+              {...(hasFormInFormFields && {
+                getDetailPanelContent,
+                getDetailPanelHeight,
+                detailPanelExpandedRowIds,
+                onDetailPanelExpandedRowIdsChange: handleDetailPanelExpandedRowIdsChange,
+              })}
+              slotProps={{
+                columnMenu: {
+                  showFilters,
+                  activeFiltersCount,
+                  disabled: isInEditMode,
+                  onToggleFilters: handleToggleFilters,
+                  onClearFilters: handleClearFilters,
+                } as any,
+                row: {},
+              }}
+              sx={{
+                "& .MuiDataGrid-headerFilterCell": {
+                  overflow: "hidden",
+                  px: 0.5,
+                  minWidth: 0,
+                },
+                "& .MuiDataGrid-headerFilterCell .MuiInputBase-root": {
+                  backgroundColor: "transparent",
+                  width: "100%",
+                  minWidth: 0,
+                },
+                "& .MuiDataGrid-headerFilterCell .MuiFormControl-root": {
+                  width: "100%",
+                  minWidth: 0,
+                },
+                "& .MuiDataGrid-headerFilterCell .MuiStack-root": {
+                  minWidth: 0,
+                },
+                "& .MuiDataGrid-headerFilterCell input": {
+                  backgroundColor: "transparent",
+                  minWidth: 0,
+                },
+              }}
+            />
+          </TableContainer>
         </MainContent>
       </ContentContainer>
     );

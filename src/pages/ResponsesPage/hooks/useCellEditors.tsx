@@ -1,7 +1,7 @@
 import { TextField, Tooltip } from "@mui/material";
 import { GridRenderEditCellParams } from "@mui/x-data-grid-pro";
 import { GridApiPro } from "@mui/x-data-grid-pro/models/gridApiPro";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 import { fieldType } from "formula-gear";
 
@@ -345,5 +345,5 @@ export const useCellEditors = ({
     [findFormFieldByColumnName, renderFallbackTextField, updateCellValue, validationErrors],
   );
 
-  return { renderEditCell };
+  return useMemo(() => ({ renderEditCell }), [renderEditCell]);
 };
