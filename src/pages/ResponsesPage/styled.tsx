@@ -55,14 +55,16 @@ export const MainContentWrapper = styled(Box)<BoxProps>(() => ({
   minWidth: 0,
   minHeight: 0,
   overflow: "hidden",
+  scrollbarGutter: "stable", // Prevent horizontal jumps when scrollbar appears
 }));
 
 export const TopSection = styled(Box)<BoxProps>(() => ({
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "flex-start",
+  alignItems: "center", // Align center to prevent height-based jumps
   marginBottom: "5px",
   flexShrink: 0,
+  minHeight: "48px", // Ensure stable header height
 }));
 
 export const CenteredBox = styled(Box)<BoxProps>(() => ({
@@ -100,9 +102,6 @@ export const FormIconWrapper = styled(Box)(({ theme }) => ({
 export const QuickEditTableContainer = styled(MuiTableContainer)<{ isQuickEditMode?: boolean }>(
   ({ theme, isQuickEditMode }) => ({
     ...(isQuickEditMode && {
-      "& .MuiTableCell-root": {
-        padding: "4px",
-      },
       "& .MuiTableRow-root:hover": {
         backgroundColor: "#f5f5f5",
       },
@@ -173,8 +172,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     width: "100%",
     maxWidth: "100%",
     fontSize: "18px",
-    transition: "all 0.3s ease",
     border: "none",
+    overflow: "hidden",
+    direction: "rtl /* @noflip */",
     "& .MuiDataGrid-cell": {
       borderBottom: "none",
       borderRight: "none",
@@ -189,14 +189,20 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
         borderRight: `none`,
       },
     },
-    "& .MuiDataGrid-columnSeparator": {
-      display: "none",
-    },
     "& .MuiDataGrid-row--even": {
       backgroundColor: "#ffffff",
     },
     "& .MuiDataGrid-row--odd": {
       backgroundColor: "#f5f5f5",
+    },
+    "& .pending-deletion-row": {
+      backgroundColor: "rgba(211, 47, 47, 0.08) !important",
+      color: "rgba(0, 0, 0, 0.4) !important",
+      textDecoration: "line-through",
+      opacity: 0.7,
+      "& .MuiDataGrid-cell": {
+        color: "inherit",
+      },
     },
   "& .MuiDataGrid-columnHeaderCheckbox": {
     "& .MuiDataGrid-columnHeaderTitleContainer": {
@@ -362,7 +368,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     borderRadius: "2px",
     cursor: "text",
     boxShadow: "inset 0 0 0 1px #e0e0e0",
-    transition: "all 0.2s ease",
+    transition: "box-shadow 0.2s ease, background-color 0.2s ease", // More specific transition
     "&:hover": {
       boxShadow: "inset 0 0 0 1px #bdbdbd",
     },
@@ -511,7 +517,9 @@ export const ExpandIconBox = styled(Box)(() => ({
 export const SyncStatusIconBox = styled(Box)(() => ({
   display: "flex",
   alignItems: "center",
+  justifyContent: "center",
   height: "100%",
+  width: "32px",
 }));
 
 export const FormInfoContentBox = styled(Box)(() => ({
@@ -580,6 +588,8 @@ export const formInfoTooltipSlotProps = {
 export const HeaderAsterisk = styled("span")(({ theme }) => ({
   color: "#d32f2f",
   fontWeight: 700,
+  minWidth: "8px", // Reserve space even when empty
+  display: "inline-block",
 }));
 
 export const HeaderFlex = styled("div")({
@@ -588,6 +598,7 @@ export const HeaderFlex = styled("div")({
   gap: 6,
   position: "relative",
   fontWeight: 700,
+  minHeight: "24px", // Reserve minimum height for consistency
 });
 
 export const CellErrorWrapper = styled("div")({
@@ -645,6 +656,10 @@ export const PaginationContainer = styled(Box)(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   gap: theme.spacing(0.5),
+  "& .MuiTypography-root": {
+    minWidth: "24px",
+    textAlign: "center",
+  },
 }));
 
 export const FooterInfoContainer = styled(Box)(({ theme }) => ({
@@ -660,6 +675,8 @@ export const PaginationButton = styled(IconButton)(({ theme }) => ({
   padding: "4px",
   backgroundColor: "transparent",
   border: "none",
+  width: "32px",
+  height: "32px",
   "&:hover": {
     backgroundColor: "rgba(0, 0, 0, 0.04)",
   },

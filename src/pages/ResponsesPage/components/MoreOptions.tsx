@@ -22,6 +22,7 @@ import { useFormStore } from "../stores/form.store";
 import { SourceOperationStatus, SourceOperationStatusType } from "./FormActionsToolbar";
 import { UploadResponses } from "./UploadResponses";
 import { PermissionGate } from "@src/components/PermissionGate";
+import { useSuperAdmin } from "@src/contexts/SuperAdminContext";
 
 interface MoreOptionsProps {
   setAnchorElSourceType: React.Dispatch<React.SetStateAction<HTMLElement | null>>;
@@ -37,6 +38,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
   const { id: formId } = useParams();
   const navigate = useNavigate();
   const { permissions, form, rows } = useFormStore();
+  const { isSuperAdmin } = useSuperAdmin();
 
   const [anchorElMoreActions, setAnchorElMoreActions] = useState<HTMLElement | null>(null);
   const [showDeleteFormPopup, setShowDeleteFormPopup] = useState(false);
@@ -46,7 +48,21 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
   const { mutate: deleteForm } = useDeleteForm({ id: formId ?? "" });
   const { mutate: softDeleteResponses } = useSoftDeleteResponses(formId ?? "");
 
-  if (!permissions || !form || !formId) return null;
+  const hasVisibleOptions = useMemo(() => {
+    if (isSuperAdmin) return true;
+
+    const requiredPermissions = [
+      permission.SyncForm,
+      permission.ImportResponses,
+      permission.ExportForm,
+      permission.DeleteForm,
+      permission.DeleteAnyResponse,
+    ];
+
+    return requiredPermissions.some((p) => (permissions || []).includes(p));
+  }, [isSuperAdmin, permissions]);
+
+  if (!permissions || !form || !formId || !hasVisibleOptions) return null;
 
   const hasMetroSource = !!(form.metro_access_url || form.oasisSourceKey);
   const hasFormFields = (form.sections ?? []).some((section) => (section.fields?.length ?? 0) > 0);

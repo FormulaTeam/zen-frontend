@@ -97,10 +97,12 @@ export const highlightTextUtil = (
   }
 
   return (
-    <>
-      {parts.map((part, index) =>
-        index % 2 === 1 ? <HighlightedText key={index}>{part}</HighlightedText> : part,
-      )}
-    </>
+    <React.Fragment key={`${stringText}-${searchQuery}`}>
+      {parts
+        .map((part, index) =>
+          index % 2 === 1 ? <HighlightedText key={index}>{part}</HighlightedText> : part,
+        )
+        .filter((part) => part !== "")}
+    </React.Fragment>
   );
 };

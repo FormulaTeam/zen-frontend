@@ -137,6 +137,10 @@ const FormCard = ({
   const userPermissions =
     (isSuperAdmin || isCreator ? Object.values(permission) : form.permissions) ?? [];
 
+  const hasMenuPermissions = userPermissions.some((perm) =>
+    [permission.UpdateForm, permission.ShareForm].includes(perm as any),
+  );
+
   return (
     <StyledCard
       sx={{ backgroundcolor: theme.palette.background.paper }}
@@ -152,59 +156,63 @@ const FormCard = ({
               </ItemTitle>
             </Box>
 
-            <IconButton
-              aria-label="more"
-              id="long-button"
-              aria-controls={openMenu ? "long-menu" : undefined}
-              aria-expanded={openMenu ? "true" : undefined}
-              aria-haspopup="true"
-              onClick={handleMenuClick}
-              size="small"
-              sx={{ color: "#62748E" }}>
-              <MoreVert />
-            </IconButton>
-            <Menu
-              id="long-menu"
-              MenuListProps={{
-                "aria-labelledby": "long-button",
-              }}
-              anchorEl={anchorEl}
-              open={openMenu}
-              onClose={handleMenuClose}
-              PaperProps={{
-                style: {
-                  maxHeight: 48 * 4.5,
-                  width: "150px",
-                  borderRadius: "8px",
-                  boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-                },
-              }}>
-              <PermissionGate
-                userPermissions={userPermissions}
-                requiredPermissions={[permission.UpdateForm]}>
-                <MenuItem onClick={handleEditClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
-                  <EditOutlined fontSize="small" /> עריכת טופס
-                </MenuItem>
-              </PermissionGate>
+            {hasMenuPermissions && (
+              <>
+                <IconButton
+                  aria-label="more"
+                  id="long-button"
+                  aria-controls={openMenu ? "long-menu" : undefined}
+                  aria-expanded={openMenu ? "true" : undefined}
+                  aria-haspopup="true"
+                  onClick={handleMenuClick}
+                  size="small"
+                  sx={{ color: "#62748E" }}>
+                  <MoreVert />
+                </IconButton>
+                <Menu
+                  id="long-menu"
+                  MenuListProps={{
+                    "aria-labelledby": "long-button",
+                  }}
+                  anchorEl={anchorEl}
+                  open={openMenu}
+                  onClose={handleMenuClose}
+                  PaperProps={{
+                    style: {
+                      maxHeight: 48 * 4.5,
+                      width: "150px",
+                      borderRadius: "8px",
+                      boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+                    },
+                  }}>
+                  <PermissionGate
+                    userPermissions={userPermissions}
+                    requiredPermissions={[permission.UpdateForm]}>
+                    <MenuItem onClick={handleEditClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
+                      <EditOutlined fontSize="small" /> עריכת טופס
+                    </MenuItem>
+                  </PermissionGate>
 
-              <PermissionGate
-                userPermissions={userPermissions}
-                requiredPermissions={[permission.ShareForm]}>
-                <MenuItem onClick={handleShareClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
-                  <ShareOutlined fontSize="small" /> שיתוף טופס
-                </MenuItem>
-              </PermissionGate>
+                  <PermissionGate
+                    userPermissions={userPermissions}
+                    requiredPermissions={[permission.ShareForm]}>
+                    <MenuItem onClick={handleShareClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
+                      <ShareOutlined fontSize="small" /> שיתוף טופס
+                    </MenuItem>
+                  </PermissionGate>
 
-              <PermissionGate
-                userPermissions={userPermissions}
-                requiredPermissions={[permission.UpdateForm]}>
-                <MenuItem
-                  onClick={handleDeleteClick}
-                  sx={{ fontSize: "14px", color: theme.palette.error.main, gap: 1 }}>
-                  <DeleteOutline fontSize="small" /> מחיקת טופס
-                </MenuItem>
-              </PermissionGate>
-            </Menu>
+                  <PermissionGate
+                    userPermissions={userPermissions}
+                    requiredPermissions={[permission.UpdateForm]}>
+                    <MenuItem
+                      onClick={handleDeleteClick}
+                      sx={{ fontSize: "14px", color: theme.palette.error.main, gap: 1 }}>
+                      <DeleteOutline fontSize="small" /> מחיקת טופס
+                    </MenuItem>
+                  </PermissionGate>
+                </Menu>
+              </>
+            )}
           </ItemTitleAndNum>
 
           <DescriptionDiv>

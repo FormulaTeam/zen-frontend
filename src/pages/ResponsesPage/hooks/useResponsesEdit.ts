@@ -36,6 +36,8 @@ import {
   OptionResponseValue,
 } from "../../../utils/optionResponseValue";
 import { saveQuickEditDraft, clearQuickEditDraft } from "../../FormEditor/utils/draftPersistence";
+import { DefaultDateValue } from "../../FormEditor/schemas/fields/dateSchema";
+import { DefaultTimeValue } from "../../FormEditor/schemas/fields/timeSchema";
 
 type RowId = string | number;
 
@@ -279,7 +281,11 @@ const getEmptyFieldValue = (field: FormFieldDto): unknown => {
     };
   }
 
-  if (field.fieldType === fieldType.Link) {
+  if (
+    field.fieldType === fieldType.Link ||
+    field.fieldType === fieldType.Date ||
+    field.fieldType === fieldType.Time
+  ) {
     return null;
   }
 
@@ -301,6 +307,22 @@ const getDefaultFieldValue = (field: FormFieldDto): unknown => {
       typeof extra.options.defaultOptionId === "string"
     ) {
       return extra.options.defaultOptionId;
+    }
+
+    return getEmptyFieldValue(field);
+  }
+
+  if (field.fieldType === fieldType.Date) {
+    if (extra.defaultValue === DefaultDateValue.NOW) {
+      return moment().toISOString();
+    }
+
+    return getEmptyFieldValue(field);
+  }
+
+  if (field.fieldType === fieldType.Time) {
+    if (extra.defaultValue === DefaultTimeValue.NOW) {
+      return moment().format("HH:mm");
     }
 
     return getEmptyFieldValue(field);
@@ -472,9 +494,9 @@ export const useResponsesEdit = () => {
       const stringIds = ids.map((id) => String(id));
 
       if (isInEditMode) {
-        // Local defer
+        // Local defer - add to deletedRowIds but don't filter localRows
         setDeletedRowIds((prev) => [...new Set([...prev, ...stringIds])]);
-        setLocalRows((prev) => prev.filter((row) => !stringIds.includes(String(row.id))));
+        
         setEditedRows((prev) => {
           const next = new Map(prev);
           stringIds.forEach((id) => next.delete(id));
