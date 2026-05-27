@@ -71,6 +71,8 @@ function FormEditorHeader() {
     const trimmedTitle = suggestedTitle.trim();
     if (setFormMetadata({ title: trimmedTitle })) {
       setShowUntitledFormPopup(false);
+      setIsEditingMetadata(false);
+      setEditedMetadata((prev) => ({ ...prev, title: trimmedTitle }));
       // Pass the title directly to save to avoid race conditions with state
       handleSaveForm({ title: trimmedTitle });
     }
