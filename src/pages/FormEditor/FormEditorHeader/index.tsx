@@ -68,10 +68,11 @@ function FormEditorHeader() {
   };
 
   const handleAcceptSuggestedTitle = async () => {
-    if (setFormMetadata({ title: suggestedTitle })) {
+    const trimmedTitle = suggestedTitle.trim();
+    if (setFormMetadata({ title: trimmedTitle })) {
       setShowUntitledFormPopup(false);
       // Pass the title directly to save to avoid race conditions with state
-      handleSaveForm({ title: suggestedTitle });
+      handleSaveForm({ title: trimmedTitle });
     }
   };
 
@@ -174,7 +175,7 @@ function FormEditorHeader() {
               placeholder={"שם הטופס"}
               error={!!validationErrors?.title}
               onChange={(e) => {
-                const newVal = e.target.value.replace(/[^\u0590-\u05FF]/g, "");
+                const newVal = e.target.value.replace(/[^\u0590-\u05FF\s]/g, "");
                 setEditedMetadata((prev) => ({ ...prev, title: newVal }));
                 setFormMetadata({ title: newVal });
               }}
@@ -202,7 +203,7 @@ function FormEditorHeader() {
             placeholder={"תיאור"}
             error={!!validationErrors?.description}
             onChange={(e) => {
-              const newVal = e.target.value.replace(/[^\u0590-\u05FF]/g, "");
+              const newVal = e.target.value.replace(/[^\u0590-\u05FF\s]/g, "");
               setEditedMetadata((prev) => ({
                 ...prev,
                 description: newVal,
@@ -320,7 +321,7 @@ function FormEditorHeader() {
           fullWidth
           label="שם הטופס"
           value={suggestedTitle}
-          onChange={(e) => setSuggestedTitle(e.target.value.replace(/[^\u0590-\u05FF]/g, ""))}
+          onChange={(e) => setSuggestedTitle(e.target.value.replace(/[^\u0590-\u05FF\s]/g, ""))}
           variant="outlined"
           sx={{ mt: 1 }}
         />
