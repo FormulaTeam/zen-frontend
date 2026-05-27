@@ -211,6 +211,7 @@ export const TableContainer = styled(Box)<BoxProps>(() => ({
   overflow: "hidden",
   display: "flex",
   flexDirection: "column",
+  padding: "0 24px",
 }));
 
 export const PageWrapper = styled(Box)<BoxProps>(() => ({

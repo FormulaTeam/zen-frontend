@@ -79,7 +79,7 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
                 </Select>
             )}
 
-            <Tooltip title={hasSavedViews ? MANAGE_VIEWS_LABEL : ""} placement="top" arrow>
+            <Tooltip title={hasSavedViews ? MANAGE_VIEWS_LABEL : ""} placement="top">
                 <span>
                     <UnifiedButton
                         onClick={() => setIsSidePanelOpen(true)}

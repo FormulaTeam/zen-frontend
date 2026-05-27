@@ -70,7 +70,7 @@ const DraftRecoveryBanner: React.FC<DraftRecoveryBannerProps> = ({
                 px: 2,
                 order: 1,
               }}>
-              שחזר טיוטה
+              שחזור טיוטה
             </Button>
           </Box>
         }>
