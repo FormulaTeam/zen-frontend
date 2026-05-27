@@ -21,17 +21,12 @@ import {
   MetadataContainer,
   StyledDescriptionText,
   StyledTitleText,
-  ExitAlertMsgDialog,
-  ExitAlertMsgCloseIcon,
-  ExitAlertMsgDialogTitle,
-  ExitAlertMsgDialogContent,
-  ExitAlertMsgDialogContentText,
-  ExitAlertMsgDialogActions,
   SeamlessTitleInput,
   SeamlessDescriptionInput,
 } from "./styled";
 import { texts } from "@src/utils/texts";
 import ValidationErrorsDialog from "../../../components/BasePopup/ValidationErrorsDialog";
+import UnsavedChangesDialog from "../../../components/BasePopup/UnsavedChangesDialog";
 
 function FormEditorHeader() {
   const { formStructure, validateForm, setFormMetadata, checkHasChanges } =
@@ -180,8 +175,7 @@ function FormEditorHeader() {
             setEditedMetadata({ title, description, iconId });
             setIsEditingMetadata(true);
           }
-        }}
-      >
+        }}>
         <div className={styles.title}>
           {isEditingMetadata ? (
             <SeamlessTitleInput
@@ -238,7 +232,9 @@ function FormEditorHeader() {
           />
         ) : (
           <OverflowTooltip title={description || "ללא תיאור"} placement="bottom">
-            <StyledDescriptionText variant="subtitle1">{description ?? "ללא תיאור"}</StyledDescriptionText>
+            <StyledDescriptionText variant="subtitle1">
+              {description ?? "ללא תיאור"}
+            </StyledDescriptionText>
           </OverflowTooltip>
         )}
 
@@ -265,43 +261,13 @@ function FormEditorHeader() {
   );
 
   const exitAlertMsg: JSX.Element | null = (
-    <Dialog
+    <UnsavedChangesDialog
       open={showAlertMsg}
       onClose={() => setShowAlertMsg(false)}
-      slotProps={{
-        paper: {
-          component: ExitAlertMsgDialog,
-        },
-      }}>
-      <ExitAlertMsgCloseIcon>
-        <Close onClick={() => setShowAlertMsg(false)} />
-      </ExitAlertMsgCloseIcon>
-      <ExitAlertMsgDialogTitle>
-        <ErrorIcon sx={{ fontSize: "5rem", color: "red" }} />
-      </ExitAlertMsgDialogTitle>
-      <ExitAlertMsgDialogContent>
-        <ExitAlertMsgDialogContentText>
-          יש לך שינויים שלא נשמרו בטופס. האם ברצונך לשמור את השינויים?
-        </ExitAlertMsgDialogContentText>
-      </ExitAlertMsgDialogContent>
-      <ExitAlertMsgDialogActions>
-        <Button variant="outlined" onClick={() => setShowAlertMsg(false)}>
-          ביטול
-        </Button>
-        <Button variant="contained" color="primary" onClick={handleSaveAndExit}>
-          שמירה ויציאה
-        </Button>
-        <Button
-          variant="outlined"
-          color="error"
-          onClick={() => {
-            setShowAlertMsg(false);
-            handleDiscardAndExit();
-          }}>
-          יציאה ללא שמירה
-        </Button>
-      </ExitAlertMsgDialogActions>
-    </Dialog>
+      onSave={handleSaveAndExit}
+      onDiscard={handleDiscardAndExit}
+      message="יש לך שינויים שלא נשמרו בטופס. האם ברצונך לשמור את השינויים?"
+    />
   );
 
   const validationErrorsPopup = (
@@ -309,7 +275,7 @@ function FormEditorHeader() {
       open={showValidationErrorsPopup}
       onClose={() => setShowValidationErrorsPopup(false)}
       errors={[
-        "יש שגיאות בטופס. נא לתקן את השדות המסומנים באדום.",
+        "נא לתקן את השדות המסומנים באדום",
         ...(Object.keys(formStructure.fields).length === 0 ? ["לא ניתן לשמור טופס ללא שדות."] : []),
       ]}
     />

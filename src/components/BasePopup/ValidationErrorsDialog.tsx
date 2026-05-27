@@ -71,7 +71,7 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
   onClose,
   errors,
   title = "נמצאו שגיאות בטופס",
-  subtitle? ,
+  subtitle,
 }) => {
   return (
     <StyledDialog open={open} onClose={onClose} scroll="paper">
@@ -88,10 +88,11 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
         <Typography variant="h6" sx={{ fontWeight: 800, color: "#020618", mb: 0.5 }}>
           {title}
         </Typography>
-        subtitle && {
-        <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
-          {subtitle}
-        </Typography>}
+        {subtitle && (
+          <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
+            {subtitle}
+          </Typography>
+        )}
       </ErrorHeader>
 
       <DialogContent sx={{ py: 0 }}>

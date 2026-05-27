@@ -26,6 +26,7 @@ import ResponseHeader from "../../components/ResponseComponents/ResponseHeader";
 import ResponseSection from "../../components/ResponseComponents/ResponseSection";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import ValidationErrorsDialog from "../../components/BasePopup/ValidationErrorsDialog";
+import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialog";
 import { useValidationErrors, type ValidationDisplayError } from "../../hooks/useValidationErrors";
 import { clearResponseDraft, getResponseDraft } from "../FormEditor/utils/draftPersistence";
 import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner";
@@ -441,35 +442,19 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
       <ValidationErrorsDialog
         title="נמצאו שגיאות בתגובה"
+        subtitle="יש לתקן את השדות הבאים לפני שמירה:"
         open={showValidationPopup}
         onClose={closeValidationPopup}
         errors={validationErrors}
       />
 
-      <Dialog open={showAlertMsg} onClose={() => setShowAlertMsg(false)}>
-        <Box sx={{ position: "absolute", top: 8, right: 8 }}>
-          <Close onClick={() => setShowAlertMsg(false)} sx={{ cursor: "pointer" }} />
-        </Box>
-        <DialogTitle sx={{ display: "flex", flexDirection: "column", alignItems: "center", pt: 4 }}>
-          <ErrorIcon sx={{ fontSize: "5rem", color: "red" }} />
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText textAlign="center">
-            יש לך שינויים שלא נשמרו בתגובה. האם ברצונך לשמור את השינויים?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", pb: 3, px: 3, gap: 2 }}>
-          <Button variant="outlined" onClick={() => setShowAlertMsg(false)}>
-            ביטול
-          </Button>
-          <Button variant="contained" color="primary" onClick={handleSaveAndExit}>
-            שמירה ויציאה
-          </Button>
-          <Button variant="outlined" color="error" onClick={handleDiscardAndExit}>
-            יציאה ללא שמירה
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <UnsavedChangesDialog
+        open={showAlertMsg}
+        onClose={() => setShowAlertMsg(false)}
+        onSave={handleSaveAndExit}
+        onDiscard={handleDiscardAndExit}
+        message="יש לך שינויים שלא נשמרו בתגובה. האם ברצונך לשמור את השינויים?"
+      />
 
       <DraftRecoveryBanner
         open={showRestoreBanner}
