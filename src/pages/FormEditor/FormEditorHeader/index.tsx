@@ -32,6 +32,8 @@ function FormEditorHeader() {
   const [showPickIcon, setShowPickIcon] = useState(false);
   const [showAlertMsg, setShowAlertMsg] = useState(false);
   const [showValidationErrorsPopup, setShowValidationErrorsPopup] = useState(false);
+  const [showUntitledFormPopup, setShowUntitledFormPopup] = useState(false);
+  const [suggestedTitle, setSuggestedTitle] = useState("טופס ללא שם");
 
   const { title, description, iconId, validationErrors } = formStructure.metadata;
 
@@ -39,9 +41,30 @@ function FormEditorHeader() {
     const isValid = validateForm();
     if (isValid) {
       handleSaveForm();
+      return;
+    }
+
+    // Check if the ONLY error is the title (meaning form has fields and fields are valid)
+    const hasFields = Object.keys(formStructure.fields).length > 0;
+    const fieldsValid = Object.values(formStructure.fields).every(f => !f.validationErrors || Object.keys(f.validationErrors).length === 0);
+    const metadataErrors = formStructure.metadata.validationErrors || {};
+    const titleError = metadataErrors.title;
+    const onlyTitleError = hasFields && fieldsValid && Object.keys(metadataErrors).length === 1 && !!titleError;
+
+    if (onlyTitleError) {
+      setShowUntitledFormPopup(true);
     } else {
       setShowValidationErrorsPopup(true);
     }
+  };
+
+  const handleAcceptSuggestedTitle = async () => {
+    setFormMetadata({ title: suggestedTitle });
+    setShowUntitledFormPopup(false);
+    // Wait for state to settle then save
+    setTimeout(() => {
+      handleSaveForm();
+    }, 100);
   };
 
   const handleSaveAndExit = async () => {
@@ -50,6 +73,8 @@ function FormEditorHeader() {
     if (isValid) {
       await handleSaveForm();
       handleExit();
+    } else {
+      onSaveClick();
     }
   };
 
@@ -239,11 +264,38 @@ function FormEditorHeader() {
     showValidationErrorsPopup ? (
       <div style={{ position: 'fixed', top: 80, left: 0, right: 0, zIndex: 1300, display: 'flex', justifyContent: 'center' }}>
         <AlertMsg
-          msg={["יש שגיאות בטופס. נא לתקן את השדות המסומנים באדום."]}
+          msg={[
+            "יש שגיאות בטופס. נא לתקן את השדות המסומנים באדום.",
+            ...(Object.keys(formStructure.fields).length === 0 ? ["לא ניתן לשמור טופס ללא שדות."] : [])
+          ]}
           closePopup={() => setShowValidationErrorsPopup(false)}
         />
       </div>
     ) : null
+  );
+
+  const untitledFormDialog = (
+    <Dialog open={showUntitledFormPopup} onClose={() => setShowUntitledFormPopup(false)}>
+      <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>שם לטופס</DialogTitle>
+      <DialogContent>
+        <DialogContentText sx={{ mb: 2, textAlign: 'center' }}>
+          נראה שלטופס אין שם. האם תרצה לשמור אותו תחת השם המוצע?
+        </DialogContentText>
+        <TextField
+          autoFocus
+          fullWidth
+          label="שם הטופס"
+          value={suggestedTitle}
+          onChange={(e) => setSuggestedTitle(e.target.value)}
+          variant="outlined"
+          sx={{ mt: 1 }}
+        />
+      </DialogContent>
+      <DialogActions sx={{ justifyContent: 'center', gap: 1, pb: 3 }}>
+        <Button onClick={() => setShowUntitledFormPopup(false)} variant="outlined">ביטול</Button>
+        <Button onClick={handleAcceptSuggestedTitle} variant="contained" color="primary">שמירה</Button>
+      </DialogActions>
+    </Dialog>
   );
 
   return (
@@ -264,6 +316,7 @@ function FormEditorHeader() {
         />
       )}
 
+      {untitledFormDialog}
       {exitAlertMsg}
       {validationErrorsPopup}
     </div>

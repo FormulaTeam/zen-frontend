@@ -552,6 +552,10 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     const fields = { ...formStructure.fields };
     const { validationErrors: _, ...metadata } = { ...formStructure.metadata };
 
+    if (Object.keys(fields).length === 0) {
+      isValid = false;
+    }
+
     Object.keys(fields).forEach((fieldId) => {
       const fieldValidationErrors = validateField(formStructure, fieldId);
       if (Object.keys(fieldValidationErrors).length > 0) isValid = false;
