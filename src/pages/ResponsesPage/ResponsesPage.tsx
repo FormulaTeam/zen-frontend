@@ -197,9 +197,9 @@ const ResponsesPageContent = (): JSX.Element => {
       <MainContentWrapper>
         <TopSection>
           <MetadataLine>
-            {/* RIGHT SIDE: Metadata (Info, ID, Name) */}
+            {/* RIGHT SIDE: Nav Actions (Back, Share, Edit, More) */}
             <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
-              <Header />
+              <FormActionsToolbar />
             </Box>
 
             {/* MIDDLE: Search Responses Bar (Exact Middle) */}
@@ -209,9 +209,9 @@ const ResponsesPageContent = (): JSX.Element => {
               </Box>
             </Box>
 
-            {/* LEFT SIDE: Nav Actions (Back, Share, Edit, More) */}
+            {/* LEFT SIDE: Metadata (Info, ID, Name) */}
             <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-              <FormActionsToolbar />
+              <Header />
             </Box>
           </MetadataLine>
 

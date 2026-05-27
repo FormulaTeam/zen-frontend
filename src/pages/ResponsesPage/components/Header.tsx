@@ -80,7 +80,7 @@ const Header = () => {
           <InfoOutlinedIcon sx={{ fontSize: "24px" }} />
         </InfoIconButton>
       </Tooltip>
-      <Typography sx={{ fontWeight: 700, fontSize: "1.2rem", minWidth: "fit-content" }}>
+      <Typography sx={{ fontWeight: 800, fontSize: "2rem", minWidth: "fit-content", lineHeight: 1 }}>
         {form.id}
       </Typography>
       <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
