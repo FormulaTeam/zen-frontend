@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { Box, Chip, Link as MuiLink, Typography, styled } from "@mui/material";
+import { Box, Chip, Link as MuiLink, Tooltip, Typography, styled } from "@mui/material";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import moment from "moment";
 
@@ -478,21 +478,33 @@ export const useCellDisplay = ({
 
   const formatLocationCell = useCallback(
     (value: LocationValue): React.ReactElement | null => {
-      if (!value || !value.x || !value.y) return null;
+      if (!value || value.x == null || value.y == null) return null;
 
-      const fullText = `x: ${value.x}, y: ${value.y}`;
+      const x = String(value.x);
+      const y = String(value.y);
+
+      const displayText = `${x}, ${y}`;
+      const fullText = `x: ${x}, y: ${y}`;
 
       return (
-        <OverflowTooltip title={fullText} arrow>
-          <Box className="cell-box" sx={{ lineHeight: 1.2 }}>
-            <Box>
-              <label>x: {highlightText(String(value.x))}</label>
-            </Box>
-            <Box>
-              <label>y: {highlightText(String(value.y))}</label>
-            </Box>
+        <Tooltip title={fullText} arrow placement="bottom">
+          <Box
+            component="span"
+            className="cell-box"
+            dir="ltr"
+            sx={{
+              width: "100%",
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              display: "block",
+              textAlign: "left",
+              cursor: "default",
+            }}>
+            {highlightText(displayText)}
           </Box>
-        </OverflowTooltip>
+        </Tooltip>
       );
     },
     [highlightText],
@@ -564,7 +576,8 @@ export const useCellDisplay = ({
   const formatCellValue = useCallback(
     (value: any, field: FormFieldDto): React.ReactElement | null => {
       if (value === null || value === undefined || value === "") {
-        if (isInEditMode && field.fieldType === field.fieldType) { // Fixed: was using fieldType.File but let's be more precise
+        if (isInEditMode && field.fieldType === field.fieldType) {
+          // Fixed: was using fieldType.File but let's be more precise
           if (field.fieldType === fieldType.File) {
             return formatFileCell(value);
           }
