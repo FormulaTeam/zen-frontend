@@ -82,45 +82,49 @@ export const EditResponsesButton = ({
         </UnifiedButton>
 
         {hasSelection && (
-          <UnifiedButton
-            onClick={() => handleDeleteResponses(selectedRows)}
-            startIcon={<DeleteIcon />}
-            sx={{ color: "#d32f2f" }}>
-            {selectedRows.length == 1 ? "מחיקת תגובה" : "מחיקת תגובות"}{" "}
-          </UnifiedButton>
+            <UnifiedButton
+                onClick={() => handleDeleteResponses(selectedRows.map(r => r.id))}
+                startIcon={<DeleteIcon />}
+                sx={{ color: "#d32f2f" }}
+            >
+                {selectedRows.length == 1 ? "מחיקת תגובה" : "מחיקת תגובות"}
+            </UnifiedButton>
         )}
-      </Box>
-    );
-  }
+        </Box>
+        );
+        }
 
-  // 2. SELECTION MODE (OUTSIDE QUICK EDIT)
-  if (hasSelection) {
-    const isSingleSelection = selectedRows.length === 1;
-    return (
-      <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
+        // 2. SELECTION MODE (OUTSIDE QUICK EDIT)
+        if (hasSelection) {
+        const isSingleSelection = selectedRows.length === 1;
+        return (
+        <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
         <UnifiedButton
-          disabled={!isSingleSelection}
-          onClick={onViewResponse}
-          startIcon={<VisibilityIcon />}>
-          צפייה
+            disabled={!isSingleSelection}
+            onClick={onViewResponse}
+            startIcon={<VisibilityIcon />}
+        >
+            צפייה
         </UnifiedButton>
 
         <UnifiedButton
-          disabled={!isSingleSelection}
-          onClick={onEditResponse}
-          startIcon={<EditIcon />}>
-          עריכה
+            disabled={!isSingleSelection}
+            onClick={onEditResponse}
+            startIcon={<EditIcon />}
+        >
+            עריכה
         </UnifiedButton>
 
         <UnifiedButton
-          onClick={() => handleDeleteResponses(selectedRows)}
-          startIcon={<DeleteIcon />}
-          sx={{ color: "#d32f2f" }}>
-          מחיקה
+            onClick={() => handleDeleteResponses(selectedRows.map(r => r.id))}
+            startIcon={<DeleteIcon />}
+            sx={{ color: "#d32f2f" }}
+        >
+            מחיקה
         </UnifiedButton>
-      </Box>
-    );
-  }
+        </Box>
+        );
+        }
 
   // 3. STANDARD MODE
   return (
