@@ -114,7 +114,11 @@ function FormSectionElement({ id }: Props) {
       }}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
-      onChange={(e) => setEditedTitle(e.target.value.trimStart())}
+      onChange={(e) => {
+        const newVal = e.target.value.trimStart();
+        setEditedTitle(newVal);
+        renameSection(id, newVal);
+      }}
       onBlur={(e) => {
         const val = e.target.value.trim();
         renameSection(id, val);

@@ -334,18 +334,16 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
   }, []);
 
   const renameSection = useCallback((sectionId: string, title: string) => {
-    setFormStructure((prev) => {
-      const changedSection = prev.sections[sectionId];
-      changedSection.title = title;
-
-      return {
-        ...prev,
-        sections: {
-          ...prev.sections,
-          [sectionId]: changedSection,
+    setFormStructure((prev) => ({
+      ...prev,
+      sections: {
+        ...prev.sections,
+        [sectionId]: {
+          ...prev.sections[sectionId],
+          title,
         },
-      };
-    });
+      },
+    }));
   }, [setFormStructure]);
 
   const toggleSectionExpanded = useCallback((sectionId: string) => {

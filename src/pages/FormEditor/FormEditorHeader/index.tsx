@@ -123,7 +123,11 @@ function FormEditorHeader() {
         }}
         placeholder={"שם הטופס"}
         error={!!validationErrors?.title}
-        onChange={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trimStart() }))}
+        onChange={(e) => {
+          const newVal = e.target.value.trimStart();
+          setEditedMetadata((prev) => ({ ...prev, title: newVal }));
+          setFormMetadata({ title: newVal });
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             handleSaveMetadata(null as any);
@@ -139,12 +143,14 @@ function FormEditorHeader() {
         }}
         placeholder={"תיאור"}
         error={!!validationErrors?.description}
-        onChange={(e) =>
+        onChange={(e) => {
+          const newVal = e.target.value.trimStart();
           setEditedMetadata((prev) => ({
             ...prev,
-            description: e.target.value.trimStart(),
-          }))
-        }
+            description: newVal,
+          }));
+          setFormMetadata({ description: newVal });
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             handleSaveMetadata(null as any);
