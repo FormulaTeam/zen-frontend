@@ -42,24 +42,37 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
                     displayEmpty
                     sx={{
                         minWidth: 200,
+                        height: "40px",
                         backgroundColor: "rgba(30, 136, 229, 0.04)",
                         borderRadius: "10px",
                         "& .MuiOutlinedInput-notchedOutline": {
                             borderColor: "rgba(30, 136, 229, 0.15)",
                         },
                         "& .MuiSelect-select": {
-                            padding: "9px 14px",
-                            fontSize: "1rem",
+                            padding: "8px 14px",
+                            fontSize: "0.95rem",
                             fontWeight: 600,
-                            color: "#1E88E5",
+                            color: "#020618",
+                            display: "flex",
+                            alignItems: "center",
+                        }
+                    }}
+                    MenuProps={{
+                        PaperProps: {
+                            sx: {
+                                "& .MuiMenuItem-root": {
+                                    color: "#020618",
+                                    fontSize: "0.95rem",
+                                }
+                            }
                         }
                     }}
                 >
-                    <MenuItem value="" sx={{ fontStyle: "italic", color: "text.secondary", fontSize: "1rem" }}>
+                    <MenuItem value="" sx={{ fontStyle: "italic", color: "text.secondary" }}>
                         {SELECT_VIEW_LABEL}
                     </MenuItem>
                     {savedViews.map((view) => (
-                        <MenuItem key={String(view.id)} value={String(view.id)} sx={{ fontSize: "1rem" }}>
+                        <MenuItem key={String(view.id)} value={String(view.id)}>
                             {view.name}
                         </MenuItem>
                     ))}
@@ -70,8 +83,9 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
                 onClick={() => setIsSidePanelOpen(true)}
                 disabled={isSidePanelOpen}
                 startIcon={<BackupTable />}
+                sx={hasSavedViews ? { minWidth: "40px", width: "40px", padding: 0 } : {}}
             >
-                {MANAGE_VIEWS_LABEL}
+                {!hasSavedViews && MANAGE_VIEWS_LABEL}
             </UnifiedButton>
         </Stack>
     );
