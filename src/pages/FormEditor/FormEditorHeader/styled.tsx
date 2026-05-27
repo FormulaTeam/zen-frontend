@@ -8,7 +8,7 @@ export const MetadataContainer = styled(Box)({
 
 export const SeamlessTextField = styled(TextField)(({ theme }) => ({
   "& .MuiInputBase-root": {
-    padding: "0 8px", // Matches view state padding exactly
+    padding: "0 8px",
     borderRadius: "4px",
     backgroundColor: "rgba(0, 0, 0, 0.02)",
     transition: "background-color 0.2s, box-shadow 0.2s",
@@ -24,13 +24,26 @@ export const SeamlessTextField = styled(TextField)(({ theme }) => ({
   "& .MuiInputBase-input": {
     padding: 0,
     height: "auto",
-    // These metrics must match Typography variant line-heights
-    lineHeight: 1.2,
+    lineHeight: "inherit",
+    fontSize: "inherit",
+    fontWeight: "inherit",
+    color: "inherit",
   },
   "& .MuiFormHelperText-root": {
     position: "absolute",
     bottom: -20,
     margin: 0,
+  },
+  // Typography variant sync
+  "&.title-field": {
+    ...theme.typography.h5,
+    fontWeight: 700,
+    lineHeight: 1.2,
+  },
+  "&.description-field": {
+    ...theme.typography.subtitle1,
+    lineHeight: 1.4,
+    color: "rgba(0, 0, 0, 0.6)",
   }
 }));
 
@@ -38,11 +51,11 @@ export const StyledTitleText = styled(Typography)({
   maxWidth: "500px",
   minWidth: 0,
   cursor: "pointer",
-  padding: "0 8px", // Must be identical to SeamlessTextField padding
+  padding: "0 8px",
   borderRadius: "4px",
   transition: "background-color 0.2s",
   fontWeight: 700,
-  lineHeight: 1.2, // Must match InputBase-input
+  lineHeight: 1.2,
   boxSizing: "border-box",
   "&:hover": {
     backgroundColor: "rgba(0, 0, 0, 0.04)",
@@ -53,7 +66,7 @@ export const StyledDescriptionText = styled(Typography)({
   maxWidth: "500px",
   minWidth: 0,
   cursor: "pointer",
-  padding: "0 8px", // Must be identical to SeamlessTextField padding
+  padding: "0 8px",
   borderRadius: "4px",
   transition: "background-color 0.2s",
   lineHeight: 1.4,

@@ -114,12 +114,12 @@ function FormEditorHeader() {
         handleSaveMetadata(null as any);
       }}
     >
-      <TextField
+      <SeamlessTextField
         autoFocus
         value={editedMetadata.title}
+        className="title-field"
         slotProps={{
           htmlInput: {
-            className: styles.titleInput,
             maxLength: 60,
           },
         }}
@@ -137,8 +137,9 @@ function FormEditorHeader() {
           }
         }}
       />
-      <TextField
+      <SeamlessTextField
         value={editedMetadata.description}
+        className="description-field"
         slotProps={{
           htmlInput: {
             maxLength: 255,
