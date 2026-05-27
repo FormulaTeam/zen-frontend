@@ -100,14 +100,32 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
         </Typography>
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, pt: 1, gap: 1.5 }}>
+      <DialogActions sx={{ flexDirection: "column", p: 3, pt: 1, gap: 1.5 }}>
+        <Button
+          onClick={onSave}
+          variant="contained"
+          fullWidth
+          disableElevation
+          sx={{
+            borderRadius: "8px",
+            height: "44px",
+            textTransform: "none",
+            fontWeight: 600,
+            backgroundColor: theme.palette.primary.main,
+            "&:hover": {
+              backgroundColor: theme.palette.primary.dark,
+            },
+          }}
+        >
+          {saveText}
+        </Button>
         <Button
           onClick={onDiscard}
           variant="outlined"
+          fullWidth
           sx={{
             borderRadius: "8px",
-            px: 3,
-            py: 1,
+            height: "44px",
             color: "#ef4444",
             borderColor: "#e2e8f0",
             textTransform: "none",
@@ -119,24 +137,6 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
           }}
         >
           {discardText}
-        </Button>
-        <Button
-          onClick={onSave}
-          variant="contained"
-          disableElevation
-          sx={{
-            borderRadius: "8px",
-            px: 4,
-            py: 1,
-            textTransform: "none",
-            fontWeight: 600,
-            backgroundColor: theme.palette.primary.main,
-            "&:hover": {
-              backgroundColor: theme.palette.primary.dark,
-            },
-          }}
-        >
-          {saveText}
         </Button>
       </DialogActions>
     </StyledDialog>
