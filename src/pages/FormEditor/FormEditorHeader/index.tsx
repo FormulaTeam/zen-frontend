@@ -45,7 +45,7 @@ function FormEditorHeader() {
   const [showAlertMsg, setShowAlertMsg] = useState(false);
   const [showValidationErrorsPopup, setShowValidationErrorsPopup] = useState(false);
   const [showUntitledFormPopup, setShowUntitledFormPopup] = useState(false);
-  const [suggestedTitle, setSuggestedTitle] = useState("טופס ללא שם");
+  const [suggestedTitle, setSuggestedTitle] = useState("טופסללאשם");
 
   const { title, description, iconId, validationErrors } = formStructure.metadata;
 
@@ -79,7 +79,7 @@ function FormEditorHeader() {
     // Wait for state to settle then save
     setTimeout(() => {
       handleSaveForm();
-    }, 100);
+    }, 50);
   };
 
   const handleSaveAndExit = async () => {
@@ -327,7 +327,7 @@ function FormEditorHeader() {
           fullWidth
           label="שם הטופס"
           value={suggestedTitle}
-          onChange={(e) => setSuggestedTitle(e.target.value)}
+          onChange={(e) => setSuggestedTitle(e.target.value.replace(/[^\u0590-\u05FF]/g, ""))}
           variant="outlined"
           sx={{ mt: 1 }}
         />

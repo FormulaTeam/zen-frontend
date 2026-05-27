@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCreateForm, useUpdateForm } from "@api/formsApi";
 import { FormStructure } from "../context/FormStructureContext";
@@ -23,17 +23,23 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
     const { mode } = useFormEditorContext();
     const [isLoading, setIsLoading] = useState(false);
 
+    // Use a ref to always have the latest formStructure in the async save function
+    const formStructureRef = useRef(formStructure);
+    useEffect(() => {
+        formStructureRef.current = formStructure;
+    }, [formStructure]);
+
     const handleSaveForm = useCallback(async () => {
         setIsLoading(true);
 
         try {
-            const payload = convertFormStructureToCreateDto(formStructure);
+            const payload = convertFormStructureToCreateDto(formStructureRef.current);
 
-            if (mode === FORM_EDITOR_MODE.EDIT && formStructure.metadata.id) {
-                await mutateUpdateFormAsync({ id: formStructure.metadata.id, payload });
+            if (mode === FORM_EDITOR_MODE.EDIT && formStructureRef.current.metadata.id) {
+                await mutateUpdateFormAsync({ id: formStructureRef.current.metadata.id, payload });
                 showSuccessNotification("הטופס עודכן בהצלחה!");
-                clearFormDraft(formStructure.metadata.id);
-                queryClient.invalidateQueries({ queryKey: [formStructure.metadata.id.toString()] });
+                clearFormDraft(formStructureRef.current.metadata.id);
+                queryClient.invalidateQueries({ queryKey: [formStructureRef.current.metadata.id.toString()] });
             } else {
                 const createdForm = await mutateCreateFormAsync(payload);
                 showSuccessNotification("הטופס נשמר בהצלחה!");
@@ -49,16 +55,16 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
         } finally {
             setIsLoading(false);
         }
-    }, [formStructure, mutateCreateFormAsync, mutateUpdateFormAsync, mode, navigate]);
+    }, [mutateCreateFormAsync, mutateUpdateFormAsync, mode, navigate]);
 
     const handleExit = useCallback(() => {
         navigate(IPath.HOME);
     }, [navigate]);
 
     const handleDiscardAndExit = useCallback(() => {
-        clearFormDraft(formStructure.metadata.id);
+        clearFormDraft(formStructureRef.current.metadata.id);
         navigate(IPath.HOME);
-    }, [formStructure.metadata.id, navigate]);
+    }, [navigate]);
 
     return {
         handleSaveForm,
