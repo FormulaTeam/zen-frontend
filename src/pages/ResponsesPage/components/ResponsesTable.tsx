@@ -219,9 +219,15 @@ export const ResponsesTable = React.memo(
     const navigate = useNavigate();
 
     const displayRows = useMemo(() => {
-      if (isInEditMode && localRows.length > 0) return localRows;
-      return rows;
-    }, [isInEditMode, localRows, rows]);
+      let baseRows = isInEditMode && localRows.length > 0 ? localRows : rows;
+      
+      if (isInEditMode && deletedRowIds.length > 0) {
+        const deletedSet = new Set(deletedRowIds.map(String));
+        return baseRows.filter(row => !deletedSet.has(String(row.id)));
+      }
+      
+      return baseRows;
+    }, [isInEditMode, localRows, rows, deletedRowIds]);
 
     const currentViewConfig = useMemo(() => currentView?.columns || [], [currentView]);
 

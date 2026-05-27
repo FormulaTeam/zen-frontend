@@ -95,7 +95,7 @@ const Header = () => {
       </FormNameTypography>
 
       {/* ID */}
-      <Tooltip>
+      <Tooltip title={"מזהה הטופס"}>
         <Typography
           sx={{
             fontWeight: 800,
