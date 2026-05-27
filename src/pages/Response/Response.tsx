@@ -1,7 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ResponseDto } from "../../types/shared";
 import { fieldType } from "formula-gear";
-import { Box, Button, Container, Tooltip, Typography, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  Tooltip,
+  Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useResponseSave, type ParentResponseRef } from "../../hooks/useResponseSave";
 import { useResponseState } from "../../hooks/useResponseState";
@@ -66,8 +77,18 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     collapsedSections,
     toggleSectionCollapse,
     hiddenFieldIds,
-    setFormFieldsValuesMap
-  } = useResponseState(formId, id, viewMode, copyMode, undefined, user, isSuperAdmin ?? undefined, setHasUnsavedChanges, hasUnsavedChanges);
+    setFormFieldsValuesMap,
+  } = useResponseState(
+    formId,
+    id,
+    viewMode,
+    copyMode,
+    undefined,
+    user,
+    isSuperAdmin ?? undefined,
+    setHasUnsavedChanges,
+    hasUnsavedChanges,
+  );
 
   useEffect(() => {
     if (!viewMode) {
@@ -123,7 +144,13 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     // For now, let's just trigger the save.
   };
 
-  const { saveResponse, isSaving } = useResponseSave(form, response, undefined, copyMode, hiddenFieldIds);
+  const { saveResponse, isSaving } = useResponseSave(
+    form,
+    response,
+    undefined,
+    copyMode,
+    hiddenFieldIds,
+  );
 
   const parentCreatePromiseRef = useRef<Promise<ResponseDto> | null>(null);
   const generateValidationErrorMessagesRef = useRef<
@@ -284,9 +311,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       prev.map((childForm) =>
         childForm.shown
           ? {
-            ...childForm,
-            valid: [],
-          }
+              ...childForm,
+              valid: [],
+            }
           : childForm,
       ),
     );
@@ -314,9 +341,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
     const parentResponse: ParentResponseRef | undefined = savedParentResponseId
       ? {
-        formId: Number(formId),
-        responseId: savedParentResponseId,
-      }
+          formId: Number(formId),
+          responseId: savedParentResponseId,
+        }
       : undefined;
 
     return (
@@ -413,15 +440,13 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       </PageContainer>
 
       <ValidationErrorsDialog
+        title="נמצאו שגיאות בתגובה"
         open={showValidationPopup}
         onClose={closeValidationPopup}
         errors={validationErrors}
       />
 
-      <Dialog
-        open={showAlertMsg}
-        onClose={() => setShowAlertMsg(false)}
-      >
+      <Dialog open={showAlertMsg} onClose={() => setShowAlertMsg(false)}>
         <Box sx={{ position: "absolute", top: 8, right: 8 }}>
           <Close onClick={() => setShowAlertMsg(false)} sx={{ cursor: "pointer" }} />
         </Box>

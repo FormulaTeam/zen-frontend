@@ -51,10 +51,12 @@ const IconWrapper = styled(Box)(({ theme }) => ({
   },
 }));
 
-export type ValidationError = string | {
-  fieldName?: string;
-  message: string;
-};
+export type ValidationError =
+  | string
+  | {
+      fieldName?: string;
+      message: string;
+    };
 
 interface ValidationErrorsDialogProps {
   open: boolean;
@@ -69,7 +71,7 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
   onClose,
   errors,
   title = "נמצאו שגיאות בטופס",
-  subtitle = "יש לתקן את השדות הבאים לפני שמירה:",
+  subtitle? ,
 }) => {
   return (
     <StyledDialog open={open} onClose={onClose} scroll="paper">
@@ -86,9 +88,10 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
         <Typography variant="h6" sx={{ fontWeight: 800, color: "#020618", mb: 0.5 }}>
           {title}
         </Typography>
+        subtitle && {
         <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
           {subtitle}
-        </Typography>
+        </Typography>}
       </ErrorHeader>
 
       <DialogContent sx={{ py: 0 }}>
@@ -128,25 +131,26 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
           })}
         </List>
       </DialogContent>
-
       <DialogActions sx={{ justifyContent: "center", p: 3, pt: 2 }}>
         <Button
           onClick={onClose}
-          variant="contained"
+          variant="outlined"
           fullWidth
           sx={{
-            backgroundColor: "#020618",
-            color: "#fff",
+            borderColor: "#020618",
+            color: "#020618",
             borderRadius: "10px",
             height: "44px",
             fontSize: "1rem",
             fontWeight: 700,
             textTransform: "none",
+
             "&:hover": {
-              backgroundColor: "#1e293b",
+              borderColor: "#1e293b",
+              backgroundColor: "rgba(2, 6, 24, 0.06)",
             },
           }}>
-          הבנתי, אטפל בזה
+          חזרה לתיקון השדות
         </Button>
       </DialogActions>
     </StyledDialog>
