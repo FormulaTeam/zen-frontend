@@ -17,6 +17,12 @@ export const SeamlessTitleInput = styled(InputBase)(({ theme }) => ({
   width: "100%",
   maxWidth: "500px",
   boxSizing: "border-box",
+  display: "block",
+  "& .MuiInputBase-input": {
+    padding: 0,
+    height: "auto",
+    lineHeight: 1.2,
+  },
   "&.Mui-focused": {
     backgroundColor: "rgba(0, 0, 0, 0.04)",
     boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`,
@@ -35,6 +41,12 @@ export const SeamlessDescriptionInput = styled(InputBase)(({ theme }) => ({
   boxSizing: "border-box",
   marginTop: "2px",
   color: "rgba(0, 0, 0, 0.6)",
+  display: "block",
+  "& .MuiInputBase-input": {
+    padding: 0,
+    height: "auto",
+    lineHeight: 1.4,
+  },
   "&.Mui-focused": {
     backgroundColor: "rgba(0, 0, 0, 0.04)",
     boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`,
@@ -51,6 +63,8 @@ export const StyledTitleText = styled(Typography)({
   fontWeight: 700,
   lineHeight: 1.2,
   boxSizing: "border-box",
+  margin: 0,
+  display: "block",
   "&:hover": {
     backgroundColor: "rgba(0, 0, 0, 0.04)",
   },
@@ -64,9 +78,11 @@ export const StyledDescriptionText = styled(Typography)({
   borderRadius: "4px",
   transition: "background-color 0.2s",
   lineHeight: 1.4,
-  marginTop: "2px",
   color: "rgba(0, 0, 0, 0.6)",
   boxSizing: "border-box",
+  margin: 0,
+  marginTop: "2px",
+  display: "block",
   "&:hover": {
     backgroundColor: "rgba(0, 0, 0, 0.04)",
   },
