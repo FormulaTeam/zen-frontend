@@ -19,15 +19,13 @@ export const AddResponseButton: React.FC = () => {
     if (!form || !canCreate) return null;
 
     return (
-        <Tooltip title="תגובה חדשה">
-            <UnifiedButton
-                $isPrimary
-                startIcon={<AddIcon />}
-                onClick={() => navigate(`/response/create/${form.id}`)}
-            >
-                הוספת תגובה
-            </UnifiedButton>
-        </Tooltip>
+        <UnifiedButton
+            $isPrimary
+            startIcon={<AddIcon />}
+            onClick={() => navigate(`/response/create/${form.id}`)}
+        >
+            הוספת תגובה
+        </UnifiedButton>
     );
 };
 
