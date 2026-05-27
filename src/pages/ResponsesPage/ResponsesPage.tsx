@@ -1,8 +1,9 @@
 import { GridRowId, GridRowModel, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { Tooltip, IconButton, Typography } from "@mui/material";
 import Delete from "@mui/icons-material/Delete";
+import { StatusCodes } from "http-status-codes";
 
 import SidePanel from "../../components/SidePanel/SidePanel";
 import SearchInfo from "../../components/Responses/SearchInfo";
@@ -52,8 +53,18 @@ export default function ResponsesPage({
   void shouldRefreshPage;
   void setShouldRefreshPage;
 
+  const navigate = useNavigate();
   const { id: formId } = useParams<string>();
-  const { isLoading, isError } = useFormLoader(formId || "");
+  const { isLoading, isError, error } = useFormLoader(formId || "");
+
+  useEffect(() => {
+    if (isError && error) {
+      const status = (error as any).response?.status;
+      if (status === StatusCodes.NOT_FOUND || status === StatusCodes.FORBIDDEN) {
+        navigate("/error", { replace: true });
+      }
+    }
+  }, [isError, error, navigate]);
 
   if (isLoading) {
     return (
