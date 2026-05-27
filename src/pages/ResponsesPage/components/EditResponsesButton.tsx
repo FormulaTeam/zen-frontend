@@ -54,19 +54,28 @@ export const EditResponsesButton = ({
 
   // 1. QUICK EDIT MODE
   if (isInEditMode) {
-    return (
-      <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
-        <UnifiedButton onClick={onAddNewResponse} startIcon={<AddIcon />}>
-          הוספת שורה חדשה
-        </UnifiedButton>
+      return (
+          <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
+              <UnifiedButton
+                  onClick={onAddNewResponse}
+                  startIcon={
+                      <CustomIcon
+                          iconName="newComment"
+                          style={{ width: 22, height: 22 }}
+                      />
+                  }
+              >
+                  הוספת שורה חדשה
+              </UnifiedButton>
 
-        <UnifiedButton
-          $isPrimary
-          onClick={onSaveChanges}
-          disabled={!hasUnsavedChanges || isUpdating}
-          startIcon={<CheckIcon />}>
-          שמירה
-        </UnifiedButton>
+              <UnifiedButton
+                  $isPrimary
+                  onClick={onSaveChanges}
+                  disabled={!hasUnsavedChanges || isUpdating}
+                  startIcon={<CheckIcon />}
+              >
+                  שמירה
+              </UnifiedButton>
 
         <UnifiedButton onClick={onToggleEditMode} startIcon={<CloseIcon />}>
           ביטול
