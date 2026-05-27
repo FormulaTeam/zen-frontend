@@ -69,7 +69,7 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
                 <Typography
                   component="span"
                   sx={{ color: "text.secondary", fontSize: "0.75rem", mt: "2px" }}>
-                  ({option.id})
+                  {option.id}
                 </Typography>
               </Box>
             </li>
