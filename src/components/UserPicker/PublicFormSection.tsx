@@ -132,20 +132,21 @@ const PublicFormSection: React.FC<PublicFormSectionProps> = ({
                         disableElevation
                         size="small"
                         sx={{
-                          minWidth: "auto",
-                          px: 2,
-                          py: 0.5,
+                          width: "72px",
+                          height: "32px",
+                          px: 0,
                           ml: -1.5,
                           mr: 1.5,
                           fontSize: "0.75rem",
                           fontWeight: 700,
                           borderRadius: "8px 0 0 8px", // In RTL, this will be the right side
                           backgroundColor: copied ? "#10b981" : theme.palette.primary.main,
+                          color: "#fff",
                           "&:hover": {
                             backgroundColor: copied ? "#059669" : theme.palette.primary.dark,
                           },
                         }}>
-                        {copied ? <CheckIcon sx={{ fontSize: "1rem" }} /> : "העתק"}
+                        {copied ? <CheckIcon sx={{ fontSize: "1.2rem" }} /> : "העתק"}
                       </Button>
                     </Tooltip>
                   </InputAdornment>
