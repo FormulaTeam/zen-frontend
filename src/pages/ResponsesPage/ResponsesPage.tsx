@@ -9,7 +9,6 @@ import SidePanel from "../../components/SidePanel/SidePanel";
 import SearchInfo from "../../components/Responses/SearchInfo";
 import { useAuth } from "../../contexts/AuthContext";
 import { AddResponseButton } from "./components/AddResponseButton";
-import { CancelEditDialog } from "./components/CancelEditDialog";
 import { EditResponsesButton } from "./components/EditResponsesButton";
 import { FormActionsToolbar } from "./components/FormActionsToolbar";
 import Header from "./components/Header";
@@ -31,6 +30,7 @@ import {
 import { FormDto, FormFieldDto } from "../../types/shared";
 import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner";
 import { getQuickEditDraft, clearQuickEditDraft } from "../FormEditor/utils/draftPersistence";
+import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialog";
 
 type SidePanelForm = Pick<FormDto, "id" | "name"> & {
   fields: FormFieldDto[];
@@ -279,10 +279,15 @@ const ResponsesPageContent = (): JSX.Element => {
           deletedRowIds={deletedRowIds}
         />
 
-        <CancelEditDialog
+        <UnsavedChangesDialog
           open={showCancelDialog}
-          onConfirm={handleConfirmCancel}
-          onCancel={handleCancelDialogClose}
+          onClose={handleCancelDialogClose}
+          onSave={handleSaveChanges}
+          onDiscard={handleConfirmCancel}
+          title="ביטול שינויים"
+          message="ישנם שינויים שלא נשמרו. האם אתה בטוח שברצונך לבטל את השינויים?"
+          saveText="שמירת שינויים"
+          discardText="ביטול שינויים"
         />
       </MainContentWrapper>
 

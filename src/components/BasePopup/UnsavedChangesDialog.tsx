@@ -3,7 +3,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogContentText,
   DialogActions,
   Button,
   Typography,
@@ -58,6 +57,8 @@ interface UnsavedChangesDialogProps {
   onDiscard: () => void;
   title?: string;
   message?: string;
+  saveText?: string;
+  discardText?: string;
 }
 
 export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
@@ -67,6 +68,8 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
   onDiscard,
   title = "שינויים שלא נשמרו",
   message = "יש לך שינויים שלא נשמרו. האם ברצונך לשמור את השינויים לפני היציאה?",
+  saveText = "שמירה ויציאה",
+  discardText = "יציאה ללא שמירה",
 }) => {
   const theme = useTheme();
 
@@ -115,7 +118,7 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
             },
           }}
         >
-          יציאה ללא שמירה
+          {discardText}
         </Button>
         <Button
           onClick={onSave}
@@ -133,7 +136,7 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
             },
           }}
         >
-          שמירה ויציאה
+          {saveText}
         </Button>
       </DialogActions>
     </StyledDialog>
