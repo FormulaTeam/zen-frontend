@@ -73,25 +73,11 @@ export const FormActionsToolbar = () => {
 
   return (
     <Box sx={{ display: "flex", gap: "8px", alignItems: "center" }}>
-      <PermissionGate requiredPermissions={[permission.SyncForm, permission.DeleteForm, permission.ShareForm, permission.ExportForm, permission.ImportResponses, permission.DeleteAnyResponse]} userPermissions={permissions}>
-        <MoreOptions
-          setAnchorElSourceType={setAnchorElSourceType}
-          pushToMetro={pushToMetro}
-          sourceOperationStatus={sourceOperationStatus}
-        />
-      </PermissionGate>
-
-      <PermissionGate requiredPermissions={[permission.UpdateForm]} userPermissions={permissions}>
-        <Tooltip title="עריכת טופס">
-          <IconOnlyButton
-            onClick={() =>
-              navigate(`/form/edit/${formId}`, { state: { from: location.pathname } })
-            }
-          >
-            <EditIcon />
-          </IconOnlyButton>
-        </Tooltip>
-      </PermissionGate>
+      <Tooltip title="חזרה">
+        <IconOnlyButton onClick={() => navigate("/")}>
+          <ArrowBackIcon />
+        </IconOnlyButton>
+      </Tooltip>
 
       <PermissionGate requiredPermissions={[permission.ShareForm]} userPermissions={permissions}>
         <Tooltip title="שיתוף">
@@ -115,11 +101,25 @@ export const FormActionsToolbar = () => {
         )}
       </PermissionGate>
 
-      <Tooltip title="חזרה">
-        <IconOnlyButton onClick={() => navigate("/")}>
-          <ArrowBackIcon />
-        </IconOnlyButton>
-      </Tooltip>
+      <PermissionGate requiredPermissions={[permission.UpdateForm]} userPermissions={permissions}>
+        <Tooltip title="עריכת טופס">
+          <IconOnlyButton
+            onClick={() =>
+              navigate(`/form/edit/${formId}`, { state: { from: location.pathname } })
+            }
+          >
+            <EditIcon />
+          </IconOnlyButton>
+        </Tooltip>
+      </PermissionGate>
+
+      <PermissionGate requiredPermissions={[permission.SyncForm, permission.DeleteForm, permission.ShareForm, permission.ExportForm, permission.ImportResponses, permission.DeleteAnyResponse]} userPermissions={permissions}>
+        <MoreOptions
+          setAnchorElSourceType={setAnchorElSourceType}
+          pushToMetro={pushToMetro}
+          sourceOperationStatus={sourceOperationStatus}
+        />
+      </PermissionGate>
 
       <SyncTypeMenu
         anchorElSourceType={anchorElSourceType}

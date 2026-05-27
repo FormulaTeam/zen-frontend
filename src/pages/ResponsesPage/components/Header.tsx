@@ -74,26 +74,20 @@ const Header = () => {
   );
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: "16px" }}>
-      {getIcon(form.icon ?? null)}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <FormNameTypography variant="h5" sx={{ fontSize: "1.6rem", fontWeight: 700 }}>
-            {form.name}
-          </FormNameTypography>
-          <Tooltip
-            title={infoTooltipContent}
-            placement="bottom"
-            slotProps={formInfoTooltipSlotProps}
-            arrow>
-            <InfoIconButton size="small" sx={{ p: 0.5 }}>
-              <InfoOutlinedIcon sx={{ fontSize: "20px", color: "#62748E" }} />
-            </InfoIconButton>
-          </Tooltip>
-        </Box>
-        <Typography variant="caption" sx={{ color: "#62748E", fontWeight: 600, fontSize: "0.9rem" }}>
-          מזהה: {form.id}
-        </Typography>
+    <Box sx={{ display: "flex", alignItems: "center", gap: "16px", color: "#020618" }}>
+      <Tooltip title={infoTooltipContent} placement="bottom" slotProps={formInfoTooltipSlotProps} arrow>
+        <InfoIconButton size="small" sx={{ p: 0.5, color: "inherit" }}>
+          <InfoOutlinedIcon sx={{ fontSize: "24px" }} />
+        </InfoIconButton>
+      </Tooltip>
+      <Typography sx={{ fontWeight: 700, fontSize: "1.2rem", minWidth: "fit-content" }}>
+        {form.id}
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <FormNameTypography variant="h5" sx={{ fontSize: "1.6rem", fontWeight: 700, color: "inherit" }}>
+          {form.name}
+        </FormNameTypography>
+        {getIcon(form.icon ?? null)}
       </Box>
     </Box>
   );

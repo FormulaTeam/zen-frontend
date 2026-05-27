@@ -1,7 +1,8 @@
 import { GridRowId, GridRowModel, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { Box } from "@mui/material";
+import { Box, Tooltip, IconButton } from "@mui/material";
+import Delete from "@mui/icons-material/Delete";
 import { StatusCodes } from "http-status-codes";
 
 import SidePanel from "../../components/SidePanel/SidePanel";
@@ -182,6 +183,11 @@ const ResponsesPageContent = (): JSX.Element => {
     };
   }, [user]);
 
+  const selectedRows = useMemo(() => {
+    const ids = Array.from(rowSelectionModel.ids as Set<GridRowId>);
+    return storeRows.filter((row) => ids.includes(row.id));
+  }, [rowSelectionModel.ids, storeRows]);
+
   const handleRowSelectionModelChange = useCallback((model: GridRowSelectionModel) => {
     setRowSelectionModel(model);
   }, []);
@@ -191,16 +197,22 @@ const ResponsesPageContent = (): JSX.Element => {
       <MainContentWrapper>
         <TopSection>
           <MetadataLine>
-            {/* RIGHT SIDE: Metadata (Icon, Name, ID, Info) */}
-            <Header />
-
-            {/* MIDDLE: Search Responses Bar */}
-            <Box sx={{ flex: 1, maxWidth: "600px", mx: 4 }}>
-              <SearchInfo search={search} setSearch={setSearch} />
+            {/* RIGHT SIDE: Metadata (Info, ID, Name) */}
+            <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
+              <Header />
             </Box>
 
-            {/* LEFT SIDE: Nav Actions (More, Edit, Share, Back) */}
-            <FormActionsToolbar />
+            {/* MIDDLE: Search Responses Bar (Exact Middle) */}
+            <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
+              <Box sx={{ width: "100%", maxWidth: "500px" }}>
+                <SearchInfo search={search} setSearch={setSearch} />
+              </Box>
+            </Box>
+
+            {/* LEFT SIDE: Nav Actions (Back, Share, Edit, More) */}
+            <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+              <FormActionsToolbar />
+            </Box>
           </MetadataLine>
 
           <ActionLine>
@@ -219,15 +231,24 @@ const ResponsesPageContent = (): JSX.Element => {
             </Box>
 
             {/* LEFT SIDE: View Management */}
-            <ViewsButton
-              isSidePanelOpen={isSidePanelOpen}
-              setIsSidePanelOpen={setIsSidePanelOpen}
-              hasSavedViews={hasSavedViews}
-              savedViews={savedViews}
-              selectedViewId={selectedViewId}
-              defaultViewId={defaultViewId}
-              handleViewDropdownChange={handleViewDropdownChange}
-            />
+            <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              {selectedRows.length > 0 && (
+                <Tooltip title="מחיקת תגובות נבחרות">
+                  <IconButton color="error" onClick={() => handleDeleteResponses(selectedRows as any)}>
+                    <Delete />
+                  </IconButton>
+                </Tooltip>
+              )}
+              <ViewsButton
+                isSidePanelOpen={isSidePanelOpen}
+                setIsSidePanelOpen={setIsSidePanelOpen}
+                hasSavedViews={hasSavedViews}
+                savedViews={savedViews}
+                selectedViewId={selectedViewId}
+                defaultViewId={defaultViewId}
+                handleViewDropdownChange={handleViewDropdownChange}
+              />
+            </Box>
           </ActionLine>
         </TopSection>
 
