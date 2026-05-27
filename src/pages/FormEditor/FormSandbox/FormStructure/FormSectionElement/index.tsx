@@ -104,42 +104,34 @@ function FormSectionElement({ id }: Props) {
   const handleFieldDataChange = useCallback((fieldId: string) => (data: Partial<FormFieldData>) => setFieldData(fieldId, data), [setFieldData]);
 
   const sectionTitle: JSX.Element = isEditingTitle ? (
-    <>
-      <TextField value={editedTitle}
-        autoFocus
-        variant={"standard"}
-        inputRef={titleInputRef}
-        slotProps={{
-          htmlInput: {
-            maxLength: 255,
-          },
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-        onChange={(e) => setEditedTitle(e.target.value.trimStart())}
-        onBlur={(e) => setEditedTitle(e.target.value.trim())}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            renameSection(id, editedTitle);
-            setIsEditingTitle(false);
-          }
-        }} />
-      <Button className={styles.button}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(_) => {
-          renameSection(id, editedTitle);
+    <TextField
+      value={editedTitle}
+      autoFocus
+      variant={"standard"}
+      inputRef={titleInputRef}
+      slotProps={{
+        htmlInput: {
+          maxLength: 255,
+        },
+      }}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      onChange={(e) => setEditedTitle(e.target.value.trimStart())}
+      onBlur={(e) => {
+        const val = e.target.value.trim();
+        renameSection(id, val);
+        setIsEditingTitle(false);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          const val = editedTitle.trim();
+          renameSection(id, val);
           setIsEditingTitle(false);
-        }}>
-        <SaveButtonIcon />
-      </Button>
-      <Button className={styles.button}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(_) => {
+        } else if (e.key === "Escape") {
           setIsEditingTitle(false);
-        }}>
-        <CancelButtonIcon />
-      </Button>
-    </>
+        }
+      }}
+    />
   ) : (
     <Tooltip title='עריכת מקטע' placement="top">
       <SectionTitleText

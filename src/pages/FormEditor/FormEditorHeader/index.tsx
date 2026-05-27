@@ -103,65 +103,65 @@ function FormEditorHeader() {
   );
 
   const formMetadata: JSX.Element = isEditingMetadata ? (
-    <>
-      <div className={styles.editingMetadataText}>
-        <TextField
-          autoFocus
-          value={editedMetadata.title}
-          slotProps={{
-            htmlInput: {
-              className: styles.titleInput,
-              maxLength: 60,
-            },
-          }}
-          size={"medium"}
-          placeholder={"שם הטופס"}
-          error={!!validationErrors?.title}
-          helperText={validationErrors?.title?.[0]}
-          variant={"standard"}
-          onChange={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trimStart() }))}
-          onBlur={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trim() }))}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleSaveMetadata(null as any);
-            }
-          }}
-        />
-        <TextField
-          value={editedMetadata.description}
-          slotProps={{
-            htmlInput: {
-              maxLength: 255,
-            },
-          }}
-          placeholder={"תיאור"}
-          error={!!validationErrors?.description}
-          helperText={validationErrors?.description?.[0]}
-          variant={"standard"}
-          onChange={(e) => setEditedMetadata((prev) => ({
+    <div
+      className={styles.editingMetadataText}
+      onBlur={(e) => {
+        // If the focus is moving to another element within the same editing group, don't save/close yet
+        if (e.currentTarget.contains(e.relatedTarget)) {
+          return;
+        }
+        handleSaveMetadata(null as any);
+      }}
+    >
+      <TextField
+        autoFocus
+        value={editedMetadata.title}
+        slotProps={{
+          htmlInput: {
+            className: styles.titleInput,
+            maxLength: 60,
+          },
+        }}
+        size={"medium"}
+        placeholder={"שם הטופס"}
+        error={!!validationErrors?.title}
+        helperText={validationErrors?.title?.[0]}
+        variant={"standard"}
+        onChange={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trimStart() }))}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleSaveMetadata(null as any);
+          } else if (e.key === "Escape") {
+            handleCancelMetadataEdit(null as any);
+          }
+        }}
+      />
+      <TextField
+        value={editedMetadata.description}
+        slotProps={{
+          htmlInput: {
+            maxLength: 255,
+          },
+        }}
+        placeholder={"תיאור"}
+        error={!!validationErrors?.description}
+        helperText={validationErrors?.description?.[0]}
+        variant={"standard"}
+        onChange={(e) =>
+          setEditedMetadata((prev) => ({
             ...prev,
             description: e.target.value.trimStart(),
-          }))}
-          onBlur={(e) => setEditedMetadata((prev) => ({
-            ...prev,
-            description: e.target.value.trim(),
-          }))}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleSaveMetadata(null as any);
-            }
-          }}
-        />
-      </div>
-      <div>
-        <Button className={styles.button} onClick={handleSaveMetadata}>
-          <Check sx={{ fontSize: 20, color: "#308e63" }} />
-        </Button>
-        <Button className={styles.button} onClick={handleCancelMetadataEdit}>
-          <Close sx={{ fontSize: 20, color: "#a54160" }} />
-        </Button>
-      </div>
-    </>
+          }))
+        }
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleSaveMetadata(null as any);
+          } else if (e.key === "Escape") {
+            handleCancelMetadataEdit(null as any);
+          }
+        }}
+      />
+    </div>
   ) : (
     <Tooltip title="עריכת פרטי הטופס" placement="bottom-start">
       <MetadataContainer
