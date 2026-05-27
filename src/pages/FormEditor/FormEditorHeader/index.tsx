@@ -172,7 +172,7 @@ function FormEditorHeader() {
               inputProps={{
                 maxLength: 60,
               }}
-              placeholder={"שם הטופס"}
+              placeholder={texts.heb.formNameLabel}
               error={!!validationErrors?.title}
               onChange={(e) => {
                 const newVal = e.target.value.replace(/[^\u0590-\u05FF\s]/g, "");
@@ -188,8 +188,8 @@ function FormEditorHeader() {
               }}
             />
           ) : (
-            <OverflowTooltip title={title || "שם הטופס"} placement="top">
-              <StyledTitleText variant={"h5"}>{title || "שם הטופס"}</StyledTitleText>
+            <OverflowTooltip title={title || texts.heb.formNameLabel} placement="top">
+              <StyledTitleText variant={"h5"}>{title || texts.heb.formNameLabel}</StyledTitleText>
             </OverflowTooltip>
           )}
         </div>
