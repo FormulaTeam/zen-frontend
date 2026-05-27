@@ -153,78 +153,82 @@ function FormEditorHeader() {
     </div>
   );
 
-  const formMetadata: JSX.Element = isEditingMetadata ? (
-    <div
-      className={styles.editingMetadataText}
-      onBlur={(e) => {
-        // If the focus is moving to another element within the same editing group, don't save/close yet
-        if (e.currentTarget.contains(e.relatedTarget)) {
-          return;
-        }
-        handleSaveMetadata(null as any);
-      }}>
-      <SeamlessTitleInput
-        autoFocus
-        value={editedMetadata.title}
-        inputProps={{
-          maxLength: 60,
-        }}
-        placeholder={"שם הטופס"}
-        error={!!validationErrors?.title}
-        onChange={(e) => {
-          const newVal = e.target.value.replace(/[^\u0590-\u05FF]/g, "");
-          setEditedMetadata((prev) => ({ ...prev, title: newVal }));
-          setFormMetadata({ title: newVal });
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            handleSaveMetadata(null as any);
-          } else if (e.key === "Escape") {
-            handleCancelMetadataEdit(null as any);
-          }
-        }}
-      />
-      <SeamlessDescriptionInput
-        value={editedMetadata.description}
-        inputProps={{
-          maxLength: 255,
-        }}
-        placeholder={"תיאור"}
-        error={!!validationErrors?.description}
-        onChange={(e) => {
-          const newVal = e.target.value.replace(/[^\u0590-\u05FF]/g, "");
-          setEditedMetadata((prev) => ({
-            ...prev,
-            description: newVal,
-          }));
-          setFormMetadata({ description: newVal });
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            handleSaveMetadata(null as any);
-          } else if (e.key === "Escape") {
-            handleCancelMetadataEdit(null as any);
-          }
-        }}
-      />
-    </div>
-  ) : (
-    <Tooltip title="עריכת פרטי הטופס" placement="bottom-start">
+  const formMetadata: JSX.Element = (
+    <Tooltip title={isEditingMetadata ? "" : "עריכת פרטי הטופס"} placement="bottom-start">
       <MetadataContainer
+        className={isEditingMetadata ? styles.editingMetadataText : ""}
+        onBlur={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget)) {
+            return;
+          }
+          handleSaveMetadata(null as any);
+        }}
         onClick={() => {
-          setEditedMetadata({ title, description, iconId });
-          setIsEditingMetadata(true);
-        }}>
-        <div className={`${styles.title} ${styles.titleWithMargin}`}>
-          <OverflowTooltip title={title || "שם הטופס"} placement="top">
-            <StyledTitleText variant={"h5"}>{title || "שם הטופס"}</StyledTitleText>
-          </OverflowTooltip>
+          if (!isEditingMetadata) {
+            setEditedMetadata({ title, description, iconId });
+            setIsEditingMetadata(true);
+          }
+        }}
+      >
+        <div className={styles.title}>
+          {isEditingMetadata ? (
+            <SeamlessTitleInput
+              autoFocus
+              value={editedMetadata.title}
+              inputProps={{
+                maxLength: 60,
+              }}
+              placeholder={"שם הטופס"}
+              error={!!validationErrors?.title}
+              onChange={(e) => {
+                const newVal = e.target.value.replace(/[^\u0590-\u05FF]/g, "");
+                setEditedMetadata((prev) => ({ ...prev, title: newVal }));
+                setFormMetadata({ title: newVal });
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSaveMetadata(null as any);
+                } else if (e.key === "Escape") {
+                  handleCancelMetadataEdit(null as any);
+                }
+              }}
+            />
+          ) : (
+            <OverflowTooltip title={title || "שם הטופס"} placement="top">
+              <StyledTitleText variant={"h5"}>{title || "שם הטופס"}</StyledTitleText>
+            </OverflowTooltip>
+          )}
         </div>
-        <OverflowTooltip title={description || "ללא תיאור"} placement="bottom">
-          <StyledDescriptionText variant="subtitle1">
-            {description ?? "ללא תיאור"}
-          </StyledDescriptionText>
-        </OverflowTooltip>
+
+        {isEditingMetadata ? (
+          <SeamlessDescriptionInput
+            value={editedMetadata.description}
+            inputProps={{
+              maxLength: 255,
+            }}
+            placeholder={"תיאור"}
+            error={!!validationErrors?.description}
+            onChange={(e) => {
+              const newVal = e.target.value.replace(/[^\u0590-\u05FF]/g, "");
+              setEditedMetadata((prev) => ({
+                ...prev,
+                description: newVal,
+              }));
+              setFormMetadata({ description: newVal });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSaveMetadata(null as any);
+              } else if (e.key === "Escape") {
+                handleCancelMetadataEdit(null as any);
+              }
+            }}
+          />
+        ) : (
+          <OverflowTooltip title={description || "ללא תיאור"} placement="bottom">
+            <StyledDescriptionText variant="subtitle1">{description ?? "ללא תיאור"}</StyledDescriptionText>
+          </OverflowTooltip>
+        )}
 
         <div className={styles.formErrorContainer}>
           {validationErrors?.title ? (
