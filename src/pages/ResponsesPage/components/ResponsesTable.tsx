@@ -511,9 +511,9 @@ export const ResponsesTable = React.memo(
         const col: GridColDef = {
           field: gridField,
           headerName: field.displayName,
-          minWidth: 150,
-          maxWidth: 800,
-          flex: 1,
+          width: 180,
+          minWidth: 120,
+          maxWidth: 450,
           editable: true,
           sortable: isSortable(field.fieldType),
           ...getResponseFilterColumnProps(field),
@@ -730,6 +730,21 @@ export const ResponsesTable = React.memo(
       navigateToCreateResponseCopy,
       navigate,
     ]);
+
+    useEffect(() => {
+      if (isInEditMode || isRowsLoading || localRows.length === 0) return;
+
+      const frameId = window.requestAnimationFrame(() => {
+        void apiRef.current?.autosizeColumns({
+          includeHeaders: true,
+          includeOutliers: true,
+          expand: false,
+          disableColumnVirtualization: true,
+        });
+      });
+
+      return () => window.cancelAnimationFrame(frameId);
+    }, [apiRef, getFormColumns, isInEditMode, isRowsLoading, localRows.length]);
 
     const editableColumnFields = useMemo(
       () =>
@@ -1071,7 +1086,7 @@ export const ResponsesTable = React.memo(
               autosizeOptions={{
                 includeHeaders: true,
                 includeOutliers: true,
-                expand: true,
+                expand: false,
               }}
               columnBufferPx={5000}
               initialState={{
@@ -1096,7 +1111,7 @@ export const ResponsesTable = React.memo(
                 console.error("Error updating row:", error);
               }}
               getCellClassName={getCellClassName}
-              rowHeight={45}
+              rowHeight={49}
               columnHeaderHeight={40}
               loading={
                 !isInEditMode && isRowsLoading && rows.length === 0 && form?.responsesCount !== 0
