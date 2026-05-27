@@ -43,8 +43,8 @@ const DraftRecoveryBanner: React.FC<DraftRecoveryBannerProps> = ({
   return (
     <Snackbar
       open={open}
-      anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      sx={{ bottom: { xs: 16, sm: 24 } }}
+      anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      sx={{ top: { xs: 16, sm: 24 } }}
     >
       <StyledAlert
         icon={<HistoryIcon />}
