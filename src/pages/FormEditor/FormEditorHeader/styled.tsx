@@ -1,4 +1,4 @@
-import { Box, styled, Typography, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField } from "@mui/material";
+import { Box, styled, Typography, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField, InputBase } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 
 export const MetadataContainer = styled(Box)({
@@ -6,45 +6,39 @@ export const MetadataContainer = styled(Box)({
   minWidth: 0,
 });
 
-export const SeamlessTextField = styled(TextField)(({ theme }) => ({
-  "& .MuiInputBase-root": {
-    padding: "0 8px",
-    borderRadius: "4px",
-    backgroundColor: "rgba(0, 0, 0, 0.02)",
-    transition: "background-color 0.2s, box-shadow 0.2s",
-    boxSizing: "border-box",
-    "&:before, &:after": {
-      display: "none",
-    },
-    "&.Mui-focused": {
-      backgroundColor: "rgba(0, 0, 0, 0.04)",
-      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`,
-    },
+export const SeamlessTitleInput = styled(InputBase)(({ theme }) => ({
+  ...theme.typography.h5,
+  fontWeight: 700,
+  lineHeight: 1.2,
+  padding: "0 8px",
+  borderRadius: "4px",
+  backgroundColor: "rgba(0, 0, 0, 0.02)",
+  transition: "background-color 0.2s, box-shadow 0.2s",
+  width: "100%",
+  maxWidth: "500px",
+  boxSizing: "border-box",
+  "&.Mui-focused": {
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
+    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`,
   },
-  "& .MuiInputBase-input": {
-    padding: 0,
-    height: "auto",
-    lineHeight: "inherit",
-    fontSize: "inherit",
-    fontWeight: "inherit",
-    color: "inherit",
+}));
+
+export const SeamlessDescriptionInput = styled(InputBase)(({ theme }) => ({
+  ...theme.typography.subtitle1,
+  lineHeight: 1.4,
+  padding: "0 8px",
+  borderRadius: "4px",
+  backgroundColor: "rgba(0, 0, 0, 0.02)",
+  transition: "background-color 0.2s, box-shadow 0.2s",
+  width: "100%",
+  maxWidth: "500px",
+  boxSizing: "border-box",
+  marginTop: "2px",
+  color: "rgba(0, 0, 0, 0.6)",
+  "&.Mui-focused": {
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
+    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`,
   },
-  "& .MuiFormHelperText-root": {
-    position: "absolute",
-    bottom: -20,
-    margin: 0,
-  },
-  // Typography variant sync
-  "&.title-field": {
-    ...theme.typography.h5,
-    fontWeight: 700,
-    lineHeight: 1.2,
-  },
-  "&.description-field": {
-    ...theme.typography.subtitle1,
-    lineHeight: 1.4,
-    color: "rgba(0, 0, 0, 0.6)",
-  }
 }));
 
 export const StyledTitleText = styled(Typography)({

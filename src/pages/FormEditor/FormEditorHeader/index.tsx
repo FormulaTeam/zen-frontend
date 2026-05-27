@@ -17,7 +17,8 @@ import {
   ExitAlertMsgDialogContent,
   ExitAlertMsgDialogContentText,
   ExitAlertMsgDialogActions,
-  SeamlessTextField,
+  SeamlessTitleInput,
+  SeamlessDescriptionInput,
 } from "./styled";
 import { texts } from "@src/utils/texts";
 import AlertMsg from "@components/AlertMsg/AlertMsg";
@@ -114,20 +115,14 @@ function FormEditorHeader() {
         handleSaveMetadata(null as any);
       }}
     >
-      <SeamlessTextField
+      <SeamlessTitleInput
         autoFocus
         value={editedMetadata.title}
-        className="title-field"
-        slotProps={{
-          htmlInput: {
-            maxLength: 60,
-          },
+        inputProps={{
+          maxLength: 60,
         }}
-        size={"medium"}
         placeholder={"שם הטופס"}
         error={!!validationErrors?.title}
-        helperText={validationErrors?.title?.[0]}
-        variant={"standard"}
         onChange={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trimStart() }))}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
@@ -137,18 +132,13 @@ function FormEditorHeader() {
           }
         }}
       />
-      <SeamlessTextField
+      <SeamlessDescriptionInput
         value={editedMetadata.description}
-        className="description-field"
-        slotProps={{
-          htmlInput: {
-            maxLength: 255,
-          },
+        inputProps={{
+          maxLength: 255,
         }}
         placeholder={"תיאור"}
         error={!!validationErrors?.description}
-        helperText={validationErrors?.description?.[0]}
-        variant={"standard"}
         onChange={(e) =>
           setEditedMetadata((prev) => ({
             ...prev,
