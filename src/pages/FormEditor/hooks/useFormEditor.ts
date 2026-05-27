@@ -10,60 +10,60 @@ import { useFormEditorContext, FORM_EDITOR_MODE } from "../context/FormEditorCon
 import { clearFormDraft } from "../utils/draftPersistence";
 
 interface UseFormEditorReturn {
-    handleSaveForm: () => Promise<void>;
-    handleExit: () => void;
-    handleDiscardAndExit: () => void;
-    isLoading: boolean;
+  handleSaveForm: () => Promise<void>;
+  handleExit: () => void;
+  handleDiscardAndExit: () => void;
+  isLoading: boolean;
 }
 
 export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn {
-    const navigate = useNavigate();
-    const { mutateAsync: mutateCreateFormAsync } = useCreateForm();
-    const { mutateAsync: mutateUpdateFormAsync } = useUpdateForm();
-    const { mode } = useFormEditorContext();
-    const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { mutateAsync: mutateCreateFormAsync } = useCreateForm();
+  const { mutateAsync: mutateUpdateFormAsync } = useUpdateForm();
+  const { mode } = useFormEditorContext();
+  const [isLoading, setIsLoading] = useState(false);
 
-    const handleSaveForm = useCallback(async () => {
-        setIsLoading(true);
+  const handleSaveForm = useCallback(async () => {
+    setIsLoading(true);
 
-        try {
-            const payload = convertFormStructureToCreateDto(formStructure);
+    try {
+      const payload = convertFormStructureToCreateDto(formStructure);
 
-            if (mode === FORM_EDITOR_MODE.EDIT && formStructure.metadata.id) {
-                await mutateUpdateFormAsync({ id: formStructure.metadata.id, payload });
-                showSuccessNotification("הטופס עודכן בהצלחה!");
-                clearFormDraft(formStructure.metadata.id);
-                queryClient.invalidateQueries({ queryKey: [formStructure.metadata.id.toString()] });
-            } else {
-                const createdForm = await mutateCreateFormAsync(payload);
-                showSuccessNotification("הטופס נשמר בהצלחה!");
-                clearFormDraft(undefined); // Clear 'new' form draft
-
-                navigate(`/form/edit/${createdForm.id}`, { replace: true });
-            }
-
-            queryClient.invalidateQueries({ queryKey: ["forms"] });
-        } catch (error) {
-            console.error("Failed to save form:", error);
-            showErrorNotification("שמירת הטופס נכשלה");
-        } finally {
-            setIsLoading(false);
-        }
-    }, [formStructure, mutateCreateFormAsync, mutateUpdateFormAsync, mode, navigate]);
-
-    const handleExit = useCallback(() => {
-        navigate(IPath.HOME);
-    }, [navigate]);
-
-    const handleDiscardAndExit = useCallback(() => {
+      if (mode === FORM_EDITOR_MODE.EDIT && formStructure.metadata.id) {
+        await mutateUpdateFormAsync({ id: formStructure.metadata.id, payload });
+        showSuccessNotification("הטופס עודכן בהצלחה!");
         clearFormDraft(formStructure.metadata.id);
-        navigate(IPath.HOME);
-    }, [formStructure.metadata.id, navigate]);
+        queryClient.invalidateQueries({ queryKey: [formStructure.metadata.id.toString()] });
+      } else {
+        const createdForm = await mutateCreateFormAsync(payload);
+        showSuccessNotification("הטופס נשמר בהצלחה!");
+        clearFormDraft(undefined); // Clear 'new' form draft
 
-    return {
-        handleSaveForm,
-        handleExit,
-        handleDiscardAndExit,
-        isLoading,
-    };
+        navigate(`/responses/${createdForm.id}`, { replace: true });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["forms"] });
+    } catch (error) {
+      console.error("Failed to save form:", error);
+      showErrorNotification("שמירת הטופס נכשלה");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [formStructure, mutateCreateFormAsync, mutateUpdateFormAsync, mode, navigate]);
+
+  const handleExit = useCallback(() => {
+    navigate(`/responses/${formStructure.metadata.id}`);
+  }, [navigate]);
+
+  const handleDiscardAndExit = useCallback(() => {
+    clearFormDraft(formStructure.metadata.id);
+    navigate(`/responses/${formStructure.metadata.id}`);
+  }, [formStructure.metadata.id, navigate]);
+
+  return {
+    handleSaveForm,
+    handleExit,
+    handleDiscardAndExit,
+    isLoading,
+  };
 }
