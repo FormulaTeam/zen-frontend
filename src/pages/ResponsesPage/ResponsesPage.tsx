@@ -1,8 +1,7 @@
 import { GridRowId, GridRowModel, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { Tooltip, IconButton, Typography } from "@mui/material";
-import Delete from "@mui/icons-material/Delete";
+import { Box } from "@mui/material";
 import { StatusCodes } from "http-status-codes";
 
 import SidePanel from "../../components/SidePanel/SidePanel";
@@ -15,24 +14,22 @@ import { FormActionsToolbar } from "./components/FormActionsToolbar";
 import Header from "./components/Header";
 import Loader from "../../components/Responses/Loader";
 import { ResponsesTable } from "./components/ResponsesTable";
-import { RowActionsButtons } from "./components/RowActionsButtons";
 import { ViewsButton } from "./components/ViewsButton";
 import { useFormLoader } from "./hooks/useFormLoader";
 import { useResponsesEdit } from "./hooks/useResponsesEdit";
 import { useResponsesViews } from "./hooks/useResponsesViews";
 import { useFormStore } from "./stores/form.store";
-import { ActionsRow, CenteredBox, MainContentWrapper, PageWrapper, TopSection } from "./styled";
+import {
+  CenteredBox,
+  MainContentWrapper,
+  PageWrapper,
+  TopSection,
+  MetadataLine,
+  ActionLine,
+} from "./styled";
 import { FormDto, FormFieldDto } from "../../types/shared";
-import { PermissionGate } from "@src/components/PermissionGate/PermissionGate";
-import { permission } from "formula-gear";
 import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner";
-import { clearQuickEditDraft, getQuickEditDraft } from "../FormEditor/utils/draftPersistence";
-import { showErrorNotification, showSuccessNotification } from "@utils/utils";
-
-type ResponsePageRow = GridRowModel & {
-  id: string | number;
-  [key: string]: unknown;
-};
+import { getQuickEditDraft, clearQuickEditDraft } from "../FormEditor/utils/draftPersistence";
 
 type SidePanelForm = Pick<FormDto, "id" | "name"> & {
   fields: FormFieldDto[];
@@ -86,7 +83,7 @@ const ResponsesPageContent = (): JSX.Element => {
   });
 
   const [search, setSearch] = useState<string>("");
-  const { rows: storeRows, form, permissions, filter, setFilter } = useFormStore();
+  const { rows: storeRows, form, permissions } = useFormStore();
   const { user } = useAuth();
 
   const {
@@ -97,7 +94,6 @@ const ResponsesPageContent = (): JSX.Element => {
     deletedRowIds,
     setDeletedRowIds,
     hasUnsavedChanges,
-    editedRowsCount,
     localRows,
     setLocalRows,
     validationErrors,
@@ -145,8 +141,6 @@ const ResponsesPageContent = (): JSX.Element => {
   const {
     isSidePanelOpen,
     setIsSidePanelOpen,
-    currentViewConfig,
-    currentView,
     savedViews,
     hasSavedViews,
     selectedViewId,
@@ -157,6 +151,7 @@ const ResponsesPageContent = (): JSX.Element => {
     handleApplyView,
     handleSaveView,
     isSaving,
+    currentView,
   } = useResponsesViews();
 
   useEffect(() => {
@@ -187,55 +182,55 @@ const ResponsesPageContent = (): JSX.Element => {
     };
   }, [user]);
 
-  const selectedRows = useMemo(() => {
-    const ids = Array.from(rowSelectionModel.ids as Set<GridRowId>);
-    return storeRows.filter((row) => ids.includes(row.id));
-  }, [rowSelectionModel.ids, storeRows]);
-
   const handleRowSelectionModelChange = useCallback((model: GridRowSelectionModel) => {
     setRowSelectionModel(model);
   }, []);
 
   return (
     <PageWrapper>
-      <Header />
-      <TopSection>
-        <ActionsRow>
-          <AddResponseButton />
-
-          <EditResponsesButton
-            isInEditMode={isInEditMode}
-            hasUnsavedChanges={hasUnsavedChanges}
-            onToggleEditMode={handleToggleEditMode}
-            onSaveChanges={handleSaveChanges}
-            onAddNewResponse={handleAddNewResponse}
-            isUpdating={isUpdating}
-            permissions={permissions}
-          />
-
-          <ViewsButton
-            isSidePanelOpen={isSidePanelOpen}
-            setIsSidePanelOpen={setIsSidePanelOpen}
-            hasSavedViews={hasSavedViews}
-            savedViews={savedViews}
-            selectedViewId={selectedViewId}
-            defaultViewId={defaultViewId}
-            handleViewDropdownChange={handleViewDropdownChange}
-          />
-
-          {selectedRows.length > 0 && (
-            <Tooltip title="מחיקת תגובות נבחרות">
-              <IconButton color="error" onClick={() => handleDeleteResponses(selectedRows as any)}>
-                <Delete />
-              </IconButton>
-            </Tooltip>
-          )}
-        </ActionsRow>
-
-        <SearchInfo search={search} setSearch={setSearch} />
-      </TopSection>
-
       <MainContentWrapper>
+        <TopSection>
+          <MetadataLine>
+            {/* RIGHT SIDE: Metadata (Icon, Name, ID, Info) */}
+            <Header />
+
+            {/* MIDDLE: Search Responses Bar */}
+            <Box sx={{ flex: 1, maxWidth: "600px", mx: 4 }}>
+              <SearchInfo search={search} setSearch={setSearch} />
+            </Box>
+
+            {/* LEFT SIDE: Nav Actions (More, Edit, Share, Back) */}
+            <FormActionsToolbar />
+          </MetadataLine>
+
+          <ActionLine>
+            {/* RIGHT SIDE: Main Actions (Add, Quick Edit) */}
+            <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
+              <AddResponseButton />
+              <EditResponsesButton
+                isInEditMode={isInEditMode}
+                hasUnsavedChanges={hasUnsavedChanges}
+                onToggleEditMode={handleToggleEditMode}
+                onSaveChanges={handleSaveChanges}
+                onAddNewResponse={handleAddNewResponse}
+                isUpdating={isUpdating}
+                permissions={permissions}
+              />
+            </Box>
+
+            {/* LEFT SIDE: View Management */}
+            <ViewsButton
+              isSidePanelOpen={isSidePanelOpen}
+              setIsSidePanelOpen={setIsSidePanelOpen}
+              hasSavedViews={hasSavedViews}
+              savedViews={savedViews}
+              selectedViewId={selectedViewId}
+              defaultViewId={defaultViewId}
+              handleViewDropdownChange={handleViewDropdownChange}
+            />
+          </ActionLine>
+        </TopSection>
+
         <ResponsesTable
           rowSelectionModel={rowSelectionModel}
           onRowSelectionModelChange={handleRowSelectionModelChange}
@@ -245,6 +240,8 @@ const ResponsesPageContent = (): JSX.Element => {
           onCellEditStart={handleCellEditStart}
           onCellLiveChange={handleCellLiveChange}
           validationErrors={validationErrors}
+          currentView={currentView}
+          deletedRowIds={deletedRowIds}
         />
 
         <CancelEditDialog

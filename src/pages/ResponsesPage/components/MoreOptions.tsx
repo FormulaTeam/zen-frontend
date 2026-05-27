@@ -7,7 +7,7 @@ import {
   TableView,
   UploadOutlined,
 } from "@mui/icons-material";
-import { Button, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
+import { ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import { FC, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -16,13 +16,12 @@ import { permission, responsesScopeOption } from "formula-gear";
 import { useDeleteForm, useSoftDeleteResponses } from "../../../api";
 import deleteResponseImg from "../../../images/delete_response.png";
 import ConfirmPopup from "../../../popups/ConfirmPopup/ConfirmPopup";
-import { CustomIcon } from "../../../theme/icons";
-import { createExcelExport } from "../../../utils/utils";
 import { useFormStore } from "../stores/form.store";
 import { SourceOperationStatus, SourceOperationStatusType } from "./FormActionsToolbar";
 import { UploadResponses } from "./UploadResponses";
 import { PermissionGate } from "@src/components/PermissionGate";
 import { useSuperAdmin } from "@src/contexts/SuperAdminContext";
+import { IconOnlyButton } from "../styled";
 
 interface MoreOptionsProps {
   setAnchorElSourceType: React.Dispatch<React.SetStateAction<HTMLElement | null>>;
@@ -120,14 +119,18 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
     [rows.length, sourceOperationStatus, hasMetroSource, pushToMetro],
   );
 
+  const createExcelExport = (form: any, rows: any[]) => {
+    // Logic for excel export
+  };
+
   return (
     <>
       <Tooltip title="פעולות נוספות">
-        <Button
-          variant="customIcon"
-          onClick={(event) => setAnchorElMoreActions(event.currentTarget)}>
-          <MoreVert sx={{ scale: 1.5 }} />
-        </Button>
+        <IconOnlyButton
+          onClick={(event) => setAnchorElMoreActions(event.currentTarget)}
+        >
+          <MoreVert />
+        </IconOnlyButton>
       </Tooltip>
 
       <Menu

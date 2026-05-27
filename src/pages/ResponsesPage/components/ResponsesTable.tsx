@@ -11,7 +11,7 @@ import {
   GridRowSelectionModel,
   GRID_DETAIL_PANEL_TOGGLE_FIELD,
 } from "@mui/x-data-grid-pro";
-import { useFormStore } from "../stores/form.store";
+import { useFormStore, useInitiateFormStore } from "../stores/form.store";
 import clsx from "clsx";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
@@ -213,10 +213,15 @@ export const ResponsesTable = React.memo(
     currentView,
     deletedRowIds = [],
   }: ResponsesTableProps) => {
-    const { form, setForm, rows, pageInfo, filter, setFilter, setResponseFilters, isRowsLoading } =
+    const { form, rows, pageInfo, filter, setFilter, setResponseFilters, isRowsLoading } =
       useFormStore();
 
     const navigate = useNavigate();
+
+    const displayRows = useMemo(() => {
+      if (isInEditMode && localRows.length > 0) return localRows;
+      return rows;
+    }, [isInEditMode, localRows, rows]);
 
     const currentViewConfig = useMemo(() => currentView?.columns || [], [currentView]);
 
@@ -460,7 +465,8 @@ export const ResponsesTable = React.memo(
     const handleDeleteResponse = useCallback(
       async (rowId: string | number) => {
         try {
-          setForm({
+          const { setForm: storeSetForm } = useInitiateFormStore.getState();
+          storeSetForm({
             ...form,
             responsesCount: Math.max(0, (form.responsesCount ?? 0) - 1),
           } as any);
@@ -468,11 +474,12 @@ export const ResponsesTable = React.memo(
           await softDeleteResponses({ responsesIds: [String(rowId)] });
           showSuccessNotification("מחיקת התגובה בוצעה בהצלחה");
         } catch {
-          setForm(form);
+          const { setForm: storeSetForm } = useInitiateFormStore.getState();
+          storeSetForm(form);
           showErrorNotification("מחיקת התגובה נכשלה");
         }
       },
-      [form, setForm, softDeleteResponses],
+      [form, softDeleteResponses],
     );
 
     const getFormColumns = useMemo((): GridColDef[] => {
@@ -949,7 +956,7 @@ export const ResponsesTable = React.memo(
       const pageNumber = filter?.pageNumber ?? 1;
       const pageSize = filter?.pageSize ?? 25;
       const totalCount = form?.responsesCount ?? 0;
-      const currentRowsCount = localRows.length;
+      const currentRowsCount = displayRows.length;
       const startRange = totalCount === 0 ? 0 : (pageNumber - 1) * pageSize + 1;
       const endRange = totalCount === 0 ? 0 : (pageNumber - 1) * pageSize + currentRowsCount;
 
@@ -999,7 +1006,7 @@ export const ResponsesTable = React.memo(
           {/* 2. Showing responses */}
           <Typography
             variant="body2"
-            sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
+            sx={{ fontWeight: 400, color: "#020618", fontSize: "0.875rem" }}>
             {endRange > 0
               ? `מציג ${endRange}-${startRange} תגובות מתוך ${totalCount}`
               : `מציג 0 תגובות מתוך ${totalCount}`}
@@ -1009,7 +1016,7 @@ export const ResponsesTable = React.memo(
           <FooterInfoContainer sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Typography
               variant="body2"
-              sx={{ fontWeight: 400, color: "#4a5568", fontSize: "0.875rem" }}>
+              sx={{ fontWeight: 400, color: "#020618", fontSize: "0.875rem" }}>
               תגובות בעמוד
             </Typography>
 
@@ -1024,7 +1031,7 @@ export const ResponsesTable = React.memo(
                 fontSize: "0.875rem",
                 textAlign: "center",
                 fontWeight: 400,
-                color: "#4a5568",
+                color: "#020618",
               }}
               disabled={isInEditMode}>
               {[10, 25, 50, 100].map((size) => (
@@ -1122,7 +1129,7 @@ export const ResponsesTable = React.memo(
               }}
               columns={getFormColumns}
               sortModel={sortModel}
-              rows={localRows}
+              rows={displayRows}
               slots={{
                 columnMenu: ResponsesColumnMenu,
                 columnHeaderFilterIconButton: EmptyColumnHeaderFilterIconButton,

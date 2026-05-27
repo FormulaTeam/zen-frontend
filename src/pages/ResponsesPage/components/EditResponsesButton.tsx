@@ -1,7 +1,7 @@
-import { Tooltip, IconButton } from "@mui/material";
+import { Tooltip, IconButton, Box } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import { EditButtonWrapper, StyledEditButton } from "../styled";
+import { UnifiedButton } from "../styled";
 import TableEditIconSvg from "../../../icons/tableEdit.svg";
 import { CustomIcon } from "@theme/icons";
 import { PermissionGate } from "@components/PermissionGate/PermissionGate";
@@ -28,55 +28,55 @@ export const EditResponsesButton = ({
 }: EditResponsesButtonProps) => {
     const enterEditModeButton: JSX.Element = (
         <Tooltip title="עריכה מהירה">
-            <StyledEditButton
-                variant="contained"
-                size="small"
-                startIcon={<img src={TableEditIconSvg} alt="edit" />}
+            <UnifiedButton
+                startIcon={<img src={TableEditIconSvg} alt="edit" style={{ width: 20, height: 20 }} />}
                 onClick={onToggleEditMode}
             >
                 עריכה מהירה
-            </StyledEditButton>
+            </UnifiedButton>
         </Tooltip>
     );
 
     const editModeActions: JSX.Element = (
-        <>
+        <Box sx={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <Tooltip title="שמירה ויציאה מעריכה מהירה">
-                <IconButton
-                    size="small"
+                <UnifiedButton
+                    $isPrimary
                     onClick={onSaveChanges}
                     disabled={!hasUnsavedChanges || isUpdating}
+                    startIcon={<CheckIcon />}
                 >
-                    <CheckIcon />
-                </IconButton>
+                    שמירה
+                </UnifiedButton>
             </Tooltip>
             <Tooltip title="יציאה מעריכה מהירה ללא שמירה">
-                <IconButton
-                    size="small"
+                <UnifiedButton
                     onClick={onToggleEditMode}
+                    startIcon={<CloseIcon />}
                 >
-                    <CloseIcon />
-                </IconButton>
+                    ביטול
+                </UnifiedButton>
             </Tooltip>
             <Tooltip title="הוספת שורה חדשה">
-                <div>
-                    <IconButton onClick={onAddNewResponse} color="primary">
-                        <CustomIcon
-                            iconName="newComment"
-                            style={{ width: 24, height: 24 }}
-                            forcePointer
-                        />
-                    </IconButton>
-                </div>
+                <IconButton onClick={onAddNewResponse} color="primary" sx={{ 
+                    backgroundColor: "rgba(25, 118, 210, 0.08)",
+                    borderRadius: "10px",
+                    width: 42,
+                    height: 42
+                }}>
+                    <CustomIcon
+                        iconName="newComment"
+                        style={{ width: 24, height: 24 }}
+                        forcePointer
+                    />
+                </IconButton>
             </Tooltip>
-        </>
+        </Box>
     );
 
     return (
         <PermissionGate userPermissions={permissions ?? []} requiredPermissions={[permission.UpdateAnyResponse]}>
-            <EditButtonWrapper>
-                {isInEditMode ? editModeActions : enterEditModeButton}
-            </EditButtonWrapper>
+            {isInEditMode ? editModeActions : enterEditModeButton}
         </PermissionGate>
     );
 };

@@ -7,6 +7,8 @@ import { useFormStore } from "../stores/form.store";
 import { permission } from "formula-gear";
 import { useSuperAdmin } from "../../../contexts/SuperAdminContext";
 
+import { UnifiedButton } from "../styled";
+
 export const AddResponseButton: React.FC = () => {
     const navigate = useNavigate();
     const { form, permissions } = useFormStore();
@@ -17,18 +19,15 @@ export const AddResponseButton: React.FC = () => {
     if (!form || !canCreate) return null;
 
     return (
-        <EditButtonWrapper>
-            <Tooltip title="תגובה חדשה">
-                <StyledAddButton
-                    variant="contained"
-                    size="small"
-                    endIcon={<AddIcon />}
-                    onClick={() => navigate(`/response/create/${form.id}`)}
-                >
-                    הוספת תגובה
-                </StyledAddButton>
-            </Tooltip>
-        </EditButtonWrapper>
+        <Tooltip title="תגובה חדשה">
+            <UnifiedButton
+                $isPrimary
+                startIcon={<AddIcon />}
+                onClick={() => navigate(`/response/create/${form.id}`)}
+            >
+                הוספת תגובה
+            </UnifiedButton>
+        </Tooltip>
     );
 };
 

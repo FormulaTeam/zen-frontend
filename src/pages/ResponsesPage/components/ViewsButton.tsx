@@ -15,6 +15,8 @@ interface ViewsButtonProps
         "handleViewDropdownChange"
     > { }
 
+import { UnifiedButton } from "../styled";
+
 const MANAGE_VIEWS_LABEL = "ניהול תצוגות";
 const SELECT_VIEW_LABEL = "בחר תצוגה";
 
@@ -30,7 +32,7 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
     const activeViewId = selectedViewId || "";
 
     return (
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1.5} alignItems="center">
             {hasSavedViews && !isSidePanelOpen && (
                 <Select
                     value={activeViewId}
@@ -39,39 +41,38 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
                     variant="outlined"
                     displayEmpty
                     sx={{
-                        minWidth: 180,
-                        backgroundColor: "#ffffff",
-                        borderRadius: "8px",
+                        minWidth: 200,
+                        backgroundColor: "rgba(30, 136, 229, 0.04)",
+                        borderRadius: "10px",
+                        "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "rgba(30, 136, 229, 0.15)",
+                        },
                         "& .MuiSelect-select": {
-                            padding: "8px 14px",
-                            fontSize: "1.1rem",
-                            fontWeight: 500,
+                            padding: "9px 14px",
+                            fontSize: "1rem",
+                            fontWeight: 600,
+                            color: "#1E88E5",
                         }
                     }}
                 >
-                    <MenuItem value="" sx={{ fontStyle: "italic", color: "text.secondary", fontSize: "1.1rem" }}>
+                    <MenuItem value="" sx={{ fontStyle: "italic", color: "text.secondary", fontSize: "1rem" }}>
                         {SELECT_VIEW_LABEL}
                     </MenuItem>
                     {savedViews.map((view) => (
-                        <MenuItem key={String(view.id)} value={String(view.id)} sx={{ fontSize: "1.1rem" }}>
+                        <MenuItem key={String(view.id)} value={String(view.id)} sx={{ fontSize: "1rem" }}>
                             {view.name}
                         </MenuItem>
                     ))}
                 </Select>
             )}
 
-            <Tooltip title={hasSavedViews ? MANAGE_VIEWS_LABEL : ""}>
-                <span>
-                    <ViewManageButton
-                        variant="contained"
-                        onClick={() => setIsSidePanelOpen(true)}
-                        disabled={isSidePanelOpen}
-                        sx={hasSavedViews ? { width: "39px", height: "39px", padding: "8px", minWidth: 0 } : {}}>
-                        <BackupTable />
-                        {!hasSavedViews && <span>{MANAGE_VIEWS_LABEL}</span>}
-                    </ViewManageButton>
-                </span>
-            </Tooltip>
+            <UnifiedButton
+                onClick={() => setIsSidePanelOpen(true)}
+                disabled={isSidePanelOpen}
+                startIcon={<BackupTable />}
+            >
+                {MANAGE_VIEWS_LABEL}
+            </UnifiedButton>
         </Stack>
     );
 };

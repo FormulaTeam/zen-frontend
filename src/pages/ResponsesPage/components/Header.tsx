@@ -25,7 +25,7 @@ const Header = () => {
 
   const renderDynamicIcon = (name: string) => {
     const IconComponent = MuiIcons[name as keyof typeof MuiIcons];
-    return IconComponent ? <IconComponent color="primary" /> : name;
+    return IconComponent ? <IconComponent sx={{ fontSize: 32 }} color="primary" /> : name;
   };
 
   const getIcon = (iconName: string | null) => {
@@ -33,8 +33,8 @@ const Header = () => {
 
     if (typeof iconSrc === "string") {
       return (
-        <FormIconWrapper>
-          <img src={iconSrc} alt={iconName ?? "form icon"} />
+        <FormIconWrapper sx={{ width: 44, height: 44 }}>
+          <img src={iconSrc} alt={iconName ?? "form icon"} style={{ width: 32, height: 32 }} />
         </FormIconWrapper>
       );
     }
@@ -43,20 +43,20 @@ const Header = () => {
       const IconComponent = iconSrc;
 
       return (
-        <FormIconWrapper>
-          <IconComponent color="primary" />
+        <FormIconWrapper sx={{ width: 44, height: 44 }}>
+          <IconComponent color="primary" sx={{ fontSize: 32 }} />
         </FormIconWrapper>
       );
     }
 
     if (!iconName)
       return (
-        <FormIconWrapper>
-          <img src={formX} alt="form icon" />
+        <FormIconWrapper sx={{ width: 44, height: 44 }}>
+          <img src={formX} alt="form icon" style={{ width: 32, height: 32 }} />
         </FormIconWrapper>
       );
 
-    return <FormIconWrapper>{renderDynamicIcon(iconName)}</FormIconWrapper>;
+    return <FormIconWrapper sx={{ width: 44, height: 44 }}>{renderDynamicIcon(iconName)}</FormIconWrapper>;
   };
 
   const infoTooltipContent = (
@@ -74,24 +74,27 @@ const Header = () => {
   );
 
   return (
-    <Box>
-      <TitleWrapper>
-        {getIcon(form.icon ?? null)}
-        <FormNameTypography variant="h5">{form.name}</FormNameTypography>
-        <Tooltip title="מזהה הטופס">
-          <FormIdTypography>{form.id}</FormIdTypography>
-        </Tooltip>
-
-        <Tooltip
-          title={infoTooltipContent}
-          placement="left"
-          slotProps={formInfoTooltipSlotProps}
-          arrow>
-          <InfoIconButton size="small">
-            <InfoOutlinedIcon fontSize="medium" />
-          </InfoIconButton>
-        </Tooltip>
-      </TitleWrapper>
+    <Box sx={{ display: "flex", alignItems: "center", gap: "16px" }}>
+      {getIcon(form.icon ?? null)}
+      <Box sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <FormNameTypography variant="h5" sx={{ fontSize: "1.6rem", fontWeight: 700 }}>
+            {form.name}
+          </FormNameTypography>
+          <Tooltip
+            title={infoTooltipContent}
+            placement="bottom"
+            slotProps={formInfoTooltipSlotProps}
+            arrow>
+            <InfoIconButton size="small" sx={{ p: 0.5 }}>
+              <InfoOutlinedIcon sx={{ fontSize: "20px", color: "#62748E" }} />
+            </InfoIconButton>
+          </Tooltip>
+        </Box>
+        <Typography variant="caption" sx={{ color: "#62748E", fontWeight: 600, fontSize: "0.9rem" }}>
+          מזהה: {form.id}
+        </Typography>
+      </Box>
     </Box>
   );
 };
