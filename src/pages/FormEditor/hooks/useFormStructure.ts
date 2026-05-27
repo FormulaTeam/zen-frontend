@@ -467,27 +467,22 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     }, []);
 
   const setFormMetadata = useCallback((metadata: Partial<FormMetadata>) => {
-    let isValid = true;
+    let isValueValid = true;
 
     setFormStructure((prev) => {
       const { validationErrors: _, ...prevMetadata } = prev.metadata;
-
       const combinedMetadata = { ...prevMetadata, ...metadata };
 
       // If only iconId is changed, skip validation to allow changing icon even if title is empty
       const isOnlyIconChange = Object.keys(metadata).length === 1 && "iconId" in metadata;
 
+      let validationErrors = prev.metadata.validationErrors;
       if (!isOnlyIconChange) {
-        const validationErrors = validateMetadata(combinedMetadata);
+        validationErrors = validateMetadata(combinedMetadata);
         if (validationErrors && Object.keys(validationErrors).length > 0) {
-          isValid = false;
-          return {
-            ...prev,
-            metadata: {
-              ...prevMetadata,
-              validationErrors,
-            },
-          };
+          isValueValid = false;
+        } else {
+          validationErrors = null;
         }
       }
 
@@ -495,12 +490,12 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
         ...prev,
         metadata: {
           ...combinedMetadata,
-          validationErrors: isOnlyIconChange ? prev.metadata.validationErrors : {},
+          validationErrors,
         },
       };
     });
 
-    return isValid;
+    return isValueValid;
   }, []);
 
   const appendCondition = useCallback((condition: FormCondition) => {
