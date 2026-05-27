@@ -201,19 +201,21 @@ const ResponsesPageContent = (): JSX.Element => {
     setRowSelectionModel(model);
   }, []);
 
+  const showStandardActions = !isInEditMode && selectedRows.length === 0;
+
   return (
     <PageWrapper>
       <MainContentWrapper>
         <TopSection>
           <MetadataLine>
-            {/* RIFHT SIDE: Metadata (Info, ID, Name) */}
+            {/* RIGHT SIDE: Metadata (Info, ID, Name) */}
             <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
               <Header />
             </Box>
 
             {/* MIDDLE: Search Responses Bar (Exact Middle) */}
             <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
-              <Box>
+              <Box sx={{ width: "100%", maxWidth: "500px" }}>
                 <SearchInfo search={filter?.query || ""} setSearch={handleSearch} />
               </Box>
             </Box>
@@ -225,9 +227,9 @@ const ResponsesPageContent = (): JSX.Element => {
           </MetadataLine>
 
           <ActionLine>
-            {/* RIGHT SIDE: Main Actions (Add, Quick Edit) */}
+            {/* RIGHT SIDE: Main Actions (Add, Quick Edit, Selection Actions) */}
             <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
-              <AddResponseButton />
+              {showStandardActions && <AddResponseButton />}
               <EditResponsesButton
                 isInEditMode={isInEditMode}
                 hasUnsavedChanges={hasUnsavedChanges}
@@ -236,20 +238,13 @@ const ResponsesPageContent = (): JSX.Element => {
                 onAddNewResponse={handleAddNewResponse}
                 isUpdating={isUpdating}
                 permissions={permissions}
+                selectedRows={selectedRows}
+                handleDeleteResponses={handleDeleteResponses}
               />
             </Box>
 
             {/* LEFT SIDE: View Management */}
             <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              {selectedRows.length > 0 && (
-                <Tooltip title="מחיקת תגובות נבחרות">
-                  <IconButton
-                    color="error"
-                    onClick={() => handleDeleteResponses(selectedRows as any)}>
-                    <Delete />
-                  </IconButton>
-                </Tooltip>
-              )}
               <ViewsButton
                 isSidePanelOpen={isSidePanelOpen}
                 setIsSidePanelOpen={setIsSidePanelOpen}
