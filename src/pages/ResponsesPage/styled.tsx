@@ -129,8 +129,9 @@ export const TopSection = styled(Box)<BoxProps>(() => ({
   display: "flex",
   flexDirection: "column",
   width: "100%",
-  padding: "16px 24px 8px",
+  padding: "24px 24px 12px",
   flexShrink: 0,
+  gap: "16px",
 }));
 
 

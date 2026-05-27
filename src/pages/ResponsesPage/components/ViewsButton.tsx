@@ -79,14 +79,18 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
                 </Select>
             )}
 
-            <UnifiedButton
-                onClick={() => setIsSidePanelOpen(true)}
-                disabled={isSidePanelOpen}
-                startIcon={<BackupTable />}
-                sx={hasSavedViews ? { minWidth: "40px", width: "40px", padding: 0 } : {}}
-            >
-                {!hasSavedViews && MANAGE_VIEWS_LABEL}
-            </UnifiedButton>
+            <Tooltip title={hasSavedViews ? MANAGE_VIEWS_LABEL : ""} placement="top" arrow>
+                <span>
+                    <UnifiedButton
+                        onClick={() => setIsSidePanelOpen(true)}
+                        disabled={isSidePanelOpen}
+                        startIcon={<BackupTable />}
+                        sx={hasSavedViews ? { minWidth: "40px", width: "40px", padding: 0 } : {}}
+                    >
+                        {!hasSavedViews && MANAGE_VIEWS_LABEL}
+                    </UnifiedButton>
+                </span>
+            </Tooltip>
         </Stack>
     );
 };
