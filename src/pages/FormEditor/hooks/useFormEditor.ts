@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCreateForm, useUpdateForm } from "@api/formsApi";
-import { FormStructure } from "../context/FormStructureContext";
+import { FormMetadata, FormStructure } from "../context/FormStructureContext";
 import { showErrorNotification, showSuccessNotification } from "@utils/utils";
 import { convertFormStructureToCreateDto } from "../utils/formStructureToDto";
 import { IPath } from "../../../types/enums/global.enums";
@@ -10,7 +10,7 @@ import { useFormEditorContext, FORM_EDITOR_MODE } from "../context/FormEditorCon
 import { clearFormDraft } from "../utils/draftPersistence";
 
 interface UseFormEditorReturn {
-    handleSaveForm: () => Promise<void>;
+    handleSaveForm: (metadataOverride?: Partial<FormMetadata>) => Promise<void>;
     handleExit: () => void;
     handleDiscardAndExit: () => void;
     isLoading: boolean;
@@ -29,17 +29,27 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
         formStructureRef.current = formStructure;
     }, [formStructure]);
 
-    const handleSaveForm = useCallback(async () => {
+    const handleSaveForm = useCallback(async (metadataOverride?: Partial<FormMetadata>) => {
         setIsLoading(true);
 
         try {
-            const payload = convertFormStructureToCreateDto(formStructureRef.current);
+            let structureToSave = formStructureRef.current;
+            if (metadataOverride) {
+                structureToSave = {
+                    ...structureToSave,
+                    metadata: {
+                        ...structureToSave.metadata,
+                        ...metadataOverride,
+                    },
+                };
+            }
+            const payload = convertFormStructureToCreateDto(structureToSave);
 
-            if (mode === FORM_EDITOR_MODE.EDIT && formStructureRef.current.metadata.id) {
-                await mutateUpdateFormAsync({ id: formStructureRef.current.metadata.id, payload });
+            if (mode === FORM_EDITOR_MODE.EDIT && structureToSave.metadata.id) {
+                await mutateUpdateFormAsync({ id: structureToSave.metadata.id, payload });
                 showSuccessNotification("הטופס עודכן בהצלחה!");
-                clearFormDraft(formStructureRef.current.metadata.id);
-                queryClient.invalidateQueries({ queryKey: [formStructureRef.current.metadata.id.toString()] });
+                clearFormDraft(structureToSave.metadata.id);
+                queryClient.invalidateQueries({ queryKey: [structureToSave.metadata.id.toString()] });
             } else {
                 const createdForm = await mutateCreateFormAsync(payload);
                 showSuccessNotification("הטופס נשמר בהצלחה!");
@@ -64,7 +74,7 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
     const handleDiscardAndExit = useCallback(() => {
         clearFormDraft(formStructureRef.current.metadata.id);
         navigate(IPath.HOME);
-    }, [navigate]);
+    }, [formStructure.metadata.id, navigate]);
 
     return {
         handleSaveForm,

@@ -45,7 +45,7 @@ function FormEditorHeader() {
   const [showAlertMsg, setShowAlertMsg] = useState(false);
   const [showValidationErrorsPopup, setShowValidationErrorsPopup] = useState(false);
   const [showUntitledFormPopup, setShowUntitledFormPopup] = useState(false);
-  const [suggestedTitle, setSuggestedTitle] = useState("טופסללאשם");
+  const [suggestedTitle, setSuggestedTitle] = useState("טופס ללא שם");
 
   const { title, description, iconId, validationErrors } = formStructure.metadata;
 
@@ -70,8 +70,8 @@ function FormEditorHeader() {
   const handleAcceptSuggestedTitle = async () => {
     if (setFormMetadata({ title: suggestedTitle })) {
       setShowUntitledFormPopup(false);
-      // Immediate save after naming
-      handleSaveForm();
+      // Pass the title directly to save to avoid race conditions with state
+      handleSaveForm({ title: suggestedTitle });
     }
   };
 
