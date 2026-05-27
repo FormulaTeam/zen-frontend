@@ -57,9 +57,8 @@ export const LineRow = styled(Box)(({ theme }) => ({
 }));
 
 export const MetadataLine = styled(LineRow)(({ theme }) => ({
-  borderBottom: "1px solid #e2e8f0",
-  paddingBottom: theme.spacing(2),
-  marginBottom: theme.spacing(1),
+  paddingBottom: theme.spacing(1),
+  marginBottom: theme.spacing(0.5),
 }));
 
 export const ActionLine = styled(LineRow)(({ theme }) => ({
