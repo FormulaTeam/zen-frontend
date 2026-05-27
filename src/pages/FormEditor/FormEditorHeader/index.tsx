@@ -31,7 +31,7 @@ import {
   SeamlessDescriptionInput,
 } from "./styled";
 import { texts } from "@src/utils/texts";
-import AlertMsg from "@components/AlertMsg/AlertMsg";
+import ValidationErrorsDialog from "../../../components/BasePopup/ValidationErrorsDialog";
 
 function FormEditorHeader() {
   const { formStructure, validateForm, setFormMetadata, checkHasChanges } =
@@ -304,28 +304,16 @@ function FormEditorHeader() {
     </Dialog>
   );
 
-  const validationErrorsPopup = showValidationErrorsPopup ? (
-    <div
-      style={{
-        position: "fixed",
-        top: 80,
-        left: 0,
-        right: 0,
-        zIndex: 1300,
-        display: "flex",
-        justifyContent: "center",
-      }}>
-      <AlertMsg
-        msg={[
-          "יש שגיאות בטופס. נא לתקן את השדות המסומנים באדום.",
-          ...(Object.keys(formStructure.fields).length === 0
-            ? ["לא ניתן לשמור טופס ללא שדות."]
-            : []),
-        ]}
-        closePopup={() => setShowValidationErrorsPopup(false)}
-      />
-    </div>
-  ) : null;
+  const validationErrorsPopup = (
+    <ValidationErrorsDialog
+      open={showValidationErrorsPopup}
+      onClose={() => setShowValidationErrorsPopup(false)}
+      errors={[
+        "יש שגיאות בטופס. נא לתקן את השדות המסומנים באדום.",
+        ...(Object.keys(formStructure.fields).length === 0 ? ["לא ניתן לשמור טופס ללא שדות."] : []),
+      ]}
+    />
+  );
 
   const untitledFormDialog = (
     <Dialog open={showUntitledFormPopup} onClose={() => setShowUntitledFormPopup(false)}>

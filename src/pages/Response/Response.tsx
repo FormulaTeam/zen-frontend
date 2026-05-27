@@ -14,7 +14,7 @@ import styled from "styled-components";
 import ResponseHeader from "../../components/ResponseComponents/ResponseHeader";
 import ResponseSection from "../../components/ResponseComponents/ResponseSection";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
-import AlertMsg from "../../components/AlertMsg/AlertMsg";
+import ValidationErrorsDialog from "../../components/BasePopup/ValidationErrorsDialog";
 import { useValidationErrors, type ValidationDisplayError } from "../../hooks/useValidationErrors";
 import { clearResponseDraft, getResponseDraft } from "../FormEditor/utils/draftPersistence";
 import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner";
@@ -412,9 +412,11 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
         </FormSectionsContainer>
       </PageContainer>
 
-      {showValidationPopup && (
-        <AlertMsg msg={validationErrors} closePopup={closeValidationPopup} isSuccess={false} />
-      )}
+      <ValidationErrorsDialog
+        open={showValidationPopup}
+        onClose={closeValidationPopup}
+        errors={validationErrors}
+      />
 
       <Dialog
         open={showAlertMsg}
