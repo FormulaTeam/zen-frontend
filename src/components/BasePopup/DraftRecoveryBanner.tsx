@@ -1,7 +1,8 @@
 import React from "react";
-import { Snackbar, Alert, Button, Box, Typography } from "@mui/material";
+import { Snackbar, Alert, Button, Box, Typography, IconButton } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import HistoryIcon from "@mui/icons-material/History";
+import CloseIcon from "@mui/icons-material/Close";
 
 const StyledAlert = styled(Alert)(({ theme }) => ({
   backgroundColor: "#fff",
@@ -22,8 +23,10 @@ const StyledAlert = styled(Alert)(({ theme }) => ({
     gap: "16px",
   },
   "& .MuiAlert-action": {
-    padding: 0,
+    padding: "0 0 0 8px",
     marginRight: 0,
+    display: "flex",
+    alignItems: "center",
   }
 }));
 
@@ -38,7 +41,7 @@ const DraftRecoveryBanner: React.FC<DraftRecoveryBannerProps> = ({
   open,
   onRestore,
   onDiscard,
-  message = "מצאנו טיוטה עם שינויים שלא נשמרו.",
+  message = "מצאנו טיוטה עם שינויים שלא נשמרו",
 }) => {
   return (
     <Snackbar
@@ -50,18 +53,7 @@ const DraftRecoveryBanner: React.FC<DraftRecoveryBannerProps> = ({
         icon={<HistoryIcon />}
         severity="info"
         action={
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Button 
-              size="small" 
-              onClick={onDiscard} 
-              sx={{ 
-                color: "#64748b", 
-                fontWeight: 600,
-                "&:hover": { backgroundColor: "#f1f5f9" } 
-              }}
-            >
-              התעלם
-            </Button>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Button 
               size="small" 
               variant="contained" 
@@ -75,6 +67,15 @@ const DraftRecoveryBanner: React.FC<DraftRecoveryBannerProps> = ({
             >
               שחזר טיוטה
             </Button>
+            <IconButton
+              size="small"
+              aria-label="close"
+              color="inherit"
+              onClick={onDiscard}
+              sx={{ color: "#64748b" }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
           </Box>
         }
       >
