@@ -8,12 +8,13 @@ export const MetadataContainer = styled(Box)({
 
 export const SeamlessTextField = styled(TextField)(({ theme }) => ({
   "& .MuiInputBase-root": {
-    padding: "4px 8px",
+    padding: "0 8px", // Matches view state padding exactly
     borderRadius: "4px",
     backgroundColor: "rgba(0, 0, 0, 0.02)",
     transition: "background-color 0.2s, box-shadow 0.2s",
+    boxSizing: "border-box",
     "&:before, &:after": {
-      display: "none", // Remove standard underline
+      display: "none",
     },
     "&.Mui-focused": {
       backgroundColor: "rgba(0, 0, 0, 0.04)",
@@ -22,10 +23,14 @@ export const SeamlessTextField = styled(TextField)(({ theme }) => ({
   },
   "& .MuiInputBase-input": {
     padding: 0,
+    height: "auto",
+    // These metrics must match Typography variant line-heights
+    lineHeight: 1.2,
   },
   "& .MuiFormHelperText-root": {
-    marginLeft: 8,
-    marginRight: 8,
+    position: "absolute",
+    bottom: -20,
+    margin: 0,
   }
 }));
 
@@ -33,9 +38,12 @@ export const StyledTitleText = styled(Typography)({
   maxWidth: "500px",
   minWidth: 0,
   cursor: "pointer",
-  padding: "2px 8px",
+  padding: "0 8px", // Must be identical to SeamlessTextField padding
   borderRadius: "4px",
   transition: "background-color 0.2s",
+  fontWeight: 700,
+  lineHeight: 1.2, // Must match InputBase-input
+  boxSizing: "border-box",
   "&:hover": {
     backgroundColor: "rgba(0, 0, 0, 0.04)",
   },
@@ -45,9 +53,13 @@ export const StyledDescriptionText = styled(Typography)({
   maxWidth: "500px",
   minWidth: 0,
   cursor: "pointer",
-  padding: "2px 8px",
+  padding: "0 8px", // Must be identical to SeamlessTextField padding
   borderRadius: "4px",
   transition: "background-color 0.2s",
+  lineHeight: 1.4,
+  marginTop: "2px",
+  color: "rgba(0, 0, 0, 0.6)",
+  boxSizing: "border-box",
   "&:hover": {
     backgroundColor: "rgba(0, 0, 0, 0.04)",
   },
