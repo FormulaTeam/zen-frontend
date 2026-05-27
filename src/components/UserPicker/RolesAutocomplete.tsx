@@ -9,21 +9,31 @@ interface RolesAutocompleteProps {
   width?: string | number;
   user?: SharePickerUser;
   excludeRoleIds?: number[];
+  initialValue?: any;
 }
 
-const RolesAutocomplete: React.FC<RolesAutocompleteProps> = ({ isDisabled, handleRoleChange, width, user, excludeRoleIds = [] }) => {
-  const options = excludeRoleIds.length > 0
-    ? ROLE_CATALOG.filter((role) => !excludeRoleIds.includes(role.role_id))
-    : ROLE_CATALOG;
+const RolesAutocomplete: React.FC<RolesAutocompleteProps> = ({
+  isDisabled,
+  handleRoleChange,
+  width,
+  user,
+  excludeRoleIds = [],
+  initialValue,
+}) => {
+  const options =
+    excludeRoleIds.length > 0
+      ? ROLE_CATALOG.filter((role) => !excludeRoleIds.includes(role.role_id))
+      : ROLE_CATALOG;
 
   return (
     <StyledAutocomplete
       isOptionEqualToValue={(option: any, value: any) =>
         option?.roleName === value?.roleName || option?.role_id === value?.role_id
       }
-      value={undefined}
+      value={initialValue || null}
       options={options}
       disableClearable={true}
+      forcePopupIcon={false} // This removes the dropdown arrow
       onChange={(event, newValue) => handleRoleChange(event, newValue, user)}
       multiple={false}
       disabled={isDisabled}
@@ -35,30 +45,31 @@ const RolesAutocomplete: React.FC<RolesAutocompleteProps> = ({ isDisabled, handl
           return roleObj?.roleName || "";
         }
       }}
-      sx={{
-        width: width || "120px",
-        "& .MuiInputBase-root": {
-          height: "32px",
-          fontSize: "14px",
-          border: "1px solid #ccc",
-        },
-      }}
+      sx={{ width: width || "140px" }}
       renderInput={(params) => (
         <StyledTextField
           {...params}
           label=""
-          placeholder="הרשאות"
+          placeholder="בחר הרשאה"
           variant="outlined"
           fullWidth
-          size="medium"
+          size="small"
+          inputProps={{
+            ...params.inputProps,
+            readOnly: true,
+            sx: { cursor: "pointer" },
+          }}
         />
       )}
       renderOption={(props: any, option: any) => {
         let roleName = option.roleName || "";
+        const { key, ...restProps } = props;
         return (
-          <RoleOption {...props} key={"role_" + roleName}>
-            <span title={option?.role_description || ""}>{roleName}</span>
-          </RoleOption>
+          <li key={key} {...restProps} style={{ padding: 0 }}>
+            <RoleOption>
+              <span title={option?.role_description || ""}>{roleName}</span>
+            </RoleOption>
+          </li>
         );
       }}
     />

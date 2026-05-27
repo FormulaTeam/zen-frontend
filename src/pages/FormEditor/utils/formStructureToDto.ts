@@ -36,7 +36,11 @@ export function convertFormStructureToCreateDto(formStructure: FormStructure): C
         conditions: formStructure.conditions ?? [],
     };
 
-    if (formStructure.metadata.iconId && formStructure.metadata.iconId !== DEFAULT_ICON_NAME) {
+    if (
+        formStructure.metadata.iconId &&
+        formStructure.metadata.iconId !== DEFAULT_ICON_NAME &&
+        formStructure.metadata.iconId !== "default-icon"
+    ) {
         payload.icon = formStructure.metadata.iconId;
     }
 

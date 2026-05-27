@@ -1,6 +1,16 @@
 import styles from "./style.module.css";
 import { DEFAULT_ICON_NAME, formIconsNamesMap, getFormIconByName } from "@utils/utils";
-import { Button, TextField, Tooltip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
+import {
+  Button,
+  TextField,
+  Tooltip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Typography,
+} from "@mui/material";
 import { FormMetadata, useFormStructureContext } from "../context/FormStructureContext";
 import { Check, Close, DriveFileRenameOutline, Error as ErrorIcon } from "@mui/icons-material";
 import React, { useState } from "react";
@@ -11,43 +21,82 @@ import {
   MetadataContainer,
   StyledDescriptionText,
   StyledTitleText,
-  ExitAlertMsgDialog,
-  ExitAlertMsgCloseIcon,
-  ExitAlertMsgDialogTitle,
-  ExitAlertMsgDialogContent,
-  ExitAlertMsgDialogContentText,
-  ExitAlertMsgDialogActions,
+  SeamlessTitleInput,
+  SeamlessDescriptionInput,
 } from "./styled";
 import { texts } from "@src/utils/texts";
-import AlertMsg from "@components/AlertMsg/AlertMsg";
+import ValidationErrorsDialog from "../../../components/BasePopup/ValidationErrorsDialog";
+import UnsavedChangesDialog from "../../../components/BasePopup/UnsavedChangesDialog";
 
 function FormEditorHeader() {
-  const { formStructure, validateForm, setFormMetadata, checkHasChanges } = useFormStructureContext();
-  const { handleSaveForm, handleExit, handleDiscardAndExit, isLoading } = useFormEditor(formStructure);
+  const { formStructure, validateForm, setFormMetadata, checkHasChanges } =
+    useFormStructureContext();
+  const { handleSaveForm, handleExit, handleDiscardAndExit, isLoading } =
+    useFormEditor(formStructure);
 
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
   const [editedMetadata, setEditedMetadata] = useState<FormMetadata>({ title: "" });
   const [showPickIcon, setShowPickIcon] = useState(false);
   const [showAlertMsg, setShowAlertMsg] = useState(false);
   const [showValidationErrorsPopup, setShowValidationErrorsPopup] = useState(false);
+  const [showUntitledFormPopup, setShowUntitledFormPopup] = useState(false);
+  const [suggestedTitle, setSuggestedTitle] = useState("טופס ללא שם");
 
   const { title, description, iconId, validationErrors } = formStructure.metadata;
 
   const onSaveClick = () => {
-    const isValid = validateForm();
+    const { isValid, fieldsValid, metadataErrors, hasFields } = validateForm();
+
     if (isValid) {
       handleSaveForm();
-    } else {
+      return;
+    }
+
+    // 1. Priority: Field errors or empty form structure
+    if (!fieldsValid || !hasFields) {
       setShowValidationErrorsPopup(true);
+      return;
+    }
+
+    // 2. Priority: Other metadata errors (e.g. description too long)
+    const metadataErrorKeys = Object.keys(metadataErrors || {});
+    const hasOtherMetadataErrors = metadataErrorKeys.some((key) => key !== "title");
+
+    if (hasOtherMetadataErrors) {
+      setShowValidationErrorsPopup(true);
+      return;
+    }
+
+    // 3. Naming Rule: If we reach here, the only issue is the title.
+    // Show the naming popup if the title is empty.
+    if (metadataErrors?.title && title.trim() === "") {
+      setShowUntitledFormPopup(true);
+    } else {
+      // If it's a validation error with the title itself (e.g. too short but not empty),
+      // or any other edge case, show the standard validation popup.
+      setShowValidationErrorsPopup(true);
+    }
+  };
+
+  const handleAcceptSuggestedTitle = async () => {
+    const trimmedTitle = suggestedTitle.trim();
+    if (setFormMetadata({ title: trimmedTitle })) {
+      setShowUntitledFormPopup(false);
+      setIsEditingMetadata(false);
+      setEditedMetadata((prev) => ({ ...prev, title: trimmedTitle }));
+      // Pass the title directly to save to avoid race conditions with state
+      handleSaveForm({ title: trimmedTitle });
     }
   };
 
   const handleSaveAndExit = async () => {
     setShowAlertMsg(false);
-    const isValid = validateForm();
+    const { isValid } = validateForm() as any;
     if (isValid) {
       await handleSaveForm();
       handleExit();
+    } else {
+      onSaveClick();
     }
   };
 
@@ -67,7 +116,7 @@ function FormEditorHeader() {
       }
     }
     setShowPickIcon(false);
-  }
+  };
 
   const handleSaveMetadata = (e: React.MouseEvent<HTMLButtonElement>): void => {
     if (setFormMetadata(editedMetadata)) {
@@ -82,13 +131,22 @@ function FormEditorHeader() {
 
   const renderIcon = (id: string | null | undefined) => {
     const IconComponent = getFormIconByName(id ?? undefined);
-    
+
     if (typeof IconComponent === "string") {
-      return <img src={IconComponent} alt="icon" className={styles.formIcon} onClick={() => setShowPickIcon(true)} />;
+      return (
+        <img
+          src={IconComponent}
+          alt="icon"
+          className={styles.formIcon}
+          onClick={() => setShowPickIcon(true)}
+        />
+      );
     }
 
     return (
-      <div onClick={() => setShowPickIcon(true)} style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
+      <div
+        onClick={() => setShowPickIcon(true)}
+        style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
         <IconComponent color="primary" style={{ fontSize: 40 }} />
       </div>
     );
@@ -102,86 +160,93 @@ function FormEditorHeader() {
     </div>
   );
 
-  const formMetadata: JSX.Element = isEditingMetadata ? (
-    <>
-      <div className={styles.editingMetadataText}>
-        <TextField
-          value={editedMetadata.title}
-          slotProps={{
-            htmlInput: {
-              className: styles.titleInput,
-              maxLength: 60,
-            },
-          }}
-          size={"medium"}
-          placeholder={"שם הטופס"}
-          error={!!validationErrors?.title}
-          helperText={validationErrors?.title?.[0]}
-          variant={"standard"}
-          onChange={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trimStart() }))}
-          onBlur={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trim() }))}
-        />
-        <TextField
-          value={editedMetadata.description}
-          slotProps={{
-            htmlInput: {
-              maxLength: 255,
-            },
-          }}
-          placeholder={"תיאור"}
-          error={!!validationErrors?.description}
-          helperText={validationErrors?.description?.[0]}
-          variant={"standard"}
-          onChange={(e) => setEditedMetadata((prev) => ({
-            ...prev,
-            description: e.target.value.trimStart(),
-          }))}
-          onBlur={(e) => setEditedMetadata((prev) => ({
-            ...prev,
-            description: e.target.value.trim(),
-          }))}
-        />
-      </div>
-      <div>
-        <Button className={styles.button} onClick={handleSaveMetadata}>
-          <Check sx={{ fontSize: 20, color: "#308e63" }} />
-        </Button>
-        <Button className={styles.button} onClick={handleCancelMetadataEdit}>
-          <Close sx={{ fontSize: 20, color: "#a54160" }} />
-        </Button>
-      </div>
-    </>
-  ) : (
-    <MetadataContainer>
-      <div className={`${styles.title} ${styles.titleWithMargin}`}>
-        <>
-          <OverflowTooltip title={title || "שם הטופס"} placement="top">
-            <StyledTitleText variant={"h5"}>{title || "שם הטופס"}</StyledTitleText>
-          </OverflowTooltip>
-          <Tooltip title="עריכת פרטי הטופס">
-            <Button className={styles.button}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(_) => {
-                setEditedMetadata({ title, description, iconId });
-                setIsEditingMetadata(true);
-              }}>
-              <DriveFileRenameOutline sx={{ fontSize: 25, color: "#506f9e" }} />
-            </Button>
-          </Tooltip>
-        </>
-      </div>
-      <OverflowTooltip title={description || "ללא תיאור"} placement="bottom">
-        <StyledDescriptionText variant="subtitle1">{description ?? "ללא תיאור"}</StyledDescriptionText>
-      </OverflowTooltip>
+  const formMetadata: JSX.Element = (
+    <Tooltip title={isEditingMetadata ? "" : "עריכת פרטי הטופס"} placement="bottom-start">
+      <MetadataContainer
+        className={isEditingMetadata ? styles.editingMetadataText : ""}
+        onBlur={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget)) {
+            return;
+          }
+          handleSaveMetadata(null as any);
+        }}
+        onClick={() => {
+          if (!isEditingMetadata) {
+            setEditedMetadata({ title, description, iconId });
+            setIsEditingMetadata(true);
+          }
+        }}>
+        <div className={styles.title}>
+          {isEditingMetadata ? (
+            <SeamlessTitleInput
+              autoFocus
+              value={editedMetadata.title}
+              inputProps={{
+                maxLength: 60,
+              }}
+              placeholder={texts.heb.formNameLabel}
+              error={!!validationErrors?.title}
+              onChange={(e) => {
+                const newVal = e.target.value.replace(/[^\u0590-\u05FF\s]/g, "");
+                setEditedMetadata((prev) => ({ ...prev, title: newVal }));
+                setFormMetadata({ title: newVal });
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSaveMetadata(null as any);
+                } else if (e.key === "Escape") {
+                  handleCancelMetadataEdit(null as any);
+                }
+              }}
+            />
+          ) : (
+            <OverflowTooltip title={title || texts.heb.formNameLabel} placement="top">
+              <StyledTitleText variant={"h5"}>{title || texts.heb.formNameLabel}</StyledTitleText>
+            </OverflowTooltip>
+          )}
+        </div>
 
-      <div className={styles.formErrorContainer}>
-        {validationErrors?.title ? (
-          <Typography variant="body2" color="error">
-            {texts.heb.emptyFormAlert}
-          </Typography>
-        ) : null}
-      </div>
-    </MetadataContainer>
+        {isEditingMetadata ? (
+          <SeamlessDescriptionInput
+            value={editedMetadata.description}
+            inputProps={{
+              maxLength: 255,
+            }}
+            placeholder={"תיאור"}
+            error={!!validationErrors?.description}
+            onChange={(e) => {
+              const newVal = e.target.value.replace(/[^\u0590-\u05FF\s]/g, "");
+              setEditedMetadata((prev) => ({
+                ...prev,
+                description: newVal,
+              }));
+              setFormMetadata({ description: newVal });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSaveMetadata(null as any);
+              } else if (e.key === "Escape") {
+                handleCancelMetadataEdit(null as any);
+              }
+            }}
+          />
+        ) : (
+          <OverflowTooltip title={description || "ללא תיאור"} placement="bottom">
+            <StyledDescriptionText variant="subtitle1">
+              {description ?? "ללא תיאור"}
+            </StyledDescriptionText>
+          </OverflowTooltip>
+        )}
+
+        <div className={styles.formErrorContainer}>
+          {validationErrors?.title ? (
+            <Typography variant="body2" color="error">
+              {texts.heb.emptyFormAlert}
+            </Typography>
+          ) : null}
+        </div>
+      </MetadataContainer>
+    </Tooltip>
   );
 
   const headerActionButtons: JSX.Element = (
@@ -189,77 +254,73 @@ function FormEditorHeader() {
       <Button variant={"contained"} color={"primary"} onClick={onSaveClick} disabled={isLoading}>
         {isLoading ? "שומר..." : "שמירה"}
       </Button>
-      <Button variant={"outlined"} color={"error"} onClick={onExitClick} disabled={isLoading}>יציאה</Button>
+      <Button variant={"outlined"} color={"error"} onClick={onExitClick} disabled={isLoading}>
+        יציאה
+      </Button>
     </>
   );
 
   const exitAlertMsg: JSX.Element | null = (
-    <Dialog
+    <UnsavedChangesDialog
       open={showAlertMsg}
       onClose={() => setShowAlertMsg(false)}
-      slotProps={{
-        paper: {
-          component: ExitAlertMsgDialog,
-        },
-      }}
-    >
-      <ExitAlertMsgCloseIcon>
-        <Close onClick={() => setShowAlertMsg(false)} />
-      </ExitAlertMsgCloseIcon>
-      <ExitAlertMsgDialogTitle>
-        <ErrorIcon sx={{ fontSize: '5rem', color: 'red' }} />
-      </ExitAlertMsgDialogTitle>
-      <ExitAlertMsgDialogContent>
-        <ExitAlertMsgDialogContentText>
-          יש לך שינויים שלא נשמרו בטופס. האם ברצונך לשמור את השינויים?
-        </ExitAlertMsgDialogContentText>
-      </ExitAlertMsgDialogContent>
-      <ExitAlertMsgDialogActions>
-        <Button variant="outlined" onClick={() => setShowAlertMsg(false)}>
-          ביטול
-        </Button>
-        <Button variant="contained" color="primary" onClick={handleSaveAndExit}>
-          שמירה ויציאה
-        </Button>
-        <Button variant="outlined" color="error" onClick={() => {
-          setShowAlertMsg(false);
-          handleDiscardAndExit();
-        }}>
-          יציאה ללא שמירה
-        </Button>
-      </ExitAlertMsgDialogActions>
-    </Dialog>
+      onSave={handleSaveAndExit}
+      onDiscard={handleDiscardAndExit}
+      message="יש לך שינויים שלא נשמרו בטופס"
+    />
   );
 
   const validationErrorsPopup = (
-    showValidationErrorsPopup ? (
-      <div style={{ position: 'fixed', top: 80, left: 0, right: 0, zIndex: 1300, display: 'flex', justifyContent: 'center' }}>
-        <AlertMsg
-          msg={["יש שגיאות בטופס. נא לתקן את השדות המסומנים באדום."]}
-          closePopup={() => setShowValidationErrorsPopup(false)}
+    <ValidationErrorsDialog
+      open={showValidationErrorsPopup}
+      onClose={() => setShowValidationErrorsPopup(false)}
+      errors={[
+        "נא לתקן את השדות המסומנים באדום",
+        ...(Object.keys(formStructure.fields).length === 0 ? ["לא ניתן לשמור טופס ללא שדות"] : []),
+      ]}
+    />
+  );
+
+  const untitledFormDialog = (
+    <Dialog open={showUntitledFormPopup} onClose={() => setShowUntitledFormPopup(false)}>
+      <DialogTitle sx={{ textAlign: "center", pb: 1 }}>שם לטופס</DialogTitle>
+      <DialogContent>
+        <DialogContentText sx={{ mb: 2, textAlign: "center" }}>
+          נראה שלטופס אין עדיין שם. איך לקרוא לו?
+        </DialogContentText>
+        <TextField
+          autoFocus
+          fullWidth
+          label="שם הטופס"
+          value={suggestedTitle}
+          onChange={(e) => setSuggestedTitle(e.target.value.replace(/[^\u0590-\u05FF\s]/g, ""))}
+          variant="outlined"
+          sx={{ mt: 1 }}
         />
-      </div>
-    ) : null
+      </DialogContent>
+      <DialogActions sx={{ justifyContent: "center", gap: 1, pb: 3 }}>
+        <Button onClick={() => setShowUntitledFormPopup(false)} variant="outlined">
+          ביטול
+        </Button>
+        <Button onClick={handleAcceptSuggestedTitle} variant="contained" color="primary">
+          שמירה
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 
   return (
     <div className={styles.header}>
       <div className={styles.headerStart}>
         {formIcon}
-        <div className={styles.editingMetadata}>
-          {formMetadata}
-        </div>
+        <div className={styles.editingMetadata}>{formMetadata}</div>
       </div>
-      <div className={styles.headerEnd}>
-        {headerActionButtons}
-      </div>
+      <div className={styles.headerEnd}>{headerActionButtons}</div>
       {showPickIcon && (
-        <IconsGrid
-          onIconChange={onIconChange}
-          onClosePickIcon={() => setShowPickIcon(false)}
-        />
+        <IconsGrid onIconChange={onIconChange} onClosePickIcon={() => setShowPickIcon(false)} />
       )}
 
+      {untitledFormDialog}
       {exitAlertMsg}
       {validationErrorsPopup}
     </div>

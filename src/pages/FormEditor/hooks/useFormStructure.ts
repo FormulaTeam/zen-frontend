@@ -334,18 +334,16 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
   }, []);
 
   const renameSection = useCallback((sectionId: string, title: string) => {
-    setFormStructure((prev) => {
-      const changedSection = prev.sections[sectionId];
-      changedSection.title = title;
-
-      return {
-        ...prev,
-        sections: {
-          ...prev.sections,
-          [sectionId]: changedSection,
+    setFormStructure((prev) => ({
+      ...prev,
+      sections: {
+        ...prev.sections,
+        [sectionId]: {
+          ...prev.sections[sectionId],
+          title,
         },
-      };
-    });
+      },
+    }));
   }, [setFormStructure]);
 
   const toggleSectionExpanded = useCallback((sectionId: string) => {
@@ -469,27 +467,22 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     }, []);
 
   const setFormMetadata = useCallback((metadata: Partial<FormMetadata>) => {
-    let isValid = true;
+    let isValueValid = true;
 
     setFormStructure((prev) => {
       const { validationErrors: _, ...prevMetadata } = prev.metadata;
-
       const combinedMetadata = { ...prevMetadata, ...metadata };
 
       // If only iconId is changed, skip validation to allow changing icon even if title is empty
       const isOnlyIconChange = Object.keys(metadata).length === 1 && "iconId" in metadata;
 
+      let validationErrors = prev.metadata.validationErrors;
       if (!isOnlyIconChange) {
-        const validationErrors = validateMetadata(combinedMetadata);
+        validationErrors = validateMetadata(combinedMetadata);
         if (validationErrors && Object.keys(validationErrors).length > 0) {
-          isValid = false;
-          return {
-            ...prev,
-            metadata: {
-              ...prevMetadata,
-              validationErrors,
-            },
-          };
+          isValueValid = false;
+        } else {
+          validationErrors = null;
         }
       }
 
@@ -497,12 +490,12 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
         ...prev,
         metadata: {
           ...combinedMetadata,
-          validationErrors: isOnlyIconChange ? prev.metadata.validationErrors : {},
+          validationErrors,
         },
       };
     });
 
-    return isValid;
+    return isValueValid;
   }, []);
 
   const appendCondition = useCallback((condition: FormCondition) => {
@@ -549,41 +542,47 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
   }, []);
 
   const validateForm = useCallback(() => {
-    let isValid = true;
+    let fieldsValid = true;
+    let fieldErrorsCount = 0;
 
     const fields = { ...formStructure.fields };
     const { validationErrors: _, ...metadata } = { ...formStructure.metadata };
 
-    Object.keys(fields).forEach((fieldId) => {
+    const updatedFields = { ...formStructure.fields };
+    Object.keys(updatedFields).forEach((fieldId) => {
       const fieldValidationErrors = validateField(formStructure, fieldId);
-      if (Object.keys(fieldValidationErrors).length > 0) isValid = false;
-    });
-
-    const metadataValidationErrors = validateMetadata(metadata);
-    if (metadataValidationErrors && Object.keys(metadataValidationErrors).length > 0) isValid = false;
-
-    setFormStructure((prev) => {
-      const updatedFields = { ...prev.fields };
-      const { validationErrors: __, ...prevMetadata } = { ...prev.metadata };
-
-      Object.keys(updatedFields).forEach((fieldId) => {
-        updatedFields[fieldId] = {
-          ...updatedFields[fieldId],
-          validationErrors: validateField(prev, fieldId),
-        };
-      });
-
-      return {
-        ...prev,
-        fields: updatedFields,
-        metadata: {
-          ...prevMetadata,
-          validationErrors: validateMetadata(prevMetadata),
-        },
+      if (Object.keys(fieldValidationErrors).length > 0) {
+        fieldsValid = false;
+        fieldErrorsCount++;
+      }
+      updatedFields[fieldId] = {
+        ...updatedFields[fieldId],
+        validationErrors: fieldValidationErrors,
       };
     });
 
-    return isValid;
+    const metadataErrors = validateMetadata(metadata) || {};
+    const hasMetadataErrors = Object.keys(metadataErrors).length > 0;
+
+    setFormStructure((prev) => ({
+      ...prev,
+      fields: updatedFields,
+      metadata: {
+        ...prev.metadata,
+        validationErrors: hasMetadataErrors ? metadataErrors : null,
+      },
+    }));
+
+    const hasFields = Object.keys(fields).length > 0;
+    const isValid = fieldsValid && !hasMetadataErrors && hasFields;
+
+    return {
+      isValid,
+      fieldsValid,
+      fieldErrorsCount,
+      metadataErrors,
+      hasFields,
+    };
   }, [formStructure]);
 
   const checkHasChanges = useCallback(() => {

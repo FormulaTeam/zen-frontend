@@ -34,7 +34,7 @@ const DraftRecoveryDialog: React.FC<DraftRecoveryDialogProps> = ({
           התעלם והסר טיוטה
         </Button>
         <Button onClick={onRestore} color="primary" variant="contained" autoFocus>
-          שחזר טיוטה
+          שחזור טיוטה
         </Button>
       </DialogActions>
     </Dialog>

@@ -1,7 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ResponseDto } from "../../types/shared";
 import { fieldType } from "formula-gear";
-import { Box, Button, Container, Tooltip, Typography, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  Tooltip,
+  Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useResponseSave, type ParentResponseRef } from "../../hooks/useResponseSave";
 import { useResponseState } from "../../hooks/useResponseState";
@@ -14,10 +25,11 @@ import styled from "styled-components";
 import ResponseHeader from "../../components/ResponseComponents/ResponseHeader";
 import ResponseSection from "../../components/ResponseComponents/ResponseSection";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
-import AlertMsg from "../../components/AlertMsg/AlertMsg";
+import ValidationErrorsDialog from "../../components/BasePopup/ValidationErrorsDialog";
+import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialog";
 import { useValidationErrors, type ValidationDisplayError } from "../../hooks/useValidationErrors";
 import { clearResponseDraft, getResponseDraft } from "../FormEditor/utils/draftPersistence";
-import DraftRecoveryDialog from "../../components/BasePopup/DraftRecoveryDialog";
+import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner";
 
 const PageContainer = styled(Container)`
   height: 100%;
@@ -39,7 +51,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   const [showLoadingSaveBtn, setShowLoadingSaveBtn] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationDisplayError[]>([]);
   const [showValidationPopup, setShowValidationPopup] = useState(false);
-  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<Map<string, any> | null>(null);
   const [showAlertMsg, setShowAlertMsg] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -66,15 +78,25 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     collapsedSections,
     toggleSectionCollapse,
     hiddenFieldIds,
-    setFormFieldsValuesMap
-  } = useResponseState(formId, id, viewMode, copyMode, undefined, user, isSuperAdmin ?? undefined, setHasUnsavedChanges, hasUnsavedChanges);
+    setFormFieldsValuesMap,
+  } = useResponseState(
+    formId,
+    id,
+    viewMode,
+    copyMode,
+    undefined,
+    user,
+    isSuperAdmin ?? undefined,
+    setHasUnsavedChanges,
+    hasUnsavedChanges,
+  );
 
   useEffect(() => {
     if (!viewMode) {
       const draft = getResponseDraft(formId, id);
       if (draft && draft.values.length > 0) {
         setPendingDraft(new Map(draft.values));
-        setShowRestoreDialog(true);
+        setShowRestoreBanner(true);
       }
     }
   }, [formId, id, viewMode]);
@@ -84,13 +106,13 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       setFormFieldsValuesMap(pendingDraft);
       setHasUnsavedChanges(true);
     }
-    setShowRestoreDialog(false);
+    setShowRestoreBanner(false);
     setPendingDraft(null);
   };
 
   const handleDiscardDraft = () => {
     clearResponseDraft(formId, id);
-    setShowRestoreDialog(false);
+    setShowRestoreBanner(false);
     setPendingDraft(null);
   };
 
@@ -123,7 +145,13 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     // For now, let's just trigger the save.
   };
 
-  const { saveResponse, isSaving } = useResponseSave(form, response, undefined, copyMode, hiddenFieldIds);
+  const { saveResponse, isSaving } = useResponseSave(
+    form,
+    response,
+    undefined,
+    copyMode,
+    hiddenFieldIds,
+  );
 
   const parentCreatePromiseRef = useRef<Promise<ResponseDto> | null>(null);
   const generateValidationErrorMessagesRef = useRef<
@@ -284,9 +312,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       prev.map((childForm) =>
         childForm.shown
           ? {
-            ...childForm,
-            valid: [],
-          }
+              ...childForm,
+              valid: [],
+            }
           : childForm,
       ),
     );
@@ -314,9 +342,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
     const parentResponse: ParentResponseRef | undefined = savedParentResponseId
       ? {
-        formId: Number(formId),
-        responseId: savedParentResponseId,
-      }
+          formId: Number(formId),
+          responseId: savedParentResponseId,
+        }
       : undefined;
 
     return (
@@ -412,41 +440,24 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
         </FormSectionsContainer>
       </PageContainer>
 
-      {showValidationPopup && (
-        <AlertMsg msg={validationErrors} closePopup={closeValidationPopup} isSuccess={false} />
-      )}
+      <ValidationErrorsDialog
+        title="נמצאו שגיאות בתגובה"
+        subtitle="יש לתקן את השדות הבאים לפני שמירה:"
+        open={showValidationPopup}
+        onClose={closeValidationPopup}
+        errors={validationErrors}
+      />
 
-      <Dialog
+      <UnsavedChangesDialog
         open={showAlertMsg}
         onClose={() => setShowAlertMsg(false)}
-      >
-        <Box sx={{ position: "absolute", top: 8, right: 8 }}>
-          <Close onClick={() => setShowAlertMsg(false)} sx={{ cursor: "pointer" }} />
-        </Box>
-        <DialogTitle sx={{ display: "flex", flexDirection: "column", alignItems: "center", pt: 4 }}>
-          <ErrorIcon sx={{ fontSize: "5rem", color: "red" }} />
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText textAlign="center">
-            יש לך שינויים שלא נשמרו בתגובה. האם ברצונך לשמור את השינויים?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", pb: 3, px: 3, gap: 2 }}>
-          <Button variant="outlined" onClick={() => setShowAlertMsg(false)}>
-            ביטול
-          </Button>
-          <Button variant="contained" color="primary" onClick={handleSaveAndExit}>
-            שמירה ויציאה
-          </Button>
-          <Button variant="outlined" color="error" onClick={handleDiscardAndExit}>
-            יציאה ללא שמירה
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onSave={handleSaveAndExit}
+        onDiscard={handleDiscardAndExit}
+        message="יש לך שינויים שלא נשמרו בתגובה"
+      />
 
-      <DraftRecoveryDialog
-        open={showRestoreDialog}
-        description="מצאנו טיוטה של התגובה הזו עם שינויים שלא נשמרו. האם תרצה לשחזר אותם?"
+      <DraftRecoveryBanner
+        open={showRestoreBanner}
         onRestore={handleRestore}
         onDiscard={handleDiscardDraft}
       />

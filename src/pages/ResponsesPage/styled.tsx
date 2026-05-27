@@ -43,29 +43,97 @@ export const EditButtonWrapper = styled(Box)<BoxProps>(({ theme }) => ({
 
 export const ActionsRow = styled(Box)(() => ({
   display: "flex",
-  gap: "16px",
+  gap: "12px",
   alignItems: "center",
 }));
 
+export const LineRow = styled(Box)(({ theme }) => ({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%",
+  padding: theme.spacing(1, 0),
+  gap: theme.spacing(2),
+}));
+
+export const MetadataLine = styled(LineRow)(({ theme }) => ({
+  paddingBottom: theme.spacing(1),
+  marginBottom: theme.spacing(0.5),
+}));
+
+export const ActionLine = styled(LineRow)(({ theme }) => ({
+  paddingTop: theme.spacing(1),
+  paddingBottom: theme.spacing(1),
+}));
+
+export const UnifiedButton = styled(Button)<{ $isPrimary?: boolean }>(({ theme, $isPrimary }) => ({
+  height: "40px",
+  borderRadius: "10px",
+  padding: "6px 16px",
+  fontSize: "0.95rem",
+  fontWeight: 600,
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  textTransform: "none",
+  whiteSpace: "nowrap",
+  transition: "all 0.2s ease",
+  
+  backgroundColor: $isPrimary ? "#1E88E5" : "rgba(30, 136, 229, 0.08)",
+  color: $isPrimary ? "#ffffff" : "#020618",
+  border: $isPrimary ? "none" : "1px solid rgba(30, 136, 229, 0.15)",
+
+  "&:hover": {
+    backgroundColor: $isPrimary ? "#1976D2" : "rgba(30, 136, 229, 0.12)",
+    boxShadow: $isPrimary ? "0 4px 12px rgba(30, 136, 229, 0.25)" : "none",
+  },
+  
+  "& .MuiButton-startIcon, & .MuiButton-endIcon": {
+    margin: 0,
+    fontSize: "18px",
+  },
+  
+  "&.Mui-disabled": {
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
+    color: "rgba(0, 0, 0, 0.26)",
+    border: "1px solid rgba(0, 0, 0, 0.08)",
+  }
+}));
+
+export const IconOnlyButton = styled(IconButton)(({ theme }) => ({
+  color: "#020618",
+  backgroundColor: "transparent",
+  padding: "8px",
+  borderRadius: "10px",
+  transition: "all 0.2s ease",
+  "&:hover": {
+    backgroundColor: "rgba(2, 6, 24, 0.04)",
+  },
+  "& svg": {
+    fontSize: "24px",
+  }
+}));
+
 export const MainContentWrapper = styled(Box)<BoxProps>(() => ({
-  padding: "24px",
+  padding: "16px 24px",
   display: "flex",
   flexDirection: "column",
   flex: 1,
   minWidth: 0,
   minHeight: 0,
   overflow: "hidden",
-  scrollbarGutter: "stable", // Prevent horizontal jumps when scrollbar appears
+  scrollbarGutter: "stable",
 }));
 
 export const TopSection = styled(Box)<BoxProps>(() => ({
   display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center", // Align center to prevent height-based jumps
-  marginBottom: "5px",
+  flexDirection: "column",
+  width: "100%",
+  padding: "24px 24px 12px",
   flexShrink: 0,
-  minHeight: "48px", // Ensure stable header height
+  gap: "16px",
 }));
+
 
 export const CenteredBox = styled(Box)<BoxProps>(() => ({
   display: "flex",
@@ -143,6 +211,7 @@ export const TableContainer = styled(Box)<BoxProps>(() => ({
   overflow: "hidden",
   display: "flex",
   flexDirection: "column",
+  padding: "0 24px",
 }));
 
 export const PageWrapper = styled(Box)<BoxProps>(() => ({
@@ -151,6 +220,7 @@ export const PageWrapper = styled(Box)<BoxProps>(() => ({
   display: "flex",
   flexDirection: "row",
   overflow: "hidden",
+  color: "#020618",
 }));
 
 interface LoadingBtnBoxProps extends BoxProps {
@@ -181,6 +251,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
       display: "flex",
       alignItems: "center",
       justifyContent: "flex-start",
+      color: "#020618",
     },
     "& .MuiDataGrid-columnHeader": {
       borderBottom: "none",
@@ -276,13 +347,13 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-columnHeaders": {
     backgroundColor: "#e1f0ff",
-    color: "#000000",
+    color: "#020618",
     "& .MuiDataGrid-columnHeaderTitle": {
-      color: "#000000",
+      color: "#020618",
       fontWeight: 700,
     },
     "& .MuiSvgIcon-root": {
-      color: "#000000",
+      color: "#020618",
     },
   },
   "& .MuiDataGrid-columnHeader": {
@@ -296,6 +367,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     fontSize: "1.2rem",
     fontWeight: 700,
     textAlign: "right",
+    color: "#020618",
   },
   "& .MuiDataGrid-iconButtonContainer": {
     marginLeft: "4px",
@@ -375,7 +447,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--non-editable-in-edit-mode": {
     backgroundColor: "transparent",
-    color: "rgba(0, 0, 0, 0.38)",
+    color: "rgba(2, 6, 24, 0.38)",
     cursor: "not-allowed",
     opacity: 1,
     userSelect: "none",
@@ -442,6 +514,7 @@ export const StyledDialogTitle = styled(DialogTitle)(() => ({
   "& .MuiTypography-root": {
     fontSize: "2rem",
     fontWeight: 600,
+    color: "#020618",
   },
 }));
 
@@ -452,6 +525,7 @@ export const StyledDialogContent = styled(DialogContent)(() => ({
   "& .MuiTypography-root": {
     fontSize: "1.3rem",
     lineHeight: 1.6,
+    color: "#020618",
   },
 }));
 
@@ -473,7 +547,7 @@ export const DialogTitleBox = styled(Box)(() => ({
 
 export const StyledEditButton = styled(Button)(() => ({
   backgroundColor: "#DBE7F4",
-  color: "#000000",
+  color: "#020618",
   fontSize: "1rem !important",
   fontWeight: 400,
   padding: "4px 16px",
@@ -496,7 +570,7 @@ export const StyledAddButton = styled(StyledEditButton)(() => ({
 }));
 
 export const ResponsesAmountText = styled(Typography)(() => ({
-  color: "#666666",
+  color: "#020618",
   fontSize: "1.4rem !important",
 }));
 
@@ -539,6 +613,7 @@ export const CreatorInfoBox = styled(Box)(() => ({
   alignItems: "center",
   gap: "6px",
   fontWeight: 400,
+  color: "#020618",
 }));
 
 export const FormNameTypography = styled(Typography)(() => ({
@@ -547,32 +622,37 @@ export const FormNameTypography = styled(Typography)(() => ({
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
   fontWeight: 600,
+  color: "#020618",
 }));
 
 export const FormIdTypography = styled(Typography)(() => ({
   fontSize: "1.6rem !important",
+  color: "#020618",
 }));
 
 export const InfoIconButton = styled(IconButton)(() => ({
   marginLeft: "0px",
   marginRight: "8px",
   alignSelf: "center",
+  color: "#020618",
 }));
 
 export const FormNameInTooltipTypography = styled(Typography)(() => ({
   fontWeight: 600,
   marginBottom: "4px",
+  color: "#020618",
 }));
 
 export const FormDescriptionTypography = styled(Typography)(() => ({
   fontWeight: 300,
+  color: "#020618",
 }));
 
 export const formInfoTooltipSlotProps = {
   tooltip: {
     sx: {
       backgroundColor: "#ffffff",
-      color: "#000000",
+      color: "#020618",
       boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.15)",
       border: "1px solid #e0e0e0",
       "& .MuiTooltip-arrow": {
@@ -586,9 +666,9 @@ export const formInfoTooltipSlotProps = {
 };
 
 export const HeaderAsterisk = styled("span")(({ theme }) => ({
-  color: "#d32f2f",
+  color: "#DB0004",
   fontWeight: 700,
-  minWidth: "8px", // Reserve space even when empty
+  minWidth: "8px",
   display: "inline-block",
 }));
 
@@ -598,7 +678,8 @@ export const HeaderFlex = styled("div")({
   gap: 6,
   position: "relative",
   fontWeight: 700,
-  minHeight: "24px", // Reserve minimum height for consistency
+  minHeight: "24px",
+  color: "#020618",
 });
 
 export const CellErrorWrapper = styled("div")({
@@ -620,7 +701,7 @@ export const CellErrorHeader = styled("div")({
 });
 
 export const CellErrorText = styled("span")({
-  color: "#d32f2f",
+  color: "#DB0004",
   fontSize: "1rem",
   fontWeight: 600,
   lineHeight: 1.2,
@@ -634,7 +715,7 @@ export const CellErrorText = styled("span")({
 });
 
 export const CellErrorInfoIcon = styled("span")({
-  color: "#6b7280",
+  color: "#020618",
   fontSize: "0.95rem",
   fontWeight: 700,
   lineHeight: 1,
@@ -650,6 +731,7 @@ export const CellValueFlex = styled("div")({
   display: "flex",
   alignItems: "center",
   overflow: "hidden",
+  color: "#020618",
 });
 
 export const PaginationContainer = styled(Box)(({ theme }) => ({
@@ -659,6 +741,7 @@ export const PaginationContainer = styled(Box)(({ theme }) => ({
   "& .MuiTypography-root": {
     minWidth: "24px",
     textAlign: "center",
+    color: "#020618",
   },
 }));
 
@@ -666,7 +749,7 @@ export const FooterInfoContainer = styled(Box)(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   gap: theme.spacing(1),
-  color: "#4a5568",
+  color: "#020618",
   fontSize: "0.875rem",
   direction: "rtl",
 }));
@@ -677,15 +760,16 @@ export const PaginationButton = styled(IconButton)(({ theme }) => ({
   border: "none",
   width: "32px",
   height: "32px",
+  color: "#020618",
   "&:hover": {
-    backgroundColor: "rgba(0, 0, 0, 0.04)",
+    backgroundColor: "rgba(2, 6, 24, 0.04)",
   },
   "&.Mui-disabled": {
     opacity: 0.3,
   },
   "& svg": {
     fontSize: "1.2rem",
-    color: "#4a5568",
+    color: "inherit",
   },
 }));
 

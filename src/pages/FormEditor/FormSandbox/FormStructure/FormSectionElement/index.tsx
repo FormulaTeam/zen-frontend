@@ -28,7 +28,8 @@ import {
   EditButtonIcon,
   ExpandIcon,
   DeleteIcon,
-  CatalogArrowIcon
+  CatalogArrowIcon,
+  SectionTitleInput
 } from "./styled";
 
 interface Props {
@@ -104,53 +105,51 @@ function FormSectionElement({ id }: Props) {
   const handleFieldDataChange = useCallback((fieldId: string) => (data: Partial<FormFieldData>) => setFieldData(fieldId, data), [setFieldData]);
 
   const sectionTitle: JSX.Element = isEditingTitle ? (
-    <>
-      <TextField value={editedTitle}
-        variant={"standard"}
-        inputRef={titleInputRef}
-        slotProps={{
-          htmlInput: {
-            maxLength: 255,
-          },
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-        onChange={(e) => setEditedTitle(e.target.value.trimStart())}
-        onBlur={(e) => setEditedTitle(e.target.value.trim())} />
-      <Button className={styles.button}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(_) => {
-          renameSection(id, editedTitle);
+    <SectionTitleInput
+      value={editedTitle}
+      autoFocus
+      inputRef={titleInputRef}
+      inputProps={{
+        maxLength: 255,
+      }}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      onChange={(e) => {
+        const newVal = e.target.value.trimStart();
+        setEditedTitle(newVal);
+        renameSection(id, newVal);
+      }}
+      onBlur={(e) => {
+        const val = e.target.value.trim();
+        renameSection(id, val);
+        setIsEditingTitle(false);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          const val = editedTitle.trim();
+          renameSection(id, val);
           setIsEditingTitle(false);
-        }}>
-        <SaveButtonIcon />
-      </Button>
-      <Button className={styles.button}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(_) => {
+        } else if (e.key === "Escape") {
           setIsEditingTitle(false);
-        }}>
-        <CancelButtonIcon />
-      </Button>
-    </>
+        }
+      }}
+    />
   ) : (
-    <>
-      <OverflowTooltip title={self.title} placement="top">
-        <SectionTitleText variant={"body1"}>{self.title}</SectionTitleText>
-      </OverflowTooltip>
-      <Tooltip title='עריכת מקטע' placement="top">
-        <span style={{ display: 'inline-block' }}>
-          <Button className={styles.button}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(_) => {
-              setEditedTitle(self.title);
-              setIsEditingTitle(true);
-            }}>
-            <EditButtonIcon />
-          </Button>
-        </span>
-      </Tooltip>
-    </>
+    <Tooltip title='עריכת מקטע' placement="top">
+      <SectionTitleText
+        variant={"body1"}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          setEditedTitle(self.title);
+          setIsEditingTitle(true);
+          e.stopPropagation();
+        }}
+      >
+        <OverflowTooltip title={self.title} placement="top">
+          <span>{self.title}</span>
+        </OverflowTooltip>
+      </SectionTitleText>
+    </Tooltip>
   );
 
   const toggleExpandButton: JSX.Element = (

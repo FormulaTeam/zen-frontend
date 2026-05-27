@@ -1,37 +1,42 @@
 .formErrorContainer {
-    min-height: 32px;
-    margin-top: 8px;
+    min-height: 24px;
+    margin-top: 4px;
 }
 
 .titleWithMargin {
-    margin-top: 16px;
+    margin-top: 0;
 }
 
 .header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    height: 130px;
+    align-items: center; /* Center the whole start vs end blocks */
+    height: auto;
+    min-height: 100px;
     width: 100%;
-    padding: 16px 0;
+    padding: 24px 0;
     border-bottom: #1976D21A solid 1px;
 }
 
 .headerStart {
     display: flex;
-    gap: 26px;
+    gap: 16px; /* Slightly tighter gap */
     flex: 1;
     min-width: 0;
+    align-items: center; /* Center icon vertically with the text block */
 }
 
 .formIconWrapper {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .formIcon {
-    max-width: 35px;
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
     cursor: pointer;
 }
 
@@ -39,18 +44,19 @@
     display: flex;
     flex: 1;
     min-width: 0;
-    gap: 12px;
+    max-width: 600px;
 }
 
 .editingMetadataText {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
     flex: 1;
 }
 
 .titleInput {
-    font-size: 25px;
+    /* Title font size remains 25px */
+    font-size: 25px !important;
 }
 
 .title {

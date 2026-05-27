@@ -496,7 +496,7 @@ export type FormElements = Record<FormFieldTypeId, DefaultField>;
 // Default field options for the form builder
 export const FORM_ELEMENTS: FormElements = {
   [FieldTypeIds.longText]: {
-    name: "מס' שורות טקסט",
+    name: "פסקה",
     icon: "menu",
     fieldType: FieldDataTypes.string,
   },
@@ -511,7 +511,7 @@ export const FORM_ELEMENTS: FormElements = {
     fieldType: FieldDataTypes.string,
   },
   [FieldTypeIds.link]: {
-    name: "היפר-קישור",
+    name: "קישור",
     icon: "link",
     fieldType: FieldDataTypes.string,
   },

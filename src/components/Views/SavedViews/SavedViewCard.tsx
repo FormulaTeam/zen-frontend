@@ -14,7 +14,7 @@ import {
 } from "../ViewManager/styled";
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { useState } from "react";
-import BasePopup from "../../BasePopup/BasePopup";
+import ConfirmDeleteDialog from "../../BasePopup/ConfirmDeleteDialog";
 
 enum HebrewTitles {
   EDIT_VIEW = "עריכת תצוגה",
@@ -128,20 +128,14 @@ export function SavedViewCard({
         </ViewCardContent>
       </ViewCard>
 
-      <BasePopup
+      <ConfirmDeleteDialog
         open={isDeletePopupOpen}
         onClose={closeDeletePopup}
         title={HebrewTitles.DELETE_CONFIRM_TITLE}
-        content={`האם אתה בטוח שברצונך למחוק את תצוגת ${view.name}?`}
-        mainButton={{
-          text: HebrewTitles.DELETE_CONFIRM_APPROVE,
-          onClick: handleDelete,
-          color: "error",
-        }}
-        cancelButton={{
-          text: HebrewTitles.DELETE_CONFIRM_CANCEL,
-          onClick: closeDeletePopup,
-        }}
+        message={`האם אתה בטוח שברצונך למחוק את תצוגת ${view.name}?`}
+        onConfirm={handleDelete}
+        confirmText={HebrewTitles.DELETE_CONFIRM_APPROVE}
+        cancelText={HebrewTitles.DELETE_CONFIRM_CANCEL}
       />
     </>
   );

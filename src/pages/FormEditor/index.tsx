@@ -7,7 +7,7 @@ import { useFormStructure } from "./hooks/useFormStructure";
 import { FormStructureContext } from "./context/FormStructureContext";
 import type { FormDto } from "../../types/shared";
 import { clearFormDraft, getFormDraft } from "./utils/draftPersistence";
-import DraftRecoveryDialog from "../../components/BasePopup/DraftRecoveryDialog";
+import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner";
 
 interface EditorProps {
   mode: FormEditorMode;
@@ -28,14 +28,14 @@ type Props = CreateModeProps | EditModeProps;
 
 function FormEditor({ mode, editedForm }: Props) {
   const { setFormStructure, ...formStructure } = useFormStructure(editedForm);
-  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<any>(null);
 
   useEffect(() => {
     const draft = getFormDraft(editedForm?.id);
     if (draft) {
       setPendingDraft(draft.data);
-      setShowRestoreDialog(true);
+      setShowRestoreBanner(true);
     }
   }, [editedForm?.id]);
 
@@ -43,13 +43,13 @@ function FormEditor({ mode, editedForm }: Props) {
     if (pendingDraft) {
       setFormStructure(pendingDraft);
     }
-    setShowRestoreDialog(false);
+    setShowRestoreBanner(false);
     setPendingDraft(null);
   };
 
   const handleDiscardDraft = () => {
     clearFormDraft(editedForm?.id);
-    setShowRestoreDialog(false);
+    setShowRestoreBanner(false);
     setPendingDraft(null);
   };
 
@@ -84,9 +84,8 @@ function FormEditor({ mode, editedForm }: Props) {
         </FormStructureContext.Provider>
       </FormEditorContext.Provider>
 
-      <DraftRecoveryDialog
-        open={showRestoreDialog}
-        description="מצאנו טיוטה של הטופס הזה עם שינויים שלא נשמרו. האם תרצה לשחזר אותם?"
+      <DraftRecoveryBanner
+        open={showRestoreBanner}
         onRestore={handleRestore}
         onDiscard={handleDiscardDraft}
       />

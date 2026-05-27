@@ -35,6 +35,7 @@ const MainSortSelect = ({ onSortChange, dataTestId }: MainSortSelectProps) => {
         label="מיון לפי"
         onChange={handleChange}
         inputProps={{ "data-testid": dataTestId }}
+        IconComponent={() => null}
         startAdornment={
           <Box sx={{ display: "flex", mr: 1, ml: -0.5, color: "#020618" }}>
             <SortIcon sx={{ fontSize: "22px" }} />

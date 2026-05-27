@@ -56,7 +56,7 @@ export const PrimaryBlueButton = styled("button")(({ theme }) => ({
   height: "40px",
   padding: "0 30px",
   fontSize: "16px",
-  fontWeight: 400,
+  fontWeight: 700,
   border: "none",
   borderRadius: "8px",
   cursor: "pointer",
