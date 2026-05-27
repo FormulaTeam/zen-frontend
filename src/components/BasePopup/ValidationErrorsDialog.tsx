@@ -22,35 +22,38 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 const StyledDialog = styled(Dialog)(({ theme }) => ({
   "& .MuiPaper-root": {
     borderRadius: "12px",
-    padding: theme.spacing(1),
     maxWidth: "500px",
     width: "100%",
     boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
   },
 }));
 
-const ErrorHeader = styled(Box)(({ theme }) => ({
+const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
   display: "flex",
-  flexDirection: "column",
   alignItems: "center",
-  padding: theme.spacing(3, 2, 2),
-  textAlign: "center",
+  gap: "12px",
+  padding: "20px 24px",
 }));
 
 const IconWrapper = styled(Box)(({ theme }) => ({
-  width: "64px",
-  height: "64px",
-  borderRadius: "12px",
-  backgroundColor: theme.palette.error.main + "14", // 8% opacity
+  width: "40px",
+  height: "40px",
+  borderRadius: "10px",
+  backgroundColor: "rgba(239, 68, 68, 0.14)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  marginBottom: theme.spacing(2),
+  color: "#ef4444",
   "& svg": {
-    fontSize: "36px",
-    color: theme.palette.error.main,
+    fontSize: "24px",
   },
 }));
+
+const TitleText = styled(Typography)({
+  fontWeight: 600,
+  fontSize: "1.25rem",
+  color: "#1e293b",
+});
 
 export type ValidationError =
   | string
@@ -78,26 +81,30 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
 
   return (
     <StyledDialog open={open} onClose={onClose} scroll="paper">
-      <Box sx={{ position: "absolute", right: 16, top: 16 }}>
-        <IconButton onClick={onClose} size="small" sx={{ color: "#94a3b8" }}>
-          <CloseIcon />
-        </IconButton>
-      </Box>
-
-      <ErrorHeader>
+      <StyledDialogTitle>
         <IconWrapper>
           <ErrorOutlineIcon />
         </IconWrapper>
-        <Typography variant="h6" sx={{ fontWeight: 700, color: "#1e293b", mb: 0.5 }}>
-          {title}
-        </Typography>
-        <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
+        <TitleText>{title}</TitleText>
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            position: "absolute",
+            right: 16,
+            top: 16,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </StyledDialogTitle>
+
+      <DialogContent dividers sx={{ borderBottom: "none", py: 2 }}>
+        <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500, mb: 2, px: 1 }}>
           {subtitle}
         </Typography>
-      </ErrorHeader>
-
-      <DialogContent sx={{ py: 0 }}>
-        <List sx={{ pt: 1 }}>
+        <List sx={{ pt: 0 }}>
           {errors.map((error, index) => {
             const message = typeof error === "string" ? error : error.message;
             const field = typeof error === "object" ? error.fieldName : null;
@@ -107,14 +114,14 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
                 key={index}
                 sx={{
                   px: 2,
-                  py: 1.5,
-                  mb: 1.5,
+                  py: 1,
+                  mb: 1,
                   backgroundColor: "#f8fafc",
-                  borderRadius: "10px",
-                  border: "1.5px solid #e2e8f0",
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
                 }}>
-                <ListItemIcon sx={{ minWidth: "36px" }}>
-                  <WarningAmberIcon sx={{ fontSize: "20px", color: theme.palette.error.main }} />
+                <ListItemIcon sx={{ minWidth: "32px" }}>
+                  <WarningAmberIcon sx={{ fontSize: "18px", color: theme.palette.error.main }} />
                 </ListItemIcon>
                 <ListItemText
                   primary={
@@ -134,20 +141,19 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
         </List>
       </DialogContent>
 
-      <DialogActions sx={{ justifyContent: "center", p: 3, pt: 1 }}>
+      <DialogActions sx={{ p: 3, pt: 1 }}>
         <Button
           onClick={onClose}
           variant="contained"
           disableElevation
           fullWidth
           sx={{
-            backgroundColor: theme.palette.primary.main,
-            color: "#fff",
             borderRadius: "8px",
             height: "44px",
             fontSize: "1rem",
-            fontWeight: 700,
+            fontWeight: 600,
             textTransform: "none",
+            backgroundColor: theme.palette.primary.main,
             "&:hover": {
               backgroundColor: theme.palette.primary.dark,
             },

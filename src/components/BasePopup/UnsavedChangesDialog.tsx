@@ -9,6 +9,7 @@ import {
   Typography,
   Box,
   IconButton,
+  useTheme,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
@@ -16,36 +17,39 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
   "& .MuiPaper-root": {
-    borderRadius: "16px",
-    padding: theme.spacing(1),
+    borderRadius: "12px",
     maxWidth: "460px",
     width: "100%",
-    boxShadow: "0 10px 40px rgba(0,0,0,0.12)",
+    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
   },
 }));
 
-const Header = styled(Box)(({ theme }) => ({
+const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
   display: "flex",
-  flexDirection: "column",
   alignItems: "center",
-  padding: theme.spacing(4, 2, 2),
-  textAlign: "center",
+  gap: "12px",
+  padding: "20px 24px",
 }));
 
 const IconWrapper = styled(Box)(({ theme }) => ({
-  width: "72px",
-  height: "72px",
-  borderRadius: "24px",
-  backgroundColor: "rgba(245, 158, 11, 0.08)",
+  width: "40px",
+  height: "40px",
+  borderRadius: "10px",
+  backgroundColor: "rgba(245, 158, 11, 0.14)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  marginBottom: theme.spacing(3),
+  color: "#f59e0b",
   "& svg": {
-    fontSize: "44px",
-    color: "#f59e0b",
+    fontSize: "24px",
   },
 }));
+
+const TitleText = styled(Typography)({
+  fontWeight: 600,
+  fontSize: "1.25rem",
+  color: "#1e293b",
+});
 
 interface UnsavedChangesDialogProps {
   open: boolean;
@@ -62,89 +66,75 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
   onSave,
   onDiscard,
   title = "שינויים שלא נשמרו",
-  message = "יש לך שינויים שלא נשמרו",
+  message = "יש לך שינויים שלא נשמרו. האם ברצונך לשמור את השינויים לפני היציאה?",
 }) => {
+  const theme = useTheme();
+
   return (
     <StyledDialog open={open} onClose={onClose}>
-      <Box sx={{ position: "absolute", right: 16, top: 16 }}>
-        <IconButton onClick={onClose} size="small" sx={{ color: "#64748b" }}>
-          <CloseIcon />
-        </IconButton>
-      </Box>
-
-      <Header>
+      <StyledDialogTitle>
         <IconWrapper>
           <WarningAmberIcon />
         </IconWrapper>
-        <Typography variant="h6" sx={{ fontWeight: 800, color: "#020618", mb: 1.5 }}>
-          {title}
-        </Typography>
-        <Typography
-          variant="body1"
-          sx={{ color: "#475569", fontWeight: 500, lineHeight: 1.6, px: 2 }}>
+        <TitleText>{title}</TitleText>
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            position: "absolute",
+            right: 16,
+            top: 16,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </StyledDialogTitle>
+
+      <DialogContent dividers sx={{ borderBottom: "none", py: 3 }}>
+        <Typography variant="body1" sx={{ color: "#475569", fontWeight: 500, lineHeight: 1.6 }}>
           {message}
         </Typography>
-      </Header>
+      </DialogContent>
 
-      <DialogActions sx={{ flexDirection: "column", gap: 1.5, p: 3, pt: 2 }}>
+      <DialogActions sx={{ p: 3, pt: 1, gap: 1.5 }}>
+        <Button
+          onClick={onDiscard}
+          variant="outlined"
+          sx={{
+            borderRadius: "8px",
+            px: 3,
+            py: 1,
+            color: "#ef4444",
+            borderColor: "#e2e8f0",
+            textTransform: "none",
+            fontWeight: 600,
+            "&:hover": {
+              backgroundColor: "rgba(239, 68, 68, 0.04)",
+              borderColor: "#ef4444",
+            },
+          }}
+        >
+          יציאה ללא שמירה
+        </Button>
         <Button
           onClick={onSave}
           variant="contained"
-          fullWidth
+          disableElevation
           sx={{
-            backgroundColor: "#020618",
-            color: "#fff",
-            borderRadius: "10px",
-            height: "48px",
-            fontSize: "1rem",
-            fontWeight: 700,
+            borderRadius: "8px",
+            px: 4,
+            py: 1,
             textTransform: "none",
+            fontWeight: 600,
+            backgroundColor: theme.palette.primary.main,
             "&:hover": {
-              backgroundColor: "#1e293b",
+              backgroundColor: theme.palette.primary.dark,
             },
-          }}>
+          }}
+        >
           שמירה ויציאה
         </Button>
-
-        <Box sx={{ display: "flex", gap: 1.5, width: "100%" }}>
-          <Button
-            onClick={onDiscard}
-            variant="outlined"
-            fullWidth
-            sx={{
-              borderColor: "#e2e8f0",
-              color: "#ef4444",
-              borderRadius: "10px",
-              height: "44px",
-              fontSize: "0.95rem",
-              fontWeight: 600,
-              textTransform: "none",
-              "&:hover": {
-                borderColor: "#ef4444",
-                backgroundColor: "rgba(239, 68, 68, 0.04)",
-              },
-            }}>
-            יציאה ללא שמירה
-          </Button>
-
-          <Button
-            onClick={onClose}
-            variant="text"
-            fullWidth
-            sx={{
-              color: "#64748b",
-              borderRadius: "10px",
-              height: "44px",
-              fontSize: "0.95rem",
-              fontWeight: 600,
-              textTransform: "none",
-              "&:hover": {
-                backgroundColor: "#f1f5f9",
-              },
-            }}>
-            ביטול
-          </Button>
-        </Box>
       </DialogActions>
     </StyledDialog>
   );

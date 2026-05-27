@@ -75,7 +75,7 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
 
       <HeaderSection sx={{ justifyContent: "flex-end", gap: 1.5 }}>
         <Button onClick={onBack} variant="outlined" size="small" sx={{ borderRadius: "8px" }}>
-          חזור
+          חזרה
         </Button>
         {!viewMode && (
           <Button
@@ -85,7 +85,7 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
             size="small"
             sx={{ borderRadius: "8px", minWidth: "120px" }}
           >
-            {saveDisabled ? <CircularProgress size={20} color="inherit" /> : "שמור וסגור"}
+            {saveDisabled ? <CircularProgress size={20} color="inherit" /> : "שמירה"}
           </Button>
         )}
       </HeaderSection>
