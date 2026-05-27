@@ -95,15 +95,17 @@ const Header = () => {
       </FormNameTypography>
 
       {/* ID */}
-      <Typography
-        sx={{
-          fontWeight: 800,
-          fontSize: "2rem",
-          lineHeight: 1,
-          display: "inline",
-        }}>
-        {form.id}
-      </Typography>
+      <Tooltip>
+        <Typography
+          sx={{
+            fontWeight: 800,
+            fontSize: "2rem",
+            lineHeight: 1,
+            display: "inline",
+          }}>
+          {form.id}
+        </Typography>
+      </Tooltip>
 
       {/* Info */}
       <Tooltip

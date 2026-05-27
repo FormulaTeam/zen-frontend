@@ -494,18 +494,31 @@ export const useResponsesEdit = () => {
       const stringIds = ids.map((id) => String(id));
 
       if (isInEditMode) {
-        // Local defer - add to deletedRowIds but don't filter localRows
-        setDeletedRowIds((prev) => [...new Set([...prev, ...stringIds])]);
-        
-        setEditedRows((prev) => {
-          const next = new Map(prev);
-          stringIds.forEach((id) => next.delete(id));
-          return next;
-        });
+        const localOnlyIds = stringIds.filter((id) => id.startsWith("new_"));
+        const serverIds = stringIds.filter((id) => !id.startsWith("new_"));
+
+        if (localOnlyIds.length > 0) {
+          setLocalRows((prev) => prev.filter((row) => !localOnlyIds.includes(String(row.id))));
+          setEditedRows((prev) => {
+            const next = new Map(prev);
+            localOnlyIds.forEach((id) => next.delete(id));
+            return next;
+          });
+        }
+
+        if (serverIds.length > 0) {
+          // Local defer for server rows
+          setDeletedRowIds((prev) => [...new Set([...prev, ...serverIds])]);
+          setEditedRows((prev) => {
+            const next = new Map(prev);
+            serverIds.forEach((id) => next.delete(id));
+            return next;
+          });
+        }
         return;
       }
 
-      // Immediate delete
+      // Immediate delete (outside edit mode)
       try {
         setForm({
           ...dtoForm,

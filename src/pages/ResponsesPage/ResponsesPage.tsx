@@ -193,9 +193,15 @@ const ResponsesPageContent = (): JSX.Element => {
   }, [user]);
 
   const selectedRows = useMemo(() => {
-    const ids = Array.from(rowSelectionModel.ids as Set<GridRowId>);
-    return storeRows.filter((row) => ids.includes(row.id));
-  }, [rowSelectionModel.ids, storeRows]);
+    const { type, ids } = rowSelectionModel;
+    const idSet = ids as Set<GridRowId>;
+
+    if (type === "include") {
+      return storeRows.filter((row) => idSet.has(row.id));
+    }
+    // type === "exclude"
+    return storeRows.filter((row) => !idSet.has(row.id));
+  }, [rowSelectionModel, storeRows]);
 
   const handleRowSelectionModelChange = useCallback((model: GridRowSelectionModel) => {
     setRowSelectionModel(model);
@@ -215,7 +221,7 @@ const ResponsesPageContent = (): JSX.Element => {
 
             {/* MIDDLE: Search Responses Bar (Exact Middle) */}
             <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
-              <Box sx={{ width: "100%", maxWidth: "500px" }}>
+              <Box>
                 <SearchInfo search={filter?.query || ""} setSearch={handleSearch} />
               </Box>
             </Box>
