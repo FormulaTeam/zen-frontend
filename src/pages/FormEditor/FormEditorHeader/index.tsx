@@ -266,7 +266,7 @@ function FormEditorHeader() {
       onClose={() => setShowAlertMsg(false)}
       onSave={handleSaveAndExit}
       onDiscard={handleDiscardAndExit}
-      message="יש לך שינויים שלא נשמרו בטופס. האם ברצונך לשמור את השינויים?"
+      message="יש לך שינויים שלא נשמרו בטופס"
     />
   );
 

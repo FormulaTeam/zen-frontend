@@ -12,6 +12,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  useTheme,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
@@ -20,11 +21,11 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
   "& .MuiPaper-root": {
-    borderRadius: "16px",
+    borderRadius: "12px",
     padding: theme.spacing(1),
     maxWidth: "500px",
     width: "100%",
-    boxShadow: "0 10px 40px rgba(0,0,0,0.12)",
+    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
   },
 }));
 
@@ -39,15 +40,15 @@ const ErrorHeader = styled(Box)(({ theme }) => ({
 const IconWrapper = styled(Box)(({ theme }) => ({
   width: "64px",
   height: "64px",
-  borderRadius: "20px",
-  backgroundColor: "rgba(239, 68, 68, 0.08)",
+  borderRadius: "12px",
+  backgroundColor: theme.palette.error.main + "14", // 8% opacity
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   marginBottom: theme.spacing(2),
   "& svg": {
-    fontSize: "40px",
-    color: "#ef4444",
+    fontSize: "36px",
+    color: theme.palette.error.main,
   },
 }));
 
@@ -71,12 +72,14 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
   onClose,
   errors,
   title = "נמצאו שגיאות בטופס",
-  subtitle,
+  subtitle = "יש לתקן את השדות הבאים לפני שמירה:",
 }) => {
+  const theme = useTheme();
+
   return (
     <StyledDialog open={open} onClose={onClose} scroll="paper">
       <Box sx={{ position: "absolute", right: 16, top: 16 }}>
-        <IconButton onClick={onClose} size="small" sx={{ color: "#64748b" }}>
+        <IconButton onClick={onClose} size="small" sx={{ color: "#94a3b8" }}>
           <CloseIcon />
         </IconButton>
       </Box>
@@ -85,14 +88,12 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
         <IconWrapper>
           <ErrorOutlineIcon />
         </IconWrapper>
-        <Typography variant="h6" sx={{ fontWeight: 800, color: "#020618", mb: 0.5 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, color: "#1e293b", mb: 0.5 }}>
           {title}
         </Typography>
-        {subtitle && (
-          <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
-            {subtitle}
-          </Typography>
-        )}
+        <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
+          {subtitle}
+        </Typography>
       </ErrorHeader>
 
       <DialogContent sx={{ py: 0 }}>
@@ -106,20 +107,20 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
                 key={index}
                 sx={{
                   px: 2,
-                  py: 1,
-                  mb: 1,
-                  backgroundColor: "rgba(239, 68, 68, 0.02)",
+                  py: 1.5,
+                  mb: 1.5,
+                  backgroundColor: "#f8fafc",
                   borderRadius: "10px",
-                  border: "1px solid rgba(239, 68, 68, 0.08)",
+                  border: "1.5px solid #e2e8f0",
                 }}>
                 <ListItemIcon sx={{ minWidth: "36px" }}>
-                  <WarningAmberIcon sx={{ fontSize: "20px", color: "#ef4444" }} />
+                  <WarningAmberIcon sx={{ fontSize: "20px", color: theme.palette.error.main }} />
                 </ListItemIcon>
                 <ListItemText
                   primary={
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: "#020618" }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: "#1e293b" }}>
                       {field && (
-                        <Box component="span" sx={{ color: "#ef4444", mr: 0.5 }}>
+                        <Box component="span" sx={{ color: theme.palette.error.main, mr: 0.5 }}>
                           {field}:
                         </Box>
                       )}
@@ -132,26 +133,26 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
           })}
         </List>
       </DialogContent>
-      <DialogActions sx={{ justifyContent: "center", p: 3, pt: 2 }}>
+
+      <DialogActions sx={{ justifyContent: "center", p: 3, pt: 1 }}>
         <Button
           onClick={onClose}
-          variant="outlined"
+          variant="contained"
+          disableElevation
           fullWidth
           sx={{
-            borderColor: "#020618",
-            color: "#020618",
-            borderRadius: "10px",
+            backgroundColor: theme.palette.primary.main,
+            color: "#fff",
+            borderRadius: "8px",
             height: "44px",
             fontSize: "1rem",
             fontWeight: 700,
             textTransform: "none",
-
             "&:hover": {
-              borderColor: "#1e293b",
-              backgroundColor: "rgba(2, 6, 24, 0.06)",
+              backgroundColor: theme.palette.primary.dark,
             },
           }}>
-          חזרה לתיקון השדות
+          חזרה לתיקון
         </Button>
       </DialogActions>
     </StyledDialog>

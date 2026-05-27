@@ -453,7 +453,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
         onClose={() => setShowAlertMsg(false)}
         onSave={handleSaveAndExit}
         onDiscard={handleDiscardAndExit}
-        message="יש לך שינויים שלא נשמרו בתגובה. האם ברצונך לשמור את השינויים?"
+        message="יש לך שינויים שלא נשמרו בתגובה"
       />
 
       <DraftRecoveryBanner

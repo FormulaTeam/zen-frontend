@@ -62,7 +62,7 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
   onSave,
   onDiscard,
   title = "שינויים שלא נשמרו",
-  message = "יש לך שינויים שלא נשמרו. האם ברצונך לשמור את השינויים לפני היציאה?",
+  message = "יש לך שינויים שלא נשמרו",
 }) => {
   return (
     <StyledDialog open={open} onClose={onClose}>
@@ -79,7 +79,9 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
         <Typography variant="h6" sx={{ fontWeight: 800, color: "#020618", mb: 1.5 }}>
           {title}
         </Typography>
-        <Typography variant="body1" sx={{ color: "#475569", fontWeight: 500, lineHeight: 1.6, px: 2 }}>
+        <Typography
+          variant="body1"
+          sx={{ color: "#475569", fontWeight: 500, lineHeight: 1.6, px: 2 }}>
           {message}
         </Typography>
       </Header>
@@ -100,11 +102,10 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
             "&:hover": {
               backgroundColor: "#1e293b",
             },
-          }}
-        >
+          }}>
           שמירה ויציאה
         </Button>
-        
+
         <Box sx={{ display: "flex", gap: 1.5, width: "100%" }}>
           <Button
             onClick={onDiscard}
@@ -122,11 +123,10 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
                 borderColor: "#ef4444",
                 backgroundColor: "rgba(239, 68, 68, 0.04)",
               },
-            }}
-          >
+            }}>
             יציאה ללא שמירה
           </Button>
-          
+
           <Button
             onClick={onClose}
             variant="text"
@@ -141,8 +141,7 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
               "&:hover": {
                 backgroundColor: "#f1f5f9",
               },
-            }}
-          >
+            }}>
             ביטול
           </Button>
         </Box>
