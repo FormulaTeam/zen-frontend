@@ -50,19 +50,35 @@ function FormEditorHeader() {
   const { title, description, iconId, validationErrors } = formStructure.metadata;
 
   const onSaveClick = () => {
-    const { isValid, fieldsValid, metadataErrors, hasFields } = validateForm() as any;
-    
+    const { isValid, fieldsValid, metadataErrors, hasFields } = validateForm();
+
     if (isValid) {
       handleSaveForm();
       return;
     }
 
-    const titleError = metadataErrors.title;
-    const isTitleMissingOnly = hasFields && fieldsValid && Object.keys(metadataErrors).length === 1 && !!titleError && title.trim() === "";
+    // 1. Priority: Field errors or empty form structure
+    if (!fieldsValid || !hasFields) {
+      setShowValidationErrorsPopup(true);
+      return;
+    }
 
-    if (isTitleMissingOnly) {
+    // 2. Priority: Other metadata errors (e.g. description too long)
+    const metadataErrorKeys = Object.keys(metadataErrors || {});
+    const hasOtherMetadataErrors = metadataErrorKeys.some((key) => key !== "title");
+
+    if (hasOtherMetadataErrors) {
+      setShowValidationErrorsPopup(true);
+      return;
+    }
+
+    // 3. Naming Rule: If we reach here, the only issue is the title.
+    // Show the naming popup if the title is empty.
+    if (metadataErrors?.title && title.trim() === "") {
       setShowUntitledFormPopup(true);
     } else {
+      // If it's a validation error with the title itself (e.g. too short but not empty),
+      // or any other edge case, show the standard validation popup.
       setShowValidationErrorsPopup(true);
     }
   };
