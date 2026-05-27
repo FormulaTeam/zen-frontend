@@ -32,9 +32,9 @@ function FormFieldResponsesOptions(props: Props) {
   const [searchText, setSearchText] = useState("");
   const [fieldTouchAttempted, setFieldTouchAttempted] = useState(false);
   const { formsData: allForms, isLoading: isLoadingForms } = useGetFormsData({
-    searchQuery: searchText.length >= 2 ? searchText : undefined,
+    searchQuery: searchText || undefined,
     scope: formsScopeOption.LinkableForms,
-    enabled: searchText.length >= 2,
+    enabled: true,
   });
 
   const availableForms = useMemo<FormOption[]>(() => {
@@ -104,7 +104,7 @@ function FormFieldResponsesOptions(props: Props) {
         value={selectedFormOption}
         loading={isLoadingForms}
         loadingText="מחפש..."
-        noOptionsText={searchText.length < 2 ? "יש להזין לפחות 2 תווים" : "לא נמצאו תוצאות"}
+        noOptionsText="לא נמצאו תוצאות"
         onInputChange={(_, newInputValue) => {
           setSearchText(newInputValue);
         }}
