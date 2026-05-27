@@ -1,11 +1,36 @@
-import { Box, styled, Typography, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@mui/material";
+import { Box, styled, Typography, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 
 export const MetadataContainer = styled(Box)({
   flex: 1,
   minWidth: 0,
 });
 
+export const SeamlessTextField = styled(TextField)(({ theme }) => ({
+  "& .MuiInputBase-root": {
+    padding: "4px 8px",
+    borderRadius: "4px",
+    backgroundColor: "rgba(0, 0, 0, 0.02)",
+    transition: "background-color 0.2s, box-shadow 0.2s",
+    "&:before, &:after": {
+      display: "none", // Remove standard underline
+    },
+    "&.Mui-focused": {
+      backgroundColor: "rgba(0, 0, 0, 0.04)",
+      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`,
+    },
+  },
+  "& .MuiInputBase-input": {
+    padding: 0,
+  },
+  "& .MuiFormHelperText-root": {
+    marginLeft: 8,
+    marginRight: 8,
+  }
+}));
+
 export const StyledTitleText = styled(Typography)({
+
   maxWidth: "60vw",
   minWidth: 0,
   cursor: "pointer",

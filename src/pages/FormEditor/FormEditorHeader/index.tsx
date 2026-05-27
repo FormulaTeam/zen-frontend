@@ -17,6 +17,7 @@ import {
   ExitAlertMsgDialogContent,
   ExitAlertMsgDialogContentText,
   ExitAlertMsgDialogActions,
+  SeamlessTextField,
 } from "./styled";
 import { texts } from "@src/utils/texts";
 import AlertMsg from "@components/AlertMsg/AlertMsg";

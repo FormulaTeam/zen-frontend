@@ -1,4 +1,5 @@
-import { styled, Typography, Accordion, AccordionSummary } from "@mui/material";
+import { styled, Typography, Accordion, AccordionSummary, InputBase } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Check, Close, DeleteOutlined, DriveFileRenameOutline, ExpandMore, KeyboardDoubleArrowRight } from "@mui/icons-material";
 import { Resizable } from "re-resizable";
 
@@ -16,6 +17,20 @@ export const SectionTitleText = styled(Typography)({
     backgroundColor: "rgba(0, 0, 0, 0.04)",
   },
 });
+
+export const SectionTitleInput = styled(InputBase)(({ theme }) => ({
+  ...theme.typography.body1,
+  padding: "2px 8px",
+  borderRadius: "4px",
+  width: "100%",
+  maxWidth: "50vw",
+  backgroundColor: "rgba(0, 0, 0, 0.02)",
+  transition: "background-color 0.2s, box-shadow 0.2s",
+  "&.Mui-focused": {
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
+    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`,
+  },
+}));
 
 export const StyledAccordion = styled(Accordion)({
   backgroundColor: "transparent",

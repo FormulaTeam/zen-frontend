@@ -28,7 +28,8 @@ import {
   EditButtonIcon,
   ExpandIcon,
   DeleteIcon,
-  CatalogArrowIcon
+  CatalogArrowIcon,
+  SectionTitleInput
 } from "./styled";
 
 interface Props {
@@ -104,15 +105,12 @@ function FormSectionElement({ id }: Props) {
   const handleFieldDataChange = useCallback((fieldId: string) => (data: Partial<FormFieldData>) => setFieldData(fieldId, data), [setFieldData]);
 
   const sectionTitle: JSX.Element = isEditingTitle ? (
-    <TextField
+    <SectionTitleInput
       value={editedTitle}
       autoFocus
-      variant={"standard"}
       inputRef={titleInputRef}
-      slotProps={{
-        htmlInput: {
-          maxLength: 255,
-        },
+      inputProps={{
+        maxLength: 255,
       }}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
