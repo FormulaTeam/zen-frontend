@@ -14,8 +14,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { permission, responsesScopeOption } from "formula-gear";
 
 import { useDeleteForm, useSoftDeleteResponses } from "../../../api";
-import deleteResponseImg from "../../../images/delete_response.png";
-import ConfirmPopup from "../../../popups/ConfirmPopup/ConfirmPopup";
+import ConfirmDeleteDialog from "../../../components/BasePopup/ConfirmDeleteDialog";
 import { useFormStore } from "../stores/form.store";
 import { SourceOperationStatus, SourceOperationStatusType } from "./FormActionsToolbar";
 import { UploadResponses } from "./UploadResponses";
@@ -204,26 +203,28 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
       />
 
       {showDeleteFormPopup && (
-        <ConfirmPopup
-          image={deleteResponseImg}
-          msg={"האם אתה בטוח שברצונך למחוק את הטופס?"}
-          okFunc={() => {
+        <ConfirmDeleteDialog
+          open={showDeleteFormPopup}
+          title="מחיקת טופס"
+          message="האם אתה בטוח שברצונך למחוק את הטופס?"
+          onConfirm={() => {
             deleteForm(undefined, {
               onSuccess: () => {
                 navigate("/", { replace: true });
               },
             });
           }}
-          closePopup={() => setShowDeleteFormPopup(false)}
-          okBtnText={"מחק טופס"}
+          onClose={() => setShowDeleteFormPopup(false)}
+          confirmText="מחק טופס"
         />
       )}
 
       {showDeleteResponsesPopup && (
-        <ConfirmPopup
-          image={deleteResponseImg}
-          msg={"האם אתה בטוח שברצונך למחוק את כל התגובות לטופס?"}
-          okFunc={() => {
+        <ConfirmDeleteDialog
+          open={showDeleteResponsesPopup}
+          title="מחיקת תגובות"
+          message="האם אתה בטוח שברצונך למחוק את כל התגובות לטופס?"
+          onConfirm={() => {
             softDeleteResponses(
               {
                 scope: responsesScopeOption.AllResponses,
@@ -235,8 +236,8 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
               },
             );
           }}
-          closePopup={() => setShowDeleteResponsesPopup(false)}
-          okBtnText={"מחק תגובות"}
+          onClose={() => setShowDeleteResponsesPopup(false)}
+          confirmText="מחק תגובות"
         />
       )}
     </>

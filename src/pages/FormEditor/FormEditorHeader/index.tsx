@@ -276,7 +276,7 @@ function FormEditorHeader() {
       onClose={() => setShowValidationErrorsPopup(false)}
       errors={[
         "נא לתקן את השדות המסומנים באדום",
-        ...(Object.keys(formStructure.fields).length === 0 ? ["לא ניתן לשמור טופס ללא שדות."] : []),
+        ...(Object.keys(formStructure.fields).length === 0 ? ["לא ניתן לשמור טופס ללא שדות"] : []),
       ]}
     />
   );

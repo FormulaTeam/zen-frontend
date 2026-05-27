@@ -17,7 +17,7 @@ const CreateNew = ({ isFirstForm = false }: CreateNewProps) => {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => navigate("/form/create")}
-          sx={{ fontWeight: 400 }}>
+          sx={{ fontWeight: 700 }}>
           {isFirstForm ? "ליצירת הטופס הראשון שלך" : "יצירת טופס חדש"}
         </Button>
       </Box>
