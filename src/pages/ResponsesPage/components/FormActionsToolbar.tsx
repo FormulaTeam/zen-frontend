@@ -73,47 +73,17 @@ export const FormActionsToolbar = () => {
 
   return (
     <Box sx={{ display: "flex", gap: "8px", alignItems: "center" }}>
-      <Tooltip title="חזרה">
-        <IconOnlyButton onClick={() => navigate("/")}>
-          <ArrowBackIcon />
-        </IconOnlyButton>
-      </Tooltip>
-
-      <PermissionGate requiredPermissions={[permission.ShareForm]} userPermissions={permissions}>
-        <Tooltip title="שיתוף">
-          <IconOnlyButton
-            disabled={!hasFormFields}
-            onClick={() => setShowSharePopup(true)}
-          >
-            <ShareIcon />
-          </IconOnlyButton>
-        </Tooltip>
-        {showSharePopup && (
-          <UserPicker
-            form={form}
-            closeSharePopupAndRefreshForm={(users, updatedForm) => {
-              const formToUpdate = updatedForm || form;
-
-              setForm(formToUpdate as typeof form);
-              setShowSharePopup(false);
-            }}
-          />
-        )}
-      </PermissionGate>
-
-      <PermissionGate requiredPermissions={[permission.UpdateForm]} userPermissions={permissions}>
-        <Tooltip title="עריכת טופס">
-          <IconOnlyButton
-            onClick={() =>
-              navigate(`/form/edit/${formId}`, { state: { from: location.pathname } })
-            }
-          >
-            <EditIcon />
-          </IconOnlyButton>
-        </Tooltip>
-      </PermissionGate>
-
-      <PermissionGate requiredPermissions={[permission.SyncForm, permission.DeleteForm, permission.ShareForm, permission.ExportForm, permission.ImportResponses, permission.DeleteAnyResponse]} userPermissions={permissions}>
+      {/* More options (now first) */}
+      <PermissionGate
+        requiredPermissions={[
+          permission.SyncForm,
+          permission.DeleteForm,
+          permission.ShareForm,
+          permission.ExportForm,
+          permission.ImportResponses,
+          permission.DeleteAnyResponse,
+        ]}
+        userPermissions={permissions}>
         <MoreOptions
           setAnchorElSourceType={setAnchorElSourceType}
           pushToMetro={pushToMetro}
@@ -121,11 +91,53 @@ export const FormActionsToolbar = () => {
         />
       </PermissionGate>
 
+      {/* Edit */}
+      <PermissionGate requiredPermissions={[permission.UpdateForm]} userPermissions={permissions}>
+        <Tooltip title="עריכת טופס">
+          <IconOnlyButton
+            onClick={() =>
+              navigate(`/form/edit/${formId}`, {
+                state: { from: location.pathname },
+              })
+            }>
+            <EditIcon />
+          </IconOnlyButton>
+        </Tooltip>
+      </PermissionGate>
+
+      {/* Share */}
+      <PermissionGate requiredPermissions={[permission.ShareForm]} userPermissions={permissions}>
+        <Tooltip title="שיתוף">
+          <IconOnlyButton disabled={!hasFormFields} onClick={() => setShowSharePopup(true)}>
+            <ShareIcon />
+          </IconOnlyButton>
+        </Tooltip>
+
+        {showSharePopup && (
+          <UserPicker
+            form={form}
+            closeSharePopupAndRefreshForm={(users, updatedForm) => {
+              const formToUpdate = updatedForm || form;
+              setForm(formToUpdate as typeof form);
+              setShowSharePopup(false);
+            }}
+          />
+        )}
+      </PermissionGate>
+
+      {/* Back (now last) */}
+      <Tooltip title="חזרה">
+        <IconOnlyButton onClick={() => navigate("/")}>
+          <ArrowBackIcon />
+        </IconOnlyButton>
+      </Tooltip>
+
       <SyncTypeMenu
         anchorElSourceType={anchorElSourceType}
         handleCloseMoreActions={handleCloseMoreActions}
         handleAutomaticSource={handleAutomaticSource}
       />
+
       {showMetroPopup && <MetroSyncingPopup setShowMetroPopup={setShowMetroPopup} />}
     </Box>
   );

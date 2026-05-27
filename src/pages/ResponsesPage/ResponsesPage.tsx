@@ -83,9 +83,18 @@ const ResponsesPageContent = (): JSX.Element => {
     ids: new Set<GridRowId>(),
   });
 
-  const [search, setSearch] = useState<string>("");
-  const { rows: storeRows, form, permissions } = useFormStore();
+  const { rows: storeRows, form, permissions, filter, setFilter } = useFormStore();
   const { user } = useAuth();
+
+  const handleSearch = (val: string) => {
+    setFilter({
+      ...(filter || {}),
+      query: val,
+      pageNumber: 1,
+      before: undefined,
+      after: undefined,
+    });
+  };
 
   const {
     isInEditMode,
@@ -197,21 +206,21 @@ const ResponsesPageContent = (): JSX.Element => {
       <MainContentWrapper>
         <TopSection>
           <MetadataLine>
-            {/* RIGHT SIDE: Nav Actions (Back, Share, Edit, More) */}
+            {/* RIFHT SIDE: Metadata (Info, ID, Name) */}
             <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
-              <FormActionsToolbar />
+              <Header />
             </Box>
 
             {/* MIDDLE: Search Responses Bar (Exact Middle) */}
             <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
-              <Box sx={{ width: "100%", maxWidth: "500px" }}>
-                <SearchInfo search={search} setSearch={setSearch} />
+              <Box>
+                <SearchInfo search={filter?.query || ""} setSearch={handleSearch} />
               </Box>
             </Box>
 
-            {/* LEFT SIDE: Metadata (Info, ID, Name) */}
+            {/* LEFT SIDE: Nav Actions (Back, Share, Edit, More) */}
             <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-              <Header />
+              <FormActionsToolbar />
             </Box>
           </MetadataLine>
 
@@ -234,7 +243,9 @@ const ResponsesPageContent = (): JSX.Element => {
             <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
               {selectedRows.length > 0 && (
                 <Tooltip title="מחיקת תגובות נבחרות">
-                  <IconButton color="error" onClick={() => handleDeleteResponses(selectedRows as any)}>
+                  <IconButton
+                    color="error"
+                    onClick={() => handleDeleteResponses(selectedRows as any)}>
                     <Delete />
                   </IconButton>
                 </Tooltip>
