@@ -38,7 +38,7 @@ export const texts = {
     cantRemoveLastSection: "לא ניתן למחוק את המקטע האחרון בטופס",
     confirmEdit: "אישור עריכה",
     cancelEdit: "ביטול עריכה",
-    editSection: "עריכת מקטע",
+    editSection: "עריכת שם מקטע",
     expand: "הרחבת מקטע",
     collapse: "צמצום מקטע",
     deleteSection: "מחיקת מקטע",

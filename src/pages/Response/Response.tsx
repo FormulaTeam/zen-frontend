@@ -17,7 +17,7 @@ import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import AlertMsg from "../../components/AlertMsg/AlertMsg";
 import { useValidationErrors, type ValidationDisplayError } from "../../hooks/useValidationErrors";
 import { clearResponseDraft, getResponseDraft } from "../FormEditor/utils/draftPersistence";
-import DraftRecoveryDialog from "../../components/BasePopup/DraftRecoveryDialog";
+import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner";
 
 const PageContainer = styled(Container)`
   height: 100%;
@@ -39,7 +39,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   const [showLoadingSaveBtn, setShowLoadingSaveBtn] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationDisplayError[]>([]);
   const [showValidationPopup, setShowValidationPopup] = useState(false);
-  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<Map<string, any> | null>(null);
   const [showAlertMsg, setShowAlertMsg] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -74,7 +74,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       const draft = getResponseDraft(formId, id);
       if (draft && draft.values.length > 0) {
         setPendingDraft(new Map(draft.values));
-        setShowRestoreDialog(true);
+        setShowRestoreBanner(true);
       }
     }
   }, [formId, id, viewMode]);
@@ -84,13 +84,13 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       setFormFieldsValuesMap(pendingDraft);
       setHasUnsavedChanges(true);
     }
-    setShowRestoreDialog(false);
+    setShowRestoreBanner(false);
     setPendingDraft(null);
   };
 
   const handleDiscardDraft = () => {
     clearResponseDraft(formId, id);
-    setShowRestoreDialog(false);
+    setShowRestoreBanner(false);
     setPendingDraft(null);
   };
 
@@ -444,9 +444,8 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
         </DialogActions>
       </Dialog>
 
-      <DraftRecoveryDialog
-        open={showRestoreDialog}
-        description="מצאנו טיוטה של התגובה הזו עם שינויים שלא נשמרו. האם תרצה לשחזר אותם?"
+      <DraftRecoveryBanner
+        open={showRestoreBanner}
         onRestore={handleRestore}
         onDiscard={handleDiscardDraft}
       />
