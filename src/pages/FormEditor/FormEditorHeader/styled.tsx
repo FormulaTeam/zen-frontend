@@ -30,11 +30,10 @@ export const SeamlessTextField = styled(TextField)(({ theme }) => ({
 }));
 
 export const StyledTitleText = styled(Typography)({
-
-  maxWidth: "60vw",
+  maxWidth: "500px",
   minWidth: 0,
   cursor: "pointer",
-  padding: "4px 8px",
+  padding: "2px 8px",
   borderRadius: "4px",
   transition: "background-color 0.2s",
   "&:hover": {
@@ -43,10 +42,10 @@ export const StyledTitleText = styled(Typography)({
 });
 
 export const StyledDescriptionText = styled(Typography)({
-  maxWidth: "60vw",
+  maxWidth: "500px",
   minWidth: 0,
   cursor: "pointer",
-  padding: "4px 8px",
+  padding: "2px 8px",
   borderRadius: "4px",
   transition: "background-color 0.2s",
   "&:hover": {
