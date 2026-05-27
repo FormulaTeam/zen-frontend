@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { Tooltip, IconButton, Switch, Box, Typography, TextField, InputAdornment, Button } from "@mui/material";
+import {
+  Tooltip,
+  IconButton,
+  Switch,
+  Box,
+  Typography,
+  TextField,
+  InputAdornment,
+  Button,
+} from "@mui/material";
 import LanguageIcon from "@mui/icons-material/Language";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
@@ -49,7 +58,7 @@ const PublicFormSection: React.FC<PublicFormSectionProps> = ({
 
   const roleName = getRoleName();
 
-  const publicLink = `${window.location.origin}/response/create/${form?.id}`;
+  const publicLink = `${window.location.origin}/responses/${form?.id}`;
 
   const handleCopyLink = async () => {
     try {
@@ -66,25 +75,26 @@ const PublicFormSection: React.FC<PublicFormSectionProps> = ({
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <LabelWrapper $color={theme.palette.text.primary} onClick={togglePublicForm}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 width: 32,
                 height: 32,
-                borderRadius: '8px',
-                bgcolor: isPublic ? `${theme.palette.primary.main}14` : '#f1f5f9',
-                color: isPublic ? theme.palette.primary.main : '#94a3b8',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              <LanguageIcon sx={{ fontSize: '1.2rem' }} />
+                borderRadius: "8px",
+                bgcolor: isPublic ? `${theme.palette.primary.main}14` : "#f1f5f9",
+                color: isPublic ? theme.palette.primary.main : "#94a3b8",
+                transition: "all 0.3s ease",
+              }}>
+              <LanguageIcon sx={{ fontSize: "1.2rem" }} />
             </Box>
             <Box>
               <LabelText>גישה פומבית לטופס</LabelText>
               <Typography variant="caption" sx={{ color: "#94a3b8", display: "block", mt: -0.5 }}>
-                {isPublic ? 'הטופס זמין לכל מי שברשותו הקישור, בהתאם להרשאה הנבחרת' : 'הטופס חסום למילוי ללא הרשאה אישית'}
+                {isPublic
+                  ? "הגדרת גישה לטופס לכל מי שברשותו הקישור"
+                  : "הטופס חסום לכל מי שאין לו הרשאה אישית"}
               </Typography>
             </Box>
           </Box>
@@ -116,32 +126,26 @@ const PublicFormSection: React.FC<PublicFormSectionProps> = ({
                 startAdornment: (
                   <InputAdornment position="start">
                     <Tooltip title={copied ? "הועתק!" : "העתק קישור"}>
-                      <Button 
-                        onClick={handleCopyLink} 
+                      <Button
+                        onClick={handleCopyLink}
                         variant="contained"
                         disableElevation
                         size="small"
-                        sx={{ 
-                          minWidth: '80px', // Larger fixed width
-                          height: '40px',   // Match the standard small TextField height
+                        sx={{
+                          minWidth: "auto",
                           px: 2,
-                          py: 0,
-                          ml: -1.8,         // Pull it all the way to the right edge (RTL)
-                          mr: 1,
-                          fontSize: '0.85rem',
+                          py: 0.5,
+                          ml: -1.5,
+                          mr: 1.5,
+                          fontSize: "0.75rem",
                           fontWeight: 700,
-                          borderRadius: '10px 0 0 10px', // Rounded corners on the outer side only
+                          borderRadius: "8px 0 0 8px", // In RTL, this will be the right side
                           backgroundColor: copied ? "#10b981" : theme.palette.primary.main,
-                          color: "#fff",
                           "&:hover": {
                             backgroundColor: copied ? "#059669" : theme.palette.primary.dark,
                           },
-                          "& .MuiSvgIcon-root": {
-                            fontSize: '1.2rem'
-                          }
-                        }}
-                      >
-                        {copied ? <CheckIcon /> : 'העתק'}
+                        }}>
+                        {copied ? <CheckIcon sx={{ fontSize: "1rem" }} /> : "העתק"}
                       </Button>
                     </Tooltip>
                   </InputAdornment>
@@ -154,26 +158,27 @@ const PublicFormSection: React.FC<PublicFormSectionProps> = ({
                   fontWeight: 500,
                   "& .MuiOutlinedInput-notchedOutline": {
                     borderColor: "#e2e8f0",
-                    borderWidth: '1.5px',
+                    borderWidth: "1.5px",
                   },
                   "&:hover .MuiOutlinedInput-notchedOutline": {
                     borderColor: "#cbd5e0",
                   },
-                }
+                },
               }}
             />
           </Box>
 
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
-            mt: 2,
-            pt: 2,
-            borderTop: '1px solid #e2e8f0'
-          }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mt: 2,
+              pt: 2,
+              borderTop: "1px solid #e2e8f0",
+            }}>
             <PermissionsText $color="#475569">
-              הרשאה למשתמשים פומביים:
+              שימוש בקישור יקנה למשתמשים את ההשראה:
             </PermissionsText>
             <RolesAutocomplete
               isDisabled={false}
