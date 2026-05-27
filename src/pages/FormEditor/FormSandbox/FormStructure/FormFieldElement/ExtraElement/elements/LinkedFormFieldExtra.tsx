@@ -1,6 +1,6 @@
 import { FieldTypeIds } from "@utils/interfaces";
 import React, { useState, useMemo } from "react";
-import { FormControl, CircularProgress, Autocomplete, TextField } from "@mui/material";
+import { FormControl, CircularProgress, Autocomplete, TextField, Box, Typography } from "@mui/material";
 import { ExtraElementProps } from "../index";
 import { useGetForm, useGetLinkableForms } from "@api/formsApi";
 import { useFormStructureContext } from "@pages/FormEditor/context/FormStructureContext";
@@ -62,6 +62,18 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
             onChange({ linkedFormId: newValue ? newValue.id.toString() : undefined });
           }}
           isOptionEqualToValue={(option, value) => option?.id === value?.id}
+          renderOption={(props, option: any) => (
+            <li {...props}>
+              <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
+                <Typography component="span">{option.name}</Typography>
+                <Typography
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.75rem", mt: "2px" }}>
+                  ({option.id})
+                </Typography>
+              </Box>
+            </li>
+          )}
           renderInput={(params) => (
             <TextField
               {...params}
