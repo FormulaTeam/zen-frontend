@@ -50,23 +50,17 @@ function FormEditorHeader() {
   const { title, description, iconId, validationErrors } = formStructure.metadata;
 
   const onSaveClick = () => {
-    const isValid = validateForm();
+    const { isValid, fieldsValid, metadataErrors, hasFields } = validateForm() as any;
+    
     if (isValid) {
       handleSaveForm();
       return;
     }
 
-    // Check if the ONLY error is the title (meaning form has fields and fields are valid)
-    const hasFields = Object.keys(formStructure.fields).length > 0;
-    const fieldsValid = Object.values(formStructure.fields).every(
-      (f) => !f.validationErrors || Object.keys(f.validationErrors).length === 0,
-    );
-    const metadataErrors = formStructure.metadata.validationErrors || {};
     const titleError = metadataErrors.title;
-    const onlyTitleError =
-      hasFields && fieldsValid && Object.keys(metadataErrors).length === 1 && !!titleError;
+    const isTitleMissingOnly = hasFields && fieldsValid && Object.keys(metadataErrors).length === 1 && !!titleError && title.trim() === "";
 
-    if (onlyTitleError) {
+    if (isTitleMissingOnly) {
       setShowUntitledFormPopup(true);
     } else {
       setShowValidationErrorsPopup(true);
@@ -74,17 +68,16 @@ function FormEditorHeader() {
   };
 
   const handleAcceptSuggestedTitle = async () => {
-    setFormMetadata({ title: suggestedTitle });
-    setShowUntitledFormPopup(false);
-    // Wait for state to settle then save
-    setTimeout(() => {
+    if (setFormMetadata({ title: suggestedTitle })) {
+      setShowUntitledFormPopup(false);
+      // Immediate save after naming
       handleSaveForm();
-    }, 50);
+    }
   };
 
   const handleSaveAndExit = async () => {
     setShowAlertMsg(false);
-    const isValid = validateForm();
+    const { isValid } = validateForm() as any;
     if (isValid) {
       await handleSaveForm();
       handleExit();

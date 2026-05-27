@@ -19,7 +19,7 @@ export const texts = {
     deleteForm: "מחק טופס",
     deleteFormConfirm: "האם את/ה בטוח/ה שברצונך למחוק את הטופס?",
 
-    emptyFormAlert: "לתשומת ליבך! שם הטופס ריק",
+    emptyFormAlert: "יש למלא שם טופס בעברית",
     noHebrewTextAlert: "שם הטופס מורכב מאותיות שאינן עברית.",
     fiveLettersMinAlert: "שם הטופס פחות מ5 אותיות.",
     formNameLabel: "שם טופס",

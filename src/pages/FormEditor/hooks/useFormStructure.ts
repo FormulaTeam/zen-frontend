@@ -547,45 +547,47 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
   }, []);
 
   const validateForm = useCallback(() => {
-    let isValid = true;
+    let fieldsValid = true;
+    let fieldErrorsCount = 0;
 
     const fields = { ...formStructure.fields };
     const { validationErrors: _, ...metadata } = { ...formStructure.metadata };
 
-    if (Object.keys(fields).length === 0) {
-      isValid = false;
-    }
-
-    Object.keys(fields).forEach((fieldId) => {
+    const updatedFields = { ...formStructure.fields };
+    Object.keys(updatedFields).forEach((fieldId) => {
       const fieldValidationErrors = validateField(formStructure, fieldId);
-      if (Object.keys(fieldValidationErrors).length > 0) isValid = false;
-    });
-
-    const metadataValidationErrors = validateMetadata(metadata);
-    if (metadataValidationErrors && Object.keys(metadataValidationErrors).length > 0) isValid = false;
-
-    setFormStructure((prev) => {
-      const updatedFields = { ...prev.fields };
-      const { validationErrors: __, ...prevMetadata } = { ...prev.metadata };
-
-      Object.keys(updatedFields).forEach((fieldId) => {
-        updatedFields[fieldId] = {
-          ...updatedFields[fieldId],
-          validationErrors: validateField(prev, fieldId),
-        };
-      });
-
-      return {
-        ...prev,
-        fields: updatedFields,
-        metadata: {
-          ...prevMetadata,
-          validationErrors: validateMetadata(prevMetadata),
-        },
+      if (Object.keys(fieldValidationErrors).length > 0) {
+        fieldsValid = false;
+        fieldErrorsCount++;
+      }
+      updatedFields[fieldId] = {
+        ...updatedFields[fieldId],
+        validationErrors: fieldValidationErrors,
       };
     });
 
-    return isValid;
+    const metadataErrors = validateMetadata(metadata) || {};
+    const hasMetadataErrors = Object.keys(metadataErrors).length > 0;
+
+    setFormStructure((prev) => ({
+      ...prev,
+      fields: updatedFields,
+      metadata: {
+        ...prev.metadata,
+        validationErrors: hasMetadataErrors ? metadataErrors : null,
+      },
+    }));
+
+    const hasFields = Object.keys(fields).length > 0;
+    const isValid = fieldsValid && !hasMetadataErrors && hasFields;
+
+    return {
+      isValid,
+      fieldsValid,
+      fieldErrorsCount,
+      metadataErrors,
+      hasFields,
+    };
   }, [formStructure]);
 
   const checkHasChanges = useCallback(() => {
