@@ -106,6 +106,7 @@ function FormSectionElement({ id }: Props) {
   const sectionTitle: JSX.Element = isEditingTitle ? (
     <>
       <TextField value={editedTitle}
+        autoFocus
         variant={"standard"}
         inputRef={titleInputRef}
         slotProps={{
@@ -116,7 +117,13 @@ function FormSectionElement({ id }: Props) {
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
         onChange={(e) => setEditedTitle(e.target.value.trimStart())}
-        onBlur={(e) => setEditedTitle(e.target.value.trim())} />
+        onBlur={(e) => setEditedTitle(e.target.value.trim())}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            renameSection(id, editedTitle);
+            setIsEditingTitle(false);
+          }
+        }} />
       <Button className={styles.button}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(_) => {
@@ -134,23 +141,21 @@ function FormSectionElement({ id }: Props) {
       </Button>
     </>
   ) : (
-    <>
-      <OverflowTooltip title={self.title} placement="top">
-        <SectionTitleText variant={"body1"}>{self.title}</SectionTitleText>
-      </OverflowTooltip>
-      <Tooltip title='עריכת מקטע' placement="top">
-        <span style={{ display: 'inline-block' }}>
-          <Button className={styles.button}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(_) => {
-              setEditedTitle(self.title);
-              setIsEditingTitle(true);
-            }}>
-            <EditButtonIcon />
-          </Button>
-        </span>
-      </Tooltip>
-    </>
+    <Tooltip title='עריכת מקטע' placement="top">
+      <SectionTitleText
+        variant={"body1"}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          setEditedTitle(self.title);
+          setIsEditingTitle(true);
+          e.stopPropagation();
+        }}
+      >
+        <OverflowTooltip title={self.title} placement="top">
+          <span>{self.title}</span>
+        </OverflowTooltip>
+      </SectionTitleText>
+    </Tooltip>
   );
 
   const toggleExpandButton: JSX.Element = (

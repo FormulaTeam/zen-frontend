@@ -106,6 +106,7 @@ function FormEditorHeader() {
     <>
       <div className={styles.editingMetadataText}>
         <TextField
+          autoFocus
           value={editedMetadata.title}
           slotProps={{
             htmlInput: {
@@ -120,6 +121,11 @@ function FormEditorHeader() {
           variant={"standard"}
           onChange={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trimStart() }))}
           onBlur={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trim() }))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSaveMetadata(null as any);
+            }
+          }}
         />
         <TextField
           value={editedMetadata.description}
@@ -140,6 +146,11 @@ function FormEditorHeader() {
             ...prev,
             description: e.target.value.trim(),
           }))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSaveMetadata(null as any);
+            }
+          }}
         />
       </div>
       <div>
@@ -152,36 +163,31 @@ function FormEditorHeader() {
       </div>
     </>
   ) : (
-    <MetadataContainer>
-      <div className={`${styles.title} ${styles.titleWithMargin}`}>
-        <>
+    <Tooltip title="עריכת פרטי הטופס" placement="bottom-start">
+      <MetadataContainer
+        onClick={() => {
+          setEditedMetadata({ title, description, iconId });
+          setIsEditingMetadata(true);
+        }}
+      >
+        <div className={`${styles.title} ${styles.titleWithMargin}`}>
           <OverflowTooltip title={title || "שם הטופס"} placement="top">
             <StyledTitleText variant={"h5"}>{title || "שם הטופס"}</StyledTitleText>
           </OverflowTooltip>
-          <Tooltip title="עריכת פרטי הטופס">
-            <Button className={styles.button}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(_) => {
-                setEditedMetadata({ title, description, iconId });
-                setIsEditingMetadata(true);
-              }}>
-              <DriveFileRenameOutline sx={{ fontSize: 25, color: "#506f9e" }} />
-            </Button>
-          </Tooltip>
-        </>
-      </div>
-      <OverflowTooltip title={description || "ללא תיאור"} placement="bottom">
-        <StyledDescriptionText variant="subtitle1">{description ?? "ללא תיאור"}</StyledDescriptionText>
-      </OverflowTooltip>
+        </div>
+        <OverflowTooltip title={description || "ללא תיאור"} placement="bottom">
+          <StyledDescriptionText variant="subtitle1">{description ?? "ללא תיאור"}</StyledDescriptionText>
+        </OverflowTooltip>
 
-      <div className={styles.formErrorContainer}>
-        {validationErrors?.title ? (
-          <Typography variant="body2" color="error">
-            {texts.heb.emptyFormAlert}
-          </Typography>
-        ) : null}
-      </div>
-    </MetadataContainer>
+        <div className={styles.formErrorContainer}>
+          {validationErrors?.title ? (
+            <Typography variant="body2" color="error">
+              {texts.heb.emptyFormAlert}
+            </Typography>
+          ) : null}
+        </div>
+      </MetadataContainer>
+    </Tooltip>
   );
 
   const headerActionButtons: JSX.Element = (

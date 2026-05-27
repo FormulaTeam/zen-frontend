@@ -8,6 +8,13 @@ export const SectionTitleText = styled(Typography)({
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
+  cursor: "pointer",
+  padding: "2px 8px",
+  borderRadius: "4px",
+  transition: "background-color 0.2s",
+  "&:hover": {
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
+  },
 });
 
 export const StyledAccordion = styled(Accordion)({

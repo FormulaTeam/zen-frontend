@@ -8,11 +8,25 @@ export const MetadataContainer = styled(Box)({
 export const StyledTitleText = styled(Typography)({
   maxWidth: "60vw",
   minWidth: 0,
+  cursor: "pointer",
+  padding: "4px 8px",
+  borderRadius: "4px",
+  transition: "background-color 0.2s",
+  "&:hover": {
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
+  },
 });
 
 export const StyledDescriptionText = styled(Typography)({
   maxWidth: "60vw",
   minWidth: 0,
+  cursor: "pointer",
+  padding: "4px 8px",
+  borderRadius: "4px",
+  transition: "background-color 0.2s",
+  "&:hover": {
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
+  },
 });
 
 export const ExitAlertMsgDialog = styled(Box)(({ theme }) => ({
