@@ -195,7 +195,7 @@ const ResponsesPageContent = (): JSX.Element => {
   const selectedRows = useMemo(() => {
     const { type, ids } = rowSelectionModel;
     const idSet = ids as Set<GridRowId>;
-    
+
     const sourceRows = isInEditMode && localRows.length > 0 ? localRows : storeRows;
 
     if (type === "include") {

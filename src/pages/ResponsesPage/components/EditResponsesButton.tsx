@@ -54,77 +54,66 @@ export const EditResponsesButton = ({
 
   // 1. QUICK EDIT MODE
   if (isInEditMode) {
-      return (
-          <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
-              <UnifiedButton
-                  onClick={onAddNewResponse}
-                  startIcon={
-                      <CustomIcon
-                          iconName="newComment"
-                          style={{ width: 22, height: 22 }}
-                      />
-                  }
-              >
-                  הוספת שורה חדשה
-              </UnifiedButton>
+    return (
+      <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
+        <UnifiedButton
+          onClick={onAddNewResponse}
+          startIcon={<CustomIcon iconName="newComment" style={{ width: 22, height: 22 }} />}>
+          הוספת שורה חדשה
+        </UnifiedButton>
 
-              <UnifiedButton
-                  $isPrimary
-                  onClick={onSaveChanges}
-                  disabled={!hasUnsavedChanges || isUpdating}
-                  startIcon={<CheckIcon />}
-              >
-                  שמירה
-              </UnifiedButton>
+        <UnifiedButton
+          $isPrimary
+          onClick={onSaveChanges}
+          disabled={!hasUnsavedChanges || isUpdating}
+          startIcon={<CheckIcon />}>
+          שמירה
+        </UnifiedButton>
 
         <UnifiedButton onClick={onToggleEditMode} startIcon={<CloseIcon />}>
           ביטול
         </UnifiedButton>
 
         {hasSelection && (
-            <UnifiedButton
-                onClick={() => handleDeleteResponses(selectedRows.map(r => r.id))}
-                startIcon={<DeleteIcon />}
-                sx={{ color: "#d32f2f" }}
-            >
-                {selectedRows.length == 1 ? "מחיקת תגובה" : "מחיקת תגובות"}
-            </UnifiedButton>
-        )}
-        </Box>
-        );
-        }
-
-        // 2. SELECTION MODE (OUTSIDE QUICK EDIT)
-        if (hasSelection) {
-        const isSingleSelection = selectedRows.length === 1;
-        return (
-        <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
-        <UnifiedButton
-            disabled={!isSingleSelection}
-            onClick={onViewResponse}
-            startIcon={<VisibilityIcon />}
-        >
-            צפייה
-        </UnifiedButton>
-
-        <UnifiedButton
-            disabled={!isSingleSelection}
-            onClick={onEditResponse}
-            startIcon={<EditIcon />}
-        >
-            עריכה
-        </UnifiedButton>
-
-        <UnifiedButton
-            onClick={() => handleDeleteResponses(selectedRows.map(r => r.id))}
+          <UnifiedButton
+            onClick={() => handleDeleteResponses(selectedRows.map((r) => r.id))}
             startIcon={<DeleteIcon />}
-            sx={{ color: "#d32f2f" }}
-        >
-            מחיקה
+            sx={{ color: "#d32f2f" }}>
+            {"מחיקה"}
+          </UnifiedButton>
+        )}
+      </Box>
+    );
+  }
+
+  // 2. SELECTION MODE (OUTSIDE QUICK EDIT)
+  if (hasSelection) {
+    const isSingleSelection = selectedRows.length === 1;
+    return (
+      <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
+        <UnifiedButton
+          disabled={!isSingleSelection}
+          onClick={onViewResponse}
+          startIcon={<VisibilityIcon />}>
+          צפייה
         </UnifiedButton>
-        </Box>
-        );
-        }
+
+        <UnifiedButton
+          disabled={!isSingleSelection}
+          onClick={onEditResponse}
+          startIcon={<EditIcon />}>
+          עריכה
+        </UnifiedButton>
+
+        <UnifiedButton
+          onClick={() => handleDeleteResponses(selectedRows.map((r) => r.id))}
+          startIcon={<DeleteIcon />}
+          sx={{ color: "#d32f2f" }}>
+          מחיקה
+        </UnifiedButton>
+      </Box>
+    );
+  }
 
   // 3. STANDARD MODE
   return (

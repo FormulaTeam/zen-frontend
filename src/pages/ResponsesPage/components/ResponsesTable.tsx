@@ -220,12 +220,12 @@ export const ResponsesTable = React.memo(
 
     const displayRows = useMemo(() => {
       let baseRows = isInEditMode && localRows.length > 0 ? localRows : rows;
-      
+
       if (isInEditMode && deletedRowIds.length > 0) {
         const deletedSet = new Set(deletedRowIds.map(String));
-        return baseRows.filter(row => !deletedSet.has(String(row.id)));
+        return baseRows.filter((row) => !deletedSet.has(String(row.id)));
       }
-      
+
       return baseRows;
     }, [isInEditMode, localRows, rows, deletedRowIds]);
 
@@ -350,7 +350,8 @@ export const ResponsesTable = React.memo(
 
     const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
 
-    const { childrenFormsData, hasFormInFormFields, loadingChildForms, getChildFormData } = useChildForms({ form });
+    const { childrenFormsData, hasFormInFormFields, loadingChildForms, getChildFormData } =
+      useChildForms({ form });
 
     const {
       expandColumn,
@@ -735,11 +736,7 @@ export const ResponsesTable = React.memo(
         getFormColumns
           .filter((column) => Boolean(column.editable))
           .map((column) => column.field)
-          .filter(
-            (field) =>
-              field !== "__check__" &&
-              field !== GRID_DETAIL_PANEL_TOGGLE_FIELD,
-          ),
+          .filter((field) => field !== "__check__" && field !== GRID_DETAIL_PANEL_TOGGLE_FIELD),
       [getFormColumns],
     );
 
@@ -980,31 +977,39 @@ export const ResponsesTable = React.memo(
           }}>
           {/* 1. Pagination controls */}
           <Stack direction="row" spacing={2} alignItems="center">
+            {/* Next page */}
             <Tooltip title="עמוד הבא">
               <span>
-                <PaginationButton
-                  onClick={handleNextPage}
-                  disabled={!pageInfo?.hasNextPage || isInEditMode || isRowsLoading || isNavigating}
-                  size="small">
-                  <ArrowBackIosNewIcon />
-                </PaginationButton>
+                <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <PaginationButton
+                    onClick={handleNextPage}
+                    disabled={
+                      !pageInfo?.hasNextPage || isInEditMode || isRowsLoading || isNavigating
+                    }
+                    size="small">
+                    <ArrowBackIosNewIcon />
+                  </PaginationButton>
+                </Box>
               </span>
             </Tooltip>
 
+            {/* Previous page */}
             <Tooltip title="עמוד קודם">
               <span>
-                <PaginationButton
-                  onClick={handlePreviousPage}
-                  disabled={
-                    !pageInfo?.hasPreviousPage ||
-                    (filter?.pageNumber ?? 1) <= 1 ||
-                    isInEditMode ||
-                    isRowsLoading ||
-                    isNavigating
-                  }
-                  size="small">
-                  <ArrowForwardIosIcon />
-                </PaginationButton>
+                <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <PaginationButton
+                    onClick={handlePreviousPage}
+                    disabled={
+                      !pageInfo?.hasPreviousPage ||
+                      (filter?.pageNumber ?? 1) <= 1 ||
+                      isInEditMode ||
+                      isRowsLoading ||
+                      isNavigating
+                    }
+                    size="small">
+                    <ArrowForwardIosIcon />
+                  </PaginationButton>
+                </Box>
               </span>
             </Tooltip>
           </Stack>
