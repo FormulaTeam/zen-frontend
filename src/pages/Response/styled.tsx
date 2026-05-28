@@ -26,7 +26,8 @@ export const FormSectionsContainer = styled(Box)<BoxProps>(({ theme }) => ({
   flexDirection: "column",
   gap: theme.spacing(2),
   alignItems: "center",
-  padding: theme.spacing(2),
+  padding: "2rem 5rem",
+  width: "100%",
 }));
 
 export const LoadingContainer = styled(Box)<BoxProps>(({ theme }) => ({

@@ -67,6 +67,7 @@ root.render(
           },
 
           ".response-page, .sandboxContainer, .main-page-container, .response-page .MuiContainer-root": {
+            overflowY: "auto !important",
             scrollbarWidth: "auto !important",
             msOverflowStyle: "auto !important",
             "&::-webkit-scrollbar": {
