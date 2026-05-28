@@ -28,23 +28,42 @@ root.render(
     <CacheProvider value={cacheRtl}>
       <GlobalStyles
         styles={(theme) => ({
+          "html, body": {
+            overflow: "hidden !important",
+            height: "100%",
+            width: "100%",
+            margin: 0,
+            padding: 0,
+          },
           "*": {
             margin: 0,
             borderRadius: theme.borders.base,
-          },
-          "::-webkit-scrollbar-track": {
-            backgroundColor: theme.palette.background.default,
-          },
-
-          "::-webkit-scrollbar": {
-            width: theme.scrollBar.width,
-            height: theme.scrollBar.height,
-            backgroundColor: theme.scrollBar.color,
+            scrollbarWidth: "none !important",
+            msOverflowStyle: "none !important",
+            "&::-webkit-scrollbar": {
+              width: "0 !important",
+              height: "0 !important",
+            },
           },
 
-          "::-webkit-scrollbar-thumb": {
-            backgroundColor: theme.scrollBar.color,
-            borderRadius: theme.scrollBar.borderRadius,
+          ".MuiDataGrid-virtualScroller, .MuiTableContainer-root, .MuiDataGrid-virtualScrollerContent, .MuiDataGrid-scrollbar--horizontal": {
+            scrollbarWidth: "auto !important",
+            msOverflowStyle: "auto !important",
+            "&::-webkit-scrollbar": {
+              width: "0 !important",
+              height: "16px !important",
+              display: "block !important",
+            },
+            "&::-webkit-scrollbar-track": {
+              backgroundColor: "#f1f1f1 !important",
+              display: "block !important",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: `${theme.scrollBar.color} !important`,
+              borderRadius: "10px !important",
+              display: "block !important",
+              border: "4px solid #f1f1f1 !important",
+            },
           },
         })}
       />

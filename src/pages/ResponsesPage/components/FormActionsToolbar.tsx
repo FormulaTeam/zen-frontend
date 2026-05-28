@@ -1,17 +1,20 @@
 import SyncIcon from "@mui/icons-material/Sync";
-import { Box, Button, Tooltip } from "@mui/material";
+import { Box, Tooltip } from "@mui/material";
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import EditIcon from "@mui/icons-material/Edit";
+import ShareIcon from "@mui/icons-material/Share";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import MetroSyncingPopup from "@components/ResponseToolbar/Popups/MetroSyncingPopup";
 import SyncTypeMenu from "@components/ResponseToolbar/Menus/SyncTypeMenu";
 import UserPicker from "../../../components/UserPicker/UserPicker";
 import { useMetro } from "@hooks/useMetro";
-import { CustomIcon } from "../../../theme/icons";
 import { useFormStore } from "../stores/form.store";
 import { MoreOptions } from "./MoreOptions";
 import { permission } from "formula-gear";
 import { PermissionGate } from "@src/components/PermissionGate";
+import { IconOnlyButton } from "../styled";
 
 export const SourceOperationStatus = {
   NOT_IN_PROGRESS: "not_in_progress",
@@ -26,8 +29,8 @@ export const FormActionsToolbar = () => {
   const { permissions, form, setForm } = useFormStore();
   const { id: formId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showSharePopup, setShowSharePopup] = useState(false);
-  const [anchorElMoreActions, setAnchorElMoreActions] = useState<null | HTMLElement>(null);
   const [anchorElSourceType, setAnchorElSourceType] = useState<null | HTMLElement>(null);
   const [sourceOperationStatus, setSourceOperationStatus] = useState<SourceOperationStatusType>(
     SourceOperationStatus.NOT_IN_PROGRESS,
@@ -58,7 +61,6 @@ export const FormActionsToolbar = () => {
     });
 
   const handleCloseMoreActions = (): void => {
-    setAnchorElMoreActions(null);
     setAnchorElSourceType(null);
   };
 
@@ -70,8 +72,18 @@ export const FormActionsToolbar = () => {
   };
 
   return (
-    <Box>
-      <PermissionGate requiredPermissions={[permission.SyncForm, permission.DeleteForm, permission.ShareForm, permission.ExportForm, permission.ImportResponses, permission.DeleteAnyResponse]} userPermissions={permissions}>
+    <Box sx={{ display: "flex", gap: "8px", alignItems: "center" }}>
+      {/* More options (now first) */}
+      <PermissionGate
+        requiredPermissions={[
+          permission.SyncForm,
+          permission.DeleteForm,
+          permission.ShareForm,
+          permission.ExportForm,
+          permission.ImportResponses,
+          permission.DeleteAnyResponse,
+        ]}
+        userPermissions={permissions}>
         <MoreOptions
           setAnchorElSourceType={setAnchorElSourceType}
           pushToMetro={pushToMetro}
@@ -79,33 +91,33 @@ export const FormActionsToolbar = () => {
         />
       </PermissionGate>
 
+      {/* Edit */}
       <PermissionGate requiredPermissions={[permission.UpdateForm]} userPermissions={permissions}>
-        <Tooltip title="עריכת הטופס">
-          <Button
-            variant="customIcon"
+        <Tooltip title="עריכת טופס">
+          <IconOnlyButton
             onClick={() =>
-              navigate(`/form/edit/${formId}`, { state: { from: location.pathname } })
+              navigate(`/form/edit/${formId}`, {
+                state: { from: location.pathname },
+              })
             }>
-            <CustomIcon forcePointer iconName="edit" style={{ width: 23 }} />
-          </Button>
+            <EditIcon />
+          </IconOnlyButton>
         </Tooltip>
       </PermissionGate>
 
+      {/* Share */}
       <PermissionGate requiredPermissions={[permission.ShareForm]} userPermissions={permissions}>
-        <Tooltip title="שיתוף הטופס">
-          <Button
-            variant="customIcon"
-            disabled={!hasFormFields}
-            onClick={() => setShowSharePopup(true)}>
-            <CustomIcon forcePointer iconName="share" style={{ width: 23 }} />
-          </Button>
+        <Tooltip title="שיתוף">
+          <IconOnlyButton disabled={!hasFormFields} onClick={() => setShowSharePopup(true)}>
+            <ShareIcon />
+          </IconOnlyButton>
         </Tooltip>
+
         {showSharePopup && (
           <UserPicker
             form={form}
             closeSharePopupAndRefreshForm={(users, updatedForm) => {
               const formToUpdate = updatedForm || form;
-
               setForm(formToUpdate as typeof form);
               setShowSharePopup(false);
             }}
@@ -113,10 +125,11 @@ export const FormActionsToolbar = () => {
         )}
       </PermissionGate>
 
+      {/* Back (now last) */}
       <Tooltip title="חזרה">
-        <Button onClick={() => navigate("/")} variant="customIcon">
-          <CustomIcon forcePointer iconName="arrowBack" />
-        </Button>
+        <IconOnlyButton onClick={() => navigate("/")}>
+          <ArrowBackIcon />
+        </IconOnlyButton>
       </Tooltip>
 
       <SyncTypeMenu
@@ -124,6 +137,7 @@ export const FormActionsToolbar = () => {
         handleCloseMoreActions={handleCloseMoreActions}
         handleAutomaticSource={handleAutomaticSource}
       />
+
       {showMetroPopup && <MetroSyncingPopup setShowMetroPopup={setShowMetroPopup} />}
     </Box>
   );

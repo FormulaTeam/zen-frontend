@@ -45,6 +45,11 @@
     padding: 20px 12px !important;
 }
 
+.emptyTitle {
+    color: #a7abb1;
+    font-style: italic;
+}
+
 .catalogArrowIcon {
     animation: bounceRight 1s ease-in-out infinite;
 }

@@ -5,10 +5,13 @@ import {
   IconButton,
   InputAdornment,
   useTheme,
+  CircularProgress,
+  Avatar,
+  Box,
+  Typography,
 } from "@mui/material";
-import male from "../../images/man4.png";
-import ReactLoading from "react-loading";
 import ClearIcon from "@mui/icons-material/Clear";
+import SearchIcon from "@mui/icons-material/Search";
 import AutocompleteItem from "./AutocompleteItem";
 import { ROLE_CATALOG } from "../../consts/roles";
 import { SharePickerUser } from "@src/hooks/useUserPicker";
@@ -17,7 +20,6 @@ import {
   CreatorContainer,
   LoaderContainer,
   RoleLabel,
-  UserAvatar,
   UserDetails,
   UserInfo,
   UsersList,
@@ -51,7 +53,7 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
   const theme = useTheme();
   const [inputValue, setInputValue] = useState("");
 
-  const creatorRole = ROLE_CATALOG.find((r) => r.role_id === formCreator?.role_id);;
+  const creatorRole = ROLE_CATALOG.find((r) => r.role_id === formCreator?.role_id);
 
   const onInputChange = (event: any, value: string) => {
     setInputValue(value);
@@ -80,19 +82,27 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
     setInputValue("");
   };
 
+  const getInitials = (name?: string) => {
+    if (!name) return "";
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
   return loading ? (
     <LoaderContainer>
-      <ReactLoading type={"spinningBubbles"} color={theme.palette.primary.main} />
+      <CircularProgress size={40} thickness={4} sx={{ color: "#2563eb" }} />
     </LoaderContainer>
   ) : (
     <Container>
       <UserPickerAutocomplete
         isOptionEqualToValue={(option, value) => option?.id === value?.id}
         value={null}
-        options={inputValue.length >= 2 ? shareWithOptionsUsers : []} // הצגת תוצאות רק מעל 2 תווים
+        options={inputValue.length >= 2 ? shareWithOptionsUsers : []}
         clearOnBlur={false}
         id="shareWithAutocomplete"
         multiple={false}
+        forcePopupIcon={false} // This removes the dropdown arrow
         inputValue={inputValue}
         onInputChange={onInputChange}
         onChange={onChange}
@@ -103,13 +113,12 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
           return `${userUPN} ${displayName}`.trim();
         }}
         renderOption={(props: any, user: any) => {
-          const upn: string = user?.upn.toLowerCase();
+          const upn: string = user?.upn?.toLowerCase() || "";
           const id: string = String(user?.id || "").toLowerCase();
           const formCreatorUpn: string = formCreator?.upn?.toLowerCase() || "";
 
           const isSelected: boolean =
             (formCreatorUpn && formCreatorUpn === upn) ||
-            // Check if user is in selectedShareWith
             selectedShareWith.some((user: SharePickerUser) => {
               const userUpn: string = user.upn?.toLowerCase() || "";
               const userId: string = String(user.id || "").toLowerCase();
@@ -120,11 +129,7 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
           const { key, ...restProps } = props;
 
           return (
-            <AutocompleteListItem
-              key={key}
-              {...restProps}
-              $isSelected={isSelected}
-            >
+            <AutocompleteListItem key={key} {...restProps} $isSelected={isSelected}>
               <AutocompleteItem
                 user={{ ...user, isSelected }}
                 displayName={user?.displayName || user?.name || ""}
@@ -147,47 +152,67 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            label="חיפוש משתמשים"
+            placeholder="חיפוש משתמשים להוספה"
             variant="outlined"
             fullWidth
             size="small"
             InputProps={{
               ...params.InputProps,
+              startAdornment: (
+                <InputAdornment position="start" sx={{ ml: 0.5, mr: 1 }}>
+                  <SearchIcon sx={{ color: "#94a3b8", fontSize: "1.2rem" }} />
+                </InputAdornment>
+              ),
               endAdornment: (
                 <>
                   {inputValue && (
                     <InputAdornment position="end">
-                      <IconButton onClick={handleClear} size="small">
-                        <ClearIcon />
+                      <IconButton onClick={handleClear} size="small" sx={{ mr: -0.5 }}>
+                        <ClearIcon fontSize="small" />
                       </IconButton>
                     </InputAdornment>
                   )}
                   {params.InputProps.endAdornment}
                 </>
               ),
+              sx: {
+                pr: "8px !important",
+              },
             }}
           />
         )}
       />
 
       <UsersList>
-        {/* Creator user */}
         <CreatorContainer $bgc={theme.palette.background?.default}>
           <UserInfo>
-            <UserAvatar src={male} alt="Creator" />
+            <Avatar
+              sx={{
+                width: 36,
+                height: 36,
+                fontSize: "0.875rem",
+                bgcolor: "#f1f5f9",
+                color: "#64748b",
+                fontWeight: 600,
+                border: "1px solid #e2e8f0",
+              }}>
+              {getInitials(formCreator?.displayName || formCreator?.upn)}
+            </Avatar>
             <UserDetails>
-              <CreatorName>
-                {formCreator?.displayName || formCreator?.upn}
-              </CreatorName>
+              <CreatorName>{formCreator?.displayName || formCreator?.upn}</CreatorName>
               <UserUPN>{formCreator?.upn}</UserUPN>
             </UserDetails>
           </UserInfo>
-          <RoleLabel $isCreator={true} color={theme.palette.primary.main}>
-            {creatorRole?.roleName || "הרשאה"}
-          </RoleLabel>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography variant="caption" sx={{ color: "#94a3b8", fontWeight: 500 }}>
+              יוצר הטופס
+            </Typography>
+            <RoleLabel $isCreator={true} color={theme.palette.primary.main}>
+              {creatorRole?.roleName || "מנהל"}
+            </RoleLabel>
+          </Box>
         </CreatorContainer>
 
-        {/* Mapped users */}
         {selectedShareWith?.map((user, index) => (
           <SharedUser
             key={user?.id || index}

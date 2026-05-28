@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import ConfirmPopup from "@src/popups/ConfirmPopup/ConfirmPopup";
+import ConfirmDeleteDialog from "@src/components/BasePopup/ConfirmDeleteDialog";
 
 export function useConfirmDeleteExistingField() {
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -12,16 +12,14 @@ export function useConfirmDeleteExistingField() {
     };
 
     const ConfirmDialog = confirmOpen && onConfirm ? (
-        <ConfirmPopup
-            msg={
-                "לתשומת לבך! ייתכן ושדה זה מכיל תוכן כחלק מהתגובות לטופס. לכן, מחיקת השדה תוביל למחיקה והסרת הנתונים מהטופס ללא יכולת שחזור. האם למחוק שדה זה מהטופס?"
-            }
-            okFunc={onConfirm}
-            closePopup={() => setConfirmOpen(false)}
-            okBtnText="מחק שדה"
-            cancelBtnText="בטל"
+        <ConfirmDeleteDialog
+            open={confirmOpen}
             title="אזהרה"
-            messageType="warning"
+            message="לתשומת לבך! ייתכן ושדה זה מכיל תוכן כחלק מהתגובות לטופס. לכן, מחיקת השדה תוביל למחיקה והסרת הנתונים מהטופס ללא יכולת שחזור. האם למחוק שדה זה מהטופס?"
+            onConfirm={onConfirm}
+            onClose={() => setConfirmOpen(false)}
+            confirmText="מחק שדה"
+            cancelText="בטל"
         />
     ) : null;
 

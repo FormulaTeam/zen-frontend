@@ -41,6 +41,7 @@ const AppRouter = () => {
           display: "grid",
           gridTemplateRows: "auto 1fr",
           height: "100vh",
+          overflow: "hidden",
         }}>
         <Navbar />
         <Routes>
@@ -91,6 +92,7 @@ const AppRouter = () => {
             <Route path={IPath.DOWNLOAD_FILE} element={<DownloadPage />} />
             <Route path={IPath.DELETED_FORMS} element={<DeletedForms user={user} />} />
           </Route>
+          <Route path="*" element={<ErrorPage />} />
         </Routes>
         <Toaster richColors position="bottom-right" expand={true} />
         {/* <HelpBtn showHelpCard={() => setShowHelpCard(true)} />

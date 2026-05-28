@@ -10,6 +10,7 @@ export function useFormLoader(formId: string) {
     data: formData,
     isLoading,
     isError,
+    error,
     isSuccess,
   } = useGetForm({
     formId,
@@ -192,6 +193,7 @@ export function useFormLoader(formId: string) {
   return {
     isLoading: isLoading || (!form && !isError),
     isError,
+    error,
     form,
   };
 }

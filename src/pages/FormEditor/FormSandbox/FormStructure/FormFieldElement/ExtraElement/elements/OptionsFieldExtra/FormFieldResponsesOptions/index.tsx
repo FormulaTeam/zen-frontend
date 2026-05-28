@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { FormControl, CircularProgress, Autocomplete, TextField, Tooltip } from "@mui/material";
+import { FormControl, CircularProgress, Autocomplete, TextField, Tooltip, Typography, Box } from "@mui/material";
 import { ExtraElementProps } from "../../../index";
 import { OptionsFieldTypeId, SpecificOptions, SpecificOptionsErrors } from "../index";
 import { useGetForm } from "@api/formsApi";
@@ -32,9 +32,9 @@ function FormFieldResponsesOptions(props: Props) {
   const [searchText, setSearchText] = useState("");
   const [fieldTouchAttempted, setFieldTouchAttempted] = useState(false);
   const { formsData: allForms, isLoading: isLoadingForms } = useGetFormsData({
-    searchQuery: searchText.length >= 2 ? searchText : undefined,
+    searchQuery: searchText || undefined,
     scope: formsScopeOption.LinkableForms,
-    enabled: searchText.length >= 2,
+    enabled: true,
   });
 
   const availableForms = useMemo<FormOption[]>(() => {
@@ -104,7 +104,7 @@ function FormFieldResponsesOptions(props: Props) {
         value={selectedFormOption}
         loading={isLoadingForms}
         loadingText="מחפש..."
-        noOptionsText={searchText.length < 2 ? "יש להזין לפחות 2 תווים" : "לא נמצאו תוצאות"}
+        noOptionsText="לא נמצאו תוצאות"
         onInputChange={(_, newInputValue) => {
           setSearchText(newInputValue);
         }}
@@ -115,6 +115,18 @@ function FormFieldResponsesOptions(props: Props) {
           });
         }}
         isOptionEqualToValue={(option, value) => option?.id === value?.id}
+        renderOption={(props, option) => (
+          <li {...props}>
+            <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
+              <Typography component="span">{option.name}</Typography>
+              <Typography
+                component="span"
+                sx={{ color: "text.secondary", fontSize: "0.75rem", mt: "2px" }}>
+                {option.id}
+              </Typography>
+            </Box>
+          </li>
+        )}
         renderInput={(params) => (
           <TextField
             {...params}

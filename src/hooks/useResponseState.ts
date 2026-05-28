@@ -26,6 +26,7 @@ import { useNavigate } from "react-router-dom";
 import { IPath } from "../types/enums/global.enums";
 import { isDifferent } from "../utils/responses";
 import { FieldTypeIds } from "../utils/interfaces";
+import { StatusCodes } from "http-status-codes";
 import { TextComparator } from "../pages/FormEditor/schemas/conditions/conditionField/comparators/TextComparator";
 import { NumberComparator } from "../pages/FormEditor/schemas/conditions/conditionField/comparators/NumberComparator";
 import { DateComparator } from "../pages/FormEditor/schemas/conditions/conditionField/comparators/DateComparator";
@@ -429,10 +430,19 @@ export const useResponseState = (
     formFieldsValuesMapRef.current = formFieldsValuesMap;
   }, [formFieldsValuesMap]);
 
-  const { data: formFromQuery } = useGetForm({
+  const { data: formFromQuery, isError: isFormError, error: formError } = useGetForm({
     formId,
     includePermissions: true,
   });
+
+  useEffect(() => {
+    if (isFormError && formError) {
+      const status = (formError as any).response?.status;
+      if (status === StatusCodes.NOT_FOUND || status === StatusCodes.FORBIDDEN) {
+        navigate(IPath.ERROR, { replace: true });
+      }
+    }
+  }, [isFormError, formError, navigate]);
 
   useEffect(() => {
     if (initialResponse !== undefined) {
@@ -463,16 +473,23 @@ export const useResponseState = (
             }
           }
         } else if (responseId && formId) {
-          const found = await getResponseById(Number(formId), responseId);
+          try {
+            const found = await getResponseById(Number(formId), responseId);
 
-          if (isMounted && found) {
-            if (copyMode) {
-              setResponse({
-                ...found,
-                id: null as unknown as ResponseDto["id"],
-              });
-            } else {
-              setResponse(found);
+            if (isMounted && found) {
+              if (copyMode) {
+                setResponse({
+                  ...found,
+                  id: null as unknown as ResponseDto["id"],
+                });
+              } else {
+                setResponse(found);
+              }
+            }
+          } catch (error: any) {
+            const status = error.response?.status;
+            if (status === StatusCodes.NOT_FOUND || status === StatusCodes.FORBIDDEN) {
+              navigate(IPath.ERROR, { replace: true });
             }
           }
         } else if (isMounted) {
@@ -488,7 +505,7 @@ export const useResponseState = (
     return () => {
       isMounted = false;
     };
-  }, [formFromQuery, responseId, copyMode, formId, initialResponse]);
+  }, [formFromQuery, responseId, copyMode, formId, initialResponse, navigate]);
 
   useEffect(() => {
     if (!form) return;
@@ -1047,6 +1064,5 @@ export const useResponseState = (
     toggleSectionCollapse,
     hiddenFieldIds,
     setFormFieldsValuesMap
-    };
-    };
-
+  };
+};

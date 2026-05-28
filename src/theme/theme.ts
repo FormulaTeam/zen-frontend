@@ -71,7 +71,7 @@ const palette = {
 
 export let theme = createTheme({
   typography: {
-    fontFamily: "assistant, sans-serif",
+    fontFamily: "Heebo, assistant, sans-serif",
     fontSize: 19,
   },
   palette,

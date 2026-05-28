@@ -30,6 +30,14 @@ interface FormStructure {
   conditions: FormConditions;
 }
 
+export interface FormValidationResult {
+  isValid: boolean;
+  fieldsValid: boolean;
+  fieldErrorsCount: number;
+  metadataErrors: typeToFlattenedError<FormMetadata>["fieldErrors"];
+  hasFields: boolean;
+}
+
 interface FormStructureContext {
   formStructure: FormStructure;
   setFormStructure: (value: SetStateAction<FormStructure>) => void;
@@ -44,7 +52,7 @@ interface FormStructureContext {
   deleteConditionAt: (index: number) => void;
   setConditionDataAt: (index: number, condition: FormCondition) => void;
   checkHasChanges: () => boolean;
-  validateForm: () => boolean;
+  validateForm: () => FormValidationResult;
   setFormMetadata: (metadata: Partial<FormMetadata>) => boolean;
 }
 
@@ -62,7 +70,13 @@ const FormStructureContext = createContext<FormStructureContext>({
   deleteConditionAt: () => null,
   setConditionDataAt: () => null,
   checkHasChanges: () => false,
-  validateForm: () => false,
+  validateForm: () => ({
+    isValid: false,
+    fieldsValid: false,
+    fieldErrorsCount: 0,
+    metadataErrors: {},
+    hasFields: false,
+  }),
   setFormMetadata: () => false,
 });
 

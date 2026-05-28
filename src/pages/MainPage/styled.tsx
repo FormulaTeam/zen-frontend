@@ -36,19 +36,20 @@ export const StyledTypography = styled(Typography)(({ theme }) => ({
   fontWeight: 600,
 }));
 
-export const CreateFormButton = styled("button") <{ $bgc?: string }>`
-  background-color: ${({ $bgc }) => $bgc};
-  color: white;
-  padding: 5px 10px;
-  font-size: 16px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 140px;
-`;
+export const CreateFormButton = styled("button")<{ $bgc?: string }>(({ theme, $bgc }) => ({
+  backgroundColor: $bgc,
+  color: "white",
+  padding: "5px 10px",
+  fontSize: "16px",
+  fontFamily: "inherit",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  width: "140px",
+}));
 
 export const PrimaryBlueButton = styled("button")(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
@@ -56,7 +57,8 @@ export const PrimaryBlueButton = styled("button")(({ theme }) => ({
   height: "40px",
   padding: "0 30px",
   fontSize: "16px",
-  fontWeight: 400,
+  fontFamily: "inherit",
+  fontWeight: 700,
   border: "none",
   borderRadius: "8px",
   cursor: "pointer",

@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect, useRef } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { z } from "zod";
 import { $ZodErrorTree } from "zod/v4/core";
 import { cloneDeep, isEqual } from "lodash";
@@ -62,6 +62,7 @@ function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
     const sortedFields = [...(sectionData.fields || [])].sort(
       (a, b) => (a.index ?? 0) - (b.index ?? 0),
     );
+
     const fieldIds = sortedFields.map((fieldData) => {
       const fieldId = fieldData.id?.toString() || generateFieldId();
 
@@ -151,7 +152,7 @@ const validateFieldData = <T extends FormFieldTypeId>(
 const validateField = (prev: FormStructure, fieldId: string) => {
   const result = FormFieldSchema.safeParse({
     ...prev.fields[fieldId].data,
-    extra: prev.fields[fieldId].data.extra ?? {}, // empty object fallback is added to be able to validate required extra fields in case the extra object itself has yet to be defined
+    extra: prev.fields[fieldId].data.extra ?? {},
   });
 
   if (!result.success) {
@@ -430,7 +431,6 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
   );
   const [formStructure, setFormStructure] = useState<FormStructure>(initialFormStructure);
 
-  // When editedForm updates from external fetching properly sync the visual state
   useEffect(() => {
     if (editedForm) {
       const newStructure = yieldFormStructure(editedForm);
@@ -473,6 +473,7 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
           conditions = applyComponentDeletionToConditions("field", fieldId, conditions);
           delete fields[fieldId];
         });
+
         delete sections[sectionId];
         orderedSectionIds.splice(orderedSectionIds.indexOf(sectionId), 1);
 
@@ -491,18 +492,16 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
 
   const renameSection = useCallback(
     (sectionId: string, title: string) => {
-      setFormStructure((prev) => {
-        const changedSection = prev.sections[sectionId];
-        changedSection.title = title;
-
-        return {
-          ...prev,
-          sections: {
-            ...prev.sections,
-            [sectionId]: changedSection,
+      setFormStructure((prev) => ({
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [sectionId]: {
+            ...prev.sections[sectionId],
+            title,
           },
-        };
-      });
+        },
+      }));
     },
     [setFormStructure],
   );
@@ -634,27 +633,23 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
   );
 
   const setFormMetadata = useCallback((metadata: Partial<FormMetadata>) => {
-    let isValid = true;
+    let isValueValid = true;
 
     setFormStructure((prev) => {
       const { validationErrors: _, ...prevMetadata } = prev.metadata;
-
       const combinedMetadata = { ...prevMetadata, ...metadata };
 
-      // If only iconId is changed, skip validation to allow changing icon even if title is empty
       const isOnlyIconChange = Object.keys(metadata).length === 1 && "iconId" in metadata;
 
+      let validationErrors = prev.metadata.validationErrors;
+
       if (!isOnlyIconChange) {
-        const validationErrors = validateMetadata(combinedMetadata);
+        validationErrors = validateMetadata(combinedMetadata);
+
         if (validationErrors && Object.keys(validationErrors).length > 0) {
-          isValid = false;
-          return {
-            ...prev,
-            metadata: {
-              ...prevMetadata,
-              validationErrors,
-            },
-          };
+          isValueValid = false;
+        } else {
+          validationErrors = null;
         }
       }
 
@@ -662,16 +657,16 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
         ...prev,
         metadata: {
           ...combinedMetadata,
-          validationErrors: isOnlyIconChange ? prev.metadata.validationErrors : {},
+          validationErrors,
         },
       };
     });
 
-    return isValid;
+    return isValueValid;
   }, []);
 
   const appendCondition = useCallback((condition: FormCondition) => {
-    let validationErrors = validateCondition(condition);
+    const validationErrors = validateCondition(condition);
 
     if (!validationErrors) {
       setFormStructure((prev) => {
@@ -697,7 +692,7 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
   }, []);
 
   const setConditionDataAt = useCallback((index: number, condition: FormCondition) => {
-    let validationErrors = validateCondition(condition);
+    const validationErrors = validateCondition(condition);
 
     if (!validationErrors) {
       setFormStructure((prev) => {
@@ -714,7 +709,8 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
   }, []);
 
   const validateForm = useCallback(() => {
-    let isValid = true;
+    let fieldsValid = true;
+    let fieldErrorsCount = 0;
 
     const fields = { ...formStructure.fields };
     const { validationErrors: _, ...metadata } = { ...formStructure.metadata };
@@ -729,12 +725,16 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     const fieldsWithDuplicateErrors = applyDuplicateFieldErrors(fields);
 
     Object.values(fieldsWithDuplicateErrors).forEach((field) => {
-      if (hasFieldValidationErrors(field.validationErrors)) isValid = false;
+      if (hasFieldValidationErrors(field.validationErrors)) {
+        fieldsValid = false;
+        fieldErrorsCount++;
+      }
     });
 
-    const metadataValidationErrors = validateMetadata(metadata);
-    if (metadataValidationErrors && Object.keys(metadataValidationErrors).length > 0)
-      isValid = false;
+    const metadataErrors = validateMetadata(metadata) || {};
+    const hasMetadataErrors = Object.keys(metadataErrors).length > 0;
+    const hasFields = Object.keys(fields).length > 0;
+    const isValid = fieldsValid && !hasMetadataErrors && hasFields;
 
     setFormStructure((prev) => {
       const updatedFields = { ...prev.fields };
@@ -752,19 +752,24 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
         fields: applyDuplicateFieldErrors(updatedFields),
         metadata: {
           ...prevMetadata,
-          validationErrors: validateMetadata(prevMetadata),
+          validationErrors: hasMetadataErrors ? metadataErrors : null,
         },
       };
     });
 
-    return isValid;
+    return {
+      isValid,
+      fieldsValid,
+      fieldErrorsCount,
+      metadataErrors,
+      hasFields,
+    };
   }, [formStructure]);
 
   const checkHasChanges = useCallback(() => {
     return !isEqual(formStructure, initialFormStructure);
   }, [formStructure, initialFormStructure]);
 
-  // Auto-save draft logic
   useEffect(() => {
     if (checkHasChanges()) {
       saveFormDraft(formStructure.metadata.id, formStructure);

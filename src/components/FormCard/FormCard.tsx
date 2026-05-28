@@ -38,6 +38,7 @@ import { GrayShareIcon } from "./styled";
 import { FormOverviewDto } from "@src/types/shared";
 import { useDeleteForm } from "../../api/formsApi";
 import { toast } from "sonner";
+import ConfirmDeleteDialog from "../BasePopup/ConfirmDeleteDialog";
 
 const FormCard = ({
   form,
@@ -54,6 +55,7 @@ const FormCard = ({
 }) => {
   const theme = useTheme();
   const [showSharePopup, setShowSharePopup] = useState(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
 
@@ -79,13 +81,15 @@ const FormCard = ({
 
   const handleDeleteClick = async () => {
     handleMenuClose();
-    if (window.confirm("האם אתה בטוח שברצונך למחוק את הטופס?")) {
-      try {
-        await deleteFormMutation.mutateAsync();
-        toast.success("הטופס נמחק בהצלחה");
-      } catch (error) {
-        toast.error("מחיקת הטופס נכשלה");
-      }
+    setShowDeletePopup(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await deleteFormMutation.mutateAsync();
+      toast.success("הטופס נמחק בהצלחה");
+    } catch (error) {
+      toast.error("מחיקת הטופס נכשלה");
     }
   };
 
@@ -180,7 +184,7 @@ const FormCard = ({
                   PaperProps={{
                     style: {
                       maxHeight: 48 * 4.5,
-                      width: "150px",
+                      minWidth: "160px",
                       borderRadius: "8px",
                       boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
                     },
@@ -242,6 +246,17 @@ const FormCard = ({
               closeSharePopupAndRefreshForm={() => {
                 setShowSharePopup(false);
               }}
+            />
+          )}
+
+          {showDeletePopup && (
+            <ConfirmDeleteDialog
+              open={showDeletePopup}
+              title="מחיקת טופס"
+              message="האם אתה בטוח שברצונך למחוק את הטופס?"
+              onConfirm={confirmDelete}
+              onClose={() => setShowDeletePopup(false)}
+              confirmText="מחק טופס"
             />
           )}
 

@@ -146,7 +146,7 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
           title={
             isRestoreDisabled && hasPermission
               ? "לא ניתן לשחזר תגובה לטופס שנמחק"
-              : "שחזר תגובה לטופס"
+              : "שחזור תגובה לטופס"
           }>
           <span>
             <Button

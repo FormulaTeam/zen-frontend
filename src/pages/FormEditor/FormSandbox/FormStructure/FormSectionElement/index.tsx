@@ -1,6 +1,6 @@
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { AccordionDetails, Button, TextField, Tooltip } from "@mui/material";
+import { AccordionDetails, Button, Tooltip } from "@mui/material";
 import { FormField, useFormStructureContext } from "../../../context/FormStructureContext";
 import styles from "./style.module.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -23,12 +23,10 @@ import {
   ResizeHandleBar,
   EmptyPlaceholderText,
   StyledResizable,
-  SaveButtonIcon,
-  CancelButtonIcon,
-  EditButtonIcon,
   ExpandIcon,
   DeleteIcon,
   CatalogArrowIcon,
+  SectionTitleInput,
 } from "./styled";
 
 interface Props {
@@ -74,7 +72,7 @@ function FormSectionElement({ id }: Props) {
   const self = useMemo(() => formStructure.sections[id], [formStructure.sections, id]);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const titleInputRef = useRef<HTMLDivElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setNodeRef(containerRef.current);
@@ -108,71 +106,71 @@ function FormSectionElement({ id }: Props) {
     [setFieldData],
   );
 
+  const saveSectionTitle = useCallback(() => {
+    const trimmedTitle = editedTitle.trim();
+
+    if (!trimmedTitle) {
+      return false;
+    }
+
+    renameSection(id, trimmedTitle);
+    setIsEditingTitle(false);
+
+    return true;
+  }, [editedTitle, id, renameSection]);
+
+  const cancelSectionTitleEdit = useCallback(() => {
+    setEditedTitle(self.title);
+    setIsEditingTitle(false);
+  }, [self.title]);
+
   const sectionTitle: JSX.Element = isEditingTitle ? (
-    <>
-      <TextField
-        value={editedTitle}
-        variant="standard"
-        inputRef={titleInputRef}
-        error={isEditedTitleEmpty}
-        helperText={isEditedTitleEmpty ? "שם מקטע הוא שדה חובה" : ""}
-        slotProps={{
-          htmlInput: {
-            maxLength: 255,
-          },
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-        onChange={(e) => setEditedTitle(e.target.value.trimStart())}
-        onBlur={(e) => setEditedTitle(e.target.value.trim())}
-      />
-
-      <Button
-        className={styles.button}
-        disabled={isEditedTitleEmpty}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={() => {
-          const trimmedTitle = editedTitle.trim();
-
-          if (!trimmedTitle) {
-            return;
-          }
-
-          renameSection(id, trimmedTitle);
-          setIsEditingTitle(false);
-        }}>
-        <SaveButtonIcon />
-      </Button>
-
-      <Button
-        className={styles.button}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={() => {
-          setIsEditingTitle(false);
-        }}>
-        <CancelButtonIcon />
-      </Button>
-    </>
+    <SectionTitleInput
+      value={editedTitle}
+      autoFocus
+      inputRef={titleInputRef}
+      placeholder={texts.heb.undefinedSection}
+      error={isEditedTitleEmpty}
+      helperText={isEditedTitleEmpty ? "שם מקטע הוא שדה חובה" : ""}
+      inputProps={{
+        maxLength: 255,
+      }}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      onChange={(e) => {
+        setEditedTitle(e.target.value.trimStart());
+      }}
+      onBlur={() => {
+        if (!saveSectionTitle()) {
+          cancelSectionTitleEdit();
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          saveSectionTitle();
+        } else if (e.key === "Escape") {
+          cancelSectionTitleEdit();
+        }
+      }}
+    />
   ) : (
-    <>
-      <OverflowTooltip title={self.title} placement="top">
-        <SectionTitleText variant="body1">{self.title}</SectionTitleText>
-      </OverflowTooltip>
-
-      <Tooltip title="עריכת מקטע" placement="top">
-        <span style={{ display: "inline-block" }}>
-          <Button
-            className={styles.button}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={() => {
-              setEditedTitle(self.title);
-              setIsEditingTitle(true);
-            }}>
-            <EditButtonIcon />
-          </Button>
-        </span>
-      </Tooltip>
-    </>
+    <Tooltip title="עריכת מקטע" placement="top">
+      <SectionTitleText
+        variant="body1"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          setEditedTitle(self.title);
+          setIsEditingTitle(true);
+          e.stopPropagation();
+        }}>
+        <OverflowTooltip title={self.title || texts.heb.undefinedSection} placement="top">
+          <span className={!self.title ? styles.emptyTitle : ""}>
+            {self.title || texts.heb.undefinedSection}
+          </span>
+        </OverflowTooltip>
+      </SectionTitleText>
+    </Tooltip>
   );
 
   const toggleExpandButton: JSX.Element = (

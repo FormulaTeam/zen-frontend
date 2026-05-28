@@ -1,37 +1,36 @@
 import { GridRowId, GridRowModel, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router";
-import { Tooltip, IconButton, Typography } from "@mui/material";
+import { useNavigate, useParams } from "react-router";
+import { Box, Tooltip, IconButton } from "@mui/material";
 import Delete from "@mui/icons-material/Delete";
+import { StatusCodes } from "http-status-codes";
 
 import SidePanel from "../../components/SidePanel/SidePanel";
 import SearchInfo from "../../components/Responses/SearchInfo";
 import { useAuth } from "../../contexts/AuthContext";
 import { AddResponseButton } from "./components/AddResponseButton";
-import { CancelEditDialog } from "./components/CancelEditDialog";
 import { EditResponsesButton } from "./components/EditResponsesButton";
 import { FormActionsToolbar } from "./components/FormActionsToolbar";
 import Header from "./components/Header";
 import Loader from "../../components/Responses/Loader";
 import { ResponsesTable } from "./components/ResponsesTable";
-import { RowActionsButtons } from "./components/RowActionsButtons";
 import { ViewsButton } from "./components/ViewsButton";
 import { useFormLoader } from "./hooks/useFormLoader";
 import { useResponsesEdit } from "./hooks/useResponsesEdit";
 import { useResponsesViews } from "./hooks/useResponsesViews";
 import { useFormStore } from "./stores/form.store";
-import { ActionsRow, CenteredBox, MainContentWrapper, PageWrapper, TopSection } from "./styled";
+import {
+  CenteredBox,
+  MainContentWrapper,
+  PageWrapper,
+  TopSection,
+  MetadataLine,
+  ActionLine,
+} from "./styled";
 import { FormDto, FormFieldDto } from "../../types/shared";
-import { PermissionGate } from "@src/components/PermissionGate";
-import { permission } from "formula-gear";
-import DraftRecoveryDialog from "../../components/BasePopup/DraftRecoveryDialog";
-import { clearQuickEditDraft, getQuickEditDraft } from "../FormEditor/utils/draftPersistence";
-import { showErrorNotification, showSuccessNotification } from "@utils/utils";
-
-type ResponsePageRow = GridRowModel & {
-  id: string | number;
-  [key: string]: unknown;
-};
+import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner";
+import { getQuickEditDraft, clearQuickEditDraft } from "../FormEditor/utils/draftPersistence";
+import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialog";
 
 type SidePanelForm = Pick<FormDto, "id" | "name"> & {
   fields: FormFieldDto[];
@@ -52,8 +51,18 @@ export default function ResponsesPage({
   void shouldRefreshPage;
   void setShouldRefreshPage;
 
+  const navigate = useNavigate();
   const { id: formId } = useParams<string>();
-  const { isLoading, isError } = useFormLoader(formId || "");
+  const { isLoading, isError, error } = useFormLoader(formId || "");
+
+  useEffect(() => {
+    if (isError && error) {
+      const status = (error as any).response?.status;
+      if (status === StatusCodes.NOT_FOUND || status === StatusCodes.FORBIDDEN) {
+        navigate("/error", { replace: true });
+      }
+    }
+  }, [isError, error, navigate]);
 
   if (isLoading) {
     return (
@@ -74,9 +83,18 @@ const ResponsesPageContent = (): JSX.Element => {
     ids: new Set<GridRowId>(),
   });
 
-  const [search, setSearch] = useState<string>("");
   const { rows: storeRows, form, permissions, filter, setFilter } = useFormStore();
   const { user } = useAuth();
+
+  const handleSearch = (val: string) => {
+    setFilter({
+      ...(filter || {}),
+      query: val,
+      pageNumber: 1,
+      before: undefined,
+      after: undefined,
+    });
+  };
 
   const {
     isInEditMode,
@@ -86,7 +104,6 @@ const ResponsesPageContent = (): JSX.Element => {
     deletedRowIds,
     setDeletedRowIds,
     hasUnsavedChanges,
-    editedRowsCount,
     localRows,
     setLocalRows,
     validationErrors,
@@ -103,14 +120,14 @@ const ResponsesPageContent = (): JSX.Element => {
     handleAddNewResponse,
   } = useResponsesEdit();
 
-  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<any>(null);
 
   useEffect(() => {
     const draft = getQuickEditDraft(form?.id);
     if (draft && (draft.editedRows.length > 0 || draft.deletedRowIds?.length > 0)) {
       setPendingDraft(draft);
-      setShowRestoreDialog(true);
+      setShowRestoreBanner(true);
     }
   }, [form?.id]);
 
@@ -121,21 +138,19 @@ const ResponsesPageContent = (): JSX.Element => {
       setLocalRows(pendingDraft.localRows);
       setDeletedRowIds(pendingDraft.deletedRowIds || []);
     }
-    setShowRestoreDialog(false);
+    setShowRestoreBanner(false);
     setPendingDraft(null);
   };
 
   const handleDiscardDraft = () => {
     clearQuickEditDraft(form?.id);
-    setShowRestoreDialog(false);
+    setShowRestoreBanner(false);
     setPendingDraft(null);
   };
 
   const {
     isSidePanelOpen,
     setIsSidePanelOpen,
-    currentViewConfig,
-    currentView,
     savedViews,
     hasSavedViews,
     selectedViewId,
@@ -146,159 +161,127 @@ const ResponsesPageContent = (): JSX.Element => {
     handleApplyView,
     handleSaveView,
     isSaving,
+    currentView,
   } = useResponsesViews();
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setFilter((prev) => ({
-        ...prev,
-        query: search,
-        before: undefined,
-        after: undefined,
-        pageNumber: 1,
-      }));
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [search, setFilter]);
-
-  const displayedRows = useMemo<ResponsePageRow[]>(() => {
-    return (isInEditMode ? localRows : storeRows) as ResponsePageRow[];
-  }, [storeRows, localRows, isInEditMode]);
-
-  const selectedIds: GridRowId[] = Array.from(rowSelectionModel.ids);
-  const hasSelection = rowSelectionModel.type === "include" ? selectedIds.length > 0 : true;
-
-  const handleRowDeleted = () => {
-    setRowSelectionModel({ type: "include", ids: new Set<GridRowId>() });
-  };
-
-  const sidePanelForm = useMemo<SidePanelForm | undefined>(() => {
-    if (!form) {
-      return undefined;
+    if (!isInEditMode && !showRestoreBanner) {
+      const draft = getQuickEditDraft(form?.id);
+      if (draft && (draft.editedRows.length > 0 || draft.deletedRowIds?.length > 0)) {
+        setPendingDraft(draft);
+        setShowRestoreBanner(true);
+      }
     }
+  }, [isInEditMode, form?.id, showRestoreBanner]);
 
-    // Use form.fields which is already hierarchically sorted by useFormLoader
+  const sidePanelForm: SidePanelForm | undefined = useMemo(() => {
+    if (!form) return undefined;
     return {
       id: form.id,
-      name: form.name ?? "",
-      fields: form.fields,
+      name: form.name,
+      fields: form.sections.flatMap((s) => s.fields),
     };
   }, [form]);
 
   const sidePanelUser = useMemo(() => {
-    if (!user) {
-      return undefined;
-    }
-
-    const safeUpn = (user as any)?.upn || (user as any)?.UPN || "";
-    const safeEmail = (user as any)?.email || (user as any)?.mail || "";
-
-    let displayName = (user as any)?.name || "";
-    if (!displayName) {
-      const firstName = (user as any)?.firstName || "";
-      const lastName = (user as any)?.lastName || "";
-      displayName = `${firstName} ${lastName}`.trim();
-    }
-
+    if (!user) return undefined;
     return {
-      ...user,
-      name: displayName || safeUpn || safeEmail,
-      upn: safeUpn,
-      email: safeEmail,
+      id: (user as any).id?.toString() || user.upn || "",
+      upn: user.upn,
+      role_id: 1,
     };
   }, [user]);
 
+  const selectedRows = useMemo(() => {
+    const { type, ids } = rowSelectionModel;
+    const idSet = ids as Set<GridRowId>;
+
+    const sourceRows = isInEditMode && localRows.length > 0 ? localRows : storeRows;
+
+    if (type === "include") {
+      return sourceRows.filter((row) => idSet.has(row.id));
+    }
+    // type === "exclude"
+    return sourceRows.filter((row) => !idSet.has(row.id));
+  }, [rowSelectionModel, storeRows, localRows, isInEditMode]);
+
   const handleRowSelectionModelChange = useCallback((model: GridRowSelectionModel) => {
-    setRowSelectionModel((prev) => {
-      // Basic check for simple ID arrays (Mui DataGrid basic version)
-      if (Array.isArray(model)) {
-        const nextIds = new Set(model);
-        if (prev.type === "include" && prev.ids.size === nextIds.size) {
-          const allMatch = Array.from(nextIds).every((id) => prev.ids.has(id));
-          if (allMatch) return prev;
-        }
-
-        return {
-          type: "include",
-          ids: nextIds,
-        };
-      }
-
-      // Check for Pro model objects
-      if (
-        prev.type === model.type &&
-        prev.ids.size === model.ids.size &&
-        Array.from(model.ids).every((id) => prev.ids.has(id))
-      ) {
-        return prev;
-      }
-
-      return model;
-    });
+    setRowSelectionModel(model);
   }, []);
+
+  const showStandardActions = !isInEditMode && selectedRows.length === 0;
 
   return (
     <PageWrapper>
       <MainContentWrapper>
-        <TopSection sx={{ alignItems: "center", gap: 3 }}>
-          <Header />
-          <SearchInfo search={search} setSearch={setSearch} />
-          <FormActionsToolbar />
-        </TopSection>
         <TopSection>
-          <ActionsRow>
-            {hasSelection ? (
-              <RowActionsButtons
-                rowSelectionModel={rowSelectionModel}
-                onDeleted={handleRowDeleted}
-                onDeleteResponses={handleDeleteResponses}
-                currentUserUpn={sidePanelUser?.upn}
-                rows={displayedRows}
+          <MetadataLine>
+            {/* RIGHT SIDE: Metadata (Info, ID, Name) */}
+            <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
+              <Header />
+            </Box>
+
+            {/* LEFT SIDE: Nav Actions (Back, Share, Edit, More) */}
+            <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+              <FormActionsToolbar />
+            </Box>
+          </MetadataLine>
+
+          <ActionLine>
+            {/* RIGHT SIDE: Main Actions (Add, Quick Edit, Selection Actions) */}
+            <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
+              {showStandardActions && <AddResponseButton />}
+              <EditResponsesButton
                 isInEditMode={isInEditMode}
+                hasUnsavedChanges={hasUnsavedChanges}
+                onToggleEditMode={handleToggleEditMode}
+                onSaveChanges={handleSaveChanges}
+                onAddNewResponse={handleAddNewResponse}
+                isUpdating={isUpdating}
+                permissions={permissions}
+                selectedRows={selectedRows}
+                handleDeleteResponses={handleDeleteResponses}
               />
-            ) : (
-              <>
-                {!isInEditMode && <AddResponseButton />}
-                <EditResponsesButton
-                  isInEditMode={isInEditMode}
-                  hasUnsavedChanges={hasUnsavedChanges}
-                  isUpdating={isUpdating}
-                  onToggleEditMode={handleToggleEditMode}
-                  onSaveChanges={handleSaveChanges}
-                  onAddNewResponse={handleAddNewResponse}
-                  permissions={permissions}
-                />
-              </>
-            )}
-          </ActionsRow>
-          <PermissionGate requiredPermissions={[permission.MarkMyResponsesViewPublic]} userPermissions={permissions ?? []}>
-            <ViewsButton
-              isSidePanelOpen={isSidePanelOpen}
-              setIsSidePanelOpen={setIsSidePanelOpen}
-              hasSavedViews={hasSavedViews}
-              savedViews={savedViews}
-              selectedViewId={selectedViewId}
-              defaultViewId={defaultViewId}
-              handleViewDropdownChange={handleViewDropdownChange}
-            />
-          </PermissionGate>
+            </Box>
+
+            {/* LEFT SIDE: View Management & Search */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <SearchInfo search={filter?.query || ""} setSearch={handleSearch} />
+              <ViewsButton
+                isSidePanelOpen={isSidePanelOpen}
+                setIsSidePanelOpen={setIsSidePanelOpen}
+                hasSavedViews={hasSavedViews}
+                savedViews={savedViews}
+                selectedViewId={selectedViewId}
+                defaultViewId={defaultViewId}
+                handleViewDropdownChange={handleViewDropdownChange}
+              />
+            </Box>
+          </ActionLine>
         </TopSection>
+
         <ResponsesTable
+          rowSelectionModel={rowSelectionModel}
+          onRowSelectionModelChange={handleRowSelectionModelChange}
           isInEditMode={isInEditMode}
-          localRows={displayedRows}
+          localRows={localRows}
           handleProcessRowUpdate={handleProcessRowUpdate}
           onCellEditStart={handleCellEditStart}
-          validationErrors={validationErrors}
           onCellLiveChange={handleCellLiveChange}
-          onRowSelectionModelChange={handleRowSelectionModelChange}
-          rowSelectionModel={rowSelectionModel}
+          validationErrors={validationErrors}
           currentView={currentView}
           deletedRowIds={deletedRowIds}
         />
-        <CancelEditDialog
+
+        <UnsavedChangesDialog
           open={showCancelDialog}
-          onConfirm={handleConfirmCancel}
-          onCancel={handleCancelDialogClose}
+          onClose={handleCancelDialogClose}
+          onSave={handleSaveChanges}
+          onDiscard={handleConfirmCancel}
+          title="ביטול שינויים"
+          message="ישנם שינויים שלא נשמרו. האם אתה בטוח שברצונך לבטל את השינויים?"
+          saveText="שמירת שינויים"
+          discardText="ביטול שינויים"
         />
       </MainContentWrapper>
 
@@ -318,9 +301,9 @@ const ResponsesPageContent = (): JSX.Element => {
         isSaving={isSaving}
       />
 
-      <DraftRecoveryDialog
-        open={showRestoreDialog}
-        description="מצאנו טיוטה של עריכה מהירה עם שינויים שלא נשמרו. האם תרצה לשחזר אותם?"
+      <DraftRecoveryBanner
+        open={showRestoreBanner}
+        message="מצאנו טיוטה של עריכה מהירה עם שינויים שלא נשמרו."
         onRestore={handleRestore}
         onDiscard={handleDiscardDraft}
       />

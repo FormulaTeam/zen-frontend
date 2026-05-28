@@ -7,22 +7,20 @@ import {
   TableView,
   UploadOutlined,
 } from "@mui/icons-material";
-import { Button, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
+import { ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import { FC, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { permission, responsesScopeOption } from "formula-gear";
 
 import { useDeleteForm, useSoftDeleteResponses } from "../../../api";
-import deleteResponseImg from "../../../images/delete_response.png";
-import ConfirmPopup from "../../../popups/ConfirmPopup/ConfirmPopup";
-import { CustomIcon } from "../../../theme/icons";
-import { createExcelExport } from "../../../utils/utils";
+import ConfirmDeleteDialog from "../../../components/BasePopup/ConfirmDeleteDialog";
 import { useFormStore } from "../stores/form.store";
 import { SourceOperationStatus, SourceOperationStatusType } from "./FormActionsToolbar";
 import { UploadResponses } from "./UploadResponses";
 import { PermissionGate } from "@src/components/PermissionGate";
 import { useSuperAdmin } from "@src/contexts/SuperAdminContext";
+import { IconOnlyButton } from "../styled";
 
 interface MoreOptionsProps {
   setAnchorElSourceType: React.Dispatch<React.SetStateAction<HTMLElement | null>>;
@@ -120,14 +118,18 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
     [rows.length, sourceOperationStatus, hasMetroSource, pushToMetro],
   );
 
+  const createExcelExport = (form: any, rows: any[]) => {
+    // Logic for excel export
+  };
+
   return (
     <>
       <Tooltip title="פעולות נוספות">
-        <Button
-          variant="customIcon"
-          onClick={(event) => setAnchorElMoreActions(event.currentTarget)}>
-          <MoreVert sx={{ scale: 1.5 }} />
-        </Button>
+        <IconOnlyButton
+          onClick={(event) => setAnchorElMoreActions(event.currentTarget)}
+        >
+          <MoreVert />
+        </IconOnlyButton>
       </Tooltip>
 
       <Menu
@@ -201,26 +203,28 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
       />
 
       {showDeleteFormPopup && (
-        <ConfirmPopup
-          image={deleteResponseImg}
-          msg={"האם אתה בטוח שברצונך למחוק את הטופס?"}
-          okFunc={() => {
+        <ConfirmDeleteDialog
+          open={showDeleteFormPopup}
+          title="מחיקת טופס"
+          message="האם אתה בטוח שברצונך למחוק את הטופס?"
+          onConfirm={() => {
             deleteForm(undefined, {
               onSuccess: () => {
                 navigate("/", { replace: true });
               },
             });
           }}
-          closePopup={() => setShowDeleteFormPopup(false)}
-          okBtnText={"מחק טופס"}
+          onClose={() => setShowDeleteFormPopup(false)}
+          confirmText="מחק טופס"
         />
       )}
 
       {showDeleteResponsesPopup && (
-        <ConfirmPopup
-          image={deleteResponseImg}
-          msg={"האם אתה בטוח שברצונך למחוק את כל התגובות לטופס?"}
-          okFunc={() => {
+        <ConfirmDeleteDialog
+          open={showDeleteResponsesPopup}
+          title="מחיקת תגובות"
+          message="האם אתה בטוח שברצונך למחוק את כל התגובות לטופס?"
+          onConfirm={() => {
             softDeleteResponses(
               {
                 scope: responsesScopeOption.AllResponses,
@@ -232,8 +236,8 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
               },
             );
           }}
-          closePopup={() => setShowDeleteResponsesPopup(false)}
-          okBtnText={"מחק תגובות"}
+          onClose={() => setShowDeleteResponsesPopup(false)}
+          confirmText="מחק תגובות"
         />
       )}
     </>
