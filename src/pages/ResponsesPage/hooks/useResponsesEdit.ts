@@ -507,7 +507,6 @@ export const useResponsesEdit = () => {
         }
 
         if (serverIds.length > 0) {
-          // Local defer for server rows
           setDeletedRowIds((prev) => [...new Set([...prev, ...serverIds])]);
           setEditedRows((prev) => {
             const next = new Map(prev);
@@ -515,10 +514,10 @@ export const useResponsesEdit = () => {
             return next;
           });
         }
+
         return;
       }
 
-      // Immediate delete (outside edit mode)
       try {
         setForm({
           ...dtoForm,
@@ -691,7 +690,7 @@ export const useResponsesEdit = () => {
     setEditedRows((prev) => new Map(prev).set(tempId, newRow));
   }, [isInEditMode, dtoForm, formFields, user]);
 
-  const saveChanges = useCallback(async (): Promise<void> => {
+  const saveChanges = useCallback(async (): Promise<boolean> => {
     try {
       if (!hasUnsavedChanges) {
         throw new NoUnsavedChangesError();
@@ -716,7 +715,7 @@ export const useResponsesEdit = () => {
       if (Object.keys(newValidationErrors).length > 0) {
         setValidationErrors(newValidationErrors);
         showErrorNotification("יש לתקן את השגיאות לפני השמירה");
-        return;
+        return false;
       }
 
       const newRowEntries = editedEntries.filter(([rowId]) => isTempRowId(rowId));
@@ -743,16 +742,18 @@ export const useResponsesEdit = () => {
         return numA - numB;
       });
 
-      if (updatesToSend.length === 0 && sortedNewRowEntries.length === 0 && deletedRowIds.length === 0) {
+      if (
+        updatesToSend.length === 0 &&
+        sortedNewRowEntries.length === 0 &&
+        deletedRowIds.length === 0
+      ) {
         throw new NoValidChangesError();
       }
 
-      // 1. Bulk Deletion
       if (deletedRowIds.length > 0) {
         await softDeleteResponses({ responsesIds: deletedRowIds.map(String) });
       }
 
-      // 2. Bulk Updates
       if (updatesToSend.length > 0) {
         const bulkUpdatePayload: BulkUpdateResponsesDto = {
           responses: updatesToSend,
@@ -761,7 +762,6 @@ export const useResponsesEdit = () => {
         await updateResponses(bulkUpdatePayload);
       }
 
-      // 3. Create New Responses
       const newResponsesPayloads: CreateResponseDto[] = sortedNewRowEntries.map(
         ([rowId, editedRow]) => {
           const rowForCreate = getMergedRow(rowId, editedRow);
@@ -785,8 +785,8 @@ export const useResponsesEdit = () => {
         await createResponse(newResponsesPayloads);
       }
 
-      // Update responsesCount in store
       const netCountChange = newResponsesPayloads.length - deletedRowIds.length;
+
       if (netCountChange !== 0) {
         setForm({
           ...dtoForm,
@@ -803,21 +803,28 @@ export const useResponsesEdit = () => {
       setEditedRows(new Map());
       setDeletedRowIds([]);
       setIsInEditMode(false);
+      setShowCancelDialog(false);
       clearQuickEditDraft(dtoForm?.id);
       setValidationErrors({});
 
       showSuccessNotification("כל השינויים נשמרו בהצלחה!");
+
+      return true;
     } catch (error) {
       if (error instanceof CustomError) {
         if (error instanceof NoUnsavedChangesError) {
+          setShowCancelDialog(false);
           showSuccessNotification(error.message);
-        } else {
-          showErrorNotification(error.message);
+          return true;
         }
-      } else {
-        console.error("Error saving changes:", error);
-        showErrorNotification(new SaveFailedError().message);
+
+        showErrorNotification(error.message);
+        return false;
       }
+
+      console.error("Error saving changes:", error);
+      showErrorNotification(new SaveFailedError().message);
+      return false;
     }
   }, [
     editedRows,
@@ -837,7 +844,6 @@ export const useResponsesEdit = () => {
     formFields,
   ]);
 
-  // Auto-save quick edit draft logic
   useEffect(() => {
     if (isInEditMode && hasUnsavedChanges) {
       const timer = setTimeout(() => {

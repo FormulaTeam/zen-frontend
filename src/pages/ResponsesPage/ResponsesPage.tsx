@@ -201,7 +201,7 @@ const ResponsesPageContent = (): JSX.Element => {
     if (type === "include") {
       return sourceRows.filter((row) => idSet.has(row.id));
     }
-    // type === "exclude"
+
     return sourceRows.filter((row) => !idSet.has(row.id));
   }, [rowSelectionModel, storeRows, localRows, isInEditMode]);
 
@@ -216,19 +216,16 @@ const ResponsesPageContent = (): JSX.Element => {
       <MainContentWrapper>
         <TopSection>
           <MetadataLine>
-            {/* RIGHT SIDE: Metadata (Info, ID, Name) */}
             <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
               <Header />
             </Box>
 
-            {/* LEFT SIDE: Nav Actions (Back, Share, Edit, More) */}
             <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
               <FormActionsToolbar />
             </Box>
           </MetadataLine>
 
           <ActionLine>
-            {/* RIGHT SIDE: Main Actions (Add, Quick Edit, Selection Actions) */}
             <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
               {showStandardActions && <AddResponseButton />}
               <EditResponsesButton
@@ -244,7 +241,6 @@ const ResponsesPageContent = (): JSX.Element => {
               />
             </Box>
 
-            {/* LEFT SIDE: View Management & Search */}
             <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <SearchInfo search={filter?.query || ""} setSearch={handleSearch} />
               <ViewsButton
