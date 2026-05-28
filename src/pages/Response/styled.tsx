@@ -54,7 +54,7 @@ export const LoadingBtnBox = styled(Box)<LoadingBtnBoxProps>`
 `;
 
 export const PageContainer = styled(Container)`
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 `;
