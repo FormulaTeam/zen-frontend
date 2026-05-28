@@ -22,6 +22,11 @@ This task involved removing scrollbars from the entire system while preserving t
 ### 4. Responses Page Layout
 - **Search Bar Repositioning**: Moved the response search bar from the middle of the second line to the left side of the third line (next to view management).
 
+### 5. System Consistency
+- **Navbar Stabilization**: Set navbar to `position: static` and standardized container heights (`100%`) to eliminate layout "jumping" between pages.
+- **Background Standardization**: Updated the Form Editor background color to `#F1F5F9` to match the rest of the application.
+- **Layout Padding**: Standardized side padding for the Form Editor to `24px`.
+
 ## Verification Results
 - [x] Main page is non-scrollable.
 - [x] Tables show a grabbable horizontal scrollbar.
@@ -29,3 +34,6 @@ This task involved removing scrollbars from the entire system while preserving t
 - [x] Empty section names in Form Editor show a placeholder and are re-editable.
 - [x] Cards in the main page are clipped at the top row during scroll.
 - [x] Responses page search bar is correctly positioned on the third line next to views.
+- [x] Navbar does not jump when navigating between Home and Form Editor.
+- [x] Form Editor background matches the Main Page background.
+

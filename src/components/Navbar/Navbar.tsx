@@ -27,7 +27,7 @@ const Navbar = () => {
   };
 
   return (
-    <NavAppBar $bgColor={theme.palette.primary.main}>
+    <NavAppBar $bgColor={theme.palette.primary.main} position="static">
       <NavToolbar>
         <LogoContainer onClick={navigateToHome} disabled={isLogoDisabled} data-testid="navbar-logo">
           <img src={logo} height={40} />
