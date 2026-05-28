@@ -19,9 +19,13 @@ This task involved removing scrollbars from the entire system while preserving t
 - **Section Rename Bug**: Added a visible placeholder ("מקטע ללא שם") for empty section names to ensure they remain clickable and editable.
 - **Placeholder Styling**: Added italicized and greyed-out styling for the empty section title placeholder.
 
+### 4. Responses Page Layout
+- **Search Bar Repositioning**: Moved the response search bar from the middle of the second line to the left side of the third line (next to view management).
+
 ## Verification Results
 - [x] Main page is non-scrollable.
 - [x] Tables show a grabbable horizontal scrollbar.
 - [x] Tables do not show a vertical scrollbar.
 - [x] Empty section names in Form Editor show a placeholder and are re-editable.
 - [x] Cards in the main page are clipped at the top row during scroll.
+- [x] Responses page search bar is correctly positioned on the third line next to views.

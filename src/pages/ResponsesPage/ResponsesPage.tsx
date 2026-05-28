@@ -221,13 +221,6 @@ const ResponsesPageContent = (): JSX.Element => {
               <Header />
             </Box>
 
-            {/* MIDDLE: Search Responses Bar (Exact Middle) */}
-            <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
-              <Box>
-                <SearchInfo search={filter?.query || ""} setSearch={handleSearch} />
-              </Box>
-            </Box>
-
             {/* LEFT SIDE: Nav Actions (Back, Share, Edit, More) */}
             <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
               <FormActionsToolbar />
@@ -251,8 +244,9 @@ const ResponsesPageContent = (): JSX.Element => {
               />
             </Box>
 
-            {/* LEFT SIDE: View Management */}
+            {/* LEFT SIDE: View Management & Search */}
             <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <SearchInfo search={filter?.query || ""} setSearch={handleSearch} />
               <ViewsButton
                 isSidePanelOpen={isSidePanelOpen}
                 setIsSidePanelOpen={setIsSidePanelOpen}
