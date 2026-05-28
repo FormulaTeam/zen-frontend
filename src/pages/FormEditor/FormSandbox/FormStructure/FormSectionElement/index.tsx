@@ -1,6 +1,6 @@
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { AccordionDetails, Button, Tooltip } from "@mui/material";
+import { AccordionDetails, Button, FormControl, FormHelperText, Tooltip } from "@mui/material";
 import { FormField, useFormStructureContext } from "../../../context/FormStructureContext";
 import styles from "./style.module.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -125,35 +125,38 @@ function FormSectionElement({ id }: Props) {
   }, [self.title]);
 
   const sectionTitle: JSX.Element = isEditingTitle ? (
-    <SectionTitleInput
-      value={editedTitle}
-      autoFocus
-      inputRef={titleInputRef}
-      placeholder={texts.heb.undefinedSection}
-      error={isEditedTitleEmpty}
-      helperText={isEditedTitleEmpty ? "שם מקטע הוא שדה חובה" : ""}
-      inputProps={{
-        maxLength: 255,
-      }}
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => e.stopPropagation()}
-      onChange={(e) => {
-        setEditedTitle(e.target.value.trimStart());
-      }}
-      onBlur={() => {
-        if (!saveSectionTitle()) {
-          cancelSectionTitleEdit();
-        }
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          saveSectionTitle();
-        } else if (e.key === "Escape") {
-          cancelSectionTitleEdit();
-        }
-      }}
-    />
+    <FormControl error={isEditedTitleEmpty} variant="standard">
+      <SectionTitleInput
+        value={editedTitle}
+        autoFocus
+        inputRef={titleInputRef}
+        placeholder={texts.heb.undefinedSection}
+        error={isEditedTitleEmpty}
+        inputProps={{
+          maxLength: 255,
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        onChange={(e) => {
+          setEditedTitle(e.target.value.trimStart());
+        }}
+        onBlur={() => {
+          if (!saveSectionTitle()) {
+            cancelSectionTitleEdit();
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            saveSectionTitle();
+          } else if (e.key === "Escape") {
+            cancelSectionTitleEdit();
+          }
+        }}
+      />
+
+      {isEditedTitleEmpty ? <FormHelperText>שם מקטע הוא שדה חובה</FormHelperText> : null}
+    </FormControl>
   ) : (
     <Tooltip title="עריכת מקטע" placement="top">
       <SectionTitleText
