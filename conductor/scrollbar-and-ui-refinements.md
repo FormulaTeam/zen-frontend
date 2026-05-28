@@ -23,7 +23,7 @@ This task involved removing scrollbars from the entire system while preserving t
 - **Search Bar Repositioning**: Moved the response search bar from the middle of the second line to the left side of the third line (next to view management).
 - **Sync Column Refinement**: Replaced the large `CloudUploadIcon` with a small, simple `CloudIcon` in the header.
 - **Sync Column Alignment**: Re-aligned the sync header and row status icons to the left (sticking to the opposite side of standard data) for better visual distinction.
-- **Parent Response Column**: Added a "תגובת אב" column as the last column in the table, appearing only when responses have parents. Fixed a bug in `useFormLoader` where the parent response data was not being mapped to the table rows.
+- **Parent Response Column**: Added a "תגובת אב" column as the last column in the table, appearing only when responses have parents. Fixed a bug in `useFormLoader` where the parent response data was not being mapped. Enhanced `ZoomCell` to handle both string and object data formats and show a descriptive "צפה בתגובה" link for better clarity.
 
 ### 5. System Consistency
 - **Navbar Stabilization**: Set navbar to `position: static` and standardized container heights (`100%`) to eliminate layout "jumping" between pages.
