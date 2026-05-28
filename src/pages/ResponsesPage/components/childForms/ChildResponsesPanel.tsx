@@ -42,8 +42,24 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
 
   return (
     <DetailsRowContainer>
-      <ResponseTitle>
-        {title} - {responses.length} {responses.length === 1 ? "תגובה אחת" : "תגובות"}
+      <ResponseTitle
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5,
+          flexWrap: "wrap",
+        }}>
+        {responses.length > 1 ? (
+          <>
+            <span dir="auto">{title}</span>
+            <span style={{ whiteSpace: "nowrap" }}>- {responses.length} תגובות</span>
+          </>
+        ) : (
+          <>
+            <span dir="auto">{title}</span>
+            <span style={{ whiteSpace: "nowrap" }}> - תגובה אחת</span>
+          </>
+        )}
       </ResponseTitle>
       <TableContainer
         sx={{

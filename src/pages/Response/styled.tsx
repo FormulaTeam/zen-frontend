@@ -7,7 +7,6 @@ export const FieldsWrapper = styled(Paper)<PaperProps>(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-between",
-  overflowY: "auto",
   padding: theme.spacing(2),
   backgroundColor: theme.palette.background.paper,
   width: "100%",
@@ -20,7 +19,6 @@ export const SectionContainer = styled(Paper)<SectionContainerProps>(({ theme, h
   flexDirection: "column",
   justifyContent: "space-between",
   alignItems: "center",
-  overflowY: "auto",
   width: "100%",
 }));
 export const FormSectionsContainer = styled(Box)<BoxProps>(({ theme }) => ({
