@@ -595,9 +595,10 @@ export const ExpandIconBox = styled(Box)(() => ({
 export const SyncStatusIconBox = styled(Box)(() => ({
   display: "flex",
   alignItems: "center",
-  justifyContent: "center",
+  justifyContent: "flex-start",
   height: "100%",
-  width: "32px",
+  width: "100%",
+  paddingRight: "12px",
 }));
 
 export const FormInfoContentBox = styled(Box)(() => ({
