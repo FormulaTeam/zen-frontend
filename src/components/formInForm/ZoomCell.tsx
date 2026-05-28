@@ -53,13 +53,11 @@ const ZoomCell = ({ row, form }: { row: ZoomCellRow; form: FormDto }) => {
       });
   }, [parentInfo]);
 
-  if (!parentInfo) {
-    return <label>ללא</label>;
-  }
+  if (!parentInfo) return <label></label>;
 
   if (isValid === null) return <label>טוען...</label>;
 
-  if (!isValid) return <label>-</label>;
+  if (!isValid) return <label></label>;
 
   return (
     <Box sx={{ display: "flex", alignItems: "center" }}>
