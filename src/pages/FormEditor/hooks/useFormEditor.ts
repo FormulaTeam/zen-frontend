@@ -9,8 +9,12 @@ import queryClient from "@api/queryClient";
 import { useFormEditorContext, FORM_EDITOR_MODE } from "../context/FormEditorContext";
 import { clearFormDraft } from "../utils/draftPersistence";
 
+interface SaveFormOptions {
+  navigateToResponses?: boolean;
+}
+
 interface UseFormEditorReturn {
-  handleSaveForm: () => Promise<void>;
+  handleSaveForm: (options?: SaveFormOptions) => Promise<void>;
   handleExit: () => void;
   handleDiscardAndExit: () => void;
   isLoading: boolean;
@@ -23,42 +27,60 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
   const { mode } = useFormEditorContext();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSaveForm = useCallback(async () => {
-    setIsLoading(true);
+  const handleSaveForm = useCallback(
+    async (options?: SaveFormOptions) => {
+      setIsLoading(true);
 
-    try {
-      const payload = convertFormStructureToCreateDto(formStructure);
+      try {
+        const payload = convertFormStructureToCreateDto(formStructure);
 
-      if (mode === FORM_EDITOR_MODE.EDIT && formStructure.metadata.id) {
-        await mutateUpdateFormAsync({ id: formStructure.metadata.id, payload });
-        showSuccessNotification("הטופס עודכן בהצלחה!");
-        clearFormDraft(formStructure.metadata.id);
-        queryClient.invalidateQueries({ queryKey: [formStructure.metadata.id.toString()] });
-      } else {
-        const createdForm = await mutateCreateFormAsync(payload);
-        showSuccessNotification("הטופס נשמר בהצלחה!");
-        clearFormDraft(undefined); // Clear 'new' form draft
+        if (mode === FORM_EDITOR_MODE.EDIT && formStructure.metadata.id) {
+          await mutateUpdateFormAsync({ id: formStructure.metadata.id, payload });
+          showSuccessNotification("הטופס עודכן בהצלחה!");
+          clearFormDraft(formStructure.metadata.id);
+          queryClient.invalidateQueries({ queryKey: [formStructure.metadata.id.toString()] });
 
-        navigate(`/responses/${createdForm.id}`, { replace: true });
+          if (options?.navigateToResponses) {
+            navigate(`/responses/${formStructure.metadata.id}`, { replace: true });
+          }
+        } else {
+          const createdForm = await mutateCreateFormAsync(payload);
+          showSuccessNotification("הטופס נשמר בהצלחה!");
+          clearFormDraft(undefined);
+
+          navigate(`/responses/${createdForm.id}`, { replace: true });
+        }
+
+        queryClient.invalidateQueries({ queryKey: ["forms"] });
+      } catch (error) {
+        console.error("Failed to save form:", error);
+        showErrorNotification("שמירת הטופס נכשלה");
+      } finally {
+        setIsLoading(false);
       }
-
-      queryClient.invalidateQueries({ queryKey: ["forms"] });
-    } catch (error) {
-      console.error("Failed to save form:", error);
-      showErrorNotification("שמירת הטופס נכשלה");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [formStructure, mutateCreateFormAsync, mutateUpdateFormAsync, mode, navigate]);
+    },
+    [formStructure, mutateCreateFormAsync, mutateUpdateFormAsync, mode, navigate],
+  );
 
   const handleExit = useCallback(() => {
-    navigate(`/responses/${formStructure.metadata.id}`);
-  }, [navigate]);
+    if (mode === FORM_EDITOR_MODE.EDIT && formStructure.metadata.id) {
+      navigate(`/responses/${formStructure.metadata.id}`);
+      return;
+    }
+
+    navigate(IPath.HOME);
+  }, [mode, formStructure.metadata.id, navigate]);
 
   const handleDiscardAndExit = useCallback(() => {
     clearFormDraft(formStructure.metadata.id);
-    navigate(`/responses/${formStructure.metadata.id}`);
-  }, [formStructure.metadata.id, navigate]);
+
+    if (mode === FORM_EDITOR_MODE.EDIT && formStructure.metadata.id) {
+      navigate(`/responses/${formStructure.metadata.id}`);
+      return;
+    }
+
+    navigate(IPath.HOME);
+  }, [mode, formStructure.metadata.id, navigate]);
 
   return {
     handleSaveForm,

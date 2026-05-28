@@ -26,8 +26,16 @@ import { ValueOf } from "../../../types/utils";
 import type { FormDto, FormSectionDto } from "../../../types/shared";
 import { saveFormDraft } from "../utils/draftPersistence";
 
-type ExtendedFormDto = Partial<Omit<FormDto, 'sections'>> & {
+type ExtendedFormDto = Partial<Omit<FormDto, "sections">> & {
   sections?: Partial<FormSectionDto>[];
+};
+
+type FieldValidationErrors = NonNullable<$ZodErrorTree<FormFieldData>["properties"]>;
+type UniqueFieldProperty = "name" | "displayName";
+
+const DUPLICATE_FIELD_ERROR_MESSAGES: Record<UniqueFieldProperty, string> = {
+  name: "שם פנימי חייב להיות ייחודי בטופס",
+  displayName: "שם תצוגה חייב להיות ייחודי בטופס",
 };
 
 function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
@@ -43,13 +51,17 @@ function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
   const orderedSectionIds: string[] = [];
   const fields: Record<string, FormField> = {};
 
-  const sortedSections = [...(form?.sections || [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+  const sortedSections = [...(form?.sections || [])].sort(
+    (a, b) => (a.index ?? 0) - (b.index ?? 0),
+  );
 
   sortedSections.forEach((sectionData) => {
     const sectionId = sectionData.id?.toString() || generateSectionId();
     orderedSectionIds.push(sectionId);
 
-    const sortedFields = [...(sectionData.fields || [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+    const sortedFields = [...(sectionData.fields || [])].sort(
+      (a, b) => (a.index ?? 0) - (b.index ?? 0),
+    );
     const fieldIds = sortedFields.map((fieldData) => {
       const fieldId = fieldData.id?.toString() || generateFieldId();
 
@@ -82,7 +94,6 @@ function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
     orderedSectionIds,
     fields,
     conditions: (form?.conditions || []) as FormConditions,
-
   };
 }
 
@@ -150,6 +161,129 @@ const validateField = (prev: FormStructure, fieldId: string) => {
   return {};
 };
 
+const getDuplicateFieldIdsByProperty = (
+  fields: Record<string, FormField>,
+  propertyName: UniqueFieldProperty,
+): Set<string> => {
+  const fieldIdsByValue = new Map<string, string[]>();
+
+  Object.values(fields).forEach((field) => {
+    const value = String((field.data as Record<UniqueFieldProperty, string>)[propertyName] ?? "")
+      .trim()
+      .toLowerCase();
+
+    if (!value) {
+      return;
+    }
+
+    fieldIdsByValue.set(value, [...(fieldIdsByValue.get(value) ?? []), field.id]);
+  });
+
+  const duplicateFieldIds = new Set<string>();
+
+  fieldIdsByValue.forEach((fieldIds) => {
+    if (fieldIds.length > 1) {
+      fieldIds.forEach((fieldId) => duplicateFieldIds.add(fieldId));
+    }
+  });
+
+  return duplicateFieldIds;
+};
+
+const removeDuplicateFieldErrors = (
+  validationErrors?: $ZodErrorTree<FormFieldData>["properties"] | null,
+): FieldValidationErrors => {
+  const nextValidationErrors: FieldValidationErrors = {
+    ...(validationErrors ?? {}),
+  };
+
+  (["name", "displayName"] as UniqueFieldProperty[]).forEach((propertyName) => {
+    const propertyError = (nextValidationErrors as any)[propertyName] as
+      | { errors?: string[] }
+      | undefined;
+
+    if (!propertyError?.errors) {
+      return;
+    }
+
+    const filteredErrors = propertyError.errors.filter(
+      (error) => error !== DUPLICATE_FIELD_ERROR_MESSAGES[propertyName],
+    );
+
+    if (filteredErrors.length > 0) {
+      (nextValidationErrors as any)[propertyName] = {
+        ...propertyError,
+        errors: filteredErrors,
+      };
+
+      return;
+    }
+
+    const { errors: _, ...propertyErrorWithoutErrors } = propertyError;
+
+    if (Object.keys(propertyErrorWithoutErrors).length > 0) {
+      (nextValidationErrors as any)[propertyName] = propertyErrorWithoutErrors;
+      return;
+    }
+
+    delete (nextValidationErrors as any)[propertyName];
+  });
+
+  return nextValidationErrors;
+};
+
+const addDuplicateFieldError = (
+  validationErrors: FieldValidationErrors,
+  propertyName: UniqueFieldProperty,
+): FieldValidationErrors => {
+  const message = DUPLICATE_FIELD_ERROR_MESSAGES[propertyName];
+  const propertyError = ((validationErrors as any)[propertyName] ?? {}) as {
+    errors?: string[];
+  };
+
+  const existingErrors = propertyError.errors ?? [];
+
+  return {
+    ...validationErrors,
+    [propertyName]: {
+      ...propertyError,
+      errors: existingErrors.includes(message) ? existingErrors : [...existingErrors, message],
+    },
+  };
+};
+
+const applyDuplicateFieldErrors = (
+  fields: Record<string, FormField>,
+): Record<string, FormField> => {
+  const duplicateNameFieldIds = getDuplicateFieldIdsByProperty(fields, "name");
+  const duplicateDisplayNameFieldIds = getDuplicateFieldIdsByProperty(fields, "displayName");
+
+  const updatedFields: Record<string, FormField> = {};
+
+  Object.entries(fields).forEach(([fieldId, field]) => {
+    let validationErrors = removeDuplicateFieldErrors(field.validationErrors);
+
+    if (duplicateNameFieldIds.has(fieldId)) {
+      validationErrors = addDuplicateFieldError(validationErrors, "name");
+    }
+
+    if (duplicateDisplayNameFieldIds.has(fieldId)) {
+      validationErrors = addDuplicateFieldError(validationErrors, "displayName");
+    }
+
+    updatedFields[fieldId] = {
+      ...field,
+      validationErrors,
+    };
+  });
+
+  return updatedFields;
+};
+
+const hasFieldValidationErrors = (
+  validationErrors?: $ZodErrorTree<FormFieldData>["properties"] | null,
+) => !!validationErrors && Object.keys(validationErrors).length > 0;
+
 const validateConditionPredicateGroups = (groups: FormConditionPredicateGroups) => {
   const result = predicateGroupsSchema.safeParse(groups);
 
@@ -160,7 +294,9 @@ const validateConditionPredicateGroups = (groups: FormConditionPredicateGroups) 
   return null;
 };
 
-const validateConditionDependantComponents = (dependantComponents: FormConditionDependantComponents) => {
+const validateConditionDependantComponents = (
+  dependantComponents: FormConditionDependantComponents,
+) => {
   const result = conditionDependantComponentsSchema.safeParse(dependantComponents);
 
   if (!result.success) {
@@ -190,7 +326,11 @@ const validateCondition = (condition: FormCondition) => {
   return null;
 };
 
-function applyComponentDeletionToConditionsDependantComponents(componentType: ValueOf<typeof FormComponentType>, componentId: string, conditions: FormConditions) {
+function applyComponentDeletionToConditionsDependantComponents(
+  componentType: ValueOf<typeof FormComponentType>,
+  componentId: string,
+  conditions: FormConditions,
+) {
   const modifiedConditions: FormConditions = [];
 
   conditions.forEach((condition) => {
@@ -199,8 +339,9 @@ function applyComponentDeletionToConditionsDependantComponents(componentType: Va
     if (!condition.dependantComponents[componentType]?.length) {
       isConditionKept = true;
     } else {
-
-      const componentIndex = condition.dependantComponents[componentType]?.findIndex((id) => id === componentId);
+      const componentIndex = condition.dependantComponents[componentType]?.findIndex(
+        (id) => id === componentId,
+      );
 
       if (componentIndex === -1) {
         isConditionKept = true;
@@ -210,7 +351,9 @@ function applyComponentDeletionToConditionsDependantComponents(componentType: Va
       } else {
         delete condition.dependantComponents[componentType];
 
-        isConditionKept = Object.values(condition.dependantComponents).some((dependants) => dependants?.length);
+        isConditionKept = Object.values(condition.dependantComponents).some(
+          (dependants) => dependants?.length,
+        );
       }
     }
 
@@ -248,19 +391,30 @@ function applyFieldDeletionToConditionsPredicates(fieldId: string, conditions: F
   return modifiedConditions;
 }
 
-function applyComponentDeletionToConditions(componentType: ValueOf<typeof FormComponentType>, componentId: string, conditions: FormConditions): FormConditions {
+function applyComponentDeletionToConditions(
+  componentType: ValueOf<typeof FormComponentType>,
+  componentId: string,
+  conditions: FormConditions,
+): FormConditions {
   if (!conditions.length) {
     return conditions;
   }
 
   let modifiedConditions: FormConditions = [...conditions];
 
-  modifiedConditions = applyComponentDeletionToConditionsDependantComponents(componentType, componentId, modifiedConditions);
+  modifiedConditions = applyComponentDeletionToConditionsDependantComponents(
+    componentType,
+    componentId,
+    modifiedConditions,
+  );
 
   if (modifiedConditions.length) {
     switch (componentType) {
       case "field":
-        modifiedConditions = applyFieldDeletionToConditionsPredicates(componentId, modifiedConditions);
+        modifiedConditions = applyFieldDeletionToConditionsPredicates(
+          componentId,
+          modifiedConditions,
+        );
         break;
       default:
         break;
@@ -271,7 +425,9 @@ function applyComponentDeletionToConditions(componentType: ValueOf<typeof FormCo
 }
 
 function useFormStructure(editedForm?: ExtendedFormDto) {
-  const [initialFormStructure, setInitialFormStructure] = useState<FormStructure>(() => editedForm ? yieldFormStructure(editedForm) : { ...getEmptyForm() });
+  const [initialFormStructure, setInitialFormStructure] = useState<FormStructure>(() =>
+    editedForm ? yieldFormStructure(editedForm) : { ...getEmptyForm() },
+  );
   const [formStructure, setFormStructure] = useState<FormStructure>(initialFormStructure);
 
   // When editedForm updates from external fetching properly sync the visual state
@@ -333,20 +489,23 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     });
   }, []);
 
-  const renameSection = useCallback((sectionId: string, title: string) => {
-    setFormStructure((prev) => {
-      const changedSection = prev.sections[sectionId];
-      changedSection.title = title;
+  const renameSection = useCallback(
+    (sectionId: string, title: string) => {
+      setFormStructure((prev) => {
+        const changedSection = prev.sections[sectionId];
+        changedSection.title = title;
 
-      return {
-        ...prev,
-        sections: {
-          ...prev.sections,
-          [sectionId]: changedSection,
-        },
-      };
-    });
-  }, [setFormStructure]);
+        return {
+          ...prev,
+          sections: {
+            ...prev.sections,
+            [sectionId]: changedSection,
+          },
+        };
+      });
+    },
+    [setFormStructure],
+  );
 
   const toggleSectionExpanded = useCallback((sectionId: string) => {
     setFormStructure((prev) => {
@@ -369,35 +528,38 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     });
   }, []);
 
-  const appendFieldToFirstSection = useCallback((elementTypeId: FormFieldTypeId) => {
-    setFormStructure((prev) => {
-      const changedSectionId = prev.orderedSectionIds[0];
-      const changedSection = prev.sections[changedSectionId];
+  const appendFieldToFirstSection = useCallback(
+    (elementTypeId: FormFieldTypeId) => {
+      setFormStructure((prev) => {
+        const changedSectionId = prev.orderedSectionIds[0];
+        const changedSection = prev.sections[changedSectionId];
 
-      const newField: FormField = {
-        id: generateFieldId(),
-        parentSectionId: changedSectionId,
-        data: generateNewFieldData(elementTypeId),
-      };
+        const newField: FormField = {
+          id: generateFieldId(),
+          parentSectionId: changedSectionId,
+          data: generateNewFieldData(elementTypeId),
+        };
 
-      const fieldIds = [...changedSection.fieldIds, newField.id];
+        const fieldIds = [...changedSection.fieldIds, newField.id];
 
-      return {
-        ...prev,
-        sections: {
-          ...prev.sections,
-          [changedSectionId]: {
-            ...changedSection,
-            fieldIds,
+        return {
+          ...prev,
+          sections: {
+            ...prev.sections,
+            [changedSectionId]: {
+              ...changedSection,
+              fieldIds,
+            },
           },
-        },
-        fields: {
-          ...prev.fields,
-          [newField.id]: newField,
-        },
-      };
-    });
-  }, [setFormStructure]);
+          fields: {
+            ...prev.fields,
+            [newField.id]: newField,
+          },
+        };
+      });
+    },
+    [setFormStructure],
+  );
 
   const deleteField = useCallback((fieldId: string) => {
     setFormStructure((prev) => {
@@ -448,25 +610,28 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
           },
         } as FormFieldData & { typeId: T };
 
-        const validationErrors =
-          pickSharedKeysDeep(
-            validateFieldData(dataToValidate),
-            originalValidationErrors ?? {},
-          );
+        const validationErrors = pickSharedKeysDeep(
+          validateFieldData(dataToValidate),
+          originalValidationErrors ?? {},
+        );
+
+        const updatedFields = {
+          ...fields,
+          [fieldId]: {
+            ...field,
+            data: dataToValidate,
+            validationErrors,
+          },
+        };
 
         return {
           ...prev,
-          fields: {
-            ...fields,
-            [fieldId]: {
-              ...field,
-              data: dataToValidate,
-              validationErrors,
-            },
-          },
+          fields: applyDuplicateFieldErrors(updatedFields),
         };
       });
-    }, []);
+    },
+    [],
+  );
 
   const setFormMetadata = useCallback((metadata: Partial<FormMetadata>) => {
     let isValid = true;
@@ -555,12 +720,21 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     const { validationErrors: _, ...metadata } = { ...formStructure.metadata };
 
     Object.keys(fields).forEach((fieldId) => {
-      const fieldValidationErrors = validateField(formStructure, fieldId);
-      if (Object.keys(fieldValidationErrors).length > 0) isValid = false;
+      fields[fieldId] = {
+        ...fields[fieldId],
+        validationErrors: validateField(formStructure, fieldId),
+      };
+    });
+
+    const fieldsWithDuplicateErrors = applyDuplicateFieldErrors(fields);
+
+    Object.values(fieldsWithDuplicateErrors).forEach((field) => {
+      if (hasFieldValidationErrors(field.validationErrors)) isValid = false;
     });
 
     const metadataValidationErrors = validateMetadata(metadata);
-    if (metadataValidationErrors && Object.keys(metadataValidationErrors).length > 0) isValid = false;
+    if (metadataValidationErrors && Object.keys(metadataValidationErrors).length > 0)
+      isValid = false;
 
     setFormStructure((prev) => {
       const updatedFields = { ...prev.fields };
@@ -575,7 +749,7 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
 
       return {
         ...prev,
-        fields: updatedFields,
+        fields: applyDuplicateFieldErrors(updatedFields),
         metadata: {
           ...prevMetadata,
           validationErrors: validateMetadata(prevMetadata),
@@ -627,6 +801,4 @@ export {
   validateConditionSummary,
 };
 
-export type {
-  validateCondition,
-};
+export type { validateCondition };

@@ -4,9 +4,9 @@ import { AccordionDetails, Button, TextField, Tooltip } from "@mui/material";
 import { FormField, useFormStructureContext } from "../../../context/FormStructureContext";
 import styles from "./style.module.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import AlertMsg from '@components/AlertMsg/AlertMsg';
+import AlertMsg from "@components/AlertMsg/AlertMsg";
 
-import { texts } from '@utils/texts';
+import { texts } from "@utils/texts";
 import { useContext } from "react";
 import { FormEditorContext } from "@src/pages/FormEditor/context/FormEditorContext";
 import { useConfirmDeleteExistingField } from "@src/pages/FormEditor/hooks/useConfirmDeleteExistingField";
@@ -28,7 +28,7 @@ import {
   EditButtonIcon,
   ExpandIcon,
   DeleteIcon,
-  CatalogArrowIcon
+  CatalogArrowIcon,
 } from "./styled";
 
 interface Props {
@@ -45,10 +45,10 @@ function FormSectionElement({ id }: Props) {
     transition,
     active,
     isDragging,
-  } = useSortable({ 
-    id, 
+  } = useSortable({
+    id,
     data: { elementType: "section" } as DraggableElementData,
-    resizeObserverConfig: undefined as any
+    resizeObserverConfig: undefined as any,
   });
 
   const {
@@ -59,6 +59,7 @@ function FormSectionElement({ id }: Props) {
     deleteField,
     setFieldData,
   } = useFormStructureContext();
+
   const { active: draggingElement } = useDndContext();
 
   const { originalFieldIds } = useContext(FormEditorContext) || {};
@@ -73,7 +74,6 @@ function FormSectionElement({ id }: Props) {
   const self = useMemo(() => formStructure.sections[id], [formStructure.sections, id]);
 
   const containerRef = useRef<HTMLDivElement>(null);
-
   const titleInputRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -101,13 +101,21 @@ function FormSectionElement({ id }: Props) {
     opacity: isDragging ? 0.25 : 1,
   };
 
-  const handleFieldDataChange = useCallback((fieldId: string) => (data: Partial<FormFieldData>) => setFieldData(fieldId, data), [setFieldData]);
+  const isEditedTitleEmpty = editedTitle.trim().length === 0;
+
+  const handleFieldDataChange = useCallback(
+    (fieldId: string) => (data: Partial<FormFieldData>) => setFieldData(fieldId, data),
+    [setFieldData],
+  );
 
   const sectionTitle: JSX.Element = isEditingTitle ? (
     <>
-      <TextField value={editedTitle}
-        variant={"standard"}
+      <TextField
+        value={editedTitle}
+        variant="standard"
         inputRef={titleInputRef}
+        error={isEditedTitleEmpty}
+        helperText={isEditedTitleEmpty ? "שם מקטע הוא שדה חובה" : ""}
         slotProps={{
           htmlInput: {
             maxLength: 255,
@@ -116,18 +124,30 @@ function FormSectionElement({ id }: Props) {
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
         onChange={(e) => setEditedTitle(e.target.value.trimStart())}
-        onBlur={(e) => setEditedTitle(e.target.value.trim())} />
-      <Button className={styles.button}
+        onBlur={(e) => setEditedTitle(e.target.value.trim())}
+      />
+
+      <Button
+        className={styles.button}
+        disabled={isEditedTitleEmpty}
         onPointerDown={(e) => e.stopPropagation()}
-        onClick={(_) => {
-          renameSection(id, editedTitle);
+        onClick={() => {
+          const trimmedTitle = editedTitle.trim();
+
+          if (!trimmedTitle) {
+            return;
+          }
+
+          renameSection(id, trimmedTitle);
           setIsEditingTitle(false);
         }}>
         <SaveButtonIcon />
       </Button>
-      <Button className={styles.button}
+
+      <Button
+        className={styles.button}
         onPointerDown={(e) => e.stopPropagation()}
-        onClick={(_) => {
+        onClick={() => {
           setIsEditingTitle(false);
         }}>
         <CancelButtonIcon />
@@ -136,13 +156,15 @@ function FormSectionElement({ id }: Props) {
   ) : (
     <>
       <OverflowTooltip title={self.title} placement="top">
-        <SectionTitleText variant={"body1"}>{self.title}</SectionTitleText>
+        <SectionTitleText variant="body1">{self.title}</SectionTitleText>
       </OverflowTooltip>
-      <Tooltip title='עריכת מקטע' placement="top">
-        <span style={{ display: 'inline-block' }}>
-          <Button className={styles.button}
+
+      <Tooltip title="עריכת מקטע" placement="top">
+        <span style={{ display: "inline-block" }}>
+          <Button
+            className={styles.button}
             onPointerDown={(e) => e.stopPropagation()}
-            onClick={(_) => {
+            onClick={() => {
               setEditedTitle(self.title);
               setIsEditingTitle(true);
             }}>
@@ -154,9 +176,10 @@ function FormSectionElement({ id }: Props) {
   );
 
   const toggleExpandButton: JSX.Element = (
-    <Tooltip title={self.expanded ? 'צמצום מקטע' : 'הרחבת מקטע'} placement="top" >
-      <span style={{ display: 'inline-block' }}>
-        <Button className={styles.button}
+    <Tooltip title={self.expanded ? "צמצום מקטע" : "הרחבת מקטע"} placement="top">
+      <span style={{ display: "inline-block" }}>
+        <Button
+          className={styles.button}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             toggleSectionExpanded(id);
@@ -169,11 +192,14 @@ function FormSectionElement({ id }: Props) {
   );
 
   const deleteSectionButton: JSX.Element = (
-    <Tooltip title={isLastSection ? 'לא ניתן למחוק את המקטע היחיד בטופס' : 'מחיקת מקטע'} placement="top">
-      <span style={{ display: 'inline-block' }}>
-        <Button className={styles.button}
+    <Tooltip
+      title={isLastSection ? "לא ניתן למחוק את המקטע היחיד בטופס" : "מחיקת מקטע"}
+      placement="top">
+      <span style={{ display: "inline-block" }}>
+        <Button
+          className={styles.button}
           disabled={isLastSection}
-          color={'error'}
+          color="error"
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             setShowAlertMsg(true);
@@ -185,54 +211,52 @@ function FormSectionElement({ id }: Props) {
     </Tooltip>
   );
 
-  const alertMsgDialog = (
-    showAlertMsg && (
-      <AlertMsg
-        msg={[texts.heb.removeSectionAlert]}
-        closePopup={() => setShowAlertMsg(false)}
-        onOk={() => {
-          deleteSection(id);
-          setShowAlertMsg(false);
-        }}
-        sectionId={id}
-      />
-    )
+  const alertMsgDialog = showAlertMsg && (
+    <AlertMsg
+      msg={[texts.heb.removeSectionAlert]}
+      closePopup={() => setShowAlertMsg(false)}
+      onOk={() => {
+        deleteSection(id);
+        setShowAlertMsg(false);
+      }}
+      sectionId={id}
+    />
   );
 
   const resizeHandle: JSX.Element = (
-    <ResizeHandleWrapper><ResizeHandleBar /></ResizeHandleWrapper>
+    <ResizeHandleWrapper>
+      <ResizeHandleBar />
+    </ResizeHandleWrapper>
   );
 
   const fieldsList: JSX.Element = (
     <AccordionDetails className={styles.content}>
-      {
-        self.fieldIds.map((fieldId: string) => {
-          const field: FormField = formStructure.fields[fieldId];
-          const isExistingField: boolean = !!originalFieldIds && originalFieldIds.has(field?.id);
+      {self.fieldIds.map((fieldId: string) => {
+        const field: FormField = formStructure.fields[fieldId];
+        const isExistingField: boolean = !!originalFieldIds && originalFieldIds.has(field?.id);
 
-          return (
-            <FormFieldElement
-              key={fieldId}
-              field={field}
-              onDataChange={handleFieldDataChange(fieldId)}
-              onDelete={() => {
-                if (isExistingField) {
-                  requestConfirm(() => deleteField(fieldId));
-                } else {
-                  deleteField(fieldId);
-                }
-              }}
-            />
-          );
-        })
-      }
+        return (
+          <FormFieldElement
+            key={fieldId}
+            field={field}
+            onDataChange={handleFieldDataChange(fieldId)}
+            onDelete={() => {
+              if (isExistingField) {
+                requestConfirm(() => deleteField(fieldId));
+              } else {
+                deleteField(fieldId);
+              }
+            }}
+          />
+        );
+      })}
     </AccordionDetails>
   );
 
   const emptyPlaceholder: JSX.Element = (
     <div className={styles.emptySectionPlaceholder}>
       <CatalogArrowIcon className={styles.catalogArrowIcon} />
-      <EmptyPlaceholderText color={"#a7abb1"} variant={"h5"} align={"center"}>
+      <EmptyPlaceholderText color="#a7abb1" variant="h5" align="center">
         ניתן להוסיף שדה למקטע באמצעות גרירה מקטלוג השדות בצד
       </EmptyPlaceholderText>
     </div>
@@ -242,21 +266,30 @@ function FormSectionElement({ id }: Props) {
     <>
       {ConfirmDialog}
       {alertMsgDialog}
-      <StyledAccordion className={styles.container} expanded={self.expanded}
+
+      <StyledAccordion
+        className={styles.container}
+        expanded={self.expanded}
         ref={containerRef}
         style={style}
         {...attributes}>
-        <StyledAccordionSummary ref={setActivatorNodeRef} onClick={(e) => e.preventDefault()} {...listeners}>
-          <div className={styles.title}>
-            {sectionTitle}
-          </div>
+        <StyledAccordionSummary
+          ref={setActivatorNodeRef}
+          onClick={(e) => e.preventDefault()}
+          {...listeners}>
+          <div className={styles.title}>{sectionTitle}</div>
           {toggleExpandButton}
           {deleteSectionButton}
         </StyledAccordionSummary>
-        <SortableContext items={formStructure.sections[id].fieldIds}
+
+        <SortableContext
+          items={formStructure.sections[id].fieldIds}
           strategy={verticalListSortingStrategy}
-          disabled={(draggingElement?.data.current as DraggableElementData)?.elementType === "section"}>
-          <StyledResizable minHeight={200}
+          disabled={
+            (draggingElement?.data.current as DraggableElementData)?.elementType === "section"
+          }>
+          <StyledResizable
+            minHeight={200}
             enable={{ bottom: true }}
             handleComponent={{
               bottom: resizeHandle,

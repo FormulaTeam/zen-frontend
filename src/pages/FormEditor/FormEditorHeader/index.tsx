@@ -1,6 +1,16 @@
 import styles from "./style.module.css";
 import { DEFAULT_ICON_NAME, formIconsNamesMap, getFormIconByName } from "@utils/utils";
-import { Button, TextField, Tooltip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
+import {
+  Button,
+  TextField,
+  Tooltip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Typography,
+} from "@mui/material";
 import { FormMetadata, useFormStructureContext } from "../context/FormStructureContext";
 import { Check, Close, DriveFileRenameOutline, Error as ErrorIcon } from "@mui/icons-material";
 import React, { useState } from "react";
@@ -22,8 +32,10 @@ import { texts } from "@src/utils/texts";
 import AlertMsg from "@components/AlertMsg/AlertMsg";
 
 function FormEditorHeader() {
-  const { formStructure, validateForm, setFormMetadata, checkHasChanges } = useFormStructureContext();
-  const { handleSaveForm, handleExit, handleDiscardAndExit, isLoading } = useFormEditor(formStructure);
+  const { formStructure, validateForm, setFormMetadata, checkHasChanges } =
+    useFormStructureContext();
+  const { handleSaveForm, handleExit, handleDiscardAndExit, isLoading } =
+    useFormEditor(formStructure);
 
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
   const [editedMetadata, setEditedMetadata] = useState<FormMetadata>({ title: "" });
@@ -35,8 +47,9 @@ function FormEditorHeader() {
 
   const onSaveClick = () => {
     const isValid = validateForm();
+
     if (isValid) {
-      handleSaveForm();
+      void handleSaveForm();
     } else {
       setShowValidationErrorsPopup(true);
     }
@@ -44,10 +57,13 @@ function FormEditorHeader() {
 
   const handleSaveAndExit = async () => {
     setShowAlertMsg(false);
+
     const isValid = validateForm();
+
     if (isValid) {
-      await handleSaveForm();
-      handleExit();
+      await handleSaveForm({ navigateToResponses: true });
+    } else {
+      setShowValidationErrorsPopup(true);
     }
   };
 
@@ -62,12 +78,14 @@ function FormEditorHeader() {
   const onIconChange = (newIcon: string | null): void => {
     if (newIcon) {
       setFormMetadata({ iconId: newIcon });
+
       if (isEditingMetadata) {
         setEditedMetadata((prev) => ({ ...prev, iconId: newIcon }));
       }
     }
+
     setShowPickIcon(false);
-  }
+  };
 
   const handleSaveMetadata = (e: React.MouseEvent<HTMLButtonElement>): void => {
     if (setFormMetadata(editedMetadata)) {
@@ -82,13 +100,22 @@ function FormEditorHeader() {
 
   const renderIcon = (id: string | null | undefined) => {
     const IconComponent = getFormIconByName(id ?? undefined);
-    
+
     if (typeof IconComponent === "string") {
-      return <img src={IconComponent} alt="icon" className={styles.formIcon} onClick={() => setShowPickIcon(true)} />;
+      return (
+        <img
+          src={IconComponent}
+          alt="icon"
+          className={styles.formIcon}
+          onClick={() => setShowPickIcon(true)}
+        />
+      );
     }
 
     return (
-      <div onClick={() => setShowPickIcon(true)} style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
+      <div
+        onClick={() => setShowPickIcon(true)}
+        style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
         <IconComponent color="primary" style={{ fontSize: 40 }} />
       </div>
     );
@@ -118,7 +145,9 @@ function FormEditorHeader() {
           error={!!validationErrors?.title}
           helperText={validationErrors?.title?.[0]}
           variant={"standard"}
-          onChange={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trimStart() }))}
+          onChange={(e) =>
+            setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trimStart() }))
+          }
           onBlur={(e) => setEditedMetadata((prev) => ({ ...prev, title: e.target.value.trim() }))}
         />
         <TextField
@@ -132,14 +161,18 @@ function FormEditorHeader() {
           error={!!validationErrors?.description}
           helperText={validationErrors?.description?.[0]}
           variant={"standard"}
-          onChange={(e) => setEditedMetadata((prev) => ({
-            ...prev,
-            description: e.target.value.trimStart(),
-          }))}
-          onBlur={(e) => setEditedMetadata((prev) => ({
-            ...prev,
-            description: e.target.value.trim(),
-          }))}
+          onChange={(e) =>
+            setEditedMetadata((prev) => ({
+              ...prev,
+              description: e.target.value.trimStart(),
+            }))
+          }
+          onBlur={(e) =>
+            setEditedMetadata((prev) => ({
+              ...prev,
+              description: e.target.value.trim(),
+            }))
+          }
         />
       </div>
       <div>
@@ -159,7 +192,8 @@ function FormEditorHeader() {
             <StyledTitleText variant={"h5"}>{title || "שם הטופס"}</StyledTitleText>
           </OverflowTooltip>
           <Tooltip title="עריכת פרטי הטופס">
-            <Button className={styles.button}
+            <Button
+              className={styles.button}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(_) => {
                 setEditedMetadata({ title, description, iconId });
@@ -171,7 +205,9 @@ function FormEditorHeader() {
         </>
       </div>
       <OverflowTooltip title={description || "ללא תיאור"} placement="bottom">
-        <StyledDescriptionText variant="subtitle1">{description ?? "ללא תיאור"}</StyledDescriptionText>
+        <StyledDescriptionText variant="subtitle1">
+          {description ?? "ללא תיאור"}
+        </StyledDescriptionText>
       </OverflowTooltip>
 
       <div className={styles.formErrorContainer}>
@@ -189,7 +225,9 @@ function FormEditorHeader() {
       <Button variant={"contained"} color={"primary"} onClick={onSaveClick} disabled={isLoading}>
         {isLoading ? "שומר..." : "שמירה"}
       </Button>
-      <Button variant={"outlined"} color={"error"} onClick={onExitClick} disabled={isLoading}>יציאה</Button>
+      <Button variant={"outlined"} color={"error"} onClick={onExitClick} disabled={isLoading}>
+        יציאה
+      </Button>
     </>
   );
 
@@ -201,13 +239,12 @@ function FormEditorHeader() {
         paper: {
           component: ExitAlertMsgDialog,
         },
-      }}
-    >
+      }}>
       <ExitAlertMsgCloseIcon>
         <Close onClick={() => setShowAlertMsg(false)} />
       </ExitAlertMsgCloseIcon>
       <ExitAlertMsgDialogTitle>
-        <ErrorIcon sx={{ fontSize: '5rem', color: 'red' }} />
+        <ErrorIcon sx={{ fontSize: "5rem", color: "red" }} />
       </ExitAlertMsgDialogTitle>
       <ExitAlertMsgDialogContent>
         <ExitAlertMsgDialogContentText>
@@ -221,43 +258,46 @@ function FormEditorHeader() {
         <Button variant="contained" color="primary" onClick={handleSaveAndExit}>
           שמירה ויציאה
         </Button>
-        <Button variant="outlined" color="error" onClick={() => {
-          setShowAlertMsg(false);
-          handleDiscardAndExit();
-        }}>
+        <Button
+          variant="outlined"
+          color="error"
+          onClick={() => {
+            setShowAlertMsg(false);
+            handleDiscardAndExit();
+          }}>
           יציאה ללא שמירה
         </Button>
       </ExitAlertMsgDialogActions>
     </Dialog>
   );
 
-  const validationErrorsPopup = (
-    showValidationErrorsPopup ? (
-      <div style={{ position: 'fixed', top: 80, left: 0, right: 0, zIndex: 1300, display: 'flex', justifyContent: 'center' }}>
-        <AlertMsg
-          msg={["יש שגיאות בטופס. נא לתקן את השדות המסומנים באדום."]}
-          closePopup={() => setShowValidationErrorsPopup(false)}
-        />
-      </div>
-    ) : null
-  );
+  const validationErrorsPopup = showValidationErrorsPopup ? (
+    <div
+      style={{
+        position: "fixed",
+        top: 80,
+        left: 0,
+        right: 0,
+        zIndex: 1300,
+        display: "flex",
+        justifyContent: "center",
+      }}>
+      <AlertMsg
+        msg={["יש שגיאות בטופס. נא לתקן את השדות המסומנים באדום."]}
+        closePopup={() => setShowValidationErrorsPopup(false)}
+      />
+    </div>
+  ) : null;
 
   return (
     <div className={styles.header}>
       <div className={styles.headerStart}>
         {formIcon}
-        <div className={styles.editingMetadata}>
-          {formMetadata}
-        </div>
+        <div className={styles.editingMetadata}>{formMetadata}</div>
       </div>
-      <div className={styles.headerEnd}>
-        {headerActionButtons}
-      </div>
+      <div className={styles.headerEnd}>{headerActionButtons}</div>
       {showPickIcon && (
-        <IconsGrid
-          onIconChange={onIconChange}
-          onClosePickIcon={() => setShowPickIcon(false)}
-        />
+        <IconsGrid onIconChange={onIconChange} onClosePickIcon={() => setShowPickIcon(false)} />
       )}
 
       {exitAlertMsg}
