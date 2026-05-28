@@ -65,6 +65,27 @@ root.render(
               border: "4px solid #f1f1f1 !important",
             },
           },
+
+          ".response-page, .sandboxContainer, .main-page-container, .response-page .MuiContainer-root": {
+            overflowY: "auto !important",
+            scrollbarWidth: "auto !important",
+            msOverflowStyle: "auto !important",
+            "&::-webkit-scrollbar": {
+              width: "8px !important",
+              height: "8px !important",
+              display: "block !important",
+            },
+            "&::-webkit-scrollbar-track": {
+              backgroundColor: "#f1f1f1 !important",
+              display: "block !important",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: `${theme.scrollBar.color} !important`,
+              borderRadius: "10px !important",
+              display: "block !important",
+              border: "2px solid #f1f1f1 !important",
+            },
+          },
         })}
       />
       <CssBaseline />

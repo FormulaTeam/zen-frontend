@@ -47,6 +47,7 @@ type Row = GridRowModel & {
   createdByName?: string;
   edited?: string;
   editedByName?: string;
+  parentResponse?: string | null;
   [key: string]: unknown;
 };
 

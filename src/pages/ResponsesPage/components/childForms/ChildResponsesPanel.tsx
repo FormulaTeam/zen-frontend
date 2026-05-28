@@ -42,18 +42,32 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
 
   return (
     <DetailsRowContainer>
-      <ResponseTitle>
-        {title} ({responses.length})
+      <ResponseTitle
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5,
+          flexWrap: "wrap",
+        }}>
+        {responses.length > 1 ? (
+          <>
+            <span dir="auto">{title}</span>
+            <span style={{ whiteSpace: "nowrap" }}>- {responses.length} תגובות</span>
+          </>
+        ) : (
+          <>
+            <span dir="auto">{title}</span>
+            <span style={{ whiteSpace: "nowrap" }}> - תגובה אחת</span>
+          </>
+        )}
       </ResponseTitle>
-
       <TableContainer
         sx={{
           border: "1px solid #e2e8f0",
           borderRadius: "8px",
           overflow: "hidden",
           boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-        }}
-      >
+        }}>
         <StyledTable isInEditMode={isInEditMode} size="small">
           <TableHead>
             <TableRow>
@@ -84,4 +98,3 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
     </DetailsRowContainer>
   );
 };
-

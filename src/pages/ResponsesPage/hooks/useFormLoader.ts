@@ -90,6 +90,7 @@ export function useFormLoader(formId: string) {
           index: node.index,
           form_id: node.form_id || node.formId,
           childResponses: node.childResponses || node.child_responses || [],
+          parentResponse: node.parentResponse || node.parent_response || null,
         };
 
         const fieldValues = node.fieldValues || node.field_values || node.data || [];

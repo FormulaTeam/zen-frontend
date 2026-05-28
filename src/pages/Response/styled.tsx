@@ -7,7 +7,6 @@ export const FieldsWrapper = styled(Paper)<PaperProps>(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-between",
-  overflowY: "auto",
   padding: theme.spacing(2),
   backgroundColor: theme.palette.background.paper,
   width: "100%",
@@ -20,7 +19,6 @@ export const SectionContainer = styled(Paper)<SectionContainerProps>(({ theme, h
   flexDirection: "column",
   justifyContent: "space-between",
   alignItems: "center",
-  overflowY: "auto",
   width: "100%",
 }));
 export const FormSectionsContainer = styled(Box)<BoxProps>(({ theme }) => ({
@@ -28,7 +26,8 @@ export const FormSectionsContainer = styled(Box)<BoxProps>(({ theme }) => ({
   flexDirection: "column",
   gap: theme.spacing(2),
   alignItems: "center",
-  padding: theme.spacing(2),
+  padding: "2rem 5rem",
+  width: "100%",
 }));
 
 export const LoadingContainer = styled(Box)<BoxProps>(({ theme }) => ({
@@ -54,7 +53,7 @@ export const LoadingBtnBox = styled(Box)<LoadingBtnBoxProps>`
 `;
 
 export const PageContainer = styled(Container)`
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 `;

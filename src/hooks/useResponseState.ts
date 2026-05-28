@@ -413,6 +413,15 @@ export const useResponseState = (
   const initializedStateKeyRef = useRef<string | null>(null);
   const formFieldsValuesMapRef = useRef<Map<string, any>>(new Map());
 
+  const [lastModeKey, setLastModeKey] = useState<string>(`${responseId}:${viewMode}`);
+  const currentModeKey = `${responseId}:${viewMode}`;
+
+  if (currentModeKey !== lastModeKey) {
+    setLastModeKey(currentModeKey);
+    setLoading(true);
+    initializedStateKeyRef.current = null;
+  }
+
   const navigate = useNavigate();
 
   const { fieldOptions, isLoading: loadingConnections } = useConnectedFormOptions({
@@ -505,7 +514,7 @@ export const useResponseState = (
     return () => {
       isMounted = false;
     };
-  }, [formFromQuery, responseId, copyMode, formId, initialResponse, navigate]);
+  }, [formFromQuery, responseId, copyMode, formId, initialResponse, navigate, viewMode]);
 
   useEffect(() => {
     if (!form) return;

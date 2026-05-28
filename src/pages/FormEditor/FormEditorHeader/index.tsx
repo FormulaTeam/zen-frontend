@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { FormMetadata, useFormStructureContext } from "../context/FormStructureContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormEditor } from "../hooks/useFormEditor";
 import IconsGrid from "../../../components/IconsGrid/IconsGrid";
 import { OverflowTooltip } from "../../../components/OverflowTooltip";
@@ -52,6 +52,18 @@ function FormEditorHeader() {
   }>({});
 
   const { title, description, iconId, validationErrors } = formStructure.metadata;
+
+  useEffect(() => {
+    if (title === "נפל לך הקליפס") {
+      window.dispatchEvent(new CustomEvent("toggle-easter-egg", { detail: { active: true } }));
+    } else {
+      window.dispatchEvent(new CustomEvent("toggle-easter-egg", { detail: { active: false } }));
+    }
+
+    return () => {
+      window.dispatchEvent(new CustomEvent("toggle-easter-egg", { detail: { active: false } }));
+    };
+  }, [title]);
 
   const normalizeValidationResult = (
     result: boolean | Partial<FormValidationResult>,

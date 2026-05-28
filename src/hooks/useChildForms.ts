@@ -28,6 +28,7 @@ type UseChildFormsParams = {
   user: User;
   isSuperAdmin: boolean | null;
   copyMode?: boolean;
+  viewMode?: boolean;
   onSaveComplete?: (allSaved: boolean) => void;
   onValidateComplete?: (isValid: boolean) => void;
 };
@@ -98,6 +99,7 @@ export const useChildForms = ({
   user,
   isSuperAdmin = false,
   copyMode = false,
+  viewMode = false,
   onSaveComplete,
   onValidateComplete,
 }: UseChildFormsParams): UseChildFormsReturn => {
@@ -108,6 +110,7 @@ export const useChildForms = ({
 
   const initializedUnsavedRef = useRef(false);
   const lastLoadedSavedParentRef = useRef<string | undefined>(undefined);
+  const lastViewModeRef = useRef<boolean | undefined>(undefined);
   const saveAllTriggeredRef = useRef(false);
   const validateCycleHandledRef = useRef(false);
   const saveCycleHandledRef = useRef(false);
@@ -118,6 +121,14 @@ export const useChildForms = ({
     () => [...new Set(connectedFields.map((field) => getConnectedFormId(field)!))],
     [connectedFields],
   );
+
+  useEffect(() => {
+    if (lastViewModeRef.current !== viewMode) {
+      lastLoadedSavedParentRef.current = undefined;
+      initializedUnsavedRef.current = false;
+      lastViewModeRef.current = viewMode;
+    }
+  }, [viewMode]);
 
   useEffect(() => {
     if (!childFormsValidate) {
@@ -262,7 +273,7 @@ export const useChildForms = ({
     };
 
     void loadChildForms();
-  }, [childFormIds, connectedFields, id, formId, isSuperAdmin, user, copyMode]);
+  }, [childFormIds, connectedFields, id, formId, isSuperAdmin, user, copyMode, viewMode]);
 
   useEffect(() => {
     const runSaveAllOnce = async () => {

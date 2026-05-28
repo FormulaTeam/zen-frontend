@@ -764,8 +764,9 @@ const shouldSkipRerenderHOF = (
 
   const valueChanged = JSON.stringify(previousValue) !== JSON.stringify(nextValue);
   const validChanged = JSON.stringify(previousValidValue) !== JSON.stringify(nextValidValue);
+  const viewModeChanged = prevProps.viewMode !== nextProps.viewMode;
 
-  return !valueChanged && !validChanged && prevField.id === nextField.id;
+  return !valueChanged && !validChanged && !viewModeChanged && prevField.id === nextField.id;
 };
 
 export default React.memo(FormFieldRenderer, shouldSkipRerenderHOF);

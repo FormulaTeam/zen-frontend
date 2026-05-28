@@ -247,6 +247,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     user,
     isSuperAdmin,
     copyMode,
+    viewMode,
   });
 
   const { generateValidationErrorMessages } = useValidationErrors({
@@ -267,10 +268,10 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   );
 
   useEffect(() => {
-    if (viewMode && form) {
+    if (form) {
       setPermissionTypes(form?.permissions ?? []);
     }
-  }, [form, viewMode]);
+  }, [form]);
 
   useEffect(() => {
     if (!childFormsValidate) {
