@@ -11,6 +11,7 @@ import { DetailsRowContainer, ResponseCell, ResponseTitle, StyledTable } from ".
 interface ChildResponsesPanelProps {
   responses: Row[];
   form: FormDto;
+  title: string;
   parentFormId?: number;
   isInEditMode?: boolean;
   searchQuery?: string;
@@ -20,6 +21,7 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
   responses,
   form,
   parentFormId,
+  title,
   isInEditMode = false,
   searchQuery,
 }) => {
@@ -41,9 +43,8 @@ export const ChildResponsesPanel: React.FC<ChildResponsesPanelProps> = ({
   return (
     <DetailsRowContainer>
       <ResponseTitle>
-        {form.name} - {responses.length} תגובות
+        {title} - {responses.length} {responses.length === 1 ? "תגובה אחת" : "תגובות"}
       </ResponseTitle>
-
       <TableContainer
         sx={{
           border: "1px solid #e2e8f0",
