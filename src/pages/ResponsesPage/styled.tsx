@@ -122,7 +122,6 @@ export const MainContentWrapper = styled(Box)<BoxProps>(() => ({
   minWidth: 0,
   minHeight: 0,
   overflow: "hidden",
-  scrollbarGutter: "stable",
 }));
 
 export const TopSection = styled(Box)<BoxProps>(() => ({
@@ -457,8 +456,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     },
   },
   "& .MuiDataGrid-scrollbar--vertical": {
-    right: "0",
-    left: "auto",
+    display: "none",
   },
   "& .MuiDataGrid-row.Mui-selected": {
     backgroundColor: "rgba(25, 118, 210, 0.04)",
@@ -482,9 +480,11 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     outline: "none !important",
   },
   "& .MuiDataGrid-virtualScroller": {
+    overflowX: "auto !important",
     "&::-webkit-scrollbar": {
-      height: "14px",
-      width: "12px",
+      height: "16px",
+      width: "0px",
+      display: "block",
     },
     "&::-webkit-scrollbar-track": {
       backgroundColor: "#f1f1f1",
@@ -498,6 +498,10 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
         backgroundColor: "#a0aec0",
       },
     },
+  },
+  "& .MuiDataGrid-scrollbar--horizontal": {
+    display: "block",
+    height: "16px",
   },
 }));
 

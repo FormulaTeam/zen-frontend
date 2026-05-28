@@ -41,6 +41,7 @@ const AppRouter = () => {
           display: "grid",
           gridTemplateRows: "auto 1fr",
           height: "100vh",
+          overflow: "hidden",
         }}>
         <Navbar />
         <Routes>

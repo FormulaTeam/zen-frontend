@@ -109,6 +109,7 @@ function FormSectionElement({ id }: Props) {
       value={editedTitle}
       autoFocus
       inputRef={titleInputRef}
+      placeholder={texts.heb.undefinedSection}
       inputProps={{
         maxLength: 255,
       }}
@@ -145,8 +146,10 @@ function FormSectionElement({ id }: Props) {
           e.stopPropagation();
         }}
       >
-        <OverflowTooltip title={self.title} placement="top">
-          <span>{self.title}</span>
+        <OverflowTooltip title={self.title || texts.heb.undefinedSection} placement="top">
+          <span className={!self.title ? styles.emptyTitle : ""}>
+            {self.title || texts.heb.undefinedSection}
+          </span>
         </OverflowTooltip>
       </SectionTitleText>
     </Tooltip>
