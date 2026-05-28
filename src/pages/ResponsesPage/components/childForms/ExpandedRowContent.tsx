@@ -113,7 +113,6 @@ export const ExpandedRowContent: React.FC<ExpandedRowContentProps> = ({
                         key={`${item.form.id}-${index}`}
                         responses={item.responses}
                         form={item.form}
-                        title={item.field.displayName}
                         parentFormId={parentFormId}
                         isInEditMode={isInEditMode}
                         searchQuery={searchQuery}
