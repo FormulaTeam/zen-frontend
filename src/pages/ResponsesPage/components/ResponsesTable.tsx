@@ -13,7 +13,7 @@ import {
 } from "@mui/x-data-grid-pro";
 import { useFormStore, useInitiateFormStore } from "../stores/form.store";
 import clsx from "clsx";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import CloudIcon from "@mui/icons-material/Cloud";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -609,7 +609,13 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}pushed_to_metro`, {
         field: "sync",
         headerName: "",
-        renderHeader: () => <CloudUploadIcon fontSize="large" />,
+        align: "left",
+        headerAlign: "left",
+        renderHeader: () => (
+          <HeaderFlex sx={{ justifyContent: "flex-start", width: "100%" }}>
+            <CloudIcon fontSize="small" />
+          </HeaderFlex>
+        ),
         minWidth: 150,
         width: 150,
         editable: false,

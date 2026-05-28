@@ -21,6 +21,8 @@ This task involved removing scrollbars from the entire system while preserving t
 
 ### 4. Responses Page Layout
 - **Search Bar Repositioning**: Moved the response search bar from the middle of the second line to the left side of the third line (next to view management).
+- **Sync Column Refinement**: Replaced the large `CloudUploadIcon` with a small, simple `CloudIcon` in the header.
+- **Sync Column Alignment**: Re-aligned the sync header and row status icons to the left (sticking to the opposite side of standard data) for better visual distinction.
 
 ### 5. System Consistency
 - **Navbar Stabilization**: Set navbar to `position: static` and standardized container heights (`100%`) to eliminate layout "jumping" between pages.
