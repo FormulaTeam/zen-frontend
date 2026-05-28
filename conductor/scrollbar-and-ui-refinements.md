@@ -26,6 +26,7 @@ This task involved removing scrollbars from the entire system while preserving t
 - **Navbar Stabilization**: Set navbar to `position: static` and standardized container heights (`100%`) to eliminate layout "jumping" between pages.
 - **Background Standardization**: Updated the Form Editor background color to `#F1F5F9` to match the rest of the application.
 - **Layout Padding**: Standardized side padding for the Form Editor to `24px`.
+- **Typography Consistency**: Ensured custom styled buttons (like "Create New Form") explicitly inherit the system-wide font family.
 
 ## Verification Results
 - [x] Main page is non-scrollable.
@@ -36,4 +37,6 @@ This task involved removing scrollbars from the entire system while preserving t
 - [x] Responses page search bar is correctly positioned on the third line next to views.
 - [x] Navbar does not jump when navigating between Home and Form Editor.
 - [x] Form Editor background matches the Main Page background.
+- [x] "Create New Form" button uses the correct system font.
+
 
