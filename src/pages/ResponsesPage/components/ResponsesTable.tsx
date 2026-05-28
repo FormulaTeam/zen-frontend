@@ -350,6 +350,26 @@ export const ResponsesTable = React.memo(
 
     const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
 
+    const activeEditingRowIds = useMemo(() => {
+      const rowIds = new Set<string>();
+
+      Object.entries(cellModesModel).forEach(([rowId, fields]) => {
+        const isRowEditing = Object.values(fields).some(
+          (fieldMode) => fieldMode.mode === GridCellModes.Edit,
+        );
+
+        if (isRowEditing) {
+          rowIds.add(String(rowId));
+        }
+      });
+
+      return rowIds;
+    }, [cellModesModel]);
+
+    useEffect(() => {
+      apiRef.current?.resetRowHeights();
+    }, [apiRef, activeEditingRowIds, localRows]);
+
     const { childrenFormsData, hasFormInFormFields, loadingChildForms, getChildFormData } =
       useChildForms({ form });
 
@@ -994,11 +1014,9 @@ export const ResponsesTable = React.memo(
             minHeight: "40px",
             borderTop: "none",
             direction: "rtl",
-            gap: 4, // <- adds spacing between the 3 main segments
+            gap: 4,
           }}>
-          {/* 1. Pagination controls */}
           <Stack direction="row" spacing={2} alignItems="center">
-            {/* Next page */}
             <Tooltip title="עמוד הבא">
               <span>
                 <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1014,7 +1032,6 @@ export const ResponsesTable = React.memo(
               </span>
             </Tooltip>
 
-            {/* Previous page */}
             <Tooltip title="עמוד קודם">
               <span>
                 <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1035,7 +1052,6 @@ export const ResponsesTable = React.memo(
             </Tooltip>
           </Stack>
 
-          {/* 2. Showing responses */}
           <Typography
             variant="body2"
             sx={{ fontWeight: 400, color: "#020618", fontSize: "0.875rem" }}>
@@ -1044,7 +1060,6 @@ export const ResponsesTable = React.memo(
               : `מציג 0 תגובות מתוך ${totalCount}`}
           </Typography>
 
-          {/* 3. Page size selector */}
           <FooterInfoContainer sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Typography
               variant="body2"
@@ -1118,6 +1133,14 @@ export const ResponsesTable = React.memo(
               }}
               getCellClassName={getCellClassName}
               rowHeight={49}
+              getRowHeight={(params) => {
+                if (isInEditMode && activeEditingRowIds.has(String(params.id))) {
+                  return "auto";
+                }
+
+                return null;
+              }}
+              getEstimatedRowHeight={() => 72}
               columnHeaderHeight={40}
               loading={
                 !isInEditMode && isRowsLoading && rows.length === 0 && form?.responsesCount !== 0
@@ -1129,6 +1152,7 @@ export const ResponsesTable = React.memo(
               onRowSelectionModelChange={onRowSelectionModelChange}
               getRowClassName={(params) => {
                 const classes: string[] = [];
+
                 classes.push(
                   params.indexRelativeToCurrentPage % 2 === 0
                     ? "MuiDataGrid-row--even"
@@ -1140,10 +1164,7 @@ export const ResponsesTable = React.memo(
                     classes.push("pending-deletion-row");
                   }
 
-                  const isEdited = Object.keys(cellModesModel[params.id] || {}).some(
-                    (field) => cellModesModel[params.id][field].mode === GridCellModes.Edit,
-                  );
-                  if (isEdited) {
+                  if (activeEditingRowIds.has(String(params.id))) {
                     classes.push("active-editing-row");
                   }
                 }
@@ -1206,6 +1227,25 @@ export const ResponsesTable = React.memo(
                   backgroundColor: "transparent",
                   minWidth: 0,
                 },
+
+                ...(isInEditMode
+                  ? {
+                      "& .active-editing-row .MuiDataGrid-cell": {
+                        py: "4px",
+                        alignItems: "center",
+                      },
+                      "& .active-editing-row .MuiDataGrid-cell--editing": {
+                        p: "4px 6px",
+                        overflow: "visible",
+                      },
+                      "& .active-editing-row .MuiDataGrid-cell--editing:focus-within": {
+                        outline: "none",
+                      },
+                      "& .active-editing-row .MuiDataGrid-cell--editing .MuiInputBase-root": {
+                        boxShadow: "none",
+                      },
+                    }
+                  : {}),
               }}
             />
           </TableContainer>

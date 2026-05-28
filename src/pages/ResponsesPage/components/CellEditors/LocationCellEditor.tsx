@@ -6,21 +6,23 @@ import { LocationValue } from "@utils/interfaces";
 
 const LocationEditorRoot = styled(Box)({
   width: "100%",
-  display: "flex",
-  flexDirection: "column",
-  gap: 8,
-  padding: "6px 8px",
+  height: "100%",
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 6,
+  padding: "4px 6px",
   boxSizing: "border-box",
+  alignItems: "center",
 });
 
 const locationInputSx = {
   "& .MuiInputBase-root": {
-    minHeight: 38,
+    minHeight: 34,
     borderRadius: "8px",
     border: "1px solid #d7deea",
     backgroundColor: "#ffffff",
-    padding: "2px 10px",
-    fontSize: "0.95rem",
+    padding: "0 8px",
+    fontSize: "0.9rem",
     transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
 
     "&:hover": {
@@ -30,7 +32,7 @@ const locationInputSx = {
 
     "&.Mui-focused": {
       borderColor: "#7c9cc9",
-      boxShadow: "0 0 0 3px rgba(124, 156, 201, 0.14)",
+      boxShadow: "0 0 0 2px rgba(124, 156, 201, 0.14)",
     },
 
     "&::before, &::after": {
@@ -40,6 +42,7 @@ const locationInputSx = {
 
   "& .MuiInputBase-input": {
     padding: "6px 0 !important",
+    fontSize: "0.9rem",
   },
 };
 

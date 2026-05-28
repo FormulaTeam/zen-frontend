@@ -33,12 +33,12 @@ const toLinkValue = (value: LinkValue | string | null): LinkValue => {
 
 const linkInputSx = {
   "& .MuiInputBase-root": {
-    minHeight: 38,
+    minHeight: 34,
     borderRadius: "8px",
     border: "1px solid #d7deea",
     backgroundColor: "#ffffff",
-    padding: "2px 10px",
-    fontSize: "0.95rem",
+    padding: "0 8px",
+    fontSize: "0.9rem",
     transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
 
     "&:hover": {
@@ -48,7 +48,7 @@ const linkInputSx = {
 
     "&.Mui-focused": {
       borderColor: "#7c9cc9",
-      boxShadow: "0 0 0 3px rgba(124, 156, 201, 0.14)",
+      boxShadow: "0 0 0 2px rgba(124, 156, 201, 0.14)",
     },
 
     "&::before, &::after": {
@@ -58,6 +58,7 @@ const linkInputSx = {
 
   "& .MuiInputBase-input": {
     padding: "6px 0 !important",
+    fontSize: "0.9rem",
   },
 };
 
@@ -122,10 +123,12 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
     <Box
       sx={{
         width: "100%",
-        display: "flex",
-        flexDirection: "column",
+        height: "100%",
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
         gap: 0.75,
-        padding: "6px 8px",
+        alignItems: "center",
+        padding: "4px 6px",
         boxSizing: "border-box",
       }}>
       <TextField

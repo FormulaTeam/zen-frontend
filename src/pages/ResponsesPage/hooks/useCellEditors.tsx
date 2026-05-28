@@ -1,4 +1,4 @@
-import { TextField, Tooltip } from "@mui/material";
+import { Box, TextField, Tooltip } from "@mui/material";
 import { GridRenderEditCellParams } from "@mui/x-data-grid-pro";
 import { GridApiPro } from "@mui/x-data-grid-pro/models/gridApiPro";
 import { useCallback, useMemo } from "react";
@@ -324,19 +324,35 @@ export const useCellEditors = ({
 
       if (errorMessage) {
         return (
-          <CellErrorWrapper>
-            <CellErrorHeader>
-              <CellErrorText title={errorMessage}>{errorMessage}</CellErrorText>
+          <Tooltip
+            title={error?.detail ? `${errorMessage}\n${error.detail}` : errorMessage}
+            arrow
+            placement="top">
+            <Box
+              sx={{
+                width: "100%",
+                height: "100%",
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                "& .MuiInputBase-root": {
+                  borderColor: "#d32f2f !important",
+                },
+              }}>
+              {editor}
 
-              {error?.detail && (
-                <Tooltip title={error.detail} arrow placement="top">
-                  <CellErrorInfoIcon aria-label="פירוט שגיאה">ⓘ</CellErrorInfoIcon>
-                </Tooltip>
-              )}
-            </CellErrorHeader>
-
-            <CellValueFlex>{editor}</CellValueFlex>
-          </CellErrorWrapper>
+              <CellErrorInfoIcon
+                aria-label="פירוט שגיאה"
+                sx={{
+                  position: "absolute",
+                  insetInlineEnd: 4,
+                  top: 4,
+                  zIndex: 2,
+                }}>
+                ⓘ
+              </CellErrorInfoIcon>
+            </Box>
+          </Tooltip>
         );
       }
 

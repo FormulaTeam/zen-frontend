@@ -29,12 +29,12 @@ const normalizeValue = (value: string | string[], multiSelect: boolean): string 
 
 const editorSx = {
   "& .MuiInputBase-root": {
-    minHeight: "42px",
-    borderRadius: "10px",
+    minHeight: "34px",
+    borderRadius: "8px",
     border: "1px solid #d7deea",
     backgroundColor: "#fff",
     padding: "2px 10px",
-    fontSize: "0.95rem",
+    fontSize: "0.9rem",
     boxShadow: "0 1px 2px rgba(16, 24, 40, 0.04)",
     transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
 
@@ -64,9 +64,9 @@ const autocompleteSx = {
   },
 
   "& .MuiAutocomplete-tag": {
-    height: 26,
+    height: 22,
     borderRadius: "8px",
-    fontSize: "0.85rem",
+    fontSize: "0.78rem",
     fontWeight: 500,
     backgroundColor: "#eef4ff",
     border: "1px solid #d4e3ff",
