@@ -7,9 +7,19 @@ import { NavAppBar, NavToolbar, LogoContainer, ButtonsContainer } from "./styled
 
 const Navbar = () => {
   const [showMainStuff, setShowMainStuff] = useState(true);
+  const [isEasterEggActive, setIsEasterEggActive] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
+
+  useEffect(() => {
+    const handleEasterEgg = (e: any) => {
+      setIsEasterEggActive(!!e.detail?.active);
+    };
+
+    window.addEventListener("toggle-easter-egg", handleEasterEgg);
+    return () => window.removeEventListener("toggle-easter-egg", handleEasterEgg);
+  }, []);
 
   const isLogoDisabled =
     location?.pathname.includes(IOperationEndpoint.CREATE) ||
@@ -27,7 +37,7 @@ const Navbar = () => {
   };
 
   return (
-    <NavAppBar $bgColor={theme.palette.primary.main} position="static">
+    <NavAppBar $bgColor={theme.palette.primary.main} $isPink={isEasterEggActive} position="static">
       <NavToolbar>
         <LogoContainer onClick={navigateToHome} disabled={isLogoDisabled} data-testid="navbar-logo">
           <img src={logo} height={40} />

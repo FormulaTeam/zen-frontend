@@ -30,6 +30,9 @@ This task involved removing scrollbars from the entire system while preserving t
 - **Layout Padding**: Standardized side padding for the Form Editor to `24px`.
 - **Typography Consistency**: Ensured custom styled buttons (like "Create New Form") explicitly inherit the system-wide font family.
 
+### 6. Fun Features
+- **Easter Egg**: Added an easter egg where naming a form "נפל לך הקליפס" in the editor turns the navbar pink using a custom event-based trigger.
+
 ## Verification Results
 - [x] Main page is non-scrollable.
 - [x] Tables show a grabbable horizontal scrollbar.
@@ -40,5 +43,7 @@ This task involved removing scrollbars from the entire system while preserving t
 - [x] Navbar does not jump when navigating between Home and Form Editor.
 - [x] Form Editor background matches the Main Page background.
 - [x] "Create New Form" button uses the correct system font.
+- [x] Easter egg triggers pink navbar when title matches "נפל לך הקליפס".
+
 
 

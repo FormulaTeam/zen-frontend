@@ -3,6 +3,7 @@ import { AppBar, Toolbar, Button } from "@mui/material";
 
 interface AppBarProps {
   $bgColor: string;
+  $isPink?: boolean;
 }
 
 interface ButtonProps {
@@ -11,8 +12,9 @@ interface ButtonProps {
 }
 
 export const NavAppBar = styled(AppBar)<AppBarProps>`
-  background-color: ${(props) => props.$bgColor};
+  background-color: ${({ $bgColor, $isPink }) => ($isPink ? "#FF69B4" : $bgColor)} !important;
   height: 60px;
+  transition: background-color 0.5s ease;
 `;
 
 export const NavToolbar = styled(Toolbar)`
