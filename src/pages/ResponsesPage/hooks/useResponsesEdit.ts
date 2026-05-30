@@ -31,6 +31,9 @@ import {
   SaveFailedError,
 } from "../../../errors";
 import moment from "moment";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import {
   getOptionResponseSubmitValue,
   OptionResponseValue,
@@ -38,6 +41,18 @@ import {
 import { saveQuickEditDraft, clearQuickEditDraft } from "../../FormEditor/utils/draftPersistence";
 import { DefaultDateValue } from "../../FormEditor/schemas/fields/dateSchema";
 import { DefaultTimeValue } from "../../FormEditor/schemas/fields/timeSchema";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const ISRAEL_TZ = "Asia/Jerusalem";
+
+const getCurrentDateDefaultValue = (dateAndTime?: boolean): string => {
+  const israelNow = dayjs().tz(ISRAEL_TZ);
+  const value = dateAndTime ? israelNow : israelNow.startOf("day");
+
+  return value.utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
+};
 
 type RowId = string | number;
 
@@ -80,6 +95,8 @@ type EditorFieldExtra = {
   numberType?: string;
   multiple?: boolean;
   defaultValue?: unknown;
+  dateAndTime?: boolean;
+  includeTime?: boolean;
   options?:
     | string[]
     | {
@@ -314,8 +331,8 @@ const getDefaultFieldValue = (field: FormFieldDto): unknown => {
   }
 
   if (field.fieldType === fieldType.Date) {
-    if (extra.defaultValue === DefaultDateValue.NOW) {
-      return moment().toISOString();
+    if (Number(extra.defaultValue) === DefaultDateValue.NOW) {
+      return getCurrentDateDefaultValue(Boolean(extra.dateAndTime ?? extra.includeTime));
     }
 
     return getEmptyFieldValue(field);

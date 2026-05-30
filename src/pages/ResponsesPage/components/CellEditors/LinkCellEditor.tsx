@@ -31,24 +31,33 @@ const toLinkValue = (value: LinkValue | string | null): LinkValue => {
   };
 };
 
-const linkInputSx = {
+const getInputSx = ({
+  hasError,
+  direction = "rtl",
+}: {
+  hasError: boolean;
+  direction?: "rtl" | "ltr";
+}) => ({
   "& .MuiInputBase-root": {
-    minHeight: 34,
-    borderRadius: "8px",
-    border: "1px solid #d7deea",
+    minHeight: 40,
+    borderRadius: "10px",
+    border: "1px solid",
+    borderColor: hasError ? "#d32f2f" : "#d7deea",
     backgroundColor: "#ffffff",
-    padding: "0 8px",
-    fontSize: "0.9rem",
+    padding: "0 10px",
+    fontSize: "1rem",
     transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
 
     "&:hover": {
-      borderColor: "#b8c4d6",
+      borderColor: hasError ? "#d32f2f" : "#b8c4d6",
       backgroundColor: "#fbfcfe",
     },
 
     "&.Mui-focused": {
-      borderColor: "#7c9cc9",
-      boxShadow: "0 0 0 2px rgba(124, 156, 201, 0.14)",
+      borderColor: hasError ? "#d32f2f" : "#7c9cc9",
+      boxShadow: hasError
+        ? "0 0 0 3px rgba(211, 47, 47, 0.14)"
+        : "0 0 0 3px rgba(124, 156, 201, 0.16)",
     },
 
     "&::before, &::after": {
@@ -57,10 +66,12 @@ const linkInputSx = {
   },
 
   "& .MuiInputBase-input": {
-    padding: "6px 0 !important",
-    fontSize: "0.9rem",
+    padding: "7px 0 !important",
+    fontSize: "1rem",
+    direction,
+    textAlign: direction === "rtl" ? "right" : "left",
   },
-};
+});
 
 export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
   value,
@@ -125,11 +136,11 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
         width: "100%",
         height: "100%",
         display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 0.75,
-        alignItems: "center",
-        padding: "4px 6px",
+        gridTemplateRows: "auto auto",
+        gap: "8px",
+        padding: "6px 8px",
         boxSizing: "border-box",
+        direction: "rtl",
       }}>
       <TextField
         fullWidth
@@ -140,12 +151,16 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
         inputRef={urlInputRef}
         error={!!errorMessage}
         variant="standard"
+        autoFocus
         slotProps={{
           input: {
             disableUnderline: true,
           },
         }}
-        sx={linkInputSx}
+        sx={getInputSx({
+          hasError: !!errorMessage,
+          direction: "ltr",
+        })}
       />
 
       <TextField
@@ -162,7 +177,10 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
             disableUnderline: true,
           },
         }}
-        sx={linkInputSx}
+        sx={getInputSx({
+          hasError: !!errorMessage,
+          direction: "rtl",
+        })}
       />
     </Box>
   );
