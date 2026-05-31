@@ -346,7 +346,7 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
           component="span"
           sx={{
             minWidth: 0,
-            fontSize: "0.92rem",
+            fontSize: "0.91rem",
             lineHeight: 1.25,
             color: isDragActive ? "#334155" : "#0f172a",
             overflow: "hidden",
