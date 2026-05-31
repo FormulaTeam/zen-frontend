@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Autocomplete, Box, Chip, IconButton, TextField } from "@mui/material";
+import { Autocomplete, Box, IconButton, TextField } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
@@ -58,9 +58,13 @@ const slotProps = {
         mx: 0,
         my: "2px",
         px: "10px",
+        py: "8px",
         fontSize: "1rem",
+        lineHeight: 1.35,
         direction: "rtl",
         textAlign: "right",
+        whiteSpace: "normal",
+        overflowWrap: "anywhere",
 
         "&[aria-selected='true']": {
           backgroundColor: "#eaf2ff",
@@ -94,8 +98,6 @@ const getTextFieldSx = ({
     direction: "rtl",
     boxShadow: "0 1px 2px rgba(16, 24, 40, 0.04)",
     transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
-
-    // Force selected value/chips to start from the physical right side.
     display: "flex",
     flexDirection: "row-reverse",
 
@@ -104,13 +106,11 @@ const getTextFieldSx = ({
           alignItems: "flex-start",
           flexWrap: "wrap",
           gap: "6px",
-          maxHeight: "132px",
+          maxHeight: "160px",
           overflowY: "auto",
           overflowX: "hidden",
           padding: "8px 10px !important",
-          scrollbarGutter: "stable",
           overscrollBehavior: "contain",
-
           scrollbarWidth: "thin",
           scrollbarColor: "#cbd5e1 transparent",
 
@@ -133,9 +133,12 @@ const getTextFieldSx = ({
           },
         }
       : {
-          alignItems: "center",
+          alignItems: hasSelectedValue ? "flex-start" : "center",
           flexWrap: "nowrap",
-          padding: "0 10px !important",
+          maxHeight: "132px",
+          overflowY: hasSelectedValue ? "auto" : "hidden",
+          overflowX: "hidden",
+          padding: hasSelectedValue ? "8px 10px !important" : "0 10px !important",
         }),
 
     "&:hover": {
@@ -165,7 +168,7 @@ const getTextFieldSx = ({
     direction: "rtl",
     caretColor: "transparent",
 
-    ...(multiSelect && hasSelectedValue
+    ...(hasSelectedValue
       ? {
           width: "0 !important",
           minWidth: "0 !important",
@@ -178,10 +181,6 @@ const getTextFieldSx = ({
           padding: multiSelect ? "0 !important" : "7px 0 !important",
         }),
   },
-
-  "& .MuiAutocomplete-tag": {
-    margin: "2px",
-  },
 });
 
 const iconButtonSx = {
@@ -189,11 +188,47 @@ const iconButtonSx = {
   height: 28,
   color: "#64748b",
   borderRadius: "8px",
+  padding: 0,
 
   "&:hover": {
     backgroundColor: "#eef4ff",
     color: "#334155",
   },
+
+  "& .MuiSvgIcon-root": {
+    fontSize: 18,
+  },
+};
+
+const selectedTextSx = {
+  width: "100%",
+  minWidth: 0,
+  direction: "rtl",
+  textAlign: "right",
+  fontSize: "1rem",
+  lineHeight: 1.35,
+  color: "#0f172a",
+  whiteSpace: "normal",
+  overflowWrap: "anywhere",
+  userSelect: "none",
+  pointerEvents: "none",
+};
+
+const selectedTagSx = {
+  width: "100%",
+  maxWidth: "100%",
+  minHeight: 32,
+  borderRadius: "8px",
+  backgroundColor: "#eef4ff",
+  border: "1px solid #d4e3ff",
+  display: "grid",
+  gridTemplateColumns: "1fr auto",
+  alignItems: "center",
+  gap: "6px",
+  px: "8px",
+  py: "4px",
+  boxSizing: "border-box",
+  direction: "rtl",
 };
 
 export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
@@ -239,6 +274,7 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
           display: "flex",
           justifyContent: "flex-start",
           width: "100%",
+          whiteSpace: "normal",
         }}>
         <span
           style={{
@@ -246,6 +282,8 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             width: "100%",
             direction: "rtl",
             textAlign: "right",
+            whiteSpace: "normal",
+            overflowWrap: "anywhere",
           }}>
           {getOptionLabel(option)}
         </span>
@@ -300,26 +338,40 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
 
   const hasSelectedValue = multiSelect ? selectedValues.length > 0 : Boolean(singleValue);
 
+  const renderSelectedSingleValue = () => {
+    if (!singleValue) {
+      return null;
+    }
+
+    const label = getOptionLabel(singleValue);
+
+    return (
+      <Box title={label} sx={selectedTextSx}>
+        {label}
+      </Box>
+    );
+  };
+
   return (
     <Box
       sx={{
         width: "100%",
         height: "100%",
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start",
         gap: "4px",
-
-        // Physical layout: buttons left, input right.
-        // This prevents RTL from flipping the outer layout.
         direction: "ltr",
+        padding: "6px 8px",
+        boxSizing: "border-box",
       }}>
       <Box
         sx={{
-          width: hasSelectedValue ? 64 : 30,
+          width: 30,
           flexShrink: 0,
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          justifyContent: "flex-start",
+          justifyContent: hasSelectedValue ? "flex-start" : "center",
           gap: "2px",
         }}>
         {hasSelectedValue && (
@@ -369,35 +421,50 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             sx={{ width: "100%" }}
             renderTags={(tagValue, getTagProps) =>
               tagValue.map((option, index) => {
-                const { key, ...tagProps } = getTagProps({ index });
+                const { key, onDelete, ...tagProps } = getTagProps({ index });
+                const label = getOptionLabel(option);
 
                 return (
-                  <Chip
-                    key={key}
-                    {...tagProps}
-                    label={getOptionLabel(option)}
-                    size="small"
-                    sx={{
-                      height: 28,
-                      borderRadius: "8px",
-                      fontSize: "0.95rem",
-                      fontWeight: 500,
-                      backgroundColor: "#eef4ff",
-                      border: "1px solid #d4e3ff",
-                      maxWidth: "150px",
+                  <Box key={key} {...tagProps} component="span" title={label} sx={selectedTagSx}>
+                    <Box
+                      component="span"
+                      sx={{
+                        minWidth: 0,
+                        fontSize: "0.95rem",
+                        lineHeight: 1.35,
+                        color: "#0f172a",
+                        whiteSpace: "normal",
+                        overflowWrap: "anywhere",
+                      }}>
+                      {label}
+                    </Box>
 
-                      "& .MuiChip-label": {
-                        px: "8px",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      },
+                    <IconButton
+                      size="small"
+                      onMouseDown={handleIconMouseDown}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onDelete(event);
+                      }}
+                      sx={{
+                        width: 22,
+                        height: 22,
+                        color: "#64748b",
+                        padding: 0,
 
-                      "& .MuiChip-deleteIcon": {
-                        fontSize: 17,
-                        mx: "2px",
-                      },
-                    }}
-                  />
+                        "& .MuiSvgIcon-root": {
+                          fontSize: 16,
+                        },
+
+                        "&:hover": {
+                          backgroundColor: "#dceaff",
+                          color: "#334155",
+                        },
+                      }}>
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
                 );
               })
             }
@@ -468,6 +535,9 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                 }}
                 InputProps={{
                   ...params.InputProps,
+                  startAdornment: hasSelectedValue
+                    ? renderSelectedSingleValue()
+                    : params.InputProps.startAdornment,
                   disableUnderline: true,
                   endAdornment: null,
                 }}

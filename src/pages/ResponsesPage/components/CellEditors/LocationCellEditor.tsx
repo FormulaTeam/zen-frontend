@@ -1,50 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Box, TextField } from "@mui/material";
-import { styled } from "@mui/material/styles";
 
 import { LocationValue } from "@utils/interfaces";
-
-const LocationEditorRoot = styled(Box)({
-  width: "100%",
-  height: "100%",
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 6,
-  padding: "4px 6px",
-  boxSizing: "border-box",
-  alignItems: "center",
-});
-
-const locationInputSx = {
-  "& .MuiInputBase-root": {
-    minHeight: 34,
-    borderRadius: "8px",
-    border: "1px solid #d7deea",
-    backgroundColor: "#ffffff",
-    padding: "0 8px",
-    fontSize: "0.9rem",
-    transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
-
-    "&:hover": {
-      borderColor: "#b8c4d6",
-      backgroundColor: "#fbfcfe",
-    },
-
-    "&.Mui-focused": {
-      borderColor: "#7c9cc9",
-      boxShadow: "0 0 0 2px rgba(124, 156, 201, 0.14)",
-    },
-
-    "&::before, &::after": {
-      display: "none",
-    },
-  },
-
-  "& .MuiInputBase-input": {
-    padding: "6px 0 !important",
-    fontSize: "0.9rem",
-  },
-};
 
 interface LocationCellEditorProps {
   value: LocationValue | string | null | undefined;
@@ -84,6 +41,49 @@ const toLocationValue = (value: LocationCellEditorProps["value"]): LocationValue
   };
 };
 
+const getInputSx = ({
+  hasError,
+  direction = "ltr",
+}: {
+  hasError: boolean;
+  direction?: "rtl" | "ltr";
+}) => ({
+  "& .MuiInputBase-root": {
+    minHeight: 40,
+    borderRadius: "10px",
+    border: "1px solid",
+    borderColor: hasError ? "#d32f2f" : "#d7deea",
+    backgroundColor: "#ffffff",
+    padding: "0 10px",
+    fontSize: "1rem",
+    transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
+
+    "&:hover": {
+      borderColor: hasError ? "#d32f2f" : "#b8c4d6",
+      backgroundColor: "#fbfcfe",
+    },
+
+    "&.Mui-focused": {
+      borderColor: hasError ? "#d32f2f" : "#7c9cc9",
+      boxShadow: hasError
+        ? "0 0 0 3px rgba(211, 47, 47, 0.14)"
+        : "0 0 0 3px rgba(124, 156, 201, 0.16)",
+    },
+
+    "&::before, &::after": {
+      display: "none",
+    },
+  },
+
+  "& .MuiInputBase-input": {
+    padding: "7px 0 !important",
+    fontSize: "1rem",
+    direction,
+    textAlign: direction === "rtl" ? "right" : "left",
+    color: "#0f172a",
+  },
+});
+
 export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
   value,
   onChange,
@@ -105,26 +105,25 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
     setY(nextValue.y || "");
   }, [value]);
 
+  const emitChange = (nextX: string, nextY: string) => {
+    onChange({
+      x: nextX,
+      y: nextY,
+    });
+  };
+
   const handleXChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextX = event.target.value;
 
     setX(nextX);
-
-    onChange({
-      x: nextX,
-      y,
-    });
+    emitChange(nextX, y);
   };
 
   const handleYChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextY = event.target.value;
 
     setY(nextY);
-
-    onChange({
-      x,
-      y: nextY,
-    });
+    emitChange(x, nextY);
   };
 
   const handleXKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -145,14 +144,24 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
 
   const getPlaceholder = (axis: "x" | "y") => {
     if (locationFormat === "UTM") {
-      return axis === "x" ? "X (דוגמה: 200000)" : "Y (דוגמה: 500000)";
+      return axis === "x" ? "X (לדוגמה: 200000)" : "Y (לדוגמה: 500000)";
     }
 
-    return axis === "x" ? "X (דוגמה: 34.8)" : "Y (דוגמה: 31.5)";
+    return axis === "x" ? "X (לדוגמה: 34.8)" : "Y (לדוגמה: 31.5)";
   };
 
   return (
-    <LocationEditorRoot>
+    <Box
+      sx={{
+        width: "100%",
+        height: "100%",
+        display: "grid",
+        gridTemplateRows: "auto auto",
+        gap: "8px",
+        padding: "6px 8px",
+        boxSizing: "border-box",
+        direction: "rtl",
+      }}>
       <TextField
         fullWidth
         placeholder={getPlaceholder("x")}
@@ -162,12 +171,16 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
         inputRef={xInputRef}
         error={!!errorMessage}
         variant="standard"
+        autoFocus
         slotProps={{
           input: {
             disableUnderline: true,
           },
         }}
-        sx={locationInputSx}
+        sx={getInputSx({
+          hasError: !!errorMessage,
+          direction: "ltr",
+        })}
       />
 
       <TextField
@@ -184,8 +197,11 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
             disableUnderline: true,
           },
         }}
-        sx={locationInputSx}
+        sx={getInputSx({
+          hasError: !!errorMessage,
+          direction: "ltr",
+        })}
       />
-    </LocationEditorRoot>
+    </Box>
   );
 };

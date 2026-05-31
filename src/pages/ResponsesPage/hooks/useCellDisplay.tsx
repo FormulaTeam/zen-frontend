@@ -1,6 +1,5 @@
-import { useCallback, useMemo } from "react";
-import { Box, Chip, Link as MuiLink, Tooltip, Typography, styled } from "@mui/material";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
+import React, { useCallback, useMemo } from "react";
+import { Box, Link as MuiLink, Tooltip, styled } from "@mui/material";
 import moment from "moment";
 
 import { OverflowTooltip } from "@components/OverflowTooltip";
@@ -203,13 +202,6 @@ const formatTimeDisplayValue = (value: unknown, includeSeconds?: boolean): strin
   return "";
 };
 
-const EllipsisBox = styled(Box)({
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-  display: "block",
-});
-
 const CenteredBox = styled(Box)({
   display: "flex",
   alignItems: "center",
@@ -221,102 +213,32 @@ const CenteredBox = styled(Box)({
   },
 });
 
-const QuickEditFileRoot = styled(Box)(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  gap: 7,
-  padding: "7px 8px",
-  height: "100%",
-  maxHeight: "130px",
-  width: "100%",
-  overflow: "hidden",
-  boxSizing: "border-box",
-  borderRadius: 8,
-  backgroundColor: theme.palette.background.paper,
-}));
-
-const QuickEditFileDropzoneLook = styled(Box)(({ theme }) => ({
-  flexShrink: 0,
-  border: "1.5px dashed",
-  borderColor: theme.palette.grey[400],
-  borderRadius: 8,
-  padding: "4px 8px",
-  textAlign: "center",
-  backgroundColor: theme.palette.background.paper,
-  width: "100%",
-  minHeight: 38,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 6,
-  boxSizing: "border-box",
-  color: theme.palette.text.primary,
-}));
-
-const QuickEditFilesContainer = styled(Box)({
-  flex: 1,
-  minHeight: 0,
-  display: "flex",
-  alignContent: "flex-start",
-  alignItems: "flex-start",
-  flexWrap: "wrap",
-  gap: 5,
-  overflowY: "auto",
-  overflowX: "hidden",
-  paddingInlineEnd: 2,
-  paddingBottom: 2,
-});
-
-const QuickEditFileChip = styled(Chip)({
-  maxWidth: 152,
-  fontSize: "0.76rem",
-  height: 23,
-  "& .MuiChip-label": {
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    paddingInline: 8,
-  },
-});
-
-const getQuickEditFileParts = (
-  value: unknown,
-): {
-  newFiles: File[];
-  attachedFiles: StoredFile[];
-} => {
+const getFileDisplayItems = (value: unknown): Array<StoredFile | LocalDisplayFile> => {
   if (isFileDraftValue(value)) {
-    return {
-      newFiles: value.files.newFiles,
-      attachedFiles: value.files.attachedFiles,
-    };
+    return [
+      ...value.files.attachedFiles,
+      ...value.files.newFiles.map((file) => ({
+        name: file.name,
+        file,
+      })),
+    ];
   }
 
   if (isLocalFileFieldValue(value)) {
-    return {
-      newFiles: value.files.map((file) => file.file),
-      attachedFiles: [],
-    };
+    return value.files;
   }
 
   if (isFileFieldValue(value)) {
-    return {
-      newFiles: [],
-      attachedFiles: value.files,
-    };
+    return value.files;
   }
 
-  return {
-    newFiles: [],
-    attachedFiles: [],
-  };
+  return [];
 };
 
 export const useCellDisplay = ({
   formId,
   onFileClick,
   searchQuery,
-  isInEditMode = false,
 }: UseCellDisplayParams): UseCellDisplayReturn => {
   const highlightText = useCallback(
     (text: string | number | null | undefined): React.ReactNode => {
@@ -356,66 +278,11 @@ export const useCellDisplay = ({
     [highlightText],
   );
 
-  const formatQuickEditFileCell = useCallback((value: unknown): React.ReactElement => {
-    const { newFiles, attachedFiles } = getQuickEditFileParts(value);
-    const files = [
-      ...attachedFiles.map((file) => ({
-        key: `attached-${file.path}`,
-        name: file.name,
-        color: "default" as const,
-        variant: "outlined" as const,
-      })),
-      ...newFiles.map((file, index) => ({
-        key: `new-${file.name}-${index}`,
-        name: file.name,
-        color: "primary" as const,
-        variant: "filled" as const,
-      })),
-    ];
-
-    return (
-      <QuickEditFileRoot>
-        <QuickEditFileDropzoneLook>
-          <AttachFileIcon fontSize="small" color="primary" />
-
-          <Typography variant="caption" sx={{ fontWeight: 500, fontSize: "0.78rem" }}>
-            לחץ או גרור קבצים
-          </Typography>
-        </QuickEditFileDropzoneLook>
-
-        {files.length > 0 && (
-          <QuickEditFilesContainer>
-            {files.map((file) => (
-              <OverflowTooltip key={file.key} title={file.name} arrow>
-                <QuickEditFileChip
-                  label={file.name}
-                  size="small"
-                  color={file.color}
-                  variant={file.variant}
-                />
-              </OverflowTooltip>
-            ))}
-          </QuickEditFilesContainer>
-        )}
-      </QuickEditFileRoot>
-    );
-  }, []);
-
   const formatFileCell = useCallback(
     (value: unknown): React.ReactElement => {
-      if (!value) {
-        return isInEditMode ? (
-          formatQuickEditFileCell(value)
-        ) : (
-          <Box component="span" className="cell-box"></Box>
-        );
-      }
+      const displayFiles = getFileDisplayItems(value);
 
-      if (isInEditMode) {
-        return formatQuickEditFileCell(value);
-      }
-
-      if (!isFileFieldValue(value) || value.files.length === 0) {
+      if (displayFiles.length === 0) {
         return <Box component="span" className="cell-box"></Box>;
       }
 
@@ -423,14 +290,14 @@ export const useCellDisplay = ({
         <CenteredBox>
           <CustomCarousel
             formId={formId}
-            items={value.files}
+            items={displayFiles}
             onItemClickHandler={onFileClick || (() => {})}
             shouldSpaceFiles
           />
         </CenteredBox>
       );
     },
-    [formId, onFileClick, isInEditMode, formatQuickEditFileCell],
+    [formId, onFileClick],
   );
 
   const formatDateCell = useCallback(
@@ -575,18 +442,15 @@ export const useCellDisplay = ({
 
   const formatCellValue = useCallback(
     (value: any, field: FormFieldDto): React.ReactElement | null => {
+      const extra = getFieldExtra(field);
+
       if (value === null || value === undefined || value === "") {
-        if (isInEditMode && field.fieldType === field.fieldType) {
-          // Fixed: was using fieldType.File but let's be more precise
-          if (field.fieldType === fieldType.File) {
-            return formatFileCell(value);
-          }
+        if (field.fieldType === fieldType.File) {
+          return formatFileCell(value);
         }
 
         return <Box component="span" className="cell-box"></Box>;
       }
-
-      const extra = getFieldExtra(field);
 
       const dateAndTime = Boolean(
         (field as any).dateAndTime ??
@@ -624,7 +488,6 @@ export const useCellDisplay = ({
       }
     },
     [
-      isInEditMode,
       formatFileCell,
       formatOptionsCell,
       formatLinkCell,

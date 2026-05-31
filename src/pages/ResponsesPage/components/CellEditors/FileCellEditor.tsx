@@ -1,75 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Box, Chip, styled, Typography } from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import { useDropzone } from "react-dropzone";
 import CloseIcon from "@mui/icons-material/Close";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
-
-const StyledContainer = styled(Box)({
-  display: "flex",
-  flexDirection: "column",
-  gap: 8,
-  height: "100%",
-  padding: "4px 6px",
-  overflow: "hidden",
-  width: "100%",
-  overflowY: "auto",
-  boxSizing: "border-box",
-});
-
-const StyledDropzone = styled(Box, {
-  shouldForwardProp: (prop) => prop !== "$isDragActive",
-})<{
-  $isDragActive: boolean;
-}>(({ theme, $isDragActive }) => ({
-  border: "1.5px dashed",
-  borderColor: $isDragActive ? theme.palette.primary.main : theme.palette.grey[400],
-  borderRadius: 8,
-  padding: "4px 8px",
-  textAlign: "center",
-  cursor: "pointer",
-  backgroundColor: $isDragActive ? theme.palette.action.hover : theme.palette.background.paper,
-  width: "100%",
-  minHeight: 34,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 8,
-  boxSizing: "border-box",
-  transition: "background-color 0.15s ease, border-color 0.15s ease",
-  "&:hover": {
-    backgroundColor: theme.palette.action.hover,
-    borderColor: theme.palette.primary.light,
-  },
-}));
-
-const StyledFilesContainer = styled(Box)({
-  display: "flex",
-  flexWrap: "wrap",
-  gap: 4,
-});
-
-const StyledChip = styled(Chip)({
-  maxWidth: 180,
-  fontSize: "0.85rem",
-  height: 26,
-  "& .MuiChip-label": {
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-});
-
-const SectionLabel = styled(Typography)(({ theme }) => ({
-  display: "block",
-  marginBottom: 4,
-  color: theme.palette.text.secondary,
-  fontSize: "0.75rem",
-}));
-
-const ErrorText = styled("div")(({ theme }) => ({
-  color: theme.palette.error.main,
-  fontSize: "0.75rem",
-}));
+import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
 
 export interface StoredFile {
   name: string;
@@ -184,6 +118,93 @@ const buildFilesSignature = (
   return `${newFilesNames}::${attachedFileNames}::${deletedFileNames}`;
 };
 
+const getUploadRowSx = ({
+  hasError,
+  isDragActive,
+}: {
+  hasError: boolean;
+  isDragActive: boolean;
+}) => ({
+  width: "100%",
+  minWidth: 0,
+  height: 34,
+  borderRadius: "10px",
+  border: "1px dashed",
+  borderColor: hasError ? "#d32f2f" : isDragActive ? "#7c9cc9" : "#d7deea",
+  backgroundColor: isDragActive ? "#f3f7fd" : "#ffffff",
+  padding: "0 8px",
+  boxShadow: hasError ? "0 0 0 2px rgba(211, 47, 47, 0.14)" : "0 1px 2px rgba(16, 24, 40, 0.04)",
+  display: "grid",
+  gridTemplateColumns: "18px minmax(0, 1fr)",
+  alignItems: "center",
+  gap: "6px",
+  boxSizing: "border-box",
+  cursor: "pointer",
+  transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
+  overflow: "hidden",
+
+  "&:hover": {
+    borderColor: hasError ? "#d32f2f" : "#b8c4d6",
+    backgroundColor: "#fbfcfe",
+  },
+
+  "& .MuiSvgIcon-root": {
+    fontSize: 17,
+    color: hasError ? "#d32f2f" : "#64748b",
+  },
+});
+
+const deleteButtonSx = {
+  width: 22,
+  height: 22,
+  minWidth: 22,
+  borderRadius: "7px",
+  color: "#a54160",
+  padding: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+
+  "&:hover": {
+    backgroundColor: "rgba(165, 65, 96, 0.08)",
+  },
+
+  "& .MuiSvgIcon-root": {
+    fontSize: 15,
+  },
+};
+
+const fileRowSx = (existing: boolean) => ({
+  width: "100%",
+  minWidth: 0,
+  height: 32,
+  borderRadius: "9px",
+  border: "1px solid",
+  borderColor: existing ? "#d7deea" : "#d4e3ff",
+  backgroundColor: existing ? "#ffffff" : "#eef4ff",
+  display: "grid",
+  gridTemplateColumns: "18px minmax(0, 1fr) 22px",
+  alignItems: "center",
+  gap: "6px",
+  px: "7px",
+  boxSizing: "border-box",
+  overflow: "hidden",
+  flexShrink: 0,
+});
+
+const fileNameSx = {
+  minWidth: 0,
+  fontSize: "0.9rem",
+  lineHeight: 1.25,
+  fontWeight: 400,
+  color: "#0f172a",
+  textAlign: "right",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  display: "block",
+};
+
 export const FileCellEditor: React.FC<FileCellEditorProps> = ({
   value,
   onChange,
@@ -240,11 +261,11 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
   }, []);
 
   const deleteNewFile = (index: number) => {
-    setFiles((prevFiles) => prevFiles.filter((_, idx) => idx !== index));
+    setFiles((prevFiles) => prevFiles.filter((_, currentIndex) => currentIndex !== index));
   };
 
   const deleteAttachedFile = (file: StoredFile, index: number) => {
-    setResponseFiles((prevFiles) => prevFiles.filter((_, idx) => idx !== index));
+    setResponseFiles((prevFiles) => prevFiles.filter((_, currentIndex) => currentIndex !== index));
     setDeletedFiles((prevFiles) => [...prevFiles, file]);
   };
 
@@ -258,59 +279,156 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
     event.stopPropagation();
   };
 
+  const hasError = !!errorMessage;
+  const hasFiles = files.length > 0 || responseFiles.length > 0;
+  const filesCount = files.length + responseFiles.length;
+
+  const renderFileRow = ({
+    name,
+    existing = false,
+    onDelete,
+  }: {
+    name: string;
+    existing?: boolean;
+    onDelete: () => void;
+  }) => (
+    <Tooltip title={name} arrow>
+      <Box sx={fileRowSx(existing)}>
+        <InsertDriveFileOutlinedIcon
+          sx={{
+            fontSize: 17,
+            color: existing ? "#64748b" : "#506f9e",
+            display: "block",
+            justifySelf: "center",
+          }}
+        />
+
+        <Box component="span" dir="auto" sx={fileNameSx}>
+          {name}
+        </Box>
+
+        <IconButton
+          size="small"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onDelete();
+          }}
+          sx={deleteButtonSx}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </Box>
+    </Tooltip>
+  );
+
   return (
-    <StyledContainer onClick={handleClick}>
-      <StyledDropzone {...getRootProps()} $isDragActive={isDragActive}>
+    <Box
+      onClick={handleClick}
+      sx={{
+        width: "100%",
+        height: "100%",
+        minHeight: 0,
+        maxHeight: "100%",
+        display: "grid",
+        gridTemplateRows: "34px minmax(0, 1fr)",
+        gap: "6px",
+        padding: "5px 7px",
+        boxSizing: "border-box",
+        direction: "rtl",
+        overflow: "hidden",
+      }}>
+      <Box {...getRootProps()} sx={getUploadRowSx({ hasError, isDragActive })}>
         <input {...getInputProps()} />
 
-        <AttachFileIcon fontSize="small" color="primary" />
+        <AttachFileIcon />
 
-        <Typography variant="caption" sx={{ fontWeight: 500 }}>
-          {isDragActive ? "שחרר קבצים כאן..." : "לחץ או גרור קבצים"}
-        </Typography>
-      </StyledDropzone>
-
-      {files.length > 0 && (
-        <Box>
-          <SectionLabel>קבצים חדשים:</SectionLabel>
-
-          <StyledFilesContainer>
-            {files.map((file, index) => (
-              <StyledChip
-                key={`new-${file.name}-${index}`}
-                label={file.name}
-                size="small"
-                color="primary"
-                variant="filled"
-                onDelete={() => deleteNewFile(index)}
-                deleteIcon={<CloseIcon fontSize="small" />}
-              />
-            ))}
-          </StyledFilesContainer>
+        <Box
+          component="span"
+          sx={{
+            minWidth: 0,
+            fontSize: "0.92rem",
+            lineHeight: 1.25,
+            color: isDragActive ? "#334155" : "#0f172a",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            textAlign: "right",
+          }}>
+          {isDragActive
+            ? "שחרר קבצים כאן..."
+            : filesCount > 0
+              ? `הוסף קבצים (${filesCount})`
+              : "לחץ או גרור קבצים"}
         </Box>
-      )}
+      </Box>
 
-      {responseFiles.length > 0 && (
-        <Box>
-          <SectionLabel>קבצים קיימים:</SectionLabel>
+      <Box
+        sx={{
+          width: "100%",
+          minWidth: 0,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: "5px",
+          overflowY: "auto",
+          overflowX: "hidden",
+          boxSizing: "border-box",
+        }}>
+        {!hasFiles ? (
+          <Box
+            component="span"
+            sx={{
+              width: "100%",
+              minHeight: 32,
+              borderRadius: "9px",
+              border: "1px dashed #cbd5e1",
+              backgroundColor: "#fbfcfe",
+              color: "#94a3b8",
+              fontSize: "0.9rem",
+              lineHeight: 1.25,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxSizing: "border-box",
+            }}>
+            אין קבצים
+          </Box>
+        ) : (
+          <>
+            {files.map((file, index) =>
+              renderFileRow({
+                name: file.name,
+                onDelete: () => deleteNewFile(index),
+              }),
+            )}
 
-          <StyledFilesContainer>
-            {responseFiles.map((file, index) => (
-              <StyledChip
-                key={`attached-${file.path}-${index}`}
-                label={file.name}
-                size="small"
-                color="default"
-                variant="outlined"
-                onDelete={() => deleteAttachedFile(file, index)}
-                deleteIcon={<CloseIcon fontSize="small" />}
-              />
-            ))}
-          </StyledFilesContainer>
-        </Box>
-      )}
+            {responseFiles.map((file, index) =>
+              renderFileRow({
+                name: file.name,
+                existing: true,
+                onDelete: () => deleteAttachedFile(file, index),
+              }),
+            )}
 
-      {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
-    </StyledContainer>
+            {errorMessage && (
+              <Box
+                component="span"
+                sx={{
+                  width: "100%",
+                  fontSize: "0.8rem",
+                  lineHeight: 1.2,
+                  color: "#d32f2f",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  textAlign: "right",
+                }}>
+                {errorMessage}
+              </Box>
+            )}
+          </>
+        )}
+      </Box>
+    </Box>
   );
 };

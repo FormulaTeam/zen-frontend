@@ -1,24 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { TextField, styled } from "@mui/material";
+import { Box, TextField } from "@mui/material";
 import { preventEnterKeyNavigation } from "@utils/utils";
-
-const StyledNumberTextField = styled(TextField)({
-  width: "100%",
-  "& .MuiInputBase-root": {
-    minHeight: "34px",
-    borderRadius: "8px",
-    border: "1px solid #d7deea",
-    backgroundColor: "#fff",
-    fontSize: "0.9rem",
-    padding: "0 8px",
-    "&::before, &::after": {
-      display: "none",
-    },
-  },
-  "& .MuiInputBase-input": {
-    padding: "6px 0 !important",
-  },
-});
 
 interface NumberCellEditorProps {
   value: number | string;
@@ -30,6 +12,51 @@ interface NumberCellEditorProps {
   errorMessage?: string;
 }
 
+const getInputSx = ({ hasError }: { hasError: boolean }) => ({
+  "& .MuiInputBase-root": {
+    minHeight: 40,
+    borderRadius: "10px",
+    border: "1px solid",
+    borderColor: hasError ? "#d32f2f" : "#d7deea",
+    backgroundColor: "#ffffff",
+    padding: "0 10px",
+    fontSize: "1rem",
+    color: "#0f172a",
+    transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
+
+    "&:hover": {
+      borderColor: hasError ? "#d32f2f" : "#b8c4d6",
+      backgroundColor: "#fbfcfe",
+    },
+
+    "&.Mui-focused": {
+      borderColor: hasError ? "#d32f2f" : "#7c9cc9",
+      boxShadow: hasError
+        ? "0 0 0 3px rgba(211, 47, 47, 0.14)"
+        : "0 0 0 3px rgba(124, 156, 201, 0.16)",
+    },
+
+    "&::before, &::after": {
+      display: "none",
+    },
+  },
+
+  "& .MuiInputBase-input": {
+    padding: "7px 0 !important",
+    fontSize: "1rem",
+    lineHeight: 1.3,
+    fontWeight: 400,
+    direction: "ltr",
+    textAlign: "left",
+    color: "#0f172a",
+  },
+
+  "& input[type=number]::-webkit-inner-spin-button, & input[type=number]::-webkit-outer-spin-button":
+    {
+      opacity: 1,
+    },
+});
+
 export const NumberCellEditor: React.FC<NumberCellEditorProps> = ({
   value,
   onChange,
@@ -39,8 +66,8 @@ export const NumberCellEditor: React.FC<NumberCellEditorProps> = ({
   isRequired = false,
   errorMessage: externalErrorMessage,
 }) => {
-  const [inputValue, setInputValue] = useState<string>(String(value ?? ""));
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [inputValue, setInputValue] = useState(String(value ?? ""));
+  const [localErrorMessage, setLocalErrorMessage] = useState("");
 
   useEffect(() => {
     setInputValue(String(value ?? ""));
@@ -54,16 +81,22 @@ export const NumberCellEditor: React.FC<NumberCellEditorProps> = ({
   ): { isValid: boolean; errorMsg: string; parsed: number | string } => {
     if (val === "") {
       if (isRequired) {
-        return { isValid: false, errorMsg: "נדרש להזין מספר", parsed: "" };
+        return {
+          isValid: false,
+          errorMsg: "נדרש להזין מספר",
+          parsed: "",
+        };
       }
-      return { isValid: true, errorMsg: "", parsed: "" };
+
+      return {
+        isValid: true,
+        errorMsg: "",
+        parsed: "",
+      };
     }
-    let isValidFormat = false;
-    if (numberType === "integer") {
-      isValidFormat = integerRegex.test(val);
-    } else {
-      isValidFormat = floatRegex.test(val);
-    }
+
+    const isValidFormat = numberType === "integer" ? integerRegex.test(val) : floatRegex.test(val);
+
     if (!isValidFormat) {
       return {
         isValid: false,
@@ -71,7 +104,9 @@ export const NumberCellEditor: React.FC<NumberCellEditorProps> = ({
         parsed: val,
       };
     }
+
     const parsed = numberType === "integer" ? parseInt(val, 10) : parseFloat(val);
+
     if (minValue !== undefined && parsed < minValue) {
       return {
         isValid: false,
@@ -79,6 +114,7 @@ export const NumberCellEditor: React.FC<NumberCellEditorProps> = ({
         parsed,
       };
     }
+
     if (maxValue !== undefined && parsed > maxValue) {
       return {
         isValid: false,
@@ -86,32 +122,64 @@ export const NumberCellEditor: React.FC<NumberCellEditorProps> = ({
         parsed,
       };
     }
-    return { isValid: true, errorMsg: "", parsed };
+
+    return {
+      isValid: true,
+      errorMsg: "",
+      parsed,
+    };
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const val = event.target.value;
-    setInputValue(val);
-    const { isValid, errorMsg, parsed } = validate(val);
-    setErrorMessage(errorMsg);
-    const finalValid = isValid && !(isRequired && val === "");
-    onChange(parsed, finalValid);
+    const nextValue = event.target.value;
+
+    setInputValue(nextValue);
+
+    const { isValid, errorMsg, parsed } = validate(nextValue);
+
+    setLocalErrorMessage(errorMsg);
+    onChange(parsed, isValid && !(isRequired && nextValue === ""));
   };
 
+  const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (event) => {
+    preventEnterKeyNavigation(event);
+  };
+
+  const hasError = !!externalErrorMessage || !!localErrorMessage;
+
   return (
-    <StyledNumberTextField
-      fullWidth
-      type="number"
-      value={inputValue}
-      onChange={handleChange}
-      onKeyDown={(e) => preventEnterKeyNavigation(e)}
-      error={!!externalErrorMessage || !!errorMessage}
-      helperText={undefined}
-      variant="standard"
-      autoFocus
-      inputProps={{
-        step: numberType === "integer" ? 1 : "any",
-      }}
-    />
+    <Box
+      sx={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        padding: "6px 8px",
+        boxSizing: "border-box",
+        direction: "ltr",
+      }}>
+      <TextField
+        fullWidth
+        type="number"
+        value={inputValue}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        error={hasError}
+        helperText={undefined}
+        variant="standard"
+        autoFocus
+        slotProps={{
+          input: {
+            disableUnderline: true,
+          },
+          htmlInput: {
+            step: numberType === "integer" ? 1 : "any",
+            min: minValue,
+            max: maxValue,
+          },
+        }}
+        sx={getInputSx({ hasError })}
+      />
+    </Box>
   );
 };

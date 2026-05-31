@@ -54,6 +54,12 @@ const getCurrentDateDefaultValue = (dateAndTime?: boolean): string => {
   return value.utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
 };
 
+const getCurrentTimeDefaultValue = (includeSeconds?: boolean): string => {
+  const format = includeSeconds ? "HH:mm:ss" : "HH:mm";
+
+  return dayjs().tz(ISRAEL_TZ).format(format);
+};
+
 type RowId = string | number;
 
 type Row = GridRowModel & {
@@ -97,6 +103,8 @@ type EditorFieldExtra = {
   defaultValue?: unknown;
   dateAndTime?: boolean;
   includeTime?: boolean;
+  includeSeconds?: boolean;
+  showSeconds?: boolean;
   options?:
     | string[]
     | {
@@ -339,8 +347,8 @@ const getDefaultFieldValue = (field: FormFieldDto): unknown => {
   }
 
   if (field.fieldType === fieldType.Time) {
-    if (extra.defaultValue === DefaultTimeValue.NOW) {
-      return moment().format("HH:mm");
+    if (Number(extra.defaultValue) === DefaultTimeValue.NOW) {
+      return getCurrentTimeDefaultValue(Boolean(extra.includeSeconds ?? extra.showSeconds));
     }
 
     return getEmptyFieldValue(field);

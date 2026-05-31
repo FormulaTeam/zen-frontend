@@ -114,29 +114,39 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
               onClick={(event) => handleCopyLink(event, downloadPath)}
               sx={{ color: theme.palette.white }}
               size="small">
-              <Link />
+              <Link sx={{ fontSize: 17 }} />
             </IconButton>
+
             {downloadPath}
           </Box>
         }>
         <Box
           onClick={() => onItemClickHandler(item)}
           sx={{
-            width: 44,
-            height: 48,
+            width: 34,
+            height: 38,
             cursor: "pointer",
-            borderRadius: 1.5,
+            borderRadius: "8px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            overflow: "visible",
+            overflow: "hidden",
             transition: "background-color 0.15s ease, transform 0.15s ease",
             "&:hover": {
               backgroundColor: theme.palette.action.hover,
               transform: "translateY(-1px)",
             },
           }}>
-          <Box sx={{ width: 34, height: 44, overflow: "visible", direction: "ltr" }}>
+          <Box
+            sx={{
+              width: 25,
+              height: 31,
+              overflow: "hidden",
+              direction: "ltr",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}>
             <FileIcon extension={extension} {...(defaultStyles[extension] || {})} />
           </Box>
         </Box>
@@ -148,23 +158,24 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
     <Box
       dir="ltr"
       sx={{
-        width: 170,
-        height: hasMultiplePages ? 68 : 52,
+        width: 150,
+        height: 40,
         mx: "auto",
         display: "flex",
-        flexDirection: "column",
+        alignItems: "center",
         justifyContent: "center",
-        overflow: "visible",
-        ...(shouldSpaceFiles && items.length > 1 ? { mt: 0.5 } : {}),
+        overflow: "hidden",
+        ...(shouldSpaceFiles && items.length > 1 ? { mt: 0 } : {}),
       }}>
       <Box
         sx={{
+          width: "100%",
+          height: 40,
           display: "grid",
-          gridTemplateColumns: hasMultiplePages ? "22px 1fr 22px" : "1fr",
+          gridTemplateColumns: hasMultiplePages ? "18px 1fr 18px" : "1fr",
           alignItems: "center",
-          columnGap: 0.25,
-          height: 52,
-          overflow: "visible",
+          columnGap: "2px",
+          overflow: "hidden",
         }}>
         {hasMultiplePages && (
           <IconButton
@@ -172,8 +183,8 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
             onClick={goPrevious}
             disabled={pageIndex === 0}
             sx={{
-              width: 22,
-              height: 22,
+              width: 18,
+              height: 18,
               p: 0,
               color: theme.palette.primary.main,
               backgroundColor: "transparent",
@@ -183,19 +194,19 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
                 color: theme.palette.primary.dark,
               },
             }}>
-            <ArrowBackIosNew sx={{ fontSize: 15 }} />
+            <ArrowBackIosNew sx={{ fontSize: 12 }} />
           </IconButton>
         )}
 
         <Box
           sx={{
+            minWidth: 0,
+            height: 40,
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            gap: 1.25,
-            minWidth: 0,
-            height: 52,
-            overflow: "visible",
+            gap: "6px",
+            overflow: "hidden",
           }}>
           {currentPage.map(renderFileIcon)}
         </Box>
@@ -206,8 +217,8 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
             onClick={goNext}
             disabled={pageIndex === pages.length - 1}
             sx={{
-              width: 22,
-              height: 22,
+              width: 18,
+              height: 18,
               p: 0,
               color: theme.palette.primary.main,
               backgroundColor: "transparent",
@@ -217,45 +228,10 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
                 color: theme.palette.primary.dark,
               },
             }}>
-            <ArrowForwardIos sx={{ fontSize: 15 }} />
+            <ArrowForwardIos sx={{ fontSize: 12 }} />
           </IconButton>
         )}
       </Box>
-
-      {hasMultiplePages && (
-        <Box
-          sx={{
-            height: 10,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: 0.75,
-            mt: 0.75,
-            overflow: "visible",
-          }}>
-          {pages.map((_, index) => (
-            <Box
-              key={index}
-              onClick={(event) => {
-                event.stopPropagation();
-                setPageIndex(index);
-              }}
-              sx={{
-                width: 7,
-                height: 7,
-                borderRadius: "50%",
-                cursor: "pointer",
-                backgroundColor:
-                  index === pageIndex ? theme.palette.primary.main : theme.palette.grey[400],
-                transition: "background-color 0.15s ease, transform 0.15s ease",
-                "&:hover": {
-                  transform: "scale(1.15)",
-                },
-              }}
-            />
-          ))}
-        </Box>
-      )}
 
       <Portal>
         <Snackbar
