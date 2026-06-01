@@ -6,7 +6,9 @@ import { getUserName } from "../utils/utils";
 import { PRE_SYSTEM_COLUMNS, POST_SYSTEM_VIEW_COLUMNS } from "./useViewColumnConfiguration";
 import { MetaColumnIds } from "../utils/interfaces";
 
-/* ------------------------ Utils ------------------------ */
+const PUBLIC_VIEW_DUPLICATE_NAME_ERROR = "קיימת כבר תצוגה ציבורית בשם הזה";
+
+const normalizeViewName = (name: string): string => name.trim();
 
 const cloneColumns = (columns: ViewColumn[]): ViewColumn[] =>
   columns.map((column) => ({ ...column }));
@@ -16,6 +18,7 @@ const areColumnsEqual = (firstColumn: ViewColumn[], secondColumn: ViewColumn[]):
 
   return firstColumn.every((first, index) => {
     const second = secondColumn[index];
+
     return (
       first.columnId === second.columnId &&
       first.displayName === second.displayName &&
@@ -42,7 +45,23 @@ const getViewUserDisplayName = (user?: ViewUserBase | UserPersonalDto): string =
   return getUserName(firstName, lastName) || user.upn || "";
 };
 
-/* ------------------------ Types ------------------------ */
+const mapResponseViewColumnsToViewColumns = (view: ResponsesView): ViewColumn[] => {
+  return cloneColumns(
+    view.columns?.map((column) => ({
+      columnId:
+        column.fieldId ||
+        Object.keys(MetaColumnIds).find(
+          (key) => MetaColumnIds[key as keyof typeof MetaColumnIds] === column.metaColumnId,
+        ) ||
+        "",
+      displayName: column.displayName,
+      visible: column.isVisible,
+      order: column.index,
+    })) ??
+      view.config?.columns ??
+      [],
+  );
+};
 
 type ViewLogicForm = {
   id: string | number;
@@ -52,12 +71,13 @@ type ViewLogicForm = {
 
 interface UseViewFormLogicProps {
   currentView?: ResponsesView;
+  savedViews?: ResponsesView[];
   user?: ViewUserBase | UserPersonalDto;
   form?: ViewLogicForm;
   columns: ViewColumn[];
   createDefaultColumns: () => ViewColumn[];
   resetToOriginalColumns: (columns: ViewColumn[]) => void;
-  onSaveView: (view: ResponsesView) => void;
+  onSaveView: (view: ResponsesView) => Promise<void>;
   onApplyView?: (view: ResponsesView) => void;
   isSaving?: boolean;
 }
@@ -69,10 +89,9 @@ interface OriginalState {
   columns: ViewColumn[];
 }
 
-/* ------------------------ Hook ------------------------ */
-
 export const useViewFormLogic = ({
   currentView,
+  savedViews = [],
   user,
   form,
   columns,
@@ -82,6 +101,7 @@ export const useViewFormLogic = ({
   isSaving = false,
 }: UseViewFormLogicProps) => {
   const [viewName, setViewName] = useState("");
+  const [viewNameError, setViewNameError] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(!currentView);
@@ -95,15 +115,15 @@ export const useViewFormLogic = ({
 
   const lastSyncedViewId = useRef<string | number | undefined>(undefined);
 
-  /* ------------------------ Sync ------------------------ */
-
   useEffect(() => {
     if (!currentView) return;
     if (currentView.id === lastSyncedViewId.current) return;
+
     lastSyncedViewId.current = currentView.id;
 
     setIsCreatingNew(false);
     setViewName(currentView.name);
+    setViewNameError("");
     setIsPublic(currentView.isPublic);
     setIsDefault(currentView.isDefault);
 
@@ -111,52 +131,70 @@ export const useViewFormLogic = ({
       viewName: currentView.name,
       isPublic: currentView.isPublic,
       isDefault: currentView.isDefault,
-      columns: cloneColumns(currentView.columns?.map(c => ({
-        columnId: c.fieldId || (Object.keys(MetaColumnIds).find(key => MetaColumnIds[key as keyof typeof MetaColumnIds] === c.metaColumnId)) || "",
-        displayName: c.displayName,
-        visible: c.isVisible,
-        order: c.index
-      })) ?? currentView.config?.columns ?? []),
+      columns: mapResponseViewColumnsToViewColumns(currentView),
     });
   }, [currentView]);
 
-  /* ------------------------ Derived ------------------------ */
+  const hasDuplicatePublicViewName = useCallback(
+    (name: string, viewId?: string | number): boolean => {
+      const normalizedName = normalizeViewName(name);
+
+      return savedViews.some((savedView) => {
+        if (!savedView.isPublic) return false;
+        if (String(savedView.id ?? "") === String(viewId ?? "")) return false;
+
+        return normalizeViewName(savedView.name) === normalizedName;
+      });
+    },
+    [savedViews],
+  );
 
   const hasChanges = useMemo(() => {
     const columnsChanged = !areColumnsEqual(columns, originalState.columns);
+    const nameChanged = normalizeViewName(viewName) !== normalizeViewName(originalState.viewName);
+
     return (
-      isPublic !== originalState.isPublic || isDefault !== originalState.isDefault || columnsChanged
+      isCreatingNew ||
+      nameChanged ||
+      isPublic !== originalState.isPublic ||
+      isDefault !== originalState.isDefault ||
+      columnsChanged
     );
-  }, [isPublic, isDefault, columns, originalState]);
+  }, [viewName, isPublic, isDefault, columns, originalState, isCreatingNew]);
 
   const canSave = useMemo(
     () => !!viewName.trim() && hasChanges && !isSaving,
     [viewName, hasChanges, isSaving],
   );
 
-  /* ------------------------ Actions ------------------------ */
+  const handleViewNameChange = useCallback((nextName: string) => {
+    setViewName(nextName);
+    setViewNameError("");
+  }, []);
 
   const handleCancel = useCallback(() => {
     setViewName(originalState.viewName);
+    setViewNameError("");
     setIsPublic(originalState.isPublic);
     setIsDefault(originalState.isDefault);
 
     const restoredColumns = cloneColumns(originalState.columns);
     resetToOriginalColumns(restoredColumns);
-    
-    // If we were creating a new view, revert to "All Fields" (undefined)
-    // If we were editing, revert to the original saved view
+
     if (isCreatingNew) {
-      onApplyView?.(undefined as any);
-    } else if (currentView) {
+      onApplyView?.(undefined as unknown as ResponsesView);
+      return;
+    }
+
+    if (currentView) {
       onApplyView?.(currentView);
     }
   }, [originalState, resetToOriginalColumns, onApplyView, currentView, isCreatingNew]);
 
   const handleApply = useCallback(() => {
     if (!form) return;
-    
-    const sortedCol = columns.find(c => c.sortOrder === 1);
+
+    const sortedCol = columns.find((column) => column.sortOrder === 1);
 
     const view: ResponsesView = {
       ...(currentView?.id && !isCreatingNew ? { id: currentView.id } : {}),
@@ -166,65 +204,88 @@ export const useViewFormLogic = ({
       isPublic,
       isDefault,
       sortDirection: sortedCol?.sortDirection || "desc",
-      columns: columns.map((c, i) => {
-        const isSystem = PRE_SYSTEM_COLUMNS.some(sc => sc.columnId === c.columnId) || 
-                        POST_SYSTEM_VIEW_COLUMNS.some(sc => sc.columnId === c.columnId);
-        
+      columns: columns.map((column, index) => {
+        const isSystem =
+          PRE_SYSTEM_COLUMNS.some((systemColumn) => systemColumn.columnId === column.columnId) ||
+          POST_SYSTEM_VIEW_COLUMNS.some(
+            (systemColumn) => systemColumn.columnId === column.columnId,
+          );
+
         return {
-          id: c.id,
-          fieldId: isSystem ? null : c.columnId,
-          metaColumnId: isSystem ? MetaColumnIds[c.columnId as keyof typeof MetaColumnIds] : null,
-          displayName: c.displayName,
-          isVisible: c.visible,
-          index: i,
-          isSortColumn: sortedCol?.columnId === c.columnId,
+          id: column.id,
+          fieldId: isSystem ? null : column.columnId,
+          metaColumnId: isSystem
+            ? MetaColumnIds[column.columnId as keyof typeof MetaColumnIds]
+            : null,
+          displayName: column.displayName,
+          isVisible: column.visible,
+          index,
+          isSortColumn: sortedCol?.columnId === column.columnId,
         };
       }),
     };
-    
+
     onApplyView?.(view);
   }, [columns, onApplyView, form, viewName, user, isPublic, isDefault, currentView, isCreatingNew]);
 
   const handleSwitchPublic = useCallback(
     (next: boolean) => {
       if (!next && isDefault) setIsDefault(false);
+
       setIsPublic(next);
+      setViewNameError("");
     },
     [isDefault],
   );
 
-  const handleSaveView = useCallback(() => {
+  const handleSaveView = useCallback(async () => {
     if (!form || !viewName.trim()) return;
 
-    const sortedCol = columns.find(c => c.sortOrder === 1);
+    const normalizedName = normalizeViewName(viewName);
+    const sortedCol = columns.find((column) => column.sortOrder === 1);
+
+    const effectiveIsPublic = isDefault ? true : isPublic;
+    const currentViewId = currentView?.id && !isCreatingNew ? currentView.id : undefined;
+
+    if (effectiveIsPublic && hasDuplicatePublicViewName(normalizedName, currentViewId)) {
+      setViewNameError(PUBLIC_VIEW_DUPLICATE_NAME_ERROR);
+      return;
+    }
 
     const view: ResponsesView = {
-      ...(currentView?.id && !isCreatingNew ? { id: currentView.id } : {}),
+      ...(currentViewId ? { id: currentViewId } : {}),
       formId: String(form.id),
-      name: viewName.trim(),
+      name: normalizedName,
       createdBy: (user as any)?.upn || (user as any)?.UPN || "unknown",
       createdByName: getViewUserDisplayName(user),
-      isPublic,
+      isPublic: effectiveIsPublic,
       isDefault,
       sortDirection: sortedCol?.sortDirection || "desc",
-      columns: columns.map((c, i) => {
-        const isSystem = PRE_SYSTEM_COLUMNS.some(sc => sc.columnId === c.columnId) || 
-                        POST_SYSTEM_VIEW_COLUMNS.some(sc => sc.columnId === c.columnId);
-        
+      columns: columns.map((column, index) => {
+        const isSystem =
+          PRE_SYSTEM_COLUMNS.some((systemColumn) => systemColumn.columnId === column.columnId) ||
+          POST_SYSTEM_VIEW_COLUMNS.some(
+            (systemColumn) => systemColumn.columnId === column.columnId,
+          );
+
         return {
-          id: c.id,
-          fieldId: isSystem ? null : c.columnId,
-          metaColumnId: isSystem ? MetaColumnIds[c.columnId as keyof typeof MetaColumnIds] : null,
-          displayName: c.displayName,
-          isVisible: c.visible,
-          index: i,
-          isSortColumn: sortedCol?.columnId === c.columnId,
+          id: column.id,
+          fieldId: isSystem ? null : column.columnId,
+          metaColumnId: isSystem
+            ? MetaColumnIds[column.columnId as keyof typeof MetaColumnIds]
+            : null,
+          displayName: column.displayName,
+          isVisible: column.visible,
+          index,
+          isSortColumn: sortedCol?.columnId === column.columnId,
         };
       }),
       config: { columns: cloneColumns(columns) },
       createdAt: currentView?.createdAt ?? new Date(),
       updatedAt: new Date(),
     };
+
+    await onSaveView(view);
 
     setOriginalState({
       viewName: view.name,
@@ -233,15 +294,25 @@ export const useViewFormLogic = ({
       columns: cloneColumns(columns),
     });
 
-    onSaveView(view);
     setIsCreatingNew(false);
-  }, [form, viewName, user, isPublic, isDefault, columns, currentView, isCreatingNew, onSaveView]);
-
-  /* ------------------------ API ------------------------ */
+    setViewNameError("");
+  }, [
+    form,
+    viewName,
+    user,
+    isPublic,
+    isDefault,
+    columns,
+    currentView,
+    isCreatingNew,
+    onSaveView,
+    hasDuplicatePublicViewName,
+  ]);
 
   return {
     viewName,
-    setViewName,
+    setViewName: handleViewNameChange,
+    viewNameError,
     isPublic,
     isDefault,
     setIsDefault,

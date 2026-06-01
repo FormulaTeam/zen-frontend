@@ -1,7 +1,7 @@
 import { useMemo, useCallback } from "react";
 import { Box, Divider, Stack } from "@mui/material";
 
-import { ResponsesView, ViewColumn } from "../../../types/interfaces/tableViews.types";
+import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { useViewColumnConfiguration } from "../../../hooks/useViewColumnConfiguration";
 import { useViewFormLogic } from "../../../hooks/useViewFormLogic";
 import { useViewPermissions } from "../../../hooks/useViewPermissions";
@@ -23,20 +23,21 @@ interface ResponsesViewPageProps {
   form?: ResponsesViewForm;
   user?: ResponsesViewUser;
   currentView?: ResponsesView;
+  savedViews?: ResponsesView[];
   permissionTypes?: number[];
   isSaving?: boolean;
-  onSaveView: (view: ResponsesView) => void;
+  onSaveView: (view: ResponsesView) => Promise<void>;
   onApplyView?: (view: ResponsesView) => void;
   onCancel: () => void;
 }
 
-const ACTIONS_HEIGHT: Number = 10;
 const HEBREW_FORM: string = "טופס";
 
 export function ResponsesViewPage({
   form,
   user,
   currentView,
+  savedViews = [],
   permissionTypes = [],
   isSaving = false,
   onSaveView,
@@ -56,6 +57,7 @@ export function ResponsesViewPage({
 
   const formLogic = useViewFormLogic({
     currentView,
+    savedViews,
     user,
     form,
     columns,
@@ -66,7 +68,11 @@ export function ResponsesViewPage({
     isSaving,
   });
 
-  const { canManagePublicViews, canEditOrDeleteView } = useViewPermissions({ user, permissionTypes });
+  const { canManagePublicViews, canEditOrDeleteView } = useViewPermissions({
+    user,
+    permissionTypes,
+  });
+
   const canEditCurrentView = canEditOrDeleteView(currentView);
 
   const visibleColumnsCount = useMemo(
@@ -92,6 +98,7 @@ export function ResponsesViewPage({
             canEditCurrentView={canEditCurrentView}
             viewName={formLogic.viewName}
             setViewName={formLogic.setViewName}
+            viewNameError={formLogic.viewNameError}
             isPublic={formLogic.isPublic}
             isDefault={formLogic.isDefault}
             setIsDefault={formLogic.setIsDefault}
@@ -111,9 +118,10 @@ export function ResponsesViewPage({
           />
         </Box>
       </Box>
+
       <Box
         position="sticky"
-        bottom={-16} // Dock to the very bottom of the padded container
+        bottom={-16}
         zIndex={10}
         bgcolor="#ffffff"
         pt={1}
@@ -122,7 +130,7 @@ export function ResponsesViewPage({
         sx={{
           borderTop: "1px solid #e0e0e0",
           boxShadow: "0 -4px 12px rgba(0, 0, 0, 0.08)",
-          mx: -2, // Offset the ViewManagerContainer 16px padding
+          mx: -2,
           width: "calc(100% + 32px)",
         }}>
         <ResponsesViewFormActions

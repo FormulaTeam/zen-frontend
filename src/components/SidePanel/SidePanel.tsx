@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { IconButton, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+
 import { SidePanelContainer, SidePanelHeader, SidePanelContent } from "./styled";
 import { ViewManager } from "../Views/ViewManager/ViewManager";
-import { ResponsesView, ViewColumn } from "../../types/interfaces/tableViews.types";
+import { ResponsesView } from "../../types/interfaces/tableViews.types";
 import { ViewUserBase } from "../../types/interfaces/view.types";
 import { FormFieldDto, UserPersonalDto } from "../../types/shared";
 
@@ -15,6 +16,8 @@ type SidePanelForm = {
 
 type SidePanelUser = ViewUserBase | UserPersonalDto;
 
+type SaveViewHandler = (view: ResponsesView) => void | Promise<void>;
+
 interface SidePanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -22,7 +25,7 @@ interface SidePanelProps {
   children?: React.ReactNode;
   form?: SidePanelForm;
   user?: SidePanelUser;
-  onSaveView?: (view: ResponsesView) => void;
+  onSaveView?: SaveViewHandler;
   onLoadView?: (view: ResponsesView) => void;
   onDeleteView?: (view: ResponsesView) => void;
   onApplyView?: (view: ResponsesView) => void;
@@ -48,23 +51,39 @@ const SidePanel: React.FC<SidePanelProps> = ({
   permissionTypes,
   isSaving = false,
 }) => {
+  const handleSaveView = useCallback(
+    async (view: ResponsesView): Promise<void> => {
+      await onSaveView?.(view);
+    },
+    [onSaveView],
+  );
+
+  const handleLoadView = useCallback(
+    (view: ResponsesView): void => {
+      onLoadView?.(view);
+    },
+    [onLoadView],
+  );
+
   return (
     <SidePanelContainer $isOpen={isOpen}>
       <SidePanelHeader $isOpen={isOpen}>
         <Typography variant="h6" component="h2">
           {title}
         </Typography>
+
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
       </SidePanelHeader>
+
       <SidePanelContent $isOpen={isOpen}>
         {children || (
           <ViewManager
             form={form}
             user={user}
-            onSaveView={onSaveView || (() => {})}
-            onLoadView={onLoadView || (() => {})}
+            onSaveView={handleSaveView}
+            onLoadView={handleLoadView}
             onDeleteView={onDeleteView}
             onApplyView={onApplyView}
             currentView={currentView}

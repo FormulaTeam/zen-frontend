@@ -1,4 +1,4 @@
-import { ResponsesView, ViewColumn } from "../../../types/interfaces/tableViews.types";
+import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { ViewUserBase } from "../../../types/interfaces/view.types";
 import { ViewManagerContainer } from "./styled";
 import { SavedViewsList } from "../SavedViews/SavedViewsList";
@@ -18,7 +18,7 @@ type ViewManagerUser = ViewUserBase | UserPersonalDto;
 interface ViewManagerProps {
   form?: ViewManagerForm;
   user?: ViewManagerUser;
-  onSaveView: (view: ResponsesView) => void;
+  onSaveView: (view: ResponsesView) => Promise<void>;
   onLoadView: (view: ResponsesView) => void;
   onDeleteView?: (view: ResponsesView) => void;
   onApplyView?: (view: ResponsesView) => void;
@@ -51,8 +51,8 @@ export function ViewManager({
   const isFormMode: boolean = mode === Modes.CREATE || mode === Modes.EDIT;
   const showHeader: boolean = (savedViews && savedViews.length > 0) || isFormMode;
 
-  const handleSave = (view: ResponsesView) => {
-    onSaveView(view);
+  const handleSave = async (view: ResponsesView) => {
+    await onSaveView(view);
     switchToList();
   };
 
@@ -77,6 +77,7 @@ export function ViewManager({
           form={form}
           user={user}
           currentView={editingView || undefined}
+          savedViews={savedViews ?? []}
           permissionTypes={permissionTypes}
           isSaving={isSaving}
           onSaveView={handleSave}

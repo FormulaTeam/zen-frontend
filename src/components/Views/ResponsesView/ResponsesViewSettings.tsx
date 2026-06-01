@@ -20,9 +20,9 @@ import { SubtitlesTypography } from "../ViewManager/styled";
 import { FormFieldDto } from "../../../types/shared";
 import * as Gear from "formula-gear";
 
-// Use bracket notation to bypass static analysis of bundlers which might have stale cache
 const getGearConstant = (key: string) => {
   const g = Gear as any;
+
   return g[key];
 };
 
@@ -37,7 +37,8 @@ const gearComparableFieldTypes = getGearConstant("comparable" + "FieldTypes") ||
 ];
 
 const isSortable = (typeId?: number): boolean => {
-  if (typeId === undefined) return true; // Meta columns are always sortable
+  if (typeId === undefined) return true;
+
   return (gearComparableFieldTypes as number[]).includes(typeId);
 };
 
@@ -48,6 +49,7 @@ interface ResponsesViewSettingsProps {
   formFields?: FormFieldDto[];
   viewName: string;
   setViewName: (viewName: string) => void;
+  viewNameError?: string;
   isPublic: boolean;
   isDefault: boolean;
   setIsDefault: (isDefault: boolean) => void;
@@ -82,6 +84,7 @@ export function ResponsesViewSettings({
   formFields = [],
   viewName,
   setViewName,
+  viewNameError,
   isPublic,
   isDefault,
   setIsDefault,
@@ -101,14 +104,24 @@ export function ResponsesViewSettings({
     [columns],
   );
 
-  const getIsColumnSortable = useCallback((columnId: string) => {
-    // Meta columns (id, updated, etc) are always sortable in this context or handled by isSortable(undefined)
-    const field = formFields.find((f) => String(f.id) === String(columnId));
-    return isSortable(field?.fieldType);
-  }, [formFields]);
+  const getIsColumnSortable = useCallback(
+    (columnId: string) => {
+      const field = formFields.find((f) => String(f.id) === String(columnId));
+
+      return isSortable(field?.fieldType);
+    },
+    [formFields],
+  );
 
   return (
-    <Box display="flex" flexDirection="column" gap={-0.5}>
+    <Box
+      display="flex"
+      flexDirection="column"
+      gap={-0.5}
+      sx={{
+        width: "100%",
+        alignItems: "stretch",
+      }}>
       <SubtitlesTypography>
         {<span style={{ color: "rgba(222, 86, 75)" }}>✱ </span>}
         {HebrewTitles.VIEW_NAME}
@@ -121,6 +134,26 @@ export function ResponsesViewSettings({
         placeholder={VIEW_NAME_PLACEHOLDER}
         disabled={!canEdit}
       />
+
+      {viewNameError && (
+        <div
+          dir="rtl"
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            display: "block",
+            marginTop: "4px",
+            color: "#d32f2f",
+            fontSize: "0.8rem",
+            lineHeight: 1.3,
+            fontWeight: 400,
+            textAlign: "right",
+            direction: "rtl",
+            unicodeBidi: "plaintext",
+          }}>
+          {viewNameError}
+        </div>
+      )}
 
       {canEdit && canManagePublicViews && (
         <Stack spacing={-4}>
@@ -189,11 +222,10 @@ export function ResponsesViewSettings({
             </MenuItem>
 
             {visibleColumns.map((column: ViewColumn) => (
-              <MenuItem 
-                key={column.columnId} 
+              <MenuItem
+                key={column.columnId}
                 value={column.columnId}
-                disabled={!getIsColumnSortable(column.columnId)}
-              >
+                disabled={!getIsColumnSortable(column.columnId)}>
                 {column.displayName}
               </MenuItem>
             ))}
