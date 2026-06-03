@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Switch } from "@mui/material";
-import { StyledFormControl, StyledFormControlLabel } from "./styled";
+import { StyledFormControl, StyledFormControlLabel, StyledLabel } from "./styled";
 import { CheckboxInitialValType } from "../../../types/enums/formFields.enums";
 
 type CustomSwitchProps = {
@@ -37,6 +37,7 @@ const CustomSwitch: React.FC<CustomSwitchProps> = ({
 
   return (
     <StyledFormControl isTabularEdit={isTabularEdit}>
+      {!isTabularEdit && <StyledLabel>{label}</StyledLabel>}
       <StyledFormControlLabel
         isTabularEdit={isTabularEdit}
         control={
@@ -47,8 +48,7 @@ const CustomSwitch: React.FC<CustomSwitchProps> = ({
             size={isTabularEdit ? "small" : "medium"}
           />
         }
-        label={isTabularEdit ? "" : label}
-        labelPlacement="start"
+        label=""
       />
     </StyledFormControl>
   );

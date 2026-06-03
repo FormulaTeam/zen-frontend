@@ -9,25 +9,29 @@ import {
 export const StyledFormControl = styled(FormControl, {
   shouldForwardProp: (prop) => prop !== 'isTabularEdit',
 })<{ isTabularEdit: boolean }>(({ isTabularEdit }) => ({
-  padding: isTabularEdit ? "0" : "1rem 0",
+  padding: isTabularEdit ? "0" : "0.5rem 0",
   display: "flex",
-  flexDirection: isTabularEdit ? "column" : "row",
-  alignItems: isTabularEdit ? "flex-start" : "center",
+  flexDirection: "column",
+  alignItems: "flex-start",
   width: "100%",
+  gap: isTabularEdit ? 0 : "8px",
 }));
 
-export const StyledLabel = styled(Typography)(() => ({
-  color: "rgba(0, 0, 0, 0.6)", // matches MUI's text.secondary
-  fontSize: "0.7rem",
-  marginBottom: "0.2rem",
-  lineHeight: 1,
+export const StyledLabel = styled(Typography)(({ theme }) => ({
+  color: theme.palette.text.primary,
+  fontSize: "1.3rem",
+  fontWeight: 600,
+  lineHeight: 1.2,
+  display: "block",
+  width: "100%",
 }));
 
 export const StyledFormControlLabel = styled(FormControlLabel, {
   shouldForwardProp: (prop) => prop !== 'isTabularEdit',
 })<{ isTabularEdit: boolean }>(({ isTabularEdit }) => ({
-  justifyContent: isTabularEdit ? "flex-start" : "flex-end",
-  alignSelf: "start",
-  padding: isTabularEdit ? "0" : "0 11px",
   margin: 0,
+  padding: isTabularEdit ? "0" : "4px 0",
+  "& .MuiFormControlLabel-label": {
+    display: "none",
+  }
 }));

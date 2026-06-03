@@ -135,7 +135,14 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
       className={validationMessage ? classes.invalid : ""}>
       {!isTabularEdit && (
         <FormLabel
-          style={{ fontSize: 16 }}
+          sx={{
+            fontSize: "1.3rem",
+            fontWeight: 600,
+            color: theme.palette.text.primary,
+            "&.Mui-focused": {
+              color: theme.palette.primary.main,
+            },
+          }}
           error={Boolean(validationMessage)}
           required={isRequired}>
           {label}

@@ -18,11 +18,12 @@ export const StyledListbox = styled("ul")`
 `;
 
 export const StyledInputLabel = styled(InputLabel)`
-  top: -8px;
+  top: -14px;
   left: 5px;
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: ${({ theme }) => theme.palette.text.secondary};
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.palette.text.primary};
+  transform: translate(0, 0) scale(1) !important;
 `;
 
 export const StyledAutocomplete = styled(Autocomplete)`

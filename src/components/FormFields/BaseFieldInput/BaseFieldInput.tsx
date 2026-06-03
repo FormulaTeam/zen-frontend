@@ -29,10 +29,11 @@ const BaseFieldInput = React.forwardRef<HTMLDivElement, BaseFieldInputProps>(
             sx: {
               left: '5px',
               display: isTabularEdit ? "none" : "block",
-              top: '-8px',
-              fontSize: '1.2rem',
-              fontWeight: 500,
-              color: theme.palette.text.secondary,
+              top: '-14px',
+              fontSize: '1.3rem',
+              fontWeight: 600,
+              color: theme.palette.text.primary,
+              transform: 'translate(0, 0) scale(1)',
               '&.Mui-focused': {
                 color: theme.palette.primary.main,
               }
