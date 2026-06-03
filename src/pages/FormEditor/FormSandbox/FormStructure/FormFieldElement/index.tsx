@@ -114,7 +114,7 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
             typeId={field.data.typeId}
             extra={field.data.extra ?? {}}
             validationErrors={field.validationErrors?.extra}
-            onChange={(extra) => onDataChange({ extra })}
+            onChange={(extra: any) => onDataChange({ extra })}
             onDataChange={onDataChange}
             disabled={isInputDisabled} />
         </div>

@@ -12,7 +12,7 @@ import { OptionsFieldTypeId } from "../index";
 import { FormFieldExtra } from "@pages/FormEditor/schemas/fields";
 
 interface Props {
-  linkedOptionsFieldId: string | null;
+  linkedOptionsFieldId: string | undefined;
   onChange: (extra: Partial<FormFieldExtra<OptionsFieldTypeId>>) => void;
   validationErrors: any;
 }
@@ -109,7 +109,7 @@ function FormFieldResponsesOptions(props: Props) {
         }}
         onChange={(_, newValue) => {
           setSelectedFormId(newValue ? newValue.id : "");
-          onChange({ linkedOptionsFieldId: null }); // Reset field when form changes
+          onChange({ linkedOptionsFieldId: undefined }); // Reset field when form changes
         }}
         isOptionEqualToValue={(option, value) => option?.id === value?.id}
         renderOption={(props, option) => (
@@ -154,7 +154,7 @@ function FormFieldResponsesOptions(props: Props) {
             value={selectedFieldOption}
             onOpen={() => setFieldTouchAttempted(true)}
             onChange={(_, newValue) => {
-              onChange({ linkedOptionsFieldId: newValue ? newValue.id : null });
+              onChange({ linkedOptionsFieldId: newValue ? newValue.id : undefined });
             }}
             noOptionsText={!selectedFormId ? (fieldTouchAttempted ? 'יש לבחור טופס' : '') : (availableFields.length ? 'לא נמצאו תוצאות' : 'אין שדות זמינים')}
             disabled={!selectedFormId}

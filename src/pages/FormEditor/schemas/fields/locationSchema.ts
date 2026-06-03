@@ -1,13 +1,12 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
-import { enum as zod_enum, literal, strictObject } from "zod";
+import { literal } from "zod";
+import { LocationFieldExtraSchema } from "formula-gear";
 
 const locationSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.location),
 
-  extra: strictObject({
-    locationFormat: zod_enum(["utm", "wkt"]).default("utm"),
-  }).default({
+  extra: LocationFieldExtraSchema.default({
     locationFormat: "utm",
   }),
 });

@@ -1,13 +1,12 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
-import { boolean, literal, strictObject } from "zod";
+import { literal } from "zod";
+import { BooleanFieldExtraSchema } from "formula-gear";
 
 const checkboxSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.checkbox),
 
-  extra: strictObject({
-    defaultValue: boolean().default(false),
-  }).default({
+  extra: BooleanFieldExtraSchema.default({
     defaultValue: false,
   }),
 });

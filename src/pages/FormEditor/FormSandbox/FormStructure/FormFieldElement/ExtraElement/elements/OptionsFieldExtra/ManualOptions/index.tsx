@@ -55,7 +55,7 @@ function ManualOptions(props: Props) {
     return (
       fieldId !== id &&
       fieldData.typeId === FieldTypeIds.options &&
-      fieldExtra?.linkedOptionsFieldId === null &&
+      fieldExtra?.linkedOptionsFieldId === undefined &&
       fieldData.displayName
     );
   }), [formStructure.fields, id]);
@@ -77,7 +77,7 @@ function ManualOptions(props: Props) {
 
   const controllingFieldItems = useMemo(() => {
     const linkedOptionsFieldId = extra.linkedOptionsFieldId;
-    if (!linkedOptionsFieldId) return null;
+    if (!linkedOptionsFieldId) return undefined;
 
     return (
       (formStructure.fields[linkedOptionsFieldId].data.options as ManualItems)?.filter((item) => !!item.text?.length)
@@ -140,7 +140,7 @@ function ManualOptions(props: Props) {
                   value={extra.linkedOptionsFieldId || null}
                   noOptionsText={"לא נמצאו שדות מתאימים"}
                   onChange={(_, newValue) => {
-                    onChange({ linkedOptionsFieldId: newValue || null });
+                    onChange({ linkedOptionsFieldId: newValue || undefined });
                   }}
                   renderInput={(params) => (
                     <TextField
@@ -162,7 +162,7 @@ function ManualOptions(props: Props) {
             extra.linkedOptionsFieldId &&
             <Button className={styles.button}
               onClick={(_) => {
-                onChange({ linkedOptionsFieldId: null });
+                onChange({ linkedOptionsFieldId: undefined });
               }}>
               <Close sx={{ fontSize: 20, color: "#a54160" }} />
             </Button>

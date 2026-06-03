@@ -16,18 +16,18 @@ interface Props extends ExtraElementProps<FieldTypeId> {
 function OptionsFieldExtra({ fieldId, extra, onChange, onDataChange, validationErrors, disabled }: Props) {
   const {
     selectionMode = "single",
-    linkedOptionsFieldId = null,
+    linkedOptionsFieldId,
     defaultValue = [],
   } = extra;
 
-  const isLinked = linkedOptionsFieldId !== null;
+  const isLinked = linkedOptionsFieldId !== undefined;
   const multiple = selectionMode === "multiple";
 
   const handleSourceChange = (newIsLinked: boolean) => {
     if (newIsLinked) {
-      onChange({ linkedOptionsFieldId: null });
+      onChange({ linkedOptionsFieldId: undefined });
     } else {
-      onChange({ linkedOptionsFieldId: null });
+      onChange({ linkedOptionsFieldId: undefined });
     }
   };
 
@@ -54,7 +54,7 @@ function OptionsFieldExtra({ fieldId, extra, onChange, onDataChange, validationE
 
       {isLinked ? (
         <FormFieldResponsesOptions
-          linkedOptionsFieldId={linkedOptionsFieldId}
+          linkedOptionsFieldId={linkedOptionsFieldId ?? undefined}
           validationErrors={validationErrors as any}
           onChange={onChange}
         />

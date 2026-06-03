@@ -50,7 +50,6 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
         typeId: FieldTypeIds.options,
         extra: {
           selectionMode: "single",
-          linkedOptionsFieldId: null,
           defaultValue: [],
         },
         options: [
@@ -66,7 +65,6 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
         typeId: FieldTypeIds.date,
         extra: {
           dateType: "date",
-          defaultValue: null,
         },
       };
       break;
@@ -77,7 +75,6 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
         typeId: FieldTypeIds.time,
         extra: {
           timePrecision: "minutes",
-          defaultValue: null,
         },
       };
       break;
@@ -88,9 +85,6 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
         typeId: FieldTypeIds.number,
         extra: {
           numberType: "integer",
-          min: null,
-          max: null,
-          defaultValue: null,
         },
       };
       break;
@@ -129,10 +123,7 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
       data = {
         ...baseData,
         typeId: FieldTypeIds.shortText,
-        extra: {
-          maxLength: null,
-          validationRegex: null,
-        },
+        extra: {},
       };
       break;
 
@@ -140,10 +131,7 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
       data = {
         ...baseData,
         typeId: FieldTypeIds.longText,
-        extra: {
-          maxLength: null,
-          validationRegex: null,
-        },
+        extra: {},
       };
       break;
 

@@ -193,6 +193,11 @@ const toValidatorField = (
           }
         });
       }
+    } else if (Array.isArray((field as any).options)) {
+      items = (field as any).options.map((item: any) => ({
+        id: String(item.id),
+        text: String(item.text || item.id),
+      }));
     } else if (extra?.options?.items) {
       items = extra.options.items.map((item: any) => ({
         id: String(item.id),

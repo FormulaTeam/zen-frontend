@@ -115,6 +115,24 @@ const isConnectedToForm = (field: FormFieldDto) => {
 };
 
 const getFieldOptionItems = (field: FormFieldDto): OptionItem[] => {
+  if (Array.isArray((field as any).options)) {
+    return (field as any).options
+      .filter(
+        (item: any) =>
+          item &&
+          typeof item.id === "string" &&
+          item.id.length > 0 &&
+          typeof item.text === "string",
+      )
+      .map((item: any) => ({
+        id: item.id,
+        text: item.text,
+        controllingItemsIds: Array.isArray(item.controllingItemsIds)
+          ? item.controllingItemsIds
+          : [],
+      }));
+  }
+
   const extra = getFieldExtra(field);
 
   if (

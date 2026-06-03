@@ -1,6 +1,7 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
-import { enum as zod_enum, literal, number, strictObject } from "zod";
+import { literal } from "zod";
+import { NumberFieldExtraSchema } from "formula-gear";
 
 const ErrorMessages = {
   invalidMinMaxFormat: "לא ניתן להגדיר מספר עשרוני כטווח למספר שלם",
@@ -12,14 +13,9 @@ const ErrorMessages = {
 const numberSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.number),
 
-  extra: strictObject({
-    numberType: zod_enum(["integer", "decimal"]).default("integer"),
-    defaultValue: number().nullable().default(null),
-    min: number().nullable().default(null),
-    max: number().nullable().default(null),
-  })
+  extra: NumberFieldExtraSchema
     .superRefine(({ min, max, defaultValue, numberType }, ctx) => {
-      if (min !== null && max !== null && max <= min) {
+      if (min != null && max != null && max <= min) {
         ctx.addIssue({
           code: "custom",
           message: ErrorMessages.invalidRange,
@@ -33,8 +29,8 @@ const numberSchema = baseFormFieldSchema.safeExtend({
       }
 
       if (
-        defaultValue !== null &&
-        ((min !== null && defaultValue < min) || (max !== null && defaultValue > max))
+        defaultValue != null &&
+        ((min != null && defaultValue < min) || (max != null && defaultValue > max))
       ) {
         ctx.addIssue({
           code: "custom",
@@ -44,7 +40,7 @@ const numberSchema = baseFormFieldSchema.safeExtend({
       }
 
       if (numberType === "integer") {
-        if (min !== null && min % 1 != 0) {
+        if (min != null && min % 1 != 0) {
           ctx.addIssue({
             code: "custom",
             message: ErrorMessages.invalidMinMaxFormat,
@@ -52,7 +48,7 @@ const numberSchema = baseFormFieldSchema.safeExtend({
           });
         }
 
-        if (max !== null && max % 1 != 0) {
+        if (max != null && max % 1 != 0) {
           ctx.addIssue({
             code: "custom",
             message: ErrorMessages.invalidMinMaxFormat,
@@ -60,7 +56,7 @@ const numberSchema = baseFormFieldSchema.safeExtend({
           });
         }
 
-        if (defaultValue !== null && defaultValue % 1 != 0) {
+        if (defaultValue != null && defaultValue % 1 != 0) {
           ctx.addIssue({
             code: "custom",
             message: ErrorMessages.invalidDefaultValueFormat,
@@ -71,9 +67,6 @@ const numberSchema = baseFormFieldSchema.safeExtend({
     })
     .default({
       numberType: "integer",
-      defaultValue: null,
-      min: null,
-      max: null,
     }),
 });
 

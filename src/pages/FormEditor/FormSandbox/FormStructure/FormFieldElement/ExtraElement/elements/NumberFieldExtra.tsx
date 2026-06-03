@@ -30,7 +30,7 @@ function NumberFieldExtra({ extra, validationErrors, onChange, disabled }: Props
   const handleNumberChange = (value: string, fieldName: "defaultValue" | "min" | "max") => {
     if (value === "" || value === "-") {
       setLocalValues((prev) => ({ ...prev, [fieldName]: value }));
-      onChange({ [fieldName]: null });
+      onChange({ [fieldName]: undefined });
       return;
     }
 

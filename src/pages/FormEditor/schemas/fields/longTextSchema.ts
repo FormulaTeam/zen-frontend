@@ -1,17 +1,12 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
-import { literal, number, strictObject, string } from "zod";
+import { literal } from "zod";
+import { EmptyExtraSchema } from "formula-gear";
 
 const longTextSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.longText),
 
-  extra: strictObject({
-    maxLength: number().int().positive().nullable().default(null),
-    validationRegex: string().min(1).nullable().default(null),
-  }).default({
-    maxLength: null,
-    validationRegex: null,
-  }),
+  extra: EmptyExtraSchema.default({}),
 });
 
 export default longTextSchema;
