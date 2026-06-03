@@ -17,15 +17,18 @@ const EmptyCard = styled(Button)(({ theme }) => ({
   alignItems: "center",
   justifyContent: "center",
   border: "1px solid transparent",
-  transition: "all 0.2s ease-in-out",
+  transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)", // Bouncy transition
   textTransform: "none",
   color: "inherit",
   padding: "24px",
   "&:hover": {
-    backgroundColor: "#ffffff",
-    transform: "translateY(-4px)",
-    boxShadow: "0px 12px 30px rgba(0, 0, 0, 0.08)",
-    borderColor: "#1E88E5", // Added primary blue border on hover to match FormCard
+    backgroundColor: "rgba(30, 136, 229, 0.02)", // Very subtle blue tint
+    boxShadow: "0px 15px 35px rgba(30, 136, 229, 0.12)", // Blue-tinted shadow
+    borderColor: "#1E88E5",
+    "& .large-plus-icon": {
+      transform: "scale(1.1) rotate(90deg)", // Scale and rotate icon
+      opacity: 1,
+    },
   },
 }));
 
@@ -34,6 +37,7 @@ const LargePlusIcon = styled(AddIcon)(({ theme }) => ({
   color: "#1E88E5",
   fontWeight: 100,
   opacity: 0.6,
+  transition: "all 0.4s ease-in-out",
 }));
 
 const TooltipPaper = styled(Paper)(({ theme }) => ({
@@ -88,7 +92,7 @@ export function EmptyState() {
   return (
     <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
       <EmptyCard ref={cardRef} onClick={handleCreateClick} disableRipple className="empty-state-card">
-        <LargePlusIcon />
+        <LargePlusIcon className="large-plus-icon" />
       </EmptyCard>
 
       <Popper

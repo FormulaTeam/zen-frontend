@@ -118,7 +118,7 @@ function MainPage({
   return (
     <Box className="main-page-container">
       <Box className="tabs-and-select-div">
-        <RowBox sx={{ mb: 3, mt: 2 }}>
+        <RowBox sx={{ mb: 1, mt: 2 }}>
           <GreetingBox>
             <PrimaryBlueButton
               onClick={() => navigate(IPath.FORM_CREATE)}
