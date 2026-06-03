@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTheme, Typography, Avatar, Box } from "@mui/material";
+import { PersonOutline as PersonIcon } from "@mui/icons-material";
 import logo from "../../images/zen_logo.png";
 import { IOperationEndpoint, IPath } from "../../types/enums/global.enums";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -31,8 +32,7 @@ const Navbar = () => {
 
   useEffect(() => {
     const inMainPage = location?.pathname === IPath.HOME;
-    const inLoginPage = location?.pathname === IPath.LOGIN;
-    setShowMainStuff(inMainPage || inLoginPage);
+    setShowMainStuff(inMainPage);
   }, [location]);
 
   const navigateToHome = () => {
@@ -62,7 +62,7 @@ const Navbar = () => {
                   fontWeight: 700,
                   border: "1px solid rgba(255, 255, 255, 0.4)",
                 }}>
-                {myPersonal?.name?.[0]}
+                <PersonIcon sx={{ fontSize: "20px", color: "#fff" }} />
               </Avatar>
               <Typography
                 sx={{

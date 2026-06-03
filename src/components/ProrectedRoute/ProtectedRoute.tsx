@@ -1,22 +1,20 @@
 import React, { useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { IPath } from "../../types/enums/global.enums";
+import { triggerSSORedirect } from "../../utils/auth";
 
 /**
  * ProtectedRoute: Ensures a user is authenticated before rendering nested routes.
- * If no user is in context, redirects to /login so the user can initiate the Keycloak flow.
+ * If no user is in context, redirects directly to the SSO flow.
  */
 const ProtectedRoute: React.FC = () => {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading && !user) {
-      localStorage.setItem("lastVisitedPath", window.location.pathname);
-      navigate(IPath.LOGIN, { replace: true });
+      triggerSSORedirect();
     }
-  }, [user, loading, navigate]);
+  }, [user, loading]);
 
   if (loading) {
     return null; // Or a loading spinner

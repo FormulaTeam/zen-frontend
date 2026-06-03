@@ -3,12 +3,11 @@ import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Box } from "@mui/material";
 import MainPage from "./pages/MainPage/MainPage";
-import Login from "./pages/Login/Login";
 import { useAuth } from "./contexts/AuthContext";
 import ResponsesPage from "./pages/ResponsesPage/ResponsesPage";
 import ProtectedRoute from "./components/ProrectedRoute/ProtectedRoute";
 import Navbar from "./components/Navbar/Navbar";
-import { SSOComeback } from "./pages/Login/SSOCallback";
+import { SSOComeback } from "./pages/Auth/SSOCallback";
 import ErrorPage from "./pages/ErrorPage/ErrorPage";
 import EditForm from "./pages/EditForm/EditForm";
 import LocalStorageUpdater from "./components/LocalStorageUpdater";
@@ -26,7 +25,6 @@ import { DashboardStatisticsProvider } from "./contexts/DashboardStatisticsConte
 const AppRouter = () => {
   const { user } = useAuth();
   const [searchValue, setSearchValue] = useState("");
-  const [showHelpCard, setShowHelpCard] = useState(false);
   const [shouldRefreshPage, setShouldRefreshPage] = useState(false);
 
   function resetSearchValue() {
@@ -46,7 +44,6 @@ const AppRouter = () => {
         <Navbar />
         <Routes>
           <Route path={IPath.ERROR} element={<ErrorPage />} />
-          <Route path={IPath.LOGIN} element={<Login />} />
           <Route path={IPath.COMEBACK} element={<SSOComeback />} />
           <Route
             path={IPath.DASHBOARD}

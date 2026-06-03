@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { loginWithCode } from "../../api/authApi";
@@ -8,14 +8,17 @@ export const SSOComeback = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { login, user, loading } = useAuth();
+  const didRunRef = useRef(false);
 
   useEffect(() => {
-    if (loading) {
+    if (loading || didRunRef.current) {
       return;
     }
 
+    // Immediately handle already authenticated users
     if (user) {
       const lastVisitedPath = localStorage.getItem("lastVisitedPath");
+      localStorage.removeItem("lastVisitedPath");
       navigate(lastVisitedPath ?? "/", { replace: true });
       return;
     }
@@ -28,29 +31,37 @@ export const SSOComeback = () => {
       return;
     }
 
+    // Mark as running to prevent double processing in React 18 strict mode
+    didRunRef.current = true;
+
     const redirectUri = `${window.location.origin}/comeback`;
+    const lastPath = localStorage.getItem("lastVisitedPath") ?? "/";
 
     loginWithCode(code, redirectUri)
       .then(() =>
         Promise.all([
           apiClient.get<{ userId: number }>("/users/me/type").catch(() => ({ data: { userId: 0 } })),
-          apiClient.get<{ name: string; upn: string }>("/users/me/personal").catch(() => ({ data: { name: "משתמש", upn: "unknown" } })),
+          apiClient
+            .get<{ name: string; upn: string }>("/users/me/personal")
+            .catch(() => ({ data: { name: "משתמש", upn: "unknown" } })),
         ]),
       )
       .then(([typeRes, personalRes]) => {
         const name = personalRes.data?.name || "משתמש";
         const upn = personalRes.data?.upn || "unknown";
-        
+
         const userData = {
           displayName: name,
           upn: upn,
           firstName: name.split(" ")[0] || "",
           lastName: name.split(" ").slice(1).join(" ") || "",
         };
-        
+
+        // Clear storage before triggering state updates that might cause re-renders
+        localStorage.removeItem("lastVisitedPath");
+
         login({ user: userData });
-        const lastVisitedPath = localStorage.getItem("lastVisitedPath");
-        navigate(lastVisitedPath ?? "/", { replace: true });
+        navigate(lastPath, { replace: true });
       })
       .catch((err) => {
         console.error("Login failed:", err);
