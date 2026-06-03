@@ -12,8 +12,8 @@ dayjs.extend(utc);
 
 interface CustomTimePickerProps {
   value: any;
-  defaultValue?: number;
-  includeSeconds?: boolean;
+  defaultValue?: string;
+  timePrecision?: "minutes" | "seconds";
   isTabularEdit?: boolean;
   label: string;
   isRequired: boolean;
@@ -48,7 +48,8 @@ const parseTimeStringToDayjs = (value: unknown): Dayjs | null => {
   return dayjs(date);
 };
 
-const formatDayjsToTimeString = (value: Dayjs, showSeconds: boolean): string => {
+const formatDayjsToTimeString = (value: Dayjs, timePrecision?: string): string => {
+  const showSeconds = timePrecision === "seconds";
   const hours = value.hour().toString().padStart(2, "0");
   const minutes = value.minute().toString().padStart(2, "0");
 
@@ -68,7 +69,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
   isRequired,
   label,
   defaultValue,
-  includeSeconds: showSeconds = false,
+  timePrecision = "minutes",
   isTabularEdit = false,
   validationMessage,
   validationDetail,
@@ -90,18 +91,20 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
       return;
     }
 
-    if (!didApplyDefaultRef.current && !value && defaultValue === 2) {
+    if (!didApplyDefaultRef.current && !value && defaultValue === "currentTime") {
       const now = dayjs();
       didApplyDefaultRef.current = true;
       setTimeValue(now);
-      onChangeHandler(formatDayjsToTimeString(now, showSeconds));
+      onChangeHandler(formatDayjsToTimeString(now, timePrecision));
       return;
     }
 
     if (!value) {
       setTimeValue((prev) => (prev === null ? prev : null));
     }
-  }, [value, defaultValue, showSeconds, onChangeHandler]);
+  }, [value, defaultValue, timePrecision, onChangeHandler]);
+
+  const showSeconds = timePrecision === "seconds";
 
   const triggerValidationOnce = () => {
     if (!didTriggerValidationRef.current) {
@@ -125,7 +128,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
 
             if (newValue?.isValid()) {
               setTimeValue(newValue);
-              onChangeHandler(formatDayjsToTimeString(newValue, showSeconds));
+              onChangeHandler(formatDayjsToTimeString(newValue, timePrecision));
               return;
             }
 

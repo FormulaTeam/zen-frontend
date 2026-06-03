@@ -7,7 +7,9 @@ const checkboxSchema = baseFormFieldSchema.safeExtend({
 
   extra: strictObject({
     defaultValue: boolean().default(false),
-  }).optional(),
+  }).default({
+    defaultValue: false,
+  }),
 });
 
 export default checkboxSchema;

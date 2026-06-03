@@ -26,9 +26,8 @@ interface ChildResponseRowProps {
 }
 
 type EditorFieldExtra = {
-  dateAndTime?: boolean;
-  includeTime?: boolean;
-  includeSeconds?: boolean;
+  dateType?: "datetime" | "date";
+  timePrecision?: "seconds" | "minutes";
 };
 
 type FileFieldValue = {
@@ -66,8 +65,8 @@ const isFileFieldValue = (value: unknown): value is FileFieldValue => {
   );
 };
 
-const formatTimeValue = (value: unknown, includeSeconds: boolean): string => {
-  const format = includeSeconds ? "HH:mm:ss" : "HH:mm";
+const formatTimeValue = (value: unknown, timePrecision: "seconds" | "minutes"): string => {
+  const format = timePrecision === "seconds" ? "HH:mm:ss" : "HH:mm";
 
   if (value instanceof Date) {
     return moment(value).format(format);
@@ -85,7 +84,9 @@ const formatTimeValue = (value: unknown, includeSeconds: boolean): string => {
       const minutes = timeOnlyMatch[2];
       const seconds = timeOnlyMatch[3] ?? "00";
 
-      return includeSeconds ? `${hours}:${minutes}:${seconds}` : `${hours}:${minutes}`;
+      return timePrecision === "seconds"
+        ? `${hours}:${minutes}:${seconds}`
+        : `${hours}:${minutes}`;
     }
 
     const parsedMoment = moment(trimmedValue);
@@ -197,7 +198,7 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
 
       case fieldType.Time: {
         const extra = getFieldExtra(field);
-        const displayValue = formatTimeValue(value, Boolean(extra.includeSeconds));
+        const displayValue = formatTimeValue(value, extra.timePrecision || "minutes");
 
         return displayValue ? highlightText(displayValue) : "";
       }
@@ -206,12 +207,7 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
         if (!moment(value).isValid()) return "";
 
         const extra = getFieldExtra(field);
-        const includeTime = Boolean(
-          (field as any).dateAndTime ??
-          extra.dateAndTime ??
-          (field as any).includeTime ??
-          extra.includeTime,
-        );
+        const includeTime = extra.dateType === "datetime";
 
         const datePart = moment(value).format(DEFAULT_DATE_FORMAT);
         const timePart = includeTime ? ` ${moment(value).format("HH:mm")}` : "";

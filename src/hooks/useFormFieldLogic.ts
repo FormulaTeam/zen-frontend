@@ -41,7 +41,7 @@ export const useFormFieldLogic = ({
     if (field.typeId !== FieldTypeIds.options) return;
 
     const extra = field.extra ?? {};
-    const multiSelect = Boolean(field.multiSelect ?? extra.multiSelect ?? extra.multiple);
+    const multiSelect = (field.selectionMode ?? extra.selectionMode) === "multiple";
     let options = extra.options || field.options || [];
 
     const parentFieldId = extra.parentFieldId ?? field.parentFieldId;

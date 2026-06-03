@@ -6,9 +6,12 @@ const longTextSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.longText),
 
   extra: strictObject({
-    maxLength: number().int().positive().optional(),
-    validationRegex: string().min(1).optional(),
-  }).optional(),
+    maxLength: number().int().positive().nullable().default(null),
+    validationRegex: string().min(1).nullable().default(null),
+  }).default({
+    maxLength: null,
+    validationRegex: null,
+  }),
 });
 
 export default longTextSchema;

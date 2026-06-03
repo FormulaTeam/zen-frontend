@@ -39,7 +39,7 @@ const ChartFromToPicker: React.FC<ChartFromToPickerProps> = ({
         isDisabled={false}
         onChangeHandler={(value) => handleDateChange("from", value || null, null)}
         value={range.from}
-        dateAndTime={false}
+        dateType="date"
         defaultValue={undefined}
         validationMessage={null}
       />
@@ -50,7 +50,7 @@ const ChartFromToPicker: React.FC<ChartFromToPickerProps> = ({
         isDisabled={false}
         onChangeHandler={(value) => handleDateChange("to", value || null, null)}
         value={range.to}
-        dateAndTime={false}
+        dateType="date"
         defaultValue={undefined}
         validationMessage={null}
       />

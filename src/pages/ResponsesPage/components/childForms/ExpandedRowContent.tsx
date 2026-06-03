@@ -11,7 +11,6 @@ import { DetailsContainer } from "../../styled";
 
 type EditorFieldExtra = {
     linkedFormId?: number | string;
-    connectedFormId?: number | string;
 };
 
 interface ChildFormData {
@@ -24,7 +23,7 @@ interface ExpandedRowContentProps {
     parentFormId: number;
     parentFormFields: FormFieldDto[];
     childrenFormsData: ChildFormData[];
-    getChildRowsForParent: (parentRowId: string | number, connectedFormId: number | string) => Row[];
+    getChildRowsForParent: (parentRowId: string | number, linkedFormId: number | string) => Row[];
     isInEditMode?: boolean;
     searchQuery?: string;
     isLoading?: boolean;
@@ -52,7 +51,7 @@ export const ExpandedRowContent: React.FC<ExpandedRowContentProps> = ({
                     (field as any).typeId === FieldTypeIds.linkedForm ||
                     (field as any).fieldType === FieldTypeIds.linkedForm;
 
-                return isFormType && !!(fieldExtra.linkedFormId || fieldExtra.connectedFormId);
+                return isFormType && !!fieldExtra.linkedFormId;
             }),
         [parentFormFields],
     );
@@ -61,7 +60,7 @@ export const ExpandedRowContent: React.FC<ExpandedRowContentProps> = ({
         () =>
             formInFormFields.map((field) => {
                 const fieldExtra = getFieldExtra(field);
-                const linkedFormId = fieldExtra.linkedFormId || fieldExtra.connectedFormId;
+                const linkedFormId = fieldExtra.linkedFormId;
 
                 const childFormData = childrenFormsData.find((data) => String(data.form.id) === String(linkedFormId));
 

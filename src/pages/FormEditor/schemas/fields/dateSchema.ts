@@ -1,20 +1,17 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
-import { boolean, enum as zod_enum, literal, strictObject } from "zod";
-
-enum DefaultDateValue {
-  EMPTY = 1,
-  NOW = 2,
-}
+import { enum as zod_enum, literal, strictObject } from "zod";
 
 const dateSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.date),
 
   extra: strictObject({
-    dateAndTime: boolean().optional(),
-    defaultValue: zod_enum(DefaultDateValue).default(DefaultDateValue.EMPTY),
-  }).optional(),
+    dateType: zod_enum(["date", "datetime"]).default("date"),
+    defaultValue: zod_enum(["currentDate", "currentDateTime"]).nullable().default(null),
+  }).default({
+    dateType: "date",
+    defaultValue: null,
+  }),
 });
 
-export { DefaultDateValue };
 export default dateSchema;

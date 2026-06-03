@@ -17,8 +17,8 @@ const ISRAEL_TZ = "Asia/Jerusalem";
 
 interface CustomDateTimeProps {
   value: string | null;
-  defaultValue?: number;
-  dateAndTime?: boolean;
+  defaultValue?: string;
+  dateType?: "date" | "datetime";
   isTabularEdit?: boolean;
   label: string;
   isRequired: boolean;
@@ -29,7 +29,8 @@ interface CustomDateTimeProps {
   validationDetail?: string | null;
 }
 
-const isCurrentDateDefault = (defaultValue?: number) => defaultValue === 2;
+const isCurrentDateDefault = (defaultValue?: string) =>
+  defaultValue === "currentDate" || defaultValue === "currentDateTime";
 
 const toIsraelDayjs = (value: string): Dayjs | null => {
   if (!value) return null;
@@ -40,8 +41,9 @@ const toIsraelDayjs = (value: string): Dayjs | null => {
   return parsed.tz(ISRAEL_TZ);
 };
 
-const toStoredUtcIso = (value: Dayjs, dateAndTime: boolean): string => {
-  if (dateAndTime) {
+const toStoredUtcIso = (value: Dayjs, dateType?: string): string => {
+  const isDateTime = dateType === "datetime";
+  if (isDateTime) {
     return value.tz(ISRAEL_TZ, true).utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
   }
 
@@ -56,7 +58,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   isRequired,
   label,
   defaultValue,
-  dateAndTime = false,
+  dateType = "date",
   isTabularEdit = false,
   validationMessage,
   validationDetail,
@@ -72,16 +74,19 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
 
     if (!didApplyDefaultRef.current && isCurrentDateDefault(defaultValue)) {
       const now = dayjs().tz(ISRAEL_TZ);
-      const initialValue = dateAndTime ? now : now.startOf("day");
+      const isDateTime = dateType === "datetime";
+      const initialValue = isDateTime ? now : now.startOf("day");
 
       didApplyDefaultRef.current = true;
       setDateValue(initialValue);
-      onChangeHandler(toStoredUtcIso(initialValue, dateAndTime));
+      onChangeHandler(toStoredUtcIso(initialValue, dateType));
       return;
     }
 
     setDateValue(null);
-  }, [value, defaultValue, dateAndTime, onChangeHandler]);
+  }, [value, defaultValue, dateType, onChangeHandler]);
+
+  const isDateTime = dateType === "datetime";
 
   return (
     <Chrome90RTLFixContainer className={classes["custom-date-time-container"]}>
@@ -99,9 +104,9 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
             }
 
             if (newValue.isValid()) {
-              const nextValue = dateAndTime ? newValue : newValue.startOf("day");
+              const nextValue = isDateTime ? newValue : newValue.startOf("day");
               setDateValue(nextValue);
-              onChangeHandler(toStoredUtcIso(nextValue, dateAndTime));
+              onChangeHandler(toStoredUtcIso(nextValue, dateType));
             }
           }}
           onClose={onBlurHandler}
@@ -129,7 +134,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
         />
       </LocalizationProvider>
 
-      {dateAndTime && (
+      {isDateTime && (
         <LocalizationProvider
           localeText={{
             okButtonLabel: "אישור",
@@ -153,7 +158,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
 
               if (newValue.isValid()) {
                 setDateValue(newValue);
-                onChangeHandler(toStoredUtcIso(newValue, true));
+                onChangeHandler(toStoredUtcIso(newValue, "datetime"));
               }
             }}
             onClose={onBlurHandler}

@@ -1,34 +1,46 @@
 import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { Checkbox, FormControl, FormControlLabel, InputLabel, MenuItem, Select } from "@mui/material";
-import { DefaultDateValue } from "../../../../../schemas/fields/dateSchema";
 import { ExtraElementProps } from "../index";
 
 type Props = ExtraElementProps<typeof FieldTypeIds.date>;
 
 function DateFieldExtra({ extra, onChange, disabled }: Props) {
   const {
-    defaultValue = DefaultDateValue.EMPTY,
-    dateAndTime = false,
+    defaultValue,
+    dateType = "date",
   } = extra;
+
+  const isDateTime = dateType === "datetime";
 
   return (
     <>
       <FormControlLabel disabled={disabled}
-                        control={<Checkbox checked={dateAndTime}
+                        control={<Checkbox checked={isDateTime}
                                            onChange={(e) => {
-                                             onChange({ dateAndTime: e.target.checked });
+                                             const nextDateType = e.target.checked ? "datetime" : "date";
+                                             const updates: any = { dateType: nextDateType };
+                                             
+                                             if (defaultValue === "currentDate") {
+                                               updates.defaultValue = "currentDateTime";
+                                             } else if (defaultValue === "currentDateTime") {
+                                               updates.defaultValue = "currentDate";
+                                             }
+                                             
+                                             onChange(updates);
                                            }} />}
                         label="תאריך ושעה" />
-      <FormControl disabled={disabled}>
-        <InputLabel id="default-value-label">ערך ברירת מחדל</InputLabel>
+      <FormControl disabled={disabled} fullWidth variant="standard">
+        <InputLabel id="default-value-label" shrink={true}>ערך ברירת מחדל</InputLabel>
         <Select labelId="default-value-label"
-                value={defaultValue}
+                value={defaultValue || ""}
                 label="ערך ברירת מחדל"
+                displayEmpty
                 onChange={(e) => {
-                  onChange({ defaultValue: e.target.value });
+                  onChange({ defaultValue: e.target.value || undefined });
                 }}>
-          <MenuItem value={DefaultDateValue.EMPTY}>ריק</MenuItem>
-          <MenuItem value={DefaultDateValue.NOW}>תאריך של היום</MenuItem>
+          <MenuItem value="">ריק</MenuItem>
+          {!isDateTime && <MenuItem value="currentDate">תאריך של היום</MenuItem>}
+          {isDateTime && <MenuItem value="currentDateTime">תאריך ושעה נוכחיים</MenuItem>}
         </Select>
       </FormControl>
     </>

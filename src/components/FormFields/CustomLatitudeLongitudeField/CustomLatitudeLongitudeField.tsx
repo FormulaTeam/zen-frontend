@@ -19,7 +19,7 @@ type CustomLatitudeLongitudeFieldProps = {
   errorDetail?: FieldErrorDisplay | null;
   isRequired: boolean;
   label: string;
-  locationFormat?: number;
+  locationFormat?: "utm" | "wkt";
   isTabularEdit?: boolean;
 };
 

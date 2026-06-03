@@ -145,11 +145,11 @@ export interface FormField {
   childFieldName?: string;
   validationRegex?: string;
   initialValType?: string;
-  multiSelect?: boolean;
-  showSeconds?: boolean;
-  dateAndTime?: boolean;
-  numberType?: string;
-  locationFormat?: string;
+  selectionMode?: "single" | "multiple";
+  timePrecision?: "minutes" | "seconds";
+  dateType?: "date" | "datetime";
+  numberType?: "integer" | "decimal";
+  locationFormat?: "utm" | "wkt";
   maxValue?: number;
   minValue?: number;
   initialNumberValue?: number;

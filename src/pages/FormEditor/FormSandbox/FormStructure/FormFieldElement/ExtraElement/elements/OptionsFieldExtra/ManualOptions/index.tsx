@@ -1,26 +1,26 @@
 import { Button, FormControl, Tooltip, Autocomplete, TextField } from "@mui/material";
-import { ExtraElementProps } from "../../../index";
-import { OptionsFieldTypeId, SpecificOptions, SpecificOptionsErrors } from "../index";
+import { OptionsFieldTypeId } from "../index";
 import { Close } from "@mui/icons-material";
 import { generateOptionItemId } from "../../../../../../../utils";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { ArrayElement } from "../../../../../../../../../types/utils";
 import { FieldTypeIds } from "../../../../../../../../../utils/interfaces";
 import { useFormStructureContext } from "../../../../../../../context/FormStructureContext";
-import { FormFieldExtra } from "../../../../../../../schemas/fields";
+import { FormFieldExtra, SpecificFormFieldData } from "../../../../../../../schemas/fields";
 import styles from "./style.module.css";
 import { ManualOptionsItemField } from "./ManualOptionsItemField";
 import { ManualOptionsControllingItemsList } from "./ManualOptionsControllingItemsList";
-import { optionsSource } from "formula-gear";
 
-interface Props extends Omit<ExtraElementProps<OptionsFieldTypeId>, "extra" | "validationErrors" | "disabled"> {
+interface Props {
   fieldId: string;
-  options: SpecificOptions<typeof optionsSource.Manual>;
-  validationErrors: SpecificOptionsErrors<typeof optionsSource.Manual> | undefined;
+  defaultValue: string[];
+  selectionMode: "single" | "multiple";
+  onChange: (extra: Partial<FormFieldExtra<OptionsFieldTypeId>>) => void;
+  onDataChange?: (data: Partial<SpecificFormFieldData<OptionsFieldTypeId>>) => void;
+  validationErrors: any;
 }
 
-type ManualOptions = SpecificOptions<typeof optionsSource.Manual>;
-type ManualItems = ManualOptions["items"];
+type ManualItems = NonNullable<SpecificFormFieldData<OptionsFieldTypeId>["options"]>;
 
 function generateEmptyItem(): ArrayElement<ManualItems> {
   return {
@@ -31,28 +31,31 @@ function generateEmptyItem(): ArrayElement<ManualItems> {
 
 function ManualOptions(props: Props) {
   const {
-    options,
-    validationErrors,
+    defaultValue,
+    selectionMode,
     onChange,
+    onDataChange,
     fieldId: id,
+    validationErrors,
   } = props;
 
-  const {
-    items = [generateEmptyItem(), generateEmptyItem()],
-    defaultOptionId,
-    controllingOptionsFieldId,
-  } = options ?? {};
-
   const { formStructure } = useFormStructureContext();
+  
+  const currentField = formStructure.fields[id];
+  const items = (currentField?.data?.options as ManualItems) ?? [generateEmptyItem(), generateEmptyItem()];
+
   const [selectedControlledItemIndex, setSelectedControlledItemIndex] = useState<number>(0);
+
+  const extra = (currentField?.data?.extra as FormFieldExtra<OptionsFieldTypeId>) ?? {};
 
   const otherManualOptionsFieldsIds = useMemo(() => Object.keys(formStructure.fields)?.filter((fieldId) => {
     const fieldData = formStructure.fields[fieldId].data;
+    const fieldExtra = fieldData.extra as FormFieldExtra<OptionsFieldTypeId> | undefined;
 
     return (
       fieldId !== id &&
       fieldData.typeId === FieldTypeIds.options &&
-      fieldData.extra?.source === optionsSource.Manual &&
+      fieldExtra?.linkedOptionsFieldId === null &&
       fieldData.displayName
     );
   }), [formStructure.fields, id]);
@@ -60,89 +63,58 @@ function ManualOptions(props: Props) {
   const definedItems = useMemo(() => items?.filter((item) => !!item.text), [items]);
 
   useEffect(() => {
-    onChange({ source: optionsSource.Manual, options: { ...options, items } });
+    if (!currentField?.data?.options) {
+      onDataChange?.({ options: items });
+    }
   }, []);
 
   useEffect(() => {
-    (controllingOptionsFieldId && !otherManualOptionsFieldsIds.includes(controllingOptionsFieldId)) &&
-      onChange({ options: { ...options, controllingOptionsFieldId: undefined } });
-  }, [otherManualOptionsFieldsIds.length]);
-
-  useEffect(() => {
-    controllingOptionsFieldId &&
-      setSelectedControlledItemIndex(0);
-  }, [controllingOptionsFieldId]);
-
-  useEffect(() => {
-    selectedControlledItemIndex >= items.length &&
-      setSelectedControlledItemIndex(items.length - 1);
-  }, [items.length]);
+    // Selection mode check for default value
+    if (selectionMode === "single" && defaultValue.length > 1) {
+      onChange({ defaultValue: [defaultValue[0]] });
+    }
+  }, [selectionMode]);
 
   const controllingFieldItems = useMemo(() => {
-    if (!controllingOptionsFieldId) return null;
+    const linkedOptionsFieldId = extra.linkedOptionsFieldId;
+    if (!linkedOptionsFieldId) return null;
 
     return (
-      ((formStructure.fields[controllingOptionsFieldId].data.extra as FormFieldExtra<OptionsFieldTypeId> & {
-        options: ManualOptions
-      })?.options?.items as ManualItems)?.filter((item) => !!item.text?.length)
+      (formStructure.fields[linkedOptionsFieldId].data.options as ManualItems)?.filter((item) => !!item.text?.length)
     );
-  }, [controllingOptionsFieldId, formStructure.fields[controllingOptionsFieldId ?? ""]?.data?.extra]);
-
-  useEffect(() => {
-    if (controllingOptionsFieldId && !controllingFieldItems?.length && items[selectedControlledItemIndex]) {
-      const updatedItems = items.toSpliced(selectedControlledItemIndex, 1, {
-        ...items[selectedControlledItemIndex],
-        controllingItemsIds: [],
-      });
-
-      onChange({
-        options: {
-          ...options,
-          items: updatedItems,
-        },
-      });
-    }
-  }, [controllingFieldItems, controllingOptionsFieldId]);
+  }, [extra.linkedOptionsFieldId, formStructure.fields]);
 
   const handleItemChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number, item: ArrayElement<ManualItems>) => {
     const newText = e.target.value.trimStart();
-    const newlyFilled = !item.text && newText;
     const updatedItem = { ...item, text: newText };
 
-    if (newlyFilled && controllingFieldItems?.length) {
-      updatedItem.controllingItemsIds = controllingFieldItems.map((controllingItem) => controllingItem.id);
-    }
-
-    onChange({
-      options: {
-        ...options,
-        items: items.toSpliced(index, 1, updatedItem),
-      },
+    onDataChange?.({
+      options: items.toSpliced(index, 1, updatedItem),
     });
-  }, [items, options, controllingFieldItems, onChange]);
+  }, [items, onDataChange]);
 
   const itemFields = useMemo(() => (
     items.map((item, index) => (
       <ManualOptionsItemField index={index}
         item={item}
-        validationErrors={validationErrors?.properties?.items?.items?.[index]?.properties?.text}
+        validationErrors={validationErrors?.properties?.options?.items?.[index]?.properties?.text}
         isDeletable={items.length > 2}
         onChange={(e) => handleItemChange(e, index, item)}
         onFocus={() => {
           setSelectedControlledItemIndex(index);
         }}
         onDelete={() => {
-          items.length > 2 &&
-            onChange({
-              options: {
-                ...options,
-                items: items.toSpliced(index, 1),
-                defaultOptionId: item.id === defaultOptionId ? undefined : defaultOptionId,
-              },
+          if (items.length > 2) {
+            onDataChange?.({
+              options: items.toSpliced(index, 1),
             });
+            if (defaultValue.includes(item.id)) {
+              onChange({ defaultValue: defaultValue.filter(id => id !== item.id) });
+            }
+          }
         }}
         isSelectedControlledItem={
-          !!controllingOptionsFieldId ?
+          !!extra.linkedOptionsFieldId ?
             selectedControlledItemIndex === index :
             undefined
         }
@@ -150,46 +122,25 @@ function ManualOptions(props: Props) {
           setSelectedControlledItemIndex(index);
         }} />
     ))
-  ), [items, validationErrors?.properties?.items?.items, onChange, options, selectedControlledItemIndex]);
+  ), [items, validationErrors, handleItemChange, onDataChange, onChange, defaultValue, extra.linkedOptionsFieldId, selectedControlledItemIndex]);
 
   return (
     <>
       <div className={styles.controllingFieldContainer}>
         <div className={styles.controllingFieldWrapper}
-          style={{ borderColor: controllingOptionsFieldId ? "#e1e7ec" : "transparent" }}>
+          style={{ borderColor: extra.linkedOptionsFieldId ? "#e1e7ec" : "transparent" }}>
           <Tooltip title={!otherManualOptionsFieldsIds.length ? "לא קיים שדה אפשרויות נוסף" : ""} placement="top">
             <span style={{ flex: 1, display: 'flex' }}>
               <FormControl className={styles.controllingFieldFormControl}
-                disabled={!otherManualOptionsFieldsIds.length}
-                error={!!validationErrors?.properties?.controllingOptionsFieldId}>
+                disabled={!otherManualOptionsFieldsIds.length}>
                 <Autocomplete
                   disabled={!otherManualOptionsFieldsIds.length}
                   options={otherManualOptionsFieldsIds}
                   getOptionLabel={(option) => formStructure.fields[option]?.data?.displayName || ""}
-                  value={controllingOptionsFieldId || null}
+                  value={extra.linkedOptionsFieldId || null}
                   noOptionsText={"לא נמצאו שדות מתאימים"}
                   onChange={(_, newValue) => {
-                    const newItems = [...items];
-                    const newControllingOptionsFieldId = newValue || undefined;
-                    const newControllingFieldItems = newControllingOptionsFieldId ? ((formStructure.fields[newControllingOptionsFieldId].data.extra as FormFieldExtra<OptionsFieldTypeId> & {
-                      options: ManualOptions
-                    })?.options?.items as ManualItems)?.filter((item) => !!item.text?.length) : [];
-
-                    newItems.forEach((item) => {
-                      if (item.text?.length) {
-                        item.controllingItemsIds = newControllingFieldItems?.map(i => i.id) || [];
-                      } else {
-                        delete item.controllingItemsIds;
-                      }
-                    });
-
-                    onChange({
-                      options: {
-                        ...options,
-                        controllingOptionsFieldId: newControllingOptionsFieldId,
-                        items: newItems,
-                      },
-                    });
+                    onChange({ linkedOptionsFieldId: newValue || null });
                   }}
                   renderInput={(params) => (
                     <TextField
@@ -201,8 +152,6 @@ function ManualOptions(props: Props) {
                         </Tooltip>
                       }
                       variant="standard"
-                      error={!!validationErrors?.properties?.controllingOptionsFieldId}
-                      helperText={validationErrors?.properties?.controllingOptionsFieldId?.errors?.[0]}
                     />
                   )}
                 />
@@ -210,24 +159,21 @@ function ManualOptions(props: Props) {
             </span>
           </Tooltip>
           {
-            controllingOptionsFieldId &&
+            extra.linkedOptionsFieldId &&
             <Button className={styles.button}
               onClick={(_) => {
-                const newItems = [...items];
-                newItems.forEach((item) => {
-                  delete item.controllingItemsIds;
-                });
-                onChange({ options: { ...options, controllingOptionsFieldId: undefined, items: newItems } });
+                onChange({ linkedOptionsFieldId: null });
               }}>
               <Close sx={{ fontSize: 20, color: "#a54160" }} />
             </Button>
           }
         </div>
         {
-          controllingOptionsFieldId &&
+          extra.linkedOptionsFieldId &&
           <div className={styles.controllingFieldConnector} />
         }
       </div>
+...
       <div className={styles.itemsContainer}>
         <div>
           <div className={styles.itemsWrapper}>
@@ -238,7 +184,7 @@ function ManualOptions(props: Props) {
               variant={"outlined"}
               className={styles.appendItemButton}
               onClick={(_) => {
-                onChange({ options: { ...options, items: [...items, generateEmptyItem()] } });
+                onDataChange?.({ options: [...items, generateEmptyItem()] });
               }}>
               + הוסף אפשרות
             </Button>
@@ -263,12 +209,7 @@ function ManualOptions(props: Props) {
                 controllingItemsIds,
               };
 
-              onChange({
-                options: {
-                  ...options,
-                  items: updatedItems,
-                },
-              });
+              onDataChange?.({ options: updatedItems });
             }}
             onCheckAllChange={(e) => {
               const updatedItems = items.toSpliced(selectedControlledItemIndex, 1, {
@@ -278,12 +219,7 @@ function ManualOptions(props: Props) {
                   [],
               });
 
-              onChange({
-                options: {
-                  ...options,
-                  items: updatedItems,
-                },
-              });
+              onDataChange?.({ options: updatedItems });
             }} />
         }
       </div>
@@ -293,16 +229,20 @@ function ManualOptions(props: Props) {
           <div className={styles.defaultFieldWrapper} style={{ display: 'flex' }}>
             <span style={{ width: '100%', display: 'flex' }}>
               <FormControl disabled={!definedItems.length}
-                style={{ width: '100%' }}
-                error={!!validationErrors?.properties?.defaultOptionId}>
+                style={{ width: '100%' }}>
                 <Autocomplete
                   disabled={!definedItems.length}
+                  multiple={selectionMode === "multiple"}
                   options={definedItems.map((item) => item.id)}
                   getOptionLabel={(optionId) => definedItems.find((item) => item.id === optionId)?.text || ""}
-                  value={defaultOptionId || null}
+                  value={selectionMode === "multiple" ? (defaultValue || []) : (defaultValue?.[0] || null)}
                   noOptionsText={"לא נמצאו אפשרויות"}
                   onChange={(_, newValue) => {
-                    onChange({ options: { ...options, defaultOptionId: newValue || undefined } });
+                    if (selectionMode === "multiple") {
+                      onChange({ defaultValue: newValue as string[] || [] });
+                    } else {
+                      onChange({ defaultValue: newValue ? [newValue as string] : [] });
+                    }
                   }}
                   renderInput={(params) => (
                     <TextField
@@ -310,8 +250,6 @@ function ManualOptions(props: Props) {
                       disabled={!definedItems.length}
                       label="ברירת מחדל"
                       variant="standard"
-                      error={!!validationErrors?.properties?.defaultOptionId}
-                      helperText={validationErrors?.properties?.defaultOptionId?.errors?.[0]}
                     />
                   )}
                 />
@@ -320,10 +258,10 @@ function ManualOptions(props: Props) {
           </div>
         </Tooltip>
         {
-          defaultOptionId &&
+          defaultValue && defaultValue.length > 0 &&
           <Button className={styles.button}
             onClick={(_) => {
-              onChange({ options: { ...options, defaultOptionId: undefined } });
+              onChange({ defaultValue: [] });
             }}>
             <Close sx={{ fontSize: 20, color: "#a54160" }} />
           </Button>

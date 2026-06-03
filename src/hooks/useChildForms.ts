@@ -66,13 +66,13 @@ const toNumber = (value: unknown): number | undefined => {
   return undefined;
 };
 
-const getConnectedFormId = (field: FormFieldDto): number | undefined => {
+const getLinkedFormId = (field: FormFieldDto): number | undefined => {
   const linkedFormId = getFieldExtra(field).linkedFormId;
   return toNumber(linkedFormId);
 };
 
-const isConnectedFormField = (field: FormFieldDto): boolean =>
-  field.fieldType === fieldType.Form && getConnectedFormId(field) !== undefined;
+const isLinkedFormField = (field: FormFieldDto): boolean =>
+  field.fieldType === fieldType.Form && getLinkedFormId(field) !== undefined;
 
 const createChildInstance = (
   fieldTemplate: FormFieldDto,
@@ -115,10 +115,10 @@ export const useChildForms = ({
   const validateCycleHandledRef = useRef(false);
   const saveCycleHandledRef = useRef(false);
 
-  const connectedFields = useMemo(() => formFields.filter(isConnectedFormField), [formFields]);
+  const connectedFields = useMemo(() => formFields.filter(isLinkedFormField), [formFields]);
 
   const childFormIds = useMemo(
-    () => [...new Set(connectedFields.map((field) => getConnectedFormId(field)!))],
+    () => [...new Set(connectedFields.map((field) => getLinkedFormId(field)!))],
     [connectedFields],
   );
 
@@ -228,7 +228,7 @@ export const useChildForms = ({
             .filter((childFormId) => availableChildFormIds.has(childFormId))
             .map((childFormId) => {
               const templateField = connectedFields.find(
-                (field) => getConnectedFormId(field) === childFormId,
+                (field) => getLinkedFormId(field) === childFormId,
               );
 
               const matchingResponses = linkedChildResponses.filter(
@@ -452,7 +452,7 @@ export const useChildForms = ({
       }
 
       const fieldTemplate = formFields.find(
-        (field) => isConnectedFormField(field) && getConnectedFormId(field) === childForm.formId,
+        (field) => isLinkedFormField(field) && getLinkedFormId(field) === childForm.formId,
       );
 
       if (!fieldTemplate) {

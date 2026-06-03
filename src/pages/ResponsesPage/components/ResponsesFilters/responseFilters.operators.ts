@@ -112,15 +112,39 @@ const dateOperators = (): GridFilterOperator[] => [
   ...emptyOperators,
 ];
 
-const timeOperators = (): GridFilterOperator[] => [
-  makeOperator(ResponseFilterOperator.Equals, "שווה ל", TimeFilterInput),
-  makeOperator(ResponseFilterOperator.NotEquals, "שונה מ", TimeFilterInput),
-  makeOperator(ResponseFilterOperator.Before, "לפני", TimeFilterInput),
-  makeOperator(ResponseFilterOperator.BeforeOrEqual, "לפני או שווה ל", TimeFilterInput),
-  makeOperator(ResponseFilterOperator.After, "אחרי", TimeFilterInput),
-  makeOperator(ResponseFilterOperator.AfterOrEqual, "אחרי או שווה ל", TimeFilterInput),
-  makeOperator(ResponseFilterOperator.Between, "בין", TimeRangeFilterInput),
-  makeOperator(ResponseFilterOperator.NotBetween, "לא בין", TimeRangeFilterInput),
+const createTimeInput = (field: FormFieldDto): GridFilterOperator["InputComponent"] => {
+  const extra = field.extra as any;
+  const timePrecision = extra?.timePrecision;
+
+  return function TimeInput(props: any) {
+    return React.createElement(TimeFilterInput, {
+      ...props,
+      timePrecision,
+    });
+  };
+};
+
+const createTimeRangeInput = (field: FormFieldDto): GridFilterOperator["InputComponent"] => {
+  const extra = field.extra as any;
+  const timePrecision = extra?.timePrecision;
+
+  return function TimeRangeInput(props: any) {
+    return React.createElement(TimeRangeFilterInput, {
+      ...props,
+      timePrecision,
+    });
+  };
+};
+
+const timeOperators = (field: FormFieldDto): GridFilterOperator[] => [
+  makeOperator(ResponseFilterOperator.Equals, "שווה ל", createTimeInput(field)),
+  makeOperator(ResponseFilterOperator.NotEquals, "שונה מ", createTimeInput(field)),
+  makeOperator(ResponseFilterOperator.Before, "לפני", createTimeInput(field)),
+  makeOperator(ResponseFilterOperator.BeforeOrEqual, "לפני או שווה ל", createTimeInput(field)),
+  makeOperator(ResponseFilterOperator.After, "אחרי", createTimeInput(field)),
+  makeOperator(ResponseFilterOperator.AfterOrEqual, "אחרי או שווה ל", createTimeInput(field)),
+  makeOperator(ResponseFilterOperator.Between, "בין", createTimeRangeInput(field)),
+  makeOperator(ResponseFilterOperator.NotBetween, "לא בין", createTimeRangeInput(field)),
   ...emptyOperators,
 ];
 
@@ -142,7 +166,7 @@ const locationOperators = (): GridFilterOperator[] => [...emptyOperators];
 const isMultiOptionField = (field: FormFieldDto): boolean => {
   const extra = field.extra as any;
 
-  return Boolean(extra?.multiSelect ?? extra?.multiple);
+  return extra?.selectionMode === "multiple";
 };
 
 export const getFilterOperatorsForField = (field: FormFieldDto): GridFilterOperator[] => {
@@ -163,7 +187,7 @@ export const getFilterOperatorsForField = (field: FormFieldDto): GridFilterOpera
       return dateOperators();
 
     case fieldType.Time:
-      return timeOperators();
+      return timeOperators(field);
 
     case fieldType.Boolean:
       return booleanOperators();

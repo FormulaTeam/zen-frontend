@@ -8,13 +8,14 @@ interface OptionsCellEditorProps {
   onChange: (value: string | string[], isValid: boolean) => void;
   options: string[];
   optionLabels?: Record<string, string>;
-  multiSelect?: boolean;
+  selectionMode?: "single" | "multiple";
   isRequired?: boolean;
   errorMessage?: string;
 }
 
-const normalizeValue = (value: string | string[], multiSelect: boolean): string | string[] => {
-  if (multiSelect) {
+const normalizeValue = (value: string | string[], selectionMode: string): string | string[] => {
+  const isMultiSelect = selectionMode === "multiple";
+  if (isMultiSelect) {
     if (Array.isArray(value)) {
       return value.filter((item) => typeof item === "string");
     }
@@ -81,11 +82,11 @@ const slotProps = {
 
 const getTextFieldSx = ({
   hasError,
-  multiSelect,
+  isMultiSelect,
   hasSelectedValue,
 }: {
   hasError: boolean;
-  multiSelect: boolean;
+  isMultiSelect: boolean;
   hasSelectedValue: boolean;
 }) => ({
   "& .MuiInputBase-root": {
@@ -101,7 +102,7 @@ const getTextFieldSx = ({
     display: "flex",
     flexDirection: "row-reverse",
 
-    ...(multiSelect
+    ...(isMultiSelect
       ? {
           alignItems: "flex-start",
           flexWrap: "wrap",
@@ -178,7 +179,7 @@ const getTextFieldSx = ({
       : {
           minWidth: "120px !important",
           flexGrow: 1,
-          padding: multiSelect ? "0 !important" : "7px 0 !important",
+          padding: isMultiSelect ? "0 !important" : "7px 0 !important",
         }),
   },
 });
@@ -236,18 +237,19 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
   onChange,
   options,
   optionLabels = {},
-  multiSelect = false,
+  selectionMode = "single",
   isRequired = false,
   errorMessage,
 }) => {
+  const isMultiSelect = selectionMode === "multiple";
   const [localValue, setLocalValue] = useState<string | string[]>(() =>
-    normalizeValue(value, multiSelect),
+    normalizeValue(value, selectionMode),
   );
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    setLocalValue(normalizeValue(value, multiSelect));
-  }, [value, multiSelect]);
+    setLocalValue(normalizeValue(value, selectionMode));
+  }, [value, selectionMode]);
 
   const normalizedOptions = useMemo(
     () => options.filter((option): option is string => typeof option === "string"),
@@ -294,7 +296,7 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
   const emitChange = (nextValue: string | string[]) => {
     setLocalValue(nextValue);
 
-    const isEmpty = multiSelect
+    const isEmpty = isMultiSelect
       ? Array.isArray(nextValue) && nextValue.length === 0
       : !nextValue || nextValue === "";
 
@@ -302,7 +304,7 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
   };
 
   const clearValue = () => {
-    emitChange(multiSelect ? [] : "");
+    emitChange(isMultiSelect ? [] : "");
   };
 
   const handleIconMouseDown = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -322,7 +324,7 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
     setOpen((prev) => !prev);
   };
 
-  const selectedValues = multiSelect
+  const selectedValues = isMultiSelect
     ? Array.isArray(localValue)
       ? localValue
       : localValue
@@ -330,13 +332,13 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
         : []
     : [];
 
-  const singleValue = !multiSelect
+  const singleValue = !isMultiSelect
     ? typeof localValue === "string"
       ? localValue
       : localValue[0] || null
     : null;
 
-  const hasSelectedValue = multiSelect ? selectedValues.length > 0 : Boolean(singleValue);
+  const hasSelectedValue = isMultiSelect ? selectedValues.length > 0 : Boolean(singleValue);
 
   const renderSelectedSingleValue = () => {
     if (!singleValue) {
@@ -399,7 +401,7 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
           minWidth: 0,
           direction: "rtl",
         }}>
-        {multiSelect ? (
+        {isMultiSelect ? (
           <Autocomplete<string, true, false, false>
             fullWidth
             multiple
@@ -492,7 +494,7 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                 }}
                 sx={getTextFieldSx({
                   hasError: !!errorMessage,
-                  multiSelect: true,
+                  isMultiSelect: true,
                   hasSelectedValue,
                 })}
               />
@@ -543,7 +545,7 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                 }}
                 sx={getTextFieldSx({
                   hasError: !!errorMessage,
-                  multiSelect: false,
+                  isMultiSelect: false,
                   hasSelectedValue,
                 })}
               />

@@ -2,7 +2,6 @@ import { FieldTypeIds, FormFieldTypeId } from "../../../utils/interfaces";
 import { FormFieldData } from "../schemas/fields";
 import { customAlphabet } from "nanoid";
 import { v4 as uuid4 } from "uuid";
-import { LocationFormat } from "../schemas/fields/locationSchema";
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const nanoid5 = customAlphabet(alphabet, 5);
@@ -35,15 +34,148 @@ function generateFieldName(elementTypeId: FormFieldTypeId) {
 }
 
 function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
-  const data: FormFieldData = {
+  const baseData = {
     typeId: elementTypeId,
     name: generateFieldName(elementTypeId),
     displayName: "",
     required: false,
   };
 
-  if (elementTypeId === FieldTypeIds.location) {
-    data.extra = { locationFormat: LocationFormat.UTM };
+  let data: FormFieldData;
+
+  switch (elementTypeId) {
+    case FieldTypeIds.options:
+      data = {
+        ...baseData,
+        typeId: FieldTypeIds.options,
+        extra: {
+          selectionMode: "single",
+          linkedOptionsFieldId: null,
+          defaultValue: [],
+        },
+        options: [
+          { id: generateOptionItemId(), text: "" },
+          { id: generateOptionItemId(), text: "" },
+        ],
+      };
+      break;
+
+    case FieldTypeIds.date:
+      data = {
+        ...baseData,
+        typeId: FieldTypeIds.date,
+        extra: {
+          dateType: "date",
+          defaultValue: null,
+        },
+      };
+      break;
+
+    case FieldTypeIds.time:
+      data = {
+        ...baseData,
+        typeId: FieldTypeIds.time,
+        extra: {
+          timePrecision: "minutes",
+          defaultValue: null,
+        },
+      };
+      break;
+
+    case FieldTypeIds.number:
+      data = {
+        ...baseData,
+        typeId: FieldTypeIds.number,
+        extra: {
+          numberType: "integer",
+          min: null,
+          max: null,
+          defaultValue: null,
+        },
+      };
+      break;
+
+    case FieldTypeIds.location:
+      data = {
+        ...baseData,
+        typeId: FieldTypeIds.location,
+        extra: {
+          locationFormat: "utm",
+        },
+      };
+      break;
+
+    case FieldTypeIds.linkedForm:
+      data = {
+        ...baseData,
+        typeId: FieldTypeIds.linkedForm,
+        extra: {
+          linkedFormId: 0,
+        },
+      };
+      break;
+
+    case FieldTypeIds.checkbox:
+      data = {
+        ...baseData,
+        typeId: FieldTypeIds.checkbox,
+        extra: {
+          defaultValue: false,
+        },
+      };
+      break;
+
+    case FieldTypeIds.shortText:
+      data = {
+        ...baseData,
+        typeId: FieldTypeIds.shortText,
+        extra: {
+          maxLength: null,
+          validationRegex: null,
+        },
+      };
+      break;
+
+    case FieldTypeIds.longText:
+      data = {
+        ...baseData,
+        typeId: FieldTypeIds.longText,
+        extra: {
+          maxLength: null,
+          validationRegex: null,
+        },
+      };
+      break;
+
+    case FieldTypeIds.link:
+      data = {
+        ...baseData,
+        typeId: FieldTypeIds.link,
+        extra: {},
+      };
+      break;
+
+    case FieldTypeIds.list:
+      data = {
+        ...baseData,
+        typeId: FieldTypeIds.list,
+        extra: {},
+      };
+      break;
+
+    case FieldTypeIds.file:
+      data = {
+        ...baseData,
+        typeId: FieldTypeIds.file,
+        extra: {},
+      };
+      break;
+
+    default:
+      data = {
+        ...baseData,
+        extra: {},
+      } as FormFieldData;
   }
 
   return data;

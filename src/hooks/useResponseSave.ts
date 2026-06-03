@@ -15,16 +15,14 @@ import { fieldType } from "formula-gear";
 const createRequestCache: Map<string, Promise<ResponseDto>> = new Map();
 
 type EditorFieldExtra = {
-  showSeconds?: boolean;
-  includeSeconds?: boolean;
+  timePrecision?: "seconds" | "minutes";
 };
 
 type SaveField = FormFieldDto & {
   value?: unknown;
   uniqueId?: string;
   typeId?: number | string;
-  showSeconds?: boolean;
-  includeSeconds?: boolean;
+  timePrecision?: "seconds" | "minutes";
 };
 
 export type ParentResponseRef = {
@@ -141,12 +139,7 @@ export const useResponseSave = (
 
       if (isTimeField(field) && value) {
         const fieldExtra = getFieldExtra(field);
-        const showSeconds =
-          fieldExtra.includeSeconds ??
-          field.includeSeconds ??
-          fieldExtra.showSeconds ??
-          field.showSeconds ??
-          false;
+        const showSeconds = fieldExtra.timePrecision === "seconds";
 
         const isValidTimeValue =
           /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(String(value)) ||
