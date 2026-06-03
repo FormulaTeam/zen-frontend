@@ -1,4 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
+import { logoutAction } from "../utils/auth";
 
 // Create a query client with custom configuration
 export const queryClient = new QueryClient({
@@ -39,7 +40,7 @@ export const queryClient = new QueryClient({
 
         // Handle authentication errors
         if (error?.response?.status === 401) {
-          window.location.href = "/login";
+          logoutAction();
         }
       },
     },

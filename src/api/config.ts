@@ -16,8 +16,7 @@ const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    const isAuthPage =
-      window.location.pathname === "/login" || window.location.pathname === "/comeback";
+    const isAuthPage = window.location.pathname === "/comeback";
     if (error.response?.status === StatusCodes.UNAUTHORIZED && !isAuthPage) {
       logoutAction();
     }
