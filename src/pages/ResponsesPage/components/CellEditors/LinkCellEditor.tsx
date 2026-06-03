@@ -165,7 +165,7 @@ export const LinkCellEditor: React.FC<LinkCellEditorProps> = ({
 
       <TextField
         fullWidth
-        placeholder="טקסט להיפר-קישור"
+        placeholder="טקסט תצוגה"
         value={linkText}
         onChange={handleLinkTextChange}
         onKeyDown={handleLinkTextKeyDown}

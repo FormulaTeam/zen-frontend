@@ -15,7 +15,7 @@ import { StyledLoadingContainer } from "../SharedStyled";
 const GridContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+  gap: 32px;
 
   @media (min-width: 960px) {
     grid-template-columns: repeat(3, 1fr);
@@ -82,30 +82,37 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
 }) => {
   const theme = useTheme();
   const resolvedSectionId = section.id || NOT_A_SECTION_ID;
+  const isExpanded = !collapsedSections[sectionId];
 
   return (
     <FieldsWrapper key={sectionId || sectionIdx}>
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+      <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
         <Box>
-          <Typography variant="h6">
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: isExpanded ? 700 : 500,
+              fontSize: "1.5rem",
+              transition: "font-weight 0.2s ease-in-out",
+            }}>
             {resolvedSectionId !== NOT_A_SECTION_ID && !section.name
               ? texts.heb.undefinedSection
               : section.name}
           </Typography>
 
           {section.description && (
-            <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+            <Typography variant="body1" sx={{ color: theme.palette.text.secondary, mt: 1 }}>
               {section.description}
             </Typography>
           )}
         </Box>
 
-        <IconButton onClick={() => toggleSectionCollapse(sectionId)} size="small">
+        <IconButton onClick={() => toggleSectionCollapse(sectionId)} size="medium">
           {collapsedSections[sectionId] ? <ExpandMore /> : <ExpandLess />}
         </IconButton>
       </Box>
 
-      <Collapse in={!collapsedSections[sectionId]} timeout="auto" unmountOnExit>
+      <Collapse in={isExpanded} timeout="auto" unmountOnExit>
         <GridContainer>
           {section.fields
             .sort((firstField, secondField) => firstField.index - secondField.index)

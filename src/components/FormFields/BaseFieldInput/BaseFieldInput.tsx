@@ -29,7 +29,13 @@ const BaseFieldInput = React.forwardRef<HTMLDivElement, BaseFieldInputProps>(
             sx: {
               left: '5px',
               display: isTabularEdit ? "none" : "block",
-              top: '-5px'
+              top: '-8px',
+              fontSize: '1.2rem',
+              fontWeight: 500,
+              color: theme.palette.text.secondary,
+              '&.Mui-focused': {
+                color: theme.palette.primary.main,
+              }
             },
             ...(slotProps as any)?.inputLabel,
           },
@@ -52,6 +58,7 @@ const BaseFieldInput = React.forwardRef<HTMLDivElement, BaseFieldInputProps>(
               width: "100%",
               height: "100%",
               border: "1px solid transparent",
+              fontSize: '1.1rem',
               "&:hover": {
                 border: "1px solid rgba(0, 0, 0, 0.23)",
               },
@@ -71,6 +78,7 @@ const BaseFieldInput = React.forwardRef<HTMLDivElement, BaseFieldInputProps>(
             display: "flex",
           },
           "& .MuiInputBase-root": {
+            fontSize: '1.2rem',
             "::before": {
               border: isTabularEdit ? "none" : "1px solid",
               borderColor: isTabularEdit ? "transparent" : theme.palette.input?.border,
@@ -92,7 +100,7 @@ const BaseFieldInput = React.forwardRef<HTMLDivElement, BaseFieldInputProps>(
               borderBottom: isTabularEdit ? "none" : `1px solid ${borderColor}`,
               border: isTabularEdit ? "none" : undefined,
             },
-            padding: isTabularEdit ? "4px 8px" : "0.5rem 1rem",
+            padding: isTabularEdit ? "4px 8px" : "0.75rem 1.25rem",
             "&:hover:not(.Mui-disabled):before": {
               borderBottom: isTabularEdit ? "none" : `${borderWeight} solid ${borderColor} `,
               border: isTabularEdit ? "none" : undefined,

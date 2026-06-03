@@ -18,8 +18,11 @@ export const StyledListbox = styled("ul")`
 `;
 
 export const StyledInputLabel = styled(InputLabel)`
-  top: -5px;
+  top: -8px;
   left: 5px;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: ${({ theme }) => theme.palette.text.secondary};
 `;
 
 export const StyledAutocomplete = styled(Autocomplete)`
@@ -38,6 +41,7 @@ export const StyledTextField = styled(TextField)`
   }
   .MuiInput-root {
     min-height: 50px;
+    font-size: 1.2rem;
     ::before: {
       border: none !important;
     }
@@ -47,6 +51,7 @@ export const StyledTextField = styled(TextField)`
     border: 1px solid;
     border-color: ${({ theme }) => theme.palette.input?.border + " !important"};
     border-radius: 8px;
+    font-size: 1.2rem;
   }
 
   .MuiAutocomplete-tag {

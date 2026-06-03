@@ -104,7 +104,7 @@ const LinkTextField: React.FC<LinkTextFieldProps> = ({
       <BaseFieldInput
         isTabularEdit={isTabularEdit}
         fullWidth={true}
-        label={isTabularEdit ? "" : "טקסט להיפר-קישור"}
+        label={isTabularEdit ? "" : "טקסט תצוגה"}
         required={false}
         value={previewText}
         onChange={handlePreviewTextChange}

@@ -155,11 +155,11 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
             sx: {
               p: "6px",
               "& .MuiAutocomplete-option": {
-                minHeight: "40px",
+                minHeight: "45px",
                 borderRadius: "8px",
-                px: "10px",
-                py: "7px",
-                fontSize: "0.95rem",
+                px: "12px",
+                py: "8px",
+                fontSize: "1.1rem",
                 justifyContent: "flex-start",
 
                 '&[aria-selected="true"]': {
@@ -170,7 +170,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
           },
           paper: {
             sx: {
-              mt: "6px",
+              mt: "8px",
               borderRadius: "12px",
               boxShadow: "0 10px 30px rgba(15, 23, 42, 0.14)",
               border: "1px solid",
@@ -198,6 +198,9 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
           hasTriggeredBlurRef.current = false;
           onSelectHandler(event, nextValue);
         }}
+        onBlur={() => {
+          triggerBlurValidation();
+        }}
         onClose={() => {
           triggerBlurValidation();
         }}
@@ -208,7 +211,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
           width: "100%",
 
           "& .MuiAutocomplete-inputRoot": {
-            minHeight: isTabularEdit ? "40px" : "46px",
+            minHeight: isTabularEdit ? "40px" : "50px",
             borderRadius: isTabularEdit ? "0" : "12px",
             backgroundColor: isTabularEdit ? "transparent" : "background.paper",
             border: isTabularEdit ? "none" : "1px solid",
@@ -249,9 +252,9 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
 
           "& .MuiAutocomplete-input": {
             textAlign: isTabularEdit ? "center" : "right",
-            fontSize: isTabularEdit ? "1rem" : "0.98rem",
+            fontSize: isTabularEdit ? "1rem" : "1.2rem",
             color: "text.primary",
-            py: "8px !important",
+            py: "10px !important",
           },
 
           "& .MuiAutocomplete-endAdornment": {
