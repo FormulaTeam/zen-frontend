@@ -4,17 +4,6 @@ import { styled } from "@mui/material/styles";
 export const StyledFormControl = styled(FormControl)(({ theme }) => ({
   width: 220,
   backgroundColor: "transparent",
-
-  "& .MuiInputLabel-root": {
-    color: "#62748E",
-    fontWeight: 600,
-    fontSize: "1.1rem",
-    padding: "0 6px",
-
-    "&.Mui-focused": {
-      color: "#020618",
-    },
-  },
 }));
 
 export const StyledSelect = styled(Select<number>)(({ theme }) => ({
@@ -44,9 +33,14 @@ export const StyledSelect = styled(Select<number>)(({ theme }) => ({
     fontWeight: 600,
     paddingTop: 8,
     paddingBottom: 8,
+    paddingRight: "32px !important",
+    paddingLeft: "8px !important",
   },
 
-  "& .MuiSvgIcon-root": {
+  "& .MuiSelect-icon": {
+    right: "7px",
+    left: "auto",
+    fontSize: "24px",
     color: "#020618",
   },
 }));
