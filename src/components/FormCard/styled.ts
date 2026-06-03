@@ -90,6 +90,12 @@ export const StyledCard = styled(Card)`
   padding: 24px 24px 16px 24px;
   width: 100%;
   min-height: 220px;
+  border: 1px solid transparent;
+  transition: border-color 0.2s ease-in-out;
+
+  &:hover {
+    border-color: #1e88e5;
+  }
 `;
 
 export const ItemImgAndTitles = styled(Box)`

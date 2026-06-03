@@ -26,12 +26,12 @@ import BasePopup from "../../components/BasePopup/BasePopup";
 import { AutoDelete, Add as AddIcon } from "@mui/icons-material";
 import MainSortSelect from "../../components/MainSortSelect/MainSortSelect";
 import SearchAndFilter from "../../components/SearchAndFilter/SearchAndFilter";
+import FormGroupSelect from "../../components/MainPage/FormGroupSelect";
 import { useGetMyPersonal } from "../../api/usersApi";
 import {
   RowBox,
   StyledTypography,
   GreetingBox,
-  TabsBox,
   SortControlsBox,
   PrimaryBlueButton,
 } from "./styled";
@@ -75,7 +75,7 @@ function MainPage({
     }
   }, []);
 
-  const handleTabValueChange = (event: React.SyntheticEvent, newValue: FormsTab) => {
+  const handleTabValueChange = (newValue: FormsTab) => {
     localStorage.setItem("tabValue", newValue.toString());
     setTabValue(newValue);
   };
@@ -118,89 +118,14 @@ function MainPage({
   return (
     <Box className="main-page-container">
       <Box className="tabs-and-select-div">
-        <TabsBox sx={{ mb: 3, mt: 2 }}>
-          <Tabs
-            className="form-tabs"
-            value={tabValue}
-            onChange={handleTabValueChange}
-            aria-label="tabs for forms"
-            TabIndicatorProps={{
-              style: { display: "none" },
-            }}
-            sx={{
-              minHeight: "auto",
-              backgroundColor: "transparent",
-              "& .MuiTabs-flexContainer": {
-                gap: "8px",
-              },
-            }}>
-            <Tab
-              label="הטפסים שאני יצרתי"
-              sx={{
-                fontSize: "16px",
-                minHeight: "auto",
-                padding: "4px 12px",
-                borderRadius: "5px",
-                color: theme.palette.text.secondary,
-                fontWeight: 600,
-                "&.Mui-selected": {
-                  backgroundColor: "#FFFFFF",
-                  color: "#020618",
-                  boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.08)",
-                  border: "1px solid rgba(255, 255, 255, 0.5)",
-                },
-              }}
-              disableRipple
-              data-testid="my-forms-button"
-            />
-            <Tab
-              label="הטפסים ששותפו איתי"
-              sx={{
-                fontSize: "16px",
-                minHeight: "auto",
-                padding: "4px 12px",
-                borderRadius: "5px",
-                color: theme.palette.text.secondary,
-                fontWeight: 600,
-                "&.Mui-selected": {
-                  backgroundColor: "#FFFFFF",
-                  color: "#020618",
-                  boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.08)",
-                  border: "1px solid rgba(255, 255, 255, 0.5)",
-                },
-              }}
-              disableRipple
-              data-testid="shared-forms-button"
-            />
-            {isSuperAdmin && (
-              <Tab
-                label="כל הטפסים"
-                sx={{
-                  fontSize: "16px",
-                  minHeight: "auto",
-                  padding: "4px 12px",
-                  borderRadius: "5px",
-                  color: theme.palette.text.secondary,
-                  fontWeight: 600,
-                  "&.Mui-selected": {
-                    backgroundColor: "#FFFFFF",
-                    color: "#020618",
-                    boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.08)",
-                    border: "1px solid rgba(255, 255, 255, 0.5)",
-                  },
-                }}
-                disableRipple
-                data-testid="all-forms-button"
-              />
-            )}
-          </Tabs>
-        </TabsBox>
-
-        <RowBox>
+        <RowBox sx={{ mb: 1, mt: 2 }}>
           <GreetingBox>
-            <StyledTypography id="greeting">
-              {myPersonal?.name ? `היי ${myPersonal.name.split(" ")[0]}` : "היי"}
-            </StyledTypography>
+            <PrimaryBlueButton
+              onClick={() => navigate(IPath.FORM_CREATE)}
+              data-testid="create-form-button">
+              <AddIcon sx={{ mr: 1, fontSize: "22px" }} />
+              יצירת טופס חדש
+            </PrimaryBlueButton>
           </GreetingBox>
 
           <SortControlsBox>
@@ -210,13 +135,20 @@ function MainPage({
               placeholder="חיפוש טופס"
               dataTestId="search-form-input"
             />
+            <Box
+              sx={{
+                width: "1px",
+                height: "24px",
+                backgroundColor: "rgba(0, 0, 0, 0.12)",
+                mx: 0.5,
+              }}
+            />
+            <FormGroupSelect
+              value={tabValue}
+              onChange={handleTabValueChange}
+              isSuperAdmin={!!isSuperAdmin}
+            />
             <MainSortSelect onSortChange={handleSortChange} dataTestId="sort-forms" />
-            <PrimaryBlueButton
-              onClick={() => navigate(IPath.FORM_CREATE)}
-              data-testid="create-form-button">
-              <AddIcon sx={{ mr: 1, fontSize: "22px" }} />
-              יצירת טופס חדש
-            </PrimaryBlueButton>
           </SortControlsBox>
         </RowBox>
       </Box>
@@ -246,20 +178,16 @@ function MainPage({
             ))}
           </Grid>
         ) : (
-          <EmptyState
-            image={noData}
-            title={searchValue ? "לא מצאנו את מה שחיפשת" : "אין טפסים להציג..."}
-            subtitle={
-              searchValue
-                ? `לא מצאנו טפסים שתואמים את החיפוש "${searchValue}"`
-                : tabValue === formsTabs.currentUserCreated
-                  ? "נראה שטרם יצרת טפסים במערכת. זה הזמן להתחיל!"
-                  : tabValue === formsTabs.sharedWithUser
-                    ? "טרם שותפו איתך טפסים במערכת."
-                    : "לא נמצאו טפסים במערכת."
-            }
-            actions={<CreateNew isFirstForm={isFirstForm} />}
-          />
+          <Grid
+            container
+            columns={{ xs: 4, sm: 8, md: 12 }}
+            className="forms-grid"
+            id="forms-grid"
+            spacing={3}>
+            <Grid size={{ xs: 4, sm: 4, md: 6, lg: 4, xl: 3 }}>
+              <EmptyState />
+            </Grid>
+          </Grid>
         )}
       </Box>
 
