@@ -1,6 +1,5 @@
 import {
   Box,
-  Button,
   CircularProgress,
   IconButton,
   Tooltip,
@@ -8,58 +7,10 @@ import {
   useTheme,
 } from "@mui/material";
 import React from "react";
-import styled from "styled-components";
 import { permission } from "formula-gear";
 import { Edit, ChevronLeft as ChevronLeftIcon } from "@mui/icons-material";
 import saveIcon from "../../icons/save-icon.png";
-
-const Header = styled(Box)<{ backgroundColor: string }>`
-  position: sticky;
-  top: 0;
-  background-color: ${({ backgroundColor }) => backgroundColor} !important;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 1100;
-  min-height: 64px;
-  border-bottom: 1px solid #e2e8f0;
-`;
-
-const HeaderSection = styled(Box)`
-  flex: 1;
-  display: flex;
-  align-items: center;
-`;
-
-const HeaderButton = styled(Button)`
-  background-color: #ffffff !important;
-  color: #1a1a24 !important;
-  border: none !important;
-  border-radius: 10px !important;
-  font-weight: 600 !important;
-  text-transform: none !important;
-  height: 42px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
-  display: flex;
-  align-items: center;
-  transition: all 0.2s ease-in-out !important;
-  padding: 0 16px !important;
-
-  &:hover {
-    background-color: #ffffff !important;
-  }
-
-  &.Mui-disabled {
-    background-color: #f8fafc !important;
-    color: #94a3b8 !important;
-    box-shadow: none !important;
-  }
-
-  & .MuiButton-startIcon {
-    margin-left: 10px;
-    margin-right: -4px;
-  }
-`;
+import { Header, HeaderSection, HeaderButton } from "../../pages/Response/styled";
 
 interface ResponseHeaderProps {
   formTitle: string;
@@ -100,7 +51,7 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
         : "תגובה חדשה";
 
   return (
-    <Header px={3} py={1} backgroundColor={theme.palette.background.default}>
+    <Header>
       <HeaderSection sx={{ gap: 1 }}>
         <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.1rem", color: "#020618" }}>
           {formTitle}

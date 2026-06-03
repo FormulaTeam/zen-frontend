@@ -405,7 +405,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
   return (
     <div className="response-page">
-      <PageContainer disableGutters maxWidth={false}>
+      <PageContainer>
         <ResponseHeader
           formTitle={formTitle}
           viewMode={viewMode}

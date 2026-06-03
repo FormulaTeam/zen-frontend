@@ -26,17 +26,7 @@ const Navbar = () => {
     return () => window.removeEventListener("toggle-easter-egg", handleEasterEgg);
   }, []);
 
-  const isLogoDisabled =
-    location?.pathname.includes(IOperationEndpoint.CREATE) ||
-    location?.pathname.includes(IOperationEndpoint.EDIT);
-
-  useEffect(() => {
-    const inMainPage = location?.pathname === IPath.HOME;
-    setShowMainStuff(inMainPage);
-  }, [location]);
-
   const navigateToHome = () => {
-    if (isLogoDisabled) return;
     navigate(IPath.HOME, { replace: true });
   };
 
@@ -45,7 +35,7 @@ const Navbar = () => {
   return (
     <NavAppBar $bgColor={theme.palette.primary.main} $isPink={isEasterEggActive} position="static">
       <NavToolbar>
-        <LogoContainer onClick={navigateToHome} disabled={isLogoDisabled} data-testid="navbar-logo">
+        <LogoContainer onClick={navigateToHome} disabled={false} data-testid="navbar-logo">
           <img src={logo} height={40} />
         </LogoContainer>
 
