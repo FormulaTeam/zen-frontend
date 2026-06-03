@@ -120,9 +120,12 @@ function MainPage({
       <Box className="tabs-and-select-div">
         <RowBox sx={{ mb: 3, mt: 2 }}>
           <GreetingBox>
-            <StyledTypography id="greeting">
-              {myPersonal?.name ? `היי ${myPersonal.name.split(" ")[0]}` : "היי"}
-            </StyledTypography>
+            <PrimaryBlueButton
+              onClick={() => navigate(IPath.FORM_CREATE)}
+              data-testid="create-form-button">
+              <AddIcon sx={{ mr: 1, fontSize: "22px" }} />
+              יצירת טופס חדש
+            </PrimaryBlueButton>
           </GreetingBox>
 
           <SortControlsBox>
@@ -138,12 +141,6 @@ function MainPage({
               isSuperAdmin={!!isSuperAdmin}
             />
             <MainSortSelect onSortChange={handleSortChange} dataTestId="sort-forms" />
-            <PrimaryBlueButton
-              onClick={() => navigate(IPath.FORM_CREATE)}
-              data-testid="create-form-button">
-              <AddIcon sx={{ mr: 1, fontSize: "22px" }} />
-              יצירת טופס חדש
-            </PrimaryBlueButton>
           </SortControlsBox>
         </RowBox>
       </Box>
