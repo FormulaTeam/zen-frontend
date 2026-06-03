@@ -11,7 +11,7 @@ interface FormGroupSelectProps {
 }
 
 const StyledFormControl = styled(Box)(({ theme }) => ({
-  width: 220,
+  width: 190,
   position: "relative",
 }));
 

@@ -135,6 +135,14 @@ function MainPage({
               placeholder="חיפוש טופס"
               dataTestId="search-form-input"
             />
+            <Box
+              sx={{
+                width: "1px",
+                height: "24px",
+                backgroundColor: "rgba(0, 0, 0, 0.12)",
+                mx: 0.5,
+              }}
+            />
             <FormGroupSelect
               value={tabValue}
               onChange={handleTabValueChange}

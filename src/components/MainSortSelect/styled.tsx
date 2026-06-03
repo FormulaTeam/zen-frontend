@@ -2,7 +2,7 @@ import { FormControl, Select } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
 export const StyledFormControl = styled(FormControl)(({ theme }) => ({
-  width: 220,
+  width: 190,
   backgroundColor: "transparent",
 }));
 
