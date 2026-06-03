@@ -1,45 +1,135 @@
-import React from "react";
-import {
-  EmptyStateContainer,
-  EmptyStateImage,
-  EmptyStateTextContent,
-  EmptyStateTitle,
-  EmptyStateSubtitle,
-  EmptyStateActions,
-} from "../../pages/MainPage/styled";
+import React, { useState } from "react";
+import { Box, Typography, Button, Paper, Fade, Popper } from "@mui/material";
+import { Add as AddIcon } from "@mui/icons-material";
+import { styled } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
+import { IPath } from "../../types/enums/global.enums";
 
-interface EmptyStateProps {
-  image?: string;
-  title: string;
-  subtitle?: string;
-  actions?: React.ReactNode;
-}
+const EmptyCard = styled(Button)(({ theme }) => ({
+  width: "100%",
+  minHeight: "220px",
+  height: "100%",
+  backgroundColor: "#ffffff",
+  borderRadius: "15px", // Matching FormCard
+  boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.04)",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  border: "1px solid transparent",
+  transition: "all 0.2s ease-in-out",
+  textTransform: "none",
+  color: "inherit",
+  padding: "24px",
+  "&:hover": {
+    backgroundColor: "#ffffff",
+    transform: "translateY(-4px)",
+    boxShadow: "0px 12px 30px rgba(0, 0, 0, 0.08)",
+    borderColor: "#1E88E5", // Added primary blue border on hover to match FormCard
+  },
+}));
 
-/**
- * A reusable component for displaying an empty state with an image, title, and optional subtitle.
- * Designed to mirror the system's ErrorPage aesthetic hierarchy.
- *
- * @param {string} [image] - The source path for the illustration image.
- * @param {string} title - The primary message/title to display (matches ErrorPage primary label).
- * @param {string} [subtitle] - An optional secondary message (matches ErrorPage secondary label).
- * @param {React.ReactNode} [actions] - Optional action components (e.g., buttons) to display below the text.
- */
-export function EmptyState({ image, title, subtitle, actions }: EmptyStateProps) {
+const LargePlusIcon = styled(AddIcon)(({ theme }) => ({
+  fontSize: "80px", // Adjusted to fit card better
+  color: "#1E88E5",
+  fontWeight: 100,
+  opacity: 0.6,
+}));
+
+const TooltipPaper = styled(Paper)(({ theme }) => ({
+  padding: "16px 20px",
+  width: "fit-content",
+  maxWidth: "450px",
+  borderRadius: "16px",
+  boxShadow: "0px 8px 24px rgba(0, 0, 0, 0.12)",
+  position: "relative",
+  backgroundColor: "#ffffff",
+  "&::after": {
+    content: '""',
+    position: "absolute",
+    top: "30px", // Aligned with the top part of the tooltip
+    left: "-8px", // Points to the card on the left (tooltip is on the right)
+    transform: "rotate(45deg)",
+    width: "16px",
+    height: "16px",
+    backgroundColor: "#ffffff",
+    borderLeft: "1px solid rgba(0, 0, 0, 0.04)",
+    borderBottom: "1px solid rgba(0, 0, 0, 0.04)",
+  },
+}));
+
+const DismissButton = styled(Button)(({ theme }) => ({
+  marginTop: "12px",
+  backgroundColor: "#f0f2f5",
+  color: "#4a5568",
+  borderRadius: "8px",
+  fontSize: "14px",
+  padding: "4px 16px",
+  fontWeight: 600,
+  textTransform: "none",
+  "&:hover": {
+    backgroundColor: "#e2e8f0",
+  },
+}));
+
+export function EmptyState() {
+  const navigate = useNavigate();
+  const [showTooltip, setShowTooltip] = useState(true);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const cardRef = (node: HTMLButtonElement | null) => {
+    if (node) setAnchorEl(node);
+  };
+
+  const handleCreateClick = () => {
+    navigate(IPath.FORM_CREATE);
+  };
+
   return (
-    <EmptyStateContainer className="empty-state-container">
-      {image && <EmptyStateImage src={image} className="empty-state-image" alt="Empty state" />}
-      
-      <EmptyStateTextContent className="empty-state-text">
-        <EmptyStateTitle className="empty-state-title primary">{title}</EmptyStateTitle>
-        {subtitle && (
-          <EmptyStateSubtitle className="empty-state-subtitle secondary">
-            {subtitle}
-          </EmptyStateSubtitle>
-        )}
-      </EmptyStateTextContent>
+    <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
+      <EmptyCard ref={cardRef} onClick={handleCreateClick} disableRipple className="empty-state-card">
+        <LargePlusIcon />
+      </EmptyCard>
 
-      {actions && <EmptyStateActions className="empty-state-actions">{actions}</EmptyStateActions>}
-    </EmptyStateContainer>
+      <Popper
+        open={showTooltip && Boolean(anchorEl)}
+        anchorEl={anchorEl}
+        placement="right-start" // Aligns top of tooltip with top of card
+        transition
+        modifiers={[
+          {
+            name: "offset",
+            options: {
+              offset: [0, 40],
+            },
+          },
+        ]}>
+        {({ TransitionProps }) => (
+          <Fade {...TransitionProps} timeout={350}>
+            <TooltipPaper sx={{ direction: "rtl" }}>
+              <Typography
+                sx={{
+                  fontSize: "15px",
+                  lineHeight: "1.4",
+                  color: "#2d3748",
+                  textAlign: "left", 
+                  fontWeight: 500,
+                }}>
+                <Box component="span" sx={{ whiteSpace: "nowrap", display: "block", fontWeight: 600 }}>
+                  כאן תוכלו ליצור את הטופס הראשון שלכם
+                </Box>
+
+                טופס הוא כלי להזנת מידע שניתן ליצור בהתאמה אישית
+              </Typography>
+              <Box sx={{ display: "flex", justifyContent: "flex-start", mt: 1 }}>
+                <DismissButton onClick={() => setShowTooltip(false)}>סגירה</DismissButton>
+              </Box>
+
+            </TooltipPaper>
+          </Fade>
+        )}
+      </Popper>
+    </Box>
   );
 }
 

@@ -178,20 +178,16 @@ function MainPage({
             ))}
           </Grid>
         ) : (
-          <EmptyState
-            image={noData}
-            title={searchValue ? "לא מצאנו את מה שחיפשת" : "אין טפסים להציג..."}
-            subtitle={
-              searchValue
-                ? `לא מצאנו טפסים שתואמים את החיפוש "${searchValue}"`
-                : tabValue === formsTabs.currentUserCreated
-                  ? "נראה שטרם יצרת טפסים במערכת. זה הזמן להתחיל!"
-                  : tabValue === formsTabs.sharedWithUser
-                    ? "טרם שותפו איתך טפסים במערכת."
-                    : "לא נמצאו טפסים במערכת."
-            }
-            actions={<CreateNew isFirstForm={isFirstForm} />}
-          />
+          <Grid
+            container
+            columns={{ xs: 4, sm: 8, md: 12 }}
+            className="forms-grid"
+            id="forms-grid"
+            spacing={3}>
+            <Grid size={{ xs: 4, sm: 4, md: 6, lg: 4, xl: 3 }}>
+              <EmptyState />
+            </Grid>
+          </Grid>
         )}
       </Box>
 
