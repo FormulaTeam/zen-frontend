@@ -856,21 +856,26 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
           ResponseFieldValueDto & {
             displayName: string;
             fieldType: FieldType;
-            dateAndTime?: boolean;
+            dateType?: "date" | "datetime";
+            timePrecision?: "seconds" | "minutes";
           }
         >
       >((acc, item) => {
         const currentFieldMetaData = formFields.find((fieldData) => fieldData.id === item.fieldId);
 
         if (currentFieldMetaData) {
-          const extra = (currentFieldMetaData.extra || {}) as { dateAndTime?: boolean };
+          const extra = (currentFieldMetaData.extra || {}) as {
+            dateType?: "date" | "datetime";
+            timePrecision?: "seconds" | "minutes";
+          };
           const { displayName, fieldType: currentFieldType } = currentFieldMetaData;
 
           acc.push({
             displayName,
             value: item.value,
             fieldId: item.fieldId,
-            dateAndTime: (currentFieldMetaData as any).dateAndTime || extra.dateAndTime,
+            dateType: (currentFieldMetaData as any).dateType || extra.dateType,
+            timePrecision: (currentFieldMetaData as any).timePrecision || extra.timePrecision,
             fieldType: currentFieldType as FieldType,
           });
         }
@@ -883,7 +888,8 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
         fieldType: currentFieldType,
         value,
         fieldId,
-        dateAndTime,
+        dateType,
+        timePrecision,
       } of fieldValuesWithMetaData) {
         if (formFieldsIds.includes(fieldId || "")) {
           let formattedValue: string | { f: string } = "";
@@ -928,7 +934,7 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
               const isValidDate = moment(dateValue).isValid();
 
               if (!isValidDate) {
-              } else if (dateAndTime) {
+              } else if (dateType === "datetime") {
                 formattedValue = moment(dateValue).format(DEFAULT_DATE_TIME_FORMAT);
               } else {
                 formattedValue = moment(dateValue).format(DEFAULT_DATE_FORMAT);
@@ -938,13 +944,19 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
 
             case fieldType.Time: {
               const timeValue = value as string;
+              const format = timePrecision === "seconds" ? "HH:mm:ss" : "HH:mm";
+
               // If it's already in the correct format, use it directly
               if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(timeValue)) {
-                formattedValue = timeValue;
+                if (timePrecision === "minutes" && timeValue.split(":").length === 3) {
+                  formattedValue = timeValue.substring(0, 5);
+                } else {
+                  formattedValue = timeValue;
+                }
               } else if (value instanceof Date) {
                 // If it's a Date object, format it
                 const timeMoment = moment(value);
-                formattedValue = timeMoment.format("HH:mm:ss");
+                formattedValue = timeMoment.format(format);
               }
               break;
             }
@@ -1064,8 +1076,8 @@ export const DEFAULT_DATE_TIME_FORMAT = `${DEFAULT_DATE_FORMAT} HH:mm`;
  * @returns {string} - The converted date string in "DD/MM/YYYY" format if the input is a number,
  * or the original value if it's not a number.
  */
-export function dateNumberToDateString(date: number | string, dateAndTime?: boolean): string {
-  const formatString = dateAndTime ? DEFAULT_DATE_TIME_FORMAT : DEFAULT_DATE_FORMAT;
+export function dateNumberToDateString(date: number | string, dateType?: "date" | "datetime"): string {
+  const formatString = dateType === "datetime" ? DEFAULT_DATE_TIME_FORMAT : DEFAULT_DATE_FORMAT;
   return typeof date === "number"
     ? moment.utc(moment.unix(Math.round((date - 25569) * 86400))).format(formatString)
     : date;
@@ -1136,7 +1148,7 @@ export function generateNewFormFieldData(item: Partial<CustomFormField>) {
   }
 
   if (item.typeId === FieldTypeIds.location) {
-    newField.locationFormat = "UTM";
+    newField.locationFormat = "utm";
   }
 
   return newField;

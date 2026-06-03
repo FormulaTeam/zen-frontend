@@ -1,20 +1,14 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
-import { boolean, enum as zod_enum, literal, strictObject } from "zod";
-
-enum DefaultTimeValue {
-  EMPTY = 1,
-  NOW = 2,
-}
+import { literal } from "zod";
+import { TimeFieldExtraSchema } from "formula-gear";
 
 const timeSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.time),
 
-  extra: strictObject({
-    includeSeconds: boolean().optional(),
-    defaultValue: zod_enum(DefaultTimeValue).default(DefaultTimeValue.EMPTY),
-  }).optional(),
+  extra: TimeFieldExtraSchema.default({
+    timePrecision: "minutes",
+  }),
 });
 
-export { DefaultTimeValue };
 export default timeSchema;

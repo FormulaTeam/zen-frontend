@@ -1,20 +1,14 @@
-import { CoordinateType } from "formula-gear";
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
-import { enum as zod_enum, literal, strictObject } from "zod";
-
-enum LocationFormat {
-  UTM = CoordinateType.UTM,
-  WKT = CoordinateType.WKT,
-}
+import { literal } from "zod";
+import { LocationFieldExtraSchema } from "formula-gear";
 
 const locationSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.location),
 
-  extra: strictObject({
-    locationFormat: zod_enum(LocationFormat).default(LocationFormat.UTM),
-  }).optional(),
+  extra: LocationFieldExtraSchema.default({
+    locationFormat: "utm",
+  }),
 });
 
-export { LocationFormat };
 export default locationSchema;

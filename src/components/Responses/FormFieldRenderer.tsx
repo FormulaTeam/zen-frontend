@@ -40,9 +40,10 @@ type OptionItem = {
 type FormFieldExtra = {
   options?: {
     items?: OptionItem[];
-    defaultOptionId?: string | string[];
+    defaultValue?: string[];
     formId?: string | number;
     fieldId?: string;
+    linkedOptionsFieldId?: string;
   };
   value?: any;
   validationRegex?: string;
@@ -51,17 +52,16 @@ type FormFieldExtra = {
   connectionType?: string | number;
   parentFieldId?: string;
   parentDependencies?: any[];
-  locationFormat?: number;
+  locationFormat?: "utm" | "wkt";
   min?: number;
   max?: number;
-  numberFormat?: number;
+  numberType?: "integer" | "decimal";
   defaultValue?: any;
   conditions?: any[];
   sectionDescription?: string;
-  dateAndTime?: boolean;
-  includeSeconds?: boolean;
-  multiSelect?: boolean;
-  multiple?: boolean;
+  dateType?: "datetime" | "date";
+  timePrecision?: "seconds" | "minutes";
+  selectionMode?: "multiple" | "single";
   source?: number;
 };
 
@@ -115,6 +115,24 @@ const isConnectedToForm = (field: FormFieldDto) => {
 };
 
 const getFieldOptionItems = (field: FormFieldDto): OptionItem[] => {
+  if (Array.isArray((field as any).options)) {
+    return (field as any).options
+      .filter(
+        (item: any) =>
+          item &&
+          typeof item.id === "string" &&
+          item.id.length > 0 &&
+          typeof item.text === "string",
+      )
+      .map((item: any) => ({
+        id: item.id,
+        text: item.text,
+        controllingItemsIds: Array.isArray(item.controllingItemsIds)
+          ? item.controllingItemsIds
+          : [],
+      }));
+  }
+
   const extra = getFieldExtra(field);
 
   if (
@@ -308,7 +326,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       break;
 
     case legacyFieldTypeIds.Options: {
-      const multiSelect = Boolean(formFieldExtra.multiSelect ?? formFieldExtra.multiple);
+      const multiSelect = formFieldExtra.selectionMode === "multiple";
 
       if (multiSelect) {
         if (!Array.isArray(formFieldValue)) {
@@ -328,7 +346,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       let connectedFieldId: string | undefined;
 
       if (connectedToForm) {
-        connectedFormId = Number(formFieldExtra.options?.formId);
+        connectedFormId = Number(formFieldExtra.linkedFormId ?? formFieldExtra.options?.formId);
         connectedFieldId = formFieldExtra.options?.fieldId;
       }
 
@@ -492,7 +510,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         }
       }
 
-      const defaultValue = formFieldExtra.options?.defaultOptionId ?? formFieldExtra.defaultValue;
+      const defaultValue = formFieldExtra.options?.defaultValue ?? formFieldExtra.defaultValue;
       const value = multiSelect
         ? Array.isArray(formFieldValue)
           ? formFieldValue
@@ -507,7 +525,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         input = (
           <ConnectedDropDownAutocomplete
             key={index}
-            connectedFormId={connectedFormId}
+            linkedFormId={connectedFormId}
             connectedFieldId={connectedFieldId}
             selectedValues={value}
             defaultValue={defaultValue}
@@ -520,7 +538,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             onBlurHandler={() => {
               onBlurHandler(fieldId);
             }}
-            multipleOptions={multiSelect}
+            selectionMode={multiSelect ? "multiple" : "single"}
             optionLabels={optionLabels}
             validationMessage={validationMessage}
             validationDetail={validationDetail}
@@ -528,7 +546,8 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             isFormFieldResponseOptions={formFieldExtra.source === optionsSource.FormFieldResponses}
           />
         );
-      } else {
+      }
+ else {
         input = (
           <CustomDropDownAutocomplete
             key={index}
@@ -543,7 +562,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
               onBlurHandler(fieldId);
             }}
             value={value}
-            multipleOptions={multiSelect}
+            selectionMode={multiSelect ? "multiple" : "single"}
             options={availableOptions}
             optionLabels={optionLabels}
             validationMessage={validationMessage}
@@ -590,7 +609,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             onBlurHandler(fieldId);
           }}
           value={formFieldValue}
-          dateAndTime={(formField as any).dateAndTime || formFieldExtra.dateAndTime || (formField as any).includeTime || (formFieldExtra as any).includeTime}
+          dateType={formFieldExtra.dateType}
           defaultValue={formFieldExtra.defaultValue}
           validationMessage={validationMessage}
           validationDetail={validationDetail}
@@ -613,7 +632,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             onBlurHandler(fieldId);
           }}
           value={formFieldValue}
-          includeSeconds={formFieldExtra.includeSeconds}
+          timePrecision={formFieldExtra.timePrecision}
           defaultValue={formFieldExtra.defaultValue}
           validationMessage={validationMessage}
           validationDetail={validationDetail}
@@ -696,7 +715,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             onBlurHandler(fieldId);
           }}
           defaultValue={formFieldValue ?? formFieldExtra.defaultValue ?? ""}
-          numberFormat={formFieldExtra.numberFormat}
+          numberType={formFieldExtra.numberType}
           min={formFieldExtra.min}
           max={formFieldExtra.max}
           validationMessage={validationMessage}

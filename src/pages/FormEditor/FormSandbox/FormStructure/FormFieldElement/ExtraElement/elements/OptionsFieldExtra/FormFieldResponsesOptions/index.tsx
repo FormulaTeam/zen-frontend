@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { FormControl, CircularProgress, Autocomplete, TextField, Tooltip, Typography, Box } from "@mui/material";
-import { ExtraElementProps } from "../../../index";
-import { OptionsFieldTypeId, SpecificOptions, SpecificOptionsErrors } from "../index";
 import { useGetForm } from "@api/formsApi";
 import { useGetFormsData } from "@hooks/useGetFormsData";
 import { formsScopeOption } from "@src/types/enums/filtersAndSorts.enum";
@@ -9,11 +7,14 @@ import { FormSectionDto, FormFieldDto } from "@src/types/shared";
 import { useFormStructureContext } from "@pages/FormEditor/context/FormStructureContext";
 import { FormOption } from "@utils/interfaces";
 import { LoaderContainer, Container, FieldControl } from "./styled";
-import { fieldType, optionsSource } from "formula-gear";
+import { fieldType } from "formula-gear";
+import { OptionsFieldTypeId } from "../index";
+import { FormFieldExtra } from "@pages/FormEditor/schemas/fields";
 
-interface Props extends Omit<ExtraElementProps<OptionsFieldTypeId>, "extra" | "validationErrors" | "disabled"> {
-  options: SpecificOptions<typeof optionsSource.FormFieldResponses>;
-  validationErrors: SpecificOptionsErrors<typeof optionsSource.FormFieldResponses> | undefined;
+interface Props {
+  linkedOptionsFieldId: string | undefined;
+  onChange: (extra: Partial<FormFieldExtra<OptionsFieldTypeId>>) => void;
+  validationErrors: any;
 }
 
 interface ValidField {
@@ -23,14 +24,16 @@ interface ValidField {
 
 function FormFieldResponsesOptions(props: Props) {
   const {
-    options = { formId: "", fieldId: "" },
+    linkedOptionsFieldId,
     validationErrors,
     onChange,
   } = props;
 
   const { formStructure } = useFormStructureContext();
+  const [selectedFormId, setSelectedFormId] = useState<string>("");
   const [searchText, setSearchText] = useState("");
   const [fieldTouchAttempted, setFieldTouchAttempted] = useState(false);
+  
   const { formsData: allForms, isLoading: isLoadingForms } = useGetFormsData({
     searchQuery: searchText || undefined,
     scope: formsScopeOption.LinkableForms,
@@ -46,7 +49,7 @@ function FormFieldResponsesOptions(props: Props) {
   }, [allForms, formStructure?.metadata?.id]);
 
   const { data: initialForm, isLoading: isInitializing } = useGetForm({
-    formId: options?.formId ? options.formId : undefined,
+    formId: selectedFormId ? selectedFormId : undefined,
   });
 
   const selectedFormOption = useMemo<FormOption | null>(() => {
@@ -80,13 +83,9 @@ function FormFieldResponsesOptions(props: Props) {
   }, [initialForm]);
 
   const selectedFieldOption = useMemo<ValidField | null>(() => {
-    if (!options?.fieldId) return null;
-    return availableFields.find((f) => f.id === options.fieldId) ?? null;
-  }, [availableFields, options?.fieldId]);
-
-  useEffect(() => {
-    onChange({ source: optionsSource.FormFieldResponses, options });
-  }, []);
+    if (!linkedOptionsFieldId) return null;
+    return availableFields.find((f) => f.id === linkedOptionsFieldId) ?? null;
+  }, [availableFields, linkedOptionsFieldId]);
 
   if (isInitializing) {
     return (
@@ -97,7 +96,7 @@ function FormFieldResponsesOptions(props: Props) {
   }
 
   const formSelector: JSX.Element = (
-    <FormControl error={!!validationErrors?.properties?.formId}>
+    <FormControl error={!!validationErrors?.properties?.linkedOptionsFieldId}>
       <Autocomplete
         options={availableForms}
         getOptionLabel={(option) => option?.name || ""}
@@ -109,10 +108,8 @@ function FormFieldResponsesOptions(props: Props) {
           setSearchText(newInputValue);
         }}
         onChange={(_, newValue) => {
-          onChange({
-            source: optionsSource.FormFieldResponses,
-            options: { ...options, formId: newValue ? newValue.id.toString() : "", fieldId: "" }
-          });
+          setSelectedFormId(newValue ? newValue.id : "");
+          onChange({ linkedOptionsFieldId: undefined }); // Reset field when form changes
         }}
         isOptionEqualToValue={(option, value) => option?.id === value?.id}
         renderOption={(props, option) => (
@@ -132,8 +129,6 @@ function FormFieldResponsesOptions(props: Props) {
             {...params}
             label="בחירת טופס"
             variant="standard"
-            error={!!validationErrors?.properties?.formId}
-            helperText={validationErrors?.properties?.formId?.errors?.[0]}
             InputProps={{
               ...params.InputProps,
               endAdornment: (
@@ -150,8 +145,8 @@ function FormFieldResponsesOptions(props: Props) {
   );
 
   const fieldSelect: JSX.Element = (
-    <FieldControl error={!!validationErrors?.properties?.fieldId}>
-      <Tooltip title={!options?.formId ? 'יש לבחור טופס' : ''}>
+    <FieldControl error={!!validationErrors?.properties?.linkedOptionsFieldId}>
+      <Tooltip title={!selectedFormId ? 'יש לבחור טופס' : ''}>
         <span style={{ display: 'block' }}>
           <Autocomplete
             options={availableFields}
@@ -159,20 +154,17 @@ function FormFieldResponsesOptions(props: Props) {
             value={selectedFieldOption}
             onOpen={() => setFieldTouchAttempted(true)}
             onChange={(_, newValue) => {
-              onChange({
-                source: optionsSource.FormFieldResponses,
-                options: { ...options, fieldId: newValue ? newValue.id : "" }
-              });
+              onChange({ linkedOptionsFieldId: newValue ? newValue.id : undefined });
             }}
-            noOptionsText={!options?.formId ? (fieldTouchAttempted ? 'יש לבחור טופס' : '') : (availableFields.length ? 'לא נמצאו תוצאות' : 'אין שדות זמינים')}
-            disabled={!options?.formId}
+            noOptionsText={!selectedFormId ? (fieldTouchAttempted ? 'יש לבחור טופס' : '') : (availableFields.length ? 'לא נמצאו תוצאות' : 'אין שדות זמינים')}
+            disabled={!selectedFormId}
             renderInput={(params) => (
               <TextField
                 {...params}
                 label={"בחירת שדה"}
                 variant="standard"
-                error={!!validationErrors?.properties?.fieldId}
-                helperText={validationErrors?.properties?.fieldId?.errors?.[0]}
+                error={!!validationErrors?.properties?.linkedOptionsFieldId}
+                helperText={validationErrors?.properties?.linkedOptionsFieldId?.errors?.[0]}
               />
             )}
           />

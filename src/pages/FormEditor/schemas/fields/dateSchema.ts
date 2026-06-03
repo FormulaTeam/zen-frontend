@@ -1,20 +1,14 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
-import { boolean, enum as zod_enum, literal, strictObject } from "zod";
-
-enum DefaultDateValue {
-  EMPTY = 1,
-  NOW = 2,
-}
+import { literal } from "zod";
+import { DateFieldExtraSchema } from "formula-gear";
 
 const dateSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.date),
 
-  extra: strictObject({
-    dateAndTime: boolean().optional(),
-    defaultValue: zod_enum(DefaultDateValue).default(DefaultDateValue.EMPTY),
-  }).optional(),
+  extra: DateFieldExtraSchema.default({
+    dateType: "date",
+  }),
 });
 
-export { DefaultDateValue };
 export default dateSchema;

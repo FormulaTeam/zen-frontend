@@ -11,7 +11,7 @@ interface CustomNumberFieldProps {
   validationMessage?: string | null;
   validationDetail?: string | null;
   defaultValue: any;
-  numberFormat?: number;
+  numberType?: "integer" | "decimal";
   min?: number;
   max?: number;
   isTabularEdit?: boolean;

@@ -183,7 +183,8 @@ const formatDateFilterValue = (value: Dayjs | null): string => {
   return value?.isValid() ? value.format("YYYY-MM-DD") : "";
 };
 
-const formatTimeFilterValue = (value: Dayjs | null, includeSeconds = false): string => {
+const formatTimeFilterValue = (value: Dayjs | null, timePrecision = "minutes"): string => {
+  const includeSeconds = timePrecision === "seconds";
   return value?.isValid() ? value.format(includeSeconds ? "HH:mm:ss" : "HH:mm") : "";
 };
 
@@ -301,8 +302,9 @@ export const DateFilterInput: React.FC<FilterInputProps> = (props) => {
   );
 };
 
-export const TimeFilterInput: React.FC<FilterInputProps> = (props) => {
-  const { item, applyValue, headerFilterMenu, clearButton } = props;
+export const TimeFilterInput: React.FC<FilterInputProps & { timePrecision?: string }> = (props) => {
+  const { item, applyValue, headerFilterMenu, clearButton, timePrecision = "minutes" } = props;
+  const showSeconds = timePrecision === "seconds";
 
   return (
     <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
@@ -311,9 +313,9 @@ export const TimeFilterInput: React.FC<FilterInputProps> = (props) => {
           <TimePicker
             value={parseTimeFilterValue(item.value)}
             onChange={(newValue) =>
-              applyFilterValue(item, applyValue, formatTimeFilterValue(newValue))
+              applyFilterValue(item, applyValue, formatTimeFilterValue(newValue, timePrecision))
             }
-            views={["hours", "minutes"]}
+            views={showSeconds ? ["hours", "minutes", "seconds"] : ["hours", "minutes"]}
             ampm={false}
             slotProps={commonPickerSlotProps(props)}
           />
@@ -438,9 +440,12 @@ export const DateRangeFilterInput: React.FC<FilterInputProps> = (props) => {
   );
 };
 
-export const TimeRangeFilterInput: React.FC<FilterInputProps> = (props) => {
-  const { item, applyValue, headerFilterMenu, clearButton } = props;
+export const TimeRangeFilterInput: React.FC<FilterInputProps & { timePrecision?: string }> = (
+  props,
+) => {
+  const { item, applyValue, headerFilterMenu, clearButton, timePrecision = "minutes" } = props;
   const range = (item.value ?? {}) as RangeValue;
+  const showSeconds = timePrecision === "seconds";
 
   return (
     <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
@@ -452,10 +457,10 @@ export const TimeRangeFilterInput: React.FC<FilterInputProps> = (props) => {
               onChange={(newValue) =>
                 applyFilterValue(item, applyValue, {
                   ...range,
-                  from: formatTimeFilterValue(newValue),
+                  from: formatTimeFilterValue(newValue, timePrecision),
                 })
               }
-              views={["hours", "minutes"]}
+              views={showSeconds ? ["hours", "minutes", "seconds"] : ["hours", "minutes"]}
               ampm={false}
               slotProps={commonPickerSlotProps(props, "מ")}
             />
@@ -465,10 +470,10 @@ export const TimeRangeFilterInput: React.FC<FilterInputProps> = (props) => {
               onChange={(newValue) =>
                 applyFilterValue(item, applyValue, {
                   ...range,
-                  to: formatTimeFilterValue(newValue),
+                  to: formatTimeFilterValue(newValue, timePrecision),
                 })
               }
-              views={["hours", "minutes"]}
+              views={showSeconds ? ["hours", "minutes", "seconds"] : ["hours", "minutes"]}
               ampm={false}
               slotProps={commonPickerSlotProps(props, "עד")}
             />

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { Box, IconButton, Tooltip, Stack, Typography, CircularProgress } from "@mui/material";
+import { Box, IconButton, Tooltip, CircularProgress } from "@mui/material";
 import {
   GridColDef,
   GridRowId,
@@ -21,7 +21,6 @@ import { FieldTypeIds } from "../../../utils/interfaces";
 import { getFieldColumnKey } from "../../../api";
 
 type EditorFieldExtra = {
-  connectedFormId?: number | string;
   linkedFormId?: number | string;
 };
 type ChildFormData = {
@@ -84,14 +83,14 @@ export const useDetailPanel = ({
   }, [currentViewConfig]);
 
   const getChildRowsForParent = useCallback(
-    (parentRowId: string | number, connectedFormId: number | string): Row[] => {
+    (parentRowId: string | number, linkedFormId: number | string): Row[] => {
       const parentRow = rows.find((r) => String(r.id) === String(parentRowId));
-      const childFormData = getChildFormData(connectedFormId);
+      const childFormData = getChildFormData(linkedFormId);
 
       // Priority 1: Use pre-nested childResponses if they exist and match the formId
       if (parentRow?.childResponses && (parentRow.childResponses as any[]).length > 0) {
         const matchingNested = (parentRow.childResponses as any[]).filter(
-          (cr) => String(cr.formId || cr.form_id || "") === String(connectedFormId),
+          (cr) => String(cr.formId || cr.form_id || "") === String(linkedFormId),
         );
 
         if (matchingNested.length > 0 && childFormData) {
@@ -133,19 +132,19 @@ export const useDetailPanel = ({
   );
 
   const getChildRowsLengthForParent = useCallback(
-    (parentRowId: string | number, connectedFormId: number | string): number => {
+    (parentRowId: string | number, linkedFormId: number | string): number => {
       const parentRow = rows.find((r) => String(r.id) === String(parentRowId));
 
       // Check nested responses first
       if (parentRow?.childResponses && (parentRow.childResponses as any[]).length > 0) {
         const count = (parentRow.childResponses as any[]).filter(
-          (cr) => String(cr.formId || cr.form_id) === String(connectedFormId),
+          (cr) => String(cr.formId || cr.form_id) === String(linkedFormId),
         ).length;
         if (count > 0) return count;
       }
 
       // Fallback to fetched data
-      const childFormData = getChildFormData(connectedFormId);
+      const childFormData = getChildFormData(linkedFormId);
       if (childFormData?.rows) {
         return childFormData.rows.filter((row) => {
           const parentResp = String(row.parentResponse || "");
@@ -182,13 +181,12 @@ export const useDetailPanel = ({
       });
 
       return formInFormFields.some((field) => {
-        const connectedFormId =
-          getFieldExtra(field).connectedFormId || getFieldExtra(field).linkedFormId;
-        if (!connectedFormId) {
+        const linkedFormId = getFieldExtra(field).linkedFormId;
+        if (!linkedFormId) {
           return false;
         }
 
-        return getChildRowsLengthForParent(rowId, connectedFormId) > 0;
+        return getChildRowsLengthForParent(rowId, linkedFormId) > 0;
       });
     },
     [hasFormInFormFields, formFields, getChildRowsLengthForParent, visibleFormInFormFieldIds],

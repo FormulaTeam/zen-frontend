@@ -1,6 +1,5 @@
 import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { ExtraElementProps } from "../index";
-import { NumberFormat } from "../../../../../schemas/fields/numberSchema";
 import { FormControl, FormHelperText, Input, InputLabel, MenuItem, Select } from "@mui/material";
 import { useEffect, useState } from "react";
 import { REGEX } from "formula-gear";
@@ -8,7 +7,7 @@ import { REGEX } from "formula-gear";
 type Props = ExtraElementProps<typeof FieldTypeIds.number>;
 
 function NumberFieldExtra({ extra, validationErrors, onChange, disabled }: Props) {
-  const { numberFormat: format = NumberFormat.INTEGER, defaultValue, max, min } = extra;
+  const { numberType = "integer", defaultValue, max, min } = extra;
 
   const [localValues, setLocalValues] = useState({
     defaultValue: defaultValue !== undefined ? String(defaultValue) : "",
@@ -17,7 +16,7 @@ function NumberFieldExtra({ extra, validationErrors, onChange, disabled }: Props
   });
 
   useEffect(() => {
-    onChange({ numberFormat: format });
+    onChange({ numberType: numberType });
   }, []);
 
   useEffect(() => {
@@ -74,13 +73,13 @@ function NumberFieldExtra({ extra, validationErrors, onChange, disabled }: Props
         <InputLabel id="format-label">סוג מספר</InputLabel>
         <Select
           labelId="format-label"
-          value={format}
+          value={numberType}
           label="סוג מספר"
           onChange={(e) => {
-            onChange({ numberFormat: e.target.value });
+            onChange({ numberType: e.target.value as "integer" | "decimal" });
           }}>
-          <MenuItem value={NumberFormat.INTEGER}>שלם</MenuItem>
-          <MenuItem value={NumberFormat.DECIMAL}>עשרוני</MenuItem>
+          <MenuItem value={"integer"}>שלם</MenuItem>
+          <MenuItem value={"decimal"}>עשרוני</MenuItem>
         </Select>
       </FormControl>
       <FormControl

@@ -13,10 +13,10 @@ import FieldErrorText from "../FormFields/FieldErrorText/FieldErrorText";
 
 export const ConnectedDropDownAutocomplete = (props: any) => {
     const {
-        connectedFormId,
+        linkedFormId,
         connectedFieldId,
         selectedValues,
-        multipleOptions,
+        selectionMode,
         isDisabled,
         label,
         isRequired,
@@ -29,8 +29,10 @@ export const ConnectedDropDownAutocomplete = (props: any) => {
 
     const [searchTerm, setSearchTerm] = React.useState("");
 
+    const isMultiple = selectionMode === "multiple";
+
     const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, error } =
-        useGetInfiniteFieldValues(connectedFormId, connectedFieldId, searchTerm);
+        useGetInfiniteFieldValues(linkedFormId, connectedFieldId, searchTerm);
 
     const isPermissionError: boolean =
         (error as any)?.response?.status === StatusCodes.FORBIDDEN;
@@ -44,7 +46,7 @@ export const ConnectedDropDownAutocomplete = (props: any) => {
         return [...new Set([...fetchedOptions, ...selectedArray])];
     }, [data, selectedValues]);
 
-    const normalizedValue = multipleOptions
+    const normalizedValue = isMultiple
         ? Array.isArray(selectedValues)
             ? selectedValues
             : []
@@ -72,7 +74,7 @@ export const ConnectedDropDownAutocomplete = (props: any) => {
             )}
             <StyledAutocomplete
                 disabled={isDisabled}
-                multiple={multipleOptions}
+                multiple={isMultiple}
                 options={availableOptions}
                 value={normalizedValue}
                 loading={isLoading || isFetchingNextPage}
@@ -83,7 +85,7 @@ export const ConnectedDropDownAutocomplete = (props: any) => {
                     else if (reason === "clear") setSearchTerm("");
                 }}
                 onChange={(_event, newValue) => {
-                    if (multipleOptions) {
+                    if (isMultiple) {
                         onChangeHandler(Array.isArray(newValue) ? newValue : []);
                     } else {
                         onChangeHandler(typeof newValue === "string" ? newValue : "");
@@ -135,7 +137,7 @@ export const ConnectedDropDownAutocomplete = (props: any) => {
                         border: isTabularEdit ? "none" : "1px solid",
                         borderColor: validationMessage ? "error.main" : "divider",
                         px: isTabularEdit ? "6px" : "12px",
-                        py: multipleOptions ? "6px" : "0",
+                        py: isMultiple ? "6px" : "0",
                         "&:before, &:after": { display: "none" },
                         "&:hover": {
                             borderColor: validationMessage ? "error.main" : "text.secondary",

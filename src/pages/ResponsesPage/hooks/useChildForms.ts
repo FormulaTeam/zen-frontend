@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { getFormById } from "../../../api/formsApi";
-import { getResponsesRows } from "../../../api/responsesApi";
 import type { FormDto, FormFieldDto } from "../../../types/shared";
 import { fieldType } from "formula-gear";
 import { Row } from "../../../utils/interfaces";
 import { FieldTypeIds } from "../../../utils/interfaces";
 
 type FieldExtra = {
-    connectedFormId?: number | string;
     linkedFormId?: number | string;
 };
 
@@ -24,7 +22,7 @@ interface UseChildFormsReturn {
     childrenFormsData: ChildFormData[];
     hasFormInFormFields: boolean;
     loadingChildForms: boolean;
-    getChildFormData: (connectedFormId: number | string) => ChildFormData | undefined;
+    getChildFormData: (linkedFormId: number | string) => ChildFormData | undefined;
 }
 
 const getFieldExtra = (field: FormFieldDto): FieldExtra => {
@@ -44,11 +42,10 @@ const getFormFields = (form: FormDto | null): FormFieldDto[] => {
 };
 
 const fetchChildFormData = async (
-    connectedFormId: number | string,
-    parentFormId: number,
+    linkedFormId: number | string,
 ): Promise<ChildFormData | null> => {
     try {
-        const formData = await getFormById(Number(connectedFormId));
+        const formData = await getFormById(Number(linkedFormId));
 
         if (formData) {
             return { form: formData, rows: [] };
@@ -74,7 +71,7 @@ export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn
                     (field as any).typeId === FieldTypeIds.linkedForm ||
                     (field as any).fieldType === FieldTypeIds.linkedForm;
 
-                return isFormType && !!(extra.connectedFormId || extra.linkedFormId);
+                return isFormType && !!extra.linkedFormId;
             }),
         [formFields],
     );
@@ -85,7 +82,7 @@ export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn
         () =>
             formInFormFields
                 .map((field) => {
-                    const id = getFieldExtra(field).connectedFormId || getFieldExtra(field).linkedFormId;
+                    const id = getFieldExtra(field).linkedFormId;
                     return id ? Number(id) : undefined;
                 })
                 .filter((id): id is number => typeof id === "number" && !isNaN(id)),
@@ -103,7 +100,7 @@ export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn
 
         setLoadingChildForms(true);
 
-        Promise.all(childFormIds.map((id) => fetchChildFormData(id, form.id)))
+        Promise.all(childFormIds.map((id) => fetchChildFormData(id)))
             .then((results) => {
                 if (isMounted) {
                     setChildrenFormsData(results.filter(Boolean) as ChildFormData[]);
@@ -123,9 +120,9 @@ export const useChildForms = ({ form }: UseChildFormsProps): UseChildFormsReturn
     }, [hasFormInFormFields, form?.id, childFormIds.join(",")]);
 
     const getChildFormData = useCallback(
-        (connectedFormId: number | string): ChildFormData | undefined => {
+        (linkedFormId: number | string): ChildFormData | undefined => {
             return childrenFormsData.find(
-                (data) => String(data.form.id) === String(connectedFormId),
+                (data) => String(data.form.id) === String(linkedFormId),
             );
         },
         [childrenFormsData],

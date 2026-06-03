@@ -1,6 +1,7 @@
 import { DEFAULT_ICON_NAME } from "@utils/utils";
 import { CreateFormDto } from "../../../api/formsApi";
 import { FormStructure } from "../context/FormStructureContext";
+import { FormFieldSchema } from "../schemas/fields";
 
 export function convertFormStructureToCreateDto(formStructure: FormStructure): CreateFormDto {
     const sections = formStructure.orderedSectionIds.map((sectionId, index) => {
@@ -10,14 +11,22 @@ export function convertFormStructureToCreateDto(formStructure: FormStructure): C
             .filter((field) => !!field)
             .map((field) => {
                 const fieldData = field.data;
+                
+                // Parse through Zod to apply defaults and ensure strict schema compliance
+                const validatedData = FormFieldSchema.parse({
+                    ...fieldData,
+                    extra: fieldData.extra ?? {},
+                });
+
                 return {
                     id: field.id,
-                    name: fieldData.name,
+                    name: validatedData.name,
                     index: formStructure.sections[sectionId].fieldIds.indexOf(field.id) + 1,
-                    fieldType: fieldData.typeId as number,
-                    displayName: fieldData.displayName,
-                    isRequired: fieldData.required,
-                    extra: fieldData.extra ?? {},
+                    fieldType: validatedData.typeId as number,
+                    displayName: validatedData.displayName,
+                    isRequired: validatedData.required,
+                    options: validatedData.options,
+                    extra: validatedData.extra ?? {},
                 };
             });
 

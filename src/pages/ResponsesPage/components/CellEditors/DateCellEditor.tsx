@@ -22,9 +22,9 @@ const toPickerValue = (value: string | null): Dayjs | null => {
   return parsedValue.isValid() ? parsedValue.tz(ISRAEL_TZ) : null;
 };
 
-const toStoredUtcIso = (value: Dayjs, dateAndTime: boolean): string => {
+const toStoredUtcIso = (value: Dayjs, isDateTime: boolean): string => {
   const israelValue = value.tz(ISRAEL_TZ, true);
-  const normalizedValue = dateAndTime ? israelValue : israelValue.startOf("day");
+  const normalizedValue = isDateTime ? israelValue : israelValue.startOf("day");
 
   return normalizedValue.utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
 };
@@ -155,7 +155,7 @@ const PickerRow = ({ icon, children }: { icon: React.ReactNode; children: React.
 interface DateCellEditorProps {
   value: string | null;
   onChange: (value: string, isValid?: boolean) => void;
-  dateAndTime?: boolean;
+  dateType?: "date" | "datetime";
   isRequired?: boolean;
   errorMessage?: string;
 }
@@ -163,13 +163,15 @@ interface DateCellEditorProps {
 export const DateCellEditor: React.FC<DateCellEditorProps> = ({
   value,
   onChange,
-  dateAndTime = false,
+  dateType = "date",
   isRequired = false,
   errorMessage,
 }) => {
   const [localValue, setLocalValue] = useState<Dayjs | null>(() => toPickerValue(value));
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
+
+  const isDateTime = dateType === "datetime";
 
   useEffect(() => {
     setLocalValue(toPickerValue(value));
@@ -179,7 +181,7 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
     setLocalValue(nextValue);
 
     if (nextValue && nextValue.isValid()) {
-      onChange(toStoredUtcIso(nextValue, dateAndTime), true);
+      onChange(toStoredUtcIso(nextValue, isDateTime), true);
       return;
     }
 
@@ -193,7 +195,7 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
     }
 
     const nextValue =
-      dateAndTime && localValue && localValue.isValid()
+      isDateTime && localValue && localValue.isValid()
         ? newValue.hour(localValue.hour()).minute(localValue.minute()).second(localValue.second())
         : newValue.startOf("day");
 
@@ -240,7 +242,7 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
           width: "100%",
           height: "100%",
           display: "grid",
-          gridTemplateRows: dateAndTime ? "auto auto" : "auto",
+          gridTemplateRows: isDateTime ? "auto auto" : "auto",
           gap: "8px",
           padding: "6px 8px",
           boxSizing: "border-box",
@@ -267,7 +269,7 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
           />
         </PickerRow>
 
-        {dateAndTime && (
+        {isDateTime && (
           <PickerRow
             icon={
               <IconButton
@@ -295,3 +297,4 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
     </LocalizationProvider>
   );
 };
+

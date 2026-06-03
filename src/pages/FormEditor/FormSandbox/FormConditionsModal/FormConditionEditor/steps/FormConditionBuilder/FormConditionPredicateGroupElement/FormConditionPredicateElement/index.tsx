@@ -18,7 +18,7 @@ import styles from "./style.module.scss";
 import { FormStructure } from "../../../../../../../context/FormStructureContext";
 import { FormFieldExtra } from "../../../../../../../schemas/fields";
 import {
-  SpecificOptions,
+  OptionsFieldTypeId,
 } from "../../../../../../FormStructure/FormFieldElement/ExtraElement/elements/OptionsFieldExtra";
 import { GroupItemValidationErrors } from "../../types";
 import { optionsSource } from "formula-gear";
@@ -67,11 +67,7 @@ function FormConditionPredicateElement({
         label: "ערך",
         ...(condition.field?.typeId === ConditionFieldTypeIds.options && condition.field.id ?
           {
-            items: (
-              (
-                fields[condition.field.id].data.extra as FormFieldExtra<typeof FieldTypeIds.options>
-              )?.options as SpecificOptions<typeof optionsSource.Manual>
-            ).items,
+            items: fields[condition.field.id].data.options,
           } :
           undefined
         ),

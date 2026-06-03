@@ -7,7 +7,7 @@ import {
   TimeFieldExtra,
 } from "./elements";
 import { FieldTypeIds, FormFieldTypeId } from "../../../../../../utils/interfaces";
-import { FormFieldExtra, SpecificFormFieldData } from "../../../../schemas/fields";
+import { FormFieldExtra, SpecificFormFieldData, FormFieldData } from "../../../../schemas/fields";
 import styles from "../style.module.css";
 import { ReactElement } from "react";
 import { $ZodErrorTree } from "zod/v4/core";
@@ -17,9 +17,10 @@ type SetExtra<T extends FormFieldTypeId> = <D extends SpecificFormFieldData<T>>(
 type ExtraElementProps<T extends FormFieldTypeId> = {
   extra: FormFieldExtra<T>;
   onChange: SetExtra<T>;
+  onDataChange?: (data: Partial<FormFieldData>) => void;
   disabled: boolean;
 
-  validationErrors?: $ZodErrorTree<FormFieldExtra<T>>;
+  validationErrors?: any;
 };
 
 type Props<T extends FormFieldTypeId> = ExtraElementProps<T> & {
@@ -28,30 +29,30 @@ type Props<T extends FormFieldTypeId> = ExtraElementProps<T> & {
 };
 
 function ExtraElement<T extends FormFieldTypeId>(props: Props<T>) {
-  const { typeId, ...restProps } = props;
+  const { typeId, onDataChange, ...restProps } = props;
   let extraElement: ReactElement;
 
   switch (typeId) {
     case FieldTypeIds.options:
-      extraElement = <OptionsFieldExtra {...restProps} />;
+      extraElement = <OptionsFieldExtra onDataChange={onDataChange as any} {...restProps as any} />;
       break;
     case FieldTypeIds.date:
-      extraElement = <DateFieldExtra {...restProps} />;
+      extraElement = <DateFieldExtra {...restProps as any} />;
       break;
     case FieldTypeIds.time:
-      extraElement = <TimeFieldExtra {...restProps} />;
+      extraElement = <TimeFieldExtra {...restProps as any} />;
       break;
     case FieldTypeIds.location:
-      extraElement = <LocationFieldExtra {...restProps} />;
+      extraElement = <LocationFieldExtra {...restProps as any} />;
       break;
     case FieldTypeIds.checkbox:
-      extraElement = <CheckboxFieldExtra {...restProps} />;
+      extraElement = <CheckboxFieldExtra {...restProps as any} />;
       break;
     case FieldTypeIds.number:
-      extraElement = <NumberFieldExtra {...restProps} />;
+      extraElement = <NumberFieldExtra {...restProps as any} />;
       break;
     case FieldTypeIds.linkedForm:
-      extraElement = <LinkedFormFieldExtra {...restProps} />;
+      extraElement = <LinkedFormFieldExtra {...restProps as any} />;
       break;
     default:
       return null;

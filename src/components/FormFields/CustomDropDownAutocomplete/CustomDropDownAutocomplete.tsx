@@ -12,7 +12,7 @@ import {
 
 interface CustomDropDownAutocompleteProps {
   value: string | string[];
-  multipleOptions?: boolean;
+  selectionMode?: "single" | "multiple";
   options: string[];
   optionLabels?: Record<string, string>;
   defaultValue?: string | string[];
@@ -41,7 +41,7 @@ const normalizeToArray = (value: string | string[] | null | undefined): string[]
 const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   value,
   isDisabled,
-  multipleOptions = false,
+  selectionMode = "single",
   options,
   optionLabels = {},
   onChangeHandler,
@@ -65,12 +65,14 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
     setSelectedValues(normalizeToArray(value));
   }, [value]);
 
+  const isMultiple = selectionMode === "multiple";
+
   const emitChange = (nextValues: string[]) => {
     const normalized = nextValues.map((val) => (val === texts.heb.emptyValue ? "" : val));
 
     setSelectedValues(normalized);
 
-    if (multipleOptions) {
+    if (isMultiple) {
       onChangeHandler(normalized);
     } else {
       onChangeHandler(normalized[0] ?? "");
@@ -92,7 +94,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   };
 
   const displayedValue = selectedValues.map((val) => (val === "" ? texts.heb.emptyValue : val));
-  const autocompleteValue = multipleOptions ? displayedValue : (displayedValue[0] ?? null);
+  const autocompleteValue = isMultiple ? displayedValue : (displayedValue[0] ?? null);
 
   const getLabel = (option: string) => {
     if (option === "") return texts.heb.emptyValue;
@@ -184,7 +186,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
           },
         }}
         disabled={isDisabled}
-        multiple={multipleOptions}
+        multiple={isMultiple}
         options={options}
         noOptionsText={noOptionsText}
         loading={loading}
@@ -212,7 +214,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
             border: isTabularEdit ? "none" : "1px solid",
             borderColor: validationMessage ? "error.main" : "divider",
             px: isTabularEdit ? "6px" : "12px",
-            py: multipleOptions ? "6px" : "0",
+            py: isMultiple ? "6px" : "0",
             transition:
               "border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease",
 
@@ -329,7 +331,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
               ...params.inputProps,
               value: inputValue !== undefined
                 ? String(params.inputProps.value)
-                : multipleOptions || params.inputProps.value !== texts.heb.emptyValue
+                : isMultiple || params.inputProps.value !== texts.heb.emptyValue
                   ? String(params.inputProps.value)
                   : "",
             }}

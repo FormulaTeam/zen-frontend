@@ -1,4 +1,4 @@
-import { any, boolean, literal, record, strictObject, string, union } from "zod";
+import { any, array, boolean, literal, object, record, strictObject, string, union } from "zod";
 import { FieldTypeIds, FormFieldTypeId } from "../../../../utils/interfaces";
 
 const EMPTY_FIELD_ERROR_MESSAGE = "שדה חובה";
@@ -13,6 +13,13 @@ const baseFormFieldSchema = strictObject({
   required: boolean().default(false),
 
   typeId: literalTypeId,
+  options: array(
+    object({
+      id: string().min(1),
+      text: string().min(1, "חובה לציין טקסט לכל אפשרות"),
+      controllingItemsIds: array(string().min(1)).optional(),
+    }),
+  ).optional(),
   extra: record(string(), any()).optional(),
 });
 

@@ -173,12 +173,7 @@ function useFormDndHandlers() {
                       [PLACEHOLDER_FIELD_ID]: {
                         id: PLACEHOLDER_FIELD_ID,
                         parentSectionId: newParentSectionId,
-                        data: {
-                          name: "",
-                          displayName: "",
-                          typeId: +active.id as FormFieldTypeId,
-                          required: false,
-                        },
+                        data: generateNewFieldData(+active.id as FormFieldTypeId),
                       },
                     },
                   };
@@ -199,12 +194,7 @@ function useFormDndHandlers() {
                   fields[PLACEHOLDER_FIELD_ID] = {
                     id: PLACEHOLDER_FIELD_ID,
                     parentSectionId: newParentSectionId,
-                    data: {
-                      name: "",
-                      displayName: "",
-                      typeId: +active.id as FormFieldTypeId,
-                      required: false,
-                    },
+                    data: generateNewFieldData(+active.id as FormFieldTypeId),
                   };
 
                   newParentSection.fieldIds.splice(newParentSection.fieldIds.indexOf(over.id as string), 0, PLACEHOLDER_FIELD_ID);

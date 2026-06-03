@@ -26,9 +26,8 @@ interface UseCellDisplayReturn {
 }
 
 type EditorFieldExtra = {
-  dateAndTime?: boolean;
-  includeTime?: boolean;
-  includeSeconds?: boolean;
+  dateType?: "datetime" | "date";
+  timePrecision?: "seconds" | "minutes";
   options?:
     | string[]
     | {
@@ -452,14 +451,8 @@ export const useCellDisplay = ({
         return <Box component="span" className="cell-box"></Box>;
       }
 
-      const dateAndTime = Boolean(
-        (field as any).dateAndTime ??
-        extra.dateAndTime ??
-        (field as any).includeTime ??
-        extra.includeTime,
-      );
-
-      const includeSeconds = Boolean(extra.includeSeconds);
+      const dateAndTime = extra.dateType === "datetime";
+      const includeSeconds = extra.timePrecision === "seconds";
 
       switch (field.fieldType) {
         case fieldType.Options:

@@ -1,58 +1,45 @@
 import { fieldConnectionTooltipTexts, FieldTypeIds } from "@utils/interfaces";
 import { ExtraElementProps } from "../../index";
 
-import {
-  SpecificDiscriminatedUnionSubObject,
-  SpecificDiscriminatedUnionSubObjectErrorTree,
-} from "@pages/FormEditor/schemas/types";
-import { FormFieldExtra } from "@pages/FormEditor/schemas/fields";
-import { ReactElement } from "react";
+import { SpecificFormFieldData } from "@pages/FormEditor/schemas/fields";
 import { FormFieldResponsesOptions } from "./FormFieldResponsesOptions";
 import { Checkbox, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Tooltip } from "@mui/material";
 import { ManualOptions } from "./ManualOptions";
 import { Info } from "@mui/icons-material";
-import { OptionsSource, optionsSource } from "formula-gear";
 
 type FieldTypeId = typeof FieldTypeIds.options;
-
-type SpecificOptions<Source extends OptionsSource> = SpecificDiscriminatedUnionSubObject<FormFieldExtra<FieldTypeId>, "source", Source, "options">;
-type SpecificOptionsErrors<Source extends OptionsSource> = SpecificDiscriminatedUnionSubObjectErrorTree<FormFieldExtra<FieldTypeId>, "source", Source, "options">;
 
 interface Props extends ExtraElementProps<FieldTypeId> {
   fieldId: string;
 }
 
-function OptionsFieldExtra({ fieldId, extra, onChange, validationErrors, disabled }: Props) {
+function OptionsFieldExtra({ fieldId, extra, onChange, onDataChange, validationErrors, disabled }: Props) {
   const {
-    source = optionsSource.Manual,
-    multiple = false,
+    selectionMode = "single",
+    linkedOptionsFieldId,
+    defaultValue = [],
   } = extra;
 
-  let optionsElement: ReactElement | null = null;
+  const isLinked = linkedOptionsFieldId !== undefined;
+  const multiple = selectionMode === "multiple";
 
-  switch (source) {
-    case optionsSource.FormFieldResponses:
-      optionsElement = <FormFieldResponsesOptions options={extra.options as SpecificOptions<typeof optionsSource.FormFieldResponses>}
-        validationErrors={validationErrors?.properties?.options as SpecificOptionsErrors<typeof optionsSource.FormFieldResponses> | undefined}
-        onChange={onChange} />;
-      break;
-    case optionsSource.Manual:
-      optionsElement = <ManualOptions fieldId={fieldId}
-        options={extra.options as SpecificOptions<typeof optionsSource.Manual>}
-        validationErrors={validationErrors?.properties?.options as SpecificOptionsErrors<typeof optionsSource.Manual> | undefined}
-        onChange={onChange} />;
-      break;
-  }
+  const handleSourceChange = (newIsLinked: boolean) => {
+    if (newIsLinked) {
+      onChange({ linkedOptionsFieldId: undefined });
+    } else {
+      onChange({ linkedOptionsFieldId: undefined });
+    }
+  };
 
   return (
     <>
       <FormControl disabled={disabled} style={{ gridColumn: "1 / -1" }}>
         <FormLabel>מקור אפשרויות</FormLabel>
-        <RadioGroup row value={source} onChange={(e) => {
-          onChange({ source: +e.target.value as OptionsSource, options: undefined });
+        <RadioGroup row value={isLinked ? "linked" : "manual"} onChange={(e) => {
+          handleSourceChange(e.target.value === "linked");
         }}>
-          <FormControlLabel value={optionsSource.Manual} control={<Radio />} label="ידני" />
-          <FormControlLabel value={optionsSource.FormFieldResponses} control={<Radio />} label={
+          <FormControlLabel value="manual" control={<Radio />} label="ידני" />
+          <FormControlLabel value="linked" control={<Radio />} label={
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <span>מטופס</span>
               <Tooltip title={fieldConnectionTooltipTexts.FormConnection}>
@@ -65,13 +52,28 @@ function OptionsFieldExtra({ fieldId, extra, onChange, validationErrors, disable
         </RadioGroup>
       </FormControl>
 
-      {optionsElement}
+      {isLinked ? (
+        <FormFieldResponsesOptions
+          linkedOptionsFieldId={linkedOptionsFieldId ?? undefined}
+          validationErrors={validationErrors as any}
+          onChange={onChange}
+        />
+      ) : (
+        <ManualOptions
+          fieldId={fieldId}
+          defaultValue={defaultValue}
+          selectionMode={selectionMode}
+          onChange={onChange}
+          onDataChange={onDataChange}
+          validationErrors={validationErrors as any}
+        />
+      )}
 
       <FormControlLabel style={{ gridColumn: "span 2" }}
         disabled={disabled}
         control={<Checkbox checked={multiple}
           onChange={(e) => {
-            onChange({ multiple: e.target.checked });
+            onChange({ selectionMode: e.target.checked ? "multiple" : "single" });
           }} />}
         label="בחירה מרובה" />
     </>
@@ -79,4 +81,4 @@ function OptionsFieldExtra({ fieldId, extra, onChange, validationErrors, disable
 }
 
 export { OptionsFieldExtra };
-export type { FieldTypeId as OptionsFieldTypeId, SpecificOptions, SpecificOptionsErrors };
+export type { FieldTypeId as OptionsFieldTypeId, SpecificFormFieldData };

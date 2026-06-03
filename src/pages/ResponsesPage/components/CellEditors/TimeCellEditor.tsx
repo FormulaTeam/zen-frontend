@@ -1,42 +1,57 @@
 import React, { useEffect, useState } from "react";
-import { Box, IconButton } from "@mui/material";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { Box, IconButton } from "@mui/material";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/he";
 
 interface TimeCellEditorProps {
   value: string | null;
   onChange: (value: string, isValid?: boolean) => void;
-  showSeconds?: boolean;
+  timePrecision?: "minutes" | "seconds";
   isRequired?: boolean;
   errorMessage?: string;
 }
 
-const parseTimeToDayjs = (time: string | null): Dayjs | null => {
-  if (!time) return null;
+const parseTimeStringToDayjs = (value: unknown): Dayjs | null => {
+  if (typeof value !== "string" || !value.includes(":")) {
+    return null;
+  }
 
-  const [hours, minutes, seconds = 0] = time.split(":").map(Number);
+  const [hours, minutes, seconds] = value.split(":").map(Number);
 
   if (
     Number.isNaN(hours) ||
     Number.isNaN(minutes) ||
-    Number.isNaN(seconds) ||
-    hours < 0 ||
-    hours > 23 ||
-    minutes < 0 ||
-    minutes > 59 ||
-    seconds < 0 ||
-    seconds > 59
+    (seconds !== undefined && Number.isNaN(seconds))
   ) {
     return null;
   }
 
-  return dayjs().hour(hours).minute(minutes).second(seconds).millisecond(0);
+  const date = new Date();
+  date.setHours(hours);
+  date.setMinutes(minutes);
+  date.setSeconds(seconds ?? 0);
+  date.setMilliseconds(0);
+
+  return dayjs(date);
 };
 
-const getTimeInputSx = (hasError: boolean) => ({
+const formatDayjsToTimeString = (value: Dayjs, timePrecision: string): string => {
+  const showSeconds = timePrecision === "seconds";
+  const hours = value.hour().toString().padStart(2, "0");
+  const minutes = value.minute().toString().padStart(2, "0");
+
+  if (!showSeconds) {
+    return `${hours}:${minutes}`;
+  }
+
+  const seconds = value.second().toString().padStart(2, "0");
+  return `${hours}:${minutes}:${seconds}`;
+};
+
+const getPickerInputSx = (hasError: boolean) => ({
   width: "100%",
 
   "& .MuiInputBase-root": {
@@ -89,17 +104,17 @@ const getTimeInputSx = (hasError: boolean) => ({
   },
 });
 
-const getTimePickerSlotProps = (hasError: boolean) => ({
+const getPickerSlotProps = (hasError: boolean, autoFocus = false) => ({
   textField: {
     variant: "standard" as const,
     fullWidth: true,
-    autoFocus: true,
+    autoFocus,
     error: hasError,
     helperText: undefined,
     InputProps: {
       disableUnderline: true,
     },
-    sx: getTimeInputSx(hasError),
+    sx: getPickerInputSx(hasError),
   },
   popper: {
     placement: "bottom-start" as const,
@@ -137,39 +152,40 @@ const iconButtonSx = {
 export const TimeCellEditor: React.FC<TimeCellEditorProps> = ({
   value,
   onChange,
-  showSeconds = false,
+  timePrecision = "minutes",
   isRequired = false,
   errorMessage,
 }) => {
-  const [selectedTime, setSelectedTime] = useState<Dayjs | null>(() => parseTimeToDayjs(value));
-  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
+  const [localValue, setLocalValue] = useState<Dayjs | null>(() => parseTimeStringToDayjs(value));
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    setSelectedTime(parseTimeToDayjs(value));
+    setLocalValue(parseTimeStringToDayjs(value));
   }, [value]);
 
-  const handleTimeChange = (newTime: Dayjs | null) => {
-    setSelectedTime(newTime);
+  const emitValue = (nextValue: Dayjs | null) => {
+    setLocalValue(nextValue);
 
-    if (newTime && newTime.isValid()) {
-      const timeFormat = showSeconds ? "HH:mm:ss" : "HH:mm";
-      onChange(newTime.format(timeFormat), true);
+    if (nextValue && nextValue.isValid()) {
+      onChange(formatDayjsToTimeString(nextValue, timePrecision), true);
       return;
     }
 
     onChange("", !isRequired);
   };
 
-  const handleTimeMouseDown = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleIconMouseDown = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
   };
 
-  const handleTimeClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleIconClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    setIsTimePickerOpen(true);
+    setIsOpen(true);
   };
+
+  const showSeconds = timePrecision === "seconds";
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
@@ -177,52 +193,42 @@ export const TimeCellEditor: React.FC<TimeCellEditorProps> = ({
         sx={{
           width: "100%",
           height: "100%",
-          display: "grid",
-          gridTemplateRows: "auto",
-          gap: "8px",
+          display: "flex",
+          alignItems: "center",
+          gap: "4px",
+          direction: "ltr",
           padding: "6px 8px",
           boxSizing: "border-box",
-          alignItems: "center",
         }}>
         <Box
           sx={{
-            width: "100%",
-            minWidth: 0,
+            width: 30,
+            flexShrink: 0,
             display: "flex",
             alignItems: "center",
-            gap: "4px",
-            direction: "ltr",
+            justifyContent: "flex-start",
           }}>
-          <Box
-            sx={{
-              width: 30,
-              flexShrink: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-start",
-            }}>
-            <IconButton
-              size="small"
-              onMouseDown={handleTimeMouseDown}
-              onClick={handleTimeClick}
-              sx={iconButtonSx}>
-              <AccessTimeIcon fontSize="small" />
-            </IconButton>
-          </Box>
+          <IconButton
+            size="small"
+            onMouseDown={handleIconMouseDown}
+            onClick={handleIconClick}
+            sx={iconButtonSx}>
+            <AccessTimeIcon fontSize="small" />
+          </IconButton>
+        </Box>
 
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <TimePicker
-              open={isTimePickerOpen}
-              onOpen={() => setIsTimePickerOpen(true)}
-              onClose={() => setIsTimePickerOpen(false)}
-              value={selectedTime}
-              onChange={handleTimeChange}
-              format={showSeconds ? "HH:mm:ss" : "HH:mm"}
-              ampm={false}
-              views={showSeconds ? ["hours", "minutes", "seconds"] : ["hours", "minutes"]}
-              slotProps={getTimePickerSlotProps(!!errorMessage)}
-            />
-          </Box>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <TimePicker
+            open={isOpen}
+            onOpen={() => setIsOpen(true)}
+            onClose={() => setIsOpen(false)}
+            value={localValue}
+            onChange={emitValue}
+            format={showSeconds ? "HH:mm:ss" : "HH:mm"}
+            ampm={false}
+            views={showSeconds ? ["hours", "minutes", "seconds"] : ["hours", "minutes"]}
+            slotProps={getPickerSlotProps(!!errorMessage, true)}
+          />
         </Box>
       </Box>
     </LocalizationProvider>

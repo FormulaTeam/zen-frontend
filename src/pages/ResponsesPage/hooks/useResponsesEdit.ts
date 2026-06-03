@@ -39,17 +39,15 @@ import {
   OptionResponseValue,
 } from "../../../utils/optionResponseValue";
 import { saveQuickEditDraft, clearQuickEditDraft } from "../../FormEditor/utils/draftPersistence";
-import { DefaultDateValue } from "../../FormEditor/schemas/fields/dateSchema";
-import { DefaultTimeValue } from "../../FormEditor/schemas/fields/timeSchema";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const ISRAEL_TZ = "Asia/Jerusalem";
 
-const getCurrentDateDefaultValue = (dateAndTime?: boolean): string => {
+const getCurrentDateDefaultValue = (isDateTime?: boolean): string => {
   const israelNow = dayjs().tz(ISRAEL_TZ);
-  const value = dateAndTime ? israelNow : israelNow.startOf("day");
+  const value = isDateTime ? israelNow : israelNow.startOf("day");
 
   return value.utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
 };
@@ -98,18 +96,16 @@ type EditorFieldExtra = {
   validationRegex?: string;
   minValue?: number;
   maxValue?: number;
-  numberType?: string;
-  multiple?: boolean;
+  numberType?: "integer" | "decimal";
+  selectionMode?: "multiple" | "single";
   defaultValue?: unknown;
-  dateAndTime?: boolean;
-  includeTime?: boolean;
-  includeSeconds?: boolean;
-  showSeconds?: boolean;
+  dateType?: "datetime" | "date";
+  timePrecision?: "seconds" | "minutes";
   options?:
     | string[]
     | {
         items?: OptionResponseValue[];
-        defaultOptionId?: string;
+        defaultValue?: string[];
       };
 };
 
@@ -297,7 +293,7 @@ const isMultipleOptionsField = (field: FormFieldDto): boolean => {
     return false;
   }
 
-  return Boolean(getFieldExtra(field).multiple);
+  return getFieldExtra(field).selectionMode === "multiple";
 };
 
 const getEmptyFieldValue = (field: FormFieldDto): unknown => {
@@ -326,29 +322,29 @@ const getDefaultFieldValue = (field: FormFieldDto): unknown => {
   const extra = getFieldExtra(field);
 
   if (field.fieldType === fieldType.Options) {
-    if (
-      extra.options &&
-      typeof extra.options === "object" &&
-      !Array.isArray(extra.options) &&
-      typeof extra.options.defaultOptionId === "string"
-    ) {
-      return extra.options.defaultOptionId;
+    const defaultValue =
+      extra.options && typeof extra.options === "object" && !Array.isArray(extra.options)
+        ? extra.options.defaultValue
+        : undefined;
+
+    if (defaultValue && Array.isArray(defaultValue)) {
+      return extra.selectionMode === "multiple" ? defaultValue : (defaultValue[0] ?? "");
     }
 
     return getEmptyFieldValue(field);
   }
 
   if (field.fieldType === fieldType.Date) {
-    if (Number(extra.defaultValue) === DefaultDateValue.NOW) {
-      return getCurrentDateDefaultValue(Boolean(extra.dateAndTime ?? extra.includeTime));
+    if (extra.defaultValue === "currentDate" || extra.defaultValue === "currentDateTime") {
+      return getCurrentDateDefaultValue(extra.dateType === "datetime");
     }
 
     return getEmptyFieldValue(field);
   }
 
   if (field.fieldType === fieldType.Time) {
-    if (Number(extra.defaultValue) === DefaultTimeValue.NOW) {
-      return getCurrentTimeDefaultValue(Boolean(extra.includeSeconds ?? extra.showSeconds));
+    if (extra.defaultValue === "currentTime") {
+      return getCurrentTimeDefaultValue(extra.timePrecision === "seconds");
     }
 
     return getEmptyFieldValue(field);

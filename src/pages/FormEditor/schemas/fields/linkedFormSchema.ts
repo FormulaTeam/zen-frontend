@@ -1,16 +1,14 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
-import { literal, number, strictObject, string } from "zod";
-
-const noLinkedIdErrorMessage = "לא נבחר טופס לקישור";
+import { literal } from "zod";
+import { FormFieldExtraSchema } from "formula-gear";
 
 const linkedFormSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.linkedForm),
 
-  extra: strictObject({
-    linkedFormId: string(noLinkedIdErrorMessage).min(1, noLinkedIdErrorMessage),
-    connectedFormId: number().int().positive().optional(),
-  }).optional(),
+  extra: FormFieldExtraSchema.default({
+    linkedFormId: 0,
+  }),
 });
 
 export default linkedFormSchema;

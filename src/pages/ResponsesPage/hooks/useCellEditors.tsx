@@ -38,15 +38,14 @@ type EditorFieldExtra = {
     | {
         items?: OptionResponseValue[];
       };
-  multiple?: boolean;
+  selectionMode?: "multiple" | "single";
   validationRegex?: string;
-  locationFormat?: string;
+  locationFormat?: "utm" | "wkt";
   minValue?: number;
   maxValue?: number;
-  numberType?: string;
-  dateAndTime?: boolean;
-  includeTime?: boolean;
-  includeSeconds?: boolean;
+  numberType?: "integer" | "decimal";
+  dateType?: "datetime" | "date";
+  timePrecision?: "seconds" | "minutes";
 };
 
 interface UseCellEditorsParams {
@@ -161,14 +160,13 @@ export const useCellEditors = ({
       const fieldExtra = getFieldExtra(formField);
       const {
         validationRegex,
-        multiple,
+        selectionMode,
         numberType,
         minValue,
         maxValue,
-        dateAndTime,
-        includeTime,
+        dateType,
         locationFormat,
-        includeSeconds,
+        timePrecision,
       } = fieldExtra;
 
       const handleChange = <T,>(newValue: T, isValid?: boolean): void => {
@@ -211,7 +209,7 @@ export const useCellEditors = ({
               onChange={handleChange}
               options={getOptionIds(fieldExtra)}
               optionLabels={getOptionLabelMap(fieldExtra)}
-              multiSelect={multiple}
+              selectionMode={selectionMode}
               isRequired={formField.isRequired}
               errorMessage={errorMessage}
             />
@@ -237,12 +235,7 @@ export const useCellEditors = ({
             <DateCellEditor
               value={params.value as string | null}
               onChange={handleChange}
-              dateAndTime={Boolean(
-                (formField as any).dateAndTime ??
-                dateAndTime ??
-                (formField as any).includeTime ??
-                includeTime,
-              )}
+              dateType={dateType}
               isRequired={formField.isRequired}
               errorMessage={errorMessage}
             />
@@ -253,7 +246,7 @@ export const useCellEditors = ({
           editor = (
             <TimeCellEditor
               value={params.value as string | null}
-              showSeconds={Boolean(includeSeconds)}
+              timePrecision={timePrecision}
               onChange={handleChange}
               isRequired={formField.isRequired}
               errorMessage={errorMessage}

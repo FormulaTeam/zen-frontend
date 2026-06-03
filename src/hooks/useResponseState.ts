@@ -38,25 +38,26 @@ import { saveResponseDraft, clearResponseDraft } from "../pages/FormEditor/utils
 export type FieldExtra = {
   options?: {
     items?: any[];
-    defaultOptionId?: string | string[];
     formId?: string | number;
     fieldId?: string;
   };
-  multiple?: boolean;
-  multiSelect?: boolean;
+  selectionMode?: "multiple" | "single";
   value?: any;
   validationRegex?: string;
   linkedFormId?: number;
   parentFieldId?: string;
   parentDependencies?: any[];
-  locationFormat?: string;
+  locationFormat?: "utm" | "wkt";
   min?: number;
   max?: number;
-  numberFormat?: string;
+  numberType?: "integer" | "decimal";
   initialNumberValue?: number;
   defaultValue?: any;
   conditions?: any[];
   sectionDescription?: string;
+  timePrecision?: "seconds" | "minutes";
+  dateType?: "datetime" | "date";
+  linkedOptionsFieldId?: string;
 };
 
 export interface FormFieldWithSectionDto extends FormFieldDto {
@@ -117,19 +118,19 @@ const flattenFields = (form: FormDto): FormFieldWithSectionDto[] => {
 
 const getDefaultOptionsValue = (field: FormFieldWithSectionDto) => {
   const extra = getFieldExtra(field);
-  const defaultOptionId = extra.options?.defaultOptionId;
+  const defaultValue = extra.defaultValue;
 
-  if (defaultOptionId === undefined) {
+  if (defaultValue === undefined) {
     return extra.value;
   }
 
-  const isMultiple = Boolean(extra.multiSelect ?? extra.multiple);
+  const isMultiple = extra.selectionMode === "multiple";
 
   if (isMultiple) {
-    return Array.isArray(defaultOptionId) ? defaultOptionId : [defaultOptionId];
+    return Array.isArray(defaultValue) ? defaultValue : [defaultValue];
   }
 
-  return Array.isArray(defaultOptionId) ? (defaultOptionId[0] ?? "") : defaultOptionId;
+  return Array.isArray(defaultValue) ? (defaultValue[0] ?? "") : defaultValue;
 };
 
 const getDefaultFieldValue = (field: FormFieldWithSectionDto) => {
@@ -138,6 +139,19 @@ const getDefaultFieldValue = (field: FormFieldWithSectionDto) => {
 
   if (currentFieldType === fieldType.Options) {
     return getDefaultOptionsValue(field);
+  }
+
+  if (currentFieldType === fieldType.Date) {
+    if (extra.defaultValue === "currentDate" || extra.defaultValue === "currentDateTime") {
+      return new Date().toISOString();
+    }
+  }
+
+  if (currentFieldType === fieldType.Time) {
+    if (extra.defaultValue === "currentTime") {
+      const now = new Date();
+      return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}${extra.timePrecision === "seconds" ? `:${String(now.getSeconds()).padStart(2, "0")}` : ""}`;
+    }
   }
 
   if (currentFieldType === fieldType.Number && extra.defaultValue !== undefined) {
@@ -158,7 +172,7 @@ const toValidatorField = (
 ): FormFieldLike => {
   if (field.fieldType === FieldTypeIds.options) {
     const extra = (field.extra ?? {}) as any;
-    const isMultiSelect = Boolean(extra?.multiSelect ?? extra?.multiple);
+    const isMultiSelect = extra?.selectionMode === "multiple";
 
     let items: { id: string; text: string }[] = [];
 
@@ -179,6 +193,11 @@ const toValidatorField = (
           }
         });
       }
+    } else if (Array.isArray((field as any).options)) {
+      items = (field as any).options.map((item: any) => ({
+        id: String(item.id),
+        text: String(item.text || item.id),
+      }));
     } else if (extra?.options?.items) {
       items = extra.options.items.map((item: any) => ({
         id: String(item.id),
@@ -594,9 +613,9 @@ export const useResponseState = (
             case fieldType.Options:
               value = getOptionResponseRawValue(value);
 
-              if (extra.multiple && value && !Array.isArray(value)) {
+              if (extra.selectionMode === "multiple" && value && !Array.isArray(value)) {
                 value = [value];
-              } else if (!extra.multiple && Array.isArray(value)) {
+              } else if (extra.selectionMode !== "multiple" && Array.isArray(value)) {
                 value = value[0] ?? "";
               }
               break;
@@ -937,7 +956,7 @@ export const useResponseState = (
                 const validValues = childValues.filter((val) => allowedOptions.has(val));
 
                 if (validValues.length !== childValues.length) {
-                  const newValue = childExtra.multiple
+                  const newValue = childExtra.selectionMode === "multiple"
                     ? validValues
                     : validValues.length > 0
                       ? validValues[0]
@@ -959,7 +978,7 @@ export const useResponseState = (
                 }
               }
             } else if (parentValues.length > 0) {
-              const emptyValue = childExtra.multiple ? [] : "";
+              const emptyValue = childExtra.selectionMode === "multiple" ? [] : "";
               newFormFieldsValuesMap.set(childFieldId, emptyValue);
 
               setFormFieldsValidMap((prev) => {

@@ -75,6 +75,7 @@ function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
           displayName: fieldData.displayName || "",
           required: fieldData.isRequired || false,
           extra: fieldData.extra || {},
+          options: (fieldData as any).options,
         },
         validationErrors: null,
       };

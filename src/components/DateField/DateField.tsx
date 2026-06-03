@@ -13,14 +13,14 @@ import {
 import { FormFieldDto } from "../../types/shared";
 
 type DateFieldExtra = {
-  dateAndTime?: boolean;
+  dateType?: "date" | "datetime";
   initialValType?: unknown;
 };
 
 type Props = {
   getBaseFieldElement: () => JSX.Element;
   formField: FormFieldDto;
-  onToggleDateAndTime: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onToggleDateType: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onDateChange: (e: SelectChangeEvent) => void;
 };
 
@@ -30,7 +30,7 @@ const getFieldExtra = (field: FormFieldDto): DateFieldExtra =>
 export default function DateField({
   getBaseFieldElement,
   formField,
-  onToggleDateAndTime,
+  onToggleDateType,
   onDateChange,
 }: Props) {
   const theme = useTheme();
@@ -44,11 +44,11 @@ export default function DateField({
         label="תאריך ושעה"
         control={
           <Checkbox
-            checked={Boolean(extra.dateAndTime)}
+            checked={extra.dateType === "datetime"}
             style={{
               color: theme.palette.primary.dark,
             }}
-            onChange={onToggleDateAndTime}
+            onChange={onToggleDateType}
           />
         }
       />

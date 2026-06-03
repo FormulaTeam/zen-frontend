@@ -53,7 +53,7 @@ const toNumber = (value: unknown): number | undefined => {
   return undefined;
 };
 
-const getConnectedFormId = (field: FormFieldDto): number | undefined => {
+const getLinkedFormId = (field: FormFieldDto): number | undefined => {
   if (!field.extra || typeof field.extra !== "object") {
     return undefined;
   }
@@ -79,7 +79,7 @@ function ConnectedFormSection({
   handleRemoveChildForm,
   initialResponse,
 }: Props) {
-  const linkedFormId = getConnectedFormId(field);
+  const linkedFormId = getLinkedFormId(field);
 
   const {
     formFields,
