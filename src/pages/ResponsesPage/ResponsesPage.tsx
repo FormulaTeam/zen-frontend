@@ -118,6 +118,7 @@ const ResponsesPageContent = (): JSX.Element => {
     handleConfirmCancel,
     handleCancelDialogClose,
     handleAddNewResponse,
+    handleDuplicateResponse,
   } = useResponsesEdit();
 
   const [showRestoreBanner, setShowRestoreBanner] = useState(false);
@@ -234,6 +235,7 @@ const ResponsesPageContent = (): JSX.Element => {
                 onToggleEditMode={handleToggleEditMode}
                 onSaveChanges={handleSaveChanges}
                 onAddNewResponse={handleAddNewResponse}
+                onDuplicateResponse={handleDuplicateResponse}
                 isUpdating={isUpdating}
                 permissions={permissions}
                 selectedRows={selectedRows}

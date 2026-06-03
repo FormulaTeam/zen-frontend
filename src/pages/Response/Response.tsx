@@ -409,6 +409,8 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
         <ResponseHeader
           formTitle={formTitle}
           viewMode={viewMode}
+          isEdit={!!id && !viewMode && !copyMode}
+          isCopy={copyMode}
           permissionTypes={permissionTypes}
           onEdit={onEdit}
           onBack={onExitClick}

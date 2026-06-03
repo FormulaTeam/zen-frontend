@@ -4,6 +4,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import AddIcon from "@mui/icons-material/Add";
 import { UnifiedButton } from "../styled";
 import TableEditIconSvg from "../../../icons/tableEdit.svg";
@@ -20,6 +21,7 @@ interface EditResponsesButtonProps {
   onToggleEditMode: () => void;
   onSaveChanges: () => void;
   onAddNewResponse: () => void;
+  onDuplicateResponse: (rowId: string) => void;
   permissions: Permission[] | undefined;
   selectedRows: any[];
   handleDeleteResponses: (rows: any[]) => void;
@@ -32,6 +34,7 @@ export const EditResponsesButton = ({
   onToggleEditMode,
   onSaveChanges,
   onAddNewResponse,
+  onDuplicateResponse: onDuplicateResponseProp,
   permissions,
   selectedRows,
   handleDeleteResponses,
@@ -39,16 +42,27 @@ export const EditResponsesButton = ({
   const navigate = useNavigate();
   const { form } = useFormStore();
   const hasSelection = selectedRows.length > 0;
+  const isSingleSelection = selectedRows.length === 1;
 
   const onEditResponse = () => {
-    if (selectedRows.length === 1 && form?.id) {
+    if (isSingleSelection && form?.id) {
       navigate(`/response/edit/${form.id}/${selectedRows[0].id}`);
     }
   };
 
   const onViewResponse = () => {
-    if (selectedRows.length === 1 && form?.id) {
+    if (isSingleSelection && form?.id) {
       navigate(`/response/view/${form.id}/${selectedRows[0].id}`);
+    }
+  };
+
+  const onDuplicateResponse = () => {
+    if (isSingleSelection && form?.id) {
+      if (isInEditMode) {
+        onDuplicateResponseProp(String(selectedRows[0].id));
+      } else {
+        navigate(`/response/create/${form.id}/${selectedRows[0].id}`);
+      }
     }
   };
 
@@ -82,13 +96,18 @@ export const EditResponsesButton = ({
             {"מחיקה"}
           </UnifiedButton>
         )}
+
+        {isSingleSelection && (
+          <UnifiedButton onClick={onDuplicateResponse} startIcon={<ContentCopyIcon />}>
+            שכפול
+          </UnifiedButton>
+        )}
       </Box>
     );
   }
 
   // 2. SELECTION MODE (OUTSIDE QUICK EDIT)
   if (hasSelection) {
-    const isSingleSelection = selectedRows.length === 1;
     return (
       <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
         <UnifiedButton
@@ -110,6 +129,13 @@ export const EditResponsesButton = ({
           startIcon={<DeleteIcon />}
           sx={{ color: "#d32f2f" }}>
           מחיקה
+        </UnifiedButton>
+
+        <UnifiedButton
+          disabled={!isSingleSelection}
+          onClick={onDuplicateResponse}
+          startIcon={<ContentCopyIcon />}>
+          שכפול
         </UnifiedButton>
       </Box>
     );

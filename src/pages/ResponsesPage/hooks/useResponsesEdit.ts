@@ -712,6 +712,37 @@ export const useResponsesEdit = () => {
     setEditedRows((prev) => new Map(prev).set(tempId, newRow));
   }, [isInEditMode, dtoForm, formFields, user]);
 
+  const duplicateResponse = useCallback(
+    (rowId: RowId): void => {
+      if (!isInEditMode || !dtoForm || formFields.length === 0) return;
+
+      const sourceRow =
+        localRows.find((row) => String(row.id) === String(rowId)) ??
+        responseRows.find((row) => String(row.id) === String(rowId));
+
+      if (!sourceRow) return;
+
+      newRowCounterRef.current += 1;
+
+      const tempId = `new_${newRowCounterRef.current}`;
+      const now = moment().toISOString();
+      const displayName = getAuthDisplayName(user);
+
+      const newRow: Row = {
+        ...sourceRow,
+        id: tempId,
+        created: now,
+        createdByName: displayName,
+        edited: now,
+        editedByName: displayName,
+      };
+
+      setLocalRows((prev) => [newRow, ...prev]);
+      setEditedRows((prev) => new Map(prev).set(tempId, newRow));
+    },
+    [isInEditMode, dtoForm, formFields, user, localRows, responseRows],
+  );
+
   const saveChanges = useCallback(async (): Promise<boolean> => {
     try {
       if (!hasUnsavedChanges) {
@@ -902,5 +933,6 @@ export const useResponsesEdit = () => {
     handleConfirmCancel: confirmCancel,
     handleCancelDialogClose: closeCancelDialog,
     handleAddNewResponse: addNewResponse,
+    handleDuplicateResponse: duplicateResponse,
   };
 };
