@@ -3,6 +3,7 @@ import { Box, Link as MuiLink, Tooltip, styled } from "@mui/material";
 import moment from "moment";
 
 import { OverflowTooltip } from "@components/OverflowTooltip";
+import { ExpandableLongText } from "@components/ExpandableLongText";
 import CustomCarousel from "../../../components/FilePreview/CustomCarousel";
 import { FormFieldDto } from "../../../types/shared";
 import { fieldType } from "formula-gear";
@@ -19,10 +20,15 @@ interface UseCellDisplayParams {
   onFileClick?: (file: any) => void;
   searchQuery?: string;
   isInEditMode?: boolean;
+  onCellExpandToggle?: (rowId: string | number, fieldId: string, isExpanded: boolean) => void;
 }
 
 interface UseCellDisplayReturn {
-  formatCellValue: (value: any, field: FormFieldDto) => React.ReactElement | null;
+  formatCellValue: (
+    value: any,
+    field: FormFieldDto,
+    rowId?: string | number,
+  ) => React.ReactElement | null;
 }
 
 type EditorFieldExtra = {
@@ -238,12 +244,32 @@ export const useCellDisplay = ({
   formId,
   onFileClick,
   searchQuery,
+  onCellExpandToggle,
 }: UseCellDisplayParams): UseCellDisplayReturn => {
   const highlightText = useCallback(
     (text: string | number | null | undefined): React.ReactNode => {
       return highlightTextUtil(text, searchQuery);
     },
     [searchQuery],
+  );
+
+  const formatLongTextCell = useCallback(
+    (value: any, fieldId: string, rowId?: string | number): React.ReactElement => {
+      const displayValue = String(value ?? "");
+
+      return (
+        <ExpandableLongText
+          text={displayValue}
+          highlightedText={highlightText(displayValue)}
+          onToggle={(isExpanded) => {
+            if (onCellExpandToggle && rowId !== undefined) {
+              onCellExpandToggle(rowId, fieldId, isExpanded);
+            }
+          }}
+        />
+      );
+    },
+    [highlightText, onCellExpandToggle],
   );
 
   const formatLinkCell = useCallback(
@@ -440,7 +466,7 @@ export const useCellDisplay = ({
   );
 
   const formatCellValue = useCallback(
-    (value: any, field: FormFieldDto): React.ReactElement | null => {
+    (value: any, field: FormFieldDto, rowId?: string | number): React.ReactElement | null => {
       const extra = getFieldExtra(field);
 
       if (value === null || value === undefined || value === "") {
@@ -455,6 +481,9 @@ export const useCellDisplay = ({
       const includeSeconds = extra.timePrecision === "seconds";
 
       switch (field.fieldType) {
+        case fieldType.LongText:
+          return formatLongTextCell(value, String(field.id), rowId);
+
         case fieldType.Options:
           return formatOptionsCell(value, field);
 

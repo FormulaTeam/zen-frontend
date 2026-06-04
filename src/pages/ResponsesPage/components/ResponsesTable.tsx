@@ -349,6 +349,40 @@ export const ResponsesTable = React.memo(
     const shouldUseHeaderFilters = showFilters && !isInEditMode;
 
     const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
+    const [expandedRows, setExpandedRows] = useState<Record<string | number, Set<string>>>(
+      {},
+    );
+
+    const handleCellExpandToggle = useCallback(
+      (rowId: string | number, fieldId: string, isExpanded: boolean) => {
+        const stringRowId = String(rowId);
+
+        setExpandedRows((prev) => {
+          const next = { ...prev };
+          const rowExpandedFields = new Set(next[stringRowId] || []);
+
+          if (isExpanded) {
+            rowExpandedFields.add(fieldId);
+          } else {
+            rowExpandedFields.delete(fieldId);
+          }
+
+          if (rowExpandedFields.size > 0) {
+            next[stringRowId] = rowExpandedFields;
+          } else {
+            delete next[stringRowId];
+          }
+
+          return next;
+        });
+
+        // Use a small timeout to allow the DOM to update before recalculating heights
+        setTimeout(() => {
+          apiRef.current?.resetRowHeights();
+        }, 0);
+      },
+      [apiRef],
+    );
 
     const activeEditingRowIds = useMemo(() => {
       const rowIds = new Set<string>();
@@ -368,7 +402,7 @@ export const ResponsesTable = React.memo(
 
     useEffect(() => {
       apiRef.current?.resetRowHeights();
-    }, [apiRef, activeEditingRowIds, localRows]);
+    }, [apiRef, activeEditingRowIds]);
 
     const { childrenFormsData, hasFormInFormFields, loadingChildForms, getChildFormData } =
       useChildForms({ form });
@@ -410,6 +444,7 @@ export const ResponsesTable = React.memo(
       onFileClick: handleFileClick,
       searchQuery: filter?.query,
       isInEditMode,
+      onCellExpandToggle: handleCellExpandToggle,
     });
 
     const handleCellClick = useCallback(
@@ -550,7 +585,7 @@ export const ResponsesTable = React.memo(
 
             const content =
               params.value !== undefined && params.value !== null
-                ? formatCellValue(params.value, field)
+                ? formatCellValue(params.value, field, rowId)
                 : null;
 
             const display = content ?? <Box component="span" className="cell-box" />;
@@ -1134,7 +1169,13 @@ export const ResponsesTable = React.memo(
               getCellClassName={getCellClassName}
               rowHeight={49}
               getRowHeight={(params) => {
-                if (isInEditMode && activeEditingRowIds.has(String(params.id))) {
+                const stringId = String(params.id);
+
+                if (isInEditMode && activeEditingRowIds.has(stringId)) {
+                  return "auto";
+                }
+
+                if (expandedRows[stringId]) {
                   return "auto";
                 }
 

@@ -698,6 +698,7 @@ export const useResponsesEdit = () => {
 
     const newRow: Row = {
       id: tempId,
+      index: undefined,
       created: now,
       createdByName: displayName,
       edited: now,
@@ -731,6 +732,7 @@ export const useResponsesEdit = () => {
       const newRow: Row = {
         ...sourceRow,
         id: tempId,
+        index: undefined,
         created: now,
         createdByName: displayName,
         edited: now,

@@ -122,6 +122,8 @@ export const MainContentWrapper = styled(Box)<BoxProps>(() => ({
   minWidth: 0,
   minHeight: 0,
   overflow: "hidden",
+  position: "relative",
+  zIndex: 1,
 }));
 
 export const TopSection = styled(Box)<BoxProps>(() => ({
@@ -238,6 +240,9 @@ export const LoadingBtnBox = styled(Box)<LoadingBtnBoxProps>(({ $bgColor }) => (
 
 export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   "&.MuiDataGrid-root": {
+    "& .MuiDataGrid-filler--pinnedLeft": {
+      display: "none !important",
+    },
     width: "100%",
     maxWidth: "100%",
     fontSize: "18px",
