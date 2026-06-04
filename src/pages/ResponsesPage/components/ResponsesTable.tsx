@@ -1137,6 +1137,7 @@ export const ResponsesTable = React.memo(
               disableColumnMenu={isInEditMode}
               disableColumnSorting={false}
               disableColumnFilter={isInEditMode}
+              disableColumnPinning
               headerFilters={shouldUseHeaderFilters}
               autosizeOnMount
               autosizeOptions={{

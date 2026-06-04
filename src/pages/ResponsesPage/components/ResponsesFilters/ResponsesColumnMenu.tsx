@@ -97,10 +97,17 @@ export const ResponsesColumnMenu: React.FC<ResponsesColumnMenuProps> = (props) =
   return (
     <GridColumnMenu
       {...gridColumnMenuProps}
+      sx={{
+        "& .MuiDivider-root + .MuiDivider-root": {
+          display: "none",
+        },
+      }}
       slots={{
         ...slots,
         columnMenuColumnsItem: null,
         columnMenuFilterItem: null,
+        columnMenuPinningItem: null,
+        columnMenuHideItem: null,
         columnMenuFilterToggleItem: FilterToggleMenuItem as any,
         columnMenuClearFiltersItem: ClearFiltersMenuItem as any,
       }}
