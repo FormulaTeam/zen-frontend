@@ -1,37 +1,22 @@
-import { Box, Button, CircularProgress, IconButton, Tooltip, Typography, useTheme } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  IconButton,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import React from "react";
-import styled from "styled-components";
 import { permission } from "formula-gear";
-import { Edit } from "@mui/icons-material";
-
-const Header = styled(Box) <{ backgroundColor: string }>`
-  position: sticky;
-  top: 0;
-  background-color: ${({ backgroundColor }) => backgroundColor} !important;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 1100;
-  min-height: 64px;
-  border-bottom: 1px solid #e2e8f0;
-`;
-
-const HeaderSection = styled(Box)`
-  flex: 1;
-  display: flex;
-  align-items: center;
-`;
-
-const HeaderCenter = styled(Box)`
-  flex: 2;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
+import { Edit, ChevronLeft as ChevronLeftIcon } from "@mui/icons-material";
+import saveIcon from "../../icons/save-icon.png";
+import { Header, HeaderSection, HeaderButton } from "../../pages/Response/styled";
 
 interface ResponseHeaderProps {
   formTitle: string;
   viewMode: boolean;
+  isEdit?: boolean;
+  isCopy?: boolean;
   permissionTypes: number[];
   saveDisabled: boolean;
   onEdit: () => void;
@@ -42,6 +27,8 @@ interface ResponseHeaderProps {
 const ResponseHeader: React.FC<ResponseHeaderProps> = ({
   formTitle,
   viewMode,
+  isEdit,
+  isCopy,
   permissionTypes,
   saveDisabled,
 
@@ -55,39 +42,56 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
     permissionTypes.includes(permission.UpdateAnyResponse) ||
     permissionTypes.includes(permission.UpdateMyResponse);
 
+  const modeLabel = viewMode
+    ? "תצוגת תגובה"
+    : isCopy
+      ? "שכפול תגובה"
+      : isEdit
+        ? "עריכת תגובה"
+        : "תגובה חדשה";
+
   return (
-    <Header px={3} py={1} backgroundColor={theme.palette.background.default}>
-      <HeaderSection>
-        {viewMode && canEdit && (
-          <Tooltip title="עריכת תגובה">
-            <IconButton onClick={onEdit} color="primary" size="small">
-              <Edit fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
+    <Header>
+      <HeaderSection sx={{ gap: 1 }}>
+        <Typography variant="h5" sx={{ fontWeight: 700, fontSize: "1.5rem", color: "#020618" }}>
+          {formTitle}
+          <Box component="span" sx={{ mx: 2, color: "#94a3b8", fontWeight: 400 }}>
+            ←
+          </Box>
+          <Box component="span" sx={{ fontWeight: 500, color: "#475569" }}>
+            {modeLabel}
+          </Box>
+        </Typography>
       </HeaderSection>
 
-      <HeaderCenter>
-        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.1rem" }}>
-          {formTitle}
-        </Typography>
-      </HeaderCenter>
-
-      <HeaderSection sx={{ justifyContent: "flex-end", gap: 1.5 }}>
-        <Button onClick={onBack} variant="outlined" size="small" sx={{ borderRadius: "8px" }}>
-          חזרה
-        </Button>
-        {!viewMode && (
-          <Button
+      <HeaderSection sx={{ justifyContent: "flex-end", gap: 2 }}>
+        {viewMode ? (
+          canEdit && (
+            <Tooltip title="עריכת תגובה">
+              <HeaderButton onClick={onEdit} size="small" sx={{ minWidth: "50px", p: 0 }}>
+                <Edit sx={{ fontSize: "22px" }} />
+              </HeaderButton>
+            </Tooltip>
+          )
+        ) : (
+          <HeaderButton
             onClick={onSaveAndClose}
-            variant="contained"
             disabled={saveDisabled}
             size="small"
-            sx={{ borderRadius: "8px", minWidth: "120px" }}
-          >
-            {saveDisabled ? <CircularProgress size={20} color="inherit" /> : "שמירה"}
-          </Button>
+            startIcon={
+              saveDisabled ? (
+                <CircularProgress size={18} color="inherit" />
+              ) : (
+                <img src={saveIcon} style={{ width: 22, height: 22 }} alt="save" />
+              )
+            }
+            sx={{ minWidth: "120px", px: 3 }}>
+            שמירה
+          </HeaderButton>
         )}
+        <HeaderButton onClick={onBack} size="small" sx={{ minWidth: "50px", p: 0 }}>
+          <ChevronLeftIcon sx={{ fontSize: "28px" }} />
+        </HeaderButton>
       </HeaderSection>
     </Header>
   );

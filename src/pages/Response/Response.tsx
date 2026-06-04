@@ -18,10 +18,9 @@ import { useResponseSave, type ParentResponseRef } from "../../hooks/useResponse
 import { useResponseState } from "../../hooks/useResponseState";
 import { showErrorNotification } from "../../utils/utils";
 import { Close, Edit, Error as ErrorIcon, Add } from "@mui/icons-material";
-import { FormSectionsContainer } from "./styled";
+import { FormSectionsContainer, PageContainer } from "./styled";
 import ConnectedFormSection from "../../components/FormSection/ConnectedFormSection";
 import { useChildForms } from "../../hooks/useChildForms";
-import styled from "styled-components";
 import ResponseHeader from "../../components/ResponseComponents/ResponseHeader";
 import ResponseSection from "../../components/ResponseComponents/ResponseSection";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
@@ -30,12 +29,6 @@ import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialo
 import { useValidationErrors, type ValidationDisplayError } from "../../hooks/useValidationErrors";
 import { clearResponseDraft, getResponseDraft } from "../FormEditor/utils/draftPersistence";
 import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner";
-
-const PageContainer = styled(Container)`
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-`;
 
 interface ResponseProps {
   user: any;
@@ -405,10 +398,12 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
   return (
     <div className="response-page">
-      <PageContainer disableGutters maxWidth={false}>
+      <PageContainer maxWidth={false}>
         <ResponseHeader
           formTitle={formTitle}
           viewMode={viewMode}
+          isEdit={!!id && !viewMode && !copyMode}
+          isCopy={copyMode}
           permissionTypes={permissionTypes}
           onEdit={onEdit}
           onBack={onExitClick}

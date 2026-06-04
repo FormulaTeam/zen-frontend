@@ -414,7 +414,8 @@ export const useResponseState = (
   hasUnsavedChanges?: boolean,
   initialResponse?: UseResponseStateInitialResponse,
 ) => {
-  const [formTitle, setFormTitle] = useState("");
+  const [form, setForm] = useState<FormDto | null>(null);
+  const formTitle = form?.name || "";
   const [formFields, setFormFields] = useState<FormFieldWithSectionDto[]>([]);
   const [formFieldsByIdMap, setFormFieldsByIdsMap] = useState<Map<string, FormFieldWithSectionDto>>(
     new Map(),
@@ -424,7 +425,6 @@ export const useResponseState = (
     Map<string, FieldValidationError | null>
   >(new Map());
   const [formFieldsTouchedMap, setFormFieldsTouchedMap] = useState<Map<string, boolean>>(new Map());
-  const [form, setForm] = useState<FormDto | null>(null);
   const [response, setResponse] = useState<ResponseDto | null>(initialResponse ?? null);
   const [loading, setLoading] = useState(true);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -583,8 +583,6 @@ export const useResponseState = (
     });
 
     if (effectiveResponseId) {
-      setFormTitle((copyMode ? "יצירת תגובה - " : "עריכת תגובה - ") + form.name);
-
       const fieldValuesArray = (response?.fieldValues ?? []) as ResponseFieldValueDto[];
       const fieldDefsMap = new Map<string, FormFieldWithSectionDto>();
 
@@ -633,12 +631,6 @@ export const useResponseState = (
 
         nextValuesMap.set(currentFieldId, value);
       });
-    } else {
-      setFormTitle("יצירת תגובה - " + form.name);
-    }
-
-    if (viewMode) {
-      setFormTitle("צפייה בתגובה - " + form.name);
     }
 
     initializedStateKeyRef.current = stateKey;
