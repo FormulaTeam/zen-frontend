@@ -793,19 +793,18 @@ export const ResponsesTable = React.memo(
     ]);
 
     useEffect(() => {
-      if (isInEditMode || isRowsLoading || localRows.length === 0) return;
+      if (isRowsLoading || displayRows.length === 0) return;
 
-      const frameId = window.requestAnimationFrame(() => {
-        void apiRef.current?.autosizeColumns({
+      const timer = setTimeout(() => {
+        apiRef.current?.autosizeColumns({
           includeHeaders: true,
           includeOutliers: true,
           expand: false,
-          disableColumnVirtualization: true,
         });
-      });
+      }, 100);
 
-      return () => window.cancelAnimationFrame(frameId);
-    }, [apiRef, getFormColumns, isInEditMode, isRowsLoading, localRows.length]);
+      return () => clearTimeout(timer);
+    }, [apiRef, isRowsLoading, displayRows.length]);
 
     const editableColumnFields = useMemo(
       () =>
@@ -1139,7 +1138,6 @@ export const ResponsesTable = React.memo(
               disableColumnFilter={isInEditMode}
               disableColumnPinning
               headerFilters={shouldUseHeaderFilters}
-              autosizeOnMount
               autosizeOptions={{
                 includeHeaders: true,
                 includeOutliers: true,

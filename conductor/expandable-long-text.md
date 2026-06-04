@@ -28,6 +28,7 @@ This task implemented a specific behavior for long text cells in the responses t
 ### 4. UI Refinements
 - **Stacking Context**: Set `z-index: 1` and `position: relative` on `MainContentWrapper` in `src/pages/ResponsesPage/styled.tsx` to ensure table content is prioritized in the visual hierarchy.
 - **Filler Removal**: Added a global override in `StyledDataGrid` to hide `.MuiDataGrid-filler--pinnedLeft` (`display: none !important`), removing unnecessary layout placeholders.
+- **Autosize Stability**: Removed `autosizeOnMount` and implemented a delayed `autosizeColumns` trigger in a `useEffect` that waits for data to be loaded. This prevents columns from shrinking to the header width on initial load or refresh.
 
 ## Verification Results
 - [x] Long text cells are truncated by default with an ellipsis.
