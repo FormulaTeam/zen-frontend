@@ -57,6 +57,7 @@ export const ExpandableLongText = ({ text, onToggle, highlightedText }: Expandab
         width: "100%",
         position: "relative",
         gap: 0.5,
+        py: 1,
       }}
     >
       <Box
