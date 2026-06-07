@@ -251,22 +251,20 @@ export const useDetailPanel = ({
     }
 
     return (
-      <ExpandIconBox>
-        <Tooltip title={allExpanded ? "כיווץ הכל" : "הרחב הכל"}>
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleAllExpanded();
-            }}>
-            {allExpanded ? (
-              <KeyboardDoubleArrowUpIcon fontSize="small" />
-            ) : (
-              <KeyboardDoubleArrowDownIcon fontSize="small" />
-            )}
-          </IconButton>
-        </Tooltip>
-      </ExpandIconBox>
+      <Tooltip title={allExpanded ? "כיווץ הכל" : "הרחב הכל"}>
+        <IconButton
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleAllExpanded();
+          }}>
+          {allExpanded ? (
+            <KeyboardDoubleArrowUpIcon fontSize="small" />
+          ) : (
+            <KeyboardDoubleArrowDownIcon fontSize="small" />
+          )}
+        </IconButton>
+      </Tooltip>
     );
   }, [hasFormInFormFields, allExpanded, toggleAllExpanded]);
 
