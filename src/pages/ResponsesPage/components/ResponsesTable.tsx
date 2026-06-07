@@ -726,6 +726,7 @@ export const ResponsesTable = React.memo(
       });
 
       const structuralColumns: GridColDef[] = [
+        metaColumnsMap.get(`${prefixes.Meta}index`)!,
         ...(expandColumn ? [{ ...expandColumn, filterable: false }] : []),
       ];
 
@@ -764,6 +765,9 @@ export const ResponsesTable = React.memo(
               }
             }
 
+            // Skip index since it's now structural
+            if (columnId === `${prefixes.Meta}index`) return undefined;
+
             if (dynamicColumnsMap.has(columnId)) return dynamicColumnsMap.get(columnId);
             if (metaColumnsMap.has(columnId)) return metaColumnsMap.get(columnId);
 
@@ -772,7 +776,6 @@ export const ResponsesTable = React.memo(
           .filter((col): col is GridColDef => col !== undefined);
       } else {
         resultColumns = [
-          metaColumnsMap.get(`${prefixes.Meta}index`)!,
           ...Array.from(dynamicColumnsMap.values()),
           metaColumnsMap.get(`${prefixes.Meta}pushed_to_metro`)!,
           metaColumnsMap.get(`${prefixes.Meta}created_by`)!,
