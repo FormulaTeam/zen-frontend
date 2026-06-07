@@ -595,6 +595,10 @@ export const ExpandIconBox = styled(Box)(() => ({
   alignItems: "center",
   width: "100%",
   height: "100%",
+  color: "#62748E",
+  "& .MuiIconButton-root": {
+    color: "inherit",
+  },
 }));
 
 export const SyncStatusIconBox = styled(Box)(() => ({
