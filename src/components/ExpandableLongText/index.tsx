@@ -53,11 +53,10 @@ export const ExpandableLongText = ({ text, onToggle, highlightedText }: Expandab
       sx={{
         display: "flex",
         flexDirection: "row",
-        alignItems: isExpanded ? "flex-start" : "center",
+        alignItems: "flex-start",
         width: "100%",
         position: "relative",
         gap: 0.5,
-        py: isExpanded ? 1 : 0,
       }}
     >
       <Box
@@ -76,21 +75,13 @@ export const ExpandableLongText = ({ text, onToggle, highlightedText }: Expandab
         {highlightedText || text}
       </Box>
       {(isOverflowing || isExpanded) && (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            mt: isExpanded ? -0.5 : 0,
-            flexShrink: 0,
-          }}
-        >
+        <Box sx={{ display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
           <Tooltip title={isExpanded ? "צמצם" : "הרחב"}>
             <IconButton
               size="small"
               onClick={handleToggle}
               sx={{
                 padding: "2px",
-                
                 transform: "rotate(45deg)",
                 "&:hover": {
                   backgroundColor: "rgba(0, 0, 0, 0.04)",
