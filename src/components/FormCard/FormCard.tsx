@@ -8,6 +8,7 @@ import {
   Menu,
   MenuItem,
   Tooltip,
+  Typography,
   useTheme,
 } from "@mui/material";
 import { MoreVert, ChatBubbleOutline, EditOutlined, ShareOutlined, DeleteOutline } from "@mui/icons-material";
@@ -17,6 +18,7 @@ import ShareIcon from "../../icons/share.svg";
 import formX from "../../images/form_x.png";
 import { CustomIcon } from "../../theme/icons";
 import { getFormIconByName } from "../../utils/utils";
+import { highlightText } from "../../utils/highlighting";
 import CardCreationDetails from "./CardCreationDetails";
 import { PermissionGate } from "../PermissionGate";
 import {
@@ -46,12 +48,14 @@ const FormCard = ({
   navigate,
   resetSearchValue,
   isCreator,
+  searchValue,
 }: {
   form: FormOverviewDto;
   isSuperAdmin: boolean | null;
   navigate: any;
   resetSearchValue: () => void;
   isCreator: boolean;
+  searchValue?: string;
 }) => {
   const theme = useTheme();
   const [showSharePopup, setShowSharePopup] = useState(false);
@@ -155,9 +159,32 @@ const FormCard = ({
           <ItemTitleAndNum>
             <Box sx={{ display: "flex", alignItems: "center", overflow: "hidden", gap: "12px", flex: 1 }}>
               {getIcon(form.icon ?? null)}
-              <ItemTitle onClick={goToResponsesPage} title={form.name} className="form-title" sx={{ color: "#020618" }}>
-                {form.name}
-              </ItemTitle>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: "8px",
+                  overflow: "hidden",
+                  flex: 1,
+                }}>
+                <ItemTitle
+                  onClick={goToResponsesPage}
+                  title={form.name}
+                  className="form-title"
+                  sx={{ color: "#020618" }}>
+                  {highlightText(form.name, searchValue)}
+                </ItemTitle>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "#62748E",
+                    minWidth: "max-content",
+                    fontWeight: 400,
+                    fontSize: "11px",
+                  }}>
+                  {highlightText(form.id, searchValue)}
+                </Typography>
+              </Box>
             </Box>
 
             {hasMenuPermissions && (
@@ -221,7 +248,7 @@ const FormCard = ({
 
           <DescriptionDiv>
             <ItemDescription className="form-description" sx={{ color: "#020618" }}>
-              {form.description ? form.description : "-"}
+              {form.description ? highlightText(form.description, searchValue) : "-"}
             </ItemDescription>
           </DescriptionDiv>
         </ItemTitles>

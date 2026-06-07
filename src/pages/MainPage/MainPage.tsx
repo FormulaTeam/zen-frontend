@@ -169,6 +169,7 @@ function MainPage({
               <Grid key={form.id ?? index} size={{ xs: 4, sm: 4, md: 6, lg: 4, xl: 3 }}>
                 <FormCard
                   form={form}
+                  searchValue={searchValue}
                   resetSearchValue={resetSearchValue}
                   isSuperAdmin={isSuperAdmin}
                   navigate={navigate}

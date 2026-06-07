@@ -16,3 +16,10 @@ export const FormSelectInput = styled(TextField)(() => ({
     color: "#6c6c6c",
   },
 }));
+
+export const HighlightedText = styled("mark")({
+  backgroundColor: "#fff59d",
+  color: "inherit",
+  padding: 0,
+  borderRadius: "2px",
+});
