@@ -58,8 +58,9 @@ const toIsraelDayjs = (value: string): Dayjs | null => {
   return parsed.tz(ISRAEL_TZ);
 };
 
-const toStoredUtcIso = (value: Dayjs, dateType?: string): string => {
+const toStoredUtcIso = (value: Dayjs, dateType?: "date" | "datetime"): string => {
   const isDateTime = dateType === "datetime";
+
   if (isDateTime) {
     return value.tz(ISRAEL_TZ, true).utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
   }
@@ -217,6 +218,13 @@ const CompactCalendarHeader = (props: any) => {
   );
 };
 
+const getClosedInputTextSx = (isTabularEdit: boolean) => ({
+  fontFamily: "inherit",
+  fontWeight: 400,
+  lineHeight: 1.5,
+  letterSpacing: 0,
+});
+
 const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   value,
   isDisabled = false,
@@ -235,6 +243,8 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   const [dateTimePickerView, setDateTimePickerView] = useState<DateTimeView>("day");
   const didApplyDefaultRef = useRef(false);
 
+  const isDateTime = dateType === "datetime";
+
   useEffect(() => {
     if (value) {
       setDateValue(toIsraelDayjs(value));
@@ -243,7 +253,6 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
 
     if (!didApplyDefaultRef.current && isCurrentDateDefault(defaultValue)) {
       const now = dayjs().tz(ISRAEL_TZ);
-      const isDateTime = dateType === "datetime";
       const initialValue = isDateTime ? now : now.startOf("day");
 
       didApplyDefaultRef.current = true;
@@ -253,9 +262,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
     }
 
     setDateValue(null);
-  }, [value, defaultValue, dateType, onChangeHandler]);
-
-  const isDateTime = dateType === "datetime";
+  }, [value, defaultValue, dateType, isDateTime, onChangeHandler]);
 
   const handlePickerChange = (newValue: Dayjs | null, shouldKeepTime: boolean) => {
     if (newValue === null) {
@@ -271,6 +278,8 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
     setDateValue(nextValue);
     onChangeHandler(toStoredUtcIso(nextValue, shouldKeepTime ? "datetime" : "date"));
   };
+
+  const inputTextSx = getClosedInputTextSx(isTabularEdit);
 
   const inputWrapperSx: SxProps<Theme> = {
     width: "100%",
@@ -298,9 +307,12 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
       direction: "ltr !important",
       textAlign: "left !important",
       unicodeBidi: "plaintext",
-      fontSize: isTabularEdit ? "0.98rem" : "1.12rem",
-      fontWeight: 500,
+      ...inputTextSx,
       color: "#0f172a",
+    },
+
+    "& .MuiPickersInputBase-root": {
+      alignItems: "center !important",
     },
 
     "& .MuiPickersSectionList-root": {
@@ -310,26 +322,40 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
       display: "flex !important",
       flexDirection: "row !important",
       justifyContent: "flex-start !important",
-      fontSize: isTabularEdit ? "0.98rem" : "1.12rem",
+      alignItems: "center !important",
+      height: "100%",
+      ...inputTextSx,
     },
 
     "& .MuiPickersInputBase-sectionsContainer": {
       direction: "ltr !important",
-      fontSize: isTabularEdit ? "0.98rem" : "1.12rem",
+      display: "flex !important",
+      alignItems: "center !important",
+      height: "100%",
+      paddingBlock: "0 !important",
+      ...inputTextSx,
     },
 
     "& .MuiPickersSectionList-section": {
       direction: "ltr !important",
+      display: "inline-flex !important",
+      alignItems: "center !important",
     },
 
     "& .MuiPickersSectionList-sectionContent": {
       direction: "ltr !important",
       unicodeBidi: "plaintext",
+      display: "inline-flex !important",
+      alignItems: "center !important",
+      ...inputTextSx,
     },
 
     "& .MuiPickersSectionList-sectionSeparator": {
       direction: "ltr !important",
       unicodeBidi: "plaintext",
+      display: "inline-flex !important",
+      alignItems: "center !important",
+      ...inputTextSx,
     },
 
     "& .MuiIconButton-root": {

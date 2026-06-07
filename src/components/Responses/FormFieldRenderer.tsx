@@ -1,15 +1,5 @@
 import React from "react";
 
-import { Chip, FormControl } from "@mui/material";
-import {
-  StyledAutocomplete,
-  StyledFormHelperText,
-  StyledInputLabel,
-  StyledListbox,
-  StyledTextField,
-} from "../FormFields/CustomDropDownAutocomplete/styled";
-import FieldErrorText from "../FormFields/FieldErrorText/FieldErrorText";
-
 import type { FormFieldDto } from "../../types/shared";
 import {
   connectionTypes,
@@ -596,6 +586,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       break;
 
     case legacyFieldTypeIds.Date:
+      console.log("HIIIII", JSON.stringify(formFieldExtra));
       input = (
         <CustomDateTime
           key={index}

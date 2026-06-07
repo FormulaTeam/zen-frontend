@@ -160,7 +160,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
 
     "& .MuiInputBase-input": {
       direction: "ltr !important",
-      textAlign: "left !important",
+      textAlign: "right !important",
       unicodeBidi: "plaintext",
       ...inputTextSx,
       color: "#0f172a",
@@ -172,12 +172,13 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
 
     "& .MuiPickersSectionList-root": {
       direction: "ltr !important",
-      textAlign: "left !important",
+      textAlign: "right !important",
       unicodeBidi: "plaintext",
       display: "flex !important",
       flexDirection: "row !important",
-      justifyContent: "flex-start !important",
+      justifyContent: "flex-end !important",
       alignItems: "center !important",
+      width: "100%",
       height: "100%",
       ...inputTextSx,
     },
@@ -186,6 +187,8 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
       direction: "ltr !important",
       display: "flex !important",
       alignItems: "center !important",
+      justifyContent: "flex-end !important",
+      width: "100%",
       height: "100%",
       paddingBlock: "0 !important",
       ...inputTextSx,
@@ -227,7 +230,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
     "& .MuiFormHelperText-root": {
       marginRight: 0,
       marginTop: "8px",
-      textAlign: "right",
+      textAlign: "right !important",
     },
   };
 
@@ -428,8 +431,6 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
               error: Boolean(validationMessage),
               helperText: <FieldErrorText message={validationMessage} detail={validationDetail} />,
               size: isTabularEdit ? "medium" : undefined,
-            } as any,
-            field: {
               sx: inputWrapperSx,
             } as any,
             popper: timePopperSlotProps,
