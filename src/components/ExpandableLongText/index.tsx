@@ -53,7 +53,7 @@ export const ExpandableLongText = ({ text, onToggle, highlightedText }: Expandab
       sx={{
         display: "flex",
         flexDirection: "row",
-        alignItems: "flex-start",
+        alignItems: isExpanded ? "flex-start" : "center",
         width: "100%",
         position: "relative",
         gap: 0.5,
@@ -80,7 +80,7 @@ export const ExpandableLongText = ({ text, onToggle, highlightedText }: Expandab
           sx={{
             display: "flex",
             justifyContent: "flex-end",
-            mt: isExpanded ? -0.4 : 0.6,
+            mt: isExpanded ? -0.5 : 0,
             flexShrink: 0,
           }}
         >
