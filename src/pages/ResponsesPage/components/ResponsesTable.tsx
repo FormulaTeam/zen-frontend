@@ -346,6 +346,12 @@ export const ResponsesTable = React.memo(
 
     const apiRef = useGridApiRef();
 
+    const columnWidths = useRef<Record<string, number>>({});
+
+    const handleColumnWidthChange = useCallback((params: { colDef: GridColDef; width: number }) => {
+      columnWidths.current[params.colDef.field] = params.width;
+    }, []);
+
     const shouldUseHeaderFilters = showFilters && !isInEditMode;
 
     const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
@@ -566,7 +572,7 @@ export const ResponsesTable = React.memo(
         const col: GridColDef = {
           field: gridField,
           headerName: field.displayName,
-          width: 180,
+          width: columnWidths.current[gridField],
           minWidth: 120,
           maxWidth: 450,
           editable: true,
@@ -625,7 +631,7 @@ export const ResponsesTable = React.memo(
             <span>מזהה</span>
           </HeaderFlex>
         ),
-        width: 160,
+        width: columnWidths.current[`${prefixes.Meta}index`] || 160,
         minWidth: 100,
         editable: false,
         sortable: true,
@@ -636,7 +642,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}created_by`, {
         field: `${prefixes.Meta}created_by`,
         headerName: "נוצר ע״י",
-        width: 200,
+        width: columnWidths.current[`${prefixes.Meta}created_by`] || 200,
         minWidth: 150,
         editable: false,
         sortable: true,
@@ -647,7 +653,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}created_at`, {
         field: `${prefixes.Meta}created_at`,
         headerName: "תאריך יצירה",
-        width: 200,
+        width: columnWidths.current[`${prefixes.Meta}created_at`] || 200,
         minWidth: 150,
         editable: false,
         sortable: true,
@@ -672,7 +678,7 @@ export const ResponsesTable = React.memo(
           </HeaderFlex>
         ),
         minWidth: 150,
-        width: 150,
+        width: columnWidths.current["sync"] || 150,
         editable: false,
         sortable: true,
         filterable: false,
@@ -684,7 +690,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}updated_by`, {
         field: `${prefixes.Meta}updated_by`,
         headerName: "השתנה ע״י",
-        width: 200,
+        width: columnWidths.current[`${prefixes.Meta}updated_by`] || 200,
         minWidth: 150,
         editable: false,
         sortable: true,
@@ -695,7 +701,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}updated_at`, {
         field: `${prefixes.Meta}updated_at`,
         headerName: "תאריך שינוי",
-        width: 200,
+        width: columnWidths.current[`${prefixes.Meta}updated_at`] || 200,
         minWidth: 150,
         editable: false,
         sortable: true,
@@ -712,7 +718,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}id`, {
         field: `${prefixes.Meta}id`,
         headerName: "ID",
-        width: 150,
+        width: columnWidths.current[`${prefixes.Meta}id`] || 150,
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.id,
@@ -728,7 +734,7 @@ export const ResponsesTable = React.memo(
             {
               field: "parentResponse",
               headerName: "תגובת אב",
-              width: 200,
+              width: columnWidths.current["parentResponse"] || 200,
               editable: false,
               filterable: false,
               sortable: false,
@@ -793,7 +799,7 @@ export const ResponsesTable = React.memo(
     ]);
 
     useEffect(() => {
-      if (isRowsLoading || displayRows.length === 0) return;
+      if (isRowsLoading || displayRows.length === 0 || isInEditMode) return;
 
       const timer = setTimeout(() => {
         apiRef.current?.autosizeColumns({
@@ -1188,6 +1194,7 @@ export const ResponsesTable = React.memo(
               checkboxSelection
               disableRowSelectionOnClick
               disableColumnResize
+              onColumnWidthChange={handleColumnWidthChange}
               rowSelectionModel={rowSelectionModel}
               onRowSelectionModelChange={onRowSelectionModelChange}
               getRowClassName={(params) => {
