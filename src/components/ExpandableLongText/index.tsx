@@ -82,6 +82,7 @@ export const ExpandableLongText = ({ text, onToggle, highlightedText }: Expandab
             justifyContent: "flex-end",
             mt: isExpanded ? -0.5 : 0,
             flexShrink: 0,
+            width: isExpanded ? "100%" : "auto",
           }}
         >
           <Tooltip title={isExpanded ? "צמצם" : "הרחב"}>
