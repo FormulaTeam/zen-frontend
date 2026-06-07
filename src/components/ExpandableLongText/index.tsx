@@ -52,7 +52,7 @@ export const ExpandableLongText = ({ text, onToggle, highlightedText }: Expandab
     <Box
       sx={{
         display: "flex",
-        flexDirection: isExpanded ? "column" : "row",
+        flexDirection: "row",
         alignItems: isExpanded ? "flex-start" : "center",
         width: "100%",
         position: "relative",
@@ -63,7 +63,7 @@ export const ExpandableLongText = ({ text, onToggle, highlightedText }: Expandab
       <Box
         ref={containerRef}
         sx={{
-          flex: isExpanded ? "none" : 1,
+          flex: 1,
           minWidth: 0,
           overflow: isExpanded ? "visible" : "hidden",
           textOverflow: isExpanded ? "initial" : "ellipsis",
@@ -82,7 +82,6 @@ export const ExpandableLongText = ({ text, onToggle, highlightedText }: Expandab
             justifyContent: "flex-end",
             mt: isExpanded ? -0.5 : 0,
             flexShrink: 0,
-            width: isExpanded ? "100%" : "auto",
           }}
         >
           <Tooltip title={isExpanded ? "צמצם" : "הרחב"}>
