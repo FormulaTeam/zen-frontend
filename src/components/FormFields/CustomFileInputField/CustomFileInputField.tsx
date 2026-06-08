@@ -34,6 +34,7 @@ interface CustomFileInputFieldProps {
 type FileItem = {
   name: string;
   path: string;
+  file?: File;
   url?: string;
   fileName?: string;
   relativePath?: string;
@@ -106,6 +107,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
         return {
           name: file.name,
           path: relativePath || `./${file.name}`,
+          file,
         };
       });
 
@@ -165,7 +167,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
                   flexShrink: 0,
                   cursor: "pointer",
                 }}
-                onClick={() => downloadFileFromResponse(item, formId ? String(formId) : undefined)}>
+                onClick={() => formId && downloadFileFromResponse(item, formId)}>
                 <FileIcon extension={extension} {...(defaultStyles[extension] || {})} />
               </div>
             );

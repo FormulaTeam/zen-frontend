@@ -1,6 +1,7 @@
 import { useCreateResponse, useUpdateResponses } from "../api";
 import { showErrorNotification, getUserName } from "../utils/utils";
 import { NotificationTexts } from "../utils/interfaces";
+import { toStoredFile, uploadFile, type ResponseFileDto, type StoredFile } from "../api/filesApi";
 import moment from "moment";
 import {
   BulkUpdateResponsesDto,
@@ -39,12 +40,21 @@ type CreateResponsePayload = CreateResponseDto & {
 };
 
 type FileValueItem = {
+  id?: string;
+  responseId?: string;
   name?: string;
   path?: string;
   url?: string;
   fileName?: string;
   relativePath?: string;
+  file?: File;
   [key: string]: any;
+};
+
+type FileFieldUploadDraft = {
+  fieldId: string;
+  files: File[];
+  attachedFiles: StoredFile[];
 };
 
 const parseParentResponse = (parentResponse?: string | ParentResponseRef): ParentResponseRef | undefined => {
@@ -80,22 +90,97 @@ const isTimeField = (field: SaveField): boolean => getFieldTypeValue(field) === 
 const isFormField = (field: SaveField): boolean =>
   getFieldTypeValue(field) === fieldType.Form || getFieldTypeValue(field) === "form";
 
-const normalizeFileValue = (value: any): { files: FileValueItem[] } => {
-  if (!Array.isArray(value?.files)) {
-    return { files: [] };
+const isBrowserFile = (value: unknown): value is File =>
+  typeof File !== "undefined" && value instanceof File;
+
+const normalizeStoredFile = (file: FileValueItem): StoredFile | null => {
+  const rawName = file.name ?? file.fileName;
+  const name = typeof rawName === "string" ? rawName.trim() : "";
+  const rawPath = file.path ?? file.id ?? file.relativePath ?? name;
+  const path = typeof rawPath === "string" ? rawPath.trim() : "";
+
+  if (!name || !path || isBrowserFile(file.file)) {
+    return null;
   }
 
   return {
-    files: value.files.filter(
-      (file: FileValueItem) =>
-        file &&
-        typeof file.name === "string" &&
-        file.name.trim().length > 0 &&
-        typeof file.path === "string" &&
-        file.path.trim().length > 0,
-    ),
+    ...file,
+    name,
+    path,
   };
 };
+
+const getFileUploadDraft = (fieldId: string, value: any): FileFieldUploadDraft => {
+  if (!Array.isArray(value?.files)) {
+    return { fieldId, files: [], attachedFiles: [] };
+  }
+
+  const files: File[] = [];
+  const attachedFiles: StoredFile[] = [];
+
+  value.files.forEach((file: FileValueItem) => {
+    if (isBrowserFile(file?.file)) {
+      files.push(file.file);
+      return;
+    }
+
+    const storedFile = normalizeStoredFile(file);
+    if (storedFile) {
+      attachedFiles.push(storedFile);
+    }
+  });
+
+  return { fieldId, files, attachedFiles };
+};
+
+const buildFileValue = (files: StoredFile[]): { files: StoredFile[] } => ({
+  files,
+});
+
+const replaceFieldValue = (
+  fieldValues: ResponseFieldValueDto[],
+  fieldId: string,
+  value: unknown,
+): ResponseFieldValueDto[] =>
+  fieldValues.map((fieldValue) =>
+    fieldValue.fieldId === fieldId ? { ...fieldValue, value } : fieldValue,
+  );
+
+const uploadDraftFiles = async (
+  formId: number,
+  responseId: string,
+  drafts: FileFieldUploadDraft[],
+): Promise<Map<string, StoredFile[]>> => {
+  const uploadedByFieldId = new Map<string, StoredFile[]>();
+
+  for (const draft of drafts) {
+    if (draft.files.length === 0) {
+      uploadedByFieldId.set(draft.fieldId, draft.attachedFiles);
+      continue;
+    }
+
+    const uploadedFiles = await Promise.all(
+      draft.files.map((file) => uploadFile<ResponseFileDto>(formId, responseId, file)),
+    );
+
+    uploadedByFieldId.set(draft.fieldId, [
+      ...draft.attachedFiles,
+      ...uploadedFiles.map(toStoredFile),
+    ]);
+  }
+
+  return uploadedByFieldId;
+};
+
+const getFileDraftSignature = (drafts: FileFieldUploadDraft[]): string =>
+  drafts
+    .map((draft) =>
+      [
+        draft.fieldId,
+        ...draft.files.map((file) => `${file.name}:${file.size}:${file.lastModified}`),
+      ].join("|"),
+    )
+    .join("::");
 
 export const useResponseSave = (
   form: FormDto | null,
@@ -114,12 +199,14 @@ export const useResponseSave = (
   const saveResponse = async (
     formFieldsByIdMap: Map<string, SaveField>,
     formFieldsValuesMap: Map<string, any>,
+    rawFormFieldsValuesMap?: Map<string, any>,
   ): Promise<ResponseDto> => {
     if (!formId) {
       throw new Error("Form is not loaded");
     }
 
     const fieldValues: ResponseFieldValueDto[] = [];
+    const fileUploadDrafts: FileFieldUploadDraft[] = [];
 
     for (const [key, field] of formFieldsByIdMap) {
       if (isFormField(field)) {
@@ -130,9 +217,13 @@ export const useResponseSave = (
       let value = formFieldsValuesMap.get(key) ?? field.value;
 
       if (isFileField(field)) {
+        value = rawFormFieldsValuesMap?.get(key) ?? value;
+        const draft = getFileUploadDraft(fieldId, value);
+        fileUploadDrafts.push(draft);
+
         fieldValues.push({
           fieldId,
-          value: normalizeFileValue(value),
+          value: buildFileValue(draft.attachedFiles),
         });
         continue;
       }
@@ -160,11 +251,25 @@ export const useResponseSave = (
     const parsedParentResponse = parseParentResponse(parentResponse);
     try {
       if (response && response.id && !copyMode) {
+        let nextFieldValues = fieldValues;
+
+        if (fileUploadDrafts.some((draft) => draft.files.length > 0)) {
+          const uploadedByFieldId = await uploadDraftFiles(
+            Number(formId),
+            response.id,
+            fileUploadDrafts,
+          );
+
+          uploadedByFieldId.forEach((files, fieldId) => {
+            nextFieldValues = replaceFieldValue(nextFieldValues, fieldId, buildFileValue(files));
+          });
+        }
+
         const updatedResponsesPayload: BulkUpdateResponsesDto = {
           responses: [
             {
               responseId: response.id,
-              fieldValues,
+              fieldValues: nextFieldValues,
             },
           ],
         };
@@ -187,10 +292,31 @@ export const useResponseSave = (
 
       if (parentResponse) {
         const results = (await mutateCreateResponseAsync(newResponse)) as ResponseDto[];
-        return results[0];
+        const createdResponse = results[0];
+
+        if (createdResponse?.id && fileUploadDrafts.some((draft) => draft.files.length > 0)) {
+          const uploadedByFieldId = await uploadDraftFiles(
+            Number(formId),
+            createdResponse.id,
+            fileUploadDrafts,
+          );
+          let nextFieldValues = fieldValues;
+
+          uploadedByFieldId.forEach((files, fieldId) => {
+            nextFieldValues = replaceFieldValue(nextFieldValues, fieldId, buildFileValue(files));
+          });
+
+          const updatedResponses = (await mutateUpdateResponsesAsync({
+            responses: [{ responseId: createdResponse.id, fieldValues: nextFieldValues }],
+          })) as ResponseDto[];
+
+          return updatedResponses[0] ?? createdResponse;
+        }
+
+        return createdResponse;
       }
 
-      const createKey = `${formId}::${JSON.stringify(fieldValues)}`;
+      const createKey = `${formId}::${JSON.stringify(fieldValues)}::${getFileDraftSignature(fileUploadDrafts)}`;
 
       if (!createRequestCache.has(createKey)) {
         const requestPromise = (mutateCreateResponseAsync(newResponse) as Promise<ResponseDto[]>)
@@ -206,7 +332,28 @@ export const useResponseSave = (
         createRequestCache.set(createKey, requestPromise);
       }
 
-      return await createRequestCache.get(createKey)!;
+      const createdResponse = await createRequestCache.get(createKey)!;
+
+      if (createdResponse?.id && fileUploadDrafts.some((draft) => draft.files.length > 0)) {
+        const uploadedByFieldId = await uploadDraftFiles(
+          Number(formId),
+          createdResponse.id,
+          fileUploadDrafts,
+        );
+        let nextFieldValues = fieldValues;
+
+        uploadedByFieldId.forEach((files, fieldId) => {
+          nextFieldValues = replaceFieldValue(nextFieldValues, fieldId, buildFileValue(files));
+        });
+
+        const updatedResponses = (await mutateUpdateResponsesAsync({
+          responses: [{ responseId: createdResponse.id, fieldValues: nextFieldValues }],
+        })) as ResponseDto[];
+
+        return updatedResponses[0] ?? createdResponse;
+      }
+
+      return createdResponse;
     } catch (error: any) {
       if (error?.response?.data?.error?.includes("Metro")) {
         showErrorNotification(

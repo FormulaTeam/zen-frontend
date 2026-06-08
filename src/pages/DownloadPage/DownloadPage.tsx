@@ -13,7 +13,7 @@ import { decodeFileName } from "../../utils/utils";
 export function DownloadPage() {
   const [waitingForDownload, setWaitingForDownload] = useState(true);
   const [error, setError] = useState(false);
-  const { fileName, formId } = useParams();
+  const { fileName, formId, responseId, fileId } = useParams();
 
   const theme = useTheme();
 
@@ -21,10 +21,12 @@ export function DownloadPage() {
     if (!fileName) return null;
 
     return {
+      id: fileId,
+      responseId,
       name: fileName,
-      path: fileName,
+      path: fileId ?? fileName,
     };
-  }, [fileName]);
+  }, [fileId, fileName, responseId]);
 
   const handleDownload = useCallback(() => {
     if (!storedFile || !formId) return;

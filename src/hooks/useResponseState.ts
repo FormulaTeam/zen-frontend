@@ -1041,6 +1041,7 @@ export const useResponseState = (
     return {
       isValid: isValidForm,
       parsedValuesMap: nextParsedValuesMap,
+      rawValuesMap: new Map(formFieldsValuesMapRef.current),
       validationMap: nextValidMap,
     };
   };

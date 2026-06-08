@@ -87,6 +87,7 @@ const AppRouter = () => {
             <Route path={IPath.RESPONSE_EDIT} element={<Response user={user} />} />
             <Route path={IPath.RESPONSE_VIEW} element={<Response user={user} viewMode />} />
             <Route path={IPath.DOWNLOAD_FILE} element={<DownloadPage />} />
+            <Route path={IPath.DOWNLOAD_FILE_LEGACY} element={<DownloadPage />} />
             <Route path={IPath.DELETED_FORMS} element={<DeletedForms user={user} />} />
           </Route>
           <Route path="*" element={<ErrorPage />} />

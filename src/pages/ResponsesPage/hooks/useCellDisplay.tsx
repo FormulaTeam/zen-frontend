@@ -17,7 +17,7 @@ import {
 
 interface UseCellDisplayParams {
   formId?: number;
-  onFileClick?: (file: any) => void;
+  onFileClick?: (file: any, responseId?: string | number) => void;
   searchQuery?: string;
   isInEditMode?: boolean;
   onCellExpandToggle?: (rowId: string | number, fieldId: string, isExpanded: boolean) => void;
@@ -304,7 +304,7 @@ export const useCellDisplay = ({
   );
 
   const formatFileCell = useCallback(
-    (value: unknown): React.ReactElement => {
+    (value: unknown, rowId?: string | number): React.ReactElement => {
       const displayFiles = getFileDisplayItems(value);
 
       if (displayFiles.length === 0) {
@@ -316,7 +316,7 @@ export const useCellDisplay = ({
           <CustomCarousel
             formId={formId}
             items={displayFiles}
-            onItemClickHandler={onFileClick || (() => {})}
+            onItemClickHandler={(file) => onFileClick?.(file, rowId)}
             shouldSpaceFiles
           />
         </CenteredBox>
@@ -491,7 +491,7 @@ export const useCellDisplay = ({
           return formatLinkCell(value as LinkValue);
 
         case fieldType.File:
-          return formatFileCell(value);
+          return formatFileCell(value, rowId);
 
         case fieldType.Date:
           return formatDateCell(value, dateAndTime);
