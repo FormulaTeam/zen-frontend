@@ -1,6 +1,7 @@
 import { FieldTypeIds } from "./interfaces";
 import { getKeyByValue } from "./utils";
 import { getOptionResponseRawValue } from "./optionResponseValue";
+import { selectionMode } from "formula-gear";
 
 export const normalizeFieldValue = (field: any, value: any): any => {
   let newValue = value;
@@ -13,7 +14,7 @@ export const normalizeFieldValue = (field: any, value: any): any => {
   }
 
   if (field.typeId === FieldTypeIds.options) {
-    const isMultiple = Boolean(field.extra?.multiple);
+    const isMultiple = field.extra?.selectionMode === selectionMode.Multiple;
 
     newValue = getOptionResponseRawValue(newValue);
 

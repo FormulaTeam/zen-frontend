@@ -1,21 +1,22 @@
 import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { Checkbox, FormControl, FormControlLabel, InputLabel, MenuItem, Select } from "@mui/material";
 import { ExtraElementProps } from "../index";
+import { timePrecision, timeDefaultValue } from "formula-gear";
 
 type Props = ExtraElementProps<typeof FieldTypeIds.time>;
 
 function TimeFieldExtra({ extra, onChange, disabled }: Props) {
   const {
     defaultValue,
-    timePrecision = "minutes",
+    timePrecision: precision = timePrecision.Minutes,
   } = extra;
 
   return (
     <>
       <FormControlLabel disabled={disabled}
-                        control={<Checkbox checked={timePrecision === "seconds"}
+                        control={<Checkbox checked={precision === timePrecision.Seconds}
                                            onChange={(e) => {
-                                             onChange({ timePrecision: e.target.checked ? "seconds" : "minutes" });
+                                             onChange({ timePrecision: e.target.checked ? timePrecision.Seconds : timePrecision.Minutes });
                                            }} />}
                         label="הצגת שניות" />
       <FormControl fullWidth disabled={disabled} variant="standard">
@@ -28,7 +29,7 @@ function TimeFieldExtra({ extra, onChange, disabled }: Props) {
                   onChange({ defaultValue: e.target.value || undefined });
                 }}>
           <MenuItem value="">ריק</MenuItem>
-          <MenuItem value="currentTime">שעה נוכחית</MenuItem>
+          <MenuItem value={timeDefaultValue.CurrentTime}>שעה נוכחית</MenuItem>
         </Select>
       </FormControl>
     </>

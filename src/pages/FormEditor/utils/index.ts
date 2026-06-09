@@ -33,6 +33,8 @@ function generateFieldName(elementTypeId: FormFieldTypeId) {
   return `${FormElementTypeIdToKey[elementTypeId]}_${nanoid5()}`;
 }
 
+import { selectionMode, dateType, timePrecision, numberType, locationFormat } from "formula-gear";
+
 function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
   const baseData = {
     typeId: elementTypeId,
@@ -44,27 +46,29 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
   let data: FormFieldData;
 
   switch (elementTypeId) {
-    case FieldTypeIds.options:
+    case FieldTypeIds.options: {
+      const options = [
+        { id: generateOptionItemId(), text: "" },
+        { id: generateOptionItemId(), text: "" },
+      ];
       data = {
         ...baseData,
         typeId: FieldTypeIds.options,
         extra: {
-          selectionMode: "single",
+          selectionMode: selectionMode.Single,
           defaultValue: [],
         },
-        options: [
-          { id: generateOptionItemId(), text: "" },
-          { id: generateOptionItemId(), text: "" },
-        ],
+        options,
       };
       break;
+    }
 
     case FieldTypeIds.date:
       data = {
         ...baseData,
         typeId: FieldTypeIds.date,
         extra: {
-          dateType: "date",
+          dateType: dateType.Date,
         },
       };
       break;
@@ -74,7 +78,7 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
         ...baseData,
         typeId: FieldTypeIds.time,
         extra: {
-          timePrecision: "minutes",
+          timePrecision: timePrecision.Minutes,
         },
       };
       break;
@@ -84,7 +88,7 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
         ...baseData,
         typeId: FieldTypeIds.number,
         extra: {
-          numberType: "integer",
+          numberType: numberType.Integer,
         },
       };
       break;
@@ -94,7 +98,7 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
         ...baseData,
         typeId: FieldTypeIds.location,
         extra: {
-          locationFormat: "utm",
+          locationFormat: locationFormat.UTM,
         },
       };
       break;

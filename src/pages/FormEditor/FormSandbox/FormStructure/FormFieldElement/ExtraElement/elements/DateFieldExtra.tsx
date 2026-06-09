@@ -1,29 +1,30 @@
 import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { Checkbox, FormControl, FormControlLabel, InputLabel, MenuItem, Select } from "@mui/material";
 import { ExtraElementProps } from "../index";
+import { dateType, dateDefaultValue } from "formula-gear";
 
 type Props = ExtraElementProps<typeof FieldTypeIds.date>;
 
 function DateFieldExtra({ extra, onChange, disabled }: Props) {
   const {
     defaultValue,
-    dateType = "date",
+    dateType: type = dateType.Date,
   } = extra;
 
-  const isDateTime = dateType === "datetime";
+  const isDateTime = type === dateType.Datetime;
 
   return (
     <>
       <FormControlLabel disabled={disabled}
                         control={<Checkbox checked={isDateTime}
                                            onChange={(e) => {
-                                             const nextDateType = e.target.checked ? "datetime" : "date";
+                                             const nextDateType = e.target.checked ? dateType.Datetime : dateType.Date;
                                              const updates: any = { dateType: nextDateType };
                                              
-                                             if (defaultValue === "currentDate") {
-                                               updates.defaultValue = "currentDateTime";
-                                             } else if (defaultValue === "currentDateTime") {
-                                               updates.defaultValue = "currentDate";
+                                             if (defaultValue === dateDefaultValue.CurrentDate) {
+                                               updates.defaultValue = dateDefaultValue.CurrentDateTime;
+                                             } else if (defaultValue === dateDefaultValue.CurrentDateTime) {
+                                               updates.defaultValue = dateDefaultValue.CurrentDate;
                                              }
                                              
                                              onChange(updates);
@@ -39,8 +40,8 @@ function DateFieldExtra({ extra, onChange, disabled }: Props) {
                   onChange({ defaultValue: e.target.value || undefined });
                 }}>
           <MenuItem value="">ריק</MenuItem>
-          {!isDateTime && <MenuItem value="currentDate">תאריך של היום</MenuItem>}
-          {isDateTime && <MenuItem value="currentDateTime">תאריך ושעה נוכחיים</MenuItem>}
+          {!isDateTime && <MenuItem value={dateDefaultValue.CurrentDate}>תאריך של היום</MenuItem>}
+          {isDateTime && <MenuItem value={dateDefaultValue.CurrentDateTime}>תאריך ושעה נוכחיים</MenuItem>}
         </Select>
       </FormControl>
     </>

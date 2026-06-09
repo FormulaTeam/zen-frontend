@@ -17,7 +17,15 @@ import {
   LocationValueError,
   LinkValueError,
 } from "../../utils/interfaces";
-import { fieldType as legacyFieldTypeIds, optionsSource, type FieldValidationMessage } from "formula-gear";
+import {
+  fieldType as legacyFieldTypeIds,
+  optionsSource,
+  type FieldValidationMessage,
+  selectionMode,
+  dateType,
+  timePrecision,
+  locationFormat,
+} from "formula-gear";
 import CustomDateTime from "../FormFields/CustomDateTime/CustomDateTime";
 import CustomDropDownAutocomplete from "../FormFields/CustomDropDownAutocomplete/CustomDropDownAutocomplete";
 import CustomFileInputField from "../FormFields/CustomFileInputField/CustomFileInputField";
@@ -41,8 +49,6 @@ type FormFieldExtra = {
   options?: {
     items?: OptionItem[];
     defaultValue?: string[];
-    formId?: string | number;
-    fieldId?: string;
     linkedOptionsFieldId?: string;
   };
   value?: any;
@@ -109,8 +115,8 @@ const isConnectedToForm = (field: FormFieldDto) => {
 
   return (
     extra.source === optionsSource.FormFieldResponses &&
-    !!extra.options?.formId &&
-    !!extra.options?.fieldId
+    !!extra.linkedFormId &&
+    !!extra.connectedFieldId
   );
 };
 
@@ -326,9 +332,10 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       break;
 
     case legacyFieldTypeIds.Options: {
-      const multiSelect = formFieldExtra.selectionMode === "multiple";
+      const mode = formFieldExtra.selectionMode ?? selectionMode.Single;
+      const isMultiple = mode === selectionMode.Multiple;
 
-      if (multiSelect) {
+      if (isMultiple) {
         if (!Array.isArray(formFieldValue)) {
           formFieldValue =
             typeof formFieldValue === "string" && formFieldValue !== "" ? [formFieldValue] : [];
@@ -346,8 +353,8 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       let connectedFieldId: string | undefined;
 
       if (connectedToForm) {
-        connectedFormId = Number(formFieldExtra.linkedFormId ?? formFieldExtra.options?.formId);
-        connectedFieldId = formFieldExtra.options?.fieldId;
+        connectedFormId = Number(formFieldExtra.linkedFormId);
+        connectedFieldId = formFieldExtra.connectedFieldId;
       }
 
       let availableOptions: string[] = [];
@@ -467,7 +474,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
               );
             }
 
-            if (multiSelect) {
+            if (isMultiple) {
               const currentValues = Array.isArray(formFieldValue) ? formFieldValue : [];
               const validValues = currentValues.filter((value: string) =>
                 allowedOptions.has(value),
@@ -493,7 +500,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             }
           } else if (parentValues?.length > 0) {
             availableOptions = [];
-            formFieldValue = multiSelect ? [] : "";
+            formFieldValue = isMultiple ? [] : "";
 
             setTimeout(() => {
               onChangeHandler(formFieldValue, fieldId);
@@ -511,7 +518,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       }
 
       const defaultValue = formFieldExtra.options?.defaultValue ?? formFieldExtra.defaultValue;
-      const value = multiSelect
+      const value = isMultiple
         ? Array.isArray(formFieldValue)
           ? formFieldValue
           : []
@@ -538,7 +545,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             onBlurHandler={() => {
               onBlurHandler(fieldId);
             }}
-            selectionMode={multiSelect ? "multiple" : "single"}
+            selectionMode={mode}
             optionLabels={optionLabels}
             validationMessage={validationMessage}
             validationDetail={validationDetail}
@@ -562,7 +569,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
               onBlurHandler(fieldId);
             }}
             value={value}
-            selectionMode={multiSelect ? "multiple" : "single"}
+            selectionMode={mode}
             options={availableOptions}
             optionLabels={optionLabels}
             validationMessage={validationMessage}

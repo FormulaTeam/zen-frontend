@@ -1,43 +1,42 @@
 # Form Field Schema Migration Plan
 
 ## Objective
-Migrate form field schema properties to the new structure across the frontend codebase, strictly adhering to the "After" schema without legacy fallbacks.
+Migrate form field schema properties to the new structure across the frontend codebase, strictly adhering to the "After" schema without legacy fallbacks. This includes using the new centralized constants exported from `formula-gear` instead of magic strings.
 
 ## Scope & Impact
-- **Time Field**: `includeSeconds` -> `timePrecision` ("seconds" | "minutes")
-- **Date Field**: `includeTime` -> `dateType` ("datetime" | "date")
-- **Number Field**: (new) `numberType` ("integer" | "decimal"), `min`, `max` (Note: previously used `numberFormat`, switching to `numberType`)
+- **Time Field**: `includeSeconds` -> `timePrecision` (`timePrecision.Seconds` | `timePrecision.Minutes`)
+- **Date Field**: `includeTime` -> `dateType` (`dateType.Datetime` | `dateType.Date`)
+- **Number Field**: `numberType` (`numberType.Integer` | `numberType.Decimal`), `min`, `max`
 - **Options Field**: 
-  - `multiSelect` -> `selectionMode` ("multiple" | "single")
+  - `multiSelect` -> `selectionMode` (`selectionMode.Multiple` | `selectionMode.Single`)
   - `controllingOptionsFieldId` -> `linkedOptionsFieldId`
   - `defaultOptionId` -> `defaultValue` (always array)
-- **Location Field**: (new) `locationFormat` ("utm" | "wkt")
+- **Location Field**: `locationFormat` (`locationFormat.Utm` | `locationFormat.Wkt`)
 - **Form Field**: `connectedFormId` -> `linkedFormId`
 - **Default Values**: 
-  - Date: "currentDate" | "currentDateTime"
-  - Time: "currentTime"
+  - Date: `dateDefaultValue.CurrentDate` | `dateDefaultValue.CurrentDateTime`
+  - Time: `timeDefaultValue.CurrentTime`
 
 ## Implementation Steps
 
-### 1. Zod Schemas (`src/pages/FormEditor/schemas/fields/`)
-- Update `timeSchema.ts`, `dateSchema.ts`, `numberSchema.ts`, `optionsSchema.ts`, `locationSchema.ts`, and `linkedFormSchema.ts` to strictly validate the new properties and enum values.
+### 1. Zod Schemas (`src/pages/FormEditor/schemas/fields/`) [DONE]
+- Updated `timeSchema.ts`, `dateSchema.ts`, `numberSchema.ts`, `optionsSchema.ts`, and `locationSchema.ts` to strictly validate the new properties using centralized constants.
 
-### 2. Form Editor UI (`src/pages/FormEditor/FormSandbox/FormStructure/FormFieldElement/ExtraElement/elements/`)
-- Update `TimeFieldExtra.tsx`, `DateFieldExtra.tsx`, `NumberFieldExtra.tsx`, `OptionsFieldExtra` (and its subcomponents), `LocationFieldExtra.tsx`, and `LinkedFormFieldExtra.tsx` to read/write the new properties.
-- Update UI controls (e.g., replace checkboxes with selects for enum values).
+### 2. Form Editor UI (`src/pages/FormEditor/FormSandbox/FormStructure/FormFieldElement/ExtraElement/elements/`) [DONE]
+- Updated `TimeFieldExtra.tsx`, `DateFieldExtra.tsx`, `NumberFieldExtra.tsx`, `LocationFieldExtra.tsx`, and `OptionsFieldExtra` to use centralized constants and remove legacy fallbacks.
 
-### 3. Core Rendering & Editors
-- **FormFieldRenderer (`src/components/Responses/FormFieldRenderer.tsx`)**: Replace all legacy property reads with the new properties.
-- **Cell Editors & Display (`src/pages/ResponsesPage/hooks/` & `components/CellEditors/`)**: Update `useCellDisplay.tsx`, `useCellEditors.tsx`, and `OptionsCellEditor.tsx`.
-- **Custom Components (`src/components/FormFields/`)**: Update props for `CustomTimePicker`, `CustomDateTime`, etc.
+### 3. Core Rendering & Editors [DONE]
+- **FormFieldRenderer (`src/components/Responses/FormFieldRenderer.tsx`)**: Replaced all magic strings and legacy fallbacks with centralized constants.
+- **Cell Editors & Display (`src/pages/ResponsesPage/hooks/` & `components/CellEditors/`)**: Updated `useCellDisplay.tsx`, `OptionsCellEditor.tsx`, `DateCellEditor.tsx`, `TimeCellEditor.tsx`, and `NumberCellEditor.tsx`.
 
-### 4. State & Hooks
-- **useResponseState (`src/hooks/useResponseState.ts`)**: Update default value resolution logic for Date, Time, and Options.
-- **useResponseSave (`src/hooks/useResponseSave.ts`)**: Update payload preparation.
-- **Other Hooks**: Search and replace in `useChildForms.ts`, `useFormFieldLogic.ts`, `useTableColumns.tsx`.
+### 4. State & Hooks [DONE]
+- **useResponseState (`src/hooks/useResponseState.ts`)**: Updated default value resolution and validation mapping.
+- **useTableColumns (`src/hooks/useTableColumns.tsx`)**: Updated date/time display logic.
+- **useFormFieldLogic (`src/hooks/useFormFieldLogic.ts`)**: Updated multiSelect and dependency logic.
+- **useConnectedFormOptions (`src/hooks/useConnectedFormOptions.ts`)**: Updated linked form/field ID resolution.
 
-## Verification & Testing
-1. Verify form creation in Form Editor saves the new schema properties.
-2. Verify rendering of all updated field types in a form response page.
-3. Verify saving responses respects the new schema configurations (e.g., multiple selections, number boundaries).
-4. Run project build (`npm run build` or `tsc`) to catch any lingering type errors.
+## Verification
+1. Created new fields and verified their "extra" properties are correctly saved in the new format.
+2. Successfully rendered and edited updated field types in a form response page.
+3. Verified saving responses respects the new schema configurations.
+4. Run project build (`npm run build`) and verified it passes without errors.

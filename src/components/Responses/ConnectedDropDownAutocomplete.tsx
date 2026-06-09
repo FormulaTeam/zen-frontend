@@ -11,12 +11,14 @@ import {
 } from "../FormFields/CustomDropDownAutocomplete/styled";
 import FieldErrorText from "../FormFields/FieldErrorText/FieldErrorText";
 
+import { selectionMode } from "formula-gear";
+
 export const ConnectedDropDownAutocomplete = (props: any) => {
     const {
         linkedFormId,
         connectedFieldId,
         selectedValues,
-        selectionMode,
+        selectionMode: mode,
         isDisabled,
         label,
         isRequired,
@@ -29,7 +31,7 @@ export const ConnectedDropDownAutocomplete = (props: any) => {
 
     const [searchTerm, setSearchTerm] = React.useState("");
 
-    const isMultiple = selectionMode === "multiple";
+    const isMultiple = mode === selectionMode.Multiple;
 
     const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, error } =
         useGetInfiniteFieldValues(linkedFormId, connectedFieldId, searchTerm);

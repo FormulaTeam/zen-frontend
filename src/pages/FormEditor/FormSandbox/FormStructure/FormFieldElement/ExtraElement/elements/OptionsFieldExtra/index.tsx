@@ -6,6 +6,7 @@ import { FormFieldResponsesOptions } from "./FormFieldResponsesOptions";
 import { Checkbox, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Tooltip } from "@mui/material";
 import { ManualOptions } from "./ManualOptions";
 import { Info } from "@mui/icons-material";
+import { selectionMode, optionsSource } from "formula-gear";
 
 type FieldTypeId = typeof FieldTypeIds.options;
 
@@ -15,19 +16,31 @@ interface Props extends ExtraElementProps<FieldTypeId> {
 
 function OptionsFieldExtra({ fieldId, extra, onChange, onDataChange, validationErrors, disabled }: Props) {
   const {
-    selectionMode = "single",
+    selectionMode: mode = selectionMode.Single,
+    linkedFormId,
+    connectedFieldId,
     linkedOptionsFieldId,
+    source: optionsSourceValue,
     defaultValue = [],
   } = extra;
 
-  const isLinked = linkedOptionsFieldId !== undefined;
-  const multiple = selectionMode === "multiple";
+  const isLinkedToForm = optionsSourceValue === optionsSource.FormFieldResponses;
+  const multiple = mode === selectionMode.Multiple;
 
-  const handleSourceChange = (newIsLinked: boolean) => {
-    if (newIsLinked) {
-      onChange({ linkedOptionsFieldId: undefined });
+  const handleSourceChange = (isLinked: boolean) => {
+    if (isLinked) {
+      onChange({ 
+        source: optionsSource.FormFieldResponses,
+        linkedOptionsFieldId: undefined,
+        defaultValue: []
+      });
     } else {
-      onChange({ linkedOptionsFieldId: undefined });
+      onChange({ 
+        source: undefined,
+        linkedFormId: undefined,
+        connectedFieldId: undefined,
+        defaultValue: []
+      });
     }
   };
 
@@ -35,7 +48,7 @@ function OptionsFieldExtra({ fieldId, extra, onChange, onDataChange, validationE
     <>
       <FormControl disabled={disabled} style={{ gridColumn: "1 / -1" }}>
         <FormLabel>מקור אפשרויות</FormLabel>
-        <RadioGroup row value={isLinked ? "linked" : "manual"} onChange={(e) => {
+        <RadioGroup row value={isLinkedToForm ? "linked" : "manual"} onChange={(e) => {
           handleSourceChange(e.target.value === "linked");
         }}>
           <FormControlLabel value="manual" control={<Radio />} label="ידני" />
@@ -52,9 +65,10 @@ function OptionsFieldExtra({ fieldId, extra, onChange, onDataChange, validationE
         </RadioGroup>
       </FormControl>
 
-      {isLinked ? (
+      {isLinkedToForm ? (
         <FormFieldResponsesOptions
-          linkedOptionsFieldId={linkedOptionsFieldId ?? undefined}
+          linkedFormId={linkedFormId}
+          connectedFieldId={connectedFieldId}
           validationErrors={validationErrors as any}
           onChange={onChange}
         />
@@ -62,7 +76,7 @@ function OptionsFieldExtra({ fieldId, extra, onChange, onDataChange, validationE
         <ManualOptions
           fieldId={fieldId}
           defaultValue={defaultValue}
-          selectionMode={selectionMode}
+          selectionMode={mode}
           onChange={onChange}
           onDataChange={onDataChange}
           validationErrors={validationErrors as any}
@@ -73,7 +87,7 @@ function OptionsFieldExtra({ fieldId, extra, onChange, onDataChange, validationE
         disabled={disabled}
         control={<Checkbox checked={multiple}
           onChange={(e) => {
-            onChange({ selectionMode: e.target.checked ? "multiple" : "single" });
+            onChange({ selectionMode: e.target.checked ? selectionMode.Multiple : selectionMode.Single });
           }} />}
         label="בחירה מרובה" />
     </>

@@ -11,6 +11,8 @@ import styles from "./style.module.css";
 import { ManualOptionsItemField } from "./ManualOptionsItemField";
 import { ManualOptionsControllingItemsList } from "./ManualOptionsControllingItemsList";
 
+import { selectionMode } from "formula-gear";
+
 interface Props {
   fieldId: string;
   defaultValue: string[];
@@ -32,7 +34,7 @@ function generateEmptyItem(): ArrayElement<ManualItems> {
 function ManualOptions(props: Props) {
   const {
     defaultValue,
-    selectionMode,
+    selectionMode: mode,
     onChange,
     onDataChange,
     fieldId: id,
@@ -70,26 +72,26 @@ function ManualOptions(props: Props) {
 
   useEffect(() => {
     // Selection mode check for default value
-    if (selectionMode === "single" && defaultValue.length > 1) {
+    if (mode === selectionMode.Single && defaultValue.length > 1) {
       onChange({ defaultValue: [defaultValue[0]] });
     }
-  }, [selectionMode]);
+  }, [mode]);
 
   const controllingFieldItems = useMemo(() => {
     const linkedOptionsFieldId = extra.linkedOptionsFieldId;
     if (!linkedOptionsFieldId) return undefined;
 
-    return (
-      (formStructure.fields[linkedOptionsFieldId].data.options as ManualItems)?.filter((item) => !!item.text?.length)
-    );
+    const linkedField = formStructure.fields[linkedOptionsFieldId];
+    return (linkedField?.data?.options as ManualItems)?.filter((item) => !!item.text?.length);
   }, [extra.linkedOptionsFieldId, formStructure.fields]);
 
   const handleItemChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number, item: ArrayElement<ManualItems>) => {
     const newText = e.target.value.trimStart();
     const updatedItem = { ...item, text: newText };
+    const newItems = items.toSpliced(index, 1, updatedItem);
 
     onDataChange?.({
-      options: items.toSpliced(index, 1, updatedItem),
+      options: newItems,
     });
   }, [items, onDataChange]);
 
@@ -105,9 +107,11 @@ function ManualOptions(props: Props) {
         }}
         onDelete={() => {
           if (items.length > 2) {
+            const newItems = items.toSpliced(index, 1);
             onDataChange?.({
-              options: items.toSpliced(index, 1),
+              options: newItems,
             });
+
             if (defaultValue.includes(item.id)) {
               onChange({ defaultValue: defaultValue.filter(id => id !== item.id) });
             }
@@ -173,7 +177,7 @@ function ManualOptions(props: Props) {
           <div className={styles.controllingFieldConnector} />
         }
       </div>
-...
+
       <div className={styles.itemsContainer}>
         <div>
           <div className={styles.itemsWrapper}>
@@ -184,7 +188,8 @@ function ManualOptions(props: Props) {
               variant={"outlined"}
               className={styles.appendItemButton}
               onClick={(_) => {
-                onDataChange?.({ options: [...items, generateEmptyItem()] });
+                const newItems = [...items, generateEmptyItem()];
+                onDataChange?.({ options: newItems });
               }}>
               + הוסף אפשרות
             </Button>
@@ -195,12 +200,15 @@ function ManualOptions(props: Props) {
           <ManualOptionsControllingItemsList item={items[selectedControlledItemIndex]}
             controllingFieldItems={controllingFieldItems}
             onCheckChange={(e, controllingItem: ArrayElement<ManualItems>) => {
-              const controllingItemsIds = [...items[selectedControlledItemIndex].controllingItemsIds ?? []];
+              const controllingItemsIds = [...(items[selectedControlledItemIndex].controllingItemsIds ?? [])];
 
               if (e.target.checked) {
                 controllingItemsIds.push(controllingItem.id);
               } else {
-                controllingItemsIds.splice(controllingItemsIds.indexOf(controllingItem.id), 1);
+                const indexToRemove = controllingItemsIds.indexOf(controllingItem.id);
+                if (indexToRemove !== -1) {
+                  controllingItemsIds.splice(indexToRemove, 1);
+                }
               }
 
               const updatedItems = [...items];
@@ -214,9 +222,9 @@ function ManualOptions(props: Props) {
             onCheckAllChange={(e) => {
               const updatedItems = items.toSpliced(selectedControlledItemIndex, 1, {
                 ...items[selectedControlledItemIndex],
-                controllingItemsIds: e.target.checked ?
-                  controllingFieldItems?.map((fieldItems) => fieldItems.id) :
-                  [],
+                controllingItemsIds: e.target.checked
+                  ? controllingFieldItems?.map((fieldItems) => fieldItems.id)
+                  : [],
               });
 
               onDataChange?.({ options: updatedItems });
@@ -232,13 +240,13 @@ function ManualOptions(props: Props) {
                 style={{ width: '100%' }}>
                 <Autocomplete
                   disabled={!definedItems.length}
-                  multiple={selectionMode === "multiple"}
+                  multiple={mode === selectionMode.Multiple}
                   options={definedItems.map((item) => item.id)}
                   getOptionLabel={(optionId) => definedItems.find((item) => item.id === optionId)?.text || ""}
-                  value={selectionMode === "multiple" ? (defaultValue || []) : (defaultValue?.[0] || null)}
+                  value={mode === selectionMode.Multiple ? (defaultValue || []) : (defaultValue?.[0] || null)}
                   noOptionsText={"לא נמצאו אפשרויות"}
                   onChange={(_, newValue) => {
-                    if (selectionMode === "multiple") {
+                    if (mode === selectionMode.Multiple) {
                       onChange({ defaultValue: newValue as string[] || [] });
                     } else {
                       onChange({ defaultValue: newValue ? [newValue as string] : [] });

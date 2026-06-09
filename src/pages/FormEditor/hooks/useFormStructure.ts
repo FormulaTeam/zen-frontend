@@ -66,6 +66,9 @@ function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
     const fieldIds = sortedFields.map((fieldData) => {
       const fieldId = fieldData.id?.toString() || generateFieldId();
 
+      const options = (fieldData as any).options || [];
+      const extra = fieldData.extra || {};
+
       fields[fieldId] = {
         id: fieldId,
         parentSectionId: sectionId,
@@ -74,8 +77,8 @@ function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
           name: fieldData.name || "",
           displayName: fieldData.displayName || "",
           required: fieldData.isRequired || false,
-          extra: fieldData.extra || {},
-          options: (fieldData as any).options,
+          extra,
+          options,
         },
         validationErrors: null,
       };

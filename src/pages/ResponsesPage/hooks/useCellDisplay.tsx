@@ -6,7 +6,7 @@ import { OverflowTooltip } from "@components/OverflowTooltip";
 import { ExpandableLongText } from "@components/ExpandableLongText";
 import CustomCarousel from "../../../components/FilePreview/CustomCarousel";
 import { FormFieldDto } from "../../../types/shared";
-import { fieldType } from "formula-gear";
+import { fieldType, dateType, timePrecision } from "formula-gear";
 import { DEFAULT_DATE_FORMAT } from "../../../utils/utils";
 
 import { highlightTextUtil } from "../utils/highlighting";
@@ -137,6 +137,14 @@ const isFileDraftValue = (value: unknown): value is FileDraftValue => {
 };
 
 const getOptionLabelMap = (field: FormFieldDto): Record<string, string> => {
+  if (Array.isArray((field as any).options)) {
+    return Object.fromEntries(
+      (field as any).options
+        .filter((option: any) => option && typeof option.id === "string" && typeof option.text === "string")
+        .map((option: any) => [option.id, option.text]),
+    );
+  }
+
   const extra = getFieldExtra(field);
 
   if (
@@ -175,8 +183,8 @@ const getOptionDisplayText = (value: unknown, field: FormFieldDto): string => {
   return labelMap[stringValue] ?? stringValue;
 };
 
-const formatTimeDisplayValue = (value: unknown, includeSeconds?: boolean): string => {
-  const timeFormat = includeSeconds ? "HH:mm:ss" : "HH:mm";
+const formatTimeDisplayValue = (value: unknown, precision?: "seconds" | "minutes"): string => {
+  const timeFormat = precision === timePrecision.Seconds ? "HH:mm:ss" : "HH:mm";
 
   if (value instanceof Date) {
     return moment(value).format(timeFormat);
@@ -194,7 +202,7 @@ const formatTimeDisplayValue = (value: unknown, includeSeconds?: boolean): strin
       const minutes = timeOnlyMatch[2];
       const seconds = timeOnlyMatch[3] ?? "00";
 
-      return includeSeconds ? `${hours}:${minutes}:${seconds}` : `${hours}:${minutes}`;
+      return precision === timePrecision.Seconds ? `${hours}:${minutes}:${seconds}` : `${hours}:${minutes}`;
     }
 
     const parsedMoment = moment(trimmedValue);
@@ -326,13 +334,14 @@ export const useCellDisplay = ({
   );
 
   const formatDateCell = useCallback(
-    (value: any, includeTime?: boolean): React.ReactElement => {
+    (value: any, type?: "datetime" | "date"): React.ReactElement => {
       if (!value || !moment(value).isValid()) {
         return <Box component="span" className="cell-box-date"></Box>;
       }
 
+      const isDateTime = type === dateType.Datetime;
       const datePart = moment(value).format(DEFAULT_DATE_FORMAT);
-      const timePart = includeTime ? ` ${moment(value).format("HH:mm")}` : "";
+      const timePart = isDateTime ? ` ${moment(value).format("HH:mm")}` : "";
       const fullText = `${datePart}${timePart}`;
 
       return (
@@ -350,8 +359,8 @@ export const useCellDisplay = ({
   );
 
   const formatTimeCell = useCallback(
-    (value: any, includeSeconds?: boolean): React.ReactElement => {
-      const displayValue = formatTimeDisplayValue(value, includeSeconds);
+    (value: any, precision?: "seconds" | "minutes"): React.ReactElement => {
+      const displayValue = formatTimeDisplayValue(value, precision);
 
       if (!displayValue) {
         return <Box component="span" className="cell-box-date"></Box>;
@@ -477,9 +486,6 @@ export const useCellDisplay = ({
         return <Box component="span" className="cell-box"></Box>;
       }
 
-      const dateAndTime = extra.dateType === "datetime";
-      const includeSeconds = extra.timePrecision === "seconds";
-
       switch (field.fieldType) {
         case fieldType.LongText:
           return formatLongTextCell(value, String(field.id), rowId);
@@ -494,10 +500,10 @@ export const useCellDisplay = ({
           return formatFileCell(value);
 
         case fieldType.Date:
-          return formatDateCell(value, dateAndTime);
+          return formatDateCell(value, extra.dateType);
 
         case fieldType.Time:
-          return formatTimeCell(value, includeSeconds);
+          return formatTimeCell(value, extra.timePrecision);
 
         case fieldType.Location:
           return formatLocationCell(value as LocationValue);

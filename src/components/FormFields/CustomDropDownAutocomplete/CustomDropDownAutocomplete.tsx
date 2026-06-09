@@ -9,6 +9,7 @@ import {
   StyledTextField,
   StyledAutocomplete,
 } from "./styled";
+import { selectionMode } from "formula-gear";
 
 interface CustomDropDownAutocompleteProps {
   value: string | string[];
@@ -41,7 +42,7 @@ const normalizeToArray = (value: string | string[] | null | undefined): string[]
 const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   value,
   isDisabled,
-  selectionMode = "single",
+  selectionMode: mode = "single",
   options,
   optionLabels = {},
   onChangeHandler,
@@ -65,7 +66,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
     setSelectedValues(normalizeToArray(value));
   }, [value]);
 
-  const isMultiple = selectionMode === "multiple";
+  const isMultiple = mode === selectionMode.Multiple;
 
   const emitChange = (nextValues: string[]) => {
     const normalized = nextValues.map((val) => (val === texts.heb.emptyValue ? "" : val));

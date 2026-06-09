@@ -21,6 +21,7 @@ import {
   type FieldValidationMessage,
   type FormFieldLike,
   getFieldValidationMessage,
+  selectionMode,
 } from "formula-gear";
 import {
   CustomError,
@@ -293,7 +294,7 @@ const isMultipleOptionsField = (field: FormFieldDto): boolean => {
     return false;
   }
 
-  return getFieldExtra(field).selectionMode === "multiple";
+  return getFieldExtra(field).selectionMode === selectionMode.Multiple;
 };
 
 const getEmptyFieldValue = (field: FormFieldDto): unknown => {
@@ -328,7 +329,7 @@ const getDefaultFieldValue = (field: FormFieldDto): unknown => {
         : undefined;
 
     if (defaultValue && Array.isArray(defaultValue)) {
-      return extra.selectionMode === "multiple" ? defaultValue : (defaultValue[0] ?? "");
+      return extra.selectionMode === selectionMode.Multiple ? defaultValue : (defaultValue[0] ?? "");
     }
 
     return getEmptyFieldValue(field);
