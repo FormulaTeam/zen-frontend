@@ -71,11 +71,11 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
   const getDownloadPath = (file: CarouselFile): string => {
     const fileName = getDisplayFileName(file);
 
-    if (!isLocalDisplayFile(file) && file.responseId && (file.id || file.path)) {
-      return `${window.location.origin}/download/${formId}/${file.responseId}/${file.id ?? file.path}/${encodeURIComponent(fileName)}`;
+    if (isLocalDisplayFile(file)) {
+      return "";
     }
 
-    return `${window.location.origin}/download/${formId}/${encodeURIComponent(fileName)}`;
+    return `${window.location.origin}/download/${formId}/${file.responseId}/${file.id ?? file.path}/${encodeURIComponent(fileName)}`;
   };
 
   const handleCopyLink = async (

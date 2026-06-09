@@ -15,7 +15,6 @@ export enum IPath {
   RESPONSE_VIEW = "/response/view/:formId/:id",
 
   DOWNLOAD_FILE = "/download/:formId/:responseId/:fileId/:fileName",
-  DOWNLOAD_FILE_LEGACY = "/download/:formId/:fileName",
 }
 
 export enum IOperationEndpoint {
