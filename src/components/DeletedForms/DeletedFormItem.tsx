@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Typography, Button, Tooltip, Checkbox, Box } from "@mui/material";
-import { StyledListItem, FormInfo, FormTitleBox, RestoreButtonWrapper, Img } from "./styled";
+import { StyledListItem, FormInfo, FormTitleBox, MetadataBox, RestoreButtonWrapper } from "./styled";
 import { getFormIconByName } from "../../utils/utils";
 import { FormIconWrapper } from "../FormCard/styled";
 import * as MuiIcons from "@mui/icons-material";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import EventBusyIcon from "@mui/icons-material/EventBusy";
+import RestoreFromTrashIcon from "@mui/icons-material/RestoreFromTrash";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
 interface DeletedFormItemProps {
   form: any;
@@ -61,43 +65,67 @@ const DeletedFormItem: React.FC<DeletedFormItemProps> = ({
     setHasResponses(responsesCount > 0);
   }, [form.numberOfResponses, form._count?.responses]);
 
+  const deletedAt = form?.deleted_at || form?.deletedAt || form?.deleted;
+  const deletedDateObj = new Date(deletedAt);
+  const isValidDate = !isNaN(deletedDateObj.getTime());
+  const deletedDate = isValidDate ? deletedDateObj.toLocaleDateString("he-IL") : "לא ידוע";
+  const deletedTime = isValidDate ? deletedDateObj.toLocaleTimeString("he-IL") : "";
+  
+  const createdBy = form?.created_by_name || form?.createdBy || form?.created_by || "לא ידוע";
+  const deletedBy = form?.deleted_by_name || form?.deletedBy || form?.deleted_by || "";
+
   return (
     <StyledListItem key={form.id}>
-      <Box display="flex" alignItems="flex-start" gap={2} flex={1}>
-        <Checkbox checked={isSelected} onChange={() => toggleSelect(form.id)} sx={{ mt: 1 }} />
+      <Box display="flex" alignItems="center" gap={2} flex={1}>
+        <Checkbox checked={isSelected} onChange={() => toggleSelect(form.id)} />
 
         <FormInfo>
           <FormTitleBox>
             {getIcon(form.icon)}
-            <Typography variant="h6">{form.name}</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 500 }}>
+              {form.name}
+            </Typography>
           </FormTitleBox>
-          <Typography variant="subtitle2">
-            נוצר על ידי {form.created_by_name || form.created_by}
-          </Typography>
-          <Typography variant="subtitle2">
-            {`נמחק בתאריך ${new Date(form?.deleted).toLocaleDateString("he-IL")} בשעה ${new Date(
-              form?.deleted,
-            ).toLocaleTimeString("he-IL")}`}
-            {form?.deleted_by_name ? ` על ידי ${form?.deleted_by_name}` : ""}
-          </Typography>
+          <MetadataBox>
+            <Box display="flex" alignItems="center" gap={1}>
+              <PersonOutlineIcon fontSize="small" color="action" />
+              <Typography variant="body2" color="text.secondary">
+                נוצר ע״י {createdBy}
+              </Typography>
+            </Box>
+            <Box display="flex" alignItems="center" gap={1}>
+              <EventBusyIcon fontSize="small" color="action" />
+              <Typography variant="body2" color="text.secondary">
+                נמחק בתאריך {deletedDate} {deletedTime ? `בשעה ${deletedTime}` : ""}{" "}
+                {deletedBy ? `ע״י ${deletedBy}` : ""}
+              </Typography>
+            </Box>
+          </MetadataBox>
         </FormInfo>
       </Box>
 
       <RestoreButtonWrapper>
-        <Button onClick={() => handleRestoreForm(form.id)} variant="contained" color="primary">
-          שחזור טופס
-        </Button>
-        <Tooltip title={!hasResponses ? "אין תגובות להצגה" : "הצג תגובות לטופס שנמחק"}>
+        <Tooltip title={!hasResponses ? "אין תגובות להצגה" : "הצג תגובות"}>
           <span>
             <Button
               onClick={() => setCurrentDeletedForm(form)}
               variant="outlined"
               color="primary"
-              disabled={!hasResponses}>
+              disabled={!hasResponses}
+              startIcon={<VisibilityOutlinedIcon />}
+              sx={{ borderRadius: "8px" }}>
               הצג תגובות
             </Button>
           </span>
         </Tooltip>
+        <Button
+          onClick={() => handleRestoreForm(form.id)}
+          variant="contained"
+          color="primary"
+          startIcon={<RestoreFromTrashIcon />}
+          sx={{ borderRadius: "8px" }}>
+          שחזור
+        </Button>
       </RestoreButtonWrapper>
     </StyledListItem>
   );
