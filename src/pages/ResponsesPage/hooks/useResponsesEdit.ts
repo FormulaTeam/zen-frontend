@@ -432,6 +432,7 @@ export const useResponsesEdit = () => {
   const [editedRows, setEditedRows] = useState<Map<RowId, Row>>(new Map());
   const [localRows, setLocalRows] = useState<Row[]>([]);
   const [deletedRowIds, setDeletedRowIds] = useState<RowId[]>([]);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<RowId[] | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
     Record<RowId, Record<string, QuickEditValidationError>>
@@ -544,49 +545,62 @@ export const useResponsesEdit = () => {
     }
   }, [isInEditMode, responseRows]);
 
+  const confirmDelete = useCallback(async (): Promise<void> => {
+    if (!pendingDeleteIds) return;
+    
+    const stringIds = pendingDeleteIds.map((id) => String(id));
+
+    if (isInEditMode) {
+      const localOnlyIds = stringIds.filter((id) => id.startsWith("new_"));
+      const serverIds = stringIds.filter((id) => !id.startsWith("new_"));
+
+      if (localOnlyIds.length > 0) {
+        setLocalRows((prev) => prev.filter((row) => !localOnlyIds.includes(String(row.id))));
+        setEditedRows((prev) => {
+          const next = new Map(prev);
+          localOnlyIds.forEach((id) => next.delete(id));
+          return next;
+        });
+      }
+
+      if (serverIds.length > 0) {
+        setDeletedRowIds((prev) => [...new Set([...prev, ...serverIds])]);
+        setEditedRows((prev) => {
+          const next = new Map(prev);
+          serverIds.forEach((id) => next.delete(id));
+          return next;
+        });
+      }
+      
+      setPendingDeleteIds(null);
+      return;
+    }
+
+    try {
+      setForm({
+        ...dtoForm,
+        responsesCount: Math.max(0, (dtoForm?.responsesCount ?? 0) - stringIds.length),
+      } as any);
+
+      await softDeleteResponses({ responsesIds: stringIds });
+      showSuccessNotification("מחיקת התגובות בוצעה בהצלחה");
+    } catch {
+      setForm(dtoForm as any);
+      showErrorNotification("מחיקת התגובות נכשלה");
+    } finally {
+      setPendingDeleteIds(null);
+    }
+  }, [pendingDeleteIds, isInEditMode, dtoForm, setForm, softDeleteResponses]);
+
+  const cancelDelete = useCallback(() => {
+    setPendingDeleteIds(null);
+  }, []);
+
   const handleDeleteResponses = useCallback(
-    async (ids: RowId[]): Promise<void> => {
-      const stringIds = ids.map((id) => String(id));
-
-      if (isInEditMode) {
-        const localOnlyIds = stringIds.filter((id) => id.startsWith("new_"));
-        const serverIds = stringIds.filter((id) => !id.startsWith("new_"));
-
-        if (localOnlyIds.length > 0) {
-          setLocalRows((prev) => prev.filter((row) => !localOnlyIds.includes(String(row.id))));
-          setEditedRows((prev) => {
-            const next = new Map(prev);
-            localOnlyIds.forEach((id) => next.delete(id));
-            return next;
-          });
-        }
-
-        if (serverIds.length > 0) {
-          setDeletedRowIds((prev) => [...new Set([...prev, ...serverIds])]);
-          setEditedRows((prev) => {
-            const next = new Map(prev);
-            serverIds.forEach((id) => next.delete(id));
-            return next;
-          });
-        }
-
-        return;
-      }
-
-      try {
-        setForm({
-          ...dtoForm,
-          responsesCount: Math.max(0, (dtoForm?.responsesCount ?? 0) - stringIds.length),
-        } as any);
-
-        await softDeleteResponses({ responsesIds: stringIds });
-        showSuccessNotification("מחיקת התגובות בוצעה בהצלחה");
-      } catch {
-        setForm(dtoForm as any);
-        showErrorNotification("מחיקת התגובות נכשלה");
-      }
+    (ids: RowId[]): void => {
+      setPendingDeleteIds(ids);
     },
-    [isInEditMode, dtoForm, setForm, softDeleteResponses],
+    [],
   );
 
   const handleCellLiveChange = useCallback(
@@ -1028,5 +1042,8 @@ export const useResponsesEdit = () => {
     handleCancelDialogClose: closeCancelDialog,
     handleAddNewResponse: addNewResponse,
     handleDuplicateResponse: duplicateResponse,
+    pendingDeleteIds,
+    confirmDelete,
+    cancelDelete,
   };
 };
