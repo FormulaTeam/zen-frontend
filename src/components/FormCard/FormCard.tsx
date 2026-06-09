@@ -15,7 +15,6 @@ import { MoreVert, ChatBubbleOutline, EditOutlined, ShareOutlined, DeleteOutline
 import { permission } from "formula-gear";
 import UserPicker from "../UserPicker/UserPicker";
 import ShareIcon from "../../icons/share.svg";
-import formX from "../../images/form_x.png";
 import { CustomIcon } from "../../theme/icons";
 import { getFormIconByName } from "../../utils/utils";
 import { highlightText } from "../../utils/highlighting";
@@ -123,15 +122,11 @@ const FormCard = ({
       );
     }
 
-    if (!iconName) {
-      return (
-        <FormIconWrapper>
-          <img src={formX} alt="form icon" />
-        </FormIconWrapper>
-      );
-    }
-
-    return <FormIconWrapper>{renderDynamicIcon(iconName)}</FormIconWrapper>;
+    return (
+      <FormIconWrapper>
+        {renderDynamicIcon(iconName ?? "grid_view")}
+      </FormIconWrapper>
+    );
   };
 
   const goToResponsesPage = (event: React.MouseEvent<HTMLElement>) => {

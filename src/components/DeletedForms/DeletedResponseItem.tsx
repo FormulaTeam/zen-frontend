@@ -11,7 +11,6 @@ import {
   FlexRowItem,
 } from "./styled";
 import { formIconsNamesMap, getFormIconByName } from "../../utils/utils";
-import formX from "../../images/form_x.png";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import { FormDto } from "../../types/shared";
 
@@ -46,7 +45,6 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
   const isValidDate = !isNaN(deletedDateObj.getTime());
   const deletedDate = isValidDate ? deletedDateObj.toLocaleDateString("he-IL") : "לא ידוע";
   const deletedTime = isValidDate ? deletedDateObj.toLocaleTimeString("he-IL") : "";
-
   const renderFormIcon = () => {
     const iconSrc = getFormIconByName(form?.icon ?? undefined);
 
@@ -56,18 +54,15 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
           src={iconSrc}
           alt="form icon"
           loading="lazy"
-          onError={(e) => {
-            if (e.currentTarget.src !== formX) {
-              e.currentTarget.src = formX;
-            }
-          }}
         />
       );
     }
 
-    if (iconSrc) {
-      const IconComponent = iconSrc;
-      return <IconComponent color="primary" sx={{ fontSize: 24 }} />;
+    const IconComponent = iconSrc;
+    if (IconComponent) {
+      return (
+        <IconComponent color="primary" sx={{ fontSize: 24 }} />
+      );
     }
 
     return null;

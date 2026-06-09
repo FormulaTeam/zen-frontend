@@ -1,8 +1,10 @@
 import React from "react";
 import { Typography, useTheme, Button } from "@mui/material";
 import { StyledListHeader, FormInfo, FormTitleBox, Img, StrongText, HeaderWrapper } from "./styled";
-import formX from "../../images/form_x.png";
 import { FormDto } from "../../types/shared";
+import { getFormIconByName } from "../../utils/utils";
+import * as MuiIcons from "@mui/icons-material";
+import { FormIconWrapper } from "../FormCard/styled";
 
 interface DeletedFormHeaderProps {
   form: FormDto;
@@ -21,12 +23,44 @@ const DeletedFormHeader: React.FC<DeletedFormHeaderProps> = ({
   const filteredResponses = responses.filter((response) => !response.deleted && !!form);
   const responsesCount = filteredResponses.length;
 
+  const renderDynamicIcon = (name: string) => {
+    const IconComponent = MuiIcons[name as keyof typeof MuiIcons];
+    return IconComponent ? <IconComponent color="primary" /> : name;
+  };
+
+  const getIcon = (iconName: string | null) => {
+    const iconSrc = getFormIconByName(iconName ?? undefined);
+
+    if (typeof iconSrc === "string") {
+      return (
+        <FormIconWrapper>
+          <img src={iconSrc} alt={iconName ?? "form icon"} />
+        </FormIconWrapper>
+      );
+    }
+
+    if (iconSrc) {
+      const IconComponent = iconSrc;
+      return (
+        <FormIconWrapper>
+          <IconComponent color="primary" />
+        </FormIconWrapper>
+      );
+    }
+
+    return (
+      <FormIconWrapper>
+        {renderDynamicIcon(iconName ?? "grid_view")}
+      </FormIconWrapper>
+    );
+  };
+
   return (
     <StyledListHeader>
       <HeaderWrapper>
         <FormInfo>
           <FormTitleBox>
-            <Img src={formX} alt="form icon" />
+            {getIcon(form?.icon ?? null)}
             <Typography variant="h6">
               טופס <StrongText color={theme.palette.primary.main}>{form.name}</StrongText> - מזהה
               טופס <StrongText color={theme.palette.primary.main}>{form.id}</StrongText>
@@ -38,7 +72,7 @@ const DeletedFormHeader: React.FC<DeletedFormHeaderProps> = ({
         </FormInfo>
 
         <Button variant="contained" color="primary" onClick={() => handleRestoreForm(form.id)}>
-          שחזור טופס
+          שחזור הטופס כולו
         </Button>
       </HeaderWrapper>
     </StyledListHeader>

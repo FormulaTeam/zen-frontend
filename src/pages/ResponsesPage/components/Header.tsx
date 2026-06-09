@@ -5,7 +5,6 @@ import * as MuiIcons from "@mui/icons-material";
 
 import { getCreatorName } from "../../../utils/formFieldsResponses";
 import { getFormIconByName } from "../../../utils/utils";
-import formX from "../../../images/form_x.png";
 import { useFormStore } from "../stores/form.store";
 
 import {
@@ -31,12 +30,8 @@ const Header = () => {
   const getIconContent = (iconName: string | null) => {
     const iconSrc = getFormIconByName(iconName ?? undefined);
 
-    if (!iconName || !iconSrc) {
-      return <img src={formX} alt="form icon" style={{ width: 32, height: 32 }} />;
-    }
-
     if (typeof iconSrc === "string") {
-      return <img src={iconSrc} alt={iconName} style={{ width: 32, height: 32 }} />;
+      return <img src={iconSrc} alt={iconName ?? "form icon"} style={{ width: 32, height: 32 }} />;
     }
 
     const IconComponent = iconSrc;
@@ -44,7 +39,7 @@ const Header = () => {
       return <IconComponent color="primary" sx={{ fontSize: 32 }} />;
     }
 
-    return renderDynamicIcon(iconName);
+    return renderDynamicIcon(iconName ?? "grid_view");
   };
 
   const infoTooltipContent = (
