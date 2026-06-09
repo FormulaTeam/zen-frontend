@@ -1,4 +1,4 @@
-import { Box, Paper, Typography, Button, IconButton } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
 export const StyledListHeader = styled(Box)(({ theme }) => ({
@@ -10,38 +10,49 @@ export const StyledListHeader = styled(Box)(({ theme }) => ({
   alignItems: "center",
   width: "100%",
   backgroundColor: theme.palette.background.paper,
-  boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.04)",
   border: `1px solid ${theme.palette.divider}`,
 }));
 
-export const StyledListItem = styled(Paper)(({ theme }) => ({
-  padding: "20px 24px",
+export const StyledListItem = styled(Box)(({ theme }) => ({
+  padding: "16px 24px",
   margin: "0 0 12px 0",
   borderRadius: "12px",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
   width: "100%",
-  boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.03)",
+  backgroundColor: theme.palette.background.paper,
   border: `1px solid ${theme.palette.divider}`,
-  transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out",
+  transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out, background-color 0.2s ease-in-out",
   "&:hover": {
     transform: "translateY(-2px)",
-    boxShadow: "0px 6px 16px rgba(0, 0, 0, 0.08)",
+    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.05)",
     borderColor: theme.palette.primary.light,
+    backgroundColor: theme.palette.action.hover,
   },
 }));
 
 export const FormInfo = styled(Box)({
   display: "flex",
-  flexDirection: "column",
-  gap: "4px",
+  flexDirection: "row",
+  alignItems: "center",
+  flex: 1,
+  gap: "32px",
 });
 
 export const FormTitleBox = styled(Box)({
   display: "flex",
   alignItems: "center",
   gap: "12px",
+  minWidth: "250px",
+});
+
+export const MetadataBox = styled(Box)({
+  display: "flex",
+  flexDirection: "row",
+  alignItems: "center",
+  gap: "24px",
+  flex: 1,
 });
 
 export const RestoreButtonWrapper = styled(Box)({
@@ -99,5 +110,4 @@ export const EmptyStateWrapper = styled(Box)({
   justifyContent: "center",
   height: "400px",
   gap: "24px",
-  opacity: 0.8,
 });

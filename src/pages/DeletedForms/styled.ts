@@ -2,6 +2,7 @@ import React from "react";
 import { Typography, Box, Grid, Tab } from "@mui/material";
 import styled from "styled-components";
 import { styled as muiStyled } from "@mui/material/styles";
+
 export const Header = styled(Box)`
   display: flex;
   justify-content: space-between;
@@ -45,14 +46,16 @@ export const FormsGrid = styled(Grid)`
   align-content: start;
 `;
 
-export const TopBar = styled(Box)`
-  padding: 8px 16px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-`;
+export const TopBar = muiStyled(Box)(({ theme }) => ({
+  padding: "12px 24px",
+  borderRadius: "12px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%",
+  backgroundColor: theme.palette.primary.light + "20",
+  border: `1px solid ${theme.palette.primary.light}`,
+}));
 
 export const TopBarWrapper = styled(Box)`
   min-height: 72px;
@@ -71,3 +74,4 @@ export const FullWidthBox = styled.div`
 export const CustomTab = muiStyled(Tab)(() => ({
   fontSize: "20px",
 }));
+

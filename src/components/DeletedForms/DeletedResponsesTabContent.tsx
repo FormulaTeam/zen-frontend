@@ -140,14 +140,30 @@ export default function DeletedResponsesTabContent({
 
       {isLoading ? (
         <LoadingBox>
-          <ReactLoading type="spinningBubbles" color={theme.palette.primary.main} />
+          <ReactLoading type="spin" color={theme.palette.primary.main} height={40} width={40} />
         </LoadingBox>
       ) : !currentDeletedForm ? (
         <Box display="flex" flexDirection="column" alignItems="center" gap={2} mt={10}>
-          <EmptyMessage variant="h5">בחר טופס כדי להציג את התגובות שנמחקו שלו</EmptyMessage>
+          <Box
+            component="img"
+            src={require("../../images/noData2.png")}
+            alt="No Form Selected"
+            sx={{ width: 160, height: 160, opacity: 0.8, objectFit: "contain" }}
+          />
+          <EmptyMessage variant="h6" color="text.secondary" sx={{ fontWeight: 500 }}>
+            בחר טופס כדי להציג את התגובות שנמחקו שלו
+          </EmptyMessage>
         </Box>
       ) : responses.length === 0 ? (
-        <EmptyMessage variant="subtitle1">לא נמצאו תגובות שנמחקו עבור טופס זה</EmptyMessage>
+        <Box display="flex" flexDirection="column" alignItems="center" gap={2} mt={10}>
+          <Box
+            component="img"
+            src={require("../../images/noData2.png")}
+            alt="No Responses"
+            sx={{ width: 160, height: 160, opacity: 0.8, objectFit: "contain" }}
+          />
+          <EmptyMessage variant="subtitle1" color="text.secondary">לא נמצאו תגובות שנמחקו עבור טופס זה</EmptyMessage>
+        </Box>
       ) : (
         <FormsGrid container spacing={3} ref={listRef} onScroll={handleScroll}>
           {responses.map((res) => {

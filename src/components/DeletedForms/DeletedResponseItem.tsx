@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Typography, Button, useTheme, Checkbox, CircularProgress, Tooltip } from "@mui/material";
+import { Typography, Button, useTheme, Checkbox, CircularProgress, Tooltip, Box } from "@mui/material";
 import {
   StyledListItem,
   FormInfo,
@@ -9,10 +9,14 @@ import {
   StrongText,
   CheckboxWrapper,
   FlexRowItem,
+  MetadataBox,
 } from "./styled";
 import { formIconsNamesMap, getFormIconByName } from "../../utils/utils";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import { FormDto } from "../../types/shared";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import EventBusyIcon from "@mui/icons-material/EventBusy";
+import RestoreFromTrashIcon from "@mui/icons-material/RestoreFromTrash";
 
 interface DeletedResponseItemProps {
   form?: FormDto;
@@ -85,63 +89,71 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
   const formName = form?.name || response.form_name;
   const formId = form?.id || responseFormId;
 
-  const isRestoreDisabled =
-    response.parentFormStatus !== "active" || (!!currentDeletedForm && response.deleted);
+  const isFormDeleted = response.parentFormStatus !== "active" || !!currentDeletedForm;
+  const isDeletedWithForm = response.deleted_with_form === true;
 
-  if (!response.deleted && !currentDeletedForm) {
-    return null;
+  const isRestoreDisabled = isFormDeleted || isDeletedWithForm;
+
+  let warningMessage: string | null = null;
+  if (isDeletedWithForm) {
+    warningMessage = "תגובה זו נמחקה יחד עם הטופס. יש לשחזר את הטופס תחילה.";
+  } else if (isFormDeleted) {
+    warningMessage = "לא ניתן לשחזר את התגובה מכיוון שהטופס שלה נמחק. יש לשחזר את הטופס תחילה.";
   }
+
+  const createdBy = response.created_by_name || response.created_by || "לא ידוע";
+  const deletedBy = response.deleted_by_name || response.updated_by_name || "";
 
   return (
     <StyledListItem>
-      <FlexRowItem>
+      <Box display="flex" alignItems="center" gap={2} flex={1}>
         {!currentDeletedForm && (
-          <CheckboxWrapper>
-            <Checkbox checked={isSelected} onChange={handleCheckboxChange} color="primary" />
-          </CheckboxWrapper>
+          <Checkbox checked={isSelected} onChange={handleCheckboxChange} color="primary" disabled={isRestoreDisabled} />
         )}
         <FormInfo>
           <FormTitleBox>
             {!currentDeletedForm && renderFormIcon()}
-            <Typography variant="h6">
-              תגובה מספר <StrongText color={theme.palette.primary.main}>{responseIndex}</StrongText>{" "}
-              שנמחקה מטופס מזהה <StrongText color={theme.palette.primary.main}>{formId}</StrongText>{" "}
-              {formName ? (
+            <Typography variant="h6" sx={{ fontWeight: 500 }}>
+              תגובה <StrongText color={theme.palette.primary.main}>#{responseIndex}</StrongText>
+              {!currentDeletedForm && (
                 <>
-                  בשם <StrongText color={theme.palette.primary.main}>{formName}</StrongText>
+                  {" "}מטופס {formName ? (
+                    <StrongText color={theme.palette.primary.main}>{formName}</StrongText>
+                  ) : (
+                    <CircularProgress size={14} color="primary" />
+                  )}
                 </>
-              ) : (
-                <CircularProgress size={14} color="primary" />
               )}
             </Typography>
           </FormTitleBox>
-          <Typography variant="subtitle2">
-            נוצר על ידי {response.created_by_name || response.created_by}
-          </Typography>{" "}
-          <Typography variant="subtitle2">
-            נמחק על ידי {response.deleted_by_name || response.updated_by_name}
-          </Typography>
-          <Typography variant="subtitle2">
-            נמחק בתאריך {deletedDate} {deletedTime ? "בשעה " + deletedTime : ""}
-          </Typography>
-          {!response.deleted && !!currentDeletedForm ? (
-            <Typography variant="subtitle2" color="warning">
-              התגובה נמחקה יחד עם הטופס ותשוחזר באופן אוטומטי בעת שחזור הטופס.{" "}
+          <MetadataBox>
+            <Box display="flex" alignItems="center" gap={1}>
+              <PersonOutlineIcon fontSize="small" color="action" />
+              <Typography variant="body2" color="text.secondary">
+                נוצר ע״י {createdBy}
+              </Typography>
+            </Box>
+            <Box display="flex" alignItems="center" gap={1}>
+              <EventBusyIcon fontSize="small" color="action" />
+              <Typography variant="body2" color="text.secondary">
+                נמחק בתאריך {deletedDate} {deletedTime ? "בשעה " + deletedTime : ""} {deletedBy ? `ע״י ${deletedBy}` : ""}
+              </Typography>
+            </Box>
+          </MetadataBox>
+          {warningMessage && (
+            <Typography variant="body2" color="error.main" sx={{ mt: 0.5 }}>
+              {warningMessage}
             </Typography>
-          ) : currentDeletedForm ? (
-            <Typography variant="subtitle2" color="error">
-              התגובה נמחקה לפני שהטופס נמחק. לכן במידה והטופס ישוחזר תגובה זאת לא תשוחזר עם
-              הטופס.{" "}
-            </Typography>
-          ) : null}
+          )}
         </FormInfo>
-      </FlexRowItem>
+      </Box>
+
       <RestoreButtonWrapper>
         <Tooltip
           title={
             isRestoreDisabled && hasPermission
-              ? "לא ניתן לשחזר תגובה לטופס שנמחק"
-              : "שחזור תגובה לטופס"
+              ? warningMessage
+              : "שחזור תגובה"
           }>
           <span>
             <Button
@@ -152,8 +164,10 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
               }}
               variant="contained"
               color="primary"
-              disabled={isRestoreDisabled && hasPermission}>
-              שחזור תגובה לטופס
+              disabled={isRestoreDisabled && hasPermission}
+              startIcon={<RestoreFromTrashIcon />}
+              sx={{ borderRadius: "8px" }}>
+              שחזור תגובה
             </Button>
           </span>
         </Tooltip>

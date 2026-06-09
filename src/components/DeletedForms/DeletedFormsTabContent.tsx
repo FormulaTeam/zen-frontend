@@ -12,8 +12,9 @@ import { DeletedFormsFilters } from "../../hooks/useDeletedForms";
 import DeletedSelection from "./DeletedSelection";
 import Grow from "@mui/material/Grow";
 import { EmptyStateWrapper } from "./styled";
-import { Typography, useTheme } from "@mui/material";
+import { Typography, useTheme, Box } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import noDataImg from "../../images/noData2.png";
 
 interface DeletedFormsTabContentProps {
   forms: any[];
@@ -93,12 +94,17 @@ const DeletedFormsTabContent: React.FC<DeletedFormsTabContentProps> = ({
 
       {loadingForms && !forms.length ? (
         <LoadingBox>
-          <ReactLoading type="spinningBubbles" color="#1976d2" />
+          <ReactLoading type="spin" color={theme.palette.primary.main} height={40} width={40} />
         </LoadingBox>
       ) : !forms.length ? (
         <EmptyStateWrapper>
-          <DeleteOutlineIcon sx={{ fontSize: 80, color: theme.palette.text.disabled }} />
-          <Typography variant="h6" color="text.secondary">
+          <Box
+            component="img"
+            src={noDataImg}
+            alt="No Data"
+            sx={{ width: 200, height: 200, opacity: 0.9, objectFit: "contain" }}
+          />
+          <Typography variant="h6" color="text.secondary" sx={{ mt: 2, fontWeight: 500 }}>
             סל המיחזור ריק
           </Typography>
           <Typography variant="body2" color="text.disabled">
@@ -106,7 +112,7 @@ const DeletedFormsTabContent: React.FC<DeletedFormsTabContentProps> = ({
           </Typography>
         </EmptyStateWrapper>
       ) : (
-        <FormsGrid container spacing={3} onScroll={handleScroll} style={{ overflowY: 'auto', flex: 1, maxHeight: 'calc(100vh - 200px)' }}>
+        <FormsGrid container spacing={0} onScroll={handleScroll} style={{ overflowY: 'auto', flex: 1, maxHeight: 'calc(100vh - 200px)', padding: '16px 0' }}>
           {forms.map((form) => (
             <Grow in timeout={300} key={form.id}>
               <FullWidthBox>
@@ -122,7 +128,7 @@ const DeletedFormsTabContent: React.FC<DeletedFormsTabContentProps> = ({
           ))}
           {isFetchingNextPage && (
             <LoadingBox style={{ width: '100%', marginTop: '16px' }}>
-              <ReactLoading type="spin" color="#1976d2" height={30} width={30} />
+              <ReactLoading type="spin" color={theme.palette.primary.main} height={30} width={30} />
             </LoadingBox>
           )}
         </FormsGrid>
