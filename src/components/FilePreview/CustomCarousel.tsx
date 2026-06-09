@@ -5,8 +5,11 @@ import { FileIcon, defaultStyles } from "react-file-icon";
 import { decodeFileName } from "../../utils/utils";
 
 type StoredFile = {
+  id?: string;
+  responseId?: string;
   name: string;
   path: string;
+  fileName?: string;
 };
 
 type LocalDisplayFile = {
@@ -67,6 +70,10 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
 
   const getDownloadPath = (file: CarouselFile): string => {
     const fileName = getDisplayFileName(file);
+
+    if (!isLocalDisplayFile(file) && file.responseId && (file.id || file.path)) {
+      return `${window.location.origin}/download/${formId}/${file.responseId}/${file.id ?? file.path}/${encodeURIComponent(fileName)}`;
+    }
 
     return `${window.location.origin}/download/${formId}/${encodeURIComponent(fileName)}`;
   };

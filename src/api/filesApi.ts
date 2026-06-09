@@ -1,27 +1,68 @@
 import { decodeFileName } from "../utils/utils";
 import apiClient from "./config";
 
+// --- Types ---
 export type StoredFile = {
+  id?: string;
+  responseId?: string;
   name: string;
   path: string;
+  fileName?: string;
+  mimeType?: string;
+  sizeInBytes?: number;
+  uploadedAt?: string;
 };
 
 export type LocalDisplayFile = {
   name: string;
+  path?: string;
   file: File;
 };
 
 export type ResponseDisplayFile = StoredFile | LocalDisplayFile;
 
-export const uploadFile = async (
+export type ResponseFileDto = {
+  id: string;
+  responseId: string;
+  fileName: string;
+  mimeType: string;
+  sizeInBytes: number;
+  uploadedAt: string;
+};
+
+// --- Helper Functions ---
+
+const isLocalDisplayFile = (file: ResponseDisplayFile): file is LocalDisplayFile => {
+  return "file" in file;
+};
+
+/**
+ * Centralized utility to handle the DOM operations for triggering a file download.
+ */
+const triggerBrowserDownload = (data: Blob | File, rawFileName: string): void => {
+  const url = URL.createObjectURL(data);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = decodeFileName(rawFileName);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  URL.revokeObjectURL(url);
+};
+
+// --- API Methods ---
+
+export const uploadFile = async <T = unknown>(
   formId: number | string,
   responseId: string,
   file: File,
-): Promise<any> => {
+): Promise<T> => {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await apiClient.post(
+  const response = await apiClient.post<T>(
     `/forms/${formId}/responses/${responseId}/files`,
     formData,
     {
@@ -41,74 +82,51 @@ export const downloadFile = async (
   fileName: string,
 ): Promise<void> => {
   try {
-    const response = await apiClient.get(
+    const response = await apiClient.get<Blob>(
       `/forms/${formId}/responses/${responseId}/files/${fileId}`,
-      {
-        responseType: "blob",
-      },
+      { responseType: "blob" },
     );
 
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.setAttribute("download", decodeFileName(fileName));
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    window.URL.revokeObjectURL(url);
+    triggerBrowserDownload(response.data, fileName);
   } catch (error) {
     console.error("Failed to download file:", error);
     throw error;
   }
 };
 
-const isLocalDisplayFile = (file: ResponseDisplayFile): file is LocalDisplayFile => {
-  return "file" in file;
-};
-
 export const downloadFileFromResponse = async (
   file: ResponseDisplayFile,
-  formId?: string,
+  formId: string | number,
+  responseId?: string,
 ): Promise<void> => {
   try {
+    // Handle un-uploaded local files directly
     if (isLocalDisplayFile(file)) {
-      const url = URL.createObjectURL(file.file);
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.download = decodeFileName(file.file.name);
-      link.click();
-
-      URL.revokeObjectURL(url);
+      triggerBrowserDownload(file.file, file.file.name);
       return;
     }
 
-    const response = await apiClient.get(`/responses/download-file`, {
-      params: {
-        fileName: file.name,
-        form_id: formId,
-      },
-      responseType: "blob",
-    });
+    const resolvedResponseId = responseId ?? file.responseId;
+    const fileId = file.id ?? file.path;
 
-    const url = URL.createObjectURL(response.data);
-    const link = document.createElement("a");
+    if (!resolvedResponseId || !fileId) {
+      throw new Error("Missing file download identifiers");
+    }
 
-    link.href = url;
-    link.download = decodeFileName(file.name);
-    link.click();
-
-    URL.revokeObjectURL(url);
+    await downloadFile(formId, resolvedResponseId, fileId, file.name || file.fileName || fileId);
   } catch (error) {
     console.error("Failed to download file from response:", error);
-    return Promise.reject(error);
+    throw error;
   }
 };
 
-export const deleteFilesFromS3 = async (fileKeys: string[]): Promise<{ message: string }> => {
-  const response = await apiClient.post<{ message: string }>("/delete-files-from-s3", { fileKeys });
-
-  return response.data;
-};
+export const toStoredFile = (file: ResponseFileDto): StoredFile => ({
+  id: file.id,
+  responseId: file.responseId,
+  name: file.fileName,
+  path: file.id,
+  fileName: file.fileName,
+  mimeType: file.mimeType,
+  sizeInBytes: file.sizeInBytes,
+  uploadedAt: file.uploadedAt,
+});
