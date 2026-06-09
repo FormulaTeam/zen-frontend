@@ -3,7 +3,6 @@ import ReactLoading from "react-loading";
 import {
   FormsGrid,
   LoadingBox,
-  EmptyMessage,
   TopBarWrapper,
   FullWidthBox,
 } from "../../pages/DeletedForms/styled";
@@ -12,6 +11,9 @@ import DeletedFormsToolbar from "./DeletedFormsToolbar";
 import { DeletedFormsFilters } from "../../hooks/useDeletedForms";
 import DeletedSelection from "./DeletedSelection";
 import Grow from "@mui/material/Grow";
+import { EmptyStateWrapper } from "./styled";
+import { Typography, useTheme } from "@mui/material";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 interface DeletedFormsTabContentProps {
   forms: any[];
@@ -36,6 +38,7 @@ const DeletedFormsTabContent: React.FC<DeletedFormsTabContentProps> = ({
   hasNextPage,
   isFetchingNextPage,
 }) => {
+  const theme = useTheme();
   const [selectedFormIds, setSelectedFormIds] = useState<number[]>([]);
 
   const toggleSelect = (formId: number) => {
@@ -93,7 +96,15 @@ const DeletedFormsTabContent: React.FC<DeletedFormsTabContentProps> = ({
           <ReactLoading type="spinningBubbles" color="#1976d2" />
         </LoadingBox>
       ) : !forms.length ? (
-        <EmptyMessage variant="subtitle1">אין טפסים בסל המיחזור</EmptyMessage>
+        <EmptyStateWrapper>
+          <DeleteOutlineIcon sx={{ fontSize: 80, color: theme.palette.text.disabled }} />
+          <Typography variant="h6" color="text.secondary">
+            סל המיחזור ריק
+          </Typography>
+          <Typography variant="body2" color="text.disabled">
+            לא נמצאו טפסים שנמחקו עבור החיפוש הנוכחי
+          </Typography>
+        </EmptyStateWrapper>
       ) : (
         <FormsGrid container spacing={3} onScroll={handleScroll} style={{ overflowY: 'auto', flex: 1, maxHeight: 'calc(100vh - 200px)' }}>
           {forms.map((form) => (

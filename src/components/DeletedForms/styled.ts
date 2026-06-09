@@ -1,65 +1,103 @@
-import { Box, Paper } from "@mui/material";
-import styled from "styled-components";
+import { Box, Paper, Typography, Button, IconButton } from "@mui/material";
+import { styled } from "@mui/material/styles";
 
-export const StyledListHeader = styled.div`
-  padding: 16px;
-  margin: 8px 0;
-  border-radius: 4px;
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-`;
-export const StyledListItem = styled(Paper)`
-  padding: 16px;
-  margin: 8px 0;
-  border-radius: 4px;
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-`;
-export const FormInfo = styled(Box)`
-  display: flex;
-  flex-direction: column;
-`;
+export const StyledListHeader = styled(Box)(({ theme }) => ({
+  padding: "16px 24px",
+  margin: "12px 0",
+  borderRadius: "12px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%",
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.04)",
+  border: `1px solid ${theme.palette.divider}`,
+}));
 
-export const FormTitleBox = styled(Box)`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
+export const StyledListItem = styled(Paper)(({ theme }) => ({
+  padding: "20px 24px",
+  margin: "0 0 12px 0",
+  borderRadius: "12px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%",
+  boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.03)",
+  border: `1px solid ${theme.palette.divider}`,
+  transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out",
+  "&:hover": {
+    transform: "translateY(-2px)",
+    boxShadow: "0px 6px 16px rgba(0, 0, 0, 0.08)",
+    borderColor: theme.palette.primary.light,
+  },
+}));
 
-export const RestoreButtonWrapper = styled(Box)`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  align-items: center;
-  justify-content: center;
-`;
+export const FormInfo = styled(Box)({
+  display: "flex",
+  flexDirection: "column",
+  gap: "4px",
+});
 
-export const Img = styled.img`
-  height: 20px;
-`;
+export const FormTitleBox = styled(Box)({
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+});
 
-export const StrongText = styled.strong`
-  color: ${({ color }) => color};
-`;
+export const RestoreButtonWrapper = styled(Box)({
+  display: "flex",
+  gap: "12px",
+  alignItems: "center",
+  justifyContent: "flex-end",
+  minWidth: "220px",
+});
 
-export const HeaderWrapper = styled(Box)`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-`;
+export const Img = styled("img")({
+  height: "24px",
+  width: "24px",
+  objectFit: "contain",
+});
 
-export const CheckboxWrapper = styled("div")`
-  display: flex;
-  align-items: center;
-  padding: 0;
-  width: 40px;
-`;
+export const StrongText = styled("strong")<{ color?: string }>(({ color }) => ({
+  color: color || "inherit",
+  fontWeight: 600,
+}));
 
-export const FlexRowItem = styled("div")`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-`;
+export const HeaderWrapper = styled(Box)({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%",
+});
+
+export const CheckboxWrapper = styled(Box)({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  marginRight: "16px",
+});
+
+export const FlexRowItem = styled(Box)({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  width: "100%",
+});
+
+export const MetadataTypography = styled(Typography)(({ theme }) => ({
+  fontSize: "0.85rem",
+  color: theme.palette.text.secondary,
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+}));
+
+export const EmptyStateWrapper = styled(Box)({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  height: "400px",
+  gap: "24px",
+  opacity: 0.8,
+});
