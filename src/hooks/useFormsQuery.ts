@@ -1,6 +1,10 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import apiClient from "../api/config";
-import { FormsScopeOption, FormsSortOption, SortDirection } from "../types/enums/filtersAndSorts.enum";
+import {
+  FormsScopeOption,
+  FormsSortOption,
+  SortDirection,
+} from "../types/enums/filtersAndSorts.enum";
 import { FormOverviewDto } from "@src/types/shared";
 
 export interface FormsQueryParams {
@@ -10,7 +14,7 @@ export interface FormsQueryParams {
   sortDirection?: SortDirection;
   enabled?: boolean;
   includePermissions?: boolean;
-  onlyDeleted?: boolean;
+  softDeleted?: boolean;
 }
 
 export const FORMS_PAGINATION_LIMIT = 25;

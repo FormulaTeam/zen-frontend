@@ -14,7 +14,7 @@ export type IGetFormsData = (
   currentFilter: Filter,
   additionalFilter?: Filter,
   deleted?: boolean,
-  onlyDeleted?: boolean,
+  softDeleted?: boolean,
 ) => Promise<FormDto[] | undefined>;
 
 /**
@@ -22,7 +22,8 @@ export type IGetFormsData = (
  * Uses the new GET /forms endpoint with server-side filtering and sorting.
  */
 export function useGetFormsData(params: FormsQueryParams) {
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetFormsQuery(params);
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useGetFormsQuery(params);
 
   const formsData = data?.pages.flat() ?? [];
 
@@ -42,7 +43,13 @@ export function useLegacyFormsData(maxInPage = 1000) {
   const [formsData, setFormsData] = useState<FormDto[]>([]);
 
   const getData: IGetFormsData = useCallback(
-    async (nextPage, currentFilter = {}, additionalFilter = {}, deleted = false, onlyDeleted = false) => {
+    async (
+      nextPage,
+      currentFilter = {},
+      additionalFilter = {},
+      deleted = false,
+      softDeleted = false,
+    ) => {
       const mergedQuery =
         currentFilter.query &&
         typeof currentFilter.query === "object" &&
@@ -59,7 +66,7 @@ export function useLegacyFormsData(maxInPage = 1000) {
         orderBy: (additionalFilter.orderBy ?? currentFilter.orderBy ?? IOrderBy.ASC) as IOrderBy,
         signal: additionalFilter.signal,
         deleted,
-        onlyDeleted,
+        softDeleted,
       };
 
       try {

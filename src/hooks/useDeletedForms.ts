@@ -32,7 +32,7 @@ export const useDeletedForms = (
     isFetchingNextPage,
   } = useGetFormsData({
     scope: isSuperAdmin ? formsScopeOption.AllForms : formsScopeOption.AccessibleForms,
-    onlyDeleted: true,
+    softDeleted: true,
     searchQuery: searchQuery,
     enabled: !!user,
   });

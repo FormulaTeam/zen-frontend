@@ -23,6 +23,7 @@ interface CustomCarouselProps {
   items: CarouselFile[];
   onItemClickHandler: (file: CarouselFile) => void;
   formId?: string | number;
+  responseId?: string | number;
   shouldSpaceFiles?: boolean;
 }
 
@@ -54,6 +55,7 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
   items,
   onItemClickHandler,
   formId,
+  responseId,
   shouldSpaceFiles = false,
 }) => {
   const theme = useTheme();
@@ -74,8 +76,10 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
     if (isLocalDisplayFile(file)) {
       return "";
     }
+    
+    const resolvedResponseId = responseId ?? file.responseId;
 
-    return `${window.location.origin}/download/${formId}/${file.responseId}/${file.id ?? file.path}/${encodeURIComponent(fileName)}`;
+    return `${window.location.origin}/download/${formId}/${resolvedResponseId}/${file.id ?? file.path}/${encodeURIComponent(fileName)}`;
   };
 
   const handleCopyLink = async (

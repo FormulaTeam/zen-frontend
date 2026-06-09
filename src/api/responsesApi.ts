@@ -30,7 +30,11 @@ const stringifyQuery = (query: any): string => {
 
 const formatParams = (filter?: Filter) => {
   const sortBy = filter?.sortBy;
-  const formattedSortBy = sortBy ? (sortBy.includes(":") ? sortBy : `meta:${sortBy}`) : "meta:created_at";
+  const formattedSortBy = sortBy
+    ? sortBy.includes(":")
+      ? sortBy
+      : `meta:${sortBy}`
+    : "meta:created_at";
 
   const responseFilters = filter?.responseFilters;
   const query = filter?.query;
@@ -65,7 +69,7 @@ const formatParams = (filter?: Filter) => {
     sortDirection: (filter?.orderBy?.toLowerCase() === "asc" ? "asc" : "desc") as SortDirection,
     before: filter?.before,
     after: filter?.after,
-    onlyDeleted: filter?.onlyDeleted,
+    softDeleted: filter?.softDeleted,
   };
 };
 
@@ -125,7 +129,9 @@ export const createResponse = async (
   hiddenFieldIds?: string[],
 ): Promise<ResponseDto[]> => {
   try {
-    const params = hiddenFieldIds?.length ? { hiddenFieldIds: hiddenFieldIds.join(',') } : undefined;
+    const params = hiddenFieldIds?.length
+      ? { hiddenFieldIds: hiddenFieldIds.join(",") }
+      : undefined;
     const response = await apiClient.post<ResponseDto[]>(
       `/forms/${formId}/responses`,
       responseData,
@@ -149,12 +155,12 @@ export const updateResponses = async (
   hiddenFieldIds?: string[],
 ): Promise<ResponseDto[]> => {
   try {
-    const params = hiddenFieldIds?.length ? { hiddenFieldIds: hiddenFieldIds.join(',') } : undefined;
-    const response = await apiClient.put<ResponseDto[]>(
-      `/forms/${formId}/responses`,
-      dto,
-      { params },
-    );
+    const params = hiddenFieldIds?.length
+      ? { hiddenFieldIds: hiddenFieldIds.join(",") }
+      : undefined;
+    const response = await apiClient.put<ResponseDto[]>(`/forms/${formId}/responses`, dto, {
+      params,
+    });
     return response.data;
   } catch (error) {
     console.error("Failed to update responses:", error);
@@ -234,7 +240,7 @@ export const getAllDeletedResponses = async (filter: Filter): Promise<any> => {
 
     const params = {
       ...formatParams(filter),
-      onlyDeleted: true,
+      softDeleted: true,
     };
 
     const response = await apiClient.get(`/forms/${formId}/responses`, { params });
@@ -512,7 +518,12 @@ export const getFieldValues = async (
   formId: number,
   fieldId: string,
   params?: { limit?: number; offset?: number; search?: string },
-): Promise<{ total: number; limit: number; offset: number; data: { responseId: string; value: unknown }[] }> => {
+): Promise<{
+  total: number;
+  limit: number;
+  offset: number;
+  data: { responseId: string; value: unknown }[];
+}> => {
   try {
     const response = await apiClient.get(`/forms/${formId}/responses/fields/${fieldId}`, {
       params: {
@@ -532,7 +543,7 @@ export const getFieldValues = async (
 export const useGetInfiniteFieldValues = (
   formId?: number,
   fieldId?: string,
-  search: string = ""
+  search: string = "",
 ) => {
   return useInfiniteQuery({
     queryKey: ["fieldValues", formId, fieldId, search],

@@ -323,6 +323,7 @@ export const useCellDisplay = ({
         <CenteredBox>
           <CustomCarousel
             formId={formId}
+            responseId={rowId}
             items={displayFiles}
             onItemClickHandler={(file) => onFileClick?.(file, rowId)}
             shouldSpaceFiles
