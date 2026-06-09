@@ -1,4 +1,4 @@
-import { UseQueryResult } from "@tanstack/react-query";
+import { useInfiniteQuery, UseQueryResult } from "@tanstack/react-query";
 import { UserType, userType, UserWithoutUserTypeSchema } from "formula-gear";
 import z from "zod";
 
@@ -6,7 +6,7 @@ import type { UserDto, UserPersonalDto } from "../types/shared";
 import { useFetch } from "../utils/useFetch";
 import apiClient from "./config";
 
-type UserSearchResult = {
+export type UserSearchResult = {
   id: number;
   displayName: string;
   upn: string;
@@ -18,26 +18,33 @@ export type UserTypeDto = {
 
 type UserWithoutType = z.infer<typeof UserWithoutUserTypeSchema>
 
-export const getUsers = async (filterName?: string): Promise<UserSearchResult[]> => {
-  const trimmedName = filterName?.trim();
+export const USERS_PAGINATION_LIMIT = 10;
 
-  if (!trimmedName) return [];
+export const useSearchUsersQuery = (searchQuery: string) => {
+  return useInfiniteQuery({
+    queryKey: ["users", "search", searchQuery],
+    queryFn: async ({ pageParam = 0 }) => {
+      if (!searchQuery?.trim()) return [];
 
-  try {
-    const response = await apiClient.get<UserDto[]>("/users", {
-      params: { searchQuery: trimmedName },
-    });
+      const response = await apiClient.get<UserDto[]>("/users", {
+        params: { search: searchQuery.trim(), limit: USERS_PAGINATION_LIMIT, offset: pageParam },
+      });
 
-    return (response.data ?? []).map((user: UserWithoutType) => ({
-      id: user.id,
-      displayName: user.name || "",
-      upn: user.upn || "",
-    }));
-  } catch (error) {
-    console.error("Failed to fetch users:", error);
-
-    throw error;
-  }
+      return (response.data ?? []).map((user: UserWithoutType) => ({
+        id: user.id,
+        displayName: user.name || "",
+        upn: user.upn || "",
+      }));
+    },
+    enabled: !!searchQuery?.trim() && searchQuery.trim().length >= 2,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < USERS_PAGINATION_LIMIT) {
+        return undefined;
+      }
+      return allPages.length * USERS_PAGINATION_LIMIT;
+    },
+  });
 };
 
 export const useGetIsSuperAdmin = (

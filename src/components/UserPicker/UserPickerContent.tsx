@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import SharedUser from "./SharedUser";
 import {
   TextField,
@@ -28,45 +28,43 @@ import {
   AutocompleteListItem,
   CreatorName,
 } from "./styled";
+import { useSearchUsersQuery } from "../../api/usersApi";
 
 interface UserPickerProps {
   loading: boolean;
-  shareWithOptionsUsers: SharePickerUser[];
   selectedShareWith: SharePickerUser[];
   formCreator: SharePickerUser | null;
   removeUserFromShare: (user: any) => void;
   handleRoleChange: (event: any, newValue: any, user: SharePickerUser) => void;
   handleValueChange: (event: any, newValue: SharePickerUser) => void;
-  handleInputChange: (event: any, value: string) => void;
+  searchQuery: string;
+  handleSearchQueryChange: (event: any, value: string) => void;
 }
 
 const UserPickerContent: React.FC<UserPickerProps> = ({
   loading,
-  shareWithOptionsUsers,
   formCreator,
   selectedShareWith,
   handleValueChange,
-  handleInputChange,
+  handleSearchQueryChange,
   handleRoleChange,
   removeUserFromShare,
+  searchQuery,
 }) => {
   const theme = useTheme();
-  const [inputValue, setInputValue] = useState("");
+
+  const { data, fetchNextPage, hasNextPage, isFetching, isLoading } = useSearchUsersQuery(searchQuery);
+
+  const searchResults = data?.pages.flat() || [];
 
   const creatorRole = ROLE_CATALOG.find((r) => r.role_id === formCreator?.role_id);
 
   const onInputChange = (event: any, value: string) => {
-    setInputValue(value);
-    if (value && value.length >= 2) {
-      handleInputChange(event, value);
-    } else {
-      handleInputChange(event, "");
-    }
+    handleSearchQueryChange(event, value);
   };
 
   const handleClear = () => {
-    setInputValue("");
-    handleInputChange(null, "");
+    handleSearchQueryChange(null, "");
   };
 
   const onChange = (event: any, newValue: any) => {
@@ -79,7 +77,6 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
     if (!alreadyExists) {
       handleValueChange(event, newValue);
     }
-    setInputValue("");
   };
 
   const getInitials = (name?: string) => {
@@ -87,6 +84,16 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
     const parts = name.trim().split(" ");
     if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const handleScroll = (event: React.SyntheticEvent) => {
+    const listboxNode = event.currentTarget;
+    const scrollPosition = listboxNode.scrollTop + listboxNode.clientHeight;
+    const isAtBottom = listboxNode.scrollHeight - scrollPosition <= 10;
+    
+    if (isAtBottom && hasNextPage && !isFetching) {
+      fetchNextPage();
+    }
   };
 
   return loading ? (
@@ -98,19 +105,23 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
       <UserPickerAutocomplete
         isOptionEqualToValue={(option, value) => option?.id === value?.id}
         value={null}
-        options={inputValue.length >= 2 ? shareWithOptionsUsers : []}
+        options={searchQuery.length >= 2 ? searchResults : []}
         clearOnBlur={false}
         id="shareWithAutocomplete"
         multiple={false}
         forcePopupIcon={false} // This removes the dropdown arrow
-        inputValue={inputValue}
+        inputValue={searchQuery}
         onInputChange={onInputChange}
         onChange={onChange}
-        noOptionsText={inputValue.length < 2 ? "הקלד לפחות 2 תווים" : "לא נמצאו משתמשים"}
+        noOptionsText={searchQuery.length < 2 ? "הקלד לפחות 2 תווים" : (isLoading ? <CircularProgress size={20} /> : "לא נמצאו משתמשים")}
         getOptionLabel={(option: any) => {
           const userUPN = option?.upn || option?.UPN || option?.id || "";
           const displayName = option?.displayName || option?.name || "";
           return `${userUPN} ${displayName}`.trim();
+        }}
+        ListboxProps={{
+          onScroll: handleScroll,
+          style: { maxHeight: "200px" }
         }}
         renderOption={(props: any, user: any) => {
           const upn: string = user?.upn?.toLowerCase() || "";
@@ -165,7 +176,7 @@ const UserPickerContent: React.FC<UserPickerProps> = ({
               ),
               endAdornment: (
                 <>
-                  {inputValue && (
+                  {searchQuery && (
                     <InputAdornment position="end">
                       <IconButton onClick={handleClear} size="small" sx={{ mr: -0.5 }}>
                         <ClearIcon fontSize="small" />

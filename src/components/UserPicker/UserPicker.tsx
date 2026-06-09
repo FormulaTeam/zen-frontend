@@ -57,14 +57,14 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
 
   const {
     loading,
-    shareWithOptionsUsers,
     selectedShareWith,
     formCreator,
     saveSharedWith,
     removeUserFromShare,
     handleRoleChange,
     handleValueChange,
-    handleInputChange,
+    searchQuery,
+    handleSearchQueryChange,
     handleClose,
     handleFormPermissionChange,
   } = useUserPicker({ form, closeSharePopupAndRefreshForm, roles, publicRole });
@@ -165,13 +165,13 @@ const UserPicker = ({ form, closeSharePopupAndRefreshForm }: UserPickerProps) =>
         <ContentWrapper>
           <UserPickerContent
             loading={loading}
-            shareWithOptionsUsers={shareWithOptionsUsers}
             formCreator={formCreator}
             selectedShareWith={selectedShareWith}
             handleValueChange={handleValueChange}
-            handleInputChange={handleInputChange}
+            handleSearchQueryChange={handleSearchQueryChange}
             handleRoleChange={handleRoleChange}
             removeUserFromShare={removeUserFromShare}
+            searchQuery={searchQuery}
           />
 
           <Divider sx={{ my: 1 }} />
