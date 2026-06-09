@@ -22,11 +22,16 @@ export type IGetFormsData = (
  * Uses the new GET /forms endpoint with server-side filtering and sorting.
  */
 export function useGetFormsData(params: FormsQueryParams) {
-  const { data: formsData = [], isLoading } = useGetFormsQuery(params);
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetFormsQuery(params);
+
+  const formsData = data?.pages.flat() ?? [];
 
   return {
     formsData,
     isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   };
 }
 /**

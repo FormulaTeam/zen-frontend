@@ -56,7 +56,7 @@ function MainPage({
 
   const { scope, setScope } = useFormsScope({ isSuperAdmin: !!isSuperAdmin });
 
-  const { formsData, isLoading } = useGetFormsData({
+  const { formsData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetFormsData({
     scope: scope,
     searchQuery: searchValue || undefined,
     sortBy,
@@ -64,6 +64,13 @@ function MainPage({
     enabled: !!user,
     includePermissions: !isSuperAdmin && scope !== formsScopeOption.MyForms,
   });
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight + 10 && hasNextPage && !isFetchingNextPage && !isLoading) {
+      fetchNextPage();
+    }
+  };
 
   const handleSortChange = (newSortBy: FormsSortOption, newSortDirection: SortDirection) => {
     setSortBy(newSortBy);
@@ -149,6 +156,7 @@ function MainPage({
             columns={{ xs: 4, sm: 8, md: 12 }}
             className="forms-grid"
             id="forms-grid"
+            onScroll={handleScroll}
             spacing={3}>
             {formsData.map((form: FormOverviewDto, index: number) => (
               <Grid key={form.id ?? index} size={{ xs: 4, sm: 4, md: 6, lg: 4, xl: 3 }}>
@@ -162,6 +170,11 @@ function MainPage({
                 />
               </Grid>
             ))}
+            {isFetchingNextPage && (
+              <Box className="bottom-lbl" sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                <ReactLoading type="spin" color={theme.palette.primary.main} height={30} width={30} />
+              </Box>
+            )}
           </Grid>
         ) : (
           <Grid
