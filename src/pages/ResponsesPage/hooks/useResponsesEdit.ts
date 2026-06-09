@@ -441,6 +441,10 @@ export const useResponsesEdit = () => {
 
   const dtoForm = form as FormDto | null | undefined;
 
+  const hasUnsavedChanges = useMemo(() => {
+    return editedRows.size > 0 || deletedRowIds.length > 0;
+  }, [editedRows, deletedRowIds]);
+
   const formFields = useMemo<FormFieldDto[]>(() => {
     const sectionsFields = (dtoForm?.sections ?? [])
       .flatMap((section) => section.fields ?? [])
@@ -462,11 +466,6 @@ export const useResponsesEdit = () => {
   const responseRows: Row[] = useMemo(
     () => (rows?.filter((row) => row != null) as Row[]) || [],
     [rows],
-  );
-
-  const hasUnsavedChanges = useMemo(
-    () => editedRows.size > 0 || deletedRowIds.length > 0,
-    [editedRows, deletedRowIds],
   );
 
   const getMergedRow = useCallback(

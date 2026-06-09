@@ -124,6 +124,34 @@ const ResponsesPageContent = (): JSX.Element => {
   const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<any>(null);
 
+  // Hook to block navigation if there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    const handlePopState = () => {
+      if (hasUnsavedChanges) {
+        window.history.pushState(null, "", window.location.href);
+        handleToggleEditMode(); // This triggers the showCancelDialog internally via useResponsesEdit
+      }
+    };
+
+    if (hasUnsavedChanges) {
+      window.addEventListener("beforeunload", handleBeforeUnload);
+      window.history.pushState(null, "", window.location.href);
+      window.addEventListener("popstate", handlePopState);
+    }
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [hasUnsavedChanges, handleToggleEditMode]);
+
   useEffect(() => {
     const draft = getQuickEditDraft(form?.id);
     if (draft && (draft.editedRows.length > 0 || draft.deletedRowIds?.length > 0)) {
