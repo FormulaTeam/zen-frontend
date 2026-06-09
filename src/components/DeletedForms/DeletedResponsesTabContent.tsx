@@ -85,7 +85,7 @@ export default function DeletedResponsesTabContent({
    */
   const formMap = useMemo(() => {
     const combinedForms = [...formsData, ...forms];
-    const uniqueForms = new Map<number, FormDto>();
+    const uniqueForms = new Map<number, any>();
 
     combinedForms.forEach((form) => {
       if (!uniqueForms.has(form.id)) {

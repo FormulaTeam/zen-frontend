@@ -10,6 +10,7 @@ export interface FormsQueryParams {
   sortDirection?: SortDirection;
   enabled?: boolean;
   includePermissions?: boolean;
+  onlyDeleted?: boolean;
 }
 
 export const FORMS_PAGINATION_LIMIT = 25;

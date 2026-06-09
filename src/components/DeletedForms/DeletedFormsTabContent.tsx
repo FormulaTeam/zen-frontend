@@ -20,6 +20,9 @@ interface DeletedFormsTabContentProps {
   setCurrentDeletedForm: (response: any) => void;
   filters: DeletedFormsFilters;
   setFilters: React.Dispatch<React.SetStateAction<DeletedFormsFilters>>;
+  fetchNextPage: () => void;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
 }
 
 const DeletedFormsTabContent: React.FC<DeletedFormsTabContentProps> = ({
@@ -29,6 +32,9 @@ const DeletedFormsTabContent: React.FC<DeletedFormsTabContentProps> = ({
   setCurrentDeletedForm,
   filters,
   setFilters,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
 }) => {
   const [selectedFormIds, setSelectedFormIds] = useState<number[]>([]);
 
@@ -47,6 +53,13 @@ const DeletedFormsTabContent: React.FC<DeletedFormsTabContentProps> = ({
 
   const cancelSelection = () => {
     setSelectedFormIds([]);
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight + 10 && hasNextPage && !isFetchingNextPage && !loadingForms) {
+      fetchNextPage();
+    }
   };
 
   return (
@@ -75,14 +88,14 @@ const DeletedFormsTabContent: React.FC<DeletedFormsTabContentProps> = ({
         )}
       </TopBarWrapper>
 
-      {loadingForms ? (
+      {loadingForms && !forms.length ? (
         <LoadingBox>
           <ReactLoading type="spinningBubbles" color="#1976d2" />
         </LoadingBox>
       ) : !forms.length ? (
         <EmptyMessage variant="subtitle1">אין טפסים בסל המיחזור</EmptyMessage>
       ) : (
-        <FormsGrid container spacing={3}>
+        <FormsGrid container spacing={3} onScroll={handleScroll} style={{ overflowY: 'auto', flex: 1, maxHeight: 'calc(100vh - 200px)' }}>
           {forms.map((form) => (
             <Grow in timeout={300} key={form.id}>
               <FullWidthBox>
@@ -96,6 +109,11 @@ const DeletedFormsTabContent: React.FC<DeletedFormsTabContentProps> = ({
               </FullWidthBox>
             </Grow>
           ))}
+          {isFetchingNextPage && (
+            <LoadingBox style={{ width: '100%', marginTop: '16px' }}>
+              <ReactLoading type="spin" color="#1976d2" height={30} width={30} />
+            </LoadingBox>
+          )}
         </FormsGrid>
       )}
     </>
