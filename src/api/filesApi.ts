@@ -111,14 +111,7 @@ export const downloadFileFromResponse = async (
     const fileName = file.name || file.fileName || fileId;
 
     if (!resolvedResponseId || !fileId) {
-      // Fallback for legacy urls lacking responseId/fileId
-      const response = await apiClient.get<Blob>(
-        `/forms/${formId}/responses/legacy/files/legacy/${fileName}`,
-        { responseType: "blob" },
-      );
-
-      triggerBrowserDownload(response.data, fileName);
-      return;
+      throw new Error("Missing file download identifiers");
     }
 
     await downloadFile(formId, resolvedResponseId, fileId, fileName);
