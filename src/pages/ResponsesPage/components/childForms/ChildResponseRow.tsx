@@ -157,9 +157,9 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
 
   const onFileClick = useCallback(
     (file: CarouselFile) => {
-      downloadFileFromResponse(file, String(linkedFormId));
+      downloadFileFromResponse(file, String(linkedFormId), String(response.id));
     },
-    [linkedFormId],
+    [linkedFormId, response.id],
   );
 
   const formatFileCell = useCallback(

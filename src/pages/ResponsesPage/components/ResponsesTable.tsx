@@ -439,8 +439,8 @@ export const ResponsesTable = React.memo(
     });
 
     const handleFileClick = useCallback(
-      (file: ResponseDisplayFile) => {
-        downloadFileFromResponse(file, String(form?.id));
+      (file: ResponseDisplayFile, rowId?: string | number) => {
+        downloadFileFromResponse(file, String(form?.id), rowId ? String(rowId) : undefined);
       },
       [form?.id],
     );

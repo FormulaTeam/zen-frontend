@@ -108,12 +108,20 @@ export const downloadFileFromResponse = async (
 
     const resolvedResponseId = responseId ?? file.responseId;
     const fileId = file.id ?? file.path;
+    const fileName = file.name || file.fileName || fileId;
 
     if (!resolvedResponseId || !fileId) {
-      throw new Error("Missing file download identifiers");
+      // Fallback for legacy urls lacking responseId/fileId
+      const response = await apiClient.get<Blob>(
+        `/forms/${formId}/responses/legacy/files/legacy/${fileName}`,
+        { responseType: "blob" },
+      );
+
+      triggerBrowserDownload(response.data, fileName);
+      return;
     }
 
-    await downloadFile(formId, resolvedResponseId, fileId, file.name || file.fileName || fileId);
+    await downloadFile(formId, resolvedResponseId, fileId, fileName);
   } catch (error) {
     console.error("Failed to download file from response:", error);
     throw error;
