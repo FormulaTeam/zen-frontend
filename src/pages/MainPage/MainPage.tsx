@@ -4,7 +4,7 @@ import ReactLoading from "react-loading";
 import Grid from "@mui/material/Grid";
 import { Box, IconButton, Tab, Tabs, Tooltip, Typography, useTheme } from "@mui/material";
 import { useGetFormsData } from "../../hooks/useGetFormsData";
-import { useActiveTabFilter } from "../../hooks/useActiveTabFilter";
+import { useFormsScope } from "../../hooks/useFormsScope";
 import {
   FormsSortOption,
   SortDirection,
@@ -12,12 +12,10 @@ import {
   sortDirectionOption,
   formsScopeOption,
 } from "../../types/enums/filtersAndSorts.enum";
-import { FormsTab } from "../../utils/interfaces";
 import CreateNew from "../../components/MainPage/CreateNew";
 import mGif from "../../images/m.gif";
 import syncGif from "../../images/sync.gif";
 import noData from "../../images/noData2.png";
-import { formsTabs } from "../../utils/utils";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import FormCard from "../../components/FormCard/FormCard";
 import wavingHand from "../../images/waving_hand.png";
@@ -47,7 +45,6 @@ function MainPage({
   setShouldRefreshPage,
   resetSearchValue,
 }) {
-  const [tabValue, setTabValue] = useState<FormsTab | null>(formsTabs.currentUserCreated);
   const [sortBy, setSortBy] = useState<FormsSortOption>(formsSortOption.Name);
   const [sortDirection, setSortDirection] = useState<SortDirection>(sortDirectionOption.Ascending);
 
@@ -57,28 +54,16 @@ function MainPage({
 
   const { data: myPersonal } = useGetMyPersonal({ enabled: !!user });
 
-  const { getScope } = useActiveTabFilter({ isSuperAdmin: !!isSuperAdmin, tabValue });
+  const { scope, setScope } = useFormsScope({ isSuperAdmin: !!isSuperAdmin });
 
   const { formsData, isLoading } = useGetFormsData({
-    scope: getScope(),
+    scope: scope,
     searchQuery: searchValue || undefined,
     sortBy,
     sortDirection,
     enabled: !!user,
-    includePermissions: !isSuperAdmin && tabValue !== formsTabs.currentUserCreated,
+    includePermissions: !isSuperAdmin && scope !== formsScopeOption.MyForms,
   });
-
-  useEffect(() => {
-    const tabFromStorage = localStorage.getItem("tabValue");
-    if (tabFromStorage) {
-      setTabValue(parseInt(tabFromStorage) as FormsTab);
-    }
-  }, []);
-
-  const handleTabValueChange = (newValue: FormsTab) => {
-    localStorage.setItem("tabValue", newValue.toString());
-    setTabValue(newValue);
-  };
 
   const handleSortChange = (newSortBy: FormsSortOption, newSortDirection: SortDirection) => {
     setSortBy(newSortBy);
@@ -144,8 +129,8 @@ function MainPage({
               }}
             />
             <FormGroupSelect
-              value={tabValue}
-              onChange={handleTabValueChange}
+              value={scope}
+              onChange={setScope}
               isSuperAdmin={!!isSuperAdmin}
             />
             <MainSortSelect onSortChange={handleSortChange} dataTestId="sort-forms" />

@@ -1,12 +1,11 @@
 import { Box, MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { formsTabs } from "../../utils/utils";
-import { FormsTab } from "../../utils/interfaces";
+import { formsScopeOption, FormsScopeOption } from "../../types/enums/filtersAndSorts.enum";
 
 interface FormGroupSelectProps {
-  value: FormsTab | null;
-  onChange: (newValue: FormsTab) => void;
+  value: FormsScopeOption;
+  onChange: (newValue: FormsScopeOption) => void;
   isSuperAdmin: boolean;
 }
 
@@ -15,7 +14,7 @@ const StyledFormControl = styled(Box)(({ theme }) => ({
   position: "relative",
 }));
 
-const StyledSelect = styled(Select<FormsTab>)(({ theme }) => ({
+const StyledSelect = styled(Select<FormsScopeOption>)(({ theme }) => ({
   width: "100%",
   borderRadius: 8,
   height: 40,
@@ -56,27 +55,30 @@ const StyledSelect = styled(Select<FormsTab>)(({ theme }) => ({
 }));
 
 const FormGroupSelect = ({ value, onChange, isSuperAdmin }: FormGroupSelectProps) => {
-  const handleChange = (event: SelectChangeEvent<FormsTab>) => {
-    onChange(event.target.value as FormsTab);
+  const handleChange = (event: SelectChangeEvent<FormsScopeOption>) => {
+    onChange(event.target.value as FormsScopeOption);
   };
 
   return (
     <StyledFormControl>
       <StyledSelect
         id="form-group-select"
-        value={value ?? formsTabs.currentUserCreated}
+        value={value}
         onChange={handleChange}
         IconComponent={KeyboardArrowDownIcon}
       >
-        <MenuItem value={formsTabs.currentUserCreated} sx={{ fontSize: "16px" }}>
+        <MenuItem value={formsScopeOption.AccessibleForms} sx={{ fontSize: "16px" }}>
+          כל הטפסים
+        </MenuItem>
+        <MenuItem value={formsScopeOption.MyForms} sx={{ fontSize: "16px" }}>
           טפסים שלי
         </MenuItem>
-        <MenuItem value={formsTabs.sharedWithUser} sx={{ fontSize: "16px" }}>
+        <MenuItem value={formsScopeOption.SharedWithMeForms} sx={{ fontSize: "16px" }}>
           טפסים ששותפו איתי
         </MenuItem>
         {isSuperAdmin && (
-          <MenuItem value={formsTabs.allForms} sx={{ fontSize: "16px" }}>
-            כל הטפסים
+          <MenuItem value={formsScopeOption.AllForms} sx={{ fontSize: "16px" }}>
+            🥺👉🏽👈🏽
           </MenuItem>
         )}
       </StyledSelect>
