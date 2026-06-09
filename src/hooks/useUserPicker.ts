@@ -87,7 +87,7 @@ export const useUserPicker = ({
   }, [form, roles, publicRole]);
 
   const saveSharedWith = async () => {
-    const userRoles: { userId: number; role: Role }[] = [];
+    const userRoles: { userId?: number; upn?: string; name?: string; role: Role }[] = [];
     let allPermissionsSelected = true;
 
     selectedShareWith.forEach((user) => {
@@ -95,10 +95,17 @@ export const useUserPicker = ({
       if (!role_id) {
         allPermissionsSelected = false;
       } else {
-        userRoles.push({
-          userId: Number(user.id),
-          role: role_id,
-        });
+        const payloadUser: any = { role: role_id };
+        
+        const numericId = Number(user.id);
+        if (numericId > 0) {
+          payloadUser.userId = numericId;
+        } else {
+          payloadUser.upn = user.upn;
+          payloadUser.name = user.displayName;
+        }
+        
+        userRoles.push(payloadUser);
       }
     });
 
