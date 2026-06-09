@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
-import { Box, IconButton, Portal, Snackbar, Tooltip, useTheme } from "@mui/material";
+import { Box, IconButton, Tooltip, useTheme } from "@mui/material";
 import { ArrowBackIosNew, ArrowForwardIos, Link } from "@mui/icons-material";
 import { FileIcon, defaultStyles } from "react-file-icon";
-import { decodeFileName } from "../../utils/utils";
+import { decodeFileName, showSuccessNotification } from "../../utils/utils";
 
 type StoredFile = {
   id?: string;
@@ -59,7 +59,6 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
   shouldSpaceFiles = false,
 }) => {
   const theme = useTheme();
-  const [open, setOpen] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
 
   const pages = useMemo(() => chunkFiles(items ?? []), [items]);
@@ -89,7 +88,7 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
     event.stopPropagation();
 
     await navigator.clipboard.writeText(downloadPath);
-    setOpen(true);
+    showSuccessNotification("הקישור הועתק בהצלחה");
   };
 
   const goPrevious = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -243,15 +242,6 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
           </IconButton>
         )}
       </Box>
-
-      <Portal>
-        <Snackbar
-          open={open}
-          autoHideDuration={1000}
-          onClose={() => setOpen(false)}
-          message="הקישור הועתק בהצלחה"
-        />
-      </Portal>
     </Box>
   );
 };
