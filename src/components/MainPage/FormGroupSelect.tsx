@@ -65,8 +65,7 @@ const FormGroupSelect = ({ value, onChange, isSuperAdmin }: FormGroupSelectProps
         id="form-group-select"
         value={value}
         onChange={handleChange}
-        IconComponent={KeyboardArrowDownIcon}
-      >
+        IconComponent={KeyboardArrowDownIcon}>
         <MenuItem value={formsScopeOption.AccessibleForms} sx={{ fontSize: "16px" }}>
           כל הטפסים
         </MenuItem>
@@ -78,7 +77,7 @@ const FormGroupSelect = ({ value, onChange, isSuperAdmin }: FormGroupSelectProps
         </MenuItem>
         {isSuperAdmin && (
           <MenuItem value={formsScopeOption.AllForms} sx={{ fontSize: "16px" }}>
-            🥺👉🏽👈🏽
+            👈🏽👉🏽🥺
           </MenuItem>
         )}
       </StyledSelect>
