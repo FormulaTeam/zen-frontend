@@ -3,9 +3,10 @@ import { Box, Link as MuiLink, Tooltip, styled } from "@mui/material";
 import moment from "moment";
 
 import { OverflowTooltip } from "@components/OverflowTooltip";
+import { ExpandableLongText } from "@components/ExpandableLongText";
 import CustomCarousel from "../../../components/FilePreview/CustomCarousel";
 import { FormFieldDto } from "../../../types/shared";
-import { fieldType } from "formula-gear";
+import { fieldType, dateType, timePrecision } from "formula-gear";
 import { DEFAULT_DATE_FORMAT } from "../../../utils/utils";
 
 import { highlightTextUtil } from "../utils/highlighting";
@@ -16,13 +17,18 @@ import {
 
 interface UseCellDisplayParams {
   formId?: number;
-  onFileClick?: (file: any) => void;
+  onFileClick?: (file: any, responseId?: string | number) => void;
   searchQuery?: string;
   isInEditMode?: boolean;
+  onCellExpandToggle?: (rowId: string | number, fieldId: string, isExpanded: boolean) => void;
 }
 
 interface UseCellDisplayReturn {
-  formatCellValue: (value: any, field: FormFieldDto) => React.ReactElement | null;
+  formatCellValue: (
+    value: any,
+    field: FormFieldDto,
+    rowId?: string | number,
+  ) => React.ReactElement | null;
 }
 
 type EditorFieldExtra = {
@@ -131,6 +137,14 @@ const isFileDraftValue = (value: unknown): value is FileDraftValue => {
 };
 
 const getOptionLabelMap = (field: FormFieldDto): Record<string, string> => {
+  if (Array.isArray((field as any).options)) {
+    return Object.fromEntries(
+      (field as any).options
+        .filter((option: any) => option && typeof option.id === "string" && typeof option.text === "string")
+        .map((option: any) => [option.id, option.text]),
+    );
+  }
+
   const extra = getFieldExtra(field);
 
   if (
@@ -169,8 +183,8 @@ const getOptionDisplayText = (value: unknown, field: FormFieldDto): string => {
   return labelMap[stringValue] ?? stringValue;
 };
 
-const formatTimeDisplayValue = (value: unknown, includeSeconds?: boolean): string => {
-  const timeFormat = includeSeconds ? "HH:mm:ss" : "HH:mm";
+const formatTimeDisplayValue = (value: unknown, precision?: "seconds" | "minutes"): string => {
+  const timeFormat = precision === timePrecision.Seconds ? "HH:mm:ss" : "HH:mm";
 
   if (value instanceof Date) {
     return moment(value).format(timeFormat);
@@ -188,7 +202,7 @@ const formatTimeDisplayValue = (value: unknown, includeSeconds?: boolean): strin
       const minutes = timeOnlyMatch[2];
       const seconds = timeOnlyMatch[3] ?? "00";
 
-      return includeSeconds ? `${hours}:${minutes}:${seconds}` : `${hours}:${minutes}`;
+      return precision === timePrecision.Seconds ? `${hours}:${minutes}:${seconds}` : `${hours}:${minutes}`;
     }
 
     const parsedMoment = moment(trimmedValue);
@@ -238,12 +252,32 @@ export const useCellDisplay = ({
   formId,
   onFileClick,
   searchQuery,
+  onCellExpandToggle,
 }: UseCellDisplayParams): UseCellDisplayReturn => {
   const highlightText = useCallback(
     (text: string | number | null | undefined): React.ReactNode => {
       return highlightTextUtil(text, searchQuery);
     },
     [searchQuery],
+  );
+
+  const formatLongTextCell = useCallback(
+    (value: any, fieldId: string, rowId?: string | number): React.ReactElement => {
+      const displayValue = String(value ?? "");
+
+      return (
+        <ExpandableLongText
+          text={displayValue}
+          highlightedText={highlightText(displayValue)}
+          onToggle={(isExpanded) => {
+            if (onCellExpandToggle && rowId !== undefined) {
+              onCellExpandToggle(rowId, fieldId, isExpanded);
+            }
+          }}
+        />
+      );
+    },
+    [highlightText, onCellExpandToggle],
   );
 
   const formatLinkCell = useCallback(
@@ -278,7 +312,7 @@ export const useCellDisplay = ({
   );
 
   const formatFileCell = useCallback(
-    (value: unknown): React.ReactElement => {
+    (value: unknown, rowId?: string | number): React.ReactElement => {
       const displayFiles = getFileDisplayItems(value);
 
       if (displayFiles.length === 0) {
@@ -289,8 +323,9 @@ export const useCellDisplay = ({
         <CenteredBox>
           <CustomCarousel
             formId={formId}
+            responseId={rowId}
             items={displayFiles}
-            onItemClickHandler={onFileClick || (() => {})}
+            onItemClickHandler={(file) => onFileClick?.(file, rowId)}
             shouldSpaceFiles
           />
         </CenteredBox>
@@ -300,13 +335,14 @@ export const useCellDisplay = ({
   );
 
   const formatDateCell = useCallback(
-    (value: any, includeTime?: boolean): React.ReactElement => {
+    (value: any, type?: "datetime" | "date"): React.ReactElement => {
       if (!value || !moment(value).isValid()) {
         return <Box component="span" className="cell-box-date"></Box>;
       }
 
+      const isDateTime = type === dateType.Datetime;
       const datePart = moment(value).format(DEFAULT_DATE_FORMAT);
-      const timePart = includeTime ? ` ${moment(value).format("HH:mm")}` : "";
+      const timePart = isDateTime ? ` ${moment(value).format("HH:mm")}` : "";
       const fullText = `${datePart}${timePart}`;
 
       return (
@@ -324,8 +360,8 @@ export const useCellDisplay = ({
   );
 
   const formatTimeCell = useCallback(
-    (value: any, includeSeconds?: boolean): React.ReactElement => {
-      const displayValue = formatTimeDisplayValue(value, includeSeconds);
+    (value: any, precision?: "seconds" | "minutes"): React.ReactElement => {
+      const displayValue = formatTimeDisplayValue(value, precision);
 
       if (!displayValue) {
         return <Box component="span" className="cell-box-date"></Box>;
@@ -440,7 +476,7 @@ export const useCellDisplay = ({
   );
 
   const formatCellValue = useCallback(
-    (value: any, field: FormFieldDto): React.ReactElement | null => {
+    (value: any, field: FormFieldDto, rowId?: string | number): React.ReactElement | null => {
       const extra = getFieldExtra(field);
 
       if (value === null || value === undefined || value === "") {
@@ -451,10 +487,10 @@ export const useCellDisplay = ({
         return <Box component="span" className="cell-box"></Box>;
       }
 
-      const dateAndTime = extra.dateType === "datetime";
-      const includeSeconds = extra.timePrecision === "seconds";
-
       switch (field.fieldType) {
+        case fieldType.LongText:
+          return formatLongTextCell(value, String(field.id), rowId);
+
         case fieldType.Options:
           return formatOptionsCell(value, field);
 
@@ -462,13 +498,13 @@ export const useCellDisplay = ({
           return formatLinkCell(value as LinkValue);
 
         case fieldType.File:
-          return formatFileCell(value);
+          return formatFileCell(value, rowId);
 
         case fieldType.Date:
-          return formatDateCell(value, dateAndTime);
+          return formatDateCell(value, extra.dateType);
 
         case fieldType.Time:
-          return formatTimeCell(value, includeSeconds);
+          return formatTimeCell(value, extra.timePrecision);
 
         case fieldType.Location:
           return formatLocationCell(value as LocationValue);

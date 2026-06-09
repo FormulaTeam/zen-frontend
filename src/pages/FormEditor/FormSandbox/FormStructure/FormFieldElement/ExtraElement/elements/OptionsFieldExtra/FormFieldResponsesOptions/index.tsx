@@ -7,12 +7,13 @@ import { FormSectionDto, FormFieldDto } from "@src/types/shared";
 import { useFormStructureContext } from "@pages/FormEditor/context/FormStructureContext";
 import { FormOption } from "@utils/interfaces";
 import { LoaderContainer, Container, FieldControl } from "./styled";
-import { fieldType } from "formula-gear";
+import { fieldType, optionsSource } from "formula-gear";
 import { OptionsFieldTypeId } from "../index";
 import { FormFieldExtra } from "@pages/FormEditor/schemas/fields";
 
 interface Props {
-  linkedOptionsFieldId: string | undefined;
+  linkedFormId: number | undefined;
+  connectedFieldId: string | undefined;
   onChange: (extra: Partial<FormFieldExtra<OptionsFieldTypeId>>) => void;
   validationErrors: any;
 }
@@ -24,13 +25,13 @@ interface ValidField {
 
 function FormFieldResponsesOptions(props: Props) {
   const {
-    linkedOptionsFieldId,
+    linkedFormId,
+    connectedFieldId,
     validationErrors,
     onChange,
   } = props;
 
   const { formStructure } = useFormStructureContext();
-  const [selectedFormId, setSelectedFormId] = useState<string>("");
   const [searchText, setSearchText] = useState("");
   const [fieldTouchAttempted, setFieldTouchAttempted] = useState(false);
   
@@ -49,7 +50,7 @@ function FormFieldResponsesOptions(props: Props) {
   }, [allForms, formStructure?.metadata?.id]);
 
   const { data: initialForm, isLoading: isInitializing } = useGetForm({
-    formId: selectedFormId ? selectedFormId : undefined,
+    formId: linkedFormId ? linkedFormId.toString() : undefined,
   });
 
   const selectedFormOption = useMemo<FormOption | null>(() => {
@@ -83,9 +84,9 @@ function FormFieldResponsesOptions(props: Props) {
   }, [initialForm]);
 
   const selectedFieldOption = useMemo<ValidField | null>(() => {
-    if (!linkedOptionsFieldId) return null;
-    return availableFields.find((f) => f.id === linkedOptionsFieldId) ?? null;
-  }, [availableFields, linkedOptionsFieldId]);
+    if (!connectedFieldId) return null;
+    return availableFields.find((f) => f.id === connectedFieldId) ?? null;
+  }, [availableFields, connectedFieldId]);
 
   if (isInitializing) {
     return (
@@ -96,7 +97,7 @@ function FormFieldResponsesOptions(props: Props) {
   }
 
   const formSelector: JSX.Element = (
-    <FormControl error={!!validationErrors?.properties?.linkedOptionsFieldId}>
+    <FormControl error={!!validationErrors?.properties?.linkedFormId}>
       <Autocomplete
         options={availableForms}
         getOptionLabel={(option) => option?.name || ""}
@@ -108,8 +109,11 @@ function FormFieldResponsesOptions(props: Props) {
           setSearchText(newInputValue);
         }}
         onChange={(_, newValue) => {
-          setSelectedFormId(newValue ? newValue.id : "");
-          onChange({ linkedOptionsFieldId: undefined }); // Reset field when form changes
+          onChange({ 
+            linkedFormId: newValue ? Number(newValue.id) : undefined,
+            connectedFieldId: undefined,
+            source: newValue ? optionsSource.FormFieldResponses : undefined
+          });
         }}
         isOptionEqualToValue={(option, value) => option?.id === value?.id}
         renderOption={(props, option) => (
@@ -145,8 +149,8 @@ function FormFieldResponsesOptions(props: Props) {
   );
 
   const fieldSelect: JSX.Element = (
-    <FieldControl error={!!validationErrors?.properties?.linkedOptionsFieldId}>
-      <Tooltip title={!selectedFormId ? 'יש לבחור טופס' : ''}>
+    <FieldControl error={!!validationErrors?.properties?.connectedFieldId}>
+      <Tooltip title={!linkedFormId ? 'יש לבחור טופס' : ''}>
         <span style={{ display: 'block' }}>
           <Autocomplete
             options={availableFields}
@@ -154,17 +158,17 @@ function FormFieldResponsesOptions(props: Props) {
             value={selectedFieldOption}
             onOpen={() => setFieldTouchAttempted(true)}
             onChange={(_, newValue) => {
-              onChange({ linkedOptionsFieldId: newValue ? newValue.id : undefined });
+              onChange({ connectedFieldId: newValue ? newValue.id : undefined });
             }}
-            noOptionsText={!selectedFormId ? (fieldTouchAttempted ? 'יש לבחור טופס' : '') : (availableFields.length ? 'לא נמצאו תוצאות' : 'אין שדות זמינים')}
-            disabled={!selectedFormId}
+            noOptionsText={!linkedFormId ? (fieldTouchAttempted ? 'יש לבחור טופס' : '') : (availableFields.length ? 'לא נמצאו תוצאות' : 'אין שדות זמינים')}
+            disabled={!linkedFormId}
             renderInput={(params) => (
               <TextField
                 {...params}
                 label={"בחירת שדה"}
                 variant="standard"
-                error={!!validationErrors?.properties?.linkedOptionsFieldId}
-                helperText={validationErrors?.properties?.linkedOptionsFieldId?.errors?.[0]}
+                error={!!validationErrors?.properties?.connectedFieldId}
+                helperText={validationErrors?.properties?.connectedFieldId?.errors?.[0]}
               />
             )}
           />

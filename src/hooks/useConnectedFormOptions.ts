@@ -5,11 +5,9 @@ import { optionsSource } from "formula-gear";
 
 type ConnectedFieldExtra = {
   source?: number;
-  options?: {
-    formId?: string | number;
-    fieldId?: string;
-  };
-  multiple?: boolean;
+  linkedFormId?: number;
+  connectedFieldId?: string;
+  selectionMode?: "multiple" | "single";
 };
 
 type ConnectedFormField = FormFieldDto & {
@@ -39,19 +37,18 @@ const isConnectedToForm = (field: ConnectedFormField): boolean => {
   const extra = getFieldExtra(field);
   return (
     extra.source === optionsSource.FormFieldResponses &&
-    !!extra.options?.formId &&
-    !!extra.options?.fieldId
+    !!extra.linkedFormId &&
+    !!extra.connectedFieldId
   );
 };
 
 const getLinkedFormId = (field: ConnectedFormField): number | undefined => {
   const extra = getFieldExtra(field);
-  const formId = extra.options?.formId;
-  return formId !== undefined ? Number(formId) : undefined;
+  return extra.linkedFormId !== undefined ? Number(extra.linkedFormId) : undefined;
 };
 
 const getLinkedFieldId = (field: ConnectedFormField): string | undefined => {
-  return getFieldExtra(field).options?.fieldId;
+  return getFieldExtra(field).connectedFieldId;
 };
 
 export const useConnectedFormOptions = ({

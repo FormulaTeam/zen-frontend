@@ -9,7 +9,7 @@ import CustomCarousel from "../components/FilePreview/CustomCarousel";
 import ZoomCell from "../components/formInForm/ZoomCell";
 import FormFieldRenderer from "../components/Responses/FormFieldRenderer";
 import { ViewColumn } from "../types/interfaces/tableViews.types";
-import type { FieldValidationMessage } from "formula-gear";
+import { fieldType, dateType, type FieldValidationMessage } from "formula-gear";
 
 type TableFieldValidationError = {
   messages: FieldValidationMessage[];
@@ -282,7 +282,7 @@ export const useTableColumns = (
 
             if (field.typeId === FieldTypeIds.date) {
               if (value && value !== "" && moment(value).isValid()) {
-                const isDateTime = (field.dateType || field.extra?.dateType) === "datetime";
+                const isDateTime = field.extra?.dateType === dateType.Datetime;
                 value = isDateTime
                   ? moment(value).format(DEFAULT_DATE_TIME_FORMAT)
                   : moment(value).format(DEFAULT_DATE_FORMAT);
@@ -336,12 +336,15 @@ export const useTableColumns = (
       };
 
       if (field.typeId === FieldTypeIds.options) {
+        const extra = field.extra ?? {};
+        const items = (extra.options?.items as any[]) ?? field.options ?? [];
+
         col.filterFn = "equals";
         col.filterSelectOptions =
           (fieldOptions?.[field.uniqueId] && [
             ...new Set(fieldOptions[field.uniqueId].map((option) => option.value)),
           ]) ||
-          field.options ||
+          items.map((item: any) => typeof item === "object" ? item.id : item) ||
           [];
         col.filterVariant = "select";
       }

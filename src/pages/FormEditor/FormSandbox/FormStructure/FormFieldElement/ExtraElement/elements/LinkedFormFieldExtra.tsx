@@ -59,7 +59,7 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
             }
           }}
           onChange={(_, newValue: any) => {
-            onChange({ linkedFormId: newValue ? newValue.id.toString() : undefined });
+            onChange({ linkedFormId: newValue ? Number(newValue.id) : undefined });
           }}
           isOptionEqualToValue={(option, value) => option?.id === value?.id}
           renderOption={(props, option: any) => (

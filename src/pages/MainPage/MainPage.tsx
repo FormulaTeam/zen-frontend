@@ -4,7 +4,7 @@ import ReactLoading from "react-loading";
 import Grid from "@mui/material/Grid";
 import { Box, IconButton, Tab, Tabs, Tooltip, Typography, useTheme } from "@mui/material";
 import { useGetFormsData } from "../../hooks/useGetFormsData";
-import { useActiveTabFilter } from "../../hooks/useActiveTabFilter";
+import { useFormsScope } from "../../hooks/useFormsScope";
 import {
   FormsSortOption,
   SortDirection,
@@ -12,12 +12,10 @@ import {
   sortDirectionOption,
   formsScopeOption,
 } from "../../types/enums/filtersAndSorts.enum";
-import { FormsTab } from "../../utils/interfaces";
 import CreateNew from "../../components/MainPage/CreateNew";
 import mGif from "../../images/m.gif";
 import syncGif from "../../images/sync.gif";
 import noData from "../../images/noData2.png";
-import { formsTabs } from "../../utils/utils";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import FormCard from "../../components/FormCard/FormCard";
 import wavingHand from "../../images/waving_hand.png";
@@ -47,7 +45,6 @@ function MainPage({
   setShouldRefreshPage,
   resetSearchValue,
 }) {
-  const [tabValue, setTabValue] = useState<FormsTab | null>(formsTabs.currentUserCreated);
   const [sortBy, setSortBy] = useState<FormsSortOption>(formsSortOption.Name);
   const [sortDirection, setSortDirection] = useState<SortDirection>(sortDirectionOption.Ascending);
 
@@ -57,27 +54,22 @@ function MainPage({
 
   const { data: myPersonal } = useGetMyPersonal({ enabled: !!user });
 
-  const { getScope } = useActiveTabFilter({ isSuperAdmin: !!isSuperAdmin, tabValue });
+  const { scope, setScope } = useFormsScope({ isSuperAdmin: !!isSuperAdmin });
 
-  const { formsData, isLoading } = useGetFormsData({
-    scope: getScope(),
+  const { formsData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetFormsData({
+    scope: scope,
     searchQuery: searchValue || undefined,
     sortBy,
     sortDirection,
     enabled: !!user,
-    includePermissions: !isSuperAdmin && tabValue !== formsTabs.currentUserCreated,
+    includePermissions: !isSuperAdmin && scope !== formsScopeOption.MyForms,
   });
 
-  useEffect(() => {
-    const tabFromStorage = localStorage.getItem("tabValue");
-    if (tabFromStorage) {
-      setTabValue(parseInt(tabFromStorage) as FormsTab);
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight + 10 && hasNextPage && !isFetchingNextPage && !isLoading) {
+      fetchNextPage();
     }
-  }, []);
-
-  const handleTabValueChange = (newValue: FormsTab) => {
-    localStorage.setItem("tabValue", newValue.toString());
-    setTabValue(newValue);
   };
 
   const handleSortChange = (newSortBy: FormsSortOption, newSortDirection: SortDirection) => {
@@ -144,8 +136,8 @@ function MainPage({
               }}
             />
             <FormGroupSelect
-              value={tabValue}
-              onChange={handleTabValueChange}
+              value={scope}
+              onChange={setScope}
               isSuperAdmin={!!isSuperAdmin}
             />
             <MainSortSelect onSortChange={handleSortChange} dataTestId="sort-forms" />
@@ -164,11 +156,13 @@ function MainPage({
             columns={{ xs: 4, sm: 8, md: 12 }}
             className="forms-grid"
             id="forms-grid"
+            onScroll={handleScroll}
             spacing={3}>
             {formsData.map((form: FormOverviewDto, index: number) => (
               <Grid key={form.id ?? index} size={{ xs: 4, sm: 4, md: 6, lg: 4, xl: 3 }}>
                 <FormCard
                   form={form}
+                  searchValue={searchValue}
                   resetSearchValue={resetSearchValue}
                   isSuperAdmin={isSuperAdmin}
                   navigate={navigate}
@@ -176,6 +170,11 @@ function MainPage({
                 />
               </Grid>
             ))}
+            {isFetchingNextPage && (
+              <Box className="bottom-lbl" sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                <ReactLoading type="spin" color={theme.palette.primary.main} height={30} width={30} />
+              </Box>
+            )}
           </Grid>
         ) : (
           <Grid

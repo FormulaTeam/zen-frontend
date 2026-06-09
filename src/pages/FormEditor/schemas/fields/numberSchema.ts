@@ -1,7 +1,7 @@
 import baseFormFieldSchema from "./baseFormFieldSchema";
 import { FieldTypeIds } from "../../../../utils/interfaces";
 import { literal } from "zod";
-import { NumberFieldExtraSchema } from "formula-gear";
+import { NumberFieldExtraSchema, numberType } from "formula-gear";
 
 const ErrorMessages = {
   invalidMinMaxFormat: "לא ניתן להגדיר מספר עשרוני כטווח למספר שלם",
@@ -14,7 +14,7 @@ const numberSchema = baseFormFieldSchema.safeExtend({
   typeId: literal(FieldTypeIds.number),
 
   extra: NumberFieldExtraSchema
-    .superRefine(({ min, max, defaultValue, numberType }, ctx) => {
+    .superRefine(({ min, max, defaultValue, numberType: type }, ctx) => {
       if (min != null && max != null && max <= min) {
         ctx.addIssue({
           code: "custom",
@@ -39,7 +39,7 @@ const numberSchema = baseFormFieldSchema.safeExtend({
         });
       }
 
-      if (numberType === "integer") {
+      if (type === numberType.Integer) {
         if (min != null && min % 1 != 0) {
           ctx.addIssue({
             code: "custom",
@@ -66,7 +66,7 @@ const numberSchema = baseFormFieldSchema.safeExtend({
       }
     })
     .default({
-      numberType: "integer",
+      numberType: numberType.Integer,
     }),
 });
 

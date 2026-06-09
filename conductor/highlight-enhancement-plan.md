@@ -1,40 +1,40 @@
-# Objective
+# Implementation Plan: Semantic Highlighting for Forms Search
 
-Enhance the search highlighting feature to intelligently format and highlight dates and boolean values (כן / לא), even when the input format differs from the displayed format. Also, ensure meta-columns are definitively excluded from highlighting.
+## Objective
+Enhance the Forms search experience by adding semantic highlighting to search results. The highlighting will cover the Form ID, Form Name, and Form Description, supporting exact, partial, and case-insensitive matches for multiple independent search terms.
 
-# Key Files & Context
+## Key Files & Context
+- `src/components/SharedStyled.tsx`: Add the central `HighlightedText` styled component.
+- `src/utils/highlighting.tsx`: Create a reusable utility that handles multi-term regex building and highlighting.
+- `src/pages/MainPage/MainPage.tsx`: Update the component to pass the current `searchValue` down to each `FormCard`.
+- `src/components/FormCard/FormCard.tsx`: Update to receive `searchValue`, apply the highlighting utility to Name and Description, and display the Form ID (with highlighting) right after the form name in a smaller, muted style.
 
-- `src/pages/ResponsesPage/utils/highlighting.tsx`: A new utility file to hold the sophisticated regex generation and highlighting logic.
-- `src/pages/ResponsesPage/hooks/useCellDisplay.tsx`: Needs to be refactored to use the new `highlightTextUtil` instead of its inline logic.
-- `src/pages/ResponsesPage/components/childForms/ChildResponseRow.tsx`: Needs to be refactored to use `highlightTextUtil` and MUST have the `highlightText` removed from the meta-columns (created, createdByName).
-- `src/pages/ResponsesPage/components/ResponsesTable.tsx`: The inline `highlightText` function is no longer used for meta columns and should be removed.
+## Implementation Steps
 
-# Implementation Steps
+1.  **Centralize Highlighting Style:** [DONE]
+    -   Add `export const HighlightedText = styled("mark")({ backgroundColor: "#fff59d", color: "inherit", padding: 0, borderRadius: "2px" });` to `src/components/SharedStyled.tsx`.
 
-1. **Create Utility Function (`src/pages/ResponsesPage/utils/highlighting.tsx`)**:
-   - Implement `buildSearchRegex(query: string): RegExp | null`
-     - For "כן", return `/(כן|\btrue\b|\b1\b|\byes\b)/gi`
-     - For "לא", return `/(לא|\bfalse\b|\b0\b|\bno\b)/gi`
-     - For flexible dates, parse `(\d{1,2})[\.\/\-](\d{1,2})(?:[\.\/\-](\d{2}|\d{4}))?` and reconstruct a flexible regex using optional leading zeros and flexible separators.
-     - Default to a standard escaped global regex.
-   - Implement `highlightTextUtil(text, searchQuery)` that leverages the generated RegExp. Since the RegExp has exactly 1 capturing group, `split` will place the matched groups at odd indices (1, 3, 5...), which allows precise highlighting.
+2.  **Create Multi-term Highlighting Utility:** [DONE]
+    -   Create `src/utils/highlighting.tsx` containing a `highlightText` function.
+    -   To ensure non-consecutive words are highlighted correctly, the function will split the `searchQuery` by whitespace, escape each individual word, and join them with `|` to create a regex that matches *any* of the words independently (using `gi` flags).
+    -   It will map over the split text and wrap matches in the `<HighlightedText>` component.
 
-2. **Refactor `useCellDisplay.tsx`**:
-   - Import `highlightTextUtil` and remove the inline `escapeRegExp` and `highlightText` functions.
-   - Update all `highlightText(value)` calls to use the new utility `highlightTextUtil(value, searchQuery)`.
+3.  **Update `MainPage.tsx`:** [DONE]
+    -   In the `formsData.map` loop, pass the `searchValue` prop to the `FormCard` component.
 
-3. **Refactor `ChildResponseRow.tsx`**:
-   - Import `highlightTextUtil` and remove the inline `highlightText` function.
-   - Update `getResponseFieldStringValue` to use `highlightTextUtil(value, searchQuery)`.
-   - **Crucial**: Remove `highlightText` wrappers from the `formatCreatedDate` and `response.createdByName` meta-columns at the bottom of the render function to adhere to the rule that meta-columns are NEVER highlighted.
+4.  **Update `FormCard.tsx`:** [DONE]
+    -   Add `searchValue` to the component's props interface.
+    -   **Form Name:** Wrap `form.name` with the `highlightText` utility inside the `<ItemTitle>` component.
+    -   **Form ID:** Add a new `<Typography>` element right after the `<ItemTitle>` (inside a parent flex container) to display the ID (e.g., `#1234` or just `1234`). It will have a smaller font size and muted color (e.g., `text.secondary`). Apply `highlightText` to it.
+    -   **Form Description:** Wrap `form.description` with the `highlightText` utility inside the `<ItemDescription>` component.
 
-4. **Refactor `ResponsesTable.tsx`**:
-   - Remove the unused inline `highlightText` function and `escapeRegExp` completely, as it is no longer used (meta-columns should not be highlighted).
-   - Remove `HighlightedText` from imports as it is unused.
+5.  **Refactor Existing Highlighting (Optional/Cleanup):** [DONE]
+    -   The central `HighlightedText` style is now available in `SharedStyled.tsx`. `ResponsesPage` already uses an identical style, ensuring consistency.
 
-# Verification & Testing
-
-- **Date Matching**: Searching for "3.5", "03-05", or "03/05" should correctly highlight "03/05/2024" or "3.5.24" in date fields.
-- **Boolean Matching**: Searching for "כן" should highlight "כן", "true", "yes", etc.
-- **Meta Columns**: Verify that searching for an ID or a specific user's name does NOT highlight the text in the "ID", "Created By", or "Updated By" columns.
-- **Build Verification**: Run `npm run build` to verify there are no TypeScript or compilation errors.
+## Verification & Testing
+- Search for a single term (e.g., "leave") and verify it's highlighted in names and descriptions.
+- Search for multiple terms (e.g., "leave request") and verify both "leave" and "request" are highlighted independently, regardless of their order.
+- Search for a Form ID number and verify the new ID element appears next to the name and is highlighted.
+- Verify that case-insensitive matches work correctly for English characters.
+- Verify that Hebrew text highlights correctly.
+- Ensure the layout of `FormCard` remains intact when text is highlighted or truncated.

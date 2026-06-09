@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Box, TextField } from "@mui/material";
 import { preventEnterKeyNavigation } from "@utils/utils";
 
+import { numberType } from "formula-gear";
+
 interface NumberCellEditorProps {
   value: number | string;
   onChange: (value: number | string, isValid: boolean) => void;
@@ -60,7 +62,7 @@ const getInputSx = ({ hasError }: { hasError: boolean }) => ({
 export const NumberCellEditor: React.FC<NumberCellEditorProps> = ({
   value,
   onChange,
-  numberType = "integer",
+  numberType: type = numberType.Integer,
   minValue,
   maxValue,
   isRequired = false,
@@ -95,17 +97,17 @@ export const NumberCellEditor: React.FC<NumberCellEditorProps> = ({
       };
     }
 
-    const isValidFormat = numberType === "integer" ? integerRegex.test(val) : floatRegex.test(val);
+    const isValidFormat = type === numberType.Integer ? integerRegex.test(val) : floatRegex.test(val);
 
     if (!isValidFormat) {
       return {
         isValid: false,
-        errorMsg: numberType === "integer" ? "חובה להזין מספר שלם" : "חובה להזין מספר עשרוני",
+        errorMsg: type === numberType.Integer ? "חובה להזין מספר שלם" : "חובה להזין מספר עשרוני",
         parsed: val,
       };
     }
 
-    const parsed = numberType === "integer" ? parseInt(val, 10) : parseFloat(val);
+    const parsed = type === numberType.Integer ? parseInt(val, 10) : parseFloat(val);
 
     if (minValue !== undefined && parsed < minValue) {
       return {
@@ -173,7 +175,7 @@ export const NumberCellEditor: React.FC<NumberCellEditorProps> = ({
             disableUnderline: true,
           },
           htmlInput: {
-            step: numberType === "integer" ? 1 : "any",
+            step: type === numberType.Integer ? 1 : "any",
             min: minValue,
             max: maxValue,
           },

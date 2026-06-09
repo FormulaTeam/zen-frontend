@@ -1,6 +1,6 @@
 import React from "react";
 import { GridFilterOperator } from "@mui/x-data-grid-pro";
-import { fieldType, ResponseFilterOperator, type FieldType } from "formula-gear";
+import { fieldType, ResponseFilterOperator, type FieldType, selectionMode } from "formula-gear";
 import { FormFieldDto, ResponseMetaField } from "../../../../types/shared";
 import {
   DateFilterInput,
@@ -166,7 +166,7 @@ const locationOperators = (): GridFilterOperator[] => [...emptyOperators];
 const isMultiOptionField = (field: FormFieldDto): boolean => {
   const extra = field.extra as any;
 
-  return extra?.selectionMode === "multiple";
+  return extra?.selectionMode === selectionMode.Multiple;
 };
 
 export const getFilterOperatorsForField = (field: FormFieldDto): GridFilterOperator[] => {

@@ -31,6 +31,7 @@ import { FormDto, FormFieldDto } from "../../types/shared";
 import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner";
 import { getQuickEditDraft, clearQuickEditDraft } from "../FormEditor/utils/draftPersistence";
 import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialog";
+import ConfirmDeleteDialog from "../../components/BasePopup/ConfirmDeleteDialog";
 
 type SidePanelForm = Pick<FormDto, "id" | "name"> & {
   fields: FormFieldDto[];
@@ -119,10 +120,41 @@ const ResponsesPageContent = (): JSX.Element => {
     handleCancelDialogClose,
     handleAddNewResponse,
     handleDuplicateResponse,
+    pendingDeleteIds,
+    confirmDelete,
+    cancelDelete,
   } = useResponsesEdit();
 
   const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<any>(null);
+
+  // Hook to block navigation if there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    const handlePopState = () => {
+      if (hasUnsavedChanges) {
+        window.history.pushState(null, "", window.location.href);
+        handleToggleEditMode(); // This triggers the showCancelDialog internally via useResponsesEdit
+      }
+    };
+
+    if (hasUnsavedChanges) {
+      window.addEventListener("beforeunload", handleBeforeUnload);
+      window.history.pushState(null, "", window.location.href);
+      window.addEventListener("popstate", handlePopState);
+    }
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [hasUnsavedChanges, handleToggleEditMode]);
 
   useEffect(() => {
     const draft = getQuickEditDraft(form?.id);
@@ -304,6 +336,14 @@ const ResponsesPageContent = (): JSX.Element => {
         message="מצאנו טיוטה של עריכה מהירה עם שינויים שלא נשמרו."
         onRestore={handleRestore}
         onDiscard={handleDiscardDraft}
+      />
+
+      <ConfirmDeleteDialog
+        open={pendingDeleteIds !== null}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="מחיקת תגובות"
+        message={`האם אתה בטוח שברצונך למחוק ${pendingDeleteIds?.length || 0} תגובות?`}
       />
     </PageWrapper>
   );

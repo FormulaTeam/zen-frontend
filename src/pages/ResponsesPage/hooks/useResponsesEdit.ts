@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import { GridRowModel } from "@mui/x-data-grid-pro";
 import { showSuccessNotification, showErrorNotification } from "@utils/utils";
 import { useUpdateResponses, useCreateResponse, useSoftDeleteResponses } from "@api/responsesApi";
-import { type StoredFile } from "@api/filesApi";
+import { toStoredFile, uploadFile, type ResponseFileDto, type StoredFile } from "@api/filesApi";
 import { useFormStore } from "../stores/form.store";
 import { useAuth } from "@contexts/AuthContext";
 import {
@@ -21,6 +21,7 @@ import {
   type FieldValidationMessage,
   type FormFieldLike,
   getFieldValidationMessage,
+  selectionMode,
 } from "formula-gear";
 import {
   CustomError,
@@ -203,6 +204,26 @@ const buildFileFieldValue = (value: unknown): FileFieldValue | null => {
   return allFiles.length > 0 ? { files: allFiles } : null;
 };
 
+const buildPersistedFileFieldValue = async (
+  formId: number,
+  responseId: string,
+  value: unknown,
+): Promise<FileFieldValue | null> => {
+  const { newFiles, attachedFiles } = getFileDraftParts(value);
+
+  if (newFiles.length === 0) {
+    return attachedFiles.length > 0 ? { files: attachedFiles } : null;
+  }
+
+  const uploadedFiles = await Promise.all(
+    newFiles.map((file) => uploadFile<ResponseFileDto>(formId, responseId, file)),
+  );
+
+  const allFiles = [...attachedFiles, ...uploadedFiles.map(toStoredFile)];
+
+  return allFiles.length > 0 ? { files: allFiles } : null;
+};
+
 const toValidatorField = (field: FormFieldDto): FormFieldLike => ({
   typeId: field.fieldType as FormFieldLike["typeId"],
   required: field.isRequired,
@@ -261,6 +282,19 @@ const getSubmitFieldValue = (field: FormFieldDto, value: unknown): unknown => {
   return value;
 };
 
+const getPersistedSubmitFieldValue = async (
+  formId: number,
+  responseId: string,
+  field: FormFieldDto,
+  value: unknown,
+): Promise<unknown> => {
+  if (field.fieldType === fieldType.File) {
+    return buildPersistedFileFieldValue(formId, responseId, value);
+  }
+
+  return getSubmitFieldValue(field, value);
+};
+
 const getFieldValidationError = (
   field: FormFieldDto,
   value: unknown,
@@ -293,7 +327,7 @@ const isMultipleOptionsField = (field: FormFieldDto): boolean => {
     return false;
   }
 
-  return getFieldExtra(field).selectionMode === "multiple";
+  return getFieldExtra(field).selectionMode === selectionMode.Multiple;
 };
 
 const getEmptyFieldValue = (field: FormFieldDto): unknown => {
@@ -328,7 +362,7 @@ const getDefaultFieldValue = (field: FormFieldDto): unknown => {
         : undefined;
 
     if (defaultValue && Array.isArray(defaultValue)) {
-      return extra.selectionMode === "multiple" ? defaultValue : (defaultValue[0] ?? "");
+      return extra.selectionMode === selectionMode.Multiple ? defaultValue : (defaultValue[0] ?? "");
     }
 
     return getEmptyFieldValue(field);
@@ -398,6 +432,7 @@ export const useResponsesEdit = () => {
   const [editedRows, setEditedRows] = useState<Map<RowId, Row>>(new Map());
   const [localRows, setLocalRows] = useState<Row[]>([]);
   const [deletedRowIds, setDeletedRowIds] = useState<RowId[]>([]);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<RowId[] | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
     Record<RowId, Record<string, QuickEditValidationError>>
@@ -406,6 +441,10 @@ export const useResponsesEdit = () => {
   const newRowCounterRef = useRef(0);
 
   const dtoForm = form as FormDto | null | undefined;
+
+  const hasUnsavedChanges = useMemo(() => {
+    return editedRows.size > 0 || deletedRowIds.length > 0;
+  }, [editedRows, deletedRowIds]);
 
   const formFields = useMemo<FormFieldDto[]>(() => {
     const sectionsFields = (dtoForm?.sections ?? [])
@@ -428,11 +467,6 @@ export const useResponsesEdit = () => {
   const responseRows: Row[] = useMemo(
     () => (rows?.filter((row) => row != null) as Row[]) || [],
     [rows],
-  );
-
-  const hasUnsavedChanges = useMemo(
-    () => editedRows.size > 0 || deletedRowIds.length > 0,
-    [editedRows, deletedRowIds],
   );
 
   const getMergedRow = useCallback(
@@ -511,49 +545,62 @@ export const useResponsesEdit = () => {
     }
   }, [isInEditMode, responseRows]);
 
+  const confirmDelete = useCallback(async (): Promise<void> => {
+    if (!pendingDeleteIds) return;
+    
+    const stringIds = pendingDeleteIds.map((id) => String(id));
+
+    if (isInEditMode) {
+      const localOnlyIds = stringIds.filter((id) => id.startsWith("new_"));
+      const serverIds = stringIds.filter((id) => !id.startsWith("new_"));
+
+      if (localOnlyIds.length > 0) {
+        setLocalRows((prev) => prev.filter((row) => !localOnlyIds.includes(String(row.id))));
+        setEditedRows((prev) => {
+          const next = new Map(prev);
+          localOnlyIds.forEach((id) => next.delete(id));
+          return next;
+        });
+      }
+
+      if (serverIds.length > 0) {
+        setDeletedRowIds((prev) => [...new Set([...prev, ...serverIds])]);
+        setEditedRows((prev) => {
+          const next = new Map(prev);
+          serverIds.forEach((id) => next.delete(id));
+          return next;
+        });
+      }
+      
+      setPendingDeleteIds(null);
+      return;
+    }
+
+    try {
+      setForm({
+        ...dtoForm,
+        responsesCount: Math.max(0, (dtoForm?.responsesCount ?? 0) - stringIds.length),
+      } as any);
+
+      await softDeleteResponses({ responsesIds: stringIds });
+      showSuccessNotification("מחיקת התגובות בוצעה בהצלחה");
+    } catch {
+      setForm(dtoForm as any);
+      showErrorNotification("מחיקת התגובות נכשלה");
+    } finally {
+      setPendingDeleteIds(null);
+    }
+  }, [pendingDeleteIds, isInEditMode, dtoForm, setForm, softDeleteResponses]);
+
+  const cancelDelete = useCallback(() => {
+    setPendingDeleteIds(null);
+  }, []);
+
   const handleDeleteResponses = useCallback(
-    async (ids: RowId[]): Promise<void> => {
-      const stringIds = ids.map((id) => String(id));
-
-      if (isInEditMode) {
-        const localOnlyIds = stringIds.filter((id) => id.startsWith("new_"));
-        const serverIds = stringIds.filter((id) => !id.startsWith("new_"));
-
-        if (localOnlyIds.length > 0) {
-          setLocalRows((prev) => prev.filter((row) => !localOnlyIds.includes(String(row.id))));
-          setEditedRows((prev) => {
-            const next = new Map(prev);
-            localOnlyIds.forEach((id) => next.delete(id));
-            return next;
-          });
-        }
-
-        if (serverIds.length > 0) {
-          setDeletedRowIds((prev) => [...new Set([...prev, ...serverIds])]);
-          setEditedRows((prev) => {
-            const next = new Map(prev);
-            serverIds.forEach((id) => next.delete(id));
-            return next;
-          });
-        }
-
-        return;
-      }
-
-      try {
-        setForm({
-          ...dtoForm,
-          responsesCount: Math.max(0, (dtoForm?.responsesCount ?? 0) - stringIds.length),
-        } as any);
-
-        await softDeleteResponses({ responsesIds: stringIds });
-        showSuccessNotification("מחיקת התגובות בוצעה בהצלחה");
-      } catch {
-        setForm(dtoForm as any);
-        showErrorNotification("מחיקת התגובות נכשלה");
-      }
+    (ids: RowId[]): void => {
+      setPendingDeleteIds(ids);
     },
-    [isInEditMode, dtoForm, setForm, softDeleteResponses],
+    [],
   );
 
   const handleCellLiveChange = useCallback(
@@ -670,14 +717,19 @@ export const useResponsesEdit = () => {
 
       const rowForSubmit = getMergedRow(rowId, editedRow);
 
-      const updatedFieldValues: ResponseFieldValueDto[] = formFields.map((formField) => {
+      const updatedFieldValues = await Promise.all(formFields.map(async (formField) => {
         const rawValue = rowForSubmit[getFieldColumnKey(formField)];
 
         return {
           fieldId: formField.id,
-          value: getSubmitFieldValue(formField, rawValue ?? null),
+          value: await getPersistedSubmitFieldValue(
+            dtoForm.id,
+            rowId,
+            formField,
+            rawValue ?? null,
+          ),
         };
-      });
+      }));
 
       return {
         responseId: String(rowId),
@@ -698,6 +750,7 @@ export const useResponsesEdit = () => {
 
     const newRow: Row = {
       id: tempId,
+      index: undefined,
       created: now,
       createdByName: displayName,
       edited: now,
@@ -731,6 +784,7 @@ export const useResponsesEdit = () => {
       const newRow: Row = {
         ...sourceRow,
         id: tempId,
+        index: undefined,
         created: now,
         createdByName: displayName,
         edited: now,
@@ -835,7 +889,61 @@ export const useResponsesEdit = () => {
       );
 
       if (newResponsesPayloads.length > 0) {
-        await createResponse(newResponsesPayloads);
+        const createdResponses = (await createResponse(newResponsesPayloads)) as ResponseDto[];
+
+        const fileUpdates: Array<UpdateOneResponseDto | null> = await Promise.all(
+          sortedNewRowEntries.map(async ([rowId, editedRow], index) => {
+            const createdResponse = createdResponses[index];
+
+            if (!createdResponse?.id) {
+              return null;
+            }
+
+            const rowForCreate = getMergedRow(rowId, editedRow);
+            const fieldValues = await Promise.all(
+              formFields.map(async (field) => {
+                const rawValue = rowForCreate[getFieldColumnKey(field)];
+
+                return {
+                  fieldId: field.id,
+                  value: await getPersistedSubmitFieldValue(
+                    dtoForm.id,
+                    createdResponse.id,
+                    field,
+                    rawValue ?? getDefaultFieldValue(field),
+                  ),
+                };
+              }),
+            );
+
+            const hasUploadedFiles = fieldValues.some((fieldValue) => {
+              const value = fieldValue.value as FileFieldValue | null;
+              return (
+                value &&
+                typeof value === "object" &&
+                Array.isArray(value.files) &&
+                value.files.some((file) => file.responseId === createdResponse.id)
+              );
+            });
+
+            if (!hasUploadedFiles) {
+              return null;
+            }
+
+            return {
+              responseId: createdResponse.id,
+              fieldValues,
+            };
+          }),
+        );
+
+        const fileUpdatesToSend = fileUpdates.filter(
+          (update): update is UpdateOneResponseDto => update !== null,
+        );
+
+        if (fileUpdatesToSend.length > 0) {
+          await updateResponses({ responses: fileUpdatesToSend });
+        }
       }
 
       const netCountChange = newResponsesPayloads.length - deletedRowIds.length;
@@ -934,5 +1042,8 @@ export const useResponsesEdit = () => {
     handleCancelDialogClose: closeCancelDialog,
     handleAddNewResponse: addNewResponse,
     handleDuplicateResponse: duplicateResponse,
+    pendingDeleteIds,
+    confirmDelete,
+    cancelDelete,
   };
 };

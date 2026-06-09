@@ -67,7 +67,13 @@ interface UseCellEditorsReturn {
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
 
-const getOptionIds = (extra: EditorFieldExtra): string[] => {
+const getOptionIds = (field: FormFieldDto): string[] => {
+  if (Array.isArray((field as any).options)) {
+    return (field as any).options.map((option: any) => String(option.id));
+  }
+
+  const extra = getFieldExtra(field);
+
   if (Array.isArray(extra.options)) {
     return extra.options.map((option) => String(option));
   }
@@ -81,7 +87,19 @@ const getOptionIds = (extra: EditorFieldExtra): string[] => {
   return [];
 };
 
-const getOptionLabelMap = (extra: EditorFieldExtra): Record<string, string> => {
+const getOptionLabelMap = (field: FormFieldDto): Record<string, string> => {
+  if (Array.isArray((field as any).options)) {
+    return Object.fromEntries(
+      (field as any).options
+        .filter(
+          (option: any) => option && typeof option.id === "string" && typeof option.text === "string",
+        )
+        .map((option: any) => [option.id, option.text]),
+    );
+  }
+
+  const extra = getFieldExtra(field);
+
   if (
     extra.options &&
     typeof extra.options === "object" &&
@@ -207,8 +225,8 @@ export const useCellEditors = ({
             <OptionsCellEditor
               value={getOptionResponseRawValue(params.value) as string | string[]}
               onChange={handleChange}
-              options={getOptionIds(fieldExtra)}
-              optionLabels={getOptionLabelMap(fieldExtra)}
+              options={getOptionIds(formField)}
+              optionLabels={getOptionLabelMap(formField)}
               selectionMode={selectionMode}
               isRequired={formField.isRequired}
               errorMessage={errorMessage}

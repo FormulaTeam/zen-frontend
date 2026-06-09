@@ -87,20 +87,18 @@ export const useDeletedResponses = (
       const filter: Filter = {
         pageSize: PAGE_SIZE,
         pageNumber,
-        onlyDeleted: true,
+        softDeleted: true,
         sortBy,
         orderBy,
         query: trimmedSearch || undefined,
         responseFilters: items.length ? { items } : undefined,
       };
 
-      const result = currentDeletedForm
-        ? await getResponses(currentDeletedForm.id, filter)
-        : [];
+      const result = currentDeletedForm ? await getResponses(currentDeletedForm.id, filter) : [];
 
       if (queryId !== currentQueryId.current) return;
 
-      const sorted = sortResponses(result as any ?? [], customSort);
+      const sorted = sortResponses((result as any) ?? [], customSort);
 
       if (pageNumber === 1) {
         setResponses(sorted);
@@ -146,9 +144,7 @@ export const useDeletedResponses = (
       showSuccessNotification("התגובה שוחזרה בהצלחה");
 
       setResponses((prev: any[]) =>
-        prev.filter(
-          (r) => !((r.form_id ?? r.formId) === formId && (r.id) === responseId),
-        ),
+        prev.filter((r) => !((r.form_id ?? r.formId) === formId && r.id === responseId)),
       );
     } catch (err) {
       console.error("Failed to restore response:", err);
@@ -174,9 +170,7 @@ export const useDeletedResponses = (
         await restoreResponses(currentDeletedForm.id, responseIdsToRestore);
         showSuccessNotification(`${responseIdsToRestore.length} תגובות שוחזרו בהצלחה`);
 
-        setResponses((prev) =>
-          prev.filter((r) => !responseIdsToRestore.includes(r.id)),
-        );
+        setResponses((prev) => prev.filter((r) => !responseIdsToRestore.includes(r.id)));
       }
     } catch (err) {
       console.error("Failed to restore responses:", err);

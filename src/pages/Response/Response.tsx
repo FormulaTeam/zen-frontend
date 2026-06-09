@@ -181,6 +181,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
           parentCreatePromiseRef.current = saveResponse(
             formFieldsByIdMap,
             validationResult.parsedValuesMap,
+            validationResult.rawValuesMap,
           ) as Promise<ResponseDto>;
         }
 
@@ -189,6 +190,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
         result = (await saveResponse(
           formFieldsByIdMap,
           validationResult.parsedValuesMap,
+          validationResult.rawValuesMap,
         )) as ResponseDto;
       }
 

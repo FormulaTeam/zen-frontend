@@ -3,6 +3,8 @@ import { Autocomplete, Box, IconButton, TextField } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
+import { selectionMode } from "formula-gear";
+
 interface OptionsCellEditorProps {
   value: string | string[];
   onChange: (value: string | string[], isValid: boolean) => void;
@@ -13,8 +15,8 @@ interface OptionsCellEditorProps {
   errorMessage?: string;
 }
 
-const normalizeValue = (value: string | string[], selectionMode: string): string | string[] => {
-  const isMultiSelect = selectionMode === "multiple";
+const normalizeValue = (value: string | string[], mode: string): string | string[] => {
+  const isMultiSelect = mode === selectionMode.Multiple;
   if (isMultiSelect) {
     if (Array.isArray(value)) {
       return value.filter((item) => typeof item === "string");
@@ -237,19 +239,19 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
   onChange,
   options,
   optionLabels = {},
-  selectionMode = "single",
+  selectionMode: mode = "single",
   isRequired = false,
   errorMessage,
 }) => {
-  const isMultiSelect = selectionMode === "multiple";
+  const isMultiSelect = mode === selectionMode.Multiple;
   const [localValue, setLocalValue] = useState<string | string[]>(() =>
-    normalizeValue(value, selectionMode),
+    normalizeValue(value, mode),
   );
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    setLocalValue(normalizeValue(value, selectionMode));
-  }, [value, selectionMode]);
+    setLocalValue(normalizeValue(value, mode));
+  }, [value, mode]);
 
   const normalizedOptions = useMemo(
     () => options.filter((option): option is string => typeof option === "string"),

@@ -6,6 +6,8 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/he";
 
+import { timePrecision } from "formula-gear";
+
 interface TimeCellEditorProps {
   value: string | null;
   onChange: (value: string, isValid?: boolean) => void;
@@ -38,8 +40,8 @@ const parseTimeStringToDayjs = (value: unknown): Dayjs | null => {
   return dayjs(date);
 };
 
-const formatDayjsToTimeString = (value: Dayjs, timePrecision: string): string => {
-  const showSeconds = timePrecision === "seconds";
+const formatDayjsToTimeString = (value: Dayjs, precision: string): string => {
+  const showSeconds = precision === timePrecision.Seconds;
   const hours = value.hour().toString().padStart(2, "0");
   const minutes = value.minute().toString().padStart(2, "0");
 
@@ -152,7 +154,7 @@ const iconButtonSx = {
 export const TimeCellEditor: React.FC<TimeCellEditorProps> = ({
   value,
   onChange,
-  timePrecision = "minutes",
+  timePrecision: precision = timePrecision.Minutes,
   isRequired = false,
   errorMessage,
 }) => {
@@ -167,7 +169,7 @@ export const TimeCellEditor: React.FC<TimeCellEditorProps> = ({
     setLocalValue(nextValue);
 
     if (nextValue && nextValue.isValid()) {
-      onChange(formatDayjsToTimeString(nextValue, timePrecision), true);
+      onChange(formatDayjsToTimeString(nextValue, precision), true);
       return;
     }
 
@@ -185,7 +187,7 @@ export const TimeCellEditor: React.FC<TimeCellEditorProps> = ({
     setIsOpen(true);
   };
 
-  const showSeconds = timePrecision === "seconds";
+  const showSeconds = precision === timePrecision.Seconds;
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">

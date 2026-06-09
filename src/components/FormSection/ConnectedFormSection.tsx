@@ -144,7 +144,11 @@ function ConnectedFormSection({
     }
 
     try {
-      const result = await saveResponse(formFieldsByIdMap, validationResult.parsedValuesMap);
+      const result = await saveResponse(
+        formFieldsByIdMap,
+        validationResult.parsedValuesMap,
+        validationResult.rawValuesMap,
+      );
 
       if (!result?.id) {
         setSaved(false);

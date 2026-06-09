@@ -2,12 +2,12 @@ import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { ExtraElementProps } from "../index";
 import { FormControl, FormHelperText, Input, InputLabel, MenuItem, Select } from "@mui/material";
 import { useEffect, useState } from "react";
-import { REGEX } from "formula-gear";
+import { REGEX, numberType } from "formula-gear";
 
 type Props = ExtraElementProps<typeof FieldTypeIds.number>;
 
 function NumberFieldExtra({ extra, validationErrors, onChange, disabled }: Props) {
-  const { numberType = "integer", defaultValue, max, min } = extra;
+  const { numberType: type = numberType.Integer, defaultValue, max, min } = extra;
 
   const [localValues, setLocalValues] = useState({
     defaultValue: defaultValue !== undefined ? String(defaultValue) : "",
@@ -16,7 +16,7 @@ function NumberFieldExtra({ extra, validationErrors, onChange, disabled }: Props
   });
 
   useEffect(() => {
-    onChange({ numberType: numberType });
+    onChange({ numberType: type });
   }, []);
 
   useEffect(() => {
@@ -73,13 +73,13 @@ function NumberFieldExtra({ extra, validationErrors, onChange, disabled }: Props
         <InputLabel id="format-label">סוג מספר</InputLabel>
         <Select
           labelId="format-label"
-          value={numberType}
+          value={type}
           label="סוג מספר"
           onChange={(e) => {
-            onChange({ numberType: e.target.value as "integer" | "decimal" });
+            onChange({ numberType: e.target.value as any });
           }}>
-          <MenuItem value={"integer"}>שלם</MenuItem>
-          <MenuItem value={"decimal"}>עשרוני</MenuItem>
+          <MenuItem value={numberType.Integer}>שלם</MenuItem>
+          <MenuItem value={numberType.Decimal}>עשרוני</MenuItem>
         </Select>
       </FormControl>
       <FormControl

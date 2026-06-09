@@ -346,9 +346,49 @@ export const ResponsesTable = React.memo(
 
     const apiRef = useGridApiRef();
 
+    const columnWidths = useRef<Record<string, number>>({});
+
+    const handleColumnWidthChange = useCallback((params: { colDef: GridColDef; width: number }) => {
+      columnWidths.current[params.colDef.field] = params.width;
+    }, []);
+
     const shouldUseHeaderFilters = showFilters && !isInEditMode;
 
     const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
+    const [expandedRows, setExpandedRows] = useState<Record<string | number, Set<string>>>(
+      {},
+    );
+
+    const handleCellExpandToggle = useCallback(
+      (rowId: string | number, fieldId: string, isExpanded: boolean) => {
+        const stringRowId = String(rowId);
+
+        setExpandedRows((prev) => {
+          const next = { ...prev };
+          const rowExpandedFields = new Set(next[stringRowId] || []);
+
+          if (isExpanded) {
+            rowExpandedFields.add(fieldId);
+          } else {
+            rowExpandedFields.delete(fieldId);
+          }
+
+          if (rowExpandedFields.size > 0) {
+            next[stringRowId] = rowExpandedFields;
+          } else {
+            delete next[stringRowId];
+          }
+
+          return next;
+        });
+
+        // Use a small timeout to allow the DOM to update before recalculating heights
+        setTimeout(() => {
+          apiRef.current?.resetRowHeights();
+        }, 0);
+      },
+      [apiRef],
+    );
 
     const activeEditingRowIds = useMemo(() => {
       const rowIds = new Set<string>();
@@ -368,7 +408,7 @@ export const ResponsesTable = React.memo(
 
     useEffect(() => {
       apiRef.current?.resetRowHeights();
-    }, [apiRef, activeEditingRowIds, localRows]);
+    }, [apiRef, activeEditingRowIds]);
 
     const { childrenFormsData, hasFormInFormFields, loadingChildForms, getChildFormData } =
       useChildForms({ form });
@@ -399,8 +439,8 @@ export const ResponsesTable = React.memo(
     });
 
     const handleFileClick = useCallback(
-      (file: ResponseDisplayFile) => {
-        downloadFileFromResponse(file, String(form?.id));
+      (file: ResponseDisplayFile, rowId?: string | number) => {
+        downloadFileFromResponse(file, String(form?.id), rowId ? String(rowId) : undefined);
       },
       [form?.id],
     );
@@ -410,6 +450,7 @@ export const ResponsesTable = React.memo(
       onFileClick: handleFileClick,
       searchQuery: filter?.query,
       isInEditMode,
+      onCellExpandToggle: handleCellExpandToggle,
     });
 
     const handleCellClick = useCallback(
@@ -531,7 +572,7 @@ export const ResponsesTable = React.memo(
         const col: GridColDef = {
           field: gridField,
           headerName: field.displayName,
-          width: 180,
+          width: columnWidths.current[gridField],
           minWidth: 120,
           maxWidth: 450,
           editable: true,
@@ -550,7 +591,7 @@ export const ResponsesTable = React.memo(
 
             const content =
               params.value !== undefined && params.value !== null
-                ? formatCellValue(params.value, field)
+                ? formatCellValue(params.value, field, rowId)
                 : null;
 
             const display = content ?? <Box component="span" className="cell-box" />;
@@ -590,7 +631,7 @@ export const ResponsesTable = React.memo(
             <span>מזהה</span>
           </HeaderFlex>
         ),
-        width: 160,
+        width: columnWidths.current[`${prefixes.Meta}index`] || 160,
         minWidth: 100,
         editable: false,
         sortable: true,
@@ -601,7 +642,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}created_by`, {
         field: `${prefixes.Meta}created_by`,
         headerName: "נוצר ע״י",
-        width: 200,
+        width: columnWidths.current[`${prefixes.Meta}created_by`] || 200,
         minWidth: 150,
         editable: false,
         sortable: true,
@@ -612,7 +653,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}created_at`, {
         field: `${prefixes.Meta}created_at`,
         headerName: "תאריך יצירה",
-        width: 200,
+        width: columnWidths.current[`${prefixes.Meta}created_at`] || 200,
         minWidth: 150,
         editable: false,
         sortable: true,
@@ -637,7 +678,7 @@ export const ResponsesTable = React.memo(
           </HeaderFlex>
         ),
         minWidth: 150,
-        width: 150,
+        width: columnWidths.current["sync"] || 150,
         editable: false,
         sortable: true,
         filterable: false,
@@ -649,7 +690,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}updated_by`, {
         field: `${prefixes.Meta}updated_by`,
         headerName: "השתנה ע״י",
-        width: 200,
+        width: columnWidths.current[`${prefixes.Meta}updated_by`] || 200,
         minWidth: 150,
         editable: false,
         sortable: true,
@@ -660,7 +701,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}updated_at`, {
         field: `${prefixes.Meta}updated_at`,
         headerName: "תאריך שינוי",
-        width: 200,
+        width: columnWidths.current[`${prefixes.Meta}updated_at`] || 200,
         minWidth: 150,
         editable: false,
         sortable: true,
@@ -677,7 +718,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}id`, {
         field: `${prefixes.Meta}id`,
         headerName: "ID",
-        width: 150,
+        width: columnWidths.current[`${prefixes.Meta}id`] || 150,
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.id,
@@ -685,6 +726,7 @@ export const ResponsesTable = React.memo(
       });
 
       const structuralColumns: GridColDef[] = [
+        metaColumnsMap.get(`${prefixes.Meta}index`)!,
         ...(expandColumn ? [{ ...expandColumn, filterable: false }] : []),
       ];
 
@@ -693,7 +735,7 @@ export const ResponsesTable = React.memo(
             {
               field: "parentResponse",
               headerName: "תגובת אב",
-              width: 200,
+              width: columnWidths.current["parentResponse"] || 200,
               editable: false,
               filterable: false,
               sortable: false,
@@ -723,6 +765,9 @@ export const ResponsesTable = React.memo(
               }
             }
 
+            // Skip index since it's now structural
+            if (columnId === `${prefixes.Meta}index`) return undefined;
+
             if (dynamicColumnsMap.has(columnId)) return dynamicColumnsMap.get(columnId);
             if (metaColumnsMap.has(columnId)) return metaColumnsMap.get(columnId);
 
@@ -731,7 +776,6 @@ export const ResponsesTable = React.memo(
           .filter((col): col is GridColDef => col !== undefined);
       } else {
         resultColumns = [
-          metaColumnsMap.get(`${prefixes.Meta}index`)!,
           ...Array.from(dynamicColumnsMap.values()),
           metaColumnsMap.get(`${prefixes.Meta}pushed_to_metro`)!,
           metaColumnsMap.get(`${prefixes.Meta}created_by`)!,
@@ -758,19 +802,18 @@ export const ResponsesTable = React.memo(
     ]);
 
     useEffect(() => {
-      if (isInEditMode || isRowsLoading || localRows.length === 0) return;
+      if (isRowsLoading || displayRows.length === 0 || isInEditMode) return;
 
-      const frameId = window.requestAnimationFrame(() => {
-        void apiRef.current?.autosizeColumns({
+      const timer = setTimeout(() => {
+        apiRef.current?.autosizeColumns({
           includeHeaders: true,
           includeOutliers: true,
           expand: false,
-          disableColumnVirtualization: true,
         });
-      });
+      }, 100);
 
-      return () => window.cancelAnimationFrame(frameId);
-    }, [apiRef, getFormColumns, isInEditMode, isRowsLoading, localRows.length]);
+      return () => clearTimeout(timer);
+    }, [apiRef, isRowsLoading, displayRows.length]);
 
     const editableColumnFields = useMemo(
       () =>
@@ -1102,8 +1145,8 @@ export const ResponsesTable = React.memo(
               disableColumnMenu={isInEditMode}
               disableColumnSorting={false}
               disableColumnFilter={isInEditMode}
+              disableColumnPinning
               headerFilters={shouldUseHeaderFilters}
-              autosizeOnMount
               autosizeOptions={{
                 includeHeaders: true,
                 includeOutliers: true,
@@ -1134,7 +1177,13 @@ export const ResponsesTable = React.memo(
               getCellClassName={getCellClassName}
               rowHeight={49}
               getRowHeight={(params) => {
-                if (isInEditMode && activeEditingRowIds.has(String(params.id))) {
+                const stringId = String(params.id);
+
+                if (isInEditMode && activeEditingRowIds.has(stringId)) {
+                  return "auto";
+                }
+
+                if (expandedRows[stringId]) {
                   return "auto";
                 }
 
@@ -1148,6 +1197,7 @@ export const ResponsesTable = React.memo(
               checkboxSelection
               disableRowSelectionOnClick
               disableColumnResize
+              onColumnWidthChange={handleColumnWidthChange}
               rowSelectionModel={rowSelectionModel}
               onRowSelectionModelChange={onRowSelectionModelChange}
               getRowClassName={(params) => {

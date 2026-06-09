@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
-import { Filter, User } from "../utils/interfaces";
-import { getForms, restoreForm } from "../api";
+import { User } from "../utils/interfaces";
+import { restoreForm } from "../api";
 import { useSuperAdmin } from "../contexts/SuperAdminContext";
 import { DELETED_TABS } from "../utils/recycleBin";
-import { getSortedFilter } from "../utils/filters";
-import { permission } from "formula-gear";
+import { formsScopeOption } from "../types/enums/filtersAndSorts.enum";
+import { useGetFormsData } from "./useGetFormsData";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface DeletedFormsFilters {
   deletedBy: string;
@@ -18,68 +19,48 @@ export const useDeletedForms = (
   handleTabChange: (event: React.SyntheticEvent, newValue: number) => void,
   filters: DeletedFormsFilters,
 ) => {
-  const [forms, setForms] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const { isSuperAdmin } = useSuperAdmin();
+  const queryClient = useQueryClient();
 
-  const fetchDeletedForms = useCallback(async () => {
-    setLoading(true);
+  const searchQuery = filters.createdBy?.trim() || undefined;
 
-    const items: any[] = [];
-    if (filters.createdBy?.trim()) {
-      items.push({
-        metaField: "created_by",
-        operator: "contains",
-        value: filters.createdBy.trim(),
-      });
-    }
-
-    const filter: Filter = getSortedFilter(filters.sortValue ?? 7, {
-      responseFilters: items.length ? { items } : undefined,
-    });
-
-    filter.onlyDeleted = true;
-
-    try {
-      const newForms = await getForms(filter);
-      setForms(newForms || []);
-    } catch (error: any) {
-      if (error?.message !== "canceled") {
-        showErrorNotification("שליפת הטפסים נכשלה");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [user.upn, filters, isSuperAdmin]);
+  const {
+    formsData: forms,
+    isLoading: loading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetFormsData({
+    scope: isSuperAdmin ? formsScopeOption.AllForms : formsScopeOption.AccessibleForms,
+    softDeleted: true,
+    searchQuery: searchQuery,
+    enabled: !!user,
+  });
 
   const handleRestoreForm = useCallback(
     async (formId: number) => {
-      setLoading(true);
       try {
         const response = await restoreForm(formId);
         if (response) {
-          setForms((prev) => prev.filter((form) => form.id !== formId));
           showSuccessNotification("שחזור הטופס בוצע בהצלחה");
+          queryClient.invalidateQueries({ queryKey: ["forms"] });
           handleTabChange({} as React.SyntheticEvent, DELETED_TABS.FORMS);
         } else {
           showErrorNotification("שחזור הטופס נכשל");
         }
       } catch {
         showErrorNotification("שחזור הטופס נכשל");
-      } finally {
-        setLoading(false);
       }
     },
-    [handleTabChange],
+    [handleTabChange, queryClient],
   );
-
-  useEffect(() => {
-    fetchDeletedForms();
-  }, [fetchDeletedForms]);
 
   return {
     forms,
     loading,
     handleRestoreForm,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   };
 };

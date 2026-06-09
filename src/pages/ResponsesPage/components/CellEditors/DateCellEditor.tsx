@@ -9,6 +9,8 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import "dayjs/locale/he";
 
+import { dateType } from "formula-gear";
+
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -163,7 +165,7 @@ interface DateCellEditorProps {
 export const DateCellEditor: React.FC<DateCellEditorProps> = ({
   value,
   onChange,
-  dateType = "date",
+  dateType: type = dateType.Date,
   isRequired = false,
   errorMessage,
 }) => {
@@ -171,7 +173,7 @@ export const DateCellEditor: React.FC<DateCellEditorProps> = ({
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
 
-  const isDateTime = dateType === "datetime";
+  const isDateTime = type === dateType.Datetime;
 
   useEffect(() => {
     setLocalValue(toPickerValue(value));

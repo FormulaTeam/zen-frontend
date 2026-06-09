@@ -1,12 +1,15 @@
 import React, { useMemo, useState } from "react";
-import { Box, IconButton, Portal, Snackbar, Tooltip, useTheme } from "@mui/material";
+import { Box, IconButton, Tooltip, useTheme } from "@mui/material";
 import { ArrowBackIosNew, ArrowForwardIos, Link } from "@mui/icons-material";
 import { FileIcon, defaultStyles } from "react-file-icon";
-import { decodeFileName } from "../../utils/utils";
+import { decodeFileName, showSuccessNotification } from "../../utils/utils";
 
 type StoredFile = {
+  id?: string;
+  responseId?: string;
   name: string;
   path: string;
+  fileName?: string;
 };
 
 type LocalDisplayFile = {
@@ -20,6 +23,7 @@ interface CustomCarouselProps {
   items: CarouselFile[];
   onItemClickHandler: (file: CarouselFile) => void;
   formId?: string | number;
+  responseId?: string | number;
   shouldSpaceFiles?: boolean;
 }
 
@@ -51,10 +55,10 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
   items,
   onItemClickHandler,
   formId,
+  responseId,
   shouldSpaceFiles = false,
 }) => {
   const theme = useTheme();
-  const [open, setOpen] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
 
   const pages = useMemo(() => chunkFiles(items ?? []), [items]);
@@ -68,7 +72,13 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
   const getDownloadPath = (file: CarouselFile): string => {
     const fileName = getDisplayFileName(file);
 
-    return `${window.location.origin}/download/${formId}/${encodeURIComponent(fileName)}`;
+    if (isLocalDisplayFile(file)) {
+      return "";
+    }
+    
+    const resolvedResponseId = responseId ?? file.responseId;
+
+    return `${window.location.origin}/download/${formId}/${resolvedResponseId}/${file.id ?? file.path}/${encodeURIComponent(fileName)}`;
   };
 
   const handleCopyLink = async (
@@ -78,7 +88,7 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
     event.stopPropagation();
 
     await navigator.clipboard.writeText(downloadPath);
-    setOpen(true);
+    showSuccessNotification("הקישור הועתק בהצלחה");
   };
 
   const goPrevious = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -232,15 +242,6 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
           </IconButton>
         )}
       </Box>
-
-      <Portal>
-        <Snackbar
-          open={open}
-          autoHideDuration={1000}
-          onClose={() => setOpen(false)}
-          message="הקישור הועתק בהצלחה"
-        />
-      </Portal>
     </Box>
   );
 };

@@ -4,7 +4,6 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import type { UserRoleDto } from "../types/shared";
 import { useUpsertFormRoles } from "../api/rolesApi";
-import { getUsers } from "../api/usersApi";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
 import { FormOverview } from "@src/utils/interfaces";
 
@@ -25,14 +24,14 @@ interface UseUserPickerProps {
 
 export interface UserPickerReturnType {
   loading: boolean;
-  shareWithOptionsUsers: SharePickerUser[];
   selectedShareWith: SharePickerUser[];
   formCreator: SharePickerUser | null;
   saveSharedWith: () => Promise<void>;
   removeUserFromShare: (user: SharePickerUser) => void;
   handleRoleChange: (_: any, newValue: any, user: SharePickerUser) => void;
   handleValueChange: (_: any, newValue: SharePickerUser) => void;
-  handleInputChange: (_: any, value: string) => void;
+  searchQuery: string;
+  handleSearchQueryChange: (_: any, value: string) => void;
   handleClose: () => void;
   handleFormPermissionChange: (isPublic: boolean, permission?: Role) => void;
 }
@@ -56,7 +55,7 @@ export const useUserPicker = ({
 }: UseUserPickerProps): UserPickerReturnType => {
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedShareWith, setSelectedShareWith] = useState<SharePickerUser[]>([]);
-  const [shareWithOptionsUsers, setSharedWithOptionsUsers] = useState<SharePickerUser[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [formCreator, setFormCreator] = useState<SharePickerUser | null>(null);
   const [formPermissionState, setFormPermissionState] = useState<Role | null>(
     null,
@@ -88,7 +87,7 @@ export const useUserPicker = ({
   }, [form, roles, publicRole]);
 
   const saveSharedWith = async () => {
-    const userRoles: { userId: number; role: Role }[] = [];
+    const userRoles: { userId?: number; upn?: string; name?: string; role: Role }[] = [];
     let allPermissionsSelected = true;
 
     selectedShareWith.forEach((user) => {
@@ -96,10 +95,17 @@ export const useUserPicker = ({
       if (!role_id) {
         allPermissionsSelected = false;
       } else {
-        userRoles.push({
-          userId: Number(user.id),
-          role: role_id,
-        });
+        const payloadUser: any = { role: role_id };
+        
+        const numericId = Number(user.id);
+        if (numericId > 0) {
+          payloadUser.userId = numericId;
+        } else {
+          payloadUser.upn = user.upn;
+          payloadUser.name = user.displayName;
+        }
+        
+        userRoles.push(payloadUser);
       }
     });
 
@@ -210,30 +216,16 @@ export const useUserPicker = ({
       return [...previousUsers, { ...newValue, role_id: undefined, selected: true }];
     });
 
-    handleInputChange(null, "");
+    setSearchQuery("");
   };
 
-  const handleInputChange = async (_: any, value: string) => {
-    const minLength = 2;
-
-    if (!value || value.length < minLength) {
-      setSharedWithOptionsUsers([]);
-
-      return;
-    }
-
-    try {
-      const users = await getUsers(value);
-      setSharedWithOptionsUsers(users as SharePickerUser[]);
-    } catch {
-      showErrorNotification("הייתה שגיאה בשליפת המשתמשים");
-      setSharedWithOptionsUsers([]);
-    }
+  const handleSearchQueryChange = (_: any, value: string) => {
+    setSearchQuery(value);
   };
 
   const handleClose = () => {
     setSelectedShareWith([]);
-    setSharedWithOptionsUsers([]);
+    setSearchQuery("");
     setFormCreator(null);
     closeSharePopupAndRefreshForm([], form);
   };
@@ -244,14 +236,14 @@ export const useUserPicker = ({
 
   return {
     loading,
-    shareWithOptionsUsers,
     selectedShareWith,
     formCreator,
     saveSharedWith,
     removeUserFromShare,
     handleRoleChange,
     handleValueChange,
-    handleInputChange,
+    searchQuery,
+    handleSearchQueryChange,
     handleClose,
     handleFormPermissionChange,
   };

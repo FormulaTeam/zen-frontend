@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Typography, Button, Tooltip, Checkbox, Box } from "@mui/material";
 import { StyledListItem, FormInfo, FormTitleBox, RestoreButtonWrapper, Img } from "./styled";
-import formX from "../../images/form_x.png";
-import { formIconsNamesMap } from "../../utils/utils";
+import { getFormIconByName } from "../../utils/utils";
 import { FormIconWrapper } from "../FormCard/styled";
 import * as MuiIcons from "@mui/icons-material";
 
@@ -31,20 +30,12 @@ const DeletedFormItem: React.FC<DeletedFormItemProps> = ({
   };
 
   const getIcon = (iconName: string | null) => {
-    if (!iconName) {
-      return (
-        <FormIconWrapper>
-          <img src={formX} alt="form icon" />
-        </FormIconWrapper>
-      );
-    }
-
-    const iconSrc = formIconsNamesMap.get(iconName);
+    const iconSrc = getFormIconByName(iconName ?? undefined);
 
     if (typeof iconSrc === "string") {
       return (
         <FormIconWrapper>
-          <img src={iconSrc} alt={iconName} />
+          <img src={iconSrc} alt={iconName ?? "form icon"} />
         </FormIconWrapper>
       );
     }
@@ -60,7 +51,7 @@ const DeletedFormItem: React.FC<DeletedFormItemProps> = ({
 
     return (
       <FormIconWrapper>
-        {renderDynamicIcon(iconName)}
+        {renderDynamicIcon(iconName ?? "grid_view")}
       </FormIconWrapper>
     );
   };

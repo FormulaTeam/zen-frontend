@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { normalizeFieldValue } from "../utils/formFieldsResponses";
 import { texts } from "../utils/texts";
 import { FieldTypeIds } from "../utils/interfaces";
+import { selectionMode } from "formula-gear";
 
 interface UseFormFieldLogicProps {
   formField: any;
@@ -41,12 +42,12 @@ export const useFormFieldLogic = ({
     if (field.typeId !== FieldTypeIds.options) return;
 
     const extra = field.extra ?? {};
-    const multiSelect = (field.selectionMode ?? extra.selectionMode) === "multiple";
-    let options = extra.options || field.options || [];
+    const isMultiSelect = extra.selectionMode === selectionMode.Multiple;
+    let options = extra.options || [];
 
-    const parentFieldId = extra.parentFieldId ?? field.parentFieldId;
-    const parentDependencies = extra.parentDependencies ?? field.parentDependencies;
-    const connectedToForm = extra.connectionType === "form" || field.connectionType === "form";
+    const parentFieldId = extra.parentFieldId;
+    const parentDependencies = extra.parentDependencies;
+    const connectedToForm = extra.connectionType === "form";
 
     if (connectedToForm && fieldOptions[uniqueId]) {
       options = fieldOptions[uniqueId].map((f) => f.value);
@@ -59,7 +60,7 @@ export const useFormFieldLogic = ({
 
       if (parentField) {
         const parentExtra = parentField.extra ?? {};
-        const parentOptions = parentExtra.options || parentField.options || [];
+        const parentOptions = parentExtra.options || [];
         const parentValues = Array.isArray(parentValue) ? parentValue : [parentValue];
 
         parentValues.forEach((val) => {
@@ -79,7 +80,7 @@ export const useFormFieldLogic = ({
 
         // Clean invalid selection
         if (value) {
-          if (multiSelect) {
+          if (isMultiSelect) {
             const currentValues = Array.isArray(value) ? value : [value];
             const validValues = currentValues.filter(v => allowedOptions.has(v));
             if (validValues.length !== currentValues.length) {
@@ -99,7 +100,7 @@ export const useFormFieldLogic = ({
       }
     }
 
-    if (!field.required && !multiSelect) {
+    if (!field.required && !isMultiSelect) {
       if (!options.includes(texts.heb.emptyValue)) {
         options = [texts.heb.emptyValue, ...options];
       }

@@ -34,6 +34,9 @@ function DeletedForms({ user }) {
     forms,
     loading: loadingForms,
     handleRestoreForm,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = useDeletedForms(user, handleTabChange, debouncedFilters);
 
   useEffect(() => {
@@ -79,6 +82,9 @@ function DeletedForms({ user }) {
           setCurrentDeletedForm={setCurrentDeletedForm}
           filters={filters}
           setFilters={setFilters}
+          fetchNextPage={fetchNextPage}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
         />
       ) : (
         <DeletedResponsesTabContent
