@@ -79,6 +79,7 @@ export default function ResponsesPage({
 }
 
 const ResponsesPageContent = (): JSX.Element => {
+  const navigate = useNavigate();
   const [rowSelectionModel, setRowSelectionModel] = useState<GridRowSelectionModel>({
     type: "include",
     ids: new Set<GridRowId>(),
@@ -127,6 +128,33 @@ const ResponsesPageContent = (): JSX.Element => {
 
   const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<any>(null);
+  const [showBackCancelDialog, setShowBackCancelDialog] = useState(false);
+
+  const handleBackClick = useCallback(() => {
+    if (hasUnsavedChanges) {
+      setShowBackCancelDialog(true);
+    } else {
+      navigate("/");
+    }
+  }, [hasUnsavedChanges, navigate]);
+
+  const handleBackDiscard = useCallback(() => {
+    handleConfirmCancel();
+    setShowBackCancelDialog(false);
+    navigate("/");
+  }, [handleConfirmCancel, navigate]);
+
+  const handleBackSave = useCallback(async () => {
+    const success = await handleSaveChanges();
+    if (success) {
+      setShowBackCancelDialog(false);
+      navigate("/");
+    }
+  }, [handleSaveChanges, navigate]);
+
+  const handleBackCancelDialogClose = useCallback(() => {
+    setShowBackCancelDialog(false);
+  }, []);
 
   // Hook to block navigation if there are unsaved changes
   useEffect(() => {
@@ -254,7 +282,7 @@ const ResponsesPageContent = (): JSX.Element => {
             </Box>
 
             <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-              <FormActionsToolbar />
+              <FormActionsToolbar onBackClick={handleBackClick} />
             </Box>
           </MetadataLine>
 
@@ -312,6 +340,17 @@ const ResponsesPageContent = (): JSX.Element => {
           message="ישנם שינויים שלא נשמרו. האם אתה בטוח שברצונך לבטל את השינויים?"
           saveText="שמירת שינויים"
           discardText="ביטול שינויים"
+        />
+
+        <UnsavedChangesDialog
+          open={showBackCancelDialog}
+          onClose={handleBackCancelDialogClose}
+          onSave={handleBackSave}
+          onDiscard={handleBackDiscard}
+          title="שינויים שלא נשמרו"
+          message="ישנם שינויים שלא נשמרו. האם ברצונך לשמור את השינויים לפני היציאה מהעמוד?"
+          saveText="שמור וצא"
+          discardText="צא ללא שמירה"
         />
       </MainContentWrapper>
 
