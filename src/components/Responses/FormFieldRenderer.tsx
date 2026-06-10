@@ -9,12 +9,8 @@ import {
 } from "../../utils/interfaces";
 import {
   fieldType as legacyFieldTypeIds,
-  optionsSource,
   type FieldValidationMessage,
   selectionMode,
-  dateType,
-  timePrecision,
-  locationFormat,
 } from "formula-gear";
 import CustomDateTime from "../FormFields/CustomDateTime/CustomDateTime";
 import CustomDropDownAutocomplete from "../FormFields/CustomDropDownAutocomplete/CustomDropDownAutocomplete";
@@ -27,7 +23,6 @@ import CustomTextField from "../FormFields/CustomTextField/CustomTextField";
 import CustomTimePicker from "../FormFields/CustomTimePicker/CustomTimePicker";
 import LinkTextField from "../FormFields/LinkTextField/LinkTextField";
 import { FormFieldWrapper, StyledBox } from "./FormFieldRenderer.styled";
-import { ConnectedDropDownAutocomplete } from "./ConnectedDropDownAutocomplete";
 
 type OptionItem = {
   id: string;
@@ -39,13 +34,15 @@ type FormFieldExtra = {
   options?: {
     items?: OptionItem[];
     defaultValue?: string[];
-    linkedOptionsFieldId?: string;
   };
   value?: any;
   validationRegex?: string;
+  linkedOptionsFieldId?: string | null;
+
   linkedFormId?: number;
   connectedFieldId?: string;
   connectionType?: string | number;
+
   parentFieldId?: string;
   parentDependencies?: any[];
   locationFormat?: "utm" | "wkt";
@@ -58,7 +55,6 @@ type FormFieldExtra = {
   dateType?: "datetime" | "date";
   timePrecision?: "seconds" | "minutes";
   selectionMode?: "multiple" | "single";
-  source?: number;
 };
 
 type FieldOptionValue = {
@@ -100,14 +96,23 @@ const getFieldExtra = (field: FormFieldDto): FormFieldExtra => {
   return field.extra as FormFieldExtra;
 };
 
-const isConnectedToForm = (field: FormFieldDto) => {
-  const extra = getFieldExtra(field);
+const isConnectedToForm = (field: FormFieldDto): boolean => {
+  const linkedOptionsFieldId = getFieldExtra(field).linkedOptionsFieldId;
 
-  return (
-    extra.source === optionsSource.FormFieldResponses &&
-    !!extra.linkedFormId &&
-    !!extra.connectedFieldId
-  );
+  return typeof linkedOptionsFieldId === "string" && linkedOptionsFieldId.trim() !== "";
+};
+
+const getConnectedFieldOptions = (
+  fieldId: string,
+  fieldOptions: Record<string, FieldOptionValue[]>,
+): string[] => {
+  const options =
+    fieldOptions[fieldId]
+      ?.map((optionField) => optionField.value)
+      .filter((value) => value !== undefined && value !== null && String(value).trim() !== "")
+      .map((value) => String(value)) ?? [];
+
+  return Array.from(new Set(options));
 };
 
 const getFieldOptionItems = (field: FormFieldDto): OptionItem[] => {
@@ -170,6 +175,9 @@ const getFieldOptions = (field: FormFieldDto): string[] =>
 
 const getFieldOptionLabelMap = (field: FormFieldDto): Record<string, string> =>
   Object.fromEntries(getFieldOptionItems(field).map((item) => [item.id, item.text]));
+
+const getConnectedOptionLabelMap = (options: string[]): Record<string, string> =>
+  Object.fromEntries(options.map((option) => [option, option]));
 
 const getParentDependencies = (field: FormFieldDto): any[] => {
   const extra = getFieldExtra(field);
@@ -339,21 +347,10 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       }
 
       const connectedToForm = isConnectedToForm(formField);
-      let connectedFormId: number | undefined;
-      let connectedFieldId: string | undefined;
 
-      if (connectedToForm) {
-        connectedFormId = Number(formFieldExtra.linkedFormId);
-        connectedFieldId = formFieldExtra.connectedFieldId;
-      }
-
-      let availableOptions: string[] = [];
-
-      if (!connectedToForm) {
-        availableOptions = getFieldOptions(formField);
-      }
-
-      const optionLabels = connectedToForm ? {} : getFieldOptionLabelMap(formField);
+      let availableOptions: string[] = connectedToForm
+        ? getConnectedFieldOptions(fieldId, fieldOptions)
+        : getFieldOptions(formField);
 
       const parentFieldId = formFieldExtra.parentFieldId;
       const parentDependencies = getParentDependencies(formField);
@@ -497,15 +494,17 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             }, 0);
           }
         } else {
-          if (connectedToForm) {
-            availableOptions =
-              fieldOptions[fieldId]?.map((optionField) => String(optionField.value)) || [];
-            availableOptions = Array.from(new Set(availableOptions));
-          } else {
-            availableOptions = getFieldOptions(formField);
-          }
+          availableOptions = connectedToForm
+            ? getConnectedFieldOptions(fieldId, fieldOptions)
+            : getFieldOptions(formField);
         }
       }
+
+      availableOptions = Array.from(new Set(availableOptions.filter((option) => !!option)));
+
+      const optionLabels = connectedToForm
+        ? getConnectedOptionLabelMap(availableOptions)
+        : getFieldOptionLabelMap(formField);
 
       const defaultValue = formFieldExtra.options?.defaultValue ?? formFieldExtra.defaultValue;
       const value = isMultiple
@@ -516,58 +515,28 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           ? formFieldValue
           : "";
 
-      availableOptions = availableOptions.filter((option) => !!option);
-
-      if (connectedToForm && connectedFormId && connectedFieldId) {
-        input = (
-          <ConnectedDropDownAutocomplete
-            key={index}
-            linkedFormId={connectedFormId}
-            connectedFieldId={connectedFieldId}
-            selectedValues={value}
-            defaultValue={defaultValue}
-            label={formField.displayName}
-            isRequired={formField.isRequired}
-            isDisabled={viewMode}
-            onChangeHandler={(nextValue: string[] | string) => {
-              onChangeHandler(nextValue, fieldId);
-            }}
-            onBlurHandler={() => {
-              onBlurHandler(fieldId);
-            }}
-            selectionMode={mode}
-            optionLabels={optionLabels}
-            validationMessage={validationMessage}
-            validationDetail={validationDetail}
-            isTabularEdit={isTabularEdit}
-            isFormFieldResponseOptions={formFieldExtra.source === optionsSource.FormFieldResponses}
-          />
-        );
-      }
- else {
-        input = (
-          <CustomDropDownAutocomplete
-            key={index}
-            defaultValue={defaultValue}
-            label={formField.displayName}
-            isRequired={formField.isRequired}
-            isDisabled={viewMode}
-            onChangeHandler={(nextValue: string[] | string) => {
-              onChangeHandler(nextValue, fieldId);
-            }}
-            onBlurHandler={() => {
-              onBlurHandler(fieldId);
-            }}
-            value={value}
-            selectionMode={mode}
-            options={availableOptions}
-            optionLabels={optionLabels}
-            validationMessage={validationMessage}
-            validationDetail={validationDetail}
-            isTabularEdit={isTabularEdit}
-          />
-        );
-      }
+      input = (
+        <CustomDropDownAutocomplete
+          key={index}
+          defaultValue={defaultValue}
+          label={formField.displayName}
+          isRequired={formField.isRequired}
+          isDisabled={viewMode}
+          onChangeHandler={(nextValue: string[] | string) => {
+            onChangeHandler(nextValue, fieldId);
+          }}
+          onBlurHandler={() => {
+            onBlurHandler(fieldId);
+          }}
+          value={value}
+          selectionMode={mode}
+          options={availableOptions}
+          optionLabels={optionLabels}
+          validationMessage={validationMessage}
+          validationDetail={validationDetail}
+          isTabularEdit={isTabularEdit}
+        />
+      );
       break;
     }
 
@@ -593,7 +562,6 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       break;
 
     case legacyFieldTypeIds.Date:
-      console.log("HIIIII", JSON.stringify(formFieldExtra));
       input = (
         <CustomDateTime
           key={index}
@@ -782,8 +750,14 @@ const shouldSkipRerenderHOF = (
   const valueChanged = JSON.stringify(previousValue) !== JSON.stringify(nextValue);
   const validChanged = JSON.stringify(previousValidValue) !== JSON.stringify(nextValidValue);
   const viewModeChanged = prevProps.viewMode !== nextProps.viewMode;
+  const fieldChanged = prevField.id !== nextField.id;
 
-  return !valueChanged && !validChanged && !viewModeChanged && prevField.id === nextField.id;
+  const fieldOptionsChanged =
+    JSON.stringify(prevProps.fieldOptions) !== JSON.stringify(nextProps.fieldOptions);
+
+  return (
+    !valueChanged && !validChanged && !viewModeChanged && !fieldChanged && !fieldOptionsChanged
+  );
 };
 
 export default React.memo(FormFieldRenderer, shouldSkipRerenderHOF);

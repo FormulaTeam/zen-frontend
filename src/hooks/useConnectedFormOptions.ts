@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { getFieldValues, OPTIONS_PAGINATION_LIMIT } from "../api/responsesApi";
-import { FormFieldDto } from "../types/shared";
-import { optionsSource } from "formula-gear";
+import apiClient from "../api/config";
+import { FormDto, FormFieldDto, FormSectionDto } from "../types/shared";
+import { useGetFormsData } from "./useGetFormsData";
+import { formsScopeOption } from "../types/enums/filtersAndSorts.enum";
 
 type ConnectedFieldExtra = {
-  source?: number;
-  linkedFormId?: number;
-  connectedFieldId?: string;
+  linkedOptionsFieldId?: string | null;
   selectionMode?: "multiple" | "single";
 };
 
@@ -33,22 +33,20 @@ interface UseConnectedFormOptionsReturn {
 const getFieldExtra = (field: ConnectedFormField): ConnectedFieldExtra =>
   (field.extra as ConnectedFieldExtra | undefined) ?? {};
 
+const getLinkedOptionsFieldId = (field: ConnectedFormField): string | undefined => {
+  const linkedOptionsFieldId = getFieldExtra(field).linkedOptionsFieldId;
+
+  return typeof linkedOptionsFieldId === "string" && linkedOptionsFieldId.trim() !== ""
+    ? linkedOptionsFieldId
+    : undefined;
+};
+
 const isConnectedToForm = (field: ConnectedFormField): boolean => {
-  const extra = getFieldExtra(field);
-  return (
-    extra.source === optionsSource.FormFieldResponses &&
-    !!extra.linkedFormId &&
-    !!extra.connectedFieldId
-  );
+  return Boolean(getLinkedOptionsFieldId(field));
 };
 
-const getLinkedFormId = (field: ConnectedFormField): number | undefined => {
-  const extra = getFieldExtra(field);
-  return extra.linkedFormId !== undefined ? Number(extra.linkedFormId) : undefined;
-};
-
-const getLinkedFieldId = (field: ConnectedFormField): string | undefined => {
-  return getFieldExtra(field).connectedFieldId;
+const getFieldsFromForm = (form: FormDto): FormFieldDto[] => {
+  return (form.sections ?? []).flatMap((section: FormSectionDto) => section.fields ?? []);
 };
 
 export const useConnectedFormOptions = ({
@@ -60,41 +58,95 @@ export const useConnectedFormOptions = ({
 
   const offsetRef = useRef<Record<string, number>>({});
   const loadedFieldsRef = useRef<Set<string>>(new Set());
+  const linkedFieldOwnerFormIdRef = useRef<Record<string, number | null>>({});
 
-  const loadOptionsForField = async (
-    field: ConnectedFormField,
-    search?: string,
-    offset = 0,
-  ): Promise<void> => {
-    const linkedFormId = getLinkedFormId(field);
-    const linkedFieldId = getLinkedFieldId(field);
+  const { formsData: allForms, isLoading: isLoadingForms } = useGetFormsData({
+    searchQuery: undefined,
+    scope: formsScopeOption.LinkableForms,
+    enabled: true,
+  });
 
-    if (!linkedFormId || !linkedFieldId) return;
+  const findOwnerFormIdByFieldId = useCallback(
+    async (linkedOptionsFieldId: string): Promise<number | undefined> => {
+      const cachedOwnerFormId = linkedFieldOwnerFormIdRef.current[linkedOptionsFieldId];
 
-    const result = await getFieldValues(linkedFormId, linkedFieldId, {
-      limit: OPTIONS_PAGINATION_LIMIT,
-      offset,
-      search,
-    });
+      if (cachedOwnerFormId !== undefined) {
+        return cachedOwnerFormId ?? undefined;
+      }
 
-    const formattedOptions: FieldOptionValue[] = result.data.map((item) => ({
-      value: item.value,
-      fieldId: item.responseId,
-    }));
+      for (const formOverview of allForms) {
+        const formId = Number(formOverview.id);
 
-    setFieldOptions((prev) => ({
-      ...prev,
-      [field.id]: offset === 0
-        ? formattedOptions
-        : [...(prev[field.id] ?? []), ...formattedOptions],
-    }));
+        if (!formId) {
+          continue;
+        }
 
-    offsetRef.current[field.id] = offset + result.data.length;
-  };
+        const response = await apiClient.get<FormDto>(`/forms/${formId}`, {
+          params: {
+            includePermissions: true,
+          },
+        });
+
+        const form = response.data;
+        const fields = getFieldsFromForm(form);
+        const hasLinkedField = fields.some(
+          (field) => String(field.id) === String(linkedOptionsFieldId),
+        );
+
+        if (hasLinkedField) {
+          linkedFieldOwnerFormIdRef.current[linkedOptionsFieldId] = formId;
+          return formId;
+        }
+      }
+
+      linkedFieldOwnerFormIdRef.current[linkedOptionsFieldId] = null;
+      return undefined;
+    },
+    [allForms],
+  );
+
+  const loadOptionsForField = useCallback(
+    async (field: ConnectedFormField, search?: string, offset = 0): Promise<void> => {
+      const linkedOptionsFieldId = getLinkedOptionsFieldId(field);
+
+      if (!linkedOptionsFieldId) {
+        return;
+      }
+
+      const ownerFormId = await findOwnerFormIdByFieldId(linkedOptionsFieldId);
+
+      if (!ownerFormId) {
+        return;
+      }
+
+      const result = await getFieldValues(ownerFormId, linkedOptionsFieldId, {
+        limit: OPTIONS_PAGINATION_LIMIT,
+        offset,
+        search,
+      });
+
+      const formattedOptions: FieldOptionValue[] = result.data.map((item) => ({
+        value: item.value,
+        fieldId: item.responseId,
+      }));
+
+      setFieldOptions((prev) => ({
+        ...prev,
+        [field.id]:
+          offset === 0 ? formattedOptions : [...(prev[field.id] ?? []), ...formattedOptions],
+      }));
+
+      offsetRef.current[field.id] = offset + result.data.length;
+    },
+    [findOwnerFormIdByFieldId],
+  );
 
   const loadMoreOptions = async (fieldId: string, search?: string): Promise<void> => {
-    const field = formFields.find((f) => f.id === fieldId);
-    if (!field || !isConnectedToForm(field)) return;
+    const field = formFields.find((formField) => String(formField.id) === String(fieldId));
+
+    if (!field || !isConnectedToForm(field)) {
+      return;
+    }
 
     const currentOffset = search !== undefined ? 0 : (offsetRef.current[fieldId] ?? 0);
 
@@ -112,13 +164,17 @@ export const useConnectedFormOptions = ({
   };
 
   useEffect(() => {
-    if (!formFields || formFields.length === 0) return;
+    if (!formFields || formFields.length === 0 || isLoadingForms || allForms.length === 0) {
+      return;
+    }
 
     const connectedFields = formFields.filter(
-      (field) => isConnectedToForm(field) && !loadedFieldsRef.current.has(field.id),
+      (field) => isConnectedToForm(field) && !loadedFieldsRef.current.has(String(field.id)),
     );
 
-    if (connectedFields.length === 0) return;
+    if (connectedFields.length === 0) {
+      return;
+    }
 
     const loadAll = async () => {
       try {
@@ -127,7 +183,7 @@ export const useConnectedFormOptions = ({
 
         await Promise.all(
           connectedFields.map((field) => {
-            loadedFieldsRef.current.add(field.id);
+            loadedFieldsRef.current.add(String(field.id));
             return loadOptionsForField(field, undefined, 0);
           }),
         );
@@ -141,11 +197,11 @@ export const useConnectedFormOptions = ({
     };
 
     void loadAll();
-  }, [formFields]);
+  }, [formFields, allForms, isLoadingForms, loadOptionsForField]);
 
   return {
     fieldOptions,
-    isLoading,
+    isLoading: isLoading || isLoadingForms,
     error,
     loadMoreOptions,
   };

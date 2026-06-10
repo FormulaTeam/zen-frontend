@@ -15,7 +15,6 @@ import {
   getFieldValidationMessage,
   FormCondition,
   FormConditionBooleanOperator,
-  optionsSource,
   FormConditionPredicate,
   selectionMode,
   dateDefaultValue,
@@ -198,7 +197,7 @@ const toValidatorField = (
 
     let items: { id: string; text: string }[] = [];
 
-    if (extra?.source === optionsSource.FormFieldResponses) {
+    if (extra?.linkedOptionsFieldId) {
       if (fieldOptions?.[field.id]) {
         items = fieldOptions[field.id].map((opt: any) => ({
           id: String(opt.value),
@@ -236,7 +235,6 @@ const toValidatorField = (
       typeId: field.fieldType,
       required: field.isRequired,
       extra: {
-        source: extra.source,
         selectionMode: extra.selectionMode ?? selectionMode.Single,
         options: {
           items,
