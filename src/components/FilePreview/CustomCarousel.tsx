@@ -111,6 +111,24 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
         key={`${fileName}-${index}`}
         arrow
         placement="top"
+        slotProps={{
+          tooltip: {
+            sx: {
+              backgroundColor: "#ffffff",
+              color: "#0f172a",
+              boxShadow: "0px 4px 16px rgba(2, 6, 24, 0.12)",
+              border: "1px solid #e2e8f0",
+              borderRadius: "8px",
+              padding: "4px 10px",
+              "& .MuiTooltip-arrow": {
+                color: "#ffffff",
+                "&::before": {
+                  border: "1px solid #e2e8f0",
+                },
+              },
+            },
+          },
+        }}
         title={
           <Box
             sx={{
@@ -123,13 +141,28 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
             {downloadPath && (
               <IconButton
                 onClick={(event) => handleCopyLink(event, downloadPath)}
-                sx={{ color: theme.palette.white }}
+                sx={{
+                  color: "#64748b",
+                  padding: "4px",
+                  "&:hover": {
+                    color: "#0f172a",
+                    backgroundColor: "#f1f5f9",
+                  },
+                }}
                 size="small">
-                <Link sx={{ fontSize: 17 }} />
+                <Link sx={{ fontSize: 16 }} />
               </IconButton>
             )}
 
-            {fileName}
+            <Box
+              component="span"
+              sx={{
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                color: "#0f172a",
+              }}>
+              {fileName}
+            </Box>
           </Box>
         }>
         <Box
