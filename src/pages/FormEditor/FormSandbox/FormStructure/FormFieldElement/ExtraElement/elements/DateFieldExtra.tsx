@@ -40,7 +40,7 @@ function DateFieldExtra({ extra, onChange, disabled }: Props) {
                   onChange({ defaultValue: e.target.value || undefined });
                 }}>
           <MenuItem value="">ריק</MenuItem>
-          {!isDateTime && <MenuItem value={dateDefaultValue.CurrentDate}>תאריך של היום</MenuItem>}
+          {!isDateTime && <MenuItem value={dateDefaultValue.CurrentDate}>תאריך נוכחי</MenuItem>}
           {isDateTime && <MenuItem value={dateDefaultValue.CurrentDateTime}>תאריך ושעה נוכחיים</MenuItem>}
         </Select>
       </FormControl>

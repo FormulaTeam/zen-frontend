@@ -65,7 +65,7 @@ export default function DateField({
             }
 
             return (
-              <Typography color="black">{value === "empty" ? "ריק" : "תאריך של היום"}</Typography>
+              <Typography color="black">{value === "empty" ? "ריק" : "תאריך נוכחי"}</Typography>
             );
           }}
           onChange={onDateChange}>
@@ -73,7 +73,7 @@ export default function DateField({
             value="currentTime"
             className="initial-val-type-menu-item"
             key="initialValType_currentTime">
-            תאריך של היום
+            תאריך נוכחי
           </MenuItem>
 
           <MenuItem value="empty" className="initial-val-type-menu-item" key="initialValType_empty">
