@@ -349,8 +349,8 @@ const ResponsesPageContent = (): JSX.Element => {
           onDiscard={handleBackDiscard}
           title="שינויים שלא נשמרו"
           message="ישנם שינויים שלא נשמרו. האם ברצונך לשמור את השינויים לפני היציאה מהעמוד?"
-          saveText="שמור וצא"
-          discardText="צא ללא שמירה"
+          saveText="שמירה ויציאה"
+          discardText="יציאה ללא שמירה"
         />
       </MainContentWrapper>
 
