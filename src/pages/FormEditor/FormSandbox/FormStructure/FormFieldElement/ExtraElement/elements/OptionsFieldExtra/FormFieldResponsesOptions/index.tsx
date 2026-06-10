@@ -1,5 +1,13 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { FormControl, CircularProgress, Autocomplete, TextField, Tooltip, Typography, Box } from "@mui/material";
+import React, { useMemo, useState } from "react";
+import {
+  FormControl,
+  CircularProgress,
+  Autocomplete,
+  TextField,
+  Tooltip,
+  Typography,
+  Box,
+} from "@mui/material";
 import { useGetForm } from "@api/formsApi";
 import { useGetFormsData } from "@hooks/useGetFormsData";
 import { formsScopeOption } from "@src/types/enums/filtersAndSorts.enum";
@@ -7,13 +15,12 @@ import { FormSectionDto, FormFieldDto } from "@src/types/shared";
 import { useFormStructureContext } from "@pages/FormEditor/context/FormStructureContext";
 import { FormOption } from "@utils/interfaces";
 import { LoaderContainer, Container, FieldControl } from "./styled";
-import { fieldType, optionsSource } from "formula-gear";
+import { fieldType } from "formula-gear";
 import { OptionsFieldTypeId } from "../index";
 import { FormFieldExtra } from "@pages/FormEditor/schemas/fields";
 
 interface Props {
-  linkedFormId: number | undefined;
-  connectedFieldId: string | undefined;
+  linkedOptionsFieldId: string | null | undefined;
   onChange: (extra: Partial<FormFieldExtra<OptionsFieldTypeId>>) => void;
   validationErrors: any;
 }
@@ -24,17 +31,17 @@ interface ValidField {
 }
 
 function FormFieldResponsesOptions(props: Props) {
-  const {
-    linkedFormId,
-    connectedFieldId,
-    validationErrors,
-    onChange,
-  } = props;
+  const { linkedOptionsFieldId, validationErrors, onChange } = props;
 
   const { formStructure } = useFormStructureContext();
+
   const [searchText, setSearchText] = useState("");
+  const [selectedFormId, setSelectedFormId] = useState<number | undefined>();
+  const [selectedFieldId, setSelectedFieldId] = useState<string | undefined>(
+    linkedOptionsFieldId ?? undefined,
+  );
   const [fieldTouchAttempted, setFieldTouchAttempted] = useState(false);
-  
+
   const { formsData: allForms, isLoading: isLoadingForms } = useGetFormsData({
     searchQuery: searchText || undefined,
     scope: formsScopeOption.LinkableForms,
@@ -49,21 +56,28 @@ function FormFieldResponsesOptions(props: Props) {
     return list.map((form) => ({ id: form.id.toString(), name: form.name }));
   }, [allForms, formStructure?.metadata?.id]);
 
-  const { data: initialForm, isLoading: isInitializing } = useGetForm({
-    formId: linkedFormId ? linkedFormId.toString() : undefined,
+  const { data: selectedForm, isLoading: isInitializing } = useGetForm({
+    formId: selectedFormId ? selectedFormId.toString() : undefined,
   });
 
   const selectedFormOption = useMemo<FormOption | null>(() => {
-    if (!initialForm) return null;
-    return { id: initialForm.id.toString(), name: initialForm.name };
-  }, [initialForm]);
+    if (!selectedForm) return null;
+
+    return {
+      id: selectedForm.id.toString(),
+      name: selectedForm.name,
+    };
+  }, [selectedForm]);
 
   const availableFields = useMemo<ValidField[]>(() => {
-    if (!initialForm) return [];
+    if (!selectedForm) return [];
 
-    const fields = (initialForm?.sections || []).reduce((acc: FormFieldDto[], section: FormSectionDto) => {
-      return [...acc, ...(section.fields || [])];
-    }, []);
+    const fields = (selectedForm.sections || []).reduce(
+      (acc: FormFieldDto[], section: FormSectionDto) => {
+        return [...acc, ...(section.fields || [])];
+      },
+      [],
+    );
 
     const allowedTypes = [
       fieldType.Number,
@@ -75,18 +89,21 @@ function FormFieldResponsesOptions(props: Props) {
       fieldType.Link,
     ];
 
-    const filtered = fields.filter((field) => allowedTypes.some((type) => type === field.fieldType));
+    const filtered = fields.filter((field) =>
+      allowedTypes.some((type) => type === field.fieldType),
+    );
 
     return filtered.map((field: FormFieldDto) => ({
       id: field.id.toString(),
-      displayName: field.displayName
+      displayName: field.displayName,
     }));
-  }, [initialForm]);
+  }, [selectedForm]);
 
   const selectedFieldOption = useMemo<ValidField | null>(() => {
-    if (!connectedFieldId) return null;
-    return availableFields.find((f) => f.id === connectedFieldId) ?? null;
-  }, [availableFields, connectedFieldId]);
+    if (!selectedFieldId) return null;
+
+    return availableFields.find((field) => field.id === selectedFieldId) ?? null;
+  }, [availableFields, selectedFieldId]);
 
   if (isInitializing) {
     return (
@@ -97,7 +114,7 @@ function FormFieldResponsesOptions(props: Props) {
   }
 
   const formSelector: JSX.Element = (
-    <FormControl error={!!validationErrors?.properties?.linkedFormId}>
+    <FormControl>
       <Autocomplete
         options={availableForms}
         getOptionLabel={(option) => option?.name || ""}
@@ -109,16 +126,22 @@ function FormFieldResponsesOptions(props: Props) {
           setSearchText(newInputValue);
         }}
         onChange={(_, newValue) => {
-          onChange({ 
-            linkedFormId: newValue ? Number(newValue.id) : undefined,
-            connectedFieldId: undefined,
-            source: newValue ? optionsSource.FormFieldResponses : undefined
+          const nextFormId = newValue ? Number(newValue.id) : undefined;
+
+          setSelectedFormId(nextFormId);
+          setSelectedFieldId(undefined);
+
+          onChange({
+            linkedOptionsFieldId: null,
+            defaultValue: [],
           });
         }}
         isOptionEqualToValue={(option, value) => option?.id === value?.id}
         renderOption={(props, option) => (
           <li {...props}>
-            <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
+            <Box
+              component="span"
+              sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
               <Typography component="span">{option.name}</Typography>
               <Typography
                 component="span"
@@ -149,26 +172,41 @@ function FormFieldResponsesOptions(props: Props) {
   );
 
   const fieldSelect: JSX.Element = (
-    <FieldControl error={!!validationErrors?.properties?.connectedFieldId}>
-      <Tooltip title={!linkedFormId ? 'יש לבחור טופס' : ''}>
-        <span style={{ display: 'block' }}>
+    <FieldControl error={!!validationErrors?.properties?.linkedOptionsFieldId}>
+      <Tooltip title={!selectedFormId ? "יש לבחור טופס" : ""}>
+        <span style={{ display: "block" }}>
           <Autocomplete
             options={availableFields}
             getOptionLabel={(option) => option.displayName || ""}
             value={selectedFieldOption}
             onOpen={() => setFieldTouchAttempted(true)}
             onChange={(_, newValue) => {
-              onChange({ connectedFieldId: newValue ? newValue.id : undefined });
+              const nextFieldId = newValue ? newValue.id : undefined;
+
+              setSelectedFieldId(nextFieldId);
+
+              onChange({
+                linkedOptionsFieldId: nextFieldId,
+                defaultValue: [],
+              });
             }}
-            noOptionsText={!linkedFormId ? (fieldTouchAttempted ? 'יש לבחור טופס' : '') : (availableFields.length ? 'לא נמצאו תוצאות' : 'אין שדות זמינים')}
-            disabled={!linkedFormId}
+            noOptionsText={
+              !selectedFormId
+                ? fieldTouchAttempted
+                  ? "יש לבחור טופס"
+                  : ""
+                : availableFields.length
+                  ? "לא נמצאו תוצאות"
+                  : "אין שדות זמינים"
+            }
+            disabled={!selectedFormId}
             renderInput={(params) => (
               <TextField
                 {...params}
-                label={"בחירת שדה"}
+                label="בחירת שדה"
                 variant="standard"
-                error={!!validationErrors?.properties?.connectedFieldId}
-                helperText={validationErrors?.properties?.connectedFieldId?.errors?.[0]}
+                error={!!validationErrors?.properties?.linkedOptionsFieldId}
+                helperText={validationErrors?.properties?.linkedOptionsFieldId?.errors?.[0]}
               />
             )}
           />
@@ -178,12 +216,10 @@ function FormFieldResponsesOptions(props: Props) {
   );
 
   return (
-    <>
-      <Container>
-        {formSelector}
-        {fieldSelect}
-      </Container>
-    </>
+    <Container>
+      {formSelector}
+      {fieldSelect}
+    </Container>
   );
 }
 
