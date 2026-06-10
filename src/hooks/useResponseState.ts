@@ -38,6 +38,21 @@ import { OptionsComparator } from "../pages/FormEditor/schemas/conditions/condit
 import { CheckboxComparator } from "../pages/FormEditor/schemas/conditions/conditionField/comparators/CheckboxComparator";
 import { getOptionResponseRawValue } from "../utils/optionResponseValue";
 import { saveResponseDraft, clearResponseDraft } from "../pages/FormEditor/utils/draftPersistence";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const ISRAEL_TZ = "Asia/Jerusalem";
+
+const getCurrentDateDefaultValue = (isDateTime?: boolean): string => {
+  const israelNow = dayjs().tz(ISRAEL_TZ);
+  const value = isDateTime ? israelNow : israelNow.startOf("day");
+
+  return value.utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
+};
 
 export type FieldExtra = {
   options?: {
@@ -150,7 +165,7 @@ const getDefaultFieldValue = (field: FormFieldWithSectionDto) => {
       extra.defaultValue === dateDefaultValue.CurrentDate ||
       extra.defaultValue === dateDefaultValue.CurrentDateTime
     ) {
-      return new Date().toISOString();
+      return getCurrentDateDefaultValue(extra.dateType === "datetime");
     }
   }
 
@@ -175,7 +190,7 @@ const getDefaultFieldValue = (field: FormFieldWithSectionDto) => {
 const toValidatorField = (
   field: FormFieldDto,
   fieldOptions?: Record<string, any[]>,
-  submittedValue?: any
+  submittedValue?: any,
 ): FormFieldLike => {
   if (field.fieldType === FieldTypeIds.options) {
     const extra = (field.extra ?? {}) as FieldExtra;
@@ -287,15 +302,24 @@ const evaluatePredicate = (
     const numericTargetValue = Number(targetValue);
 
     switch (comparator) {
-      case NumberComparator.EMPTY: return isEmptyValue;
-      case NumberComparator.NOT_EMPTY: return !isEmptyValue;
-      case NumberComparator.EQUAL: return !isEmptyValue && numericFieldValue === numericTargetValue;
-      case NumberComparator.NOT_EQUAL: return !isEmptyValue && numericFieldValue !== numericTargetValue;
-      case NumberComparator.LARGER: return !isEmptyValue && numericFieldValue > numericTargetValue;
-      case NumberComparator.SMALLER: return !isEmptyValue && numericFieldValue < numericTargetValue;
-      case NumberComparator.LARGER_OR_EQUAL: return !isEmptyValue && numericFieldValue >= numericTargetValue;
-      case NumberComparator.SMALLER_OR_EQUAL: return !isEmptyValue && numericFieldValue <= numericTargetValue;
-      default: return false;
+      case NumberComparator.EMPTY:
+        return isEmptyValue;
+      case NumberComparator.NOT_EMPTY:
+        return !isEmptyValue;
+      case NumberComparator.EQUAL:
+        return !isEmptyValue && numericFieldValue === numericTargetValue;
+      case NumberComparator.NOT_EQUAL:
+        return !isEmptyValue && numericFieldValue !== numericTargetValue;
+      case NumberComparator.LARGER:
+        return !isEmptyValue && numericFieldValue > numericTargetValue;
+      case NumberComparator.SMALLER:
+        return !isEmptyValue && numericFieldValue < numericTargetValue;
+      case NumberComparator.LARGER_OR_EQUAL:
+        return !isEmptyValue && numericFieldValue >= numericTargetValue;
+      case NumberComparator.SMALLER_OR_EQUAL:
+        return !isEmptyValue && numericFieldValue <= numericTargetValue;
+      default:
+        return false;
     }
   }
 
@@ -304,15 +328,24 @@ const evaluatePredicate = (
     const dateTargetValue = new Date(String(targetValue)).getTime();
 
     switch (comparator) {
-      case DateComparator.EQUAL: return dateFieldValue === dateTargetValue;
-      case DateComparator.NOT_EQUAL: return dateFieldValue !== dateTargetValue;
-      case DateComparator.BEFORE: return dateFieldValue < dateTargetValue;
-      case DateComparator.AFTER: return dateFieldValue > dateTargetValue;
-      case DateComparator.BEFORE_OR_EQUAL: return dateFieldValue <= dateTargetValue;
-      case DateComparator.AFTER_OR_EQUAL: return dateFieldValue >= dateTargetValue;
-      case DateComparator.EMPTY: return isEmptyValue;
-      case DateComparator.NOT_EMPTY: return !isEmptyValue;
-      default: return false;
+      case DateComparator.EQUAL:
+        return dateFieldValue === dateTargetValue;
+      case DateComparator.NOT_EQUAL:
+        return dateFieldValue !== dateTargetValue;
+      case DateComparator.BEFORE:
+        return dateFieldValue < dateTargetValue;
+      case DateComparator.AFTER:
+        return dateFieldValue > dateTargetValue;
+      case DateComparator.BEFORE_OR_EQUAL:
+        return dateFieldValue <= dateTargetValue;
+      case DateComparator.AFTER_OR_EQUAL:
+        return dateFieldValue >= dateTargetValue;
+      case DateComparator.EMPTY:
+        return isEmptyValue;
+      case DateComparator.NOT_EMPTY:
+        return !isEmptyValue;
+      default:
+        return false;
     }
   }
 
@@ -329,13 +362,21 @@ const evaluatePredicate = (
     switch (comparator) {
       case OptionsComparator.ONLY:
         if (fieldValuesArray.length !== targetValuesArray.length) return false;
-        return fieldValuesArray.every((fieldValueItem) => targetValuesArray.includes(fieldValueItem));
-      case OptionsComparator.OTHER_THAN: return !hasIntersection(fieldValuesArray, targetValuesArray);
-      case OptionsComparator.INCLUDES: return hasIntersection(fieldValuesArray, targetValuesArray);
-      case OptionsComparator.NOT_INCLUDES: return !hasIntersection(fieldValuesArray, targetValuesArray);
-      case OptionsComparator.NONE: return isEmptyValue;
-      case OptionsComparator.ANY: return !isEmptyValue;
-      default: return false;
+        return fieldValuesArray.every((fieldValueItem) =>
+          targetValuesArray.includes(fieldValueItem),
+        );
+      case OptionsComparator.OTHER_THAN:
+        return !hasIntersection(fieldValuesArray, targetValuesArray);
+      case OptionsComparator.INCLUDES:
+        return hasIntersection(fieldValuesArray, targetValuesArray);
+      case OptionsComparator.NOT_INCLUDES:
+        return !hasIntersection(fieldValuesArray, targetValuesArray);
+      case OptionsComparator.NONE:
+        return isEmptyValue;
+      case OptionsComparator.ANY:
+        return !isEmptyValue;
+      default:
+        return false;
     }
   }
 
@@ -344,8 +385,10 @@ const evaluatePredicate = (
     const isTargetChecked = targetValue === true || targetValue === "true";
 
     switch (comparator) {
-      case CheckboxComparator.EQUAL: return isChecked === isTargetChecked;
-      default: return false;
+      case CheckboxComparator.EQUAL:
+        return isChecked === isTargetChecked;
+      default:
+        return false;
     }
   }
 
@@ -353,13 +396,20 @@ const evaluatePredicate = (
   const stringTargetValue = String(targetValue);
 
   switch (comparator) {
-    case TextComparator.EQUAL: return stringFieldValue === stringTargetValue;
-    case TextComparator.NOT_EQUAL: return stringFieldValue !== stringTargetValue;
-    case TextComparator.CONTAINS: return stringFieldValue.includes(stringTargetValue);
-    case TextComparator.NOT_CONTAINS: return !stringFieldValue.includes(stringTargetValue);
-    case TextComparator.EMPTY: return isEmptyValue;
-    case TextComparator.NOT_EMPTY: return !isEmptyValue;
-    default: return false;
+    case TextComparator.EQUAL:
+      return stringFieldValue === stringTargetValue;
+    case TextComparator.NOT_EQUAL:
+      return stringFieldValue !== stringTargetValue;
+    case TextComparator.CONTAINS:
+      return stringFieldValue.includes(stringTargetValue);
+    case TextComparator.NOT_CONTAINS:
+      return !stringFieldValue.includes(stringTargetValue);
+    case TextComparator.EMPTY:
+      return isEmptyValue;
+    case TextComparator.NOT_EMPTY:
+      return !isEmptyValue;
+    default:
+      return false;
   }
 };
 
@@ -466,7 +516,11 @@ export const useResponseState = (
     formFieldsValuesMapRef.current = formFieldsValuesMap;
   }, [formFieldsValuesMap]);
 
-  const { data: formFromQuery, isError: isFormError, error: formError } = useGetForm({
+  const {
+    data: formFromQuery,
+    isError: isFormError,
+    error: formError,
+  } = useGetForm({
     formId,
     includePermissions: true,
   });
@@ -619,7 +673,11 @@ export const useResponseState = (
             case fieldType.Options:
               value = getOptionResponseRawValue(value);
 
-              if (extra.selectionMode === selectionMode.Multiple && value && !Array.isArray(value)) {
+              if (
+                extra.selectionMode === selectionMode.Multiple &&
+                value &&
+                !Array.isArray(value)
+              ) {
                 value = [value];
               } else if (extra.selectionMode !== selectionMode.Multiple && Array.isArray(value)) {
                 value = value[0] ?? "";
@@ -676,8 +734,8 @@ export const useResponseState = (
 
     const affectingSectionConditions = field.sectionId
       ? formConditions.filter((condition: FormCondition) =>
-        condition.dependantComponents?.section?.includes(String(field.sectionId)),
-      )
+          condition.dependantComponents?.section?.includes(String(field.sectionId)),
+        )
       : [];
 
     if (affectingFieldConditions.length === 0 && affectingSectionConditions.length === 0) {
@@ -743,7 +801,6 @@ export const useResponseState = (
       saveResponseDraft(formId, responseId, formFieldsValuesMap);
     }
   }, [formFieldsValuesMap, hasUnsavedChanges, viewMode, formId, responseId]);
-
 
   useEffect(() => {
     if (formFields.length === 0) return;
@@ -852,7 +909,10 @@ export const useResponseState = (
 
     const valuesMap = valuesMapOverride ?? formFieldsValuesMapRef.current;
     const rawValue = valuesMap.get(normalizedFieldId);
-    const result = validateFormFieldValue(toValidatorField(field, fieldOptions, rawValue), rawValue);
+    const result = validateFormFieldValue(
+      toValidatorField(field, fieldOptions, rawValue),
+      rawValue,
+    );
 
     if (markTouched) {
       setFormFieldsTouchedMap((prev) => {
@@ -956,11 +1016,12 @@ export const useResponseState = (
                 const validValues = childValues.filter((val) => allowedOptions.has(val));
 
                 if (validValues.length !== childValues.length) {
-                  const newValue = childExtra.selectionMode === selectionMode.Multiple
-                    ? validValues
-                    : validValues.length > 0
-                      ? validValues[0]
-                      : "";
+                  const newValue =
+                    childExtra.selectionMode === selectionMode.Multiple
+                      ? validValues
+                      : validValues.length > 0
+                        ? validValues[0]
+                        : "";
 
                   newFormFieldsValuesMap.set(childFieldId, newValue);
 
@@ -1031,7 +1092,10 @@ export const useResponseState = (
       nextTouchedMap.set(currentFieldId, true);
 
       const rawValue = nextParsedValuesMap.get(currentFieldId);
-      const result = validateFormFieldValue(toValidatorField(field, fieldOptions, rawValue), rawValue);
+      const result = validateFormFieldValue(
+        toValidatorField(field, fieldOptions, rawValue),
+        rawValue,
+      );
 
       if (result.success) {
         nextParsedValuesMap.set(currentFieldId, result.data);
@@ -1092,6 +1156,6 @@ export const useResponseState = (
     collapsedSections,
     toggleSectionCollapse,
     hiddenFieldIds,
-    setFormFieldsValuesMap
+    setFormFieldsValuesMap,
   };
 };
