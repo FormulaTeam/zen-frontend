@@ -338,7 +338,6 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
       direction: "ltr !important",
       textAlign: "left !important",
       unicodeBidi: "plaintext",
-      ...inputTextSx,
       color: APP_TEXT,
     },
 
