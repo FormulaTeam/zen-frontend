@@ -15,6 +15,9 @@ export const useGetResponsesViews = (formId: string): UseQueryResult<ResponsesVi
   return useFetch<{}, ResponsesView[]>({
     endpoint: `/forms/${formId}/responses-views`,
     queryKey: () => ["responses-views", formId],
+    queryOptions: {
+      enabled: !!formId && formId !== "undefined" && formId !== "null",
+    },
   });
 };
 

@@ -175,8 +175,14 @@ export const softDeleteResponses = async (
   formId: number,
   dto: SoftDeleteResponsesDto,
 ): Promise<void> => {
+  const ids = dto.responsesIds ?? [];
+
+  if (ids.length === 0) return;
+
   try {
-    await apiClient.post(`/forms/${formId}/responses/soft-delete`, dto);
+    await Promise.all(
+      ids.map((id) => apiClient.post(`/forms/${formId}/responses/${id}/soft-delete`))
+    );
   } catch (error) {
     console.error("Failed to soft-delete responses:", error);
     throw error;
@@ -196,8 +202,12 @@ export const restoreResponses = async (
   responsesIds: string[],
   scope?: string,
 ): Promise<void> => {
+  if (responsesIds.length === 0) return;
+
   try {
-    await apiClient.post(`/forms/${formId}/responses/restore`, { responsesIds, scope });
+    await Promise.all(
+      responsesIds.map((id) => apiClient.post(`/forms/${formId}/responses/${id}/restore`))
+    );
   } catch (error) {
     console.error("Failed to restore responses:", error);
     throw error;
@@ -240,10 +250,10 @@ export const getAllDeletedResponses = async (filter: Filter): Promise<any> => {
 
     const params = {
       ...formatParams(filter),
-      softDeleted: true,
     };
+    delete params.softDeleted; // ensure softDeleted is not passed
 
-    const response = await apiClient.get(`/forms/${formId}/responses`, { params });
+    const response = await apiClient.get(`/forms/${formId}/responses/soft-deleted`, { params });
 
     return response?.data || [];
   } catch (error) {
@@ -334,7 +344,7 @@ export const useGetResponsesRows = (formId: string, filter?: Filter) => {
     queryKey: () => ["responses", formId, params],
     params: params,
     queryOptions: {
-      enabled: !!formId,
+      enabled: !!formId && formId !== "undefined" && formId !== "null",
       placeholderData: keepPreviousData,
     },
   });
@@ -348,7 +358,7 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
     endpoint: `/forms/${formId}/responses`,
     queryKey: () => ["responses", filter],
     params,
-    queryOptions: { enabled: !!formId },
+    queryOptions: { enabled: !!formId && String(formId) !== "undefined" && String(formId) !== "null" },
   });
 };
 

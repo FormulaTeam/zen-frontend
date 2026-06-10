@@ -60,7 +60,21 @@ const AppRouter = () => {
                 <MainPage
                   user={user}
                   searchValue={searchValue}
-                  handleSearch={(val) => setSearchValue(val)}
+                  handleSearch={(val) => {
+                    if (val.trim() === "תודה על הכל כרכום") {
+                      try {
+                        const newWindow = window.open("/zendaya.png", "_blank", "noopener,noreferrer");
+                        if (newWindow) {
+                          newWindow.opener = null;
+                        }
+                      } catch (err) {
+                        console.error("Popup blocker prevented opening the easter egg:", err);
+                      }
+                      setSearchValue("");
+                      return;
+                    }
+                    setSearchValue(val);
+                  }}
                   shouldRefreshPage={shouldRefreshPage}
                   setShouldRefreshPage={setShouldRefreshPage}
                   resetSearchValue={resetSearchValue}

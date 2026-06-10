@@ -29,7 +29,6 @@ const stringifyQuery = (query: any): string => {
  */
 export const getForms = async (filter?: Filter): Promise<FormDto[]> => {
   const sortBy = filter?.sortBy;
-  const formattedSortBy = sortBy ? (sortBy.includes(":") ? sortBy : `meta:${sortBy}`) : undefined;
 
   const responseFilters = filter?.responseFilters;
   const query = filter?.query;
@@ -54,7 +53,7 @@ export const getForms = async (filter?: Filter): Promise<FormDto[]> => {
   const params = {
     filters: filtersParam,
     search: searchParam,
-    sortBy: formattedSortBy,
+    sortBy: sortBy,
     orderBy: filter?.orderBy,
     pageSize: filter?.pageSize,
     pageNumber: filter?.pageNumber,
@@ -66,6 +65,53 @@ export const getForms = async (filter?: Filter): Promise<FormDto[]> => {
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch forms:", error);
+    throw error;
+  }
+};
+
+/**
+ * Fetch all soft-deleted forms.
+ *
+ * @param filter - Optional filter parameters for querying deleted forms.
+ * @returns A promise that resolves to an array of forms.
+ */
+export const getDeletedForms = async (filter?: Filter): Promise<FormDto[]> => {
+  const sortBy = filter?.sortBy;
+
+  const responseFilters = filter?.responseFilters;
+  const query = filter?.query;
+
+  let filtersParam: string | undefined;
+  let searchParam: string | undefined;
+
+  if (responseFilters && responseFilters.items && responseFilters.items.length > 0) {
+    filtersParam = JSON.stringify(responseFilters);
+  }
+
+  if (typeof query === "string" && query.trim() !== "") {
+    searchParam = query;
+  } else if (query && typeof query === "object") {
+    if (Array.isArray((query as any).items)) {
+      filtersParam = JSON.stringify(query);
+    } else {
+      searchParam = JSON.stringify(query);
+    }
+  }
+
+  const params = {
+    filters: filtersParam,
+    search: searchParam,
+    sortBy: sortBy,
+    orderBy: filter?.orderBy,
+    pageSize: filter?.pageSize,
+    pageNumber: filter?.pageNumber,
+  };
+
+  try {
+    const response = await apiClient.get<FormDto[]>("/forms/soft-deleted", { params, signal: filter?.signal });
+    return response?.data || [];
+  } catch (error) {
+    console.error("Failed to fetch deleted forms:", error);
     throw error;
   }
 };
@@ -300,8 +346,8 @@ export const useGetForm = ({
     endpoint: `/forms/${formId}${queryString}`,
     queryKey: () => [formId, includePermissions ?? null],
     queryOptions: {
-      enabled: !!formId,
       ...config,
+      enabled: (config?.enabled ?? true) && !!formId && formId !== "undefined" && formId !== "null",
     },
   });
 };

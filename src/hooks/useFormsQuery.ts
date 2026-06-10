@@ -7,6 +7,8 @@ import {
 } from "../types/enums/filtersAndSorts.enum";
 import { FormOverviewDto } from "@src/types/shared";
 
+export const FORMS_PAGINATION_LIMIT = 20;
+
 export interface FormsQueryParams {
   scope: FormsScopeOption;
   searchQuery?: string;
@@ -17,18 +19,17 @@ export interface FormsQueryParams {
   softDeleted?: boolean;
 }
 
-export const FORMS_PAGINATION_LIMIT = 25;
-
-export function useGetFormsQuery({ enabled = true, searchQuery, ...rest }: FormsQueryParams) {
+export function useGetFormsQuery({ enabled = true, searchQuery, softDeleted, ...rest }: FormsQueryParams) {
   const queryParams = {
     ...rest,
     ...(searchQuery ? { search: searchQuery } : {}),
   };
 
   return useInfiniteQuery({
-    queryKey: ["forms", queryParams],
+    queryKey: softDeleted ? ["forms", "deleted", queryParams] : ["forms", queryParams],
     queryFn: async ({ pageParam = 0 }) => {
-      const response = await apiClient.get<FormOverviewDto[]>("/forms", {
+      const endpoint = softDeleted ? "/forms/soft-deleted" : "/forms";
+      const response = await apiClient.get<FormOverviewDto[]>(endpoint, {
         params: { ...queryParams, limit: FORMS_PAGINATION_LIMIT, offset: pageParam },
       });
       return response.data;

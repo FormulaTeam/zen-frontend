@@ -25,7 +25,11 @@ export const SourceOperationStatus = {
 export type SourceOperationStatusType =
   (typeof SourceOperationStatus)[keyof typeof SourceOperationStatus];
 
-export const FormActionsToolbar = () => {
+interface FormActionsToolbarProps {
+  onBackClick?: () => void;
+}
+
+export const FormActionsToolbar = ({ onBackClick }: FormActionsToolbarProps) => {
   const { permissions, form, setForm } = useFormStore();
   const { id: formId } = useParams();
   const navigate = useNavigate();
@@ -127,7 +131,7 @@ export const FormActionsToolbar = () => {
 
       {/* Back (now last) */}
       <Tooltip title="חזרה">
-        <IconOnlyButton onClick={() => navigate("/")}>
+        <IconOnlyButton onClick={onBackClick ?? (() => navigate("/"))}>
           <ArrowBackIcon />
         </IconOnlyButton>
       </Tooltip>
