@@ -16,18 +16,23 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const ISRAEL_TZ = "Asia/Jerusalem";
+
 const APP_PRIMARY = "#1E88E5";
 const APP_PRIMARY_HOVER = "#1976D2";
 const APP_PRIMARY_SOFT = "rgba(30, 136, 229, 0.08)";
-const APP_PRIMARY_SOFT_BORDER = "rgba(30, 136, 229, 0.2)";
-const APP_PRIMARY_SHADOW = "0px 4px 20.4px 0px rgba(25, 118, 210, 0.1)";
+const APP_BORDER = "rgba(148, 163, 184, 0.35)";
+const APP_BORDER_SOFT = "rgba(148, 163, 184, 0.22)";
+const APP_TEXT = "#0f172a";
+const APP_MUTED_TEXT = "#475569";
+const APP_PANEL = "#fbfdff";
+const APP_SHADOW = "0 10px 28px rgba(15, 23, 42, 0.1)";
 
-const DATE_TIME_PICKER_WIDTH = "500px";
-const DATE_ONLY_PICKER_WIDTH = "340px";
-const DATE_PANEL_WIDTH = "340px";
-const TIME_PANEL_WIDTH = "160px";
-const TIME_COLUMN_WIDTH = "56px";
-const TIME_ITEM_WIDTH = "46px";
+const DATE_TIME_PICKER_WIDTH = "476px";
+const DATE_ONLY_PICKER_WIDTH = "326px";
+const DATE_PANEL_WIDTH = "320px";
+const TIME_PANEL_WIDTH = "156px";
+const TIME_COLUMN_WIDTH = "48px";
+const TIME_ITEM_WIDTH = "42px";
 
 type DateOnlyView = "day" | "month" | "year";
 type DateTimeView = "day" | "month" | "year" | "hours" | "minutes" | "seconds";
@@ -85,20 +90,23 @@ const HeaderModeButton = ({
     size="small"
     variant={active ? "contained" : "text"}
     sx={{
-      minWidth: "58px",
+      minWidth: "50px",
       height: "28px",
-      px: 1.25,
-      borderRadius: "7px",
+      px: 1,
+      borderRadius: "8px",
       fontWeight: 700,
-      fontSize: "0.82rem",
+      fontSize: "0.78rem",
       textTransform: "none",
       boxShadow: "none",
-      color: active ? "#fff" : "#475569",
-      backgroundColor: active ? APP_PRIMARY : "transparent",
-      border: active ? "none" : `1px solid ${APP_PRIMARY_SOFT_BORDER}`,
+      color: active ? "#fff" : APP_MUTED_TEXT,
+      backgroundColor: active ? APP_PRIMARY : "#fff",
+      border: active ? `1px solid ${APP_PRIMARY}` : `1px solid ${APP_BORDER_SOFT}`,
+      transition: "background-color 140ms ease, border-color 140ms ease, color 140ms ease",
+
       "&:hover": {
         boxShadow: "none",
         backgroundColor: active ? APP_PRIMARY_HOVER : APP_PRIMARY_SOFT,
+        borderColor: active ? APP_PRIMARY_HOVER : "rgba(30, 136, 229, 0.24)",
       },
     }}>
     {children}
@@ -116,17 +124,18 @@ const CompactCalendarHeader = (props: any) => {
   return (
     <Box
       sx={{
-        px: 1.5,
+        px: 1,
         pt: 1,
         pb: 0.75,
-        borderBottom: "1px solid rgba(148, 163, 184, 0.12)",
+        backgroundColor: "#fff",
+        borderBottom: `1px solid ${APP_BORDER_SOFT}`,
       }}>
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: "auto 1fr auto",
           alignItems: "center",
-          gap: 1,
+          gap: 0.75,
         }}>
         <Box
           sx={{
@@ -140,6 +149,7 @@ const CompactCalendarHeader = (props: any) => {
             onClick={() => setForcedView?.("month")}>
             חודש
           </HeaderModeButton>
+
           <HeaderModeButton
             active={isYearMode}
             disabled={disabled}
@@ -153,10 +163,10 @@ const CompactCalendarHeader = (props: any) => {
             justifySelf: "center",
             display: "flex",
             alignItems: "center",
-            gap: 0.5,
+            gap: 0.4,
             fontWeight: 700,
-            fontSize: "0.98rem",
-            color: "#0f172a",
+            fontSize: "0.9rem",
+            color: APP_TEXT,
             userSelect: "none",
             whiteSpace: "nowrap",
           }}>
@@ -181,13 +191,16 @@ const CompactCalendarHeader = (props: any) => {
             disabled={disabled}
             size="small"
             sx={{
-              width: 30,
-              height: 30,
+              width: 28,
+              height: 28,
               borderRadius: "8px",
               color: "#334155",
-              backgroundColor: "transparent",
+              backgroundColor: "#fff",
+              border: `1px solid ${APP_BORDER_SOFT}`,
+
               "&:hover": {
-                backgroundColor: "rgba(15, 23, 42, 0.06)",
+                backgroundColor: APP_PRIMARY_SOFT,
+                borderColor: "rgba(30, 136, 229, 0.24)",
               },
             }}>
             <ChevronLeftRounded fontSize="small" />
@@ -201,13 +214,16 @@ const CompactCalendarHeader = (props: any) => {
             disabled={disabled}
             size="small"
             sx={{
-              width: 30,
-              height: 30,
+              width: 28,
+              height: 28,
               borderRadius: "8px",
               color: "#334155",
-              backgroundColor: "transparent",
+              backgroundColor: "#fff",
+              border: `1px solid ${APP_BORDER_SOFT}`,
+
               "&:hover": {
-                backgroundColor: "rgba(15, 23, 42, 0.06)",
+                backgroundColor: APP_PRIMARY_SOFT,
+                borderColor: "rgba(30, 136, 229, 0.24)",
               },
             }}>
             <ChevronRightRounded fontSize="small" />
@@ -220,6 +236,7 @@ const CompactCalendarHeader = (props: any) => {
 
 const getClosedInputTextSx = (isTabularEdit: boolean) => ({
   fontFamily: "inherit",
+  fontSize: isTabularEdit ? "0.95rem" : "1rem",
   fontWeight: 400,
   lineHeight: 1.5,
   letterSpacing: 0,
@@ -285,22 +302,36 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
     width: "100%",
 
     "& .MuiInputBase-root": {
-      borderRadius: "12px",
+      borderRadius: "8px",
       backgroundColor: "#fff",
-      border: "1px solid rgba(148, 163, 184, 0.18)",
-      boxShadow: "0 4px 10px rgba(15, 23, 42, 0.04)",
-      transition: "border-color 140ms ease, box-shadow 140ms ease",
-    },
+      paddingInline: "0.25rem",
+      transition: "box-shadow 140ms ease",
 
-    "& .MuiInputBase-root:hover": {
-      borderColor: APP_PRIMARY_SOFT_BORDER,
-      boxShadow: APP_PRIMARY_SHADOW,
+      "::before": {
+        border: "1px solid",
+        borderColor: "input.border",
+        borderRadius: "8px",
+        top: 0,
+      },
+
+      "&.Mui-error::before": {
+        borderColor: "error.main",
+      },
+
+      ":hover:not(.Mui-disabled, .Mui-error)::before": {
+        borderRadius: "8px",
+        borderBottom: `1px solid ${APP_PRIMARY}`,
+      },
+
+      "::after": {
+        top: 0,
+        borderRadius: "8px",
+        borderBottom: `1px solid ${APP_PRIMARY}`,
+      },
     },
 
     "& .MuiInputBase-root.Mui-focused": {
-      borderColor: "rgba(30, 136, 229, 0.34)",
       boxShadow: "0 0 0 3px rgba(30, 136, 229, 0.08)",
-      backgroundColor: "#fff",
     },
 
     "& .MuiInputBase-input": {
@@ -308,7 +339,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
       textAlign: "left !important",
       unicodeBidi: "plaintext",
       ...inputTextSx,
-      color: "#0f172a",
+      color: APP_TEXT,
     },
 
     "& .MuiPickersInputBase-root": {
@@ -359,8 +390,8 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
     },
 
     "& .MuiIconButton-root": {
-      color: "#475569",
-      borderRadius: "10px",
+      color: APP_MUTED_TEXT,
+      borderRadius: "8px",
       transition: "background-color 140ms ease, color 140ms ease",
     },
 
@@ -377,17 +408,17 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   };
 
   const selectionButtonSx: SxProps<Theme> = {
-    borderRadius: "9px",
-    fontSize: "0.93rem",
-    fontWeight: 600,
+    borderRadius: "8px",
+    fontSize: "0.86rem",
+    fontWeight: 700,
     color: "#334155",
-    border: `1px solid ${APP_PRIMARY_SOFT_BORDER}`,
+    border: `1px solid ${APP_BORDER_SOFT}`,
     backgroundColor: "#fff",
-    transition: "all 140ms ease",
+    transition: "background-color 140ms ease, border-color 140ms ease, color 140ms ease",
 
     "&:hover": {
       backgroundColor: APP_PRIMARY_SOFT,
-      borderColor: APP_PRIMARY_SOFT_BORDER,
+      borderColor: "rgba(30, 136, 229, 0.24)",
     },
 
     "&.Mui-selected": {
@@ -410,22 +441,25 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
       maxWidth: `${DATE_PANEL_WIDTH} !important`,
       flex: `0 0 ${DATE_PANEL_WIDTH} !important`,
       flexShrink: 0,
-      backgroundColor: "transparent",
+      margin: "0 auto",
+      backgroundColor: APP_PANEL,
     },
 
     "& .MuiMonthCalendar-root": {
-      paddingInline: "12px",
-      paddingTop: "6px",
+      paddingInline: "10px",
+      paddingTop: "8px",
       paddingBottom: "10px",
       display: "grid",
       gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-      gap: "8px 7px",
+      gap: "7px",
+      backgroundColor: APP_PANEL,
     },
 
     "& .MuiYearCalendar-root": {
-      paddingInline: "12px",
-      paddingTop: "6px",
-      paddingBottom: "8px",
+      paddingInline: "10px",
+      paddingTop: "8px",
+      paddingBottom: "10px",
+      backgroundColor: APP_PANEL,
     },
 
     "& .MuiDayCalendar-header": {
@@ -441,27 +475,27 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
 
     "& .MuiDayCalendar-weekDayLabel": {
       color: "#64748b",
-      fontSize: "0.84rem",
+      fontSize: "0.78rem",
       fontWeight: 700,
-      width: "36px",
-      marginLeft: "4px",
-      marginRight: "4px",
+      width: "34px",
+      marginLeft: "3px",
+      marginRight: "3px",
     },
 
     "& .MuiPickersDay-root": {
-      width: "38px",
-      height: "38px",
-      marginLeft: "4px",
-      marginRight: "4px",
-      borderRadius: "10px",
-      fontSize: "0.94rem",
-      color: "#0f172a",
-      transition: "background-color 140ms ease, transform 140ms ease",
+      width: "34px",
+      height: "34px",
+      marginLeft: "3px",
+      marginRight: "3px",
+      borderRadius: "8px",
+      fontSize: "0.86rem",
+      fontWeight: 600,
+      color: APP_TEXT,
+      transition: "background-color 140ms ease, color 140ms ease",
     },
 
     "& .MuiPickersDay-root:hover": {
       backgroundColor: APP_PRIMARY_SOFT,
-      transform: "translateY(-1px)",
     },
 
     "& .MuiPickersDay-root.Mui-selected": {
@@ -476,7 +510,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
     },
 
     "& .MuiPickersDay-today": {
-      border: `1px solid ${APP_PRIMARY_SOFT_BORDER} !important`,
+      border: `1px solid rgba(30, 136, 229, 0.24) !important`,
       backgroundColor: APP_PRIMARY_SOFT,
     },
   };
@@ -489,39 +523,119 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
     justifyContent: "center !important",
     alignItems: "center",
     gap: "8px",
-    padding: "10px 16px !important",
-    borderTop: "1px solid rgba(148, 163, 184, 0.16)",
+    padding: "9px 10px !important",
+    borderTop: `1px solid ${APP_BORDER_SOFT}`,
     backgroundColor: "#fff",
     boxSizing: "border-box",
 
     "& .MuiButton-root": {
-      minWidth: "68px",
+      minWidth: "58px",
+      height: "32px",
       borderRadius: "8px",
-      padding: "6px 13px",
-      fontSize: "0.9rem",
-      fontWeight: 600,
+      padding: "0 11px",
+      fontSize: "0.86rem",
+      fontWeight: 700,
       textTransform: "none",
-      border: "1px solid rgba(148, 163, 184, 0.2)",
+      border: `1px solid ${APP_BORDER_SOFT}`,
       backgroundColor: "#fff",
       color: "#334155",
       boxShadow: "none",
-      transition: "background-color 140ms ease, border-color 140ms ease",
+      transition: "background-color 140ms ease, border-color 140ms ease, color 140ms ease",
     },
 
     "& .MuiButton-root:hover": {
       backgroundColor: APP_PRIMARY_SOFT,
-      borderColor: APP_PRIMARY_SOFT_BORDER,
-    },
-
-    "& .MuiButton-root:last-of-type": {
-      background: APP_PRIMARY,
-      color: "#fff",
-      border: "none",
+      borderColor: "rgba(30, 136, 229, 0.24)",
       boxShadow: "none",
     },
 
+    "& .MuiButton-root:last-of-type": {
+      backgroundColor: APP_PRIMARY,
+      color: "#fff",
+      borderColor: APP_PRIMARY,
+    },
+
     "& .MuiButton-root:last-of-type:hover": {
-      background: APP_PRIMARY_HOVER,
+      backgroundColor: APP_PRIMARY_HOVER,
+      borderColor: APP_PRIMARY_HOVER,
+    },
+  };
+
+  const timePanelSx: SxProps<Theme> = {
+    "& .MuiMultiSectionDigitalClock-root": {
+      direction: "ltr !important",
+      display: "flex !important",
+      flexDirection: "row-reverse !important",
+      justifyContent: "center !important",
+      alignItems: "stretch",
+      gap: "8px",
+      width: `${TIME_PANEL_WIDTH} !important`,
+      minWidth: `${TIME_PANEL_WIDTH} !important`,
+      maxWidth: `${TIME_PANEL_WIDTH} !important`,
+      flex: `0 0 ${TIME_PANEL_WIDTH} !important`,
+      flexShrink: 0,
+      boxSizing: "border-box",
+      padding: "8px 6px",
+      borderLeft: `1px solid ${APP_BORDER_SOFT}`,
+      borderRight: "none",
+      backgroundColor: APP_PANEL,
+    },
+
+    "& .MuiMultiSectionDigitalClockSection-root": {
+      width: `${TIME_COLUMN_WIDTH} !important`,
+      minWidth: `${TIME_COLUMN_WIDTH} !important`,
+      maxWidth: `${TIME_COLUMN_WIDTH} !important`,
+      flex: `0 0 ${TIME_COLUMN_WIDTH} !important`,
+      padding: "3px 0 !important",
+      margin: "0 !important",
+      borderLeft: "none !important",
+      borderRight: "none !important",
+      scrollbarWidth: "none",
+      scrollPaddingBlock: "0 !important",
+      overscrollBehavior: "contain",
+    },
+
+    "& .MuiMultiSectionDigitalClockSection-root::-webkit-scrollbar": {
+      display: "none",
+    },
+
+    "& .MuiMultiSectionDigitalClockSection-root::before, & .MuiMultiSectionDigitalClockSection-root::after":
+      {
+        display: "none !important",
+        height: "0 !important",
+        minHeight: "0 !important",
+        maxHeight: "0 !important",
+        content: '""" !important"',
+      },
+
+    "& .MuiMultiSectionDigitalClockSection-item": {
+      width: `${TIME_ITEM_WIDTH} !important`,
+      minWidth: `${TIME_ITEM_WIDTH} !important`,
+      maxWidth: `${TIME_ITEM_WIDTH} !important`,
+      height: "30px",
+      marginLeft: "auto !important",
+      marginRight: "auto !important",
+      borderRadius: "8px",
+      justifyContent: "center !important",
+      fontSize: "0.92rem",
+      fontWeight: 700,
+      color: APP_TEXT,
+      transition: "background-color 140ms ease, color 140ms ease",
+    },
+
+    "& .MuiMultiSectionDigitalClockSection-item:hover": {
+      backgroundColor: APP_PRIMARY_SOFT,
+    },
+
+    "& .MuiMultiSectionDigitalClockSection-item.Mui-selected": {
+      backgroundColor: `${APP_PRIMARY} !important`,
+      color: "#fff",
+      fontWeight: 800,
+      boxShadow: "none",
+    },
+
+    "& .MuiMultiSectionDigitalClockSection-item.Mui-selected:hover": {
+      backgroundColor: `${APP_PRIMARY_HOVER} !important`,
     },
   };
 
@@ -548,11 +662,12 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
         width: `${DATE_TIME_PICKER_WIDTH} !important`,
         minWidth: `${DATE_TIME_PICKER_WIDTH} !important`,
         maxWidth: `${DATE_TIME_PICKER_WIDTH} !important`,
-        overflow: "visible !important",
-        borderRadius: "18px",
-        border: "1px solid rgba(148, 163, 184, 0.18)",
-        background: "#ffffff",
-        boxShadow: APP_PRIMARY_SHADOW,
+        overflow: "hidden !important",
+        borderRadius: "10px",
+        border: `1px solid ${APP_BORDER}`,
+        backgroundColor: "#fff",
+        boxShadow: APP_SHADOW,
+        boxSizing: "border-box",
       },
 
       "& .MuiPickersLayout-root": {
@@ -561,6 +676,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
         minWidth: `${DATE_TIME_PICKER_WIDTH} !important`,
         maxWidth: `${DATE_TIME_PICKER_WIDTH} !important`,
         backgroundColor: "transparent",
+        boxSizing: "border-box",
       },
 
       "& .MuiPickersLayout-contentWrapper": {
@@ -572,75 +688,11 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
         width: `${DATE_TIME_PICKER_WIDTH} !important`,
         minWidth: `${DATE_TIME_PICKER_WIDTH} !important`,
         maxWidth: `${DATE_TIME_PICKER_WIDTH} !important`,
+        backgroundColor: APP_PANEL,
       },
 
       ...modernCalendarSx,
-
-      "& .MuiMultiSectionDigitalClock-root": {
-        direction: "ltr !important",
-        display: "flex !important",
-        flexDirection: "row-reverse !important",
-        justifyContent: "center !important",
-        alignItems: "stretch",
-        gap: "8px",
-        width: `${TIME_PANEL_WIDTH} !important`,
-        minWidth: `${TIME_PANEL_WIDTH} !important`,
-        maxWidth: `${TIME_PANEL_WIDTH} !important`,
-        flex: `0 0 ${TIME_PANEL_WIDTH} !important`,
-        flexShrink: 0,
-        boxSizing: "border-box",
-        padding: "8px 10px",
-        borderLeft: "1px solid rgba(148, 163, 184, 0.22)",
-        borderRight: "none",
-        background: "#f8fbff",
-      },
-
-      "& .MuiMultiSectionDigitalClockSection-root": {
-        width: `${TIME_COLUMN_WIDTH} !important`,
-        minWidth: `${TIME_COLUMN_WIDTH} !important`,
-        maxWidth: `${TIME_COLUMN_WIDTH} !important`,
-        flex: `0 0 ${TIME_COLUMN_WIDTH} !important`,
-        padding: "4px 0 !important",
-        margin: "0 !important",
-        borderLeft: "none !important",
-        borderRight: "none !important",
-        scrollbarWidth: "none",
-      },
-
-      "& .MuiMultiSectionDigitalClockSection-root::-webkit-scrollbar": {
-        display: "none",
-      },
-
-      "& .MuiMultiSectionDigitalClockSection-item": {
-        width: `${TIME_ITEM_WIDTH} !important`,
-        minWidth: `${TIME_ITEM_WIDTH} !important`,
-        maxWidth: `${TIME_ITEM_WIDTH} !important`,
-        height: "34px",
-        marginLeft: "auto !important",
-        marginRight: "auto !important",
-        borderRadius: "9px",
-        justifyContent: "center !important",
-        fontSize: "0.98rem",
-        fontWeight: 600,
-        color: "#0f172a",
-        transition: "background-color 140ms ease, transform 140ms ease",
-      },
-
-      "& .MuiMultiSectionDigitalClockSection-item:hover": {
-        backgroundColor: APP_PRIMARY_SOFT,
-        transform: "translateY(-1px)",
-      },
-
-      "& .MuiMultiSectionDigitalClockSection-item.Mui-selected": {
-        backgroundColor: `${APP_PRIMARY} !important`,
-        color: "#fff",
-        fontWeight: 700,
-        boxShadow: "none",
-      },
-
-      "& .MuiMultiSectionDigitalClockSection-item.Mui-selected:hover": {
-        backgroundColor: `${APP_PRIMARY_HOVER} !important`,
-      },
+      ...timePanelSx,
 
       "& .MuiPickersLayout-actionBar": {
         display: "flex !important",
@@ -662,55 +714,11 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
         width: `${DATE_TIME_PICKER_WIDTH} !important`,
         minWidth: `${DATE_TIME_PICKER_WIDTH} !important`,
         maxWidth: `${DATE_TIME_PICKER_WIDTH} !important`,
+        backgroundColor: APP_PANEL,
       },
 
       ...modernCalendarSx,
-
-      "& .MuiMultiSectionDigitalClock-root": {
-        direction: "ltr !important",
-        display: "flex !important",
-        flexDirection: "row-reverse !important",
-        justifyContent: "center !important",
-        alignItems: "stretch",
-        gap: "8px",
-        width: `${TIME_PANEL_WIDTH} !important`,
-        minWidth: `${TIME_PANEL_WIDTH} !important`,
-        maxWidth: `${TIME_PANEL_WIDTH} !important`,
-        flex: `0 0 ${TIME_PANEL_WIDTH} !important`,
-        flexShrink: 0,
-        boxSizing: "border-box",
-        padding: "8px 10px",
-        background: "#f8fbff",
-      },
-
-      "& .MuiMultiSectionDigitalClockSection-root": {
-        width: `${TIME_COLUMN_WIDTH} !important`,
-        minWidth: `${TIME_COLUMN_WIDTH} !important`,
-        maxWidth: `${TIME_COLUMN_WIDTH} !important`,
-        flex: `0 0 ${TIME_COLUMN_WIDTH} !important`,
-        padding: "4px 0 !important",
-        margin: "0 !important",
-        borderLeft: "none !important",
-        borderRight: "none !important",
-        scrollbarWidth: "none",
-      },
-
-      "& .MuiMultiSectionDigitalClockSection-root::-webkit-scrollbar": {
-        display: "none",
-      },
-
-      "& .MuiMultiSectionDigitalClockSection-item": {
-        width: `${TIME_ITEM_WIDTH} !important`,
-        minWidth: `${TIME_ITEM_WIDTH} !important`,
-        maxWidth: `${TIME_ITEM_WIDTH} !important`,
-        height: "34px",
-        marginLeft: "auto !important",
-        marginRight: "auto !important",
-        borderRadius: "9px",
-        justifyContent: "center !important",
-        fontSize: "0.98rem",
-        fontWeight: 600,
-      },
+      ...timePanelSx,
 
       "& .MuiPickersLayout-actionBar": {
         display: "flex !important",
@@ -729,11 +737,12 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
         width: `${DATE_ONLY_PICKER_WIDTH} !important`,
         minWidth: `${DATE_ONLY_PICKER_WIDTH} !important`,
         maxWidth: `${DATE_ONLY_PICKER_WIDTH} !important`,
-        overflow: "visible !important",
-        borderRadius: "18px",
-        border: "1px solid rgba(148, 163, 184, 0.18)",
-        background: "#ffffff",
-        boxShadow: APP_PRIMARY_SHADOW,
+        overflow: "hidden !important",
+        borderRadius: "10px",
+        border: `1px solid ${APP_BORDER}`,
+        backgroundColor: "#fff",
+        boxShadow: APP_SHADOW,
+        boxSizing: "border-box",
       },
 
       "& .MuiPickersLayout-root": {
@@ -741,12 +750,17 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
         minWidth: `${DATE_ONLY_PICKER_WIDTH} !important`,
         maxWidth: `${DATE_ONLY_PICKER_WIDTH} !important`,
         backgroundColor: "transparent",
+        boxSizing: "border-box",
+      },
+
+      "& .MuiPickersLayout-contentWrapper": {
+        backgroundColor: APP_PANEL,
       },
 
       "& .MuiDateCalendar-root": {
-        width: `${DATE_ONLY_PICKER_WIDTH} !important`,
-        minWidth: `${DATE_ONLY_PICKER_WIDTH} !important`,
-        maxWidth: `${DATE_ONLY_PICKER_WIDTH} !important`,
+        width: `${DATE_PANEL_WIDTH} !important`,
+        minWidth: `${DATE_PANEL_WIDTH} !important`,
+        maxWidth: `${DATE_PANEL_WIDTH} !important`,
         direction: "rtl !important",
       },
 

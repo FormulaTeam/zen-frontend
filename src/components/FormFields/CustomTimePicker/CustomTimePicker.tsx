@@ -14,13 +14,19 @@ dayjs.extend(utc);
 const APP_PRIMARY = "#1E88E5";
 const APP_PRIMARY_HOVER = "#1976D2";
 const APP_PRIMARY_SOFT = "rgba(30, 136, 229, 0.08)";
-const APP_PRIMARY_SOFT_BORDER = "rgba(30, 136, 229, 0.2)";
-const APP_PRIMARY_SHADOW = "0px 4px 20.4px 0px rgba(25, 118, 210, 0.1)";
+const APP_BORDER = "rgba(148, 163, 184, 0.35)";
+const APP_BORDER_SOFT = "rgba(148, 163, 184, 0.22)";
+const APP_TEXT = "#0f172a";
+const APP_MUTED_TEXT = "#475569";
+const APP_PANEL = "#fbfdff";
+const APP_SHADOW = "0 10px 28px rgba(15, 23, 42, 0.1)";
 
-const TWO_SECTION_WIDTH = "160px";
-const THREE_SECTION_WIDTH = "208px";
-const TIME_COLUMN_WIDTH = "56px";
-const TIME_ITEM_WIDTH = "46px";
+const TIME_PICKER_WIDTH = "236px";
+const TIME_PICKER_SECONDS_WIDTH = "292px";
+const TWO_SECTION_CLOCK_WIDTH = "124px";
+const THREE_SECTION_CLOCK_WIDTH = "184px";
+const TIME_COLUMN_WIDTH = "48px";
+const TIME_ITEM_WIDTH = "42px";
 
 interface CustomTimePickerProps {
   value: any;
@@ -75,7 +81,7 @@ const formatDayjsToTimeString = (value: Dayjs, timePrecision?: string): string =
 
 const getClosedInputTextSx = (isTabularEdit: boolean) => ({
   fontFamily: "inherit",
-  fontSize: isTabularEdit ? "0.98rem" : "1rem",
+  fontSize: isTabularEdit ? "0.95rem" : "1rem",
   fontWeight: 400,
   lineHeight: 1.5,
   letterSpacing: 0,
@@ -106,6 +112,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
         if (prev && prev.isValid() && prev.isSame(parsedValue, "second")) {
           return prev;
         }
+
         return parsedValue;
       });
       return;
@@ -113,6 +120,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
 
     if (!didApplyDefaultRef.current && !value && defaultValue === "currentTime") {
       const now = dayjs();
+
       didApplyDefaultRef.current = true;
       setTimeValue(now);
       onChangeHandler(formatDayjsToTimeString(now, timePrecision));
@@ -125,6 +133,9 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
   }, [value, defaultValue, timePrecision, onChangeHandler]);
 
   const showSeconds = timePrecision === "seconds";
+  const pickerWidth = showSeconds ? TIME_PICKER_SECONDS_WIDTH : TIME_PICKER_WIDTH;
+  const clockWidth = showSeconds ? THREE_SECTION_CLOCK_WIDTH : TWO_SECTION_CLOCK_WIDTH;
+  const inputTextSx = getClosedInputTextSx(isTabularEdit);
 
   const triggerValidationOnce = () => {
     if (!didTriggerValidationRef.current) {
@@ -133,29 +144,40 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
     }
   };
 
-  const pickerWidth = showSeconds ? THREE_SECTION_WIDTH : TWO_SECTION_WIDTH;
-  const inputTextSx = getClosedInputTextSx(isTabularEdit);
-
   const inputWrapperSx: SxProps<Theme> = {
     width: "100%",
 
     "& .MuiInputBase-root": {
-      borderRadius: "12px",
+      borderRadius: "8px",
       backgroundColor: "#fff",
-      border: "1px solid rgba(148, 163, 184, 0.18)",
-      boxShadow: "0 4px 10px rgba(15, 23, 42, 0.04)",
-      transition: "border-color 140ms ease, box-shadow 140ms ease",
-    },
+      paddingInline: "0.25rem",
+      transition: "box-shadow 140ms ease",
 
-    "& .MuiInputBase-root:hover": {
-      borderColor: APP_PRIMARY_SOFT_BORDER,
-      boxShadow: APP_PRIMARY_SHADOW,
+      "::before": {
+        border: "1px solid",
+        borderColor: "input.border",
+        borderRadius: "8px",
+        top: 0,
+      },
+
+      "&.Mui-error::before": {
+        borderColor: "error.main",
+      },
+
+      ":hover:not(.Mui-disabled, .Mui-error)::before": {
+        borderRadius: "8px",
+        borderBottom: `1px solid ${APP_PRIMARY}`,
+      },
+
+      "::after": {
+        top: 0,
+        borderRadius: "8px",
+        borderBottom: `1px solid ${APP_PRIMARY}`,
+      },
     },
 
     "& .MuiInputBase-root.Mui-focused": {
-      borderColor: "rgba(30, 136, 229, 0.34)",
       boxShadow: "0 0 0 3px rgba(30, 136, 229, 0.08)",
-      backgroundColor: "#fff",
     },
 
     "& .MuiInputBase-input": {
@@ -163,7 +185,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
       textAlign: "right !important",
       unicodeBidi: "plaintext",
       ...inputTextSx,
-      color: "#0f172a",
+      color: APP_TEXT,
     },
 
     "& .MuiPickersInputBase-root": {
@@ -217,8 +239,8 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
     },
 
     "& .MuiIconButton-root": {
-      color: "#475569",
-      borderRadius: "10px",
+      color: APP_MUTED_TEXT,
+      borderRadius: "8px",
       transition: "background-color 140ms ease, color 140ms ease",
     },
 
@@ -242,39 +264,41 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
     justifyContent: "center !important",
     alignItems: "center",
     gap: "8px",
-    padding: "10px 16px !important",
-    borderTop: "1px solid rgba(148, 163, 184, 0.16)",
+    padding: "9px 10px !important",
+    borderTop: `1px solid ${APP_BORDER_SOFT}`,
     backgroundColor: "#fff",
     boxSizing: "border-box",
 
     "& .MuiButton-root": {
-      minWidth: "68px",
+      minWidth: "58px",
+      height: "32px",
       borderRadius: "8px",
-      padding: "6px 13px",
-      fontSize: "0.9rem",
-      fontWeight: 600,
+      padding: "0 11px",
+      fontSize: "0.86rem",
+      fontWeight: 700,
       textTransform: "none",
-      border: "1px solid rgba(148, 163, 184, 0.2)",
+      border: `1px solid ${APP_BORDER_SOFT}`,
       backgroundColor: "#fff",
       color: "#334155",
       boxShadow: "none",
-      transition: "background-color 140ms ease, border-color 140ms ease",
+      transition: "background-color 140ms ease, border-color 140ms ease, color 140ms ease",
     },
 
     "& .MuiButton-root:hover": {
       backgroundColor: APP_PRIMARY_SOFT,
-      borderColor: APP_PRIMARY_SOFT_BORDER,
-    },
-
-    "& .MuiButton-root:last-of-type": {
-      background: APP_PRIMARY,
-      color: "#fff",
-      border: "none",
+      borderColor: "rgba(30, 136, 229, 0.24)",
       boxShadow: "none",
     },
 
+    "& .MuiButton-root:last-of-type": {
+      backgroundColor: APP_PRIMARY,
+      color: "#fff",
+      borderColor: APP_PRIMARY,
+    },
+
     "& .MuiButton-root:last-of-type:hover": {
-      background: APP_PRIMARY_HOVER,
+      backgroundColor: APP_PRIMARY_HOVER,
+      borderColor: APP_PRIMARY_HOVER,
     },
   };
 
@@ -299,11 +323,12 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
         width: `${pickerWidth} !important`,
         minWidth: `${pickerWidth} !important`,
         maxWidth: `${pickerWidth} !important`,
-        overflow: "visible !important",
-        borderRadius: "18px",
-        border: "1px solid rgba(148, 163, 184, 0.18)",
-        background: "#ffffff",
-        boxShadow: APP_PRIMARY_SHADOW,
+        overflow: "hidden !important",
+        borderRadius: "10px",
+        border: `1px solid ${APP_BORDER}`,
+        backgroundColor: "#fff",
+        boxShadow: APP_SHADOW,
+        boxSizing: "border-box",
       },
 
       "& .MuiPickersLayout-root": {
@@ -311,6 +336,11 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
         minWidth: `${pickerWidth} !important`,
         maxWidth: `${pickerWidth} !important`,
         backgroundColor: "transparent",
+        boxSizing: "border-box",
+      },
+
+      "& .MuiPickersLayout-contentWrapper": {
+        backgroundColor: APP_PANEL,
       },
 
       "& .MuiMultiSectionDigitalClock-root": {
@@ -320,12 +350,13 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
         justifyContent: "center !important",
         alignItems: "stretch",
         gap: "8px",
-        width: `${pickerWidth} !important`,
-        minWidth: `${pickerWidth} !important`,
-        maxWidth: `${pickerWidth} !important`,
+        width: `${clockWidth} !important`,
+        minWidth: `${clockWidth} !important`,
+        maxWidth: `${clockWidth} !important`,
+        margin: "0 auto",
         boxSizing: "border-box",
-        padding: "8px 10px",
-        background: "#f8fbff",
+        padding: "8px 6px",
+        backgroundColor: APP_PANEL,
       },
 
       "& .MuiMultiSectionDigitalClockSection-root": {
@@ -333,42 +364,51 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
         minWidth: `${TIME_COLUMN_WIDTH} !important`,
         maxWidth: `${TIME_COLUMN_WIDTH} !important`,
         flex: `0 0 ${TIME_COLUMN_WIDTH} !important`,
-        padding: "4px 0 !important",
+        padding: "3px 0 !important",
         margin: "0 !important",
         borderLeft: "none !important",
         borderRight: "none !important",
         scrollbarWidth: "none",
+        scrollPaddingBlock: "0 !important",
+        overscrollBehavior: "contain",
       },
 
       "& .MuiMultiSectionDigitalClockSection-root::-webkit-scrollbar": {
         display: "none",
       },
 
+      "& .MuiMultiSectionDigitalClockSection-root::before, & .MuiMultiSectionDigitalClockSection-root::after":
+        {
+          display: "none !important",
+          height: "0 !important",
+          minHeight: "0 !important",
+          maxHeight: "0 !important",
+          content: '""" !important"',
+        },
+
       "& .MuiMultiSectionDigitalClockSection-item": {
         width: `${TIME_ITEM_WIDTH} !important`,
         minWidth: `${TIME_ITEM_WIDTH} !important`,
         maxWidth: `${TIME_ITEM_WIDTH} !important`,
-        height: "34px",
+        height: "30px",
         marginLeft: "auto !important",
         marginRight: "auto !important",
-        borderRadius: "9px",
+        borderRadius: "8px",
         justifyContent: "center !important",
-        fontSize: "0.98rem",
-        fontWeight: 600,
-        color: "#0f172a",
-        transition: "background-color 140ms ease, transform 140ms ease",
+        fontSize: "0.92rem",
+        fontWeight: 700,
+        color: APP_TEXT,
+        transition: "background-color 140ms ease, color 140ms ease",
       },
 
       "& .MuiMultiSectionDigitalClockSection-item:hover": {
         backgroundColor: APP_PRIMARY_SOFT,
-        transform: "translateY(-1px)",
       },
 
       "& .MuiMultiSectionDigitalClockSection-item.Mui-selected": {
         backgroundColor: `${APP_PRIMARY} !important`,
         color: "#fff",
-        fontWeight: 700,
-        boxShadow: "none",
+        fontWeight: 800,
       },
 
       "& .MuiMultiSectionDigitalClockSection-item.Mui-selected:hover": {
