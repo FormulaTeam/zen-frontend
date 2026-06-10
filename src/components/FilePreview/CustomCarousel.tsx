@@ -120,14 +120,16 @@ const CustomCarousel: React.FC<CustomCarouselProps> = ({
               gap: 1,
               maxWidth: 320,
             }}>
-            <IconButton
-              onClick={(event) => handleCopyLink(event, downloadPath)}
-              sx={{ color: theme.palette.white }}
-              size="small">
-              <Link sx={{ fontSize: 17 }} />
-            </IconButton>
+            {downloadPath && (
+              <IconButton
+                onClick={(event) => handleCopyLink(event, downloadPath)}
+                sx={{ color: theme.palette.white }}
+                size="small">
+                <Link sx={{ fontSize: 17 }} />
+              </IconButton>
+            )}
 
-            {downloadPath}
+            {fileName}
           </Box>
         }>
         <Box
