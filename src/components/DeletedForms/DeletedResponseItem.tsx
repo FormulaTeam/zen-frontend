@@ -101,8 +101,26 @@ const DeletedResponseItem: React.FC<DeletedResponseItemProps> = ({
     warningMessage = "לא ניתן לשחזר את התגובה מכיוון שהטופס שלה נמחק. יש לשחזר את הטופס תחילה.";
   }
 
-  const createdBy = response.created_by_name || response.created_by || "לא ידוע";
-  const deletedBy = response.deleted_by_name || response.updated_by_name || "";
+  const getCreatedByName = () => {
+    if (typeof response.created_by_name === "string") return response.created_by_name;
+    if (response.created_by && typeof response.created_by === "object") {
+      return response.created_by.name || response.created_by.upn || "לא ידוע";
+    }
+    if (typeof response.created_by === "string") return response.created_by;
+    return "לא ידוע";
+  };
+
+  const getDeletedByName = () => {
+    if (typeof response.deleted_by_name === "string") return response.deleted_by_name;
+    if (response.updated_by_name && typeof response.updated_by_name === "string") return response.updated_by_name;
+    if (response.deleted_by && typeof response.deleted_by === "object") {
+      return response.deleted_by.name || response.deleted_by.upn || "";
+    }
+    return "";
+  };
+
+  const createdBy = getCreatedByName();
+  const deletedBy = getDeletedByName();
 
   return (
     <StyledListItem>
