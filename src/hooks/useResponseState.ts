@@ -193,54 +193,19 @@ const toValidatorField = (
 ): FormFieldLike => {
   if (field.fieldType === FieldTypeIds.options) {
     const extra = (field.extra ?? {}) as FieldExtra;
-    const isMultiSelect = extra?.selectionMode === selectionMode.Multiple;
 
-    let items: { id: string; text: string }[] = [];
-
-    if (extra?.linkedOptionsFieldId) {
-      if (fieldOptions?.[field.id]) {
-        items = fieldOptions[field.id].map((opt: any) => ({
-          id: String(opt.value),
-          text: String(opt.value),
-        }));
-      }
-
-      if (submittedValue != null) {
-        const vals = Array.isArray(submittedValue) ? submittedValue : [submittedValue];
-        vals.forEach((val: any) => {
-          const strVal = String(val);
-          if (!items.find((i) => i.id === strVal)) {
-            items.push({ id: strVal, text: strVal });
-          }
-        });
-      }
-    } else if (Array.isArray((field as any).options)) {
-      items = (field as any).options.map((item: any) => ({
-        id: String(item.id),
-        text: String(item.text || item.id),
-      }));
-    } else if (extra?.options?.items) {
-      items = extra.options.items.map((item: any) => ({
-        id: String(item.id),
-        text: String(item.text || item.id),
-      }));
-    } else if (Array.isArray(extra?.options)) {
-      items = extra.options.map((opt: any) => ({
-        id: String(opt),
-        text: String(opt),
-      }));
-    }
+    const normalizedSelectionMode =
+      extra.selectionMode === selectionMode.Multiple
+        ? selectionMode.Multiple
+        : selectionMode.Single;
 
     return {
       typeId: field.fieldType,
       required: field.isRequired,
       extra: {
-        selectionMode: extra.selectionMode ?? selectionMode.Single,
-        options: {
-          items,
-        },
-        parentFieldId: extra.parentFieldId,
-        parentDependencies: extra.parentDependencies,
+        selectionMode: normalizedSelectionMode,
+        linkedOptionsFieldId: extra.linkedOptionsFieldId,
+        defaultValue: Array.isArray(extra.defaultValue) ? extra.defaultValue : [],
       },
     } as unknown as FormFieldLike;
   }
