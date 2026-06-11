@@ -18,13 +18,7 @@ import {
   TextCellEditor,
   TimeCellEditor,
 } from "../components/CellEditors";
-import {
-  CellErrorHeader,
-  CellErrorInfoIcon,
-  CellErrorText,
-  CellErrorWrapper,
-  CellValueFlex,
-} from "../styled";
+import { CellErrorInfoIcon } from "../styled";
 import { getOptionResponseRawValue, OptionResponseValue } from "../../../utils/optionResponseValue";
 
 type QuickEditValidationError = {
@@ -39,6 +33,7 @@ type EditorFieldExtra = {
         items?: OptionResponseValue[];
       };
   selectionMode?: "multiple" | "single";
+  linkedOptionsFieldId?: string | null;
   validationRegex?: string;
   locationFormat?: "utm" | "wkt";
   minValue?: number;
@@ -48,9 +43,15 @@ type EditorFieldExtra = {
   timePrecision?: "seconds" | "minutes";
 };
 
+type FieldOptionValue = {
+  value?: unknown;
+  fieldId?: string;
+};
+
 interface UseCellEditorsParams {
   apiRef: React.MutableRefObject<GridApiPro | null>;
   formFields: FormFieldDto[] | undefined;
+  fieldOptions?: Record<string, FieldOptionValue[]>;
   validationErrors?: Record<number | string, Record<string, QuickEditValidationError>>;
   onLiveChange?: <T>(
     rowId: number | string,
@@ -66,6 +67,12 @@ interface UseCellEditorsReturn {
 
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
+
+const isLinkedOptionsField = (field: FormFieldDto): boolean => {
+  const linkedOptionsFieldId = getFieldExtra(field).linkedOptionsFieldId;
+
+  return typeof linkedOptionsFieldId === "string" && linkedOptionsFieldId.trim() !== "";
+};
 
 const getOptionIds = (field: FormFieldDto): string[] => {
   if (Array.isArray((field as any).options)) {
@@ -92,7 +99,8 @@ const getOptionLabelMap = (field: FormFieldDto): Record<string, string> => {
     return Object.fromEntries(
       (field as any).options
         .filter(
-          (option: any) => option && typeof option.id === "string" && typeof option.text === "string",
+          (option: any) =>
+            option && typeof option.id === "string" && typeof option.text === "string",
         )
         .map((option: any) => [option.id, option.text]),
     );
@@ -118,9 +126,28 @@ const getOptionLabelMap = (field: FormFieldDto): Record<string, string> => {
   return {};
 };
 
+const getConnectedOptionIds = (
+  fieldId: string,
+  fieldOptions: Record<string, FieldOptionValue[]>,
+): string[] => {
+  return Array.from(
+    new Set(
+      (fieldOptions[fieldId] ?? [])
+        .map((option) => option.value)
+        .filter((value) => value !== undefined && value !== null && String(value).trim() !== "")
+        .map((value) => String(value)),
+    ),
+  );
+};
+
+const getConnectedOptionLabelMap = (options: string[]): Record<string, string> => {
+  return Object.fromEntries(options.map((option) => [option, option]));
+};
+
 export const useCellEditors = ({
   apiRef,
   formFields,
+  fieldOptions = {},
   validationErrors,
   onLiveChange,
 }: UseCellEditorsParams): UseCellEditorsReturn => {
@@ -220,19 +247,30 @@ export const useCellEditors = ({
           );
           break;
 
-        case fieldType.Options:
+        case fieldType.Options: {
+          const linkedOptionsField = isLinkedOptionsField(formField);
+
+          const options = linkedOptionsField
+            ? getConnectedOptionIds(String(formField.id), fieldOptions)
+            : getOptionIds(formField);
+
+          const optionLabels = linkedOptionsField
+            ? getConnectedOptionLabelMap(options)
+            : getOptionLabelMap(formField);
+
           editor = (
             <OptionsCellEditor
               value={getOptionResponseRawValue(params.value) as string | string[]}
               onChange={handleChange}
-              options={getOptionIds(formField)}
-              optionLabels={getOptionLabelMap(formField)}
+              options={options}
+              optionLabels={optionLabels}
               selectionMode={selectionMode}
               isRequired={formField.isRequired}
               errorMessage={errorMessage}
             />
           );
           break;
+        }
 
         case fieldType.Number:
           editor = (
@@ -369,7 +407,13 @@ export const useCellEditors = ({
 
       return editor;
     },
-    [findFormFieldByColumnName, renderFallbackTextField, updateCellValue, validationErrors],
+    [
+      fieldOptions,
+      findFormFieldByColumnName,
+      renderFallbackTextField,
+      updateCellValue,
+      validationErrors,
+    ],
   );
 
   return useMemo(() => ({ renderEditCell }), [renderEditCell]);

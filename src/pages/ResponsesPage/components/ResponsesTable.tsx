@@ -78,6 +78,7 @@ import {
   ResponsesColumnMenu,
   useResponsesTableFilters,
 } from "./ResponsesFilters";
+import { useConnectedFormOptions } from "@src/hooks/useConnectedFormOptions";
 
 const responseHeaderFilterLocaleText = {
   headerFilterOperatorContains: "מכיל",
@@ -331,6 +332,10 @@ export const ResponsesTable = React.memo(
       return form?.fields ?? [];
     }, [form]);
 
+    const { fieldOptions } = useConnectedFormOptions({
+      formFields,
+    });
+
     const { sortModel, handleSortModelChange } = useResponsesTableSorting({
       filter,
       setFilter,
@@ -355,9 +360,7 @@ export const ResponsesTable = React.memo(
     const shouldUseHeaderFilters = showFilters && !isInEditMode;
 
     const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
-    const [expandedRows, setExpandedRows] = useState<Record<string | number, Set<string>>>(
-      {},
-    );
+    const [expandedRows, setExpandedRows] = useState<Record<string | number, Set<string>>>({});
 
     const handleCellExpandToggle = useCallback(
       (rowId: string | number, fieldId: string, isExpanded: boolean) => {
@@ -434,6 +437,7 @@ export const ResponsesTable = React.memo(
     const { renderEditCell } = useCellEditors({
       apiRef,
       formFields,
+      fieldOptions,
       validationErrors,
       onLiveChange: onCellLiveChange,
     });

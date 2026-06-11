@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   FormControl,
   CircularProgress,
@@ -9,9 +9,10 @@ import {
   Box,
 } from "@mui/material";
 import { useGetForm } from "@api/formsApi";
+import apiClient from "@api/config";
 import { useGetFormsData } from "@hooks/useGetFormsData";
 import { formsScopeOption } from "@src/types/enums/filtersAndSorts.enum";
-import { FormSectionDto, FormFieldDto } from "@src/types/shared";
+import { FormSectionDto, FormFieldDto, FormDto } from "@src/types/shared";
 import { useFormStructureContext } from "@pages/FormEditor/context/FormStructureContext";
 import { FormOption } from "@utils/interfaces";
 import { LoaderContainer, Container, FieldControl } from "./styled";
@@ -30,23 +31,125 @@ interface ValidField {
   displayName: string;
 }
 
+const linkedOptionsOwnerFormIdCache = new Map<string, number>();
+
+const getFieldsFromForm = (form: FormDto): FormFieldDto[] => {
+  return (form.sections ?? []).flatMap((section: FormSectionDto) => section.fields ?? []);
+};
+
 function FormFieldResponsesOptions(props: Props) {
   const { linkedOptionsFieldId, validationErrors, onChange } = props;
 
   const { formStructure } = useFormStructureContext();
 
   const [searchText, setSearchText] = useState("");
-  const [selectedFormId, setSelectedFormId] = useState<number | undefined>();
+
+  const [selectedFormId, setSelectedFormId] = useState<number | undefined>(() => {
+    if (!linkedOptionsFieldId) return undefined;
+
+    return linkedOptionsOwnerFormIdCache.get(linkedOptionsFieldId);
+  });
+
   const [selectedFieldId, setSelectedFieldId] = useState<string | undefined>(
     linkedOptionsFieldId ?? undefined,
   );
+
   const [fieldTouchAttempted, setFieldTouchAttempted] = useState(false);
+  const [isResolvingInitialSelection, setIsResolvingInitialSelection] = useState(false);
+
+  const resolvedFieldIdRef = useRef<string | null>(null);
 
   const { formsData: allForms, isLoading: isLoadingForms } = useGetFormsData({
     searchQuery: searchText || undefined,
     scope: formsScopeOption.LinkableForms,
     enabled: true,
   });
+
+  useEffect(() => {
+    setSelectedFieldId(linkedOptionsFieldId ?? undefined);
+
+    if (!linkedOptionsFieldId) {
+      setSelectedFormId(undefined);
+      resolvedFieldIdRef.current = null;
+      return;
+    }
+
+    const cachedOwnerFormId = linkedOptionsOwnerFormIdCache.get(linkedOptionsFieldId);
+
+    if (cachedOwnerFormId) {
+      setSelectedFormId(cachedOwnerFormId);
+      resolvedFieldIdRef.current = linkedOptionsFieldId;
+    }
+  }, [linkedOptionsFieldId]);
+
+  useEffect(() => {
+    if (!linkedOptionsFieldId || allForms.length === 0) {
+      return;
+    }
+
+    const cachedOwnerFormId = linkedOptionsOwnerFormIdCache.get(linkedOptionsFieldId);
+
+    if (cachedOwnerFormId) {
+      setSelectedFormId(cachedOwnerFormId);
+      setSelectedFieldId(linkedOptionsFieldId);
+      resolvedFieldIdRef.current = linkedOptionsFieldId;
+      return;
+    }
+
+    if (resolvedFieldIdRef.current === linkedOptionsFieldId && selectedFormId) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const resolveSelectedForm = async () => {
+      setIsResolvingInitialSelection(true);
+
+      try {
+        for (const formOverview of allForms) {
+          const formId = Number(formOverview.id);
+
+          if (!formId) {
+            continue;
+          }
+
+          const response = await apiClient.get<FormDto>(`/forms/${formId}`, {
+            params: {
+              includePermissions: true,
+            },
+          });
+
+          const form = response.data;
+          const fields = getFieldsFromForm(form);
+          const hasLinkedField = fields.some(
+            (field) => String(field.id) === String(linkedOptionsFieldId),
+          );
+
+          if (hasLinkedField) {
+            linkedOptionsOwnerFormIdCache.set(linkedOptionsFieldId, formId);
+
+            if (isMounted) {
+              setSelectedFormId(formId);
+              setSelectedFieldId(linkedOptionsFieldId);
+              resolvedFieldIdRef.current = linkedOptionsFieldId;
+            }
+
+            return;
+          }
+        }
+      } finally {
+        if (isMounted) {
+          setIsResolvingInitialSelection(false);
+        }
+      }
+    };
+
+    void resolveSelectedForm();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [allForms, linkedOptionsFieldId, selectedFormId]);
 
   const availableForms = useMemo<FormOption[]>(() => {
     const list = formStructure?.metadata?.id
@@ -72,12 +175,7 @@ function FormFieldResponsesOptions(props: Props) {
   const availableFields = useMemo<ValidField[]>(() => {
     if (!selectedForm) return [];
 
-    const fields = (selectedForm.sections || []).reduce(
-      (acc: FormFieldDto[], section: FormSectionDto) => {
-        return [...acc, ...(section.fields || [])];
-      },
-      [],
-    );
+    const fields = getFieldsFromForm(selectedForm);
 
     const allowedTypes = [
       fieldType.Number,
@@ -105,7 +203,7 @@ function FormFieldResponsesOptions(props: Props) {
     return availableFields.find((field) => field.id === selectedFieldId) ?? null;
   }, [availableFields, selectedFieldId]);
 
-  if (isInitializing) {
+  if (isResolvingInitialSelection && !selectedFormId) {
     return (
       <LoaderContainer>
         <CircularProgress size={24} />
@@ -119,7 +217,7 @@ function FormFieldResponsesOptions(props: Props) {
         options={availableForms}
         getOptionLabel={(option) => option?.name || ""}
         value={selectedFormOption}
-        loading={isLoadingForms}
+        loading={isLoadingForms || isInitializing}
         loadingText="מחפש..."
         noOptionsText="לא נמצאו תוצאות"
         onInputChange={(_, newInputValue) => {
@@ -130,6 +228,7 @@ function FormFieldResponsesOptions(props: Props) {
 
           setSelectedFormId(nextFormId);
           setSelectedFieldId(undefined);
+          resolvedFieldIdRef.current = null;
 
           onChange({
             linkedOptionsFieldId: null,
@@ -160,7 +259,9 @@ function FormFieldResponsesOptions(props: Props) {
               ...params.InputProps,
               endAdornment: (
                 <React.Fragment>
-                  {isLoadingForms ? <CircularProgress color="inherit" size={20} /> : null}
+                  {isLoadingForms || isInitializing ? (
+                    <CircularProgress color="inherit" size={20} />
+                  ) : null}
                   {params.InputProps.endAdornment}
                 </React.Fragment>
               ),
@@ -179,11 +280,14 @@ function FormFieldResponsesOptions(props: Props) {
             options={availableFields}
             getOptionLabel={(option) => option.displayName || ""}
             value={selectedFieldOption}
+            loading={isInitializing}
+            loadingText="טוען..."
             onOpen={() => setFieldTouchAttempted(true)}
             onChange={(_, newValue) => {
               const nextFieldId = newValue ? newValue.id : undefined;
 
               setSelectedFieldId(nextFieldId);
+              resolvedFieldIdRef.current = nextFieldId ?? null;
 
               onChange({
                 linkedOptionsFieldId: nextFieldId,
