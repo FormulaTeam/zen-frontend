@@ -78,7 +78,7 @@ export const UnifiedButton = styled(Button)<{ $isPrimary?: boolean }>(({ theme, 
   textTransform: "none",
   whiteSpace: "nowrap",
   transition: "all 0.2s ease",
-  
+
   backgroundColor: $isPrimary ? "#1E88E5" : "rgba(30, 136, 229, 0.08)",
   color: $isPrimary ? "#ffffff" : "#020618",
   border: $isPrimary ? "none" : "1px solid rgba(30, 136, 229, 0.15)",
@@ -87,17 +87,17 @@ export const UnifiedButton = styled(Button)<{ $isPrimary?: boolean }>(({ theme, 
     backgroundColor: $isPrimary ? "#1976D2" : "rgba(30, 136, 229, 0.12)",
     boxShadow: $isPrimary ? "0 4px 12px rgba(30, 136, 229, 0.25)" : "none",
   },
-  
+
   "& .MuiButton-startIcon, & .MuiButton-endIcon": {
     margin: 0,
     fontSize: "18px",
   },
-  
+
   "&.Mui-disabled": {
     backgroundColor: "rgba(0, 0, 0, 0.04)",
     color: "rgba(0, 0, 0, 0.26)",
     border: "1px solid rgba(0, 0, 0, 0.08)",
-  }
+  },
 }));
 
 export const IconOnlyButton = styled(IconButton)(({ theme }) => ({
@@ -111,7 +111,7 @@ export const IconOnlyButton = styled(IconButton)(({ theme }) => ({
   },
   "& svg": {
     fontSize: "24px",
-  }
+  },
 }));
 
 export const MainContentWrapper = styled(Box)<BoxProps>(() => ({
@@ -134,7 +134,6 @@ export const TopSection = styled(Box)<BoxProps>(() => ({
   flexShrink: 0,
   gap: "16px",
 }));
-
 
 export const CenteredBox = styled(Box)<BoxProps>(() => ({
   display: "flex",
@@ -279,25 +278,25 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
         color: "inherit",
       },
     },
-  "& .MuiDataGrid-columnHeaderCheckbox": {
-    "& .MuiDataGrid-columnHeaderTitleContainer": {
+    "& .MuiDataGrid-columnHeaderCheckbox": {
+      "& .MuiDataGrid-columnHeaderTitleContainer": {
+        justifyContent: "flex-start !important",
+      },
+    },
+    "& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight": {
+      backgroundColor: "inherit",
       justifyContent: "flex-start !important",
     },
-  },
-  "& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight": {
-    backgroundColor: "inherit",
-    justifyContent: "flex-start !important",
-  },
-  "& .MuiDataGrid-columnHeader--pinnedLeft, & .MuiDataGrid-columnHeader--pinnedRight": {
-    "& .MuiDataGrid-columnHeaderTitleContainer": {
-      justifyContent: "flex-start !important",
-      flexDirection: "row !important",
+    "& .MuiDataGrid-columnHeader--pinnedLeft, & .MuiDataGrid-columnHeader--pinnedRight": {
+      "& .MuiDataGrid-columnHeaderTitleContainer": {
+        justifyContent: "flex-start !important",
+        flexDirection: "row !important",
+      },
+      "&[data-field='__detail_panel_toggle__'] .MuiDataGrid-columnHeaderTitleContainer": {
+        justifyContent: "center !important",
+      },
     },
-    "&[data-field='__detail_panel_toggle__'] .MuiDataGrid-columnHeaderTitleContainer": {
-      justifyContent: "center !important",
-    },
-  },
-  "& .MuiDataGrid-row": {
+    "& .MuiDataGrid-row": {
       borderBottom: "none",
       "&:hover": {
         backgroundColor: "#f0f7ff !important",
@@ -414,13 +413,13 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     boxShadow: "inset 0 0 0 1px #1976d2",
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus-within":
-  {
-    backgroundImage: "none",
-    boxShadow: "inset 0 0 0 1px #1976d2",
-    borderRadius: "2px",
-    outline: "none",
-    borderColor: "transparent",
-  },
+    {
+      backgroundImage: "none",
+      boxShadow: "inset 0 0 0 1px #1976d2",
+      borderRadius: "2px",
+      outline: "none",
+      borderColor: "transparent",
+    },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--editing": {
     backgroundImage: "none",
     boxShadow: "inset 0 0 0 1px #1976d2",
@@ -430,9 +429,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   },
 
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus::after, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus-within::after":
-  {
-    display: "none",
-  },
+    {
+      display: "none",
+    },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--has-error": {
     backgroundColor: "#ffebee",
     border: `1px solid ${theme.palette.error.main}`,
@@ -507,6 +506,18 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   "& .MuiDataGrid-scrollbar--horizontal": {
     display: "block",
     height: "16px",
+  },
+
+  "& .MuiDataGrid-overlayWrapper": {
+    minHeight: "320px",
+  },
+
+  "& .MuiDataGrid-skeletonLoadingOverlay": {
+    backgroundColor: "#ffffff",
+  },
+
+  "& .MuiDataGrid-skeletonLoadingOverlay .MuiSkeleton-root": {
+    borderRadius: "8px",
   },
 }));
 

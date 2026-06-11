@@ -358,7 +358,23 @@ export const ResponsesTable = React.memo(
     }, []);
 
     const shouldUseHeaderFilters = showFilters && !isInEditMode;
+    const shouldRequestTableSkeleton = !isInEditMode && isRowsLoading;
+    const [showTableSkeleton, setShowTableSkeleton] = useState(false);
 
+    useEffect(() => {
+      if (!shouldRequestTableSkeleton) {
+        setShowTableSkeleton(false);
+        return;
+      }
+
+      const timeoutId = window.setTimeout(() => {
+        setShowTableSkeleton(true);
+      }, 300);
+
+      return () => {
+        window.clearTimeout(timeoutId);
+      };
+    }, [shouldRequestTableSkeleton]);
     const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
     const [expandedRows, setExpandedRows] = useState<Record<string | number, Set<string>>>({});
 
@@ -1195,9 +1211,7 @@ export const ResponsesTable = React.memo(
               }}
               getEstimatedRowHeight={() => 72}
               columnHeaderHeight={40}
-              loading={
-                !isInEditMode && isRowsLoading && rows.length === 0 && form?.responsesCount !== 0
-              }
+              loading={showTableSkeleton}
               checkboxSelection
               disableRowSelectionOnClick
               disableColumnResize
@@ -1250,6 +1264,10 @@ export const ResponsesTable = React.memo(
                 onDetailPanelExpandedRowIdsChange: handleDetailPanelExpandedRowIdsChange,
               })}
               slotProps={{
+                loadingOverlay: {
+                  variant: "skeleton",
+                  noRowsVariant: "skeleton",
+                },
                 columnMenu: {
                   showFilters,
                   activeFiltersCount,
