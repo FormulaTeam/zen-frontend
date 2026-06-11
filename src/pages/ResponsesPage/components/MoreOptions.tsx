@@ -21,7 +21,7 @@ import { UploadResponses } from "./UploadResponses";
 import { PermissionGate } from "@src/components/PermissionGate";
 import { useSuperAdmin } from "@src/contexts/SuperAdminContext";
 import { IconOnlyButton } from "../styled";
-
+import { getResponsesAndExportToExcel } from "@utils/utils";
 interface MoreOptionsProps {
   setAnchorElSourceType: React.Dispatch<React.SetStateAction<HTMLElement | null>>;
   pushToMetro: () => Promise<void>;
@@ -69,9 +69,9 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
     setAnchorElMoreActions(null);
   };
 
-  const handleExportToExcel = () => {
-    createExcelExport(form, rows);
+  const handleExportToExcel = async () => {
     closeMoreActionsMenu();
+    await getResponsesAndExportToExcel(form);
   };
 
   const handleImportFromExcel = () => {
@@ -118,16 +118,10 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
     [rows.length, sourceOperationStatus, hasMetroSource, pushToMetro],
   );
 
-  const createExcelExport = (form: any, rows: any[]) => {
-    // Logic for excel export
-  };
-
   return (
     <>
       <Tooltip title="פעולות נוספות">
-        <IconOnlyButton
-          onClick={(event) => setAnchorElMoreActions(event.currentTarget)}
-        >
+        <IconOnlyButton onClick={(event) => setAnchorElMoreActions(event.currentTarget)}>
           <MoreVert />
         </IconOnlyButton>
       </Tooltip>

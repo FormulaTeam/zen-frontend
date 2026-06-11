@@ -358,8 +358,12 @@ export function showLoadingNotification(msg: string, icon?: JSX.Element) {
 
 export const titleBgStyle = {
   fill: {
-    fgColor: { rgb: "00c7d9c9" },
-    bgColor: { rgb: "00c7d9c9" },
+    fgColor: { rgb: "E1F0FF" },
+    bgColor: { rgb: "E1F0FF" },
+  },
+  font: {
+    color: { rgb: "020618" },
+    bold: true,
   },
   border: {
     right: {
@@ -378,6 +382,12 @@ export const titleBgStyle = {
       style: "thin",
       color: "000000",
     },
+  },
+  alignment: {
+    wrapText: "1",
+    vertical: "top",
+    horizontal: "right",
+    readingOrder: 2,
   },
 };
 
@@ -404,6 +414,7 @@ export const cellBorderStyle = {
     wrapText: "1",
     vertical: "top",
     horizontal: "right",
+    readingOrder: 2,
   },
 };
 export const cellLinkStyle = {
@@ -430,6 +441,7 @@ export const cellLinkStyle = {
     wrapText: "1",
     vertical: "top",
     horizontal: "right",
+    readingOrder: 2,
   },
 };
 
@@ -449,14 +461,65 @@ function preferredOrder(obj, order) {
   return newObject;
 }
 
+const EXPORT_PAGE_SIZE = 100;
+
+const extractResponsesFromResult = (result: any): ResponseDto[] => {
+  if (Array.isArray(result)) {
+    return result;
+  }
+
+  if (Array.isArray(result?.edges)) {
+    return result.edges.map((edge: any) => edge?.node).filter(Boolean);
+  }
+
+  if (Array.isArray(result?.responses)) {
+    return result.responses;
+  }
+
+  if (Array.isArray(result?.data)) {
+    return result.data;
+  }
+
+  return [];
+};
+
+const getPageInfoFromResult = (result: any) => {
+  return result?.pageInfo ?? result?.page_info ?? null;
+};
+
 export const getResponsesAndExportToExcel = async (form: FormDto) => {
   try {
-    let responses: ResponseDto[] = await getResponses(form.id, { form_id: form.id });
+    const allResponses: ResponseDto[] = [];
+    let after: string | undefined = undefined;
 
-    if (responses?.length > 0) {
-      exportToExcel(responses, form);
+    while (true) {
+      const result = await getResponses(form.id, {
+        form_id: form.id,
+        pageSize: EXPORT_PAGE_SIZE,
+        after,
+        before: undefined,
+      });
+
+      const responses = extractResponsesFromResult(result);
+      allResponses.push(...responses);
+
+      const pageInfo = getPageInfoFromResult(result);
+      const hasNextPage = Boolean(pageInfo?.hasNextPage ?? pageInfo?.has_next_page);
+      const endCursor = pageInfo?.endCursor ?? pageInfo?.end_cursor;
+
+      if (!hasNextPage || !endCursor) {
+        break;
+      }
+
+      after = endCursor;
     }
 
+    if (allResponses.length === 0) {
+      showWarningNotification("אין תגובות לייצוא");
+      return;
+    }
+
+    exportToExcel(allResponses, form);
     showSuccessNotification(NotificationTexts.SuccessfulExportToExcel);
   } catch (error) {
     showErrorNotification(NotificationTexts.FailedExportToExcel);
@@ -549,6 +612,8 @@ type ExcelExportCell = {
   hyperlink?: string;
 };
 
+const RESPONSE_INDEX_COLUMN = "מזהה התגובה";
+
 const SYNC_STATUS_COLUMN = "האם סונכרן למטרו";
 
 const RESPONSE_META_COLUMNS = [
@@ -573,7 +638,9 @@ export function createExcelExport(form: FormDto, rows: Row[] = []) {
   const sortedRows = [...rows].sort((a, b) => getRowIndex(a) - getRowIndex(b));
 
   const dataRows = sortedRows.map((row) => {
-    const fieldCells = formFields.map((field) => formatExcelExportCell(row[field.id]));
+    const fieldCells = formFields.map((field) =>
+      formatExcelExportCell(row[`field:${field.id}`] ?? row[field.id]),
+    );
 
     const metaCells: ExcelExportCell[] = [
       { value: formatDateValue(row.created) },
@@ -809,6 +876,7 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
   sortedResponses.forEach((element, i) => {
     //add columns isSynchronized, updated_by, updated
     data[i] = {
+      [RESPONSE_INDEX_COLUMN]: element.index ? `\u202B${String(element.index)}\u202C` : "",
       [HEBREW_TITLES.updated_by]: element.updatedBy?.name ?? "",
       [HEBREW_TITLES.updated]: moment(element.updatedAt).format("DD.MM.YY"),
     };
@@ -830,7 +898,8 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
     //get column with order (first isSynchronized, then fields. then updated_by, then updated)
     data[i] = preferredOrder(
       data[i],
-      [HEBREW_TITLES.isSynchronized]
+      [RESPONSE_INDEX_COLUMN]
+        .concat([HEBREW_TITLES.isSynchronized])
         .concat(names)
         .concat([HEBREW_TITLES.updated_by, HEBREW_TITLES.updated]),
     );
@@ -1076,7 +1145,10 @@ export const DEFAULT_DATE_TIME_FORMAT = `${DEFAULT_DATE_FORMAT} HH:mm`;
  * @returns {string} - The converted date string in "DD/MM/YYYY" format if the input is a number,
  * or the original value if it's not a number.
  */
-export function dateNumberToDateString(date: number | string, dateType?: "date" | "datetime"): string {
+export function dateNumberToDateString(
+  date: number | string,
+  dateType?: "date" | "datetime",
+): string {
   const formatString = dateType === "datetime" ? DEFAULT_DATE_TIME_FORMAT : DEFAULT_DATE_FORMAT;
   return typeof date === "number"
     ? moment.utc(moment.unix(Math.round((date - 25569) * 86400))).format(formatString)
