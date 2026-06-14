@@ -124,7 +124,9 @@ function ManualOptions(props: Props) {
     const originalText = originalItemTexts[item.id];
     const currentText = item.text;
 
-    if (originalText && currentText && originalText !== currentText) {
+    const isExistingForm = Boolean(formStructure?.metadata?.id);
+
+    if (isExistingForm && originalText && currentText && originalText !== currentText) {
       setRenameRenameData({
         index,
         item,
@@ -133,7 +135,7 @@ function ManualOptions(props: Props) {
       });
       setRenameDialogOpen(true);
     }
-  }, [originalItemTexts]);
+  }, [originalItemTexts, formStructure?.metadata?.id]);
 
   const handleConfirmRename = (retroactive: boolean) => {
     if (!renameData) return;

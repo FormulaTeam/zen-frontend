@@ -323,6 +323,26 @@ export const useTableColumns = (
                 }
 
                 const optionStr = String(optionVal ?? "");
+
+                if (fieldOptions && fieldOptions[field.uniqueId]) {
+                  const connectedOptions = fieldOptions[field.uniqueId];
+                  for (const connOpt of connectedOptions) {
+                    const connVal = connOpt.value;
+                    if (connVal && typeof connVal === "object") {
+                      if (Array.isArray(connVal)) {
+                        const matched = connVal.find((o: any) => o && String(o.id) === optionStr);
+                        if (matched) return formatOptionLabel(String(matched.text));
+                      } else if ("id" in connVal && "text" in connVal) {
+                        if (String((connVal as any).id) === optionStr) {
+                          return formatOptionLabel(String((connVal as any).text));
+                        }
+                      }
+                    } else if (String(connVal ?? "") === optionStr) {
+                      return formatOptionLabel(optionStr);
+                    }
+                  }
+                }
+
                 const staticLabelMap = Object.fromEntries(
                   (field.options ?? []).map((o: any) => [o.id, o.text]),
                 );

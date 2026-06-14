@@ -41,8 +41,15 @@ const getLinkedOptionsFieldId = (field: ConnectedFormField): string | undefined 
     : undefined;
 };
 
-const isConnectedToForm = (field: ConnectedFormField): boolean => {
-  return Boolean(getLinkedOptionsFieldId(field));
+const isConnectedToForm = (field: ConnectedFormField, formFields?: ConnectedFormField[]): boolean => {
+  const linkedOptionsFieldId = getLinkedOptionsFieldId(field);
+  if (!linkedOptionsFieldId) return false;
+
+  if (formFields && formFields.some((f) => String(f.id) === String(linkedOptionsFieldId))) {
+    return false;
+  }
+
+  return true;
 };
 
 const getFieldsFromForm = (form: FormDto): FormFieldDto[] => {
@@ -144,7 +151,7 @@ export const useConnectedFormOptions = ({
   const loadMoreOptions = async (fieldId: string, search?: string): Promise<void> => {
     const field = formFields.find((formField) => String(formField.id) === String(fieldId));
 
-    if (!field || !isConnectedToForm(field)) {
+    if (!field || !isConnectedToForm(field, formFields)) {
       return;
     }
 
@@ -169,7 +176,7 @@ export const useConnectedFormOptions = ({
     }
 
     const connectedFields = formFields.filter(
-      (field) => isConnectedToForm(field) && !loadedFieldsRef.current.has(String(field.id)),
+      (field) => isConnectedToForm(field, formFields) && !loadedFieldsRef.current.has(String(field.id)),
     );
 
     if (connectedFields.length === 0) {

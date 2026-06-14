@@ -99,10 +99,15 @@ const getFieldExtra = (field: FormFieldDto): FormFieldExtra => {
   return field.extra as FormFieldExtra;
 };
 
-const isConnectedToForm = (field: FormFieldDto): boolean => {
+const isConnectedToForm = (field: FormFieldDto, formFields?: FormFieldDto[]): boolean => {
   const linkedOptionsFieldId = getFieldExtra(field).linkedOptionsFieldId;
+  if (!linkedOptionsFieldId) return false;
 
-  return typeof linkedOptionsFieldId === "string" && linkedOptionsFieldId.trim() !== "";
+  if (formFields && formFields.some((f) => String(f.id) === String(linkedOptionsFieldId))) {
+    return false;
+  }
+
+  return true;
 };
 
 const getConnectedFieldOptions = (
@@ -118,7 +123,7 @@ const getConnectedFieldOptions = (
   return Array.from(new Set(options));
 };
 
-const getFieldOptionItems = (field: FormFieldDto): OptionItem[] => {
+const getFieldOptionItems = (field: FormFieldDto, includeInactive = false): OptionItem[] => {
   if (Array.isArray((field as any).options)) {
     return (field as any).options
       .filter(
@@ -126,58 +131,27 @@ const getFieldOptionItems = (field: FormFieldDto): OptionItem[] => {
           item &&
           typeof item.id === "string" &&
           item.id.length > 0 &&
-          typeof item.text === "string",
+          typeof item.text === "string" &&
+          (includeInactive || item.isActive !== false),
       )
       .map((item: any) => ({
         id: item.id,
         text: item.text,
+        isActive: item.isActive,
         controllingItemsIds: Array.isArray(item.controllingItemsIds)
           ? item.controllingItemsIds
           : [],
       }));
-  }
-
-  const extra = getFieldExtra(field);
-
-  if (
-    extra.options &&
-    typeof extra.options === "object" &&
-    !Array.isArray(extra.options) &&
-    Array.isArray((extra.options as { items?: OptionItem[] }).items)
-  ) {
-    return (extra.options as { items: OptionItem[] }).items
-      .filter(
-        (item) =>
-          item &&
-          typeof item.id === "string" &&
-          item.id.length > 0 &&
-          typeof item.text === "string",
-      )
-      .map((item) => ({
-        id: item.id,
-        text: item.text,
-        controllingItemsIds: Array.isArray(item.controllingItemsIds)
-          ? item.controllingItemsIds
-          : [],
-      }));
-  }
-
-  if (Array.isArray(extra.options)) {
-    return extra.options.map((option) => ({
-      id: String(option),
-      text: String(option),
-      controllingItemsIds: [],
-    }));
   }
 
   return [];
 };
 
 const getFieldOptions = (field: FormFieldDto): string[] =>
-  getFieldOptionItems(field).map((item) => item.id);
+  getFieldOptionItems(field, false).map((item) => item.id);
 
 const getFieldOptionLabelMap = (field: FormFieldDto): Record<string, string> =>
-  Object.fromEntries(getFieldOptionItems(field).map((item) => [item.id, item.text]));
+  Object.fromEntries(getFieldOptionItems(field, true).map((item) => [item.id, item.text]));
 
 const getConnectedOptionLabelMap = (options: string[]): Record<string, string> =>
   Object.fromEntries(options.map((option) => [option, formatOptionLabel(option)]));
@@ -349,7 +323,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         }
       }
 
-      const connectedToForm = isConnectedToForm(formField);
+      const connectedToForm = isConnectedToForm(formField, formFields);
 
       let availableOptions: string[] = connectedToForm
         ? getConnectedFieldOptions(fieldId, fieldOptions)
@@ -379,7 +353,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 
         if (hasParentValue) {
           const parentValues =
-            parentField && (isConnectedToForm(parentField) || connectedToForm)
+            parentField && (isConnectedToForm(parentField, formFields) || connectedToForm)
               ? fieldOptions[parentFieldId]?.map((optionField) => String(optionField.value)) || []
               : parentValuesForDependency;
 
@@ -433,7 +407,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             availableOptions = getFieldOptions(formField).filter((option) =>
               allowedOptions.has(option),
             );
-          } else if (parentField) {
+          } else if (parentField && parentDependencies.length > 0) {
             const parentOptions = getFieldOptions(parentField);
 
             parentValues.forEach((parentValueItem: string) => {
@@ -453,6 +427,16 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
                     }
                   });
                 }
+              }
+            });
+          } else if (parentField) {
+            const childOptionItems = getFieldOptionItems(formField, true);
+            childOptionItems.forEach((childOption) => {
+              const matchesParent = (childOption.controllingItemsIds ?? []).some((parentId) =>
+                parentValues.includes(parentId),
+              );
+              if (matchesParent) {
+                allowedOptions.add(childOption.id);
               }
             });
           }

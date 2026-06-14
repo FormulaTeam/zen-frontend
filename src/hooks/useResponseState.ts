@@ -109,8 +109,13 @@ const getFieldType = (field: FormFieldDto): FieldType => {
   return field.fieldType as FieldType;
 };
 
-const getOptionIds = (extra: FieldExtra): string[] => {
-  return extra.options?.items?.map((item) => item.id).filter(Boolean) ?? [];
+const getOptionIds = (field: FormFieldDto): string[] => {
+  if (Array.isArray((field as any).options)) {
+    return (field as any).options
+      .filter((option: any) => option && option.isActive !== false)
+      .map((option: any) => String(option.id));
+  }
+  return [];
 };
 
 const flattenFields = (form: FormDto): FormFieldWithSectionDto[] => {
@@ -944,8 +949,8 @@ export const useResponseState = (
             if (!parentField) return;
 
             const parentExtra = getFieldExtra(parentField);
-            const parentOptions = getOptionIds(parentExtra);
-            const childOptions = getOptionIds(childExtra);
+            const parentOptions = getOptionIds(parentField);
+            const childOptions = getOptionIds(childField);
 
             if (parentOptions.length === 0 || childOptions.length === 0) return;
 
