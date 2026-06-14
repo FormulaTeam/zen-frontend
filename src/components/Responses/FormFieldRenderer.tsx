@@ -329,7 +329,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         ? getConnectedFieldOptions(fieldId, fieldOptions)
         : getFieldOptions(formField);
 
-      const parentFieldId = formFieldExtra.parentFieldId;
+      const parentFieldId = formFieldExtra.parentFieldId ?? formFieldExtra.linkedOptionsFieldId;
       const parentDependencies = getParentDependencies(formField);
 
       if (parentFieldId && parentDependencies.length > 0) {
