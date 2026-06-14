@@ -20,3 +20,10 @@ export type GetFormsOverviewsQueryDto = z.infer<typeof GetFormsOverviewsQuerySch
 export type FormFieldDto = z.infer<typeof FormFieldSchema>;
 export type FormSectionDto = z.infer<typeof FormSectionSchema>;
 export { MetaColumnIds } from "../../utils/interfaces";
+
+export type ComparatorDto = {
+  id: number;
+  description: string;
+};
+
+export type ComparatorsByFieldTypeDto = Record<number, ComparatorDto[]>;

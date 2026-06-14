@@ -7,21 +7,20 @@ import {
 import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { ArrayElement, ValueOf } from "../../../../../../../types/utils";
 import { TextComparator } from "../../../../../schemas/conditions/conditionField/comparators/TextComparator";
-import {
-  NumberComparator,
-} from "../../../../../schemas/conditions/conditionField/comparators/NumberComparator";
+import { NumberComparator } from "../../../../../schemas/conditions/conditionField/comparators/NumberComparator";
 import { DateComparator } from "../../../../../schemas/conditions/conditionField/comparators/DateComparator";
-import {
-  OptionsComparator,
-} from "../../../../../schemas/conditions/conditionField/comparators/OptionsComparator";
-import {
-  CheckboxComparator,
-} from "../../../../../schemas/conditions/conditionField/comparators/CheckboxComparator";
+import { OptionsComparator } from "../../../../../schemas/conditions/conditionField/comparators/OptionsComparator";
+import { CheckboxComparator } from "../../../../../schemas/conditions/conditionField/comparators/CheckboxComparator";
 import { FunctionComponent } from "react";
-import { FormControl, FormHelperText, InputLabel, MenuItem, Select, TextField } from "@mui/material";
 import {
-  ManualItems,
-} from "../../../../FormStructure/FormFieldElement/ExtraElement/elements/OptionsFieldExtra/ManualOptions";
+  FormControl,
+  FormHelperText,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+} from "@mui/material";
+import { ManualItems } from "../../../../FormStructure/FormFieldElement/ExtraElement/elements/OptionsFieldExtra/ManualOptions";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import moment, { Moment } from "moment";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
@@ -29,11 +28,14 @@ import "moment/locale/he";
 
 interface ComparatorOptionData {
   label: string;
-
   requiresTargetValue?: boolean;
 }
 
-type ComparatorOptionsProperties = { [key in keyof typeof FieldTypeIdToComparator]: { [k in ValueOf<typeof FieldTypeIdToComparator[key]> & number]: ComparatorOptionData } };
+type ComparatorOptionsProperties = {
+  [key in keyof typeof FieldTypeIdToComparator]: {
+    [k in ValueOf<(typeof FieldTypeIdToComparator)[key]> & number]: ComparatorOptionData;
+  };
+};
 
 const ComparatorOptionsProperties = {
   [FieldTypeIds.longText]: {
@@ -90,7 +92,6 @@ interface ComparatorValueComponentProps {
   value: unknown;
   disabled: boolean;
   onChange: (e: { target: { value: string | unknown } }) => void;
-
   error?: boolean;
   helperText?: string;
 }
@@ -104,23 +105,23 @@ const ComparatorValueProperties = {
   [FieldTypeIds.longText]: {
     valueTransformer: String,
     inputComponent: ({ ...restProps }: ComparatorValueComponentProps) => (
-      <TextField fullWidth multiline variant={"standard"} type={"text"} {...restProps} />
+      <TextField fullWidth multiline variant="standard" type="text" {...restProps} />
     ),
   },
   [FieldTypeIds.shortText]: {
     valueTransformer: String,
     inputComponent: ({ ...restProps }: ComparatorValueComponentProps) => (
-      <TextField fullWidth variant={"standard"} type={"text"} {...restProps} />
+      <TextField fullWidth variant="standard" type="text" {...restProps} />
     ),
   },
   [FieldTypeIds.number]: {
     valueTransformer: Number,
     inputComponent: ({ ...restProps }: ComparatorValueComponentProps) => (
-      <TextField fullWidth variant={"standard"} type={"number"} {...restProps} />
+      <TextField fullWidth variant="standard" type="number" {...restProps} />
     ),
   },
   [FieldTypeIds.date]: {
-    valueTransformer: (value) => !!value ? (value as Moment).toISOString() : undefined,
+    valueTransformer: (value) => (!!value ? (value as Moment).toISOString() : undefined),
     inputComponent: ({
       label: _,
       value,
@@ -130,19 +131,17 @@ const ComparatorValueProperties = {
       helperText,
       ...restProps
     }: ComparatorValueComponentProps) => (
-      <FormControl disabled={disabled}
-        error={error}
-        sx={{ width: "100%", marginTop: 1 }}>
+      <FormControl disabled={disabled} error={error} sx={{ width: "100%", marginTop: 1 }}>
         <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale="he">
-          <DatePicker value={!!value ? moment(String(value)) : null}
+          <DatePicker
+            value={!!value ? moment(String(value)) : null}
             disabled={disabled}
             sx={{ "& .MuiInputBase-root": { borderRadius: 2 } }}
             onChange={(date) => onChange({ target: { value: date } })}
-            {...restProps} />
+            {...restProps}
+          />
         </LocalizationProvider>
-        <FormHelperText id="options-value-helper-text">
-          {helperText}
-        </FormHelperText>
+        <FormHelperText id="options-value-helper-text">{helperText}</FormHelperText>
       </FormControl>
     ),
   },
@@ -156,24 +155,23 @@ const ComparatorValueProperties = {
       helperText,
       ...restProps
     }: ComparatorValueComponentProps & {
-      items?: Pick<ArrayElement<ManualItems>, "id" | "text">[],
+      items?: Pick<ArrayElement<ManualItems>, "id" | "text">[];
     }) => (
       <FormControl disabled={disabled} error={error} fullWidth sx={{ marginTop: 1 }}>
         <InputLabel id="options-value-label">{label}</InputLabel>
-        <Select labelId="options-value-label"
+        <Select
+          labelId="options-value-label"
           fullWidth
-          aria-describedby={"options-value-helper-text"}
+          aria-describedby="options-value-helper-text"
           label={label}
           {...restProps}>
-          {
-            items?.map((item) => (
-              <MenuItem key={item.id} value={item.id}>{item.text}</MenuItem>
-            ))
-          }
+          {items?.map((item) => (
+            <MenuItem key={item.id} value={item.id}>
+              {item.text}
+            </MenuItem>
+          ))}
         </Select>
-        <FormHelperText id="options-value-helper-text">
-          {helperText}
-        </FormHelperText>
+        <FormHelperText id="options-value-helper-text">{helperText}</FormHelperText>
       </FormControl>
     ),
   },
@@ -181,18 +179,19 @@ const ComparatorValueProperties = {
     valueTransformer: Boolean,
     inputComponent: ({ helperText, disabled, error, value, ...restProps }) => (
       <FormControl disabled={disabled} error={error} fullWidth>
-        <InputLabel id="checkbox-value-label" sx={{ marginTop: 1 }}>ערך</InputLabel>
-        <Select labelId="checkbox-value-label"
+        <InputLabel id="checkbox-value-label" sx={{ marginTop: 1 }}>
+          ערך
+        </InputLabel>
+        <Select
+          labelId="checkbox-value-label"
           fullWidth
-          variant={"standard"}
+          variant="standard"
           value={value != undefined ? +(value as boolean) : ""}
           {...restProps}>
           <MenuItem value={+false}>לא</MenuItem>
           <MenuItem value={+true}>כן</MenuItem>
         </Select>
-        <FormHelperText id="checkbox-value-helper-text">
-          {helperText}
-        </FormHelperText>
+        <FormHelperText id="checkbox-value-helper-text">{helperText}</FormHelperText>
       </FormControl>
     ),
   },
@@ -200,7 +199,7 @@ const ComparatorValueProperties = {
 
 interface ComparatorOption {
   values: FormComparator[];
-  optionsProperties: ValueOf<ComparatorOptionsProperties>;
+  optionsProperties: Record<number, ComparatorOptionData>;
   valueProperties: ValueOf<typeof ComparatorValueProperties>;
 }
 
@@ -214,7 +213,76 @@ const ComparatorOptions = CONDITION_FIELD_TYPE_IDS.reduce((obj, typeId) => {
   return obj;
 }, {}) as Record<ConditionFieldTypeId, ComparatorOption>;
 
+type ComparatorsByFieldTypeDto = Record<
+  number,
+  {
+    id: number;
+    description: string;
+  }[]
+>;
+
+const getStaticComparatorOptionsProperties = (
+  typeId: number,
+): Record<number, ComparatorOptionData> => {
+  return (
+    (ComparatorOptionsProperties as Record<number, Record<number, ComparatorOptionData>>)[typeId] ??
+    {}
+  );
+};
+
+const getComparatorLabel = (typeId: number | undefined, comparator: number | undefined): string => {
+  if (typeId == null || comparator == null) {
+    return "";
+  }
+
+  return getStaticComparatorOptionsProperties(typeId)[comparator]?.label ?? "";
+};
+
+const buildComparatorOptions = (
+  comparatorsByFieldType?: ComparatorsByFieldTypeDto,
+): Record<ConditionFieldTypeId, ComparatorOption> => {
+  return CONDITION_FIELD_TYPE_IDS.reduce(
+    (obj, typeId) => {
+      const staticOptionsProperties = getStaticComparatorOptionsProperties(typeId);
+      const dbComparators = comparatorsByFieldType?.[typeId];
+
+      const values =
+        dbComparators && dbComparators.length > 0
+          ? dbComparators
+              .map((comparator) => comparator.id)
+              .filter((comparatorId) => comparatorId in staticOptionsProperties)
+          : Object.values(FieldTypeIdToComparator[typeId]);
+
+      const optionsProperties = values.reduce<Record<number, ComparatorOptionData>>(
+        (acc, comparatorId) => {
+          const staticProperty = staticOptionsProperties[comparatorId];
+
+          if (!staticProperty) {
+            return acc;
+          }
+
+          acc[comparatorId] = staticProperty;
+
+          return acc;
+        },
+        {},
+      );
+
+      obj[typeId] = {
+        values: values as FormComparator[],
+        optionsProperties,
+        valueProperties: ComparatorValueProperties[typeId],
+      };
+
+      return obj;
+    },
+    {} as Record<ConditionFieldTypeId, ComparatorOption>,
+  );
+};
+
 export {
   ComparatorOptions,
   ComparatorOptionsProperties,
+  buildComparatorOptions,
+  getComparatorLabel,
 };

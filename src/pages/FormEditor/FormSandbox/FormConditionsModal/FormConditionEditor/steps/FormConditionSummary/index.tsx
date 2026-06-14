@@ -1,10 +1,10 @@
-import React, { useRef, useState, useEffect } from "react";
+import React from "react";
+import { Chip, TextField, Typography } from "@mui/material";
+import { OverflowTooltip } from "@components/OverflowTooltip";
 import { useFormConditionEditorContext } from "../../context/FormConditionEditorContext";
 import { ConditionEditorStepId, ConditionOperatorLabel } from "../../constants";
 import { useFormStructureContext } from "../../../../../context/FormStructureContext";
-import { ComparatorOptionsProperties } from "../FormConditionBuilder/utils";
-import { Chip, TextField, Typography, Tooltip } from "@mui/material";
-import { OverflowTooltip } from "@components/OverflowTooltip";
+import { getComparatorLabel } from "../FormConditionBuilder/utils";
 import { FormComponentType, FormConditionBooleanOperator } from "../../../../../schemas/conditions";
 import styles from "../../../../../FormEditorHeader/style.module.css";
 import summaryStyles from "./style.module.css";
@@ -16,7 +16,10 @@ function FormConditionsSummary() {
     conditionData: { groups, dependantComponents, name },
     setData,
   } = useFormConditionEditorContext(ConditionEditorStepId.SUMMARY);
-  const { formStructure: { fields, sections } } = useFormStructureContext();
+
+  const {
+    formStructure: { fields, sections },
+  } = useFormStructureContext();
 
   const dependantFields = dependantComponents[FormComponentType.FIELD] ?? [];
   const dependantSections = dependantComponents[FormComponentType.SECTION] ?? [];
@@ -35,13 +38,12 @@ function FormConditionsSummary() {
 
   return (
     <div className={summaryStyles.container}>
-
       <div className={summaryStyles.borderedSection}>
         <Typography className={summaryStyles.sectionTitle}>שם ההתנייה</Typography>
         <div className={summaryStyles.nameInputWrapper}>
           <TextField
             value={name ?? ""}
-            slotProps={{ htmlInput: { className: styles.titleInput, maxLength: 30, } }}
+            slotProps={{ htmlInput: { className: styles.titleInput, maxLength: 30 } }}
             size="medium"
             placeholder="התנייה #1"
             variant="standard"
@@ -61,11 +63,11 @@ function FormConditionsSummary() {
               <div key={group?.id ?? groupIndex} className={summaryStyles.groupWrapper}>
                 {groupOperator != null && groupIndex > 0 && (
                   <div
-                    className={`${summaryStyles.operatorBadge} ${groupOperator === FormConditionBooleanOperator.OR
-                      ? summaryStyles.operatorBadgeOr
-                      : summaryStyles.operatorBadgeAnd
-                      }`}
-                  >
+                    className={`${summaryStyles.operatorBadge} ${
+                      groupOperator === FormConditionBooleanOperator.OR
+                        ? summaryStyles.operatorBadgeOr
+                        : summaryStyles.operatorBadgeAnd
+                    }`}>
                     {ConditionOperatorLabel[groupOperator as FormConditionBooleanOperator]}
                   </div>
                 )}
@@ -85,39 +87,52 @@ function FormConditionsSummary() {
 
                       const fieldDisplayName =
                         fields[field?.id ?? ""]?.data?.displayName ?? "שגיאה - שדה אינו קיים";
-                      const comparatorLabel =
-                        ComparatorOptionsProperties[field?.typeId ?? -1]?.[field?.comparator as number]?.label ?? "";
+
+                      const comparatorLabel = getComparatorLabel(
+                        field?.typeId,
+                        field?.comparator as number | undefined,
+                      );
+
                       const targetValue = field?.targetValue;
 
                       return (
-                        <div key={predicate?.id ?? predicateIndex} className={summaryStyles.predicateRow}>
+                        <div
+                          key={predicate?.id ?? predicateIndex}
+                          className={summaryStyles.predicateRow}>
                           {predicateIndex > 0 && predicateOperator != null && (
                             <Typography className={summaryStyles.predicateOperator}>
-                              {ConditionOperatorLabel[predicateOperator as FormConditionBooleanOperator]}
+                              {
+                                ConditionOperatorLabel[
+                                  predicateOperator as FormConditionBooleanOperator
+                                ]
+                              }
                             </Typography>
                           )}
+
                           <div className={summaryStyles.predicateText}>
                             <span>שדה</span>
                             <OverflowTooltip title={fieldDisplayName}>
                               <span className={summaryStyles.ellipsisText}>{fieldDisplayName}</span>
                             </OverflowTooltip>
+
                             <div className={summaryStyles.conditionValue}>
                               <span>
                                 {comparatorLabel}
-                                {field?.typeId === FieldTypeIds.date && targetValue != null ? "-" : ""}
+                                {field?.typeId === FieldTypeIds.date && targetValue != null
+                                  ? "-"
+                                  : ""}
                               </span>
 
                               {targetValue != null && (
                                 <OverflowTooltip
                                   title={formatTargetValue(
                                     field?.typeId ?? FieldTypeIds.shortText,
-                                    targetValue
-                                  )}
-                                >
+                                    targetValue,
+                                  )}>
                                   <span className={summaryStyles.ellipsisText}>
                                     {formatTargetValue(
                                       field?.typeId ?? FieldTypeIds.shortText,
-                                      targetValue
+                                      targetValue,
                                     )}
                                   </span>
                                 </OverflowTooltip>
@@ -177,7 +192,6 @@ function FormConditionsSummary() {
           </div>
         )}
       </div>
-
     </div>
   );
 }
