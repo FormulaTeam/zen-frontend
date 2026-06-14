@@ -1,6 +1,18 @@
-import { memo, useCallback, useMemo, useState } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  Box,
+  IconButton,
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
+import CloseIcon from "@mui/icons-material/Close";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
-import BasePopup from "../../BasePopup/BasePopup";
 import { createExcelMold } from "../../../utils/utils";
 import ExcelImportContent from "../ExcelImportContent";
 import { StoreForm } from "../../../pages/ResponsesPage/stores/form.store";
@@ -9,10 +21,10 @@ import {
   Chevron,
   EmptyValue,
   ErrorDetailRow,
-  ErrorDetailsHeader,
   ErrorDetailsWrapper,
   ErrorGroup,
   ErrorGroupButton,
+  ErrorGroupCount,
   ErrorGroupMainText,
   ErrorGroupSubText,
   ErrorGroupTitle,
@@ -25,8 +37,111 @@ import {
   RowNumbersText,
   StatusDescription,
   StatusHeader,
+  StatusIcon,
+  StatusTitle,
   StatusWrapper,
 } from "./styled";
+
+const StyledDialog = styled(Dialog)(() => ({
+  "& .MuiPaper-root": {
+    borderRadius: "16px",
+    maxWidth: "760px",
+    width: "calc(100% - 40px)",
+    maxHeight: "min(720px, calc(100vh - 80px))",
+    backgroundColor: "#ffffff",
+    boxShadow: "0 20px 55px rgba(15, 23, 42, 0.18), 0 8px 22px rgba(15, 23, 42, 0.08)",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+  },
+}));
+
+const StyledDialogTitle = styled(DialogTitle)(() => ({
+  position: "relative",
+  padding: "28px 32px 12px",
+}));
+
+const CloseButton = styled(IconButton)(() => ({
+  position: "absolute",
+  insetInlineEnd: "18px",
+  top: "18px",
+  color: "#64748b",
+  padding: "6px",
+  borderRadius: "10px",
+  "&:hover": {
+    backgroundColor: "rgba(100, 116, 139, 0.08)",
+  },
+  "& svg": {
+    fontSize: "26px",
+  },
+}));
+
+const HeaderText = styled(Box)(() => ({
+  paddingInlineEnd: "42px",
+}));
+
+const TitleText = styled(Typography)(() => ({
+  fontWeight: 700,
+  fontSize: "1.28rem",
+  lineHeight: 1.35,
+  color: "#0f172a",
+}));
+
+const SubtitleText = styled(Typography)(() => ({
+  marginTop: "8px",
+  color: "#64748b",
+  fontWeight: 400,
+  fontSize: "0.96rem",
+  lineHeight: 1.55,
+}));
+
+const Content = styled(DialogContent)(() => ({
+  padding: "18px 32px 0",
+  flex: 1,
+  minHeight: 0,
+  maxHeight: "min(560px, calc(100vh - 240px))",
+  overflowY: "auto",
+  overflowX: "hidden",
+}));
+
+const Actions = styled(DialogActions)(() => ({
+  padding: "30px 32px 30px",
+  gap: "10px",
+  justifyContent: "center",
+}));
+
+const SecondaryButton = styled(Button)(() => ({
+  minWidth: "112px",
+  height: "40px",
+  borderRadius: "9px",
+  fontSize: "0.95rem",
+  fontWeight: 700,
+  textTransform: "none",
+  color: "#0f172a",
+  borderColor: "#d8e2ef",
+  backgroundColor: "#ffffff",
+  boxShadow: "none",
+  "&:hover": {
+    borderColor: "#cbd5e1",
+    backgroundColor: "#f8fafc",
+    boxShadow: "none",
+  },
+}));
+
+const PrimaryButton = styled(Button)(({ theme }) => ({
+  minWidth: "112px",
+  height: "40px",
+  borderRadius: "9px",
+  fontSize: "0.95rem",
+  fontWeight: 700,
+  textTransform: "none",
+  backgroundColor: theme.palette.primary.main,
+  boxShadow: "none",
+  "&:hover": {
+    backgroundColor: theme.palette.primary.dark,
+    boxShadow: "none",
+  },
+}));
 
 export type ExcelImportPopupError = {
   rowNumber?: number;
@@ -172,16 +287,12 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
   const [openFields, setOpenFields] = useState<Set<string>>(new Set());
 
   const generalErrors = useMemo(() => errors.filter((error) => error.isGeneral), [errors]);
-
   const fieldErrors = useMemo(() => errors.filter((error) => !error.isGeneral), [errors]);
-
   const groupedErrors = useMemo(() => groupErrorsByFieldAndMessage(fieldErrors), [fieldErrors]);
-
   const failedRowsCount = useMemo(() => getUniqueFailedRowsCount(fieldErrors), [fieldErrors]);
 
   const hasGeneralErrors = generalErrors.length > 0;
   const hasFieldErrors = fieldErrors.length > 0;
-  const hasErrors = hasGeneralErrors || hasFieldErrors;
 
   const resetUploadRefValue = useCallback(() => {
     if (!uploadRef) return;
@@ -231,39 +342,46 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
     });
   }, []);
 
-  const mainButton = {
-    text: mainButtonLabel,
-    onClick: triggerUpload,
-    disabled: !canPerformActions,
-  };
-
-  const cancelButton = {
-    text: downloadButtonLabel,
-    onClick: handleDownload,
-    disabled: !canPerformActions,
-  };
+  const popupSubtitle =
+    hasGeneralErrors || hasFieldErrors
+      ? "לא נוצרו תגובות. תקנו את הערכים בקובץ ונסו לייבא שוב."
+      : "הורידו תבנית, מלאו את הנתונים בהתאם לעמודות, ולאחר מכן ייבאו את הקובץ.";
 
   const popupContent = isLoading ? (
     <Loader />
   ) : hasGeneralErrors ? (
     <StatusWrapper>
       <StatusHeader>
-        {generalErrors.map((error, index) => (
-          <StatusDescription key={index}>{error.message}</StatusDescription>
-        ))}
+        <StatusIcon>
+          <InfoOutlinedIcon />
+        </StatusIcon>
+
+        <Box>
+          <StatusTitle>לא ניתן לייבא את הקובץ</StatusTitle>
+
+          {generalErrors.map((error, index) => (
+            <StatusDescription key={index}>{error.message}</StatusDescription>
+          ))}
+        </Box>
       </StatusHeader>
     </StatusWrapper>
   ) : hasFieldErrors ? (
     <StatusWrapper>
       <StatusHeader>
-        <StatusDescription>
-          לא נוצרו תגובות. פתחו את השדות הרלוונטיים, תקנו את הערכים בקובץ ונסו לייבא שוב.
-        </StatusDescription>
+        <StatusIcon>
+          <InfoOutlinedIcon />
+        </StatusIcon>
+
+        <Box>
+          <StatusTitle>הייבוא נעצר</StatusTitle>
+          <StatusDescription>
+            נמצאו שגיאות בקובץ. הייבוא נעצר כדי למנוע יצירת תגובות חלקיות.
+          </StatusDescription>
+        </Box>
       </StatusHeader>
 
       <ErrorSummary>
-        נמצאו {fieldErrors.length} שגיאות {getFailedRowsLabel(failedRowsCount)}. הייבוא נעצר כדי
-        למנוע יצירת תגובות חלקיות.
+        נמצאו {fieldErrors.length} שגיאות {getFailedRowsLabel(failedRowsCount)}.
       </ErrorSummary>
 
       <ErrorGroupsWrapper>
@@ -283,16 +401,11 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
                   </ErrorGroupSubText>
                 </ErrorGroupTitle>
 
-                <span />
+                <ErrorGroupCount>{group.totalErrorsCount}</ErrorGroupCount>
               </ErrorGroupButton>
 
               {isOpenGroup && (
                 <ErrorDetailsWrapper>
-                  <ErrorDetailsHeader>
-                    <div>הודעת שגיאה</div>
-                    <div>שורות</div>
-                  </ErrorDetailsHeader>
-
                   {group.errors.map((errorGroup, index) => (
                     <ErrorDetailRow key={`${fieldKey}-${errorGroup.message}-${index}`}>
                       <ErrorMessageBlock>
@@ -303,7 +416,8 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
                       </ErrorMessageBlock>
 
                       <RowNumbersText>
-                        {getRowsLabel(errorGroup) || <EmptyValue>—</EmptyValue>}
+                        <span>שורות</span>
+                        <strong>{getRowsLabel(errorGroup) || <EmptyValue>—</EmptyValue>}</strong>
                       </RowNumbersText>
                     </ErrorDetailRow>
                   ))}
@@ -319,17 +433,40 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
   );
 
   return (
-    <BasePopup
-      open={isOpen}
-      onClose={handleClose}
-      title="ייבוא נתונים מאקסל"
-      minHeight="500px"
-      minWidth="700px"
-      maxWidth="760px"
-      content={<PopupContentWrapper>{popupContent}</PopupContentWrapper>}
-      mainButton={mainButton}
-      cancelButton={cancelButton}
-    />
+    <StyledDialog open={isOpen} onClose={handleClose} scroll="paper">
+      <StyledDialogTitle>
+        <CloseButton aria-label="close" onClick={handleClose}>
+          <CloseIcon />
+        </CloseButton>
+
+        <HeaderText>
+          <TitleText>ייבוא נתונים מאקסל</TitleText>
+          <SubtitleText>{popupSubtitle}</SubtitleText>
+        </HeaderText>
+      </StyledDialogTitle>
+
+      <Content>
+        <PopupContentWrapper>{popupContent}</PopupContentWrapper>
+      </Content>
+
+      <Actions>
+        <SecondaryButton
+          onClick={handleDownload}
+          variant="outlined"
+          disableElevation
+          disabled={!canPerformActions}>
+          {downloadButtonLabel}
+        </SecondaryButton>
+
+        <PrimaryButton
+          onClick={triggerUpload}
+          variant="contained"
+          disableElevation
+          disabled={!canPerformActions}>
+          {mainButtonLabel}
+        </PrimaryButton>
+      </Actions>
+    </StyledDialog>
   );
 };
 
