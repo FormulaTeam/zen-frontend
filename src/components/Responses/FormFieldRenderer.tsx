@@ -344,11 +344,27 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         const parentFieldExtra = parentField ? getFieldExtra(parentField) : {};
         const parentValueFromMap = formFieldsValuesMap.get(parentFieldId);
 
-        const normalizedParentValue = Array.isArray(parentValueFromMap)
-          ? parentValueFromMap
-          : typeof parentValueFromMap === "string" && parentValueFromMap !== ""
-            ? [parentValueFromMap]
-            : [];
+        const getOptionIdStr = (val: any): string => {
+          if (val && typeof val === "object") {
+            return String(val.id ?? val.value ?? "");
+          }
+          return String(val ?? "");
+        };
+
+        const normalizedParentValue: string[] = [];
+        if (Array.isArray(parentValueFromMap)) {
+          parentValueFromMap.forEach((item) => {
+            const idStr = getOptionIdStr(item);
+            if (idStr) {
+              normalizedParentValue.push(idStr);
+            }
+          });
+        } else if (parentValueFromMap) {
+          const idStr = getOptionIdStr(parentValueFromMap);
+          if (idStr) {
+            normalizedParentValue.push(idStr);
+          }
+        }
 
         const fallbackParentOptions = getFieldOptions(parentField ?? formField);
         const parentValuesForDependency =
