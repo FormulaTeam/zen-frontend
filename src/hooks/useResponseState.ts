@@ -927,24 +927,34 @@ export const useResponseState = (
       newFormFieldsValuesMap.set(normalizedFieldId, value);
 
       if (formFields.length > 0) {
-        const childFields = formFields.filter(
-          (field) => String(getFieldExtra(field).parentFieldId) === normalizedFieldId,
-        );
+        const childFields = formFields.filter((field) => {
+          const extraRecord = getFieldExtra(field);
+          const parentId = extraRecord.parentFieldId ?? extraRecord.linkedOptionsFieldId;
+          return String(parentId) === normalizedFieldId;
+        });
 
         if (childFields.length > 0) {
           childFields.forEach((childField) => {
             const childExtra = getFieldExtra(childField);
 
-            if (getFieldType(childField) !== fieldType.Options || !childExtra.parentDependencies) {
+            const hasLocalDependencies = (childField as any).options?.some(
+              (o: any) => o.controllingItemsIds && o.controllingItemsIds.length > 0,
+            );
+
+            if (
+              getFieldType(childField) !== fieldType.Options ||
+              (!childExtra.parentDependencies && !hasLocalDependencies)
+            ) {
               return;
             }
 
             const childFieldId = String(childField.id);
             const currentChildValue = newFormFieldsValuesMap.get(childFieldId);
 
-            const parentField = formFields.find(
-              (field) => String(field.id) === String(childExtra.parentFieldId),
-            );
+            const parentField = formFields.find((field) => {
+              const parentId = childExtra.parentFieldId ?? childExtra.linkedOptionsFieldId;
+              return String(field.id) === String(parentId);
+            });
 
             if (!parentField) return;
 
