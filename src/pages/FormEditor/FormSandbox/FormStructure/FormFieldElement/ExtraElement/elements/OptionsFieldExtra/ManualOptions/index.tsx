@@ -227,9 +227,8 @@ function ManualOptions(props: Props) {
                   value={extra.linkedOptionsFieldId || null}
                   noOptionsText={"לא נמצאו שדות מתאימים"}
                   onChange={(_, newValue) => {
-                    (onChange as any)({
+                    onChange({
                       linkedOptionsFieldId: newValue || undefined,
-                      parentFieldId: newValue || undefined,
                     });
                   }}
                   renderInput={(params) => (
@@ -252,9 +251,8 @@ function ManualOptions(props: Props) {
             extra.linkedOptionsFieldId &&
             <Button className={styles.button}
               onClick={(_) => {
-                (onChange as any)({
+                onChange({
                   linkedOptionsFieldId: undefined,
-                  parentFieldId: undefined,
                 });
               }}>
               <Close sx={{ fontSize: 20, color: "#a54160" }} />
