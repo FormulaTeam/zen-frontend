@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { FormMetadata, useFormStructureContext } from "../context/FormStructureContext";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFormEditor } from "../hooks/useFormEditor";
 import IconsGrid from "../../../components/IconsGrid/IconsGrid";
 import { OverflowTooltip } from "../../../components/OverflowTooltip";
@@ -24,7 +24,9 @@ import {
   SeamlessDescriptionInput,
 } from "./styled";
 import { texts } from "@src/utils/texts";
-import ValidationErrorsDialog from "../../../components/BasePopup/ValidationErrorsDialog";
+import ValidationErrorsDialog, {
+  type ValidationError,
+} from "../../../components/BasePopup/ValidationErrorsDialog";
 import UnsavedChangesDialog from "../../../components/BasePopup/UnsavedChangesDialog";
 
 type FormValidationResult = {
@@ -32,6 +34,63 @@ type FormValidationResult = {
   fieldsValid: boolean;
   metadataErrors?: Record<string, string[] | undefined> | null;
   hasFields: boolean;
+};
+
+const METADATA_FIELD_LABELS: Record<string, string> = {
+  title: "שם הטופס",
+  description: "תיאור הטופס",
+};
+
+const collectValidationMessages = (validationNode: unknown): string[] => {
+  const messages = new Set<string>();
+
+  const visit = (node: unknown) => {
+    if (!node) {
+      return;
+    }
+
+    if (Array.isArray(node)) {
+      node.forEach(visit);
+      return;
+    }
+
+    if (typeof node !== "object") {
+      return;
+    }
+
+    const nodeAsRecord = node as Record<string, unknown>;
+    const errors = nodeAsRecord.errors;
+
+    if (Array.isArray(errors)) {
+      errors
+        .filter((error): error is string => typeof error === "string" && error.trim() !== "")
+        .forEach((error) => messages.add(error));
+    }
+
+    const properties = nodeAsRecord.properties;
+
+    if (properties && typeof properties === "object") {
+      Object.values(properties).forEach(visit);
+    }
+
+    const items = nodeAsRecord.items;
+
+    if (items && typeof items === "object") {
+      Object.values(items).forEach(visit);
+    }
+
+    Object.entries(nodeAsRecord).forEach(([key, value]) => {
+      if (key === "errors" || key === "properties" || key === "items") {
+        return;
+      }
+
+      visit(value);
+    });
+  };
+
+  visit(validationNode);
+
+  return Array.from(messages);
 };
 
 function FormEditorHeader() {
@@ -84,6 +143,50 @@ function FormEditorHeader() {
       hasFields: result.hasFields ?? Object.keys(formStructure.fields).length > 0,
     };
   };
+
+  const validationPopupErrors = useMemo<ValidationError[]>(() => {
+    const errors: ValidationError[] = [];
+
+    if (Object.keys(formStructure.fields).length === 0) {
+      errors.push({
+        message: "לא ניתן לשמור טופס ללא שדות",
+      });
+    }
+
+    Object.entries(formStructure.metadata.validationErrors ?? {}).forEach(
+      ([fieldName, messages]) => {
+        messages
+          ?.filter(
+            (message): message is string => typeof message === "string" && message.trim() !== "",
+          )
+          .forEach((message) => {
+            errors.push({
+              fieldName: METADATA_FIELD_LABELS[fieldName] ?? fieldName,
+              message,
+            });
+          });
+      },
+    );
+
+    Object.values(formStructure.fields).forEach((field) => {
+      const fieldMessages = collectValidationMessages(field.validationErrors);
+
+      fieldMessages.forEach((message) => {
+        errors.push({
+          fieldName: field.data.displayName || field.data.name || "שדה ללא שם",
+          message,
+        });
+      });
+    });
+
+    return errors.length > 0
+      ? errors
+      : [
+          {
+            message: "נא לתקן את השדות המסומנים באדום",
+          },
+        ];
+  }, [formStructure.fields, formStructure.metadata.validationErrors]);
 
   const runSaveFlow = async (options?: { navigateToResponses?: boolean }) => {
     const { isValid, fieldsValid, metadataErrors, hasFields } = normalizeValidationResult(
@@ -335,10 +438,7 @@ function FormEditorHeader() {
     <ValidationErrorsDialog
       open={showValidationErrorsPopup}
       onClose={() => setShowValidationErrorsPopup(false)}
-      errors={[
-        "נא לתקן את השדות המסומנים באדום",
-        ...(Object.keys(formStructure.fields).length === 0 ? ["לא ניתן לשמור טופס ללא שדות"] : []),
-      ]}
+      errors={validationPopupErrors}
     />
   );
 
