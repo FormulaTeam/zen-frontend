@@ -2,7 +2,6 @@ import {
   CONDITION_FIELD_TYPE_IDS,
   ConditionFieldTypeId,
   FieldTypeIdToComparator,
-  FormComparator,
 } from "../../../../../schemas/conditions/conditionField/baseConditionFieldSchema";
 import { FieldTypeIds } from "../../../../../../../utils/interfaces";
 import { ArrayElement, ValueOf } from "../../../../../../../types/utils";
@@ -25,6 +24,8 @@ import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import moment, { Moment } from "moment";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import "moment/locale/he";
+
+type ComparatorValue = number;
 
 interface ComparatorOptionData {
   label: string;
@@ -59,8 +60,14 @@ const ComparatorOptionsProperties = {
     [NumberComparator.NOT_EQUAL]: { label: "שונה מ", requiresTargetValue: true },
     [NumberComparator.LARGER]: { label: "גדול מ", requiresTargetValue: true },
     [NumberComparator.SMALLER]: { label: "קטן מ", requiresTargetValue: true },
-    [NumberComparator.LARGER_OR_EQUAL]: { label: "גדול או שווה ל", requiresTargetValue: true },
-    [NumberComparator.SMALLER_OR_EQUAL]: { label: "קטן או שווה ל", requiresTargetValue: true },
+    [NumberComparator.LARGER_OR_EQUAL]: {
+      label: "גדול או שווה ל",
+      requiresTargetValue: true,
+    },
+    [NumberComparator.SMALLER_OR_EQUAL]: {
+      label: "קטן או שווה ל",
+      requiresTargetValue: true,
+    },
     [NumberComparator.EMPTY]: { label: "ריק" },
     [NumberComparator.NOT_EMPTY]: { label: "לא ריק" },
   },
@@ -69,8 +76,14 @@ const ComparatorOptionsProperties = {
     [DateComparator.NOT_EQUAL]: { label: "שונה מ", requiresTargetValue: true },
     [DateComparator.BEFORE]: { label: "קודם ל", requiresTargetValue: true },
     [DateComparator.AFTER]: { label: "מאוחר מ", requiresTargetValue: true },
-    [DateComparator.BEFORE_OR_EQUAL]: { label: "קודם או זהה ל", requiresTargetValue: true },
-    [DateComparator.AFTER_OR_EQUAL]: { label: "מאוחר או זהה ל", requiresTargetValue: true },
+    [DateComparator.BEFORE_OR_EQUAL]: {
+      label: "קודם או זהה ל",
+      requiresTargetValue: true,
+    },
+    [DateComparator.AFTER_OR_EQUAL]: {
+      label: "מאוחר או זהה ל",
+      requiresTargetValue: true,
+    },
     [DateComparator.EMPTY]: { label: "ריק" },
     [DateComparator.NOT_EMPTY]: { label: "לא ריק" },
   },
@@ -86,6 +99,66 @@ const ComparatorOptionsProperties = {
     [CheckboxComparator.EQUAL]: { label: "שווה ל", requiresTargetValue: true },
   },
 } as const satisfies ComparatorOptionsProperties;
+
+const ComparatorDescriptionToValue: Record<number, Record<string, ComparatorValue>> = {
+  [FieldTypeIds.longText]: {
+    equals: TextComparator.EQUAL,
+    not_equals: TextComparator.NOT_EQUAL,
+    contains: TextComparator.CONTAINS,
+    not_contains: TextComparator.NOT_CONTAINS,
+    is_empty: TextComparator.EMPTY,
+    is_not_empty: TextComparator.NOT_EMPTY,
+  },
+  [FieldTypeIds.shortText]: {
+    equals: TextComparator.EQUAL,
+    not_equals: TextComparator.NOT_EQUAL,
+    contains: TextComparator.CONTAINS,
+    not_contains: TextComparator.NOT_CONTAINS,
+    is_empty: TextComparator.EMPTY,
+    is_not_empty: TextComparator.NOT_EMPTY,
+  },
+  [FieldTypeIds.number]: {
+    equals: NumberComparator.EQUAL,
+    not_equals: NumberComparator.NOT_EQUAL,
+    greater_than: NumberComparator.LARGER,
+    less_than: NumberComparator.SMALLER,
+    greater_than_or_equal: NumberComparator.LARGER_OR_EQUAL,
+    less_than_or_equal: NumberComparator.SMALLER_OR_EQUAL,
+    is_empty: NumberComparator.EMPTY,
+    is_not_empty: NumberComparator.NOT_EMPTY,
+  },
+  [FieldTypeIds.date]: {
+    equals: DateComparator.EQUAL,
+    not_equals: DateComparator.NOT_EQUAL,
+    before: DateComparator.BEFORE,
+    after: DateComparator.AFTER,
+    before_or_equal: DateComparator.BEFORE_OR_EQUAL,
+    after_or_equal: DateComparator.AFTER_OR_EQUAL,
+    is_empty: DateComparator.EMPTY,
+    is_not_empty: DateComparator.NOT_EMPTY,
+  },
+  [FieldTypeIds.options]: {
+    equals: OptionsComparator.ONLY,
+    not_equals: OptionsComparator.OTHER_THAN,
+    contains: OptionsComparator.INCLUDES,
+    not_contains: OptionsComparator.NOT_INCLUDES,
+    is_empty: OptionsComparator.NONE,
+    is_not_empty: OptionsComparator.ANY,
+  },
+  [FieldTypeIds.checkbox]: {
+    equals: CheckboxComparator.EQUAL,
+  },
+};
+
+const getStaticComparatorOptionsProperties = (
+  typeId: number,
+): Record<number, ComparatorOptionData> => {
+  return (
+    (
+      ComparatorOptionsProperties as unknown as Record<number, Record<number, ComparatorOptionData>>
+    )[typeId] ?? {}
+  );
+};
 
 interface ComparatorValueComponentProps {
   label: string;
@@ -198,20 +271,10 @@ const ComparatorValueProperties = {
 } as const satisfies Record<keyof typeof FieldTypeIdToComparator, ComparatorValueProperty>;
 
 interface ComparatorOption {
-  values: FormComparator[];
+  values: ComparatorValue[];
   optionsProperties: Record<number, ComparatorOptionData>;
   valueProperties: ValueOf<typeof ComparatorValueProperties>;
 }
-
-const ComparatorOptions = CONDITION_FIELD_TYPE_IDS.reduce((obj, typeId) => {
-  obj[typeId] = {
-    values: Object.values(FieldTypeIdToComparator[typeId]),
-    optionsProperties: ComparatorOptionsProperties[typeId],
-    valueProperties: ComparatorValueProperties[typeId],
-  } as ComparatorOption;
-
-  return obj;
-}, {}) as Record<ConditionFieldTypeId, ComparatorOption>;
 
 type ComparatorsByFieldTypeDto = Record<
   number,
@@ -221,15 +284,6 @@ type ComparatorsByFieldTypeDto = Record<
   }[]
 >;
 
-const getStaticComparatorOptionsProperties = (
-  typeId: number,
-): Record<number, ComparatorOptionData> => {
-  return (
-    (ComparatorOptionsProperties as Record<number, Record<number, ComparatorOptionData>>)[typeId] ??
-    {}
-  );
-};
-
 const getComparatorLabel = (typeId: number | undefined, comparator: number | undefined): string => {
   if (typeId == null || comparator == null) {
     return "";
@@ -238,30 +292,54 @@ const getComparatorLabel = (typeId: number | undefined, comparator: number | und
   return getStaticComparatorOptionsProperties(typeId)[comparator]?.label ?? "";
 };
 
+const getFallbackComparatorValues = (typeId: ConditionFieldTypeId): ComparatorValue[] => {
+  return Object.values(FieldTypeIdToComparator[typeId]).filter(
+    (value): value is number => typeof value === "number",
+  );
+};
+
+const getComparatorValuesFromDb = (
+  typeId: ConditionFieldTypeId,
+  comparatorsByFieldType?: ComparatorsByFieldTypeDto,
+): ComparatorValue[] | null => {
+  const dbComparators = comparatorsByFieldType?.[typeId];
+
+  if (!dbComparators || dbComparators.length === 0) {
+    return null;
+  }
+
+  const staticOptionsProperties = getStaticComparatorOptionsProperties(typeId);
+
+  return Array.from(
+    new Set(
+      dbComparators
+        .map((comparator) => ComparatorDescriptionToValue[typeId]?.[comparator.description])
+        .filter(
+          (comparator): comparator is number =>
+            comparator !== undefined && comparator in staticOptionsProperties,
+        ),
+    ),
+  );
+};
+
 const buildComparatorOptions = (
   comparatorsByFieldType?: ComparatorsByFieldTypeDto,
 ): Record<ConditionFieldTypeId, ComparatorOption> => {
   return CONDITION_FIELD_TYPE_IDS.reduce(
     (obj, typeId) => {
       const staticOptionsProperties = getStaticComparatorOptionsProperties(typeId);
-      const dbComparators = comparatorsByFieldType?.[typeId];
 
       const values =
-        dbComparators && dbComparators.length > 0
-          ? dbComparators
-              .map((comparator) => comparator.id)
-              .filter((comparatorId) => comparatorId in staticOptionsProperties)
-          : Object.values(FieldTypeIdToComparator[typeId]);
+        getComparatorValuesFromDb(typeId, comparatorsByFieldType) ??
+        getFallbackComparatorValues(typeId);
 
       const optionsProperties = values.reduce<Record<number, ComparatorOptionData>>(
-        (acc, comparatorId) => {
-          const staticProperty = staticOptionsProperties[comparatorId];
+        (acc, comparator) => {
+          const staticProperty = staticOptionsProperties[comparator];
 
-          if (!staticProperty) {
-            return acc;
+          if (staticProperty) {
+            acc[comparator] = staticProperty;
           }
-
-          acc[comparatorId] = staticProperty;
 
           return acc;
         },
@@ -269,7 +347,7 @@ const buildComparatorOptions = (
       );
 
       obj[typeId] = {
-        values: values as FormComparator[],
+        values,
         optionsProperties,
         valueProperties: ComparatorValueProperties[typeId],
       };
@@ -279,6 +357,8 @@ const buildComparatorOptions = (
     {} as Record<ConditionFieldTypeId, ComparatorOption>,
   );
 };
+
+const ComparatorOptions = buildComparatorOptions();
 
 export {
   ComparatorOptions,
