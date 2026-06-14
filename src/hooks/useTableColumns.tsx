@@ -157,9 +157,20 @@ export const useTableColumns = (
               const formFieldsByIdMap = new Map();
               const formFieldsValuesMap = new Map();
 
+              const uniqueIdToDbIdMap = new Map();
+              form.fields.forEach((f: any) => {
+                if (f.uniqueId && f.id) {
+                  uniqueIdToDbIdMap.set(f.uniqueId, f.id);
+                }
+              });
+
               row.original.data?.forEach((f: any) => {
                 if (f.uniqueId) {
                   formFieldsValuesMap.set(f.uniqueId, f.value);
+                  const dbId = uniqueIdToDbIdMap.get(f.uniqueId);
+                  if (dbId) {
+                    formFieldsValuesMap.set(dbId, f.value);
+                  }
                 }
               });
 
@@ -167,6 +178,10 @@ export const useTableColumns = (
               if (rowEditedData) {
                 Object.keys(rowEditedData).forEach((fieldId) => {
                   formFieldsValuesMap.set(fieldId, rowEditedData[fieldId]);
+                  const dbId = uniqueIdToDbIdMap.get(fieldId);
+                  if (dbId) {
+                    formFieldsValuesMap.set(dbId, rowEditedData[fieldId]);
+                  }
                 });
               }
 
