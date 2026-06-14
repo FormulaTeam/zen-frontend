@@ -10,6 +10,7 @@ import ZoomCell from "../components/formInForm/ZoomCell";
 import FormFieldRenderer from "../components/Responses/FormFieldRenderer";
 import { ViewColumn } from "../types/interfaces/tableViews.types";
 import { fieldType, dateType, type FieldValidationMessage } from "formula-gear";
+import { formatOptionLabel } from "../utils/optionResponseValue";
 
 type TableFieldValidationError = {
   messages: FieldValidationMessage[];
@@ -314,6 +315,36 @@ export const useTableColumns = (
 
             if (field.typeId === FieldTypeIds.checkbox) return <div>{value ? "כן" : "לא"}</div>;
             if (field.typeId === FieldTypeIds.number) return <div dir="ltr">{String(value)}</div>;
+
+            if (field.typeId === FieldTypeIds.options) {
+              const resolveLabel = (optionVal: any): string => {
+                if (optionVal && typeof optionVal === "object" && "text" in optionVal) {
+                  return formatOptionLabel(String(optionVal.text));
+                }
+
+                const optionStr = String(optionVal ?? "");
+                const staticLabelMap = Object.fromEntries(
+                  (field.options ?? []).map((o: any) => [o.id, o.text]),
+                );
+
+                return staticLabelMap[optionStr] ?? formatOptionLabel(optionStr);
+              };
+
+              if (Array.isArray(value)) {
+                const labels = value.map(resolveLabel).filter(Boolean).join(", ");
+                return (
+                  <Box className="cell-box" component="span">
+                    <label>{labels}</label>
+                  </Box>
+                );
+              }
+
+              return (
+                <Box className="cell-box" component="span">
+                  <label>{resolveLabel(value)}</label>
+                </Box>
+              );
+            }
 
             if (value && (typeof value === "string" || typeof value === "number")) {
               return (

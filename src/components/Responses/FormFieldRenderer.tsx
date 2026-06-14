@@ -23,6 +23,7 @@ import CustomTextField from "../FormFields/CustomTextField/CustomTextField";
 import CustomTimePicker from "../FormFields/CustomTimePicker/CustomTimePicker";
 import LinkTextField from "../FormFields/LinkTextField/LinkTextField";
 import { FormFieldWrapper, StyledBox } from "./FormFieldRenderer.styled";
+import { formatOptionLabel } from "../../utils/optionResponseValue";
 
 type OptionItem = {
   id: string;
@@ -177,7 +178,7 @@ const getFieldOptionLabelMap = (field: FormFieldDto): Record<string, string> =>
   Object.fromEntries(getFieldOptionItems(field).map((item) => [item.id, item.text]));
 
 const getConnectedOptionLabelMap = (options: string[]): Record<string, string> =>
-  Object.fromEntries(options.map((option) => [option, option]));
+  Object.fromEntries(options.map((option) => [option, formatOptionLabel(option)]));
 
 const getParentDependencies = (field: FormFieldDto): any[] => {
   const extra = getFieldExtra(field);

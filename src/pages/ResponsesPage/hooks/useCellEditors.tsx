@@ -19,7 +19,7 @@ import {
   TimeCellEditor,
 } from "../components/CellEditors";
 import { CellErrorInfoIcon } from "../styled";
-import { getOptionResponseRawValue, OptionResponseValue } from "../../../utils/optionResponseValue";
+import { getOptionResponseRawValue, OptionResponseValue, formatOptionLabel } from "../../../utils/optionResponseValue";
 
 type QuickEditValidationError = {
   message: string;
@@ -141,7 +141,7 @@ const getConnectedOptionIds = (
 };
 
 const getConnectedOptionLabelMap = (options: string[]): Record<string, string> => {
-  return Object.fromEntries(options.map((option) => [option, option]));
+  return Object.fromEntries(options.map((option) => [option, formatOptionLabel(option)]));
 };
 
 export const useCellEditors = ({

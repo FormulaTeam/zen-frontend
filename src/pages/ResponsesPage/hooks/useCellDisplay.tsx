@@ -13,6 +13,7 @@ import { highlightTextUtil } from "../utils/highlighting";
 import {
   getOptionResponseDisplayValue,
   OptionResponseValue,
+  formatOptionLabel,
 } from "../../../utils/optionResponseValue";
 
 interface UseCellDisplayParams {
@@ -173,14 +174,14 @@ const getOptionDisplayText = (value: unknown, field: FormFieldDto): string => {
     return displayValue
       .map((item) => {
         const optionId = String(item);
-        return labelMap[optionId] ?? optionId;
+        return labelMap[optionId] ?? formatOptionLabel(optionId);
       })
       .join(", ");
   }
 
   const stringValue = String(displayValue ?? "");
 
-  return labelMap[stringValue] ?? stringValue;
+  return labelMap[stringValue] ?? formatOptionLabel(stringValue);
 };
 
 const formatTimeDisplayValue = (value: unknown, precision?: "seconds" | "minutes"): string => {
