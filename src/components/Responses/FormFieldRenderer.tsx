@@ -331,8 +331,13 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 
       const parentFieldId = formFieldExtra.parentFieldId ?? formFieldExtra.linkedOptionsFieldId;
       const parentDependencies = getParentDependencies(formField);
+      
+      const childOptionItemsForCheck = getFieldOptionItems(formField, true);
+      const hasControllingItems = childOptionItemsForCheck.some(
+        (opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0,
+      );
 
-      if (parentFieldId && parentDependencies.length > 0) {
+      if (parentFieldId && (parentDependencies.length > 0 || hasControllingItems)) {
         const parentField = formFields.find(
           (candidateField) => candidateField.id === parentFieldId,
         );
@@ -745,8 +750,18 @@ const shouldSkipRerenderHOF = (
   const fieldOptionsChanged =
     JSON.stringify(prevProps.fieldOptions) !== JSON.stringify(nextProps.fieldOptions);
 
+  const prevExtra = getFieldExtra(prevField);
+  const parentId = prevExtra.parentFieldId ?? prevExtra.linkedOptionsFieldId;
+  let parentValueChanged = false;
+
+  if (parentId) {
+    const prevParentVal = prevValues.get(parentId);
+    const nextParentVal = nextValues.get(parentId);
+    parentValueChanged = JSON.stringify(prevParentVal) !== JSON.stringify(nextParentVal);
+  }
+
   return (
-    !valueChanged && !validChanged && !viewModeChanged && !fieldChanged && !fieldOptionsChanged
+    !valueChanged && !validChanged && !viewModeChanged && !fieldChanged && !fieldOptionsChanged && !parentValueChanged
   );
 };
 
