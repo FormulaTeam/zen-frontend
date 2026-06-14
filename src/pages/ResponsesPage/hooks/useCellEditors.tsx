@@ -34,6 +34,7 @@ type EditorFieldExtra = {
       };
   selectionMode?: "multiple" | "single";
   linkedOptionsFieldId?: string | null;
+  parentFieldId?: string | null;
   validationRegex?: string;
   locationFormat?: "utm" | "wkt";
   minValue?: number;
@@ -253,9 +254,41 @@ export const useCellEditors = ({
         case fieldType.Options: {
           const linkedOptionsField = isLinkedOptionsField(formField);
 
-          const options = linkedOptionsField
+          let options = linkedOptionsField
             ? getConnectedOptionIds(String(formField.id), fieldOptions)
             : getOptionIds(formField);
+
+          const parentFieldId = fieldExtra.parentFieldId ?? fieldExtra.linkedOptionsFieldId;
+
+          if (!linkedOptionsField && parentFieldId) {
+            const parentValue = params.row["field:" + parentFieldId] ?? params.row[parentFieldId];
+            const parentValues = Array.isArray(parentValue)
+              ? parentValue
+              : typeof parentValue === "string" && parentValue !== ""
+                ? [parentValue]
+                : [];
+
+            if (parentValues.length > 0) {
+              const childOptionItems = (formField as any).options ?? [];
+              const allowedOptions = new Set<string>();
+
+              childOptionItems.forEach((childOption: any) => {
+                const controllingIds = childOption.controllingItemsIds ?? [];
+                const matchesParent = controllingIds.some((parentId: string) =>
+                  parentValues.map(String).includes(parentId),
+                );
+                if (matchesParent) {
+                  allowedOptions.add(childOption.id);
+                }
+              });
+
+              if (allowedOptions.size > 0) {
+                options = options.filter((optionId) => allowedOptions.has(optionId));
+              } else {
+                options = [];
+              }
+            }
+          }
 
           const optionLabels = linkedOptionsField
             ? getConnectedOptionLabelMap(options)
