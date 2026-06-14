@@ -20,6 +20,7 @@ const baseFormFieldSchema = strictObject({
     object({
       id: string().min(1),
       text: string().optional(),
+      isActive: boolean().optional(),
       controllingItemsIds: array(string().min(1)).optional(),
     }),
   ).optional(),

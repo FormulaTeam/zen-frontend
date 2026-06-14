@@ -4,6 +4,7 @@ import { DEFAULT_DATE_FORMAT, DEFAULT_DATE_TIME_FORMAT } from "./utils";
 export type OptionResponseValue = {
   id: string;
   text: string;
+  isActive?: boolean;
 };
 
 export const isOptionResponseValue = (value: unknown): value is OptionResponseValue => {

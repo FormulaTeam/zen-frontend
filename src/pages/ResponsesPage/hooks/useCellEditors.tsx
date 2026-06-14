@@ -41,6 +41,7 @@ type EditorFieldExtra = {
   numberType?: "integer" | "decimal";
   dateType?: "datetime" | "date";
   timePrecision?: "seconds" | "minutes";
+  inactiveOptionIds?: string[];
 };
 
 type FieldOptionValue = {
@@ -76,7 +77,9 @@ const isLinkedOptionsField = (field: FormFieldDto): boolean => {
 
 const getOptionIds = (field: FormFieldDto): string[] => {
   if (Array.isArray((field as any).options)) {
-    return (field as any).options.map((option: any) => String(option.id));
+    return (field as any).options
+      .filter((option: any) => option && option.isActive !== false)
+      .map((option: any) => String(option.id));
   }
 
   const extra = getFieldExtra(field);

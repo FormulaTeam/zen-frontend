@@ -28,6 +28,7 @@ import { formatOptionLabel } from "../../utils/optionResponseValue";
 type OptionItem = {
   id: string;
   text: string;
+  isActive?: boolean;
   controllingItemsIds?: string[];
 };
 
@@ -56,6 +57,7 @@ type FormFieldExtra = {
   dateType?: "datetime" | "date";
   timePrecision?: "seconds" | "minutes";
   selectionMode?: "multiple" | "single";
+  inactiveOptionIds?: string[];
 };
 
 type FieldOptionValue = {
@@ -502,6 +504,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       }
 
       availableOptions = Array.from(new Set(availableOptions.filter((option) => !!option)));
+
+      const inactiveOptionIds = formFieldExtra.inactiveOptionIds ?? [];
+      availableOptions = availableOptions.filter((optionId) => !inactiveOptionIds.includes(optionId));
 
       const optionLabels = connectedToForm
         ? getConnectedOptionLabelMap(availableOptions)
