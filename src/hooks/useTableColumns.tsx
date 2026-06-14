@@ -156,6 +156,20 @@ export const useTableColumns = (
 
               const formFieldsByIdMap = new Map();
               const formFieldsValuesMap = new Map();
+
+              row.original.data?.forEach((f: any) => {
+                if (f.uniqueId) {
+                  formFieldsValuesMap.set(f.uniqueId, f.value);
+                }
+              });
+
+              const rowEditedData = editedData?.[row.original.id];
+              if (rowEditedData) {
+                Object.keys(rowEditedData).forEach((fieldId) => {
+                  formFieldsValuesMap.set(fieldId, rowEditedData[fieldId]);
+                });
+              }
+
               const formFieldsValidMap = new Map<string, TableFieldValidationError | null>();
 
               formFieldsByIdMap.set(uniqueId, field);
@@ -215,7 +229,7 @@ export const useTableColumns = (
                     onBlurHandler={() => {}}
                     viewMode={false}
                     fieldOptions={cellFieldOptions}
-                    formFields={[field]}
+                    formFields={form.fields}
                     index={0}
                     isTabularEdit={true}
                   />
