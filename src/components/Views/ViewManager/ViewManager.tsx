@@ -82,7 +82,6 @@ export function ViewManager({
           isSaving={isSaving}
           onSaveView={handleSave}
           onApplyView={onApplyView}
-          onCancel={switchToList}
         />
       )}
     </ViewManagerContainer>
