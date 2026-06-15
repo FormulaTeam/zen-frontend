@@ -24,13 +24,40 @@ function FormConditionsSummary() {
   const dependantFields = dependantComponents[FormComponentType.FIELD] ?? [];
   const dependantSections = dependantComponents[FormComponentType.SECTION] ?? [];
 
-  const formatTargetValue = (typeId: ConditionFieldTypeId, targetValue: unknown): string => {
+  const formatTargetValue = (
+    typeId: ConditionFieldTypeId,
+    targetValue: unknown,
+    fieldId?: string,
+  ): string => {
     if (typeId === FieldTypeIds.date && typeof targetValue === "string") {
       return new Date(targetValue).toLocaleDateString("he-IL", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
       });
+    }
+
+    if (typeId === FieldTypeIds.options && fieldId) {
+      const fieldOptions = fields[fieldId]?.data?.options as { id: string | number; text: string }[] | undefined;
+
+      if (fieldOptions) {
+        if (Array.isArray(targetValue)) {
+          const matchedTexts = targetValue
+            .map((val) => {
+              const matched = fieldOptions.find((opt) => String(opt.id) === String(val));
+              return matched ? matched.text : String(val);
+            })
+            .filter(Boolean);
+
+          return matchedTexts.join(", ");
+        }
+
+        const matched = fieldOptions.find((opt) => String(opt.id) === String(targetValue));
+
+        if (matched) {
+          return matched.text;
+        }
+      }
     }
 
     return String(targetValue ?? "");
@@ -110,10 +137,12 @@ function FormConditionsSummary() {
                           )}
 
                           <div className={summaryStyles.predicateText}>
-                            <span>שדה</span>
-                            <OverflowTooltip title={fieldDisplayName}>
-                              <span className={summaryStyles.ellipsisText}>{fieldDisplayName}</span>
-                            </OverflowTooltip>
+                            <div className={summaryStyles.fieldNameWrapper}>
+                              <span>שדה</span>
+                              <OverflowTooltip title={fieldDisplayName}>
+                                <span className={summaryStyles.ellipsisText}>{fieldDisplayName}</span>
+                              </OverflowTooltip>
+                            </div>
 
                             <div className={summaryStyles.conditionValue}>
                               <span>
@@ -128,11 +157,13 @@ function FormConditionsSummary() {
                                   title={formatTargetValue(
                                     field?.typeId ?? FieldTypeIds.shortText,
                                     targetValue,
+                                    field?.id,
                                   )}>
                                   <span className={summaryStyles.ellipsisText}>
                                     {formatTargetValue(
                                       field?.typeId ?? FieldTypeIds.shortText,
                                       targetValue,
+                                      field?.id,
                                     )}
                                   </span>
                                 </OverflowTooltip>
