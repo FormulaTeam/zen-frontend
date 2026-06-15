@@ -1163,7 +1163,7 @@ export const ResponsesTable = React.memo(
               apiRef={apiRef}
               className={clsx({ "MuiDataGrid-root--edit-mode": isInEditMode })}
               disableColumnMenu={isInEditMode}
-              disableColumnSorting={false}
+              disableColumnSorting={isInEditMode}
               disableColumnFilter={isInEditMode}
               disableColumnPinning
               headerFilters={shouldUseHeaderFilters}
