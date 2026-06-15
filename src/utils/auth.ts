@@ -11,16 +11,16 @@ export const buildKeycloakRedirectUrl = (): string => {
 
 export const triggerSSORedirect = () => {
   const currentPath = window.location.pathname + window.location.search;
-  
+
   // Don't save the callback path or error page as the destination
   if (!window.location.pathname.startsWith("/comeback") && !window.location.pathname.startsWith("/error")) {
-    const existingPath = localStorage.getItem("lastVisitedPath");
-    
+    const existingPath = sessionStorage.getItem("formula-last-visited-path");
+
     // Only save if no path exists, or if current path is NOT just root
-    // This prevents overwriting a deep link (like /form/123) with '/' 
+    // This prevents overwriting a deep link (like /form/123) with '/'
     // if triggerSSORedirect is called twice during initialization.
     if (!existingPath || currentPath !== "/") {
-      localStorage.setItem("lastVisitedPath", currentPath);
+      sessionStorage.setItem("formula-last-visited-path", currentPath);
     }
   }
   
@@ -35,7 +35,7 @@ export const triggerSSORedirect = () => {
 };
 
 export const logoutAction = () => {
-  localStorage.removeItem("user");
+  localStorage.removeItem("formula-user");
   if (!window.location.pathname.includes("/comeback")) {
     triggerSSORedirect();
   }

@@ -5,23 +5,23 @@ interface UseFormsScopeParams {
   isSuperAdmin: boolean;
 }
 
-const STORAGE_KEY = "formula_forms_scope";
+const STORAGE_KEY = "formula-forms-scope";
 
 export function useFormsScope({ isSuperAdmin }: UseFormsScopeParams) {
   const [scope, setScopeState] = useState<FormsScopeOption>(formsScopeOption.AccessibleForms);
 
   useEffect(() => {
-    const storedScope = localStorage.getItem(STORAGE_KEY) as FormsScopeOption | null;
+    const storedScope = sessionStorage.getItem(STORAGE_KEY) as FormsScopeOption | null;
 
     if (storedScope) {
       if (storedScope === formsScopeOption.AllForms && !isSuperAdmin) {
         setScopeState(formsScopeOption.AccessibleForms);
-        localStorage.setItem(STORAGE_KEY, formsScopeOption.AccessibleForms);
+        sessionStorage.setItem(STORAGE_KEY, formsScopeOption.AccessibleForms);
       } else if (Object.values(formsScopeOption).includes(storedScope)) {
         setScopeState(storedScope);
       } else {
         setScopeState(formsScopeOption.AccessibleForms);
-        localStorage.setItem(STORAGE_KEY, formsScopeOption.AccessibleForms);
+        sessionStorage.setItem(STORAGE_KEY, formsScopeOption.AccessibleForms);
       }
     } else {
       setScopeState(formsScopeOption.AccessibleForms);
@@ -30,7 +30,7 @@ export function useFormsScope({ isSuperAdmin }: UseFormsScopeParams) {
 
   const setScope = useCallback((newScope: FormsScopeOption) => {
     setScopeState(newScope);
-    localStorage.setItem(STORAGE_KEY, newScope);
+    sessionStorage.setItem(STORAGE_KEY, newScope);
   }, []);
 
   return { scope, setScope };
