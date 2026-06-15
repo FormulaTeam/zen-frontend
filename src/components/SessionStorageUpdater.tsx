@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-const LocalStorageUpdater = () => {
+const SessionStorageUpdater = () => {
   const location = useLocation();
 
   useEffect(() => {
     if (shouldUpdateLastVisitedPath(location.pathname)) {
-      localStorage.setItem("lastVisitedPath", location.pathname);
+      sessionStorage.setItem("lastVisitedPath", location.pathname);
     }
   }, [location]);
 
@@ -21,4 +21,4 @@ function shouldUpdateLastVisitedPath(pathname: string) {
   );
 }
 
-export default LocalStorageUpdater;
+export default SessionStorageUpdater;
