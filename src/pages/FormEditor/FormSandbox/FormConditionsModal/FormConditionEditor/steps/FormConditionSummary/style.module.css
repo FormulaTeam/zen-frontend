@@ -131,6 +131,13 @@
     color: #1a1a1a !important;
 }
 
+.fieldNameWrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
 .ellipsisText {
     max-width: 110px;
     overflow: hidden;

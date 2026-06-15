@@ -137,10 +137,12 @@ function FormConditionsSummary() {
                           )}
 
                           <div className={summaryStyles.predicateText}>
-                            <span>שדה</span>
-                            <OverflowTooltip title={fieldDisplayName}>
-                              <span className={summaryStyles.ellipsisText}>{fieldDisplayName}</span>
-                            </OverflowTooltip>
+                            <div className={summaryStyles.fieldNameWrapper}>
+                              <span>שדה</span>
+                              <OverflowTooltip title={fieldDisplayName}>
+                                <span className={summaryStyles.ellipsisText}>{fieldDisplayName}</span>
+                              </OverflowTooltip>
+                            </div>
 
                             <div className={summaryStyles.conditionValue}>
                               <span>
