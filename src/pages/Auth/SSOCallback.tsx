@@ -17,8 +17,8 @@ export const SSOComeback = () => {
 
     // Immediately handle already authenticated users
     if (user) {
-      const lastVisitedPath = sessionStorage.getItem("lastVisitedPath");
-      sessionStorage.removeItem("lastVisitedPath");
+      const lastVisitedPath = sessionStorage.getItem("formula-last-visited-path");
+      sessionStorage.removeItem("formula-last-visited-path");
       navigate(lastVisitedPath ?? "/", { replace: true });
       return;
     }
@@ -35,7 +35,7 @@ export const SSOComeback = () => {
     didRunRef.current = true;
 
     const redirectUri = `${window.location.origin}/comeback`;
-    const lastPath = sessionStorage.getItem("lastVisitedPath") ?? "/";
+    const lastPath = sessionStorage.getItem("formula-last-visited-path") ?? "/";
 
     loginWithCode(code, redirectUri)
       .then(() =>
@@ -58,7 +58,7 @@ export const SSOComeback = () => {
         };
 
         // Clear storage before triggering state updates that might cause re-renders
-        sessionStorage.removeItem("lastVisitedPath");
+        sessionStorage.removeItem("formula-last-visited-path");
 
         login({ user: userData });
         navigate(lastPath, { replace: true });

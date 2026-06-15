@@ -5,7 +5,7 @@ interface UseFormsScopeParams {
   isSuperAdmin: boolean;
 }
 
-const STORAGE_KEY = "formula_forms_scope";
+const STORAGE_KEY = "formula-forms-scope";
 
 export function useFormsScope({ isSuperAdmin }: UseFormsScopeParams) {
   const [scope, setScopeState] = useState<FormsScopeOption>(formsScopeOption.AccessibleForms);

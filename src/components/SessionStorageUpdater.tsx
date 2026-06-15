@@ -6,7 +6,7 @@ const SessionStorageUpdater = () => {
 
   useEffect(() => {
     if (shouldUpdateLastVisitedPath(location.pathname)) {
-      sessionStorage.setItem("lastVisitedPath", location.pathname);
+      sessionStorage.setItem("formula-last-visited-path", location.pathname);
     }
   }, [location]);
 
