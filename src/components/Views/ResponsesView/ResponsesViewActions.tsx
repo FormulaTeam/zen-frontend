@@ -5,14 +5,12 @@ interface ResponsesViewActionsProps {
   isSaving: boolean;
   isCreatingNew: boolean;
   canSave: boolean;
-  onCancel: () => void;
   onApply: () => void;
   onSave: () => void;
 }
 
 enum HebrewTitles {
-  CANCEL = "ביטול",
-  APPLY = "החל",
+  APPLY = "החלה",
   SAVE = "שמירה",
   SAVING = "שומר...",
   CREATE_VIEW = "יצירת תצוגה",
@@ -23,16 +21,11 @@ export function ResponsesViewFormActions({
   isSaving,
   isCreatingNew,
   canSave,
-  onCancel,
   onApply,
   onSave,
 }: ResponsesViewActionsProps) {
   return (
     <ViewActionsContainer>
-      <Button variant="outlined" onClick={onCancel} disabled={isSaving}>
-        {HebrewTitles.CANCEL}
-      </Button>
-
       <Button variant="outlined" onClick={onApply} disabled={isSaving}>
         {HebrewTitles.APPLY}
       </Button>
