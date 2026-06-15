@@ -179,8 +179,9 @@
 }
 
 .conditionValue {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 4;
+    gap: 4px;
     min-width: 0;
+    white-space: nowrap;
 }
