@@ -56,18 +56,18 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
+    const savedUser = localStorage.getItem("formula-user");
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
         if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
           setUser(parsed);
         } else {
-          localStorage.removeItem("user");
+          localStorage.removeItem("formula-user");
         }
       } catch (error) {
         console.error("Failed to parse saved user:", error);
-        localStorage.removeItem("user");
+        localStorage.removeItem("formula-user");
       }
     }
     setLoading(false);
@@ -76,7 +76,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const login = useCallback(({ user }: { user: User }) => {
     if (user && Object.keys(user).length > 0) {
       setUser(user);
-      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("formula-user", JSON.stringify(user));
     }
   }, []);
 

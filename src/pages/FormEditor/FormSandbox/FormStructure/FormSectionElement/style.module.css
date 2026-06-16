@@ -54,6 +54,10 @@
     animation: bounceRight 1s ease-in-out infinite;
 }
 
+.sectionError {
+    border-color: #d32f2f !important;
+}
+
 @keyframes bounceRight {
     0% {
         transform: translateX(0);

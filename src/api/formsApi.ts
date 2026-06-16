@@ -2,7 +2,7 @@ import { useQuery, UseQueryOptions, UseQueryResult, useMutation } from "@tanstac
 import { CreateFormSchema, formsScopeOption } from "formula-gear";
 import { useMemo } from "react";
 import { z } from "zod";
-import { FormDto, FormOverviewDto } from "../types/shared";
+import { ComparatorsByFieldTypeDto, FormDto, FormOverviewDto } from "../types/shared";
 import {
   Filter,
   Form,
@@ -108,7 +108,10 @@ export const getDeletedForms = async (filter?: Filter): Promise<FormDto[]> => {
   };
 
   try {
-    const response = await apiClient.get<FormDto[]>("/forms/soft-deleted", { params, signal: filter?.signal });
+    const response = await apiClient.get<FormDto[]>("/forms/soft-deleted", {
+      params,
+      signal: filter?.signal,
+    });
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch deleted forms:", error);
@@ -384,5 +387,19 @@ export const useGetLinkableForms = ({ formId, search }: { formId?: string; searc
     queryOptions: {
       enabled: true,
     },
+  });
+};
+
+export const getComparatorsByFieldType = async (): Promise<ComparatorsByFieldTypeDto> => {
+  const response = await apiClient.get<ComparatorsByFieldTypeDto>("/forms/comparators");
+
+  return response.data ?? {};
+};
+
+export const useGetComparatorsByFieldType = () => {
+  return useQuery({
+    queryKey: ["forms", "comparators"],
+    queryFn: getComparatorsByFieldType,
+    staleTime: Infinity,
   });
 };

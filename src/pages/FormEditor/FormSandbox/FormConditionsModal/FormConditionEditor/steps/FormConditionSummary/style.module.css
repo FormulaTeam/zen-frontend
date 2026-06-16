@@ -39,10 +39,10 @@
 
 .groupsRow {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     gap: 24px;
-    overflow-x: auto;
-    padding-bottom: 8px;
+    width: 100%;
 }
 
 .groupWrapper {
@@ -50,6 +50,8 @@
     flex-direction: row;
     align-items: center;
     gap: 24px;
+    flex: 1 1 calc(25% - 18px);
+    min-width: 220px;
 }
 
 .operatorBadge {
@@ -81,7 +83,7 @@
     border: 1px solid #e0e0e0;
     border-radius: 10px;
     min-width: 220px;
-    max-width: 280px;
+    flex: 1;
     max-height: 200px;
     overflow-y: auto;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -129,6 +131,13 @@
     font-size: 15px !important;
     line-height: 1.5;
     color: #1a1a1a !important;
+}
+
+.fieldNameWrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
 }
 
 .ellipsisText {
@@ -179,8 +188,9 @@
 }
 
 .conditionValue {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 4;
+    gap: 4px;
     min-width: 0;
+    white-space: nowrap;
 }

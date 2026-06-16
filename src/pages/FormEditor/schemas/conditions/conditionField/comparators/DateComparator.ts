@@ -1,15 +1,17 @@
+import { comparator } from "formula-gear";
+
 const DateComparator = {
-  EQUAL: 1,
-  NOT_EQUAL: 2,
+  EQUAL: comparator.Equals,
+  NOT_EQUAL: comparator.NotEquals,
 
-  BEFORE: 3,
-  AFTER: 4,
+  BEFORE: comparator.Before,
+  AFTER: comparator.After,
 
-  BEFORE_OR_EQUAL: 5,
-  AFTER_OR_EQUAL: 6,
+  BEFORE_OR_EQUAL: comparator.BeforeOrEqual,
+  AFTER_OR_EQUAL: comparator.AfterOrEqual,
 
-  EMPTY: 7,
-  NOT_EMPTY: 8,
+  EMPTY: comparator.IsEmpty,
+  NOT_EMPTY: comparator.IsNotEmpty,
 } as const;
 
 export { DateComparator };

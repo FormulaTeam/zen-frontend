@@ -1,5 +1,7 @@
+import { comparator } from "formula-gear";
+
 const CheckboxComparator = {
-  EQUAL: 1,
-};
+  EQUAL: comparator.Equals,
+} as const;
 
 export { CheckboxComparator };

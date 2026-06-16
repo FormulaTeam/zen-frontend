@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { FormMetadata, useFormStructureContext } from "../context/FormStructureContext";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFormEditor } from "../hooks/useFormEditor";
 import IconsGrid from "../../../components/IconsGrid/IconsGrid";
 import { OverflowTooltip } from "../../../components/OverflowTooltip";
@@ -24,7 +24,9 @@ import {
   SeamlessDescriptionInput,
 } from "./styled";
 import { texts } from "@src/utils/texts";
-import ValidationErrorsDialog from "../../../components/BasePopup/ValidationErrorsDialog";
+import ValidationErrorsDialog, {
+  type ValidationError,
+} from "../../../components/BasePopup/ValidationErrorsDialog";
 import UnsavedChangesDialog from "../../../components/BasePopup/UnsavedChangesDialog";
 
 type FormValidationResult = {
@@ -32,6 +34,63 @@ type FormValidationResult = {
   fieldsValid: boolean;
   metadataErrors?: Record<string, string[] | undefined> | null;
   hasFields: boolean;
+};
+
+const METADATA_FIELD_LABELS: Record<string, string> = {
+  title: "שם הטופס",
+  description: "תיאור הטופס",
+};
+
+const collectValidationMessages = (validationNode: unknown): string[] => {
+  const messages = new Set<string>();
+
+  const visit = (node: unknown) => {
+    if (!node) {
+      return;
+    }
+
+    if (Array.isArray(node)) {
+      node.forEach(visit);
+      return;
+    }
+
+    if (typeof node !== "object") {
+      return;
+    }
+
+    const nodeAsRecord = node as Record<string, unknown>;
+    const errors = nodeAsRecord.errors;
+
+    if (Array.isArray(errors)) {
+      errors
+        .filter((error): error is string => typeof error === "string" && error.trim() !== "")
+        .forEach((error) => messages.add(error));
+    }
+
+    const properties = nodeAsRecord.properties;
+
+    if (properties && typeof properties === "object") {
+      Object.values(properties).forEach(visit);
+    }
+
+    const items = nodeAsRecord.items;
+
+    if (items && typeof items === "object") {
+      Object.values(items).forEach(visit);
+    }
+
+    Object.entries(nodeAsRecord).forEach(([key, value]) => {
+      if (key === "errors" || key === "properties" || key === "items") {
+        return;
+      }
+
+      visit(value);
+    });
+  };
+
+  visit(validationNode);
+
+  return Array.from(messages);
 };
 
 function FormEditorHeader() {
@@ -84,6 +143,50 @@ function FormEditorHeader() {
       hasFields: result.hasFields ?? Object.keys(formStructure.fields).length > 0,
     };
   };
+
+  const validationPopupErrors = useMemo<ValidationError[]>(() => {
+    const errors: ValidationError[] = [];
+
+    if (Object.keys(formStructure.fields).length === 0) {
+      errors.push({
+        message: "לא ניתן לשמור טופס ללא שדות",
+      });
+    }
+
+    Object.entries(formStructure.metadata.validationErrors ?? {}).forEach(
+      ([fieldName, messages]) => {
+        messages
+          ?.filter(
+            (message): message is string => typeof message === "string" && message.trim() !== "",
+          )
+          .forEach((message) => {
+            errors.push({
+              fieldName: METADATA_FIELD_LABELS[fieldName] ?? fieldName,
+              message,
+            });
+          });
+      },
+    );
+
+    Object.values(formStructure.fields).forEach((field) => {
+      const fieldMessages = collectValidationMessages(field.validationErrors);
+
+      fieldMessages.forEach((message) => {
+        errors.push({
+          fieldName: field.data.displayName || field.data.name || "שדה ללא שם",
+          message,
+        });
+      });
+    });
+
+    return errors.length > 0
+      ? errors
+      : [
+          {
+            message: "נא לתקן את השדות המסומנים באדום",
+          },
+        ];
+  }, [formStructure.fields, formStructure.metadata.validationErrors, formStructure.sections]);
 
   const runSaveFlow = async (options?: { navigateToResponses?: boolean }) => {
     const { isValid, fieldsValid, metadataErrors, hasFields } = normalizeValidationResult(
@@ -299,7 +402,12 @@ function FormEditorHeader() {
         <div className={styles.formErrorContainer}>
           {validationErrors?.title ? (
             <Typography variant="body2" color="error">
-              {texts.heb.emptyFormAlert}
+              {validationErrors.title[0]}
+            </Typography>
+          ) : null}
+          {validationErrors?.description ? (
+            <Typography variant="body2" color="error">
+              {validationErrors.description[0]}
             </Typography>
           ) : null}
         </div>
@@ -335,20 +443,60 @@ function FormEditorHeader() {
     <ValidationErrorsDialog
       open={showValidationErrorsPopup}
       onClose={() => setShowValidationErrorsPopup(false)}
-      errors={[
-        "נא לתקן את השדות המסומנים באדום",
-        ...(Object.keys(formStructure.fields).length === 0 ? ["לא ניתן לשמור טופס ללא שדות"] : []),
-      ]}
+      errors={validationPopupErrors}
     />
   );
 
   const untitledFormDialog = (
-    <Dialog open={showUntitledFormPopup} onClose={() => setShowUntitledFormPopup(false)}>
-      <DialogTitle sx={{ textAlign: "center", pb: 1 }}>שם לטופס</DialogTitle>
-      <DialogContent>
-        <DialogContentText sx={{ mb: 2, textAlign: "center" }}>
+    <Dialog
+      open={showUntitledFormPopup}
+      onClose={() => setShowUntitledFormPopup(false)}
+      PaperProps={{
+        sx: {
+          width: "100%",
+          maxWidth: 460,
+          borderRadius: "18px",
+          backgroundColor: "#ffffff",
+          boxShadow: "0 20px 55px rgba(15, 23, 42, 0.18), 0 8px 22px rgba(15, 23, 42, 0.08)",
+          overflow: "hidden",
+        },
+      }}>
+      <DialogTitle
+        sx={{
+          px: 4,
+          pt: 4,
+          pb: 1,
+          textAlign: "center",
+        }}>
+        <Typography
+          sx={{
+            fontSize: "1.35rem",
+            fontWeight: 750,
+            color: "#0f172a",
+            lineHeight: 1.35,
+          }}>
+          שם לטופס
+        </Typography>
+      </DialogTitle>
+
+      <DialogContent
+        sx={{
+          px: 4,
+          pt: 1,
+          pb: 0,
+        }}>
+        <DialogContentText
+          sx={{
+            mb: 2.5,
+            textAlign: "center",
+            color: "#64748b",
+            fontSize: "0.98rem",
+            lineHeight: 1.6,
+            fontWeight: 400,
+          }}>
           נראה שלטופס אין עדיין שם. איך לקרוא לו?
         </DialogContentText>
+
         <TextField
           autoFocus
           fullWidth
@@ -357,21 +505,81 @@ function FormEditorHeader() {
           onChange={(e) => setSuggestedTitle(e.target.value.trimStart())}
           onBlur={(e) => setSuggestedTitle(e.target.value.trim())}
           variant="outlined"
-          sx={{ mt: 1 }}
           inputProps={{
             maxLength: 60,
           }}
+          sx={{
+            mt: 0.5,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "12px",
+              backgroundColor: "#f8fafc",
+              minHeight: "52px",
+              "& fieldset": {
+                borderColor: "#d8e2ef",
+              },
+              "&:hover fieldset": {
+                borderColor: "#b8c7da",
+              },
+              "&.Mui-focused fieldset": {
+                borderWidth: "1.5px",
+              },
+            },
+            "& .MuiInputLabel-root": {
+              color: "#64748b",
+              fontWeight: 500,
+            },
+            "& .MuiInputBase-input": {
+              fontWeight: 600,
+              color: "#0f172a",
+            },
+          }}
         />
       </DialogContent>
-      <DialogActions sx={{ justifyContent: "center", gap: 1, pb: 3 }}>
-        <Button onClick={() => setShowUntitledFormPopup(false)} variant="outlined">
+
+      <DialogActions
+        sx={{
+          justifyContent: "center",
+          gap: 1.5,
+          px: 4,
+          pt: 3,
+          pb: 4,
+        }}>
+        <Button
+          onClick={() => setShowUntitledFormPopup(false)}
+          variant="outlined"
+          disableElevation
+          sx={{
+            minWidth: "92px",
+            height: "40px",
+            borderRadius: "9px",
+            fontSize: "0.95rem",
+            fontWeight: 700,
+            textTransform: "none",
+            color: "#0f172a",
+            borderColor: "#d8e2ef",
+            backgroundColor: "#ffffff",
+            "&:hover": {
+              borderColor: "#cbd5e1",
+              backgroundColor: "#f8fafc",
+            },
+          }}>
           ביטול
         </Button>
+
         <Button
           onClick={handleAcceptSuggestedTitle}
           variant="contained"
           color="primary"
-          disabled={!suggestedTitle.trim()}>
+          disableElevation
+          disabled={!suggestedTitle.trim()}
+          sx={{
+            minWidth: "96px",
+            height: "40px",
+            borderRadius: "9px",
+            fontSize: "0.95rem",
+            fontWeight: 700,
+            textTransform: "none",
+          }}>
           שמירה
         </Button>
       </DialogActions>

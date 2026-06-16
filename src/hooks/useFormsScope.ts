@@ -12,7 +12,7 @@ interface UseFormsScopeParams {
   isSuperAdmin: boolean;
 }
 
-const STORAGE_KEY = "formula_forms_scope";
+const STORAGE_KEY = "formula-forms-scope";
 
 export function useFormsScope({ isSuperAdmin }: UseFormsScopeParams) {
   const [scope, setScopeState] = useState<FormsScopeOption>(formsScopeOption.AccessibleForms);
@@ -23,13 +23,11 @@ export function useFormsScope({ isSuperAdmin }: UseFormsScopeParams) {
     if (storedScope) {
       if (storedScope === formsScopeOption.AllForms && !isSuperAdmin) {
         setScopeState(formsScopeOption.AccessibleForms);
-
         sessionStorage.setItem(STORAGE_KEY, formsScopeOption.AccessibleForms);
       } else if (Object.values(formsScopeOption).includes(storedScope)) {
         setScopeState(storedScope);
       } else {
         setScopeState(formsScopeOption.AccessibleForms);
-
         sessionStorage.setItem(STORAGE_KEY, formsScopeOption.AccessibleForms);
       }
     } else {
@@ -39,7 +37,6 @@ export function useFormsScope({ isSuperAdmin }: UseFormsScopeParams) {
 
   const setScope = useCallback((newScope: FormsScopeOption) => {
     setScopeState(newScope);
-
     sessionStorage.setItem(STORAGE_KEY, newScope);
   }, []);
 

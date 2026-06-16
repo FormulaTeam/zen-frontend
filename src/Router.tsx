@@ -10,7 +10,7 @@ import Navbar from "./components/Navbar/Navbar";
 import { SSOComeback } from "./pages/Auth/SSOCallback";
 import ErrorPage from "./pages/ErrorPage/ErrorPage";
 import EditForm from "./pages/EditForm/EditForm";
-import LocalStorageUpdater from "./components/LocalStorageUpdater";
+import SessionStorageUpdater from "./components/SessionStorageUpdater";
 import Response from "./pages/Response/Response";
 import { DownloadPage } from "./pages/DownloadPage/DownloadPage";
 import DeletedForms from "./pages/DeletedForms/DeletedForms";
@@ -33,7 +33,7 @@ const AppRouter = () => {
 
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <LocalStorageUpdater />
+      <SessionStorageUpdater />
       <Box
         sx={{
           display: "grid",

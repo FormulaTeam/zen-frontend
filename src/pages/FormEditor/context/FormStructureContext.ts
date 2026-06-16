@@ -12,6 +12,7 @@ interface Section {
   title: string;
   expanded: boolean;
   fieldIds: string[];
+  validationErrors?: string[] | null;
 }
 
 interface FormField {
@@ -23,7 +24,9 @@ interface FormField {
 }
 
 interface FormStructure {
-  metadata: FormMetadata & { validationErrors?: typeToFlattenedError<FormMetadata>["fieldErrors"] | null };
+  metadata: FormMetadata & {
+    validationErrors?: typeToFlattenedError<FormMetadata>["fieldErrors"] | null;
+  };
   sections: Record<string, Section>;
   orderedSectionIds: string[];
   fields: Record<string, FormField>;

@@ -1,8 +1,8 @@
 import { FormStructure } from "../context/FormStructureContext";
 
-const DRAFT_PREFIX = "form-draft-";
-const RESPONSE_DRAFT_PREFIX = "response-draft-";
-const QUICK_EDIT_DRAFT_PREFIX = "quick-edit-draft-";
+const DRAFT_PREFIX = "formula-form-draft-";
+const RESPONSE_DRAFT_PREFIX = "formula-response-draft-";
+const QUICK_EDIT_DRAFT_PREFIX = "formula-quick-edit-draft-";
 
 export interface FormDraft {
   data: FormStructure;

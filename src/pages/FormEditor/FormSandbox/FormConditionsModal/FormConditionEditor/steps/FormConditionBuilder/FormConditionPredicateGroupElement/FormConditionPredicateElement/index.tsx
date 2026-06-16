@@ -5,8 +5,12 @@ import {
   ConditionFieldTypeIds,
   FormComparator,
 } from "../../../../../../../schemas/conditions/conditionField/baseConditionFieldSchema";
-import { ComparatorOptions } from "../../utils";
-import { FormConditionField, FormConditionPredicateGroup } from "../../../../../../../schemas/conditions";
+import { useGetComparatorsByFieldType } from "@api/formsApi";
+import { buildComparatorOptions } from "../../utils";
+import {
+  FormConditionField,
+  FormConditionPredicateGroup,
+} from "../../../../../../../schemas/conditions";
 import { FORM_ELEMENT_ICONS } from "../../../../../../../../../components/FORM_ELEMENT_ICONS";
 import { FieldTypeIds, FORM_ELEMENTS } from "../../../../../../../../../utils/interfaces";
 import { useEffect, useMemo, useRef } from "react";
@@ -17,12 +21,9 @@ import { ArrayElement, DeepPartial } from "../../../../../../../../../types/util
 import styles from "./style.module.scss";
 import { FormStructure } from "../../../../../../../context/FormStructureContext";
 import { FormFieldExtra } from "../../../../../../../schemas/fields";
-import {
-  OptionsFieldTypeId,
-} from "../../../../../../FormStructure/FormFieldElement/ExtraElement/elements/OptionsFieldExtra";
+import { OptionsFieldTypeId } from "../../../../../../FormStructure/FormFieldElement/ExtraElement/elements/OptionsFieldExtra";
 import { GroupItemValidationErrors } from "../../types";
 import { optionsSource } from "formula-gear";
-
 
 interface Props {
   condition: DeepPartial<ArrayElement<FormConditionPredicateGroup["predicates"]>>;
@@ -49,43 +50,72 @@ function FormConditionPredicateElement({
   validationErrors,
   setData,
 }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { data: comparatorsByFieldType } = useGetComparatorsByFieldType();
 
-  const getIsTargetValueNotRequired = (comparator: ArrayElement<FormConditionPredicateGroup["predicates"]>["field"]["comparator"] | undefined) => (
-    !(condition.field?.typeId && comparator && ComparatorOptions[condition.field?.typeId].optionsProperties[comparator].requiresTargetValue)
+  const comparatorOptions = useMemo(
+    () => buildComparatorOptions(comparatorsByFieldType),
+    [comparatorsByFieldType],
   );
 
-  const renderTargetValueField = useMemo(() => {
-    const disabled = !condition.field?.typeId || getIsTargetValueNotRequired(condition.field.comparator);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-    return (
-      ComparatorOptions[condition.field?.typeId ?? ConditionFieldTypeIds.shortText].valueProperties.inputComponent({
-        disabled: disabled,
-        value: condition.field?.targetValue ?? "",
-        helperText: !disabled ? (validationErrors?.field?.properties?.targetValue?.errors[0] ?? "") : "",
-        error: !disabled && !!validationErrors?.field?.properties?.targetValue?.errors[0],
-        label: "ערך",
-        ...(condition.field?.typeId === ConditionFieldTypeIds.options && condition.field.id ?
-          {
+  const getIsTargetValueNotRequired = (
+    comparator:
+      | ArrayElement<FormConditionPredicateGroup["predicates"]>["field"]["comparator"]
+      | undefined,
+  ) =>
+    !(
+      condition.field?.typeId &&
+      comparator &&
+      comparatorOptions[condition.field?.typeId].optionsProperties[comparator].requiresTargetValue
+    );
+
+  const renderTargetValueField = useMemo(() => {
+    const disabled =
+      !condition.field?.typeId || getIsTargetValueNotRequired(condition.field.comparator);
+
+    return comparatorOptions[
+      condition.field?.typeId ?? ConditionFieldTypeIds.shortText
+    ].valueProperties.inputComponent({
+      disabled: disabled,
+      value: condition.field?.targetValue ?? "",
+      helperText: !disabled
+        ? (validationErrors?.field?.properties?.targetValue?.errors[0] ?? "")
+        : "",
+      error: !disabled && !!validationErrors?.field?.properties?.targetValue?.errors[0],
+      label: "ערך",
+      ...(condition.field?.typeId === ConditionFieldTypeIds.options && condition.field.id
+        ? {
             items: fields[condition.field.id].data.options,
-          } :
-          undefined
-        ),
-        onChange: (e) => setData((prev) => {
+          }
+        : undefined),
+      onChange: (e) =>
+        setData((prev) => {
           const group = { ...prev[parentGroupIndex] };
           const modifiedCondition = { ...condition };
 
           modifiedCondition.field = {
             ...modifiedCondition.field,
-            targetValue: e.target.value != undefined ? ComparatorOptions[condition.field!.typeId!].valueProperties.valueTransformer(e.target.value) as any : "",
+            targetValue:
+              e.target.value != undefined
+                ? (comparatorOptions[condition.field!.typeId!].valueProperties.valueTransformer(
+                    e.target.value,
+                  ) as any)
+                : "",
           };
           group.predicates = group.predicates!.toSpliced(index, 1, { ...modifiedCondition });
 
           return prev.toSpliced(parentGroupIndex, 1, group);
         }),
-      })
-    );
-  }, [condition.field?.comparator, condition.field?.targetValue, setData, parentGroupIndex, condition, validationErrors]);
+    });
+  }, [
+    condition.field?.comparator,
+    condition.field?.targetValue,
+    setData,
+    parentGroupIndex,
+    condition,
+    validationErrors,
+  ]);
 
   useEffect(() => {
     shouldScrollIntoView &&
@@ -94,54 +124,60 @@ function FormConditionPredicateElement({
 
   return (
     <div ref={containerRef} className={styles.conditionContainer}>
-      {
-        index === 0 && hasSiblings ? (
-          <div className={styles.conditionOperationToggleContainer}>
-            <div className={styles.firstOperationToggleTopConnector} />
-          </div>
-        ) : (
-          condition.operator && index > 0 &&
+      {index === 0 && hasSiblings ? (
+        <div className={styles.conditionOperationToggleContainer}>
+          <div className={styles.firstOperationToggleTopConnector} />
+        </div>
+      ) : (
+        condition.operator &&
+        index > 0 && (
           <div className={styles.conditionOperationToggleContainer}>
             <div className={styles.conditionOperationToggleWrapper}>
-              <ConditionOperationToggle value={condition.operator}
+              <ConditionOperationToggle
+                value={condition.operator}
                 type={"condition"}
-                onChange={
-                  (operator) => setData((prev) => {
+                onChange={(operator) =>
+                  setData((prev) => {
                     const group = { ...prev[parentGroupIndex] };
                     const modifiedCondition = { ...condition };
 
                     modifiedCondition.operator = operator;
-                    group.predicates = group.predicates!.toSpliced(index, 1, { ...modifiedCondition });
+                    group.predicates = group.predicates!.toSpliced(index, 1, {
+                      ...modifiedCondition,
+                    });
 
                     return prev.toSpliced(parentGroupIndex, 1, group);
                   })
-                } />
+                }
+              />
             </div>
-            <div className={
-              isLastCondition ?
-                styles.lastOperationToggleBottomConnector :
-                styles.operationToggleBottomConnector
-            } />
-            {
-              !isLastCondition &&
-              <div className={styles.operationToggleTopConnector} />
-            }
+            <div
+              className={
+                isLastCondition
+                  ? styles.lastOperationToggleBottomConnector
+                  : styles.operationToggleBottomConnector
+              }
+            />
+            {!isLastCondition && <div className={styles.operationToggleTopConnector} />}
           </div>
         )
-      }
+      )}
       <div className={styles.conditionFieldsContainer}>
-        <Autocomplete options={availableFieldIds}
+        <Autocomplete
+          options={availableFieldIds}
           value={condition.field?.id ?? null}
-          getOptionLabel={(fieldId) => fields[fieldId]?.data?.displayName ?? "שגיאה - שדה אינו קיים"}
+          getOptionLabel={(fieldId) =>
+            fields[fieldId]?.data?.displayName ?? "שגיאה - שדה אינו קיים"
+          }
           noOptionsText={"אין שדות מתאימים בטופס"}
-          onChange={
-            (_, fieldId) => setData((prev) => {
+          onChange={(_, fieldId) =>
+            setData((prev) => {
               const group = { ...prev[parentGroupIndex] };
               const modifiedCondition = { ...condition };
 
               if (fieldId) {
                 const typeId = fields[fieldId]?.data?.typeId as ConditionFieldTypeId;
-                const newComparator = ComparatorOptions[typeId].values[0];
+                const newComparator = comparatorOptions[typeId].values[0];
 
                 modifiedCondition.field = {
                   ...modifiedCondition.field,
@@ -153,7 +189,6 @@ function FormConditionPredicateElement({
               } else {
                 modifiedCondition.field = undefined;
               }
-
 
               group.predicates = group.predicates!.toSpliced(index, 1, { ...modifiedCondition });
 
@@ -171,10 +206,10 @@ function FormConditionPredicateElement({
                 {fields[fieldId]?.data?.displayName}
               </Box>
             );
-          }
-          }
+          }}
           renderInput={(params) => (
-            <TextField {...params}
+            <TextField
+              {...params}
               label={"שדה"}
               error={!!validationErrors?.field?.errors[0]}
               helperText={validationErrors?.field?.errors[0]}
@@ -183,17 +218,25 @@ function FormConditionPredicateElement({
                   ...params.inputProps,
                   autoComplete: "new-password",
                 },
-              }} />
+              }}
+            />
           )}
         />
         <Autocomplete
           disableClearable
           disabled={condition.field?.typeId === undefined}
-          options={condition.field?.typeId ? ComparatorOptions[condition.field?.typeId].values : []}
-          value={condition.field?.comparator ?? (condition.field?.typeId ? ComparatorOptions[condition.field?.typeId].values[0] : -1)}
-          getOptionLabel={(comparator) => condition.field?.typeId ? ComparatorOptions[condition.field?.typeId].optionsProperties[comparator].label : ""}
-          onChange={
-            (_, comparator) => setData((prev) => {
+          options={condition.field?.typeId ? comparatorOptions[condition.field?.typeId].values : []}
+          value={
+            condition.field?.comparator ??
+            (condition.field?.typeId ? comparatorOptions[condition.field?.typeId].values[0] : -1)
+          }
+          getOptionLabel={(comparator) =>
+            condition.field?.typeId
+              ? comparatorOptions[condition.field?.typeId].optionsProperties[comparator].label
+              : ""
+          }
+          onChange={(_, comparator) =>
+            setData((prev) => {
               const group = { ...prev[parentGroupIndex] };
               const modifiedCondition = { ...condition };
               const newComparator = (comparator ?? undefined) as FormComparator;
@@ -209,37 +252,39 @@ function FormConditionPredicateElement({
             })
           }
           renderInput={(params) => (
-            <TextField {...params}
+            <TextField
+              {...params}
               label={"סוג תנאי"}
               slotProps={{
                 htmlInput: {
                   ...params.inputProps,
                   autoComplete: "new-password",
                 },
-              }} />
+              }}
+            />
           )}
         />
-        <div style={{ marginTop: -8 }}>
-          {renderTargetValueField}
-        </div>
+        <div style={{ marginTop: -8 }}>{renderTargetValueField}</div>
       </div>
       <div className={styles.deleteConditionButtonContainer}>
-        {
-          hasSiblings &&
-          <Button className={styles.deleteConditionButton}
-            onClick={() => setData((prev) => {
-              const group = { ...prev[parentGroupIndex] };
-              group.predicates = group.predicates!.toSpliced(index, 1);
+        {hasSiblings && (
+          <Button
+            className={styles.deleteConditionButton}
+            onClick={() =>
+              setData((prev) => {
+                const group = { ...prev[parentGroupIndex] };
+                group.predicates = group.predicates!.toSpliced(index, 1);
 
-              if (index === 0 && group.predicates.length) {
-                group.predicates[0]!.operator = undefined;
-              }
+                if (index === 0 && group.predicates.length) {
+                  group.predicates[0]!.operator = undefined;
+                }
 
-              return prev.toSpliced(parentGroupIndex, 1, group);
-            })}>
+                return prev.toSpliced(parentGroupIndex, 1, group);
+              })
+            }>
             <DeleteOutlined />
           </Button>
-        }
+        )}
       </div>
     </div>
   );

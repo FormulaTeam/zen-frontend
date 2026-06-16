@@ -12,54 +12,158 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  useTheme,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
-const StyledDialog = styled(Dialog)(({ theme }) => ({
+const StyledDialog = styled(Dialog)(() => ({
   "& .MuiPaper-root": {
-    borderRadius: "12px",
-    maxWidth: "500px",
-    width: "100%",
-    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+    borderRadius: "16px",
+    maxWidth: "540px",
+    width: "calc(100% - 40px)",
+    maxHeight: "min(620px, calc(100vh - 80px))",
+    backgroundColor: "#ffffff",
+    boxShadow: "0 20px 55px rgba(15, 23, 42, 0.18), 0 8px 22px rgba(15, 23, 42, 0.08)",
+    overflow: "hidden",
   },
 }));
 
-const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-  padding: "20px 24px",
+const StyledDialogTitle = styled(DialogTitle)(() => ({
+  position: "relative",
+  padding: "28px 32px 12px",
 }));
 
-const IconWrapper = styled(Box)(({ theme }) => ({
-  width: "40px",
-  height: "40px",
+const CloseButton = styled(IconButton)(() => ({
+  position: "absolute",
+  right: "18px",
+  top: "18px",
+  color: "#64748b",
+  padding: "6px",
   borderRadius: "10px",
-  backgroundColor: "rgba(239, 68, 68, 0.14)",
+  "&:hover": {
+    backgroundColor: "rgba(100, 116, 139, 0.08)",
+  },
+  "& svg": {
+    fontSize: "26px",
+  },
+}));
+
+const HeaderText = styled(Box)(() => ({
+  paddingInlineEnd: "42px",
+}));
+
+const TitleText = styled(Typography)(() => ({
+  fontWeight: 700,
+  fontSize: "1.28rem",
+  lineHeight: 1.35,
+  color: "#0f172a",
+}));
+
+const SubtitleText = styled(Typography)(() => ({
+  marginTop: "8px",
+  color: "#64748b",
+  fontWeight: 400,
+  fontSize: "0.96rem",
+  lineHeight: 1.55,
+}));
+
+const Content = styled(DialogContent)(() => ({
+  padding: "18px 32px 0",
+  maxHeight: "280px",
+  overflowY: "auto",
+}));
+
+const ErrorListItem = styled(ListItem)(({ theme }) => ({
+  alignItems: "flex-start",
+  padding: "14px 16px",
+  marginBottom: "10px",
+  backgroundColor: "#fffafa",
+  borderRadius: "12px",
+  border: "1px solid rgba(239, 68, 68, 0.26)",
+  boxShadow: "0 6px 18px rgba(15, 23, 42, 0.035)",
+}));
+
+const ErrorIconBox = styled(Box)(({ theme }) => ({
+  width: "28px",
+  height: "28px",
+  borderRadius: "999px",
+  backgroundColor: "rgba(239, 68, 68, 0.08)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  color: "#ef4444",
+  color: theme.palette.error.main,
+  flexShrink: 0,
   "& svg": {
-    fontSize: "24px",
+    fontSize: "21px",
   },
 }));
 
-const TitleText = styled(Typography)({
-  fontWeight: 600,
-  fontSize: "1.25rem",
-  color: "#1e293b",
-});
+const ErrorTitle = styled(Typography)(() => ({
+  fontWeight: 650,
+  fontSize: "0.98rem",
+  lineHeight: 1.45,
+  color: "#dc2626",
+  wordBreak: "break-word",
+}));
+
+const ErrorDescription = styled(Typography)(() => ({
+  marginTop: "4px",
+  fontWeight: 400,
+  fontSize: "0.9rem",
+  lineHeight: 1.5,
+  color: "#dc2626",
+  opacity: 0.82,
+  wordBreak: "break-word",
+}));
+
+const Actions = styled(DialogActions)(() => ({
+  padding: "30px 32px 30px",
+  gap: "10px",
+  justifyContent: "flex-end",
+}));
+
+const CancelButton = styled(Button)(() => ({
+  minWidth: "92px",
+  height: "40px",
+  borderRadius: "9px",
+  fontSize: "0.95rem",
+  fontWeight: 700,
+  textTransform: "none",
+  color: "#0f172a",
+  borderColor: "#d8e2ef",
+  backgroundColor: "#ffffff",
+  boxShadow: "none",
+  "&:hover": {
+    borderColor: "#cbd5e1",
+    backgroundColor: "#f8fafc",
+    boxShadow: "none",
+  },
+}));
+
+const ContinueButton = styled(Button)(({ theme }) => ({
+  minWidth: "98px",
+  height: "40px",
+  borderRadius: "9px",
+  fontSize: "0.95rem",
+  fontWeight: 700,
+  textTransform: "none",
+  backgroundColor: theme.palette.primary.main,
+  boxShadow: "none",
+  "&:hover": {
+    backgroundColor: theme.palette.primary.dark,
+    boxShadow: "none",
+  },
+}));
 
 export type ValidationError =
   | string
   | {
       fieldName?: string;
       message: string;
+      detail?: string | null;
+      validationDetail?: string | null;
+      description?: string | null;
     };
 
 interface ValidationErrorsDialogProps {
@@ -68,7 +172,27 @@ interface ValidationErrorsDialogProps {
   errors: ValidationError[];
   title?: string;
   subtitle?: string;
+  onCancel?: () => void;
+  onContinue?: () => void;
+  cancelText?: string;
+  continueText?: string;
 }
+
+const getErrorParts = (error: ValidationError) => {
+  if (typeof error === "string") {
+    return {
+      fieldName: null,
+      message: error,
+      detail: null,
+    };
+  }
+
+  return {
+    fieldName: error.fieldName ?? null,
+    message: error.message,
+    detail: error.detail ?? error.validationDetail ?? error.description ?? null,
+  };
+};
 
 export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
   open,
@@ -76,91 +200,81 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
   errors,
   title = "נמצאו שגיאות בטופס",
   subtitle = "יש לתקן את השדות הבאים לפני שמירה:",
+  onCancel,
+  onContinue,
+  cancelText = "בטל",
+  continueText = "המשך",
 }) => {
-  const theme = useTheme();
+  const handleCancel = onCancel ?? onClose;
+  const handleContinue = onContinue ?? onClose;
 
   return (
     <StyledDialog open={open} onClose={onClose} scroll="paper">
       <StyledDialogTitle>
-        <IconWrapper>
-          <ErrorOutlineIcon />
-        </IconWrapper>
-        <TitleText>{title}</TitleText>
-        <IconButton
-          aria-label="close"
-          onClick={onClose}
-          sx={{
-            position: "absolute",
-            right: 16,
-            top: 16,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
+        <CloseButton aria-label="close" onClick={onClose}>
           <CloseIcon />
-        </IconButton>
+        </CloseButton>
+
+        <HeaderText>
+          <TitleText>{title}</TitleText>
+          <SubtitleText>{subtitle}</SubtitleText>
+        </HeaderText>
       </StyledDialogTitle>
 
-      <DialogContent dividers sx={{ borderBottom: "none", py: 2 }}>
-        <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500, mb: 2, px: 1 }}>
-          {subtitle}
-        </Typography>
-        <List sx={{ pt: 0 }}>
+      <Content>
+        <List sx={{ p: 0 }}>
           {errors.map((error, index) => {
-            const message = typeof error === "string" ? error : error.message;
-            const field = typeof error === "object" ? error.fieldName : null;
+            const { fieldName, message, detail } = getErrorParts(error);
 
             return (
-              <ListItem
-                key={index}
-                sx={{
-                  px: 2,
-                  py: 1,
-                  mb: 1,
-                  backgroundColor: "#f8fafc",
-                  borderRadius: "8px",
-                  border: "1px solid #e2e8f0",
-                }}>
-                <ListItemIcon sx={{ minWidth: "32px" }}>
-                  <WarningAmberIcon sx={{ fontSize: "18px", color: theme.palette.error.main }} />
+              <ErrorListItem key={index}>
+                <ListItemIcon
+                  sx={{
+                    minWidth: "38px",
+                    mt: "1px",
+                  }}>
+                  <ErrorIconBox>
+                    <InfoOutlinedIcon />
+                  </ErrorIconBox>
                 </ListItemIcon>
+
                 <ListItemText
+                  sx={{ m: 0 }}
                   primary={
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: "#1e293b" }}>
-                      {field && (
-                        <Box component="span" sx={{ color: theme.palette.error.main, mr: 0.5 }}>
-                          {field}:
-                        </Box>
-                      )}
-                      {message}
-                    </Typography>
+                    <Box>
+                      <ErrorTitle>
+                        {fieldName && (
+                          <Box
+                            component="span"
+                            sx={{
+                              fontWeight: 750,
+                              marginInlineEnd: "4px",
+                            }}>
+                            {fieldName}:
+                          </Box>
+                        )}
+                        {message}
+                      </ErrorTitle>
+
+                      {detail && <ErrorDescription>{detail}</ErrorDescription>}
+                    </Box>
                   }
                 />
-              </ListItem>
+              </ErrorListItem>
             );
           })}
         </List>
-      </DialogContent>
+      </Content>
 
-      <DialogActions sx={{ p: 3, pt: 1 }}>
-        <Button
-          onClick={onClose}
-          variant="contained"
-          disableElevation
-          fullWidth
-          sx={{
-            borderRadius: "8px",
-            height: "44px",
-            fontSize: "1rem",
-            fontWeight: 600,
-            textTransform: "none",
-            backgroundColor: theme.palette.primary.main,
-            "&:hover": {
-              backgroundColor: theme.palette.primary.dark,
-            },
-          }}>
-          חזרה לתיקון
-        </Button>
-      </DialogActions>
+      <Actions>
+        <CancelButton onClick={handleCancel} variant="outlined" disableElevation>
+          {cancelText}
+        </CancelButton>
+
+        <ContinueButton onClick={handleContinue} variant="contained" disableElevation>
+          {continueText}
+        </ContinueButton>
+      </Actions>
     </StyledDialog>
   );
 };

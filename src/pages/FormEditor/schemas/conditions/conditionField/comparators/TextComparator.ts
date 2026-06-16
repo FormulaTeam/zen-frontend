@@ -1,12 +1,14 @@
+import { comparator } from "formula-gear";
+
 const TextComparator = {
-  EQUAL: 1,
-  NOT_EQUAL: 2,
+  EQUAL: comparator.Equals,
+  NOT_EQUAL: comparator.NotEquals,
 
-  CONTAINS: 3,
-  NOT_CONTAINS: 4,
+  CONTAINS: comparator.Contains,
+  NOT_CONTAINS: comparator.NotContains,
 
-  EMPTY: 5,
-  NOT_EMPTY: 6,
+  EMPTY: comparator.IsEmpty,
+  NOT_EMPTY: comparator.IsNotEmpty,
 } as const;
 
 export { TextComparator };

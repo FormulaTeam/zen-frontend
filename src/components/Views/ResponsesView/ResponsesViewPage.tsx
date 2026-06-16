@@ -28,7 +28,6 @@ interface ResponsesViewPageProps {
   isSaving?: boolean;
   onSaveView: (view: ResponsesView) => Promise<void>;
   onApplyView?: (view: ResponsesView) => void;
-  onCancel: () => void;
 }
 
 const HEBREW_FORM: string = "טופס";
@@ -42,7 +41,6 @@ export function ResponsesViewPage({
   isSaving = false,
   onSaveView,
   onApplyView,
-  onCancel,
 }: ResponsesViewPageProps) {
   const {
     columns,
@@ -79,11 +77,6 @@ export function ResponsesViewPage({
     () => columns.filter((column) => column.visible).length,
     [columns],
   );
-
-  const handleCancel = useCallback(() => {
-    formLogic.handleCancel();
-    onCancel();
-  }, [formLogic, onCancel]);
 
   return (
     <Stack direction="column" height="100%" justifyContent="space-between">
@@ -137,7 +130,6 @@ export function ResponsesViewPage({
           isSaving={isSaving}
           isCreatingNew={formLogic.isCreatingNew}
           canSave={formLogic.canSave}
-          onCancel={handleCancel}
           onApply={formLogic.handleApply}
           onSave={formLogic.handleSaveView}
         />

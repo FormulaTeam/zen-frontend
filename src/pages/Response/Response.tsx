@@ -439,8 +439,8 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       </PageContainer>
 
       <ValidationErrorsDialog
-        title="נמצאו שגיאות בתגובה"
-        subtitle="יש לתקן את השדות הבאים לפני שמירה:"
+        title="שגיאות ביצירת תגובה"
+        subtitle="לא נוצרו תגובות. יש לתקן את השדות הבאים:"
         open={showValidationPopup}
         onClose={closeValidationPopup}
         errors={validationErrors}

@@ -69,7 +69,7 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
               {FORM_ELEMENTS[field.data.typeId].name}
             </Typography>
           </div>
-          {field.data.typeId !== FieldTypeIds.checkbox && (
+          {field.data.typeId !== FieldTypeIds.checkbox && field.data.typeId !== FieldTypeIds.linkedForm && (
             <FormControlLabel sx={{ marginInlineEnd: "2px" }}
               control={<Switch checked={field.data.required}
                 disabled={isInputDisabled}
