@@ -255,10 +255,18 @@ function FormSectionElement({ id }: Props) {
   );
 
   const emptyPlaceholder: JSX.Element = (
-    <div className={styles.emptySectionPlaceholder}>
-      <CatalogArrowIcon className={styles.catalogArrowIcon} />
-      <EmptyPlaceholderText color="#a7abb1" variant="h5" align="center">
-        ניתן להוסיף שדה למקטע באמצעות גרירה מקטלוג השדות בצד
+    <div className={styles.emptySectionPlaceholder} style={{ flexDirection: "column", gap: "8px" }}>
+      <CatalogArrowIcon
+        className={styles.catalogArrowIcon}
+        style={self.validationErrors?.length ? { color: "#d32f2f" } : undefined}
+      />
+      <EmptyPlaceholderText
+        color={self.validationErrors?.length ? "#d32f2f" : "#a7abb1"}
+        variant="h5"
+        align="center">
+        {self.validationErrors?.length
+          ? self.validationErrors[0]
+          : "ניתן להוסיף שדה למקטע באמצעות גרירה מקטלוג השדות בצד"}
       </EmptyPlaceholderText>
     </div>
   );
@@ -269,7 +277,7 @@ function FormSectionElement({ id }: Props) {
       {alertMsgDialog}
 
       <StyledAccordion
-        className={styles.container}
+        className={`${styles.container} ${self.validationErrors?.length ? styles.sectionError : ""}`}
         expanded={self.expanded}
         ref={containerRef}
         style={style}

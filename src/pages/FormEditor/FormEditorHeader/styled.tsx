@@ -27,6 +27,9 @@ export const SeamlessTitleInput = styled(InputBase)(({ theme }) => ({
     backgroundColor: "rgba(0, 0, 0, 0.04)",
     boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`,
   },
+  "&.Mui-error": {
+    boxShadow: `0 0 0 2px ${theme.palette.error.main}`,
+  },
 }));
 
 export const SeamlessDescriptionInput = styled(InputBase)(({ theme }) => ({
@@ -50,6 +53,9 @@ export const SeamlessDescriptionInput = styled(InputBase)(({ theme }) => ({
   "&.Mui-focused": {
     backgroundColor: "rgba(0, 0, 0, 0.04)",
     boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`,
+  },
+  "&.Mui-error": {
+    boxShadow: `0 0 0 2px ${theme.palette.error.main}`,
   },
 }));
 

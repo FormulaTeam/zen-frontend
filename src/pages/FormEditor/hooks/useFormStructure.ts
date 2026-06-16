@@ -735,10 +735,30 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
       }
     });
 
+    let sectionsValid = true;
+    const updatedSections = { ...formStructure.sections };
+
+    Object.keys(updatedSections).forEach((sectionId) => {
+      const section = updatedSections[sectionId];
+
+      if (section.fieldIds.length === 0) {
+        updatedSections[sectionId] = {
+          ...section,
+          validationErrors: [texts.heb.emptySectionAlert],
+        };
+        sectionsValid = false;
+      } else {
+        updatedSections[sectionId] = {
+          ...section,
+          validationErrors: null,
+        };
+      }
+    });
+
     const metadataErrors = validateMetadata(metadata) || {};
     const hasMetadataErrors = Object.keys(metadataErrors).length > 0;
     const hasFields = Object.keys(fields).length > 0;
-    const isValid = fieldsValid && !hasMetadataErrors && hasFields;
+    const isValid = fieldsValid && sectionsValid && !hasMetadataErrors && hasFields;
 
     setFormStructure((prev) => {
       const updatedFields = { ...prev.fields };
@@ -754,6 +774,7 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
       return {
         ...prev,
         fields: applyDuplicateFieldErrors(updatedFields),
+        sections: updatedSections,
         metadata: {
           ...prevMetadata,
           validationErrors: hasMetadataErrors ? metadataErrors : null,
@@ -763,7 +784,7 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
 
     return {
       isValid,
-      fieldsValid,
+      fieldsValid: fieldsValid && sectionsValid,
       fieldErrorsCount,
       metadataErrors,
       hasFields,
