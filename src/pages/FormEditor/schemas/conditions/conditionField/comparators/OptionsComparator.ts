@@ -1,12 +1,14 @@
+import { comparator } from "formula-gear";
+
 const OptionsComparator = {
-  ONLY: 1,
-  OTHER_THAN: 2,
+  ONLY: comparator.Equals,
+  OTHER_THAN: comparator.NotEquals,
 
-  INCLUDES: 3,
-  NOT_INCLUDES: 4,
+  INCLUDES: comparator.Contains,
+  NOT_INCLUDES: comparator.NotContains,
 
-  NONE: 5,
-  ANY: 6,
+  NONE: comparator.IsEmpty,
+  ANY: comparator.IsNotEmpty,
 } as const;
 
 export { OptionsComparator };

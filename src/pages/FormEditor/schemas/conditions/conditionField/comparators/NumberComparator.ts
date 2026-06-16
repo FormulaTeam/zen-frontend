@@ -1,15 +1,17 @@
+import { comparator } from "formula-gear";
+
 const NumberComparator = {
-  EQUAL: 1,
-  NOT_EQUAL: 2,
+  EQUAL: comparator.Equals,
+  NOT_EQUAL: comparator.NotEquals,
 
-  LARGER: 3,
-  SMALLER: 4,
+  LARGER: comparator.GreaterThan,
+  SMALLER: comparator.LessThan,
 
-  LARGER_OR_EQUAL: 5,
-  SMALLER_OR_EQUAL: 6,
+  LARGER_OR_EQUAL: comparator.GreaterThanOrEqual,
+  SMALLER_OR_EQUAL: comparator.LessThanOrEqual,
 
-  EMPTY: 7,
-  NOT_EMPTY: 8,
+  EMPTY: comparator.IsEmpty,
+  NOT_EMPTY: comparator.IsNotEmpty,
 } as const;
 
 export { NumberComparator };
