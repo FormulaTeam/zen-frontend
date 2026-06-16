@@ -100,56 +100,6 @@ const ComparatorOptionsProperties = {
   },
 } as const satisfies ComparatorOptionsProperties;
 
-const ComparatorDescriptionToValue: Record<number, Record<string, ComparatorValue>> = {
-  [FieldTypeIds.longText]: {
-    equals: TextComparator.EQUAL,
-    not_equals: TextComparator.NOT_EQUAL,
-    contains: TextComparator.CONTAINS,
-    not_contains: TextComparator.NOT_CONTAINS,
-    is_empty: TextComparator.EMPTY,
-    is_not_empty: TextComparator.NOT_EMPTY,
-  },
-  [FieldTypeIds.shortText]: {
-    equals: TextComparator.EQUAL,
-    not_equals: TextComparator.NOT_EQUAL,
-    contains: TextComparator.CONTAINS,
-    not_contains: TextComparator.NOT_CONTAINS,
-    is_empty: TextComparator.EMPTY,
-    is_not_empty: TextComparator.NOT_EMPTY,
-  },
-  [FieldTypeIds.number]: {
-    equals: NumberComparator.EQUAL,
-    not_equals: NumberComparator.NOT_EQUAL,
-    greater_than: NumberComparator.LARGER,
-    less_than: NumberComparator.SMALLER,
-    greater_than_or_equal: NumberComparator.LARGER_OR_EQUAL,
-    less_than_or_equal: NumberComparator.SMALLER_OR_EQUAL,
-    is_empty: NumberComparator.EMPTY,
-    is_not_empty: NumberComparator.NOT_EMPTY,
-  },
-  [FieldTypeIds.date]: {
-    equals: DateComparator.EQUAL,
-    not_equals: DateComparator.NOT_EQUAL,
-    before: DateComparator.BEFORE,
-    after: DateComparator.AFTER,
-    before_or_equal: DateComparator.BEFORE_OR_EQUAL,
-    after_or_equal: DateComparator.AFTER_OR_EQUAL,
-    is_empty: DateComparator.EMPTY,
-    is_not_empty: DateComparator.NOT_EMPTY,
-  },
-  [FieldTypeIds.options]: {
-    equals: OptionsComparator.ONLY,
-    not_equals: OptionsComparator.OTHER_THAN,
-    contains: OptionsComparator.INCLUDES,
-    not_contains: OptionsComparator.NOT_INCLUDES,
-    is_empty: OptionsComparator.NONE,
-    is_not_empty: OptionsComparator.ANY,
-  },
-  [FieldTypeIds.checkbox]: {
-    equals: CheckboxComparator.EQUAL,
-  },
-};
-
 const getStaticComparatorOptionsProperties = (
   typeId: number,
 ): Record<number, ComparatorOptionData> => {
@@ -293,9 +243,7 @@ const getComparatorLabel = (typeId: number | undefined, comparator: number | und
 };
 
 const getFallbackComparatorValues = (typeId: ConditionFieldTypeId): ComparatorValue[] => {
-  return Object.values(FieldTypeIdToComparator[typeId]).filter(
-    (value): value is number => typeof value === "number",
-  );
+  return Object.values(FieldTypeIdToComparator[typeId]).map((value) => Number(value));
 };
 
 const getComparatorValuesFromDb = (
@@ -313,11 +261,8 @@ const getComparatorValuesFromDb = (
   return Array.from(
     new Set(
       dbComparators
-        .map((comparator) => ComparatorDescriptionToValue[typeId]?.[comparator.description])
-        .filter(
-          (comparator): comparator is number =>
-            comparator !== undefined && comparator in staticOptionsProperties,
-        ),
+        .map((comparator) => comparator.id)
+        .filter((comparator) => comparator in staticOptionsProperties),
     ),
   );
 };
