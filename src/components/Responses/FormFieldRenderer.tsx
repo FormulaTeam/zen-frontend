@@ -331,7 +331,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 
       const parentFieldId = formFieldExtra.parentFieldId ?? formFieldExtra.linkedOptionsFieldId;
       const parentDependencies = getParentDependencies(formField);
-      
+
       const childOptionItemsForCheck = getFieldOptionItems(formField, true);
       const hasControllingItems = childOptionItemsForCheck.some(
         (opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0,
@@ -506,6 +506,74 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             ? getConnectedFieldOptions(fieldId, fieldOptions)
             : getFieldOptions(formField);
         }
+      }
+
+      const childFields = formFields.filter(f => {
+        const extra = getFieldExtra(f);
+        return (extra.linkedOptionsFieldId === fieldId || extra.parentFieldId === fieldId) && getFieldOptionItems(f, true).some((opt: any) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0);
+      });
+
+      if (childFields.length > 0) {
+        childFields.forEach((childField) => {
+          const childValueFromMap = formFieldsValuesMap.get(childField.id);
+          const getOptionIdStrInner = (val: any): string => {
+            if (val && typeof val === "object") {
+              return String(val.id ?? val.value ?? "");
+            }
+            return String(val ?? "");
+          };
+
+          const normalizedChildValues: string[] = [];
+          if (Array.isArray(childValueFromMap)) {
+            childValueFromMap.forEach((item) => {
+              const idStr = getOptionIdStrInner(item);
+              if (idStr) {
+                normalizedChildValues.push(idStr);
+              }
+            });
+          } else if (childValueFromMap) {
+            const idStr = getOptionIdStrInner(childValueFromMap);
+            if (idStr) {
+              normalizedChildValues.push(idStr);
+            }
+          }
+
+          if (normalizedChildValues.length > 0) {
+            const allowedByThisChild = new Set<string>();
+            const childOptionItems = getFieldOptionItems(childField, true);
+
+            childOptionItems.forEach((childOpt) => {
+              if (normalizedChildValues.includes(childOpt.id)) {
+                (childOpt.controllingItemsIds ?? []).forEach((parentId: string) => {
+                  allowedByThisChild.add(parentId);
+                });
+              }
+            });
+
+            if (allowedByThisChild.size > 0) {
+              availableOptions = availableOptions.filter((opt) => allowedByThisChild.has(opt));
+
+              if (isMultiple) {
+                const currentValues = Array.isArray(formFieldValue) ? formFieldValue : [];
+                const validValues = currentValues.filter((value: string) => allowedByThisChild.has(value));
+                if (validValues.length !== currentValues.length) {
+                  formFieldValue = validValues;
+                  setTimeout(() => {
+                    onChangeHandler(validValues, fieldId);
+                  }, 0);
+                }
+              } else {
+                const currentValue = typeof formFieldValue === "string" ? formFieldValue : "";
+                if (currentValue && !allowedByThisChild.has(currentValue)) {
+                  formFieldValue = "";
+                  setTimeout(() => {
+                    onChangeHandler("", fieldId);
+                  }, 0);
+                }
+              }
+            }
+          }
+        });
       }
 
       availableOptions = Array.from(new Set(availableOptions.filter((option) => !!option)));
@@ -776,8 +844,22 @@ const shouldSkipRerenderHOF = (
     parentValueChanged = JSON.stringify(prevParentVal) !== JSON.stringify(nextParentVal);
   }
 
+  let childValueChanged = false;
+  if (!parentValueChanged) {
+    const childFields = prevProps.formFields.filter(f => {
+      const ex = getFieldExtra(f);
+      return ex.linkedOptionsFieldId === fieldId || ex.parentFieldId === fieldId;
+    });
+    for (const child of childFields) {
+      if (JSON.stringify(prevValues.get(child.id)) !== JSON.stringify(nextValues.get(child.id))) {
+        childValueChanged = true;
+        break;
+      }
+    }
+  }
+
   return (
-    !valueChanged && !validChanged && !viewModeChanged && !fieldChanged && !fieldOptionsChanged && !parentValueChanged
+    !valueChanged && !validChanged && !viewModeChanged && !fieldChanged && !fieldOptionsChanged && !parentValueChanged && !childValueChanged
   );
 };
 
