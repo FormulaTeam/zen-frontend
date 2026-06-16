@@ -347,7 +347,15 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         }) ?? null
         : null;
 
-      const parentFieldId = formFieldExtra.parentFieldId ?? formFieldExtra.linkedOptionsFieldId ?? controllingFieldForThisField?.id ?? null;
+      const linkedFieldExists = formFields.some(
+        (f) => String(f.id) === String(formFieldExtra.linkedOptionsFieldId),
+      );
+
+      const parentFieldId =
+        formFieldExtra.parentFieldId ??
+        (linkedFieldExists ? formFieldExtra.linkedOptionsFieldId : null) ??
+        controllingFieldForThisField?.id ??
+        null;
 
       // Only enter the filtering block if this field is a dependent (not a controlling field).
       if (parentFieldId && !hasControllingItems && (parentDependencies.length > 0 || true)) {
@@ -795,9 +803,18 @@ const shouldSkipRerenderHOF = (
     })
     : null;
 
+  const linkedFieldExists = prevProps.formFields.some(
+    (f) => String(f.id) === String(prevExtra.linkedOptionsFieldId),
+  );
+
   const parentId = fieldHasControllingItems
     ? (prevExtra.parentFieldId ?? null)
-    : (prevExtra.parentFieldId ?? prevExtra.linkedOptionsFieldId ?? controllingFieldForRerender?.id ?? null);
+    : (
+      prevExtra.parentFieldId ??
+      (linkedFieldExists ? prevExtra.linkedOptionsFieldId : null) ??
+      controllingFieldForRerender?.id ??
+      null
+    );
 
   let parentValueChanged = false;
 
