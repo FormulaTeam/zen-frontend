@@ -329,7 +329,6 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         ? getConnectedFieldOptions(fieldId, fieldOptions)
         : getFieldOptions(formField);
 
-      const parentFieldId = formFieldExtra.parentFieldId ?? formFieldExtra.linkedOptionsFieldId;
       const parentDependencies = getParentDependencies(formField);
 
       const childOptionItemsForCheck = getFieldOptionItems(formField, true);
@@ -337,7 +336,21 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         (opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0,
       );
 
-      if (parentFieldId && (parentDependencies.length > 0 || hasControllingItems)) {
+      // Detect if this field is a dependent by finding a controlling field that points to it
+      const controllingFieldForThisField = !hasControllingItems
+        ? formFields.find((f) => {
+          const extra = getFieldExtra(f);
+          return (
+            extra.linkedOptionsFieldId === fieldId &&
+            getFieldOptionItems(f, true).some((opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0)
+          );
+        }) ?? null
+        : null;
+
+      const parentFieldId = formFieldExtra.parentFieldId ?? formFieldExtra.linkedOptionsFieldId ?? controllingFieldForThisField?.id ?? null;
+
+      // Only enter the filtering block if this field is a dependent (not a controlling field).
+      if (parentFieldId && !hasControllingItems && (parentDependencies.length > 0 || true)) {
         const parentField = formFields.find(
           (candidateField) => candidateField.id === parentFieldId,
         );
@@ -451,13 +464,12 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
               }
             });
           } else if (parentField) {
-            const childOptionItems = getFieldOptionItems(formField, true);
-            childOptionItems.forEach((childOption) => {
-              const matchesParent = (childOption.controllingItemsIds ?? []).some((parentId) =>
-                parentValues.includes(parentId),
-              );
-              if (matchesParent) {
-                allowedOptions.add(childOption.id);
+            const controllingOptionItems = getFieldOptionItems(parentField, true);
+            controllingOptionItems.forEach((controllingOption) => {
+              if (parentValues.includes(controllingOption.id)) {
+                (controllingOption.controllingItemsIds ?? []).forEach((dependentId: string) => {
+                  allowedOptions.add(dependentId);
+                });
               }
             });
           }
@@ -506,74 +518,6 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             ? getConnectedFieldOptions(fieldId, fieldOptions)
             : getFieldOptions(formField);
         }
-      }
-
-      const childFields = formFields.filter(f => {
-        const extra = getFieldExtra(f);
-        return (extra.linkedOptionsFieldId === fieldId || extra.parentFieldId === fieldId) && getFieldOptionItems(f, true).some((opt: any) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0);
-      });
-
-      if (childFields.length > 0) {
-        childFields.forEach((childField) => {
-          const childValueFromMap = formFieldsValuesMap.get(childField.id);
-          const getOptionIdStrInner = (val: any): string => {
-            if (val && typeof val === "object") {
-              return String(val.id ?? val.value ?? "");
-            }
-            return String(val ?? "");
-          };
-
-          const normalizedChildValues: string[] = [];
-          if (Array.isArray(childValueFromMap)) {
-            childValueFromMap.forEach((item) => {
-              const idStr = getOptionIdStrInner(item);
-              if (idStr) {
-                normalizedChildValues.push(idStr);
-              }
-            });
-          } else if (childValueFromMap) {
-            const idStr = getOptionIdStrInner(childValueFromMap);
-            if (idStr) {
-              normalizedChildValues.push(idStr);
-            }
-          }
-
-          if (normalizedChildValues.length > 0) {
-            const allowedByThisChild = new Set<string>();
-            const childOptionItems = getFieldOptionItems(childField, true);
-
-            childOptionItems.forEach((childOpt) => {
-              if (normalizedChildValues.includes(childOpt.id)) {
-                (childOpt.controllingItemsIds ?? []).forEach((parentId: string) => {
-                  allowedByThisChild.add(parentId);
-                });
-              }
-            });
-
-            if (allowedByThisChild.size > 0) {
-              availableOptions = availableOptions.filter((opt) => allowedByThisChild.has(opt));
-
-              if (isMultiple) {
-                const currentValues = Array.isArray(formFieldValue) ? formFieldValue : [];
-                const validValues = currentValues.filter((value: string) => allowedByThisChild.has(value));
-                if (validValues.length !== currentValues.length) {
-                  formFieldValue = validValues;
-                  setTimeout(() => {
-                    onChangeHandler(validValues, fieldId);
-                  }, 0);
-                }
-              } else {
-                const currentValue = typeof formFieldValue === "string" ? formFieldValue : "";
-                if (currentValue && !allowedByThisChild.has(currentValue)) {
-                  formFieldValue = "";
-                  setTimeout(() => {
-                    onChangeHandler("", fieldId);
-                  }, 0);
-                }
-              }
-            }
-          }
-        });
       }
 
       availableOptions = Array.from(new Set(availableOptions.filter((option) => !!option)));
@@ -835,7 +779,26 @@ const shouldSkipRerenderHOF = (
     JSON.stringify(prevProps.fieldOptions) !== JSON.stringify(nextProps.fieldOptions);
 
   const prevExtra = getFieldExtra(prevField);
-  const parentId = prevExtra.parentFieldId ?? prevExtra.linkedOptionsFieldId;
+
+  const childOptionItemsForCheck = getFieldOptionItems(prevField, true);
+  const fieldHasControllingItems = childOptionItemsForCheck.some(
+    (opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0,
+  );
+
+  const controllingFieldForRerender = !fieldHasControllingItems
+    ? prevProps.formFields.find((f) => {
+      const extra = getFieldExtra(f);
+      return (
+        extra.linkedOptionsFieldId === fieldId &&
+        getFieldOptionItems(f, true).some((opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0)
+      );
+    })
+    : null;
+
+  const parentId = fieldHasControllingItems
+    ? (prevExtra.parentFieldId ?? null)
+    : (prevExtra.parentFieldId ?? prevExtra.linkedOptionsFieldId ?? controllingFieldForRerender?.id ?? null);
+
   let parentValueChanged = false;
 
   if (parentId) {
@@ -844,22 +807,8 @@ const shouldSkipRerenderHOF = (
     parentValueChanged = JSON.stringify(prevParentVal) !== JSON.stringify(nextParentVal);
   }
 
-  let childValueChanged = false;
-  if (!parentValueChanged) {
-    const childFields = prevProps.formFields.filter(f => {
-      const ex = getFieldExtra(f);
-      return ex.linkedOptionsFieldId === fieldId || ex.parentFieldId === fieldId;
-    });
-    for (const child of childFields) {
-      if (JSON.stringify(prevValues.get(child.id)) !== JSON.stringify(nextValues.get(child.id))) {
-        childValueChanged = true;
-        break;
-      }
-    }
-  }
-
   return (
-    !valueChanged && !validChanged && !viewModeChanged && !fieldChanged && !fieldOptionsChanged && !parentValueChanged && !childValueChanged
+    !valueChanged && !validChanged && !viewModeChanged && !fieldChanged && !fieldOptionsChanged && !parentValueChanged
   );
 };
 

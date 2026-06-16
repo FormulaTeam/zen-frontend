@@ -702,8 +702,8 @@ export const useResponseState = (
 
     const affectingSectionConditions = field.sectionId
       ? formConditions.filter((condition: FormCondition) =>
-          condition.dependantComponents?.section?.includes(String(field.sectionId)),
-        )
+        condition.dependantComponents?.section?.includes(String(field.sectionId)),
+      )
       : [];
 
     if (affectingFieldConditions.length === 0 && affectingSectionConditions.length === 0) {
@@ -930,107 +930,66 @@ export const useResponseState = (
         const childFields = formFields.filter((field) => {
           const extraRecord = getFieldExtra(field);
           const parentId = extraRecord.parentFieldId ?? extraRecord.linkedOptionsFieldId;
-          return String(parentId) === normalizedFieldId;
+          if (String(parentId) !== normalizedFieldId) return false;
+          // Exclude controlling fields — they have controllingItemsIds on their options
+          const isControllingField = (field as any).options?.some(
+            (o: any) => o.controllingItemsIds && o.controllingItemsIds.length > 0,
+          );
+          return !isControllingField;
         });
 
         if (childFields.length > 0) {
           childFields.forEach((childField) => {
             const childExtra = getFieldExtra(childField);
-
-            const hasLocalDependencies = (childField as any).options?.some(
-              (o: any) => o.controllingItemsIds && o.controllingItemsIds.length > 0,
-            );
-
-            if (
-              getFieldType(childField) !== fieldType.Options ||
-              (!childExtra.parentDependencies && !hasLocalDependencies)
-            ) {
-              return;
-            }
-
             const childFieldId = String(childField.id);
             const currentChildValue = newFormFieldsValuesMap.get(childFieldId);
+            const isMultiple = childExtra.selectionMode === selectionMode.Multiple;
 
-            const parentField = formFields.find((field) => {
-              const parentId = childExtra.parentFieldId ?? childExtra.linkedOptionsFieldId;
-              return String(field.id) === String(parentId);
-            });
-
-            if (!parentField) return;
-
-            const parentExtra = getFieldExtra(parentField);
-            const parentOptions = getOptionIds(parentField);
-            const childOptions = getOptionIds(childField);
-
-            if (parentOptions.length === 0 || childOptions.length === 0) return;
-
-            const parentValues = Array.isArray(value) ? value : [value];
             const allowedOptions = new Set<string>();
 
-            parentValues.forEach((parentValue) => {
-              const parentOptionIndex = parentOptions.indexOf(String(parentValue));
+            const controllingOptionItems: any[] = (childField as any).options ?? [];
 
-              if (parentOptionIndex === -1) return;
+            const parentFieldDef = formFields.find(f => String(f.id) === normalizedFieldId);
+            const parentOptionItems: any[] = (parentFieldDef as any)?.options ?? [];
+            const parentValues = Array.isArray(value) ? value : value ? [value] : [];
 
-              const dependency = childExtra.parentDependencies?.find(
-                (dep: any) => dep.parentOptionIndex === parentOptionIndex,
-              );
-
-              dependency?.childOptionIndices.forEach((childOptionIndex: number) => {
-                const childOptionId = childOptions[childOptionIndex];
-
-                if (childOptionId) {
-                  allowedOptions.add(childOptionId);
-                }
-              });
+            parentOptionItems.forEach((parentOpt: any) => {
+              if (parentValues.includes(parentOpt.id) && Array.isArray(parentOpt.controllingItemsIds)) {
+                parentOpt.controllingItemsIds.forEach((depId: string) => allowedOptions.add(depId));
+              }
             });
+
+            // Fall back to parentDependencies if no controllingItemsIds found
+            if (allowedOptions.size === 0 && childExtra.parentDependencies && childExtra.parentDependencies.length > 0) {
+              const parentOptions = getOptionIds(parentFieldDef ?? childField);
+              const childOptions = getOptionIds(childField);
+              parentValues.forEach((parentValue: string) => {
+                const parentOptionIndex = parentOptions.indexOf(String(parentValue));
+                if (parentOptionIndex === -1) return;
+                const dependency = childExtra.parentDependencies?.find(
+                  (dep: any) => dep.parentOptionIndex === parentOptionIndex,
+                );
+                dependency?.childOptionIndices.forEach((childOptionIndex: number) => {
+                  const childOptionId = childOptions[childOptionIndex];
+                  if (childOptionId) allowedOptions.add(childOptionId);
+                });
+              });
+            }
 
             if (allowedOptions.size > 0) {
               if (currentChildValue) {
-                const childValues = Array.isArray(currentChildValue)
-                  ? currentChildValue
-                  : [currentChildValue];
-
-                const validValues = childValues.filter((val) => allowedOptions.has(val));
-
+                const childValues = Array.isArray(currentChildValue) ? currentChildValue : [currentChildValue];
+                const validValues = childValues.filter((val: string) => allowedOptions.has(val));
                 if (validValues.length !== childValues.length) {
-                  const newValue =
-                    childExtra.selectionMode === selectionMode.Multiple
-                      ? validValues
-                      : validValues.length > 0
-                        ? validValues[0]
-                        : "";
-
-                  newFormFieldsValuesMap.set(childFieldId, newValue);
-
-                  setFormFieldsValidMap((prev) => {
-                    const next = new Map(prev);
-                    next.set(childFieldId, null);
-                    return next;
-                  });
-
-                  setFormFieldsTouchedMap((prev) => {
-                    const next = new Map(prev);
-                    next.set(childFieldId, false);
-                    return next;
-                  });
+                  newFormFieldsValuesMap.set(childFieldId, isMultiple ? validValues : validValues[0] ?? "");
+                  setFormFieldsValidMap((prev) => { const next = new Map(prev); next.set(childFieldId, null); return next; });
+                  setFormFieldsTouchedMap((prev) => { const next = new Map(prev); next.set(childFieldId, false); return next; });
                 }
               }
             } else if (parentValues.length > 0) {
-              const emptyValue = childExtra.selectionMode === selectionMode.Multiple ? [] : "";
-              newFormFieldsValuesMap.set(childFieldId, emptyValue);
-
-              setFormFieldsValidMap((prev) => {
-                const next = new Map(prev);
-                next.set(childFieldId, null);
-                return next;
-              });
-
-              setFormFieldsTouchedMap((prev) => {
-                const next = new Map(prev);
-                next.set(childFieldId, false);
-                return next;
-              });
+              newFormFieldsValuesMap.set(childFieldId, isMultiple ? [] : "");
+              setFormFieldsValidMap((prev) => { const next = new Map(prev); next.set(childFieldId, null); return next; });
+              setFormFieldsTouchedMap((prev) => { const next = new Map(prev); next.set(childFieldId, false); return next; });
             }
           });
         }
