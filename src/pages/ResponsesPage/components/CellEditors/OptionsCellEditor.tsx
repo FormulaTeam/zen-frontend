@@ -50,7 +50,7 @@ const slotProps = {
       },
 
       "& .MuiAutocomplete-listbox": {
-        p: "6px",
+        p: "2px",
         direction: "rtl",
         textAlign: "right",
       },
@@ -106,43 +106,43 @@ const getTextFieldSx = ({
 
     ...(isMultiSelect
       ? {
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-          gap: "6px",
-          maxHeight: "160px",
-          overflowY: "auto",
-          overflowX: "hidden",
-          padding: "8px 10px !important",
-          overscrollBehavior: "contain",
-          scrollbarWidth: "thin",
-          scrollbarColor: "#cbd5e1 transparent",
+        alignItems: "flex-start",
+        flexWrap: "wrap",
+        gap: "6px",
+        maxHeight: "160px",
+        overflowY: "auto",
+        overflowX: "hidden",
+        padding: "8px 10px !important",
+        overscrollBehavior: "contain",
+        scrollbarWidth: "thin",
+        scrollbarColor: "#cbd5e1 transparent",
 
-          "&::-webkit-scrollbar": {
-            width: "8px",
-          },
+        "&::-webkit-scrollbar": {
+          width: "8px",
+        },
 
-          "&::-webkit-scrollbar-track": {
-            backgroundColor: "transparent",
-          },
+        "&::-webkit-scrollbar-track": {
+          backgroundColor: "transparent",
+        },
 
-          "&::-webkit-scrollbar-thumb": {
-            backgroundColor: "#cbd5e1",
-            borderRadius: "999px",
-            border: "2px solid #ffffff",
-          },
+        "&::-webkit-scrollbar-thumb": {
+          backgroundColor: "#cbd5e1",
+          borderRadius: "999px",
+          border: "2px solid #ffffff",
+        },
 
-          "&::-webkit-scrollbar-thumb:hover": {
-            backgroundColor: "#94a3b8",
-          },
-        }
+        "&::-webkit-scrollbar-thumb:hover": {
+          backgroundColor: "#94a3b8",
+        },
+      }
       : {
-          alignItems: hasSelectedValue ? "flex-start" : "center",
-          flexWrap: "nowrap",
-          maxHeight: "132px",
-          overflowY: hasSelectedValue ? "auto" : "hidden",
-          overflowX: "hidden",
-          padding: hasSelectedValue ? "8px 10px !important" : "0 10px !important",
-        }),
+        alignItems: hasSelectedValue ? "flex-start" : "center",
+        flexWrap: "nowrap",
+        maxHeight: "132px",
+        overflowY: hasSelectedValue ? "auto" : "hidden",
+        overflowX: "hidden",
+        padding: hasSelectedValue ? "8px 10px !important" : "0 10px !important",
+      }),
 
     "&:hover": {
       borderColor: hasError ? "#d32f2f" : "#b8c4d6",
@@ -173,16 +173,16 @@ const getTextFieldSx = ({
 
     ...(hasSelectedValue
       ? {
-          width: "0 !important",
-          minWidth: "0 !important",
-          flexGrow: "0 !important",
-          padding: "0 !important",
-        }
+        width: "0 !important",
+        minWidth: "0 !important",
+        flexGrow: "0 !important",
+        padding: "0 !important",
+      }
       : {
-          minWidth: "120px !important",
-          flexGrow: 1,
-          padding: isMultiSelect ? "0 !important" : "7px 0 !important",
-        }),
+        minWidth: "120px !important",
+        flexGrow: 1,
+        padding: isMultiSelect ? "0 !important" : "7px 0 !important",
+      }),
   },
 });
 
@@ -253,6 +253,9 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
     setLocalValue(normalizeValue(value, mode));
   }, [value, mode]);
 
+
+  // console.log('options', options);
+  // console.log('optionLabels', optionLabels);
   const normalizedOptions = useMemo(
     () => options.filter((option): option is string => typeof option === "string"),
     [options],

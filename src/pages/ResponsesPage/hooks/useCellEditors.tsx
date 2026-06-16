@@ -28,10 +28,10 @@ type QuickEditValidationError = {
 
 type EditorFieldExtra = {
   options?:
-    | string[]
-    | {
-        items?: OptionResponseValue[];
-      };
+  | string[]
+  | {
+    items?: OptionResponseValue[];
+  };
   selectionMode?: "multiple" | "single";
   linkedOptionsFieldId?: string | null;
   parentFieldId?: string | null;
@@ -69,12 +69,6 @@ interface UseCellEditorsReturn {
 
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
-
-const isLinkedOptionsField = (field: FormFieldDto): boolean => {
-  const linkedOptionsFieldId = getFieldExtra(field).linkedOptionsFieldId;
-
-  return typeof linkedOptionsFieldId === "string" && linkedOptionsFieldId.trim() !== "";
-};
 
 const getOptionIds = (field: FormFieldDto): string[] => {
   if (Array.isArray((field as any).options)) {
@@ -252,15 +246,22 @@ export const useCellEditors = ({
           break;
 
         case fieldType.Options: {
-          const linkedOptionsField = isLinkedOptionsField(formField);
+          const linkedOptionsFieldId = fieldExtra.linkedOptionsFieldId;
+          const isExternallyConnected = linkedOptionsFieldId
+            ? !formFields?.some((f) => String(f.id) === String(linkedOptionsFieldId))
+            : false;
 
-          let options = linkedOptionsField
+          let options = isExternallyConnected
             ? getConnectedOptionIds(String(formField.id), fieldOptions)
             : getOptionIds(formField);
 
-          const parentFieldId = fieldExtra.parentFieldId ?? fieldExtra.linkedOptionsFieldId;
+          const optionLabelMap = isExternallyConnected
+            ? getConnectedOptionLabelMap(options)
+            : getOptionLabelMap(formField);
 
-          if (!linkedOptionsField && parentFieldId) {
+          const parentFieldId = fieldExtra.parentFieldId ?? (isExternallyConnected ? null : linkedOptionsFieldId);
+
+          if (!linkedOptionsFieldId && parentFieldId) {
             const parentValue = params.row["field:" + parentFieldId] ?? params.row[parentFieldId];
             const parentValues = Array.isArray(parentValue)
               ? parentValue
@@ -290,16 +291,13 @@ export const useCellEditors = ({
             }
           }
 
-          const optionLabels = linkedOptionsField
-            ? getConnectedOptionLabelMap(options)
-            : getOptionLabelMap(formField);
 
           editor = (
             <OptionsCellEditor
               value={getOptionResponseRawValue(params.value) as string | string[]}
               onChange={handleChange}
               options={options}
-              optionLabels={optionLabels}
+              optionLabels={optionLabelMap}
               selectionMode={selectionMode}
               isRequired={formField.isRequired}
               errorMessage={errorMessage}
