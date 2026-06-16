@@ -186,7 +186,7 @@ function FormEditorHeader() {
             message: "נא לתקן את השדות המסומנים באדום",
           },
         ];
-  }, [formStructure.fields, formStructure.metadata.validationErrors]);
+  }, [formStructure.fields, formStructure.metadata.validationErrors, formStructure.sections]);
 
   const runSaveFlow = async (options?: { navigateToResponses?: boolean }) => {
     const { isValid, fieldsValid, metadataErrors, hasFields } = normalizeValidationResult(
@@ -402,7 +402,12 @@ function FormEditorHeader() {
         <div className={styles.formErrorContainer}>
           {validationErrors?.title ? (
             <Typography variant="body2" color="error">
-              {texts.heb.emptyFormAlert}
+              {validationErrors.title[0]}
+            </Typography>
+          ) : null}
+          {validationErrors?.description ? (
+            <Typography variant="body2" color="error">
+              {validationErrors.description[0]}
             </Typography>
           ) : null}
         </div>

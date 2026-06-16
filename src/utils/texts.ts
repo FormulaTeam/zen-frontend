@@ -18,10 +18,11 @@ export const texts = {
     deleteFormConfirm: "האם את/ה בטוח/ה שברצונך למחוק את הטופס?",
 
     emptyFormAlert: "יש למלא שם טופס בעברית",
+    emptySectionAlert: "מקטע חייב להכיל לפחות שדה אחד",
     noHebrewTextAlert: "שם הטופס מורכב מאותיות שאינן עברית",
-    fiveLettersMinAlert: "שם הטופס פחות מ5 אותיות",
+    fiveLettersMinAlert: "שם הטופס קצר מחמש אותיות",
     formNameLabel: "שם טופס",
-    onlyHebrewError: "ניתן להזין רק אותיות בעברית!",
+    onlyHebrewError: "ניתן להזין רק אותיות בעברית",
     noDescription: "ללא תיאור",
     editDetailsTooltip: "עריכת פרטי הטופס",
     savingForm: "שומר את הטופס",
