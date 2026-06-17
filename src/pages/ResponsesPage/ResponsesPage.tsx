@@ -53,7 +53,7 @@ export default function ResponsesPage({
   void setShouldRefreshPage;
 
   const navigate = useNavigate();
-  const { id: formId } = useParams<string>();
+  const { formId } = useParams<string>();
   const { isLoading, isError, error } = useFormLoader(formId || "");
 
   useEffect(() => {

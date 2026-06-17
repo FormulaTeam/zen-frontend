@@ -1,6 +1,6 @@
 import { Toaster } from "sonner";
 import { useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Box } from "@mui/material";
 import MainPage from "./pages/MainPage/MainPage";
 import { useAuth } from "./contexts/AuthContext";
@@ -43,6 +43,7 @@ const AppRouter = () => {
         }}>
         <Navbar />
         <Routes>
+          <Route path="/" element={<Navigate to={IPath.HOME} replace />} />
           <Route path={IPath.ERROR} element={<ErrorPage />} />
           <Route path={IPath.COMEBACK} element={<SSOComeback />} />
           <Route

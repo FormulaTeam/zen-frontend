@@ -100,7 +100,7 @@ export const FormActionsToolbar = ({ onBackClick }: FormActionsToolbarProps) => 
         <Tooltip title="עריכת טופס">
           <IconOnlyButton
             onClick={() =>
-              navigate(`/form/edit/${formId}`, {
+              navigate(`/forms/${formId}/edit`, {
                 state: { from: location.pathname },
               })
             }>

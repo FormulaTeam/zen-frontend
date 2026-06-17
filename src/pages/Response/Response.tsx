@@ -37,7 +37,7 @@ interface ResponseProps {
 }
 
 export default function Response({ user, viewMode = false, copyMode = false }: ResponseProps) {
-  const { formId, id } = useParams();
+  const { formId, responseId: id } = useParams();
 
   const [permissionTypes, setPermissionTypes] = useState<number[]>([]);
   const [savedParentResponseId, setSavedParentResponseId] = useState<string | undefined>(id);

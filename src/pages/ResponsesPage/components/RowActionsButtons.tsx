@@ -71,7 +71,7 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
     const response = rows.find((row) => String(row?.id) === rowId);
 
     if (response) {
-      navigate(`/response/view/${form.id}/${response.id}`);
+      navigate(`/forms/${form.id}/responses/${response.id}`);
     }
   };
 
@@ -82,7 +82,7 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
     const response = rows.find((row) => String(row?.id) === rowId);
 
     if (response) {
-      navigate(`/response/edit/${form.id}/${response.id}`);
+      navigate(`/forms/${form.id}/responses/${response.id}/edit`);
     }
   };
 
@@ -93,7 +93,7 @@ export const RowActionsButtons: React.FC<RowActionsButtonsProps> = ({
     const response = rows.find((row) => String(row?.id) === rowId);
 
     if (response) {
-      navigate(`/response/create/${form.id}/${response.id}`);
+      navigate(`/forms/${form.id}/responses/${response.id}/copy`);
     }
   };
 

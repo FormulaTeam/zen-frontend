@@ -46,13 +46,13 @@ export const EditResponsesButton = ({
 
   const onEditResponse = () => {
     if (isSingleSelection && form?.id) {
-      navigate(`/response/edit/${form.id}/${selectedRows[0].id}`);
+      navigate(`/forms/${form.id}/responses/${selectedRows[0].id}/edit`);
     }
   };
 
   const onViewResponse = () => {
     if (isSingleSelection && form?.id) {
-      navigate(`/response/view/${form.id}/${selectedRows[0].id}`);
+      navigate(`/forms/${form.id}/responses/${selectedRows[0].id}`);
     }
   };
 
@@ -61,7 +61,7 @@ export const EditResponsesButton = ({
       if (isInEditMode) {
         onDuplicateResponseProp(String(selectedRows[0].id));
       } else {
-        navigate(`/response/create/${form.id}/${selectedRows[0].id}`);
+        navigate(`/forms/${form.id}/responses/${selectedRows[0].id}/copy`);
       }
     }
   };

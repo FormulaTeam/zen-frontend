@@ -204,7 +204,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           onConfirm={() => {
             deleteForm(undefined, {
               onSuccess: () => {
-                navigate("/", { replace: true });
+                navigate("/forms", { replace: true });
               },
             });
           }}

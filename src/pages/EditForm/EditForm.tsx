@@ -6,13 +6,13 @@ import { useEffect } from "react";
 import { StatusCodes } from "http-status-codes";
 
 export default function EditForm({ }) {
-  const { id } = useParams();
+  const { formId } = useParams();
   const navigate = useNavigate();
 
   const { data: formToEdit, isLoading, error, isError } = useGetForm({
-    formId: id,
+    formId: formId,
     config: {
-      enabled: !!id,
+      enabled: !!formId,
     },
   });
 
