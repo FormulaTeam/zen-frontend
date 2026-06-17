@@ -13,6 +13,8 @@ interface OptionsCellEditorProps {
   selectionMode?: "single" | "multiple";
   isRequired?: boolean;
   errorMessage?: string;
+  loading?: boolean;
+  onScrollToBottom?: () => void;
 }
 
 const normalizeValue = (value: string | string[], mode: string): string | string[] => {
@@ -32,7 +34,8 @@ const normalizeValue = (value: string | string[], mode: string): string | string
   return value || "";
 };
 
-const slotProps = {
+
+const basePopperSlotProps = {
   clearIndicator: {
     title: "",
   },
@@ -242,6 +245,8 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
   selectionMode: mode = "single",
   isRequired = false,
   errorMessage,
+  loading = false,
+  onScrollToBottom,
 }) => {
   const isMultiSelect = mode === selectionMode.Multiple;
   const [localValue, setLocalValue] = useState<string | string[]>(() =>
@@ -253,13 +258,26 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
     setLocalValue(normalizeValue(value, mode));
   }, [value, mode]);
 
-
-  // console.log('options', options);
-  // console.log('optionLabels', optionLabels);
   const normalizedOptions = useMemo(
     () => options.filter((option): option is string => typeof option === "string"),
     [options],
   );
+
+  const handleListboxScroll = (event: React.UIEvent<HTMLUListElement>): void => {
+    if (!onScrollToBottom) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+
+    if (scrollHeight - scrollTop - clientHeight < 48) {
+      onScrollToBottom();
+    }
+  };
+
+  const autocompleteSlotProps = {
+    ...basePopperSlotProps,
+    listbox: { onScroll: handleListboxScroll },
+  };
+
 
   const getOptionLabel = (option: string): string => optionLabels[option] ?? option;
 
@@ -424,7 +442,9 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             disableCloseOnSelect
             autoHighlight
             openOnFocus
-            slotProps={slotProps}
+            slotProps={autocompleteSlotProps}
+            loading={loading}
+            loadingText="טוען אפשרויות..."
             sx={{ width: "100%" }}
             renderTags={(tagValue, getTagProps) =>
               tagValue.map((option, index) => {
@@ -521,7 +541,9 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             isOptionEqualToValue={(option, currentValue) => option === currentValue}
             autoHighlight
             openOnFocus
-            slotProps={slotProps}
+            slotProps={autocompleteSlotProps}
+            loading={loading}
+            loadingText="טוען אפשרויות..."
             sx={{ width: "100%" }}
             renderInput={(params) => (
               <TextField

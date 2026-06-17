@@ -20,6 +20,7 @@ import {
 } from "../components/CellEditors";
 import { CellErrorInfoIcon } from "../styled";
 import { getOptionResponseRawValue, OptionResponseValue, formatOptionLabel } from "../../../utils/optionResponseValue";
+import { ConnectedOptionsCellEditor } from "../components/CellEditors/ConnectedOptionsCellEditor";
 
 type QuickEditValidationError = {
   message: string;
@@ -251,46 +252,23 @@ export const useCellEditors = ({
             ? !formFields?.some((f) => String(f.id) === String(linkedOptionsFieldId))
             : false;
 
-          let options = isExternallyConnected
-            ? getConnectedOptionIds(String(formField.id), fieldOptions)
-            : getOptionIds(formField);
-
-          const optionLabelMap = isExternallyConnected
-            ? getConnectedOptionLabelMap(options)
-            : getOptionLabelMap(formField);
-
-          const parentFieldId = fieldExtra.parentFieldId ?? (isExternallyConnected ? null : linkedOptionsFieldId);
-
-          if (!linkedOptionsFieldId && parentFieldId) {
-            const parentValue = params.row["field:" + parentFieldId] ?? params.row[parentFieldId];
-            const parentValues = Array.isArray(parentValue)
-              ? parentValue
-              : typeof parentValue === "string" && parentValue !== ""
-                ? [parentValue]
-                : [];
-
-            if (parentValues.length > 0) {
-              const childOptionItems = (formField as any).options ?? [];
-              const allowedOptions = new Set<string>();
-
-              childOptionItems.forEach((childOption: any) => {
-                const controllingIds = childOption.controllingItemsIds ?? [];
-                const matchesParent = controllingIds.some((parentId: string) =>
-                  parentValues.map(String).includes(parentId),
-                );
-                if (matchesParent) {
-                  allowedOptions.add(childOption.id);
-                }
-              });
-
-              if (allowedOptions.size > 0) {
-                options = options.filter((optionId) => allowedOptions.has(optionId));
-              } else {
-                options = [];
-              }
-            }
+          if (isExternallyConnected && linkedOptionsFieldId) {
+            editor = (
+              <ConnectedOptionsCellEditor
+                linkedOptionsFieldId={linkedOptionsFieldId}
+                value={getOptionResponseRawValue(params.value) as string | string[]}
+                onChange={handleChange}
+                selectionMode={selectionMode}
+                isRequired={formField.isRequired}
+                errorMessage={errorMessage}
+              />
+            );
+            break;
           }
 
+
+          let options = getOptionIds(formField);
+          const optionLabelMap = getOptionLabelMap(formField);
 
           editor = (
             <OptionsCellEditor
