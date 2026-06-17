@@ -63,14 +63,14 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
           });
 
           if (navigateToResponses) {
-            navigate(`/responses/${structureToSave.metadata.id}`, { replace: true });
+            navigate(`/forms/${structureToSave.metadata.id}/responses`, { replace: true });
           }
         } else {
           const createdForm = await mutateCreateFormAsync(payload);
           showSuccessNotification("הטופס נשמר בהצלחה!");
           clearFormDraft(undefined);
 
-          navigate(`/responses/${createdForm.id}`, { replace: true });
+          navigate(`/forms/${createdForm.id}/responses`, { replace: true });
         }
 
         queryClient.invalidateQueries({ queryKey: ["forms"] });
@@ -88,7 +88,7 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
     const formId = formStructureRef.current.metadata.id;
 
     if (mode === FORM_EDITOR_MODE.EDIT && formId) {
-      navigate(`/responses/${formId}`);
+      navigate(`/forms/${formId}/responses`);
       return;
     }
 
@@ -101,7 +101,7 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
     clearFormDraft(formId);
 
     if (mode === FORM_EDITOR_MODE.EDIT && formId) {
-      navigate(`/responses/${formId}`);
+      navigate(`/forms/${formId}/responses`);
       return;
     }
 

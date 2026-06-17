@@ -48,7 +48,7 @@ interface FormStructureContext {
   deleteSection: (sectionId: string) => void;
   renameSection: (sectionId: string, title: string) => void;
   toggleSectionExpanded: (sectionId: string) => void;
-  appendFieldToFirstSection: (elementTypeId: FormFieldTypeId) => void;
+  appendFieldToLastSection: (elementTypeId: FormFieldTypeId) => void;
   deleteField: (fieldId: string) => void;
   setFieldData: (fieldId: string, data: Partial<FormFieldData>) => void;
   appendCondition: (condition: FormCondition) => ReturnType<typeof validateCondition>;
@@ -66,7 +66,7 @@ const FormStructureContext = createContext<FormStructureContext>({
   deleteSection: () => null,
   renameSection: () => null,
   toggleSectionExpanded: () => null,
-  appendFieldToFirstSection: () => null,
+  appendFieldToLastSection: () => null,
   deleteField: () => null,
   setFieldData: () => null,
   appendCondition: () => null,

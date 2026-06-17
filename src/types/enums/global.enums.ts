@@ -1,18 +1,18 @@
 export enum IPath {
-  HOME = "/",
+  HOME = "/forms",
   COMEBACK = "/comeback",
   DASHBOARD = "/dashboard",
   ERROR = "/error",
 
-  FORM_CREATE = "/form/create",
-  FORM_EDIT = "/form/edit/:id",
-  DELETED_FORMS = "/deleted-forms",
+  FORM_CREATE = "/forms/new",
+  FORM_EDIT = "/forms/:formId/edit",
+  DELETED_FORMS = "/forms/trash",
 
-  RESPONSES = "/responses/:id",
-  RESPONSE_CREATE = "/response/create/:formId",
-  RESPONSE_CREATE_COPY = "/response/create/:formId/:id",
-  RESPONSE_EDIT = "/response/edit/:formId/:id",
-  RESPONSE_VIEW = "/response/view/:formId/:id",
+  RESPONSES = "/forms/:formId/responses",
+  RESPONSE_CREATE = "/forms/:formId/responses/new",
+  RESPONSE_CREATE_COPY = "/forms/:formId/responses/:responseId/copy",
+  RESPONSE_EDIT = "/forms/:formId/responses/:responseId/edit",
+  RESPONSE_VIEW = "/forms/:formId/responses/:responseId",
 
   DOWNLOAD_FILE = "/download/:formId/:responseId/:fileId/:fileName",
 }

@@ -159,15 +159,15 @@ export const StyledAutocomplete = styled(Autocomplete)`
     font-size: 13px;
     font-weight: 500;
     border-radius: 8px;
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    border: 1.5px solid #cbd5e1;
     transition: all 0.2s ease;
     padding: 0 12px !important;
     cursor: pointer;
 
     &:hover {
-      border-color: #cbd5e0;
-      background-color: #f1f5f9;
+      border-color: #94a3b8;
+      background-color: #f8fafc;
     }
 
     &.Mui-focused {
@@ -186,7 +186,8 @@ export const StyledAutocomplete = styled(Autocomplete)`
   }
 
   & .MuiAutocomplete-endAdornment {
-    right: 8px !important;
+    left: 8px !important;
+    right: auto !important;
   }
 ` as typeof Autocomplete;
 

@@ -73,6 +73,7 @@ function FormSectionElement({ id }: Props) {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const lastLengthRef = useRef(self.fieldIds.length);
 
   useEffect(() => {
     setNodeRef(containerRef.current);
@@ -80,10 +81,16 @@ function FormSectionElement({ id }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!self.expanded) {
-      toggleSectionExpanded(id);
+    const prevLength = lastLengthRef.current;
+    lastLengthRef.current = self.fieldIds.length;
+
+    // Only auto-expand when a new field is added (length increased) AND no drag-and-drop operation is active
+    if (self.fieldIds.length > prevLength && !draggingElement) {
+      if (!self.expanded) {
+        toggleSectionExpanded(id);
+      }
     }
-  }, [self.fieldIds.length]);
+  }, [self.fieldIds.length, draggingElement, self.expanded, id, toggleSectionExpanded]);
 
   useEffect(() => {
     active && setIsEditingTitle(false);

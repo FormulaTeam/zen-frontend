@@ -37,7 +37,7 @@ interface ResponseProps {
 }
 
 export default function Response({ user, viewMode = false, copyMode = false }: ResponseProps) {
-  const { formId, id } = useParams();
+  const { formId, responseId: id } = useParams();
 
   const [permissionTypes, setPermissionTypes] = useState<number[]>([]);
   const [savedParentResponseId, setSavedParentResponseId] = useState<string | undefined>(id);
@@ -111,8 +111,8 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
   const onBack = () => {
     location.state?.parentFormId
-      ? navigate(`/responses/${location.state.parentFormId}`, {})
-      : form && navigate(`/responses/${form.id}`);
+      ? navigate(`/forms/${location.state.parentFormId}/responses`, {})
+      : form && navigate(`/forms/${form.id}/responses`);
   };
 
   const onExitClick = () => {
@@ -207,7 +207,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       }
 
       if (error?.response?.data?.error?.includes("Metro")) {
-        navigate(`/responses/${form?.id ?? formId}`);
+        navigate(`/forms/${form?.id ?? formId}/responses`);
       } else {
         showErrorNotification("משהו השתבש");
         setShowLoadingSaveBtn(false);
@@ -294,7 +294,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     }
   }, [childForms, childFormsValidate, generateValidationErrorMessages]);
 
-  const onEdit = () => navigate(`/response/edit/${formId}/${id}`);
+  const onEdit = () => navigate(`/forms/${formId}/responses/${id}/edit`);
 
   const onSaveAndClose = () => {
     childForms.length > 0 ? setChildFormsValidate(true) : saveAll();

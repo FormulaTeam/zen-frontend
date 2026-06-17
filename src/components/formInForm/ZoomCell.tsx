@@ -67,7 +67,7 @@ const ZoomCell = ({ row, form }: { row: ZoomCellRow; form: FormDto }) => {
         startIcon={<OpenInNew sx={{ fontSize: "1.2rem !important" }} />}
         onClick={(e) => {
           e.stopPropagation();
-          navigate(`/response/view/${parentInfo.formId}/${parentInfo.responseId}`, {
+          navigate(`/forms/${parentInfo.formId}/responses/${parentInfo.responseId}`, {
             state: { parentFormId: form.id },
           });
         }}
