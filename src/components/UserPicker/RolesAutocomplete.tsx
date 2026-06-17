@@ -45,7 +45,7 @@ const RolesAutocomplete: React.FC<RolesAutocompleteProps> = ({
           return roleObj?.roleName || "";
         }
       }}
-      sx={{ width: width || "180px" }}
+      sx={{ width: width || "195px" }}
       renderInput={(params) => (
         <StyledTextField
           {...params}
