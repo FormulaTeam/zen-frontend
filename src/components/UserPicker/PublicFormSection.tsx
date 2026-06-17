@@ -116,78 +116,122 @@ const PublicFormSection: React.FC<PublicFormSectionProps> = ({
 
       {isPublic && (
         <PermissionsWrapper>
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              fullWidth
-              size="small"
-              value={publicLink}
-              InputProps={{
-                readOnly: true,
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Tooltip title={copied ? "הועתק!" : "העתק קישור"}>
-                      <Button
-                        onClick={handleCopyLink}
-                        variant="contained"
-                        disableElevation
-                        size="small"
-                        sx={{
-                          width: "72px",
-                          height: "32px",
-                          px: 0,
-                          ml: -1.5,
-                          mr: 1.5,
-                          fontSize: "0.75rem",
-                          fontWeight: 700,
-                          borderRadius: "8px 0 0 8px", // In RTL, this will be the right side
-                          backgroundColor: copied ? "#10b981" : theme.palette.primary.main,
-                          color: "#fff",
-                          "&:hover": {
-                            backgroundColor: copied ? "#059669" : theme.palette.primary.dark,
-                          },
-                        }}>
-                        {copied ? <CheckIcon sx={{ fontSize: "1.2rem" }} /> : "העתק"}
-                      </Button>
-                    </Tooltip>
-                  </InputAdornment>
-                ),
-                sx: {
-                  bgcolor: "#fff",
-                  borderRadius: "10px",
-                  fontSize: "0.8rem",
-                  color: "#64748b",
-                  fontWeight: 500,
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#e2e8f0",
-                    borderWidth: "1.5px",
-                  },
-                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#cbd5e0",
-                  },
-                },
-              }}
-            />
-          </Box>
-
           <Box
             sx={{
               display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              mt: 2,
-              pt: 2,
-              borderTop: "1px solid #e2e8f0",
+              flexDirection: "column",
+              gap: 2,
+              width: "100%",
             }}>
-            <PermissionsText $color="#475569">
-              שימוש בקישור יקנה למשתמשים את ההשראה:
-            </PermissionsText>
-            <RolesAutocomplete
-              isDisabled={false}
-              handleRoleChange={handleLocalFormPermissionChange}
-              width="140px"
-              excludeRoleIds={[role.FormAdmin]}
-              initialValue={formPermission}
-            />
+            {/* Link Area (on top, compact) */}
+            <Box
+              sx={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                bgcolor: "#fff",
+                borderRadius: "10px",
+                border: "1.5px solid #e2e8f0",
+                p: "4px 12px",
+                height: "38px",
+                boxSizing: "border-box",
+                transition: "border-color 0.2s ease",
+                "&:hover": {
+                  borderColor: "#cbd5e0",
+                },
+              }}>
+              {/* Copy Icon Button with Micro-Animation */}
+              <Tooltip title={copied ? "הועתק!" : "העתק קישור"} placement="top">
+                <IconButton
+                  onClick={handleCopyLink}
+                  size="small"
+                  sx={{
+                    color: copied ? "#10b981" : "#94a3b8",
+                    transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                    transform: copied ? "scale(1.15)" : "scale(1)",
+                    p: 0.5,
+                    "&:hover": {
+                      color: copied ? "#059669" : theme.palette.primary.main,
+                      backgroundColor: copied
+                        ? "rgba(16, 185, 129, 0.08)"
+                        : "rgba(30, 136, 229, 0.08)",
+                    },
+                  }}>
+                  <Box
+                    sx={{
+                      position: "relative",
+                      width: 20,
+                      height: 20,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}>
+                    {/* Copy Icon */}
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        transition: "all 0.2s ease-in-out",
+                        transform: copied ? "scale(0) rotate(-45deg)" : "scale(1) rotate(0)",
+                        opacity: copied ? 0 : 1,
+                        display: "flex",
+                      }}>
+                      <ContentCopyIcon sx={{ fontSize: "1.1rem" }} />
+                    </Box>
+
+                    {/* Check Icon */}
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        transition: "all 0.2s ease-in-out",
+                        transform: copied ? "scale(1) rotate(0)" : "scale(0) rotate(45deg)",
+                        opacity: copied ? 1 : 0,
+                        display: "flex",
+                      }}>
+                      <CheckIcon sx={{ fontSize: "1.1rem" }} />
+                    </Box>
+                  </Box>
+                </IconButton>
+              </Tooltip>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#64748b",
+                  fontWeight: 500,
+                  fontSize: "0.75rem",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  userSelect: "all",
+                  fontFamily: "Heebo, sans-serif",
+                  direction: "ltr",
+                  maxWidth: "calc(100% - 32px)",
+                }}>
+                {publicLink}
+              </Typography>
+            </Box>
+
+            {/* Roles Area (on bottom) */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+              }}>
+              <PermissionsText
+                $color="#475569"
+                style={{ whiteSpace: "nowrap", fontSize: "0.85rem" }}>
+                בחירת הרשאה עבור מחזיקי הקישור{" "}
+              </PermissionsText>
+              <RolesAutocomplete
+                isDisabled={false}
+                handleRoleChange={handleLocalFormPermissionChange}
+                width="210px"
+                excludeRoleIds={[role.FormAdmin]}
+                initialValue={formPermission}
+              />
+            </Box>
           </Box>
         </PermissionsWrapper>
       )}

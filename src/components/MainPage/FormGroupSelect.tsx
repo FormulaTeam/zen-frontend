@@ -70,10 +70,10 @@ const FormGroupSelect = ({ value, onChange, isSuperAdmin }: FormGroupSelectProps
           כל הטפסים
         </MenuItem>
         <MenuItem value={formsScopeOption.MyForms} sx={{ fontSize: "16px" }}>
-          טפסים שלי
+          הטפסים שלי
         </MenuItem>
         <MenuItem value={formsScopeOption.SharedWithMeForms} sx={{ fontSize: "16px" }}>
-          טפסים ששותפו איתי
+          הטפסים ששותפו איתי
         </MenuItem>
         {isSuperAdmin && (
           <MenuItem value={formsScopeOption.AllForms} sx={{ fontSize: "16px" }}>

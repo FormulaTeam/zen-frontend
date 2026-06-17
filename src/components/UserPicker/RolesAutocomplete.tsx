@@ -33,7 +33,7 @@ const RolesAutocomplete: React.FC<RolesAutocompleteProps> = ({
       value={initialValue || null}
       options={options}
       disableClearable={true}
-      forcePopupIcon={false} // This removes the dropdown arrow
+      forcePopupIcon={true} // This shows the dropdown arrow
       onChange={(event, newValue) => handleRoleChange(event, newValue, user)}
       multiple={false}
       disabled={isDisabled}
@@ -45,12 +45,12 @@ const RolesAutocomplete: React.FC<RolesAutocompleteProps> = ({
           return roleObj?.roleName || "";
         }
       }}
-      sx={{ width: width || "140px" }}
+      sx={{ width: width || "180px" }}
       renderInput={(params) => (
         <StyledTextField
           {...params}
           label=""
-          placeholder="בחר הרשאה"
+          placeholder="בחירת הרשאה"
           variant="outlined"
           fullWidth
           size="small"

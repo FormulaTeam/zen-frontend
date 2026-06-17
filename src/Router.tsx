@@ -105,7 +105,18 @@ const AppRouter = () => {
           </Route>
           <Route path="*" element={<ErrorPage />} />
         </Routes>
-        <Toaster richColors position="bottom-right" expand={true} />
+        <Toaster
+          richColors
+          position="bottom-right"
+          expand={true}
+          toastOptions={{
+            style: {
+              fontFamily: "Heebo, sans-serif",
+              fontSize: "15px",
+              fontWeight: 500,
+            },
+          }}
+        />
         {/* <HelpBtn showHelpCard={() => setShowHelpCard(true)} />
         {showHelpCard && <HelpDiv hideHelpCard={() => setShowHelpCard(false)} />} */}
       </Box>
