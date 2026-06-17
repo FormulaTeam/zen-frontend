@@ -1,10 +1,59 @@
 .container {
-    flex-grow: 1;
-    padding: 14px 12px;
-    margin-inline-start: 12px;
-    box-sizing: border-box;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    box-shadow: 2px 0 10px 4px #1976D21A inset;
-    border-radius: 24px;
+  flex-grow: 1;
+  padding: 14px 12px;
+  margin-inline-start: 12px;
+  box-sizing: border-box;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  box-shadow: 2px 0 10px 4px #1976D21A inset;
+  border-radius: 24px;
+}
+
+.addSectionRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  width: 100%;
+  direction: ltr;
+}
+
+.addSectionButton {
+  height: 36px;
+  min-height: 36px !important;
+  min-width: 122px !important;
+  padding: 0 14px !important;
+  border-radius: 6px !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #dbe3ef !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06) !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  text-transform: none !important;
+  font-size: 0.92rem !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+}
+
+.addSectionButton:hover {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08) !important;
+}
+
+.addSectionIcon {
+  font-size: 18px !important;
+  color: #0f172a;
+}
+
+.addSectionInfoIcon {
+  width: 24px;
+  color: #64748b;
+  font-size: 22px !important;
+  cursor: pointer;
 }

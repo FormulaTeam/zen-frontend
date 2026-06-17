@@ -1,15 +1,8 @@
-import {
-  Box,
-  CircularProgress,
-  IconButton,
-  Tooltip,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Box, CircularProgress, Tooltip, Typography } from "@mui/material";
 import React from "react";
 import { permission } from "formula-gear";
 import { Edit, ChevronLeft as ChevronLeftIcon } from "@mui/icons-material";
-import saveIcon from "../../icons/save-icon.png";
+import { Save } from "lucide-react";
 import { Header, HeaderSection, HeaderButton } from "../../pages/Response/styled";
 
 interface ResponseHeaderProps {
@@ -31,13 +24,10 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
   isCopy,
   permissionTypes,
   saveDisabled,
-
   onEdit,
   onBack,
   onSaveAndClose,
 }) => {
-  const theme = useTheme();
-
   const canEdit =
     permissionTypes.includes(permission.UpdateAnyResponse) ||
     permissionTypes.includes(permission.UpdateMyResponse);
@@ -82,13 +72,14 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
               saveDisabled ? (
                 <CircularProgress size={18} color="inherit" />
               ) : (
-                <img src={saveIcon} style={{ width: 22, height: 22 }} alt="save" />
+                <Save size={22} strokeWidth={2.4} />
               )
             }
             sx={{ minWidth: "120px", px: 3 }}>
             שמירה
           </HeaderButton>
         )}
+
         <HeaderButton onClick={onBack} size="small" sx={{ minWidth: "50px", p: 0 }}>
           <ChevronLeftIcon sx={{ fontSize: "28px" }} />
         </HeaderButton>

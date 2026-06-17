@@ -8,12 +8,18 @@ function FormSandboxSidebar() {
   const { isInternalNamesShown, toggleInternalNamesShown } = useFormSandboxContext();
 
   return (
-    <div>
-      <FormManagementActions />
+    <div className={styles.sidebar}>
+      <Typography className={styles.sidebarSectionTitle}>תצוגה</Typography>
+
       <div className={styles.displayInternalNames}>
         <Typography>הצג שמות פנימיים</Typography>
         <Switch checked={isInternalNamesShown} onChange={toggleInternalNamesShown} />
       </div>
+
+      <Typography variant={"subtitle1"}>לוגיקה והתנהגות</Typography>
+
+      <FormManagementActions />
+
       <FormElementCatalog />
     </div>
   );

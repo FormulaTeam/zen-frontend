@@ -28,6 +28,7 @@ import {
   CatalogArrowIcon,
   SectionTitleInput,
 } from "./styled";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 
 interface Props {
   id: string;
@@ -68,6 +69,7 @@ function FormSectionElement({ id }: Props) {
   const [showAlertMsg, setShowAlertMsg] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
+  const [isTitleHovered, setIsTitleHovered] = useState(false);
 
   const self = useMemo(() => formStructure.sections[id], [formStructure.sections, id]);
 
@@ -124,55 +126,90 @@ function FormSectionElement({ id }: Props) {
     setIsEditingTitle(false);
   }, [self.title]);
 
-  const sectionTitle: JSX.Element = isEditingTitle ? (
-    <FormControl error={isEditedTitleEmpty} variant="standard">
-      <SectionTitleInput
-        value={editedTitle}
-        autoFocus
-        inputRef={titleInputRef}
-        placeholder={texts.heb.undefinedSection}
-        error={isEditedTitleEmpty}
-        inputProps={{
-          maxLength: 255,
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-        onChange={(e) => {
-          setEditedTitle(e.target.value.trimStart());
-        }}
-        onBlur={() => {
-          if (!saveSectionTitle()) {
-            cancelSectionTitleEdit();
-          }
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            saveSectionTitle();
-          } else if (e.key === "Escape") {
-            cancelSectionTitleEdit();
-          }
-        }}
-      />
-
-      {isEditedTitleEmpty ? <FormHelperText>שם מקטע הוא שדה חובה</FormHelperText> : null}
-    </FormControl>
-  ) : (
-    <Tooltip title="עריכת מקטע" placement="top">
-      <SectionTitleText
-        variant="body1"
+  const sectionTitle: JSX.Element = (
+    <Tooltip title={isEditingTitle ? "" : "עריכת מקטע"} placement="top">
+      <div
+        onMouseEnter={() => setIsTitleHovered(true)}
+        onMouseLeave={() => setIsTitleHovered(false)}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
-          setEditedTitle(self.title);
-          setIsEditingTitle(true);
           e.stopPropagation();
+
+          if (!isEditingTitle) {
+            setEditedTitle(self.title);
+            setIsEditingTitle(true);
+          }
+        }}
+        style={{
+          display: "inline-flex",
+          alignItems: isEditingTitle ? "flex-start" : "center",
+          gap: 7,
+          maxWidth: "100%",
+          direction: "rtl",
+          cursor: isEditingTitle ? "text" : "pointer",
         }}>
-        <OverflowTooltip title={self.title || texts.heb.undefinedSection} placement="top">
-          <span className={!self.title ? styles.emptyTitle : ""}>
-            {self.title || texts.heb.undefinedSection}
-          </span>
-        </OverflowTooltip>
-      </SectionTitleText>
+        <div
+          style={{
+            minWidth: 0,
+            maxWidth: "100%",
+          }}>
+          {isEditingTitle ? (
+            <FormControl error={isEditedTitleEmpty} variant="standard">
+              <SectionTitleInput
+                value={editedTitle}
+                autoFocus
+                inputRef={titleInputRef}
+                placeholder={texts.heb.undefinedSection}
+                error={isEditedTitleEmpty}
+                inputProps={{
+                  maxLength: 255,
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => {
+                  setEditedTitle(e.target.value.trimStart());
+                }}
+                onBlur={() => {
+                  if (!saveSectionTitle()) {
+                    cancelSectionTitleEdit();
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveSectionTitle();
+                  } else if (e.key === "Escape") {
+                    cancelSectionTitleEdit();
+                  }
+                }}
+              />
+
+              {isEditedTitleEmpty ? <FormHelperText>שם מקטע הוא שדה חובה</FormHelperText> : null}
+            </FormControl>
+          ) : (
+            <SectionTitleText variant="body1">
+              <OverflowTooltip title={self.title || texts.heb.undefinedSection} placement="top">
+                <span className={!self.title ? styles.emptyTitle : ""}>
+                  {self.title || texts.heb.undefinedSection}
+                </span>
+              </OverflowTooltip>
+            </SectionTitleText>
+          )}
+        </div>
+
+        <EditOutlinedIcon
+          sx={{
+            fontSize: 21,
+            color: isEditingTitle ? "primary.main" : "text.secondary",
+            opacity: isEditingTitle || isTitleHovered ? 0.85 : 0.38,
+            transform: isEditingTitle || isTitleHovered ? "translateX(0)" : "translateX(2px)",
+            transition: "opacity 140ms ease, transform 140ms ease, color 140ms ease",
+            flexShrink: 0,
+            mt: isEditingTitle ? "5px" : "1px",
+            pointerEvents: "none",
+          }}
+        />
+      </div>
     </Tooltip>
   );
 

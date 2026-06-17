@@ -2,6 +2,7 @@ import styles from "./style.module.css";
 import { getFormIconByName } from "@utils/utils";
 import {
   Button,
+  CircularProgress,
   TextField,
   Tooltip,
   Dialog,
@@ -28,6 +29,9 @@ import ValidationErrorsDialog, {
   type ValidationError,
 } from "../../../components/BasePopup/ValidationErrorsDialog";
 import UnsavedChangesDialog from "../../../components/BasePopup/UnsavedChangesDialog";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import { Save } from "lucide-react";
+import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 
 type FormValidationResult = {
   isValid: boolean;
@@ -39,6 +43,45 @@ type FormValidationResult = {
 const METADATA_FIELD_LABELS: Record<string, string> = {
   title: "שם הטופס",
   description: "תיאור הטופס",
+};
+
+const headerActionButtonBaseSx = {
+  height: 42,
+  borderRadius: "10px",
+  backgroundColor: "#ffffff",
+  color: "#1a1a24",
+  border: "none",
+  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
+  textTransform: "none",
+  fontWeight: 600,
+  lineHeight: 1,
+  transition: "background-color 160ms ease, box-shadow 160ms ease",
+
+  "&:hover": {
+    backgroundColor: "#ffffff",
+    boxShadow: "0 6px 12px rgba(15, 23, 42, 0.08)",
+  },
+
+  "&.Mui-disabled": {
+    backgroundColor: "#f8fafc",
+    color: "#94a3b8",
+    boxShadow: "none",
+  },
+};
+
+const saveHeaderButtonSx = {
+  ...headerActionButtonBaseSx,
+  minWidth: 120,
+  px: 3,
+  gap: 1,
+  fontSize: "0.95rem",
+};
+
+const exitHeaderButtonSx = {
+  ...headerActionButtonBaseSx,
+  width: 50,
+  minWidth: 50,
+  p: 0,
 };
 
 const collectValidationMessages = (validationNode: unknown): string[] => {
@@ -109,6 +152,7 @@ function FormEditorHeader() {
   const [saveOptionsAfterTitlePopup, setSaveOptionsAfterTitlePopup] = useState<{
     navigateToResponses?: boolean;
   }>({});
+  const [isMetadataHovered, setIsMetadataHovered] = useState(false);
 
   const { title, description, iconId, validationErrors } = formStructure.metadata;
 
@@ -323,6 +367,8 @@ function FormEditorHeader() {
     <Tooltip title={isEditingMetadata ? "" : "עריכת פרטי הטופס"} placement="bottom-start">
       <MetadataContainer
         className={isEditingMetadata ? styles.editingMetadataText : ""}
+        onMouseEnter={() => setIsMetadataHovered(true)}
+        onMouseLeave={() => setIsMetadataHovered(false)}
         onBlur={(e) => {
           if (e.currentTarget.contains(e.relatedTarget)) {
             return;
@@ -339,34 +385,70 @@ function FormEditorHeader() {
           }
         }}>
         <div className={styles.title}>
-          {isEditingMetadata ? (
-            <SeamlessTitleInput
-              autoFocus
-              value={editedMetadata.title}
-              inputProps={{
-                maxLength: 60,
-              }}
-              placeholder={texts.heb.formNameLabel}
-              error={!!validationErrors?.title}
-              onChange={(e) => {
-                setEditedMetadata((prev) => ({
-                  ...prev,
-                  title: e.target.value.trimStart(),
-                }));
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleSaveMetadata();
-                } else if (e.key === "Escape") {
-                  handleCancelMetadataEdit();
-                }
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 7,
+              maxWidth: "100%",
+              direction: "rtl",
+            }}>
+            <div
+              style={{
+                minWidth: 0,
+                maxWidth: "100%",
+              }}>
+              {isEditingMetadata ? (
+                <SeamlessTitleInput
+                  autoFocus
+                  value={editedMetadata.title}
+                  inputProps={{
+                    maxLength: 60,
+                  }}
+                  placeholder={texts.heb.formNameLabel}
+                  error={!!validationErrors?.title}
+                  onChange={(e) => {
+                    setEditedMetadata((prev) => ({
+                      ...prev,
+                      title: e.target.value.trimStart(),
+                    }));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSaveMetadata();
+                    } else if (e.key === "Escape") {
+                      handleCancelMetadataEdit();
+                    }
+                  }}
+                />
+              ) : (
+                <OverflowTooltip title={title || texts.heb.formNameLabel} placement="top">
+                  <StyledTitleText variant="h5">{title || texts.heb.formNameLabel}</StyledTitleText>
+                </OverflowTooltip>
+              )}
+            </div>
+
+            <EditOutlinedIcon
+              sx={{
+                fontSize: 21,
+                color: validationErrors?.title
+                  ? "error.main"
+                  : isEditingMetadata
+                    ? "primary.main"
+                    : "text.secondary",
+                opacity:
+                  validationErrors?.title || isEditingMetadata || isMetadataHovered ? 0.85 : 0.38,
+                transform:
+                  validationErrors?.title || isEditingMetadata || isMetadataHovered
+                    ? "translateX(0)"
+                    : "translateX(2px)",
+                transition: "opacity 140ms ease, transform 140ms ease, color 140ms ease",
+                flexShrink: 0,
+                mt: "2px",
+                pointerEvents: "none",
               }}
             />
-          ) : (
-            <OverflowTooltip title={title || texts.heb.formNameLabel} placement="top">
-              <StyledTitleText variant={"h5"}>{title || texts.heb.formNameLabel}</StyledTitleText>
-            </OverflowTooltip>
-          )}
+          </div>
         </div>
 
         {isEditingMetadata ? (
@@ -417,12 +499,28 @@ function FormEditorHeader() {
 
   const headerActionButtons: JSX.Element = (
     <>
-      <Button variant="contained" color="primary" onClick={onSaveClick} disabled={isLoading}>
-        {isLoading ? "שומר..." : "שמירה"}
+      <Button onClick={onSaveClick} disabled={isLoading} disableElevation sx={saveHeaderButtonSx}>
+        {isLoading ? (
+          <CircularProgress size={18} color="inherit" />
+        ) : (
+          <Save size={22} strokeWidth={2.4} />
+        )}
+
+        <span>{isLoading ? "שומר..." : "שמירה"}</span>
       </Button>
-      <Button variant="outlined" color="error" onClick={onExitClick} disabled={isLoading}>
-        יציאה
-      </Button>
+
+      <Tooltip title="יציאה">
+        <span>
+          <Button
+            onClick={onExitClick}
+            disabled={isLoading}
+            disableElevation
+            aria-label="יציאה"
+            sx={exitHeaderButtonSx}>
+            <LogoutRoundedIcon sx={{ fontSize: 28 }} />
+          </Button>
+        </span>
+      </Tooltip>
     </>
   );
 
