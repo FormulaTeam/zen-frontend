@@ -25,12 +25,13 @@ export const NavToolbar = styled(Toolbar)`
   align-items: center;
 `;
 
-export const LogoContainer = styled.div<{ disabled: boolean }>`
+export const LogoContainer = styled.a<{ disabled: boolean }>`
   cursor: ${({ disabled }) => (disabled ? "default" : "pointer")};
   flex: 1;
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  text-decoration: none;
 `;
 
 export const ButtonsContainer = styled.div`
