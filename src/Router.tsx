@@ -1,6 +1,6 @@
 import { Toaster } from "sonner";
 import { useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Box } from "@mui/material";
 import MainPage from "./pages/MainPage/MainPage";
 import { useAuth } from "./contexts/AuthContext";
@@ -32,7 +32,7 @@ const AppRouter = () => {
   }
 
   return (
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <>
       <SessionStorageUpdater />
       <Box
         sx={{
@@ -121,7 +121,7 @@ const AppRouter = () => {
         {/* <HelpBtn showHelpCard={() => setShowHelpCard(true)} />
         {showHelpCard && <HelpDiv hideHelpCard={() => setShowHelpCard(false)} />} */}
       </Box>
-    </BrowserRouter>
+    </>
   );
 };
 

@@ -58,7 +58,7 @@ const PublicFormSection: React.FC<PublicFormSectionProps> = ({
 
   const roleName = getRoleName();
 
-  const publicLink = `${window.location.origin}/responses/${form?.id}`;
+  const publicLink = `${window.location.origin}/forms/${form?.id}/responses`;
 
   const handleCopyLink = async () => {
     try {

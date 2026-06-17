@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import * as MuiIcons from "@mui/icons-material";
 import {
@@ -57,7 +58,8 @@ const FormCard = ({
   searchValue?: string;
 }) => {
   const theme = useTheme();
-  const [showSharePopup, setShowSharePopup] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const showSharePopup = searchParams.get("modal") === "permissions" && searchParams.get("formId") === form.id.toString();
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
@@ -74,12 +76,17 @@ const FormCard = ({
 
   const handleShareClick = async () => {
     handleMenuClose();
-    setShowSharePopup(true);
+    setSearchParams((prev) => {
+      const updated = new URLSearchParams(prev);
+      updated.set("modal", "permissions");
+      updated.set("formId", form.id.toString());
+      return updated;
+    }, { replace: true });
   };
 
   const handleEditClick = () => {
     handleMenuClose();
-    navigate(`/form/edit/${form.id}`, { state: { from: location.pathname } });
+    navigate(`/forms/${form.id}/edit`, { state: { from: location.pathname } });
   };
 
   const handleDeleteClick = async () => {
@@ -131,7 +138,7 @@ const FormCard = ({
 
   const goToResponsesPage = (event: React.MouseEvent<HTMLElement>) => {
     resetSearchValue();
-    navigate(`/responses/${form.id}`, { replace: true });
+    navigate(`/forms/${form.id}/responses`, { replace: true });
     event.stopPropagation();
   };
 
@@ -266,7 +273,12 @@ const FormCard = ({
             <UserPicker
               form={form}
               closeSharePopupAndRefreshForm={() => {
-                setShowSharePopup(false);
+                setSearchParams((prev) => {
+                  const updated = new URLSearchParams(prev);
+                  updated.delete("modal");
+                  updated.delete("formId");
+                  return updated;
+                }, { replace: true });
               }}
             />
           )}
@@ -288,7 +300,7 @@ const FormCard = ({
               requiredPermissions={[permission.CreateResponse]}>
               <ItemButton
                 className="form-add-response-button"
-                onClick={() => navigate(`/response/create/${form.id}`)}
+                onClick={() => navigate(`/forms/${form.id}/responses/new`)}
                 variant="outlined"
                 sx={{
                   height: "32px",

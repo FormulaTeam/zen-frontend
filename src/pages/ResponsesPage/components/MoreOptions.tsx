@@ -9,7 +9,7 @@ import {
 } from "@mui/icons-material";
 import { ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import { FC, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { permission, responsesScopeOption } from "formula-gear";
 
@@ -33,15 +33,28 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
   pushToMetro,
   sourceOperationStatus,
 }: MoreOptionsProps) => {
-  const { id: formId } = useParams();
+  const { formId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const showImportFromExcelPopup = searchParams.get("modal") === "excel-import";
   const { permissions, form, rows } = useFormStore();
   const { isSuperAdmin } = useSuperAdmin();
 
   const [anchorElMoreActions, setAnchorElMoreActions] = useState<HTMLElement | null>(null);
   const [showDeleteFormPopup, setShowDeleteFormPopup] = useState(false);
   const [showDeleteResponsesPopup, setShowDeleteResponsesPopup] = useState(false);
-  const [showImportFromExcelPopup, setShowImportFromExcelPopup] = useState(false);
+
+  const setShowImportFromExcelPopup = (isOpen: boolean) => {
+    setSearchParams((prev) => {
+      const updated = new URLSearchParams(prev);
+      if (isOpen) {
+        updated.set("modal", "excel-import");
+      } else {
+        updated.delete("modal");
+      }
+      return updated;
+    }, { replace: true });
+  };
 
   const { mutate: deleteForm } = useDeleteForm({ id: formId ?? "" });
   const { mutate: softDeleteResponses } = useSoftDeleteResponses(formId ?? "");
@@ -76,7 +89,11 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
 
   const handleImportFromExcel = () => {
     closeMoreActionsMenu();
-    setShowImportFromExcelPopup(true);
+    setSearchParams((prev) => {
+      const updated = new URLSearchParams(prev);
+      updated.set("modal", "excel-import");
+      return updated;
+    }, { replace: true });
   };
 
   const handleDeleteForm = () => {
