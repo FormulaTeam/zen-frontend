@@ -1,6 +1,6 @@
 import { Toaster } from "sonner";
 import { useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Box } from "@mui/material";
 import MainPage from "./pages/MainPage/MainPage";
 import { useAuth } from "./contexts/AuthContext";
@@ -32,7 +32,7 @@ const AppRouter = () => {
   }
 
   return (
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <>
       <SessionStorageUpdater />
       <Box
         sx={{
@@ -43,6 +43,7 @@ const AppRouter = () => {
         }}>
         <Navbar />
         <Routes>
+          <Route path="/" element={<Navigate to={IPath.HOME} replace />} />
           <Route path={IPath.ERROR} element={<ErrorPage />} />
           <Route path={IPath.COMEBACK} element={<SSOComeback />} />
           <Route
@@ -105,11 +106,22 @@ const AppRouter = () => {
           </Route>
           <Route path="*" element={<ErrorPage />} />
         </Routes>
-        <Toaster richColors position="bottom-right" expand={true} />
+        <Toaster
+          richColors
+          position="bottom-right"
+          expand={true}
+          toastOptions={{
+            style: {
+              fontFamily: "Heebo, sans-serif",
+              fontSize: "15px",
+              fontWeight: 500,
+            },
+          }}
+        />
         {/* <HelpBtn showHelpCard={() => setShowHelpCard(true)} />
         {showHelpCard && <HelpDiv hideHelpCard={() => setShowHelpCard(false)} />} */}
       </Box>
-    </BrowserRouter>
+    </>
   );
 };
 

@@ -36,6 +36,7 @@ import {
 import { FormOverviewDto } from "@src/types/shared";
 import { IPath } from "../../types/enums/global.enums";
 import { EmptyState } from "../../components/MainPage/EmptyState";
+import { NoResultsState } from "../../components/MainPage/NoResultsState";
 
 function MainPage({
   user,
@@ -107,6 +108,18 @@ function MainPage({
     sharedFormsCountData.length,
   ]);
 
+  const showNoResults = useMemo(() => {
+    if (searchValue && searchValue.trim() !== "") {
+      return true;
+    }
+
+    if (scope === formsScopeOption.SharedWithMeForms) {
+      return true;
+    }
+
+    return false;
+  }, [searchValue, scope]);
+
   return (
     <Box className="main-page-container">
       <Box className="tabs-and-select-div">
@@ -176,6 +189,14 @@ function MainPage({
               </Box>
             )}
           </Grid>
+        ) : showNoResults ? (
+          <Box sx={{ width: "100%", display: "flex", justifyContent: "center", mt: 6 }}>
+            <NoResultsState
+              onClearSearch={resetSearchValue}
+              setScope={setScope}
+              isSuperAdmin={!!isSuperAdmin}
+            />
+          </Box>
         ) : (
           <Grid
             container

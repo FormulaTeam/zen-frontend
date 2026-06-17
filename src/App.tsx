@@ -1,4 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { FormChangesProvider } from "./contexts/FormChangesContext";
 import { SuperAdminProvider } from "./contexts/SuperAdminContext";
@@ -15,7 +16,9 @@ function App() {
       <AuthProvider>
         <SuperAdminProvider>
           <FormChangesProvider>
-            <AppRouter />
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+              <AppRouter />
+            </BrowserRouter>
           </FormChangesProvider>
         </SuperAdminProvider>
       </AuthProvider>

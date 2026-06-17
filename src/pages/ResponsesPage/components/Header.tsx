@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { Box, Tooltip, Typography } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
@@ -20,6 +21,27 @@ import {
 
 const Header = () => {
   const { form } = useFormStore();
+  const nameRef = useRef<HTMLSpanElement>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  useEffect(() => {
+    if (!form) return;
+
+    const checkTruncation = () => {
+      if (nameRef.current) {
+        const { scrollWidth, clientWidth } = nameRef.current;
+        setIsTruncated(scrollWidth > clientWidth);
+      }
+    };
+
+    checkTruncation();
+    window.addEventListener("resize", checkTruncation);
+
+    return () => {
+      window.removeEventListener("resize", checkTruncation);
+    };
+  }, [form?.name]);
+
   if (!form) return null;
 
   const renderDynamicIcon = (name: string) => {
@@ -44,6 +66,20 @@ const Header = () => {
 
   const infoTooltipContent = (
     <FormInfoContentBox>
+      {isTruncated && (
+        <FormInfoSectionBox sx={{ borderBottom: "1px solid rgba(0, 0, 0, 0.08)", pb: 1, mb: 1 }}>
+          <Typography
+            sx={{
+              fontWeight: 600,
+              color: "#020618",
+              lineHeight: 1.3,
+              fontFamily: "Heebo, sans-serif",
+            }}>
+            {form.name}
+          </Typography>
+        </FormInfoSectionBox>
+      )}
+
       {form.description && (
         <FormInfoSectionBox>
           <FormDescriptionTypography variant="body2">{form.description}</FormDescriptionTypography>
@@ -79,12 +115,13 @@ const Header = () => {
       {/* Name */}
       <FormNameTypography
         variant="h5"
+        ref={nameRef}
         sx={{
           fontSize: "1.6rem",
           fontWeight: 700,
           color: "inherit",
           lineHeight: 1,
-          display: "inline",
+          display: "inline-block",
         }}>
         {form.name}
       </FormNameTypography>
