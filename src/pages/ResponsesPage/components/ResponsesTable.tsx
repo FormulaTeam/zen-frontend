@@ -542,7 +542,7 @@ export const ResponsesTable = React.memo(
     const navigateToCreateResponseCopy = useCallback(
       (rowData: Row): void => {
         if (rowData && form?.id) {
-          navigate(`/response/create/${form.id}/${String(rowData.id)}`);
+          navigate(`/forms/${form.id}/responses/${rowData.id}/copy`);
         }
       },
       [form?.id, navigate],

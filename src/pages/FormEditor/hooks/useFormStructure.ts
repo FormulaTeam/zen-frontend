@@ -531,10 +531,15 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     });
   }, []);
 
-  const appendFieldToFirstSection = useCallback(
+  const appendFieldToLastSection = useCallback(
     (elementTypeId: FormFieldTypeId) => {
       setFormStructure((prev) => {
-        const changedSectionId = prev.orderedSectionIds[0];
+        if (prev.orderedSectionIds.length === 0) {
+          return prev;
+        }
+
+        const lastSectionIndex = prev.orderedSectionIds.length - 1;
+        const changedSectionId = prev.orderedSectionIds[lastSectionIndex];
         const changedSection = prev.sections[changedSectionId];
 
         const newField: FormField = {
@@ -810,7 +815,7 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     renameSection,
     toggleSectionExpanded,
 
-    appendFieldToFirstSection,
+    appendFieldToLastSection,
     deleteField,
     setFieldData,
 

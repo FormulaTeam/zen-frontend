@@ -62,7 +62,7 @@ export const UploadResponses = ({
   showImportFromExcelPopup: boolean;
   setShowImportFromExcelPopup: (value: boolean) => void;
 }) => {
-  const { id: formId } = useParams();
+  const { formId } = useParams();
   const { form } = useFormStore();
   const uploadRef = useRef<HTMLInputElement>(null);
   const [showErrorFileTooBig, setShowErrorFileTooBig] = useState(false);

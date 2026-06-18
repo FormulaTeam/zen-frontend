@@ -1,9 +1,10 @@
 import { GridRowId, GridRowModel, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Box, Tooltip, IconButton } from "@mui/material";
 import Delete from "@mui/icons-material/Delete";
 import { StatusCodes } from "http-status-codes";
+import { IOrderBy } from "../../types/enums/filtersAndSorts.enum";
 
 import SidePanel from "../../components/SidePanel/SidePanel";
 import SearchInfo from "../../components/Responses/SearchInfo";
@@ -53,7 +54,7 @@ export default function ResponsesPage({
   void setShouldRefreshPage;
 
   const navigate = useNavigate();
-  const { id: formId } = useParams<string>();
+  const { formId } = useParams<string>();
   const { isLoading, isError, error } = useFormLoader(formId || "");
 
   useEffect(() => {
@@ -80,6 +81,7 @@ export default function ResponsesPage({
 
 const ResponsesPageContent = (): JSX.Element => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [rowSelectionModel, setRowSelectionModel] = useState<GridRowSelectionModel>({
     type: "include",
     ids: new Set<GridRowId>(),
@@ -224,6 +226,86 @@ const ResponsesPageContent = (): JSX.Element => {
     isSaving,
     currentView,
   } = useResponsesViews();
+
+  // 1. Initial Load: Read from URL and write to Zustand Filter (page & pageSize only)
+  useEffect(() => {
+    const pageParam = searchParams.get("page");
+    const pageSizeParam = searchParams.get("pageSize");
+
+    const newFilter = { ...(filter || {}) };
+    let hasChanges = false;
+
+    if (pageParam) {
+      newFilter.pageNumber = Number(pageParam);
+      hasChanges = true;
+    }
+    if (pageSizeParam) {
+      newFilter.pageSize = Number(pageSizeParam);
+      hasChanges = true;
+    }
+
+    if (hasChanges) {
+      setFilter(newFilter);
+    }
+  }, []);
+
+  // 2. Continuous Sync: Sync Zustand Filter changes to URL (page & pageSize only)
+  useEffect(() => {
+    if (!filter) return;
+
+    setSearchParams((prev) => {
+      const updated = new URLSearchParams(prev);
+
+      if (filter.pageNumber && filter.pageNumber !== 1) {
+        updated.set("page", String(filter.pageNumber));
+      } else {
+        updated.delete("page");
+      }
+
+      if (filter.pageSize && filter.pageSize !== 25) {
+        updated.set("pageSize", String(filter.pageSize));
+      } else {
+        updated.delete("pageSize");
+      }
+
+      return updated;
+    }, { replace: true });
+  }, [filter, setSearchParams]);
+
+  // 3. Sync Drawer and Mode to/from URL
+  useEffect(() => {
+    const drawerParam = searchParams.get("drawer");
+    const targetSidePanelOpen = drawerParam === "views";
+    if (targetSidePanelOpen !== isSidePanelOpen) {
+      setIsSidePanelOpen(targetSidePanelOpen);
+    }
+
+    const modeParam = searchParams.get("mode");
+    const targetEditMode = modeParam === "quick-edit";
+    if (targetEditMode !== isInEditMode) {
+      setIsInEditMode(targetEditMode);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    setSearchParams((prev) => {
+      const updated = new URLSearchParams(prev);
+
+      if (isSidePanelOpen) {
+        updated.set("drawer", "views");
+      } else {
+        updated.delete("drawer");
+      }
+
+      if (isInEditMode) {
+        updated.set("mode", "quick-edit");
+      } else {
+        updated.delete("mode");
+      }
+
+      return updated;
+    }, { replace: true });
+  }, [isSidePanelOpen, isInEditMode, setSearchParams]);
 
   useEffect(() => {
     if (!isInEditMode && !showRestoreBanner) {

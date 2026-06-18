@@ -2,6 +2,7 @@ import { CollisionDetection, DndContext, PointerSensor, pointerWithin, useSensor
 import { FormStructureContainer } from "./FormStructure";
 import { DraggableElementType, FormSandboxContext } from "./context/FormSandboxContext";
 import { useCallback, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { FormSandboxSidebar } from "./FormSandboxSidebar";
 import { useFormDndHandlers } from "../hooks/useFormDndHandlers";
 import { DRAG_OVERLAYS } from "./FormDragOverlay";
@@ -15,7 +16,21 @@ const COLLISION_DETECTION: Record<DraggableElementType, CollisionDetection> = {
 
 function FormSandbox() {
   const [isInternalNamesShown, setIsInternalNamesShown] = useState(false);
-  const [isConditionsDialogOpen, setIsConditionsDialogOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isConditionsDialogOpen = searchParams.get("modal") === "conditions";
+
+  const setIsConditionsDialogOpen = useCallback((isOpen: boolean) => {
+    setSearchParams((prev) => {
+      const updated = new URLSearchParams(prev);
+      if (isOpen) {
+        updated.set("modal", "conditions");
+      } else {
+        updated.delete("modal");
+      }
+      return updated;
+    }, { replace: true });
+  }, [setSearchParams]);
+
   const { handleDragStart, handleDragOver, handleDragEnd, draggingElement } = useFormDndHandlers();
 
   const sensors = useSensors(

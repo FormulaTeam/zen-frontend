@@ -619,8 +619,8 @@ export const SyncStatusIconBox = styled(Box)(() => ({
 
 export const FormInfoContentBox = styled(Box)(() => ({
   maxWidth: "28vw",
-  maxHeight: "15vh",
-  overflowY: "auto",
+  maxHeight: "none",
+  overflowY: "visible",
   direction: "ltr",
   padding: "4px",
 }));

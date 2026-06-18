@@ -150,7 +150,7 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
   });
 
   const handleViewClick = useCallback((): void => {
-    navigate(`/response/view/${linkedFormId}/${response.id}`, {
+    navigate(`/forms/${linkedFormId}/responses/${response.id}`, {
       state: { parentFormId },
     });
   }, [navigate, linkedFormId, response.id, parentFormId]);

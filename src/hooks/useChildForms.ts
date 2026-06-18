@@ -305,7 +305,7 @@ export const useChildForms = ({
           return;
         }
 
-        navigate(`/responses/${formId}`);
+        navigate(`/forms/${formId}/responses`);
         return;
       }
 
@@ -330,7 +330,7 @@ export const useChildForms = ({
       }
 
       if (allSaved) {
-        navigate(`/responses/${formId}`);
+        navigate(`/forms/${formId}/responses`);
       } else {
         showErrorNotification(NotificationTexts.CreateResponseFailed);
       }

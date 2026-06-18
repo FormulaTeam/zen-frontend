@@ -2,7 +2,6 @@ import apiClient from "./config";
 import { ResponsesView } from "../types/interfaces/tableViews.types";
 import { useFetch } from "../utils/useFetch";
 import { UseQueryResult, useMutation } from "@tanstack/react-query";
-import { StatusCodes } from "http-status-codes";
 import queryClient from "./queryClient";
 
 /**
@@ -19,29 +18,6 @@ export const useGetResponsesViews = (formId: string): UseQueryResult<ResponsesVi
       enabled: !!formId && formId !== "undefined" && formId !== "null",
     },
   });
-};
-
-/**
- * Fetch the default view for a specific form.
- *
- * @param formId - The ID of the form to get the default view for.
- * @returns A promise that resolves to the default responses view or null if not found.
- */
-export const getDefaultResponsesView = async (formId: string): Promise<ResponsesView | null> => {
-  try {
-    const { data } = await apiClient.get<ResponsesView>(
-      `/forms/${formId}/responses-views/default`,
-    );
-
-    return data ?? null;
-  } catch (error: any) {
-    if (error?.response?.status === StatusCodes.NOT_FOUND) {
-      return null;
-    }
-
-    console.error("Failed to fetch default responses view:", error);
-    throw error;
-  }
 };
 
 /**

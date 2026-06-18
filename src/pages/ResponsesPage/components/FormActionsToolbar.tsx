@@ -1,7 +1,7 @@
 import SyncIcon from "@mui/icons-material/Sync";
 import { Box, Tooltip } from "@mui/material";
 import { useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import ShareIcon from "@mui/icons-material/Share";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -31,10 +31,11 @@ interface FormActionsToolbarProps {
 
 export const FormActionsToolbar = ({ onBackClick }: FormActionsToolbarProps) => {
   const { permissions, form, setForm } = useFormStore();
-  const { id: formId } = useParams();
+  const { formId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [showSharePopup, setShowSharePopup] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const showSharePopup = searchParams.get("modal") === "permissions";
   const [anchorElSourceType, setAnchorElSourceType] = useState<null | HTMLElement>(null);
   const [sourceOperationStatus, setSourceOperationStatus] = useState<SourceOperationStatusType>(
     SourceOperationStatus.NOT_IN_PROGRESS,
@@ -100,7 +101,7 @@ export const FormActionsToolbar = ({ onBackClick }: FormActionsToolbarProps) => 
         <Tooltip title="עריכת טופס">
           <IconOnlyButton
             onClick={() =>
-              navigate(`/form/edit/${formId}`, {
+              navigate(`/forms/${formId}/edit`, {
                 state: { from: location.pathname },
               })
             }>
@@ -112,7 +113,15 @@ export const FormActionsToolbar = ({ onBackClick }: FormActionsToolbarProps) => 
       {/* Share */}
       <PermissionGate requiredPermissions={[permission.ShareForm]} userPermissions={permissions}>
         <Tooltip title="שיתוף">
-          <IconOnlyButton disabled={!hasFormFields} onClick={() => setShowSharePopup(true)}>
+          <IconOnlyButton
+            disabled={!hasFormFields}
+            onClick={() => {
+              setSearchParams((prev) => {
+                const updated = new URLSearchParams(prev);
+                updated.set("modal", "permissions");
+                return updated;
+              }, { replace: true });
+            }}>
             <ShareIcon />
           </IconOnlyButton>
         </Tooltip>
@@ -123,7 +132,12 @@ export const FormActionsToolbar = ({ onBackClick }: FormActionsToolbarProps) => 
             closeSharePopupAndRefreshForm={(users, updatedForm) => {
               const formToUpdate = updatedForm || form;
               setForm(formToUpdate as typeof form);
-              setShowSharePopup(false);
+
+              setSearchParams((prev) => {
+                const updated = new URLSearchParams(prev);
+                updated.delete("modal");
+                return updated;
+              }, { replace: true });
             }}
           />
         )}
