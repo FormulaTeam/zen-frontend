@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Autocomplete, Box, IconButton, TextField } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-
 import { selectionMode } from "formula-gear";
+
+import { useLoadMoreOnVisible } from "../../hooks/useLoadMoreOnVisible";
 
 interface OptionsCellEditorProps {
   value: string | string[];
@@ -34,6 +35,23 @@ const normalizeValue = (value: string | string[], mode: string): string | string
   return value || "";
 };
 
+const Listbox = React.forwardRef
+  <HTMLUListElement,
+    React.HTMLAttributes<HTMLUListElement> & { onLoadMore?: () => void }
+  >(function Listbox({ children, onLoadMore, ...props }, ref) {
+    const listRef = useRef<HTMLUListElement>(null);
+    const sentinelRef = useRef<HTMLLIElement>(null);
+
+    useImperativeHandle(ref, () => listRef.current as HTMLUListElement);
+    useLoadMoreOnVisible(listRef, sentinelRef, onLoadMore);
+
+    return (
+      <ul ref={listRef} {...props}>
+        {children}
+        <li aria-hidden ref={sentinelRef} style={{ height: 1, padding: 0, margin: 0, listStyle: "none" }} />
+      </ul>
+    );
+  });
 
 const basePopperSlotProps = {
   clearIndicator: {
@@ -263,22 +281,6 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
     [options],
   );
 
-  const handleListboxScroll = (event: React.UIEvent<HTMLUListElement>): void => {
-    if (!onScrollToBottom) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-
-    if (scrollHeight - scrollTop - clientHeight < 48) {
-      onScrollToBottom();
-    }
-  };
-
-  const autocompleteSlotProps = {
-    ...basePopperSlotProps,
-    listbox: { onScroll: handleListboxScroll },
-  };
-
-
   const getOptionLabel = (option: string): string => optionLabels[option] ?? option;
 
   const renderRtlOption = (
@@ -442,7 +444,9 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             disableCloseOnSelect
             autoHighlight
             openOnFocus
-            slotProps={autocompleteSlotProps}
+            slotProps={basePopperSlotProps}
+            ListboxComponent={Listbox}
+            ListboxProps={{ onLoadMore: onScrollToBottom } as any}
             loading={loading}
             loadingText="טוען אפשרויות..."
             sx={{ width: "100%" }}
@@ -541,7 +545,9 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             isOptionEqualToValue={(option, currentValue) => option === currentValue}
             autoHighlight
             openOnFocus
-            slotProps={autocompleteSlotProps}
+            slotProps={basePopperSlotProps}
+            ListboxComponent={Listbox}
+            ListboxProps={{ onLoadMore: onScrollToBottom } as any}
             loading={loading}
             loadingText="טוען אפשרויות..."
             sx={{ width: "100%" }}
