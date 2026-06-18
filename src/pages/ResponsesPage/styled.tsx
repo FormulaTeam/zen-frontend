@@ -247,7 +247,6 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     fontSize: "18px",
     border: "none",
     overflow: "hidden",
-    direction: "rtl /* @noflip */",
     "& .MuiDataGrid-cell": {
       borderBottom: "none",
       borderRight: "none",
@@ -462,6 +461,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   "& .MuiDataGrid-scrollbar--vertical": {
     display: "none",
   },
+  "& .MuiDataGrid-scrollbar.MuiDataGrid-scrollbar--horizontal": {
+    display: "none !important",
+  },
   "& .MuiDataGrid-row.Mui-selected": {
     backgroundColor: "rgba(25, 118, 210, 0.04)",
     "&:hover": {
@@ -482,30 +484,6 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   },
   "& .MuiDataGrid-columnHeaderDraggableContainer:focus-within": {
     outline: "none !important",
-  },
-  "& .MuiDataGrid-virtualScroller": {
-    overflowX: "auto !important",
-    "&::-webkit-scrollbar": {
-      height: "16px",
-      width: "0px",
-      display: "block",
-    },
-    "&::-webkit-scrollbar-track": {
-      backgroundColor: "#f1f1f1",
-      borderRadius: "10px",
-    },
-    "&::-webkit-scrollbar-thumb": {
-      backgroundColor: "#cbd5e0",
-      borderRadius: "10px",
-      border: "3px solid #f1f1f1",
-      "&:hover": {
-        backgroundColor: "#a0aec0",
-      },
-    },
-  },
-  "& .MuiDataGrid-scrollbar--horizontal": {
-    display: "block",
-    height: "16px",
   },
 
   "& .MuiDataGrid-overlayWrapper": {
