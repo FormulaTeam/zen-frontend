@@ -15,6 +15,11 @@
   opacity: 1 !important;
 }
 
-.internalNamesSwitch :global(.MuiSwitch-thumb) {
-  background-color: #ffffff;
+.internalNamesSwitch :global(.MuiSwitch-switchBase.Mui-checked) {
+  color: #1976d2 !important;
+}
+
+.internalNamesSwitch :global(.MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track) {
+  background-color: #1976d2 !important;
+  opacity: 0.5 !important;
 }
