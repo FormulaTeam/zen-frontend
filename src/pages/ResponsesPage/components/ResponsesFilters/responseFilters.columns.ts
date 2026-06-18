@@ -15,8 +15,11 @@ const getValueOptions = (field: FormFieldDto) => {
   }));
 };
 
-export const getResponseFilterColumnProps = (field: FormFieldDto): Partial<GridColDef> => {
-  const filterOperators = getFilterOperatorsForField(field);
+export const getResponseFilterColumnProps = (
+  field: FormFieldDto,
+  formFields: FormFieldDto[],
+): Partial<GridColDef> => {
+  const filterOperators = getFilterOperatorsForField(field, formFields);
 
   const baseProps: Partial<GridColDef> = {
     filterable: filterOperators.length > 0,

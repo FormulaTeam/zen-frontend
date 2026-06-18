@@ -1,15 +1,24 @@
 import { useEffect, type RefObject } from "react";
 
+type MaybeRef<T extends HTMLElement> = RefObject<T> | T | null;
+
+const resolveNode = <T extends HTMLElement>(value: MaybeRef<T>): T | null => {
+    if (!value) return null;
+    if ("current" in value) return value.current;
+    return value;
+};
+
 export const useLoadMoreOnVisible = (
-    rootRef: RefObject<HTMLElement>,
-    sentinelRef: RefObject<HTMLElement>,
+    root: MaybeRef<HTMLElement>,
+    sentinel: MaybeRef<HTMLElement>,
     onLoadMore?: () => void,
+    enabled = true,
 ): void => {
     useEffect(() => {
-        const rootNode = rootRef.current;
-        const sentinelNode = sentinelRef.current;
+        const rootNode = resolveNode(root);
+        const sentinelNode = resolveNode(sentinel);
 
-        if (!rootNode || !sentinelNode || !onLoadMore) return;
+        if (!enabled || !rootNode || !sentinelNode || !onLoadMore) return;
 
         const observer = new IntersectionObserver(
             (entries) => {
@@ -23,5 +32,5 @@ export const useLoadMoreOnVisible = (
         observer.observe(sentinelNode);
 
         return () => observer.disconnect();
-    }, [rootRef, sentinelRef, onLoadMore]);
+    }, [root, sentinel, onLoadMore, enabled]);
 };
