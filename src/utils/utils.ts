@@ -802,6 +802,10 @@ const formatExcelExportCell = (value: unknown): ExcelExportCell => {
           .join(", "),
       };
     }
+
+    if (typeof objectValue.text === "string") {
+      return { value: objectValue.text };
+    }
   }
 
   return { value: safeString(value) };
@@ -984,9 +988,9 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
 
             case fieldType.Options:
               if (Array.isArray(value)) {
-                formattedValue = value.join(",");
+                formattedValue = value.map((option) => (option as { text: string }).text).join(",");
               } else {
-                formattedValue = value as string;
+                formattedValue = (value as { text: string }).text;
               }
               break;
 
