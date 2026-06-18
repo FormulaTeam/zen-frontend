@@ -35,7 +35,7 @@
   justify-content: center !important;
   gap: 8px !important;
   text-transform: none !important;
-  font-size: 0.92rem !important;
+  font-size: 1.2rem;
   font-weight: 500 !important;
   line-height: 1 !important;
 }

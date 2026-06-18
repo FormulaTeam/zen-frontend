@@ -9,14 +9,22 @@ function FormSandboxSidebar() {
 
   return (
     <div className={styles.sidebar}>
-      <Typography className={styles.sidebarSectionTitle}>תצוגה</Typography>
+      <Typography variant="subtitle1" className={styles.logicSectionTitle}>
+        תצוגה
+      </Typography>
 
       <div className={styles.displayInternalNames}>
         <Typography>הצג שמות פנימיים</Typography>
-        <Switch checked={isInternalNamesShown} onChange={toggleInternalNamesShown} />
+        <Switch
+          className={styles.internalNamesSwitch}
+          checked={isInternalNamesShown}
+          onChange={toggleInternalNamesShown}
+        />{" "}
       </div>
 
-      <Typography variant={"subtitle1"}>לוגיקה והתנהגות</Typography>
+      <Typography variant="subtitle1" className={styles.logicSectionTitle}>
+        לוגיקה והתנהגות
+      </Typography>
 
       <FormManagementActions />
 

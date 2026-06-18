@@ -4,3 +4,17 @@
     align-items: center;
     margin-block-start: 24px;
 }
+
+.logicSectionTitle {
+  margin-block-start: 24px !important;
+  margin-block-end: 12px !important;
+}
+
+.internalNamesSwitch :global(.MuiSwitch-track) {
+  background-color: #e2e8f0 !important;
+  opacity: 1 !important;
+}
+
+.internalNamesSwitch :global(.MuiSwitch-thumb) {
+  background-color: #ffffff;
+}
