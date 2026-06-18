@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Autocomplete, Box, IconButton, TextField } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-
 import { selectionMode } from "formula-gear";
+
+import { useLoadMoreOnVisible } from "../../hooks/useLoadMoreOnVisible";
 
 interface OptionsCellEditorProps {
   value: string | string[];
@@ -13,6 +14,8 @@ interface OptionsCellEditorProps {
   selectionMode?: "single" | "multiple";
   isRequired?: boolean;
   errorMessage?: string;
+  loading?: boolean;
+  onScrollToBottom?: () => void;
 }
 
 const normalizeValue = (value: string | string[], mode: string): string | string[] => {
@@ -32,7 +35,25 @@ const normalizeValue = (value: string | string[], mode: string): string | string
   return value || "";
 };
 
-const slotProps = {
+const Listbox = React.forwardRef
+  <HTMLUListElement,
+    React.HTMLAttributes<HTMLUListElement> & { onLoadMore?: () => void }
+  >(function Listbox({ children, onLoadMore, ...props }, ref) {
+    const listRef = useRef<HTMLUListElement>(null);
+    const sentinelRef = useRef<HTMLLIElement>(null);
+
+    useImperativeHandle(ref, () => listRef.current as HTMLUListElement);
+    useLoadMoreOnVisible(listRef, sentinelRef, onLoadMore);
+
+    return (
+      <ul ref={listRef} {...props}>
+        {children}
+        <li aria-hidden ref={sentinelRef} style={{ height: 1, padding: 0, margin: 0, listStyle: "none" }} />
+      </ul>
+    );
+  });
+
+const basePopperSlotProps = {
   clearIndicator: {
     title: "",
   },
@@ -50,7 +71,7 @@ const slotProps = {
       },
 
       "& .MuiAutocomplete-listbox": {
-        p: "6px",
+        p: "2px",
         direction: "rtl",
         textAlign: "right",
       },
@@ -106,43 +127,43 @@ const getTextFieldSx = ({
 
     ...(isMultiSelect
       ? {
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-          gap: "6px",
-          maxHeight: "160px",
-          overflowY: "auto",
-          overflowX: "hidden",
-          padding: "8px 10px !important",
-          overscrollBehavior: "contain",
-          scrollbarWidth: "thin",
-          scrollbarColor: "#cbd5e1 transparent",
+        alignItems: "flex-start",
+        flexWrap: "wrap",
+        gap: "6px",
+        maxHeight: "160px",
+        overflowY: "auto",
+        overflowX: "hidden",
+        padding: "8px 10px !important",
+        overscrollBehavior: "contain",
+        scrollbarWidth: "thin",
+        scrollbarColor: "#cbd5e1 transparent",
 
-          "&::-webkit-scrollbar": {
-            width: "8px",
-          },
+        "&::-webkit-scrollbar": {
+          width: "8px",
+        },
 
-          "&::-webkit-scrollbar-track": {
-            backgroundColor: "transparent",
-          },
+        "&::-webkit-scrollbar-track": {
+          backgroundColor: "transparent",
+        },
 
-          "&::-webkit-scrollbar-thumb": {
-            backgroundColor: "#cbd5e1",
-            borderRadius: "999px",
-            border: "2px solid #ffffff",
-          },
+        "&::-webkit-scrollbar-thumb": {
+          backgroundColor: "#cbd5e1",
+          borderRadius: "999px",
+          border: "2px solid #ffffff",
+        },
 
-          "&::-webkit-scrollbar-thumb:hover": {
-            backgroundColor: "#94a3b8",
-          },
-        }
+        "&::-webkit-scrollbar-thumb:hover": {
+          backgroundColor: "#94a3b8",
+        },
+      }
       : {
-          alignItems: hasSelectedValue ? "flex-start" : "center",
-          flexWrap: "nowrap",
-          maxHeight: "132px",
-          overflowY: hasSelectedValue ? "auto" : "hidden",
-          overflowX: "hidden",
-          padding: hasSelectedValue ? "8px 10px !important" : "0 10px !important",
-        }),
+        alignItems: hasSelectedValue ? "flex-start" : "center",
+        flexWrap: "nowrap",
+        maxHeight: "132px",
+        overflowY: hasSelectedValue ? "auto" : "hidden",
+        overflowX: "hidden",
+        padding: hasSelectedValue ? "8px 10px !important" : "0 10px !important",
+      }),
 
     "&:hover": {
       borderColor: hasError ? "#d32f2f" : "#b8c4d6",
@@ -173,16 +194,16 @@ const getTextFieldSx = ({
 
     ...(hasSelectedValue
       ? {
-          width: "0 !important",
-          minWidth: "0 !important",
-          flexGrow: "0 !important",
-          padding: "0 !important",
-        }
+        width: "0 !important",
+        minWidth: "0 !important",
+        flexGrow: "0 !important",
+        padding: "0 !important",
+      }
       : {
-          minWidth: "120px !important",
-          flexGrow: 1,
-          padding: isMultiSelect ? "0 !important" : "7px 0 !important",
-        }),
+        minWidth: "120px !important",
+        flexGrow: 1,
+        padding: isMultiSelect ? "0 !important" : "7px 0 !important",
+      }),
   },
 });
 
@@ -242,6 +263,8 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
   selectionMode: mode = "single",
   isRequired = false,
   errorMessage,
+  loading = false,
+  onScrollToBottom,
 }) => {
   const isMultiSelect = mode === selectionMode.Multiple;
   const [localValue, setLocalValue] = useState<string | string[]>(() =>
@@ -421,7 +444,11 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             disableCloseOnSelect
             autoHighlight
             openOnFocus
-            slotProps={slotProps}
+            slotProps={basePopperSlotProps}
+            ListboxComponent={Listbox}
+            ListboxProps={{ onLoadMore: onScrollToBottom } as any}
+            loading={loading}
+            loadingText="טוען אפשרויות..."
             sx={{ width: "100%" }}
             renderTags={(tagValue, getTagProps) =>
               tagValue.map((option, index) => {
@@ -518,7 +545,11 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             isOptionEqualToValue={(option, currentValue) => option === currentValue}
             autoHighlight
             openOnFocus
-            slotProps={slotProps}
+            slotProps={basePopperSlotProps}
+            ListboxComponent={Listbox}
+            ListboxProps={{ onLoadMore: onScrollToBottom } as any}
+            loading={loading}
+            loadingText="טוען אפשרויות..."
             sx={{ width: "100%" }}
             renderInput={(params) => (
               <TextField

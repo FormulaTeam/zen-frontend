@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   Box,
   Checkbox,
@@ -16,8 +16,9 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/he";
 import { OptionResponseValue } from "@src/utils/optionResponseValue";
+import { useLoadMoreOnVisible } from "../../hooks/useLoadMoreOnVisible";
 
-type FilterInputProps = {
+export type FilterInputProps = {
   item: any;
   applyValue: (item: any) => void;
   focusElementRef?: React.Ref<any>;
@@ -25,6 +26,8 @@ type FilterInputProps = {
   headerFilterMenu?: React.ReactNode;
   clearButton?: React.ReactNode;
   options?: OptionResponseValue[];
+  loading?: boolean;
+  onLoadMore?: () => void;
 };
 
 type RangeValue = {
@@ -483,9 +486,13 @@ export const TimeRangeFilterInput: React.FC<FilterInputProps & { timePrecision?:
     </HeaderFilterInputShell>
   );
 };
-
 export const SingleOptionFilterInput: React.FC<FilterInputProps> = (props) => {
-  const { item, applyValue, options = [], headerFilterMenu, clearButton } = props;
+  const { item, applyValue, options = [], headerFilterMenu, clearButton, loading, onLoadMore } = props;
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const [paperNode, setPaperNode] = React.useState<HTMLElement | null>(null);
+  const [sentinelNode, setSentinelNode] = React.useState<HTMLElement | null>(null);
+
+  useLoadMoreOnVisible(paperNode, sentinelNode, onLoadMore, menuOpen);
 
   return (
     <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
@@ -495,22 +502,41 @@ export const SingleOptionFilterInput: React.FC<FilterInputProps> = (props) => {
         <Select
           label="ערך"
           value={item.value ?? ""}
-          onChange={(event) => applyFilterValue(item, applyValue, event.target.value)}>
+          onChange={(event) => applyFilterValue(item, applyValue, event.target.value)}
+          open={menuOpen}
+          onOpen={() => setMenuOpen(true)}
+          onClose={() => setMenuOpen(false)}
+          MenuProps={{
+            PaperProps: {
+              ref: setPaperNode,
+            },
+          }}>
           {options.map((option) => (
             <MenuItem key={option.id} value={option.id}>
               {option.text}
             </MenuItem>
           ))}
+
+          <MenuItem
+            disabled
+            aria-hidden
+            ref={setSentinelNode}
+            sx={{ minHeight: 1, height: 1, p: 0, opacity: 0 }}
+          />
         </Select>
       </FormControl>
-    </HeaderFilterInputShell>
+    </HeaderFilterInputShell >
   );
 };
 
 export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
-  const { item, applyValue, options = [], headerFilterMenu, clearButton } = props;
+  const { item, applyValue, options = [], headerFilterMenu, clearButton, loading, onLoadMore } = props;
   const selectedValues = Array.isArray(item.value) ? item.value.map(String) : [];
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const [paperNode, setPaperNode] = React.useState<HTMLElement | null>(null);
+  const [sentinelNode, setSentinelNode] = React.useState<HTMLElement | null>(null);
 
+  useLoadMoreOnVisible(paperNode, sentinelNode, onLoadMore, menuOpen);
   return (
     <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
       <FormControl size="small" variant="standard" fullWidth>
@@ -529,6 +555,14 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
               typeof rawValue === "string" ? rawValue.split(",") : rawValue,
             );
           }}
+          open={menuOpen}
+          onOpen={() => setMenuOpen(true)}
+          onClose={() => setMenuOpen(false)}
+          MenuProps={{
+            PaperProps: {
+              ref: setPaperNode,
+            },
+          }}
           renderValue={(selected) =>
             options
               .filter((option) => (selected as string[]).includes(option.id))
@@ -541,6 +575,13 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
               <ListItemText primary={option.text} />
             </MenuItem>
           ))}
+
+          <MenuItem
+            disabled
+            aria-hidden
+            ref={setSentinelNode}
+            sx={{ minHeight: 1, height: 1, p: 0, opacity: 0 }}
+          />
         </Select>
       </FormControl>
     </HeaderFilterInputShell>

@@ -2,7 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { formsScopeOption, FormsScopeOption } from "../types/enums/filtersAndSorts.enum";
 
+/**
+ * Parameters for the useFormsScope hook.
+ */
 interface UseFormsScopeParams {
+  /**
+   * Indicates if the current user has super administrator privileges.
+   */
   isSuperAdmin: boolean;
 }
 

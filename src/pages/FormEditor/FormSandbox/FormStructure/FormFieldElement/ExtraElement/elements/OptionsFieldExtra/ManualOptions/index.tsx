@@ -1,4 +1,4 @@
-import { Button, FormControl, Tooltip, Autocomplete, TextField } from "@mui/material";
+import { Button, FormControl, Tooltip, Autocomplete, TextField, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, IconButton } from "@mui/material";
 import { OptionsFieldTypeId } from "../index";
 import { Close } from "@mui/icons-material";
 import { generateOptionItemId } from "../../../../../../../utils";
@@ -44,11 +44,34 @@ function ManualOptions(props: Props) {
   const { formStructure } = useFormStructureContext();
   
   const currentField = formStructure.fields[id];
-  const items = (currentField?.data?.options as ManualItems) ?? [generateEmptyItem(), generateEmptyItem()];
+  const extra = (currentField?.data?.extra as FormFieldExtra<OptionsFieldTypeId>) ?? {};
+
+  const rawItems = (currentField?.data?.options as ManualItems) ?? [generateEmptyItem(), generateEmptyItem()];
+
+  const items = useMemo(() => {
+    return rawItems.filter((item) => item.isActive !== false);
+  }, [rawItems]);
+
+  const inactiveItems = useMemo(() => {
+    return rawItems.filter((item) => item.isActive === false);
+  }, [rawItems]);
+
+  const updateOptionsData = useCallback((activeItems: ManualItems) => {
+    onDataChange?.({
+      options: [...activeItems, ...inactiveItems],
+    });
+  }, [inactiveItems, onDataChange]);
 
   const [selectedControlledItemIndex, setSelectedControlledItemIndex] = useState<number>(0);
 
-  const extra = (currentField?.data?.extra as FormFieldExtra<OptionsFieldTypeId>) ?? {};
+  const [originalItemTexts, setOriginalItemTexts] = useState<Record<string, string>>({});
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameData, setRenameRenameData] = useState<{
+    index: number;
+    item: ArrayElement<ManualItems>;
+    newText: string;
+    originalText: string;
+  } | null>(null);
 
   const otherManualOptionsFieldsIds = useMemo(() => Object.keys(formStructure.fields)?.filter((fieldId) => {
     const fieldData = formStructure.fields[fieldId].data;
@@ -66,7 +89,7 @@ function ManualOptions(props: Props) {
 
   useEffect(() => {
     if (!currentField?.data?.options) {
-      onDataChange?.({ options: items });
+      updateOptionsData(items);
     }
   }, []);
 
@@ -82,18 +105,76 @@ function ManualOptions(props: Props) {
     if (!linkedOptionsFieldId) return undefined;
 
     const linkedField = formStructure.fields[linkedOptionsFieldId];
-    return (linkedField?.data?.options as ManualItems)?.filter((item) => !!item.text?.length);
+    const parentRawItems = (linkedField?.data?.options as ManualItems) ?? [];
+    const parentInactiveOptionIds = (linkedField?.data?.extra as any)?.inactiveOptionIds ?? [];
+    return parentRawItems
+      .filter((item) => !parentInactiveOptionIds.includes(item.id))
+      .filter((item) => !!item.text?.length);
   }, [extra.linkedOptionsFieldId, formStructure.fields]);
 
   const handleItemChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number, item: ArrayElement<ManualItems>) => {
     const newText = e.target.value.trimStart();
     const updatedItem = { ...item, text: newText };
-    const newItems = items.toSpliced(index, 1, updatedItem);
+    const newActiveItems = items.toSpliced(index, 1, updatedItem);
 
-    onDataChange?.({
-      options: newItems,
-    });
-  }, [items, onDataChange]);
+    updateOptionsData(newActiveItems);
+  }, [items, updateOptionsData]);
+
+  const handleItemBlur = useCallback((index: number, item: ArrayElement<ManualItems>) => {
+    const originalText = originalItemTexts[item.id];
+    const currentText = item.text;
+
+    const isExistingForm = Boolean(formStructure?.metadata?.id);
+
+    if (isExistingForm && originalText && currentText && originalText !== currentText) {
+      setRenameRenameData({
+        index,
+        item,
+        newText: currentText,
+        originalText,
+      });
+      setRenameDialogOpen(true);
+    }
+  }, [originalItemTexts, formStructure?.metadata?.id]);
+
+  const handleConfirmRename = (retroactive: boolean) => {
+    if (!renameData) return;
+
+    const { index, item, newText, originalText } = renameData;
+
+    if (retroactive) {
+      setRenameDialogOpen(false);
+    } else {
+      const newOptionId = generateOptionItemId();
+      const newOption = { id: newOptionId, text: newText, isActive: true };
+      
+      const archivedOption = { id: item.id, text: originalText, isActive: false };
+      const updatedActiveItems = items.toSpliced(index, 1, newOption);
+      
+      onDataChange?.({
+        options: [...updatedActiveItems, ...inactiveItems, archivedOption],
+      });
+
+      if (defaultValue.includes(item.id)) {
+        onChange({
+          defaultValue: defaultValue.map((dVal) => (dVal === item.id ? newOptionId : dVal)),
+        });
+      }
+
+      setRenameDialogOpen(false);
+    }
+  };
+
+  const handleCancelRename = () => {
+    if (!renameData) return;
+
+    const { index, item, originalText } = renameData;
+    const revertedItem = { ...item, text: originalText };
+    const revertedItems = items.toSpliced(index, 1, revertedItem);
+
+    updateOptionsData(revertedItems);
+    setRenameDialogOpen(false);
+  };
 
   const itemFields = useMemo(() => (
     items.map((item, index) => (
@@ -104,13 +185,15 @@ function ManualOptions(props: Props) {
         onChange={(e) => handleItemChange(e, index, item)}
         onFocus={() => {
           setSelectedControlledItemIndex(index);
+          if (!originalItemTexts[item.id]) {
+            setOriginalItemTexts(prev => ({ ...prev, [item.id]: item.text ?? "" }));
+          }
         }}
+        onBlur={() => handleItemBlur(index, item)}
         onDelete={() => {
           if (items.length > 2) {
-            const newItems = items.toSpliced(index, 1);
-            onDataChange?.({
-              options: newItems,
-            });
+            const newActiveItems = items.toSpliced(index, 1);
+            updateOptionsData(newActiveItems);
 
             if (defaultValue.includes(item.id)) {
               onChange({ defaultValue: defaultValue.filter(id => id !== item.id) });
@@ -126,7 +209,7 @@ function ManualOptions(props: Props) {
           setSelectedControlledItemIndex(index);
         }} />
     ))
-  ), [items, validationErrors, handleItemChange, onDataChange, onChange, defaultValue, extra.linkedOptionsFieldId, selectedControlledItemIndex]);
+  ), [items, validationErrors, handleItemChange, updateOptionsData, onChange, defaultValue, extra.linkedOptionsFieldId, selectedControlledItemIndex, originalItemTexts, handleItemBlur]);
 
   return (
     <>
@@ -144,7 +227,9 @@ function ManualOptions(props: Props) {
                   value={extra.linkedOptionsFieldId || null}
                   noOptionsText={"לא נמצאו שדות מתאימים"}
                   onChange={(_, newValue) => {
-                    onChange({ linkedOptionsFieldId: newValue || undefined });
+                    onChange({
+                      linkedOptionsFieldId: newValue || undefined,
+                    });
                   }}
                   renderInput={(params) => (
                     <TextField
@@ -166,7 +251,9 @@ function ManualOptions(props: Props) {
             extra.linkedOptionsFieldId &&
             <Button className={styles.button}
               onClick={(_) => {
-                onChange({ linkedOptionsFieldId: undefined });
+                onChange({
+                  linkedOptionsFieldId: undefined,
+                });
               }}>
               <Close sx={{ fontSize: 20, color: "#a54160" }} />
             </Button>
@@ -275,6 +362,42 @@ function ManualOptions(props: Props) {
           </Button>
         }
       </div>
+
+      <Dialog
+        open={renameDialogOpen}
+        onClose={handleCancelRename}
+        TransitionProps={{ onExited: () => setRenameRenameData(null) }}
+        aria-labelledby="rename-dialog-title"
+        aria-describedby="rename-dialog-description">
+        <IconButton
+          aria-label="close"
+          onClick={handleCancelRename}
+          sx={{
+            position: "absolute",
+            right: 12,
+            top: 12,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <Close sx={{ fontSize: 20 }} />
+        </IconButton>
+        <DialogTitle id="rename-dialog-title" sx={{ pr: 6 }}>
+          {"עדכון שם האפשרות"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="rename-dialog-description" sx={{ color: "text.primary" }}>
+            {`בוצע שינוי של שם האפשרות מ-"${renameData?.originalText}" ל-"${renameData?.newText}". האם ברצונך להחיל את השינוי באופן רטרואקטיבי על תגובות עבר?`}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button onClick={() => handleConfirmRename(true)} color="primary">
+            {"שינוי רטרואקטיבי"}
+          </Button>
+          <Button onClick={() => handleConfirmRename(false)} color="primary" variant="contained" autoFocus>
+            {"ללא שינוי רטרואקטיבי"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

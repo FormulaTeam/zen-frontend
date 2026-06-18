@@ -109,11 +109,16 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
     }
   };
 
-  const handleListboxScroll = (event: React.UIEvent<HTMLUListElement>) => {
+  const handleListboxScroll = (
+    event: React.UIEvent<HTMLUListElement>
+  ) => {
     const listboxNode = event.currentTarget;
+
     if (
       onScrollToBottom &&
-      listboxNode.scrollTop + listboxNode.clientHeight >= listboxNode.scrollHeight - 10
+      listboxNode.scrollTop +
+      listboxNode.clientHeight >=
+      listboxNode.scrollHeight - 10
     ) {
       onScrollToBottom();
     }
