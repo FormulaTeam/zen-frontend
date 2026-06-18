@@ -301,8 +301,14 @@ const normalizeOption = (option: unknown): OptionResponseValue | null => {
 };
 
 export const getFieldOptions = (field: FormFieldDto): OptionResponseValue[] => {
-  const extra = field.extra as any;
+  if (Array.isArray((field as any).options)) {
+    return (field as any).options
+      .filter((option: any) => option && option.isActive !== false)
+      .map(normalizeOption)
+      .filter((option): option is OptionResponseValue => option !== null);
+  }
 
+  const extra = field.extra as any;
   const rawOptions = extra?.options?.items ?? extra?.options ?? extra?.items ?? extra?.values ?? [];
 
   if (!Array.isArray(rawOptions)) {

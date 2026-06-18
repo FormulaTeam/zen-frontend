@@ -35,9 +35,10 @@ function OptionsFieldExtra({
     selectionMode: mode = selectionMode.Single,
     linkedOptionsFieldId,
     defaultValue = [],
-  } = extra;
+    source,
+  } = extra as any;
 
-  const [isLinkedToForm, setIsLinkedToForm] = useState(Boolean(linkedOptionsFieldId));
+  const [isLinkedToForm, setIsLinkedToForm] = useState(source === 2);
 
   const multiple = mode === selectionMode.Multiple;
 

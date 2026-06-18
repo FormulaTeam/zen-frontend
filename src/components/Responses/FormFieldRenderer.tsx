@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import type { FormFieldDto } from "../../types/shared";
 import {
@@ -23,10 +23,14 @@ import CustomTextField from "../FormFields/CustomTextField/CustomTextField";
 import CustomTimePicker from "../FormFields/CustomTimePicker/CustomTimePicker";
 import LinkTextField from "../FormFields/LinkTextField/LinkTextField";
 import { FormFieldWrapper, StyledBox } from "./FormFieldRenderer.styled";
+import { formatOptionLabel } from "../../utils/optionResponseValue";
+import { useGetInfiniteFieldValues } from "@src/api/responsesApi";
+import { useFindOwnerFormId } from "../../hooks/useFindOwnerFormId";
 
 type OptionItem = {
   id: string;
   text: string;
+  isActive?: boolean;
   controllingItemsIds?: string[];
 };
 
@@ -55,6 +59,7 @@ type FormFieldExtra = {
   dateType?: "datetime" | "date";
   timePrecision?: "seconds" | "minutes";
   selectionMode?: "multiple" | "single";
+  inactiveOptionIds?: string[];
 };
 
 type FieldOptionValue = {
@@ -96,10 +101,15 @@ const getFieldExtra = (field: FormFieldDto): FormFieldExtra => {
   return field.extra as FormFieldExtra;
 };
 
-const isConnectedToForm = (field: FormFieldDto): boolean => {
+const isConnectedToForm = (field: FormFieldDto, formFields?: FormFieldDto[]): boolean => {
   const linkedOptionsFieldId = getFieldExtra(field).linkedOptionsFieldId;
+  if (!linkedOptionsFieldId) return false;
 
-  return typeof linkedOptionsFieldId === "string" && linkedOptionsFieldId.trim() !== "";
+  if (formFields && formFields.some((f) => String(f.id) === String(linkedOptionsFieldId))) {
+    return false;
+  }
+
+  return true;
 };
 
 const getConnectedFieldOptions = (
@@ -115,7 +125,7 @@ const getConnectedFieldOptions = (
   return Array.from(new Set(options));
 };
 
-const getFieldOptionItems = (field: FormFieldDto): OptionItem[] => {
+const getFieldOptionItems = (field: FormFieldDto, includeInactive = false): OptionItem[] => {
   if (Array.isArray((field as any).options)) {
     return (field as any).options
       .filter(
@@ -123,61 +133,30 @@ const getFieldOptionItems = (field: FormFieldDto): OptionItem[] => {
           item &&
           typeof item.id === "string" &&
           item.id.length > 0 &&
-          typeof item.text === "string",
+          typeof item.text === "string" &&
+          (includeInactive || item.isActive !== false),
       )
       .map((item: any) => ({
         id: item.id,
         text: item.text,
+        isActive: item.isActive,
         controllingItemsIds: Array.isArray(item.controllingItemsIds)
           ? item.controllingItemsIds
           : [],
       }));
-  }
-
-  const extra = getFieldExtra(field);
-
-  if (
-    extra.options &&
-    typeof extra.options === "object" &&
-    !Array.isArray(extra.options) &&
-    Array.isArray((extra.options as { items?: OptionItem[] }).items)
-  ) {
-    return (extra.options as { items: OptionItem[] }).items
-      .filter(
-        (item) =>
-          item &&
-          typeof item.id === "string" &&
-          item.id.length > 0 &&
-          typeof item.text === "string",
-      )
-      .map((item) => ({
-        id: item.id,
-        text: item.text,
-        controllingItemsIds: Array.isArray(item.controllingItemsIds)
-          ? item.controllingItemsIds
-          : [],
-      }));
-  }
-
-  if (Array.isArray(extra.options)) {
-    return extra.options.map((option) => ({
-      id: String(option),
-      text: String(option),
-      controllingItemsIds: [],
-    }));
   }
 
   return [];
 };
 
 const getFieldOptions = (field: FormFieldDto): string[] =>
-  getFieldOptionItems(field).map((item) => item.id);
+  getFieldOptionItems(field, false).map((item) => item.id);
 
 const getFieldOptionLabelMap = (field: FormFieldDto): Record<string, string> =>
-  Object.fromEntries(getFieldOptionItems(field).map((item) => [item.id, item.text]));
+  Object.fromEntries(getFieldOptionItems(field, true).map((item) => [item.id, item.text]));
 
 const getConnectedOptionLabelMap = (options: string[]): Record<string, string> =>
-  Object.fromEntries(options.map((option) => [option, option]));
+  Object.fromEntries(options.map((option) => [option, formatOptionLabel(option)]));
 
 const getParentDependencies = (field: FormFieldDto): any[] => {
   const extra = getFieldExtra(field);
@@ -261,6 +240,41 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   const fieldId = formField.id;
   const field = formFieldsByIdMap.get(fieldId) ?? formField;
   const formFieldExtra = getFieldExtra(formField);
+
+  const connectedToForm = isConnectedToForm(formField, formFields);
+  const linkedOptionsFieldId = connectedToForm ? formFieldExtra.linkedOptionsFieldId ?? undefined : undefined;
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const { findOwnerFormIdByFieldId } = useFindOwnerFormId();
+  const [ownerFormId, setOwnerFormId] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (!linkedOptionsFieldId) {
+      setOwnerFormId(undefined);
+      return;
+    }
+
+    let isCancelled = false;
+    findOwnerFormIdByFieldId(linkedOptionsFieldId).then((formId) => {
+      if (!isCancelled) setOwnerFormId(formId);
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [linkedOptionsFieldId, findOwnerFormIdByFieldId]);
+
+  const {
+    data: connectedData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingConnected,
+  } = useGetInfiniteFieldValues(
+    connectedToForm ? ownerFormId : undefined,
+    linkedOptionsFieldId,
+    searchTerm,
+  )
 
   field.name = formField.name;
 
@@ -346,27 +360,72 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         }
       }
 
-      const connectedToForm = isConnectedToForm(formField);
 
       let availableOptions: string[] = connectedToForm
-        ? getConnectedFieldOptions(fieldId, fieldOptions)
+        ? (
+          connectedData?.pages.flatMap((page) =>
+            page.data.map((item: any) => String(item.value))
+          ) ?? []
+        )
         : getFieldOptions(formField);
 
-      const parentFieldId = formFieldExtra.parentFieldId;
       const parentDependencies = getParentDependencies(formField);
 
-      if (parentFieldId && parentDependencies.length > 0) {
+      const childOptionItemsForCheck = getFieldOptionItems(formField, true);
+      const hasControllingItems = childOptionItemsForCheck.some(
+        (opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0,
+      );
+
+      // Detect if this field is a dependent by finding a controlling field that points to it
+      const controllingFieldForThisField = !hasControllingItems
+        ? formFields.find((f) => {
+          const extra = getFieldExtra(f);
+          return (
+            extra.linkedOptionsFieldId === fieldId &&
+            getFieldOptionItems(f, true).some((opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0)
+          );
+        }) ?? null
+        : null;
+
+      const linkedFieldExists = formFields.some(
+        (f) => String(f.id) === String(formFieldExtra.linkedOptionsFieldId),
+      );
+
+      const parentFieldId =
+        formFieldExtra.parentFieldId ??
+        (linkedFieldExists ? formFieldExtra.linkedOptionsFieldId : null) ??
+        controllingFieldForThisField?.id ??
+        null;
+
+      // Only enter the filtering block if this field is a dependent (not a controlling field).
+      if (parentFieldId && !hasControllingItems && (parentDependencies.length > 0 || true)) {
         const parentField = formFields.find(
           (candidateField) => candidateField.id === parentFieldId,
         );
         const parentFieldExtra = parentField ? getFieldExtra(parentField) : {};
         const parentValueFromMap = formFieldsValuesMap.get(parentFieldId);
 
-        const normalizedParentValue = Array.isArray(parentValueFromMap)
-          ? parentValueFromMap
-          : typeof parentValueFromMap === "string" && parentValueFromMap !== ""
-            ? [parentValueFromMap]
-            : [];
+        const getOptionIdStr = (val: any): string => {
+          if (val && typeof val === "object") {
+            return String(val.id ?? val.value ?? "");
+          }
+          return String(val ?? "");
+        };
+
+        const normalizedParentValue: string[] = [];
+        if (Array.isArray(parentValueFromMap)) {
+          parentValueFromMap.forEach((item) => {
+            const idStr = getOptionIdStr(item);
+            if (idStr) {
+              normalizedParentValue.push(idStr);
+            }
+          });
+        } else if (parentValueFromMap) {
+          const idStr = getOptionIdStr(parentValueFromMap);
+          if (idStr) {
+            normalizedParentValue.push(idStr);
+          }
+        }
 
         const fallbackParentOptions = getFieldOptions(parentField ?? formField);
         const parentValuesForDependency =
@@ -376,7 +435,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 
         if (hasParentValue) {
           const parentValues =
-            parentField && (isConnectedToForm(parentField) || connectedToForm)
+            parentField && (isConnectedToForm(parentField, formFields) || connectedToForm)
               ? fieldOptions[parentFieldId]?.map((optionField) => String(optionField.value)) || []
               : parentValuesForDependency;
 
@@ -430,7 +489,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             availableOptions = getFieldOptions(formField).filter((option) =>
               allowedOptions.has(option),
             );
-          } else if (parentField) {
+          } else if (parentField && parentDependencies.length > 0) {
             const parentOptions = getFieldOptions(parentField);
 
             parentValues.forEach((parentValueItem: string) => {
@@ -450,6 +509,15 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
                     }
                   });
                 }
+              }
+            });
+          } else if (parentField) {
+            const controllingOptionItems = getFieldOptionItems(parentField, true);
+            controllingOptionItems.forEach((controllingOption) => {
+              if (parentValues.includes(controllingOption.id)) {
+                (controllingOption.controllingItemsIds ?? []).forEach((dependentId: string) => {
+                  allowedOptions.add(dependentId);
+                });
               }
             });
           }
@@ -502,6 +570,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 
       availableOptions = Array.from(new Set(availableOptions.filter((option) => !!option)));
 
+      const inactiveOptionIds = formFieldExtra.inactiveOptionIds ?? [];
+      availableOptions = availableOptions.filter((optionId) => !inactiveOptionIds.includes(optionId));
+
       const optionLabels = connectedToForm
         ? getConnectedOptionLabelMap(availableOptions)
         : getFieldOptionLabelMap(formField);
@@ -535,6 +606,20 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           validationMessage={validationMessage}
           validationDetail={validationDetail}
           isTabularEdit={isTabularEdit}
+          loading={isLoadingConnected || isFetchingNextPage}
+          filterOptions={(options) => options}
+          onInputChange={(_, value, reason) => {
+            if (reason === "input") {
+              setSearchTerm(value);
+            } else if (reason === "clear") {
+              setSearchTerm("");
+            }
+          }}
+          onScrollToBottom={() => {
+            if (hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }}
         />
       );
       break;
@@ -755,8 +840,46 @@ const shouldSkipRerenderHOF = (
   const fieldOptionsChanged =
     JSON.stringify(prevProps.fieldOptions) !== JSON.stringify(nextProps.fieldOptions);
 
+  const prevExtra = getFieldExtra(prevField);
+
+  const childOptionItemsForCheck = getFieldOptionItems(prevField, true);
+  const fieldHasControllingItems = childOptionItemsForCheck.some(
+    (opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0,
+  );
+
+  const controllingFieldForRerender = !fieldHasControllingItems
+    ? prevProps.formFields.find((f) => {
+      const extra = getFieldExtra(f);
+      return (
+        extra.linkedOptionsFieldId === fieldId &&
+        getFieldOptionItems(f, true).some((opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0)
+      );
+    })
+    : null;
+
+  const linkedFieldExists = prevProps.formFields.some(
+    (f) => String(f.id) === String(prevExtra.linkedOptionsFieldId),
+  );
+
+  const parentId = fieldHasControllingItems
+    ? (prevExtra.parentFieldId ?? null)
+    : (
+      prevExtra.parentFieldId ??
+      (linkedFieldExists ? prevExtra.linkedOptionsFieldId : null) ??
+      controllingFieldForRerender?.id ??
+      null
+    );
+
+  let parentValueChanged = false;
+
+  if (parentId) {
+    const prevParentVal = prevValues.get(parentId);
+    const nextParentVal = nextValues.get(parentId);
+    parentValueChanged = JSON.stringify(prevParentVal) !== JSON.stringify(nextParentVal);
+  }
+
   return (
-    !valueChanged && !validChanged && !viewModeChanged && !fieldChanged && !fieldOptionsChanged
+    !valueChanged && !validChanged && !viewModeChanged && !fieldChanged && !fieldOptionsChanged && !parentValueChanged
   );
 };
 

@@ -597,7 +597,7 @@ export const ResponsesTable = React.memo(
           maxWidth: 450,
           editable: true,
           sortable: isSortable(field.fieldType),
-          ...getResponseFilterColumnProps(field),
+          ...getResponseFilterColumnProps(field, formFields),
           renderEditCell,
           renderHeader: () => (
             <HeaderFlex>
@@ -752,16 +752,16 @@ export const ResponsesTable = React.memo(
 
       const parentResponseColumns: GridColDef[] = hasParentResponses
         ? [
-            {
-              field: "parentResponse",
-              headerName: "תגובת אב",
-              width: columnWidths.current["parentResponse"] || 200,
-              editable: false,
-              filterable: false,
-              sortable: false,
-              renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
-            },
-          ]
+          {
+            field: "parentResponse",
+            headerName: "תגובת אב",
+            width: columnWidths.current["parentResponse"] || 200,
+            editable: false,
+            filterable: false,
+            sortable: false,
+            renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
+          },
+        ]
         : [];
 
       let resultColumns: GridColDef[] = [];
@@ -1302,21 +1302,21 @@ export const ResponsesTable = React.memo(
 
                 ...(isInEditMode
                   ? {
-                      "& .active-editing-row .MuiDataGrid-cell": {
-                        py: "4px",
-                        alignItems: "center",
-                      },
-                      "& .active-editing-row .MuiDataGrid-cell--editing": {
-                        p: "4px 6px",
-                        overflow: "visible",
-                      },
-                      "& .active-editing-row .MuiDataGrid-cell--editing:focus-within": {
-                        outline: "none",
-                      },
-                      "& .active-editing-row .MuiDataGrid-cell--editing .MuiInputBase-root": {
-                        boxShadow: "none",
-                      },
-                    }
+                    "& .active-editing-row .MuiDataGrid-cell": {
+                      py: "4px",
+                      alignItems: "center",
+                    },
+                    "& .active-editing-row .MuiDataGrid-cell--editing": {
+                      p: "4px 6px",
+                      overflow: "visible",
+                    },
+                    "& .active-editing-row .MuiDataGrid-cell--editing:focus-within": {
+                      outline: "none",
+                    },
+                    "& .active-editing-row .MuiDataGrid-cell--editing .MuiInputBase-root": {
+                      boxShadow: "none",
+                    },
+                  }
                   : {}),
               }}
             />

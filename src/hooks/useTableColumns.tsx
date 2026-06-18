@@ -10,6 +10,7 @@ import ZoomCell from "../components/formInForm/ZoomCell";
 import FormFieldRenderer from "../components/Responses/FormFieldRenderer";
 import { ViewColumn } from "../types/interfaces/tableViews.types";
 import { fieldType, dateType, type FieldValidationMessage } from "formula-gear";
+import { formatOptionLabel } from "../utils/optionResponseValue";
 
 type TableFieldValidationError = {
   messages: FieldValidationMessage[];
@@ -155,6 +156,35 @@ export const useTableColumns = (
 
               const formFieldsByIdMap = new Map();
               const formFieldsValuesMap = new Map();
+
+              const uniqueIdToDbIdMap = new Map();
+              form.fields.forEach((f: any) => {
+                if (f.uniqueId && f.id) {
+                  uniqueIdToDbIdMap.set(f.uniqueId, f.id);
+                }
+              });
+
+              row.original.data?.forEach((f: any) => {
+                if (f.uniqueId) {
+                  formFieldsValuesMap.set(f.uniqueId, f.value);
+                  const dbId = uniqueIdToDbIdMap.get(f.uniqueId);
+                  if (dbId) {
+                    formFieldsValuesMap.set(dbId, f.value);
+                  }
+                }
+              });
+
+              const rowEditedData = editedData?.[row.original.id];
+              if (rowEditedData) {
+                Object.keys(rowEditedData).forEach((fieldId) => {
+                  formFieldsValuesMap.set(fieldId, rowEditedData[fieldId]);
+                  const dbId = uniqueIdToDbIdMap.get(fieldId);
+                  if (dbId) {
+                    formFieldsValuesMap.set(dbId, rowEditedData[fieldId]);
+                  }
+                });
+              }
+
               const formFieldsValidMap = new Map<string, TableFieldValidationError | null>();
 
               formFieldsByIdMap.set(uniqueId, field);
@@ -214,7 +244,7 @@ export const useTableColumns = (
                     onBlurHandler={() => {}}
                     viewMode={false}
                     fieldOptions={cellFieldOptions}
-                    formFields={[field]}
+                    formFields={form.fields}
                     index={0}
                     isTabularEdit={true}
                   />
@@ -314,6 +344,56 @@ export const useTableColumns = (
 
             if (field.typeId === FieldTypeIds.checkbox) return <div>{value ? "כן" : "לא"}</div>;
             if (field.typeId === FieldTypeIds.number) return <div dir="ltr">{String(value)}</div>;
+
+            if (field.typeId === FieldTypeIds.options) {
+              const resolveLabel = (optionVal: any): string => {
+                if (optionVal && typeof optionVal === "object" && "text" in optionVal) {
+                  return formatOptionLabel(String(optionVal.text));
+                }
+
+                const optionStr = String(optionVal ?? "");
+
+                if (fieldOptions && fieldOptions[field.uniqueId]) {
+                  const connectedOptions = fieldOptions[field.uniqueId];
+                  for (const connOpt of connectedOptions) {
+                    const connVal = connOpt.value;
+                    if (connVal && typeof connVal === "object") {
+                      if (Array.isArray(connVal)) {
+                        const matched = connVal.find((o: any) => o && String(o.id) === optionStr);
+                        if (matched) return formatOptionLabel(String(matched.text));
+                      } else if ("id" in connVal && "text" in connVal) {
+                        if (String((connVal as any).id) === optionStr) {
+                          return formatOptionLabel(String((connVal as any).text));
+                        }
+                      }
+                    } else if (String(connVal ?? "") === optionStr) {
+                      return formatOptionLabel(optionStr);
+                    }
+                  }
+                }
+
+                const staticLabelMap = Object.fromEntries(
+                  (field.options ?? []).map((o: any) => [o.id, o.text]),
+                );
+
+                return staticLabelMap[optionStr] ?? formatOptionLabel(optionStr);
+              };
+
+              if (Array.isArray(value)) {
+                const labels = value.map(resolveLabel).filter(Boolean).join(", ");
+                return (
+                  <Box className="cell-box" component="span">
+                    <label>{labels}</label>
+                  </Box>
+                );
+              }
+
+              return (
+                <Box className="cell-box" component="span">
+                  <label>{resolveLabel(value)}</label>
+                </Box>
+              );
+            }
 
             if (value && (typeof value === "string" || typeof value === "number")) {
               return (

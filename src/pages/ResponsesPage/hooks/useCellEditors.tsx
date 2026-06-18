@@ -19,7 +19,8 @@ import {
   TimeCellEditor,
 } from "../components/CellEditors";
 import { CellErrorInfoIcon } from "../styled";
-import { getOptionResponseRawValue, OptionResponseValue } from "../../../utils/optionResponseValue";
+import { getOptionResponseRawValue, OptionResponseValue, formatOptionLabel } from "../../../utils/optionResponseValue";
+import { ConnectedOptionsCellEditor } from "../components/CellEditors/ConnectedOptionsCellEditor";
 
 type QuickEditValidationError = {
   message: string;
@@ -28,12 +29,13 @@ type QuickEditValidationError = {
 
 type EditorFieldExtra = {
   options?:
-    | string[]
-    | {
-        items?: OptionResponseValue[];
-      };
+  | string[]
+  | {
+    items?: OptionResponseValue[];
+  };
   selectionMode?: "multiple" | "single";
   linkedOptionsFieldId?: string | null;
+  parentFieldId?: string | null;
   validationRegex?: string;
   locationFormat?: "utm" | "wkt";
   minValue?: number;
@@ -41,6 +43,7 @@ type EditorFieldExtra = {
   numberType?: "integer" | "decimal";
   dateType?: "datetime" | "date";
   timePrecision?: "seconds" | "minutes";
+  inactiveOptionIds?: string[];
 };
 
 type FieldOptionValue = {
@@ -68,15 +71,11 @@ interface UseCellEditorsReturn {
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
 
-const isLinkedOptionsField = (field: FormFieldDto): boolean => {
-  const linkedOptionsFieldId = getFieldExtra(field).linkedOptionsFieldId;
-
-  return typeof linkedOptionsFieldId === "string" && linkedOptionsFieldId.trim() !== "";
-};
-
 const getOptionIds = (field: FormFieldDto): string[] => {
   if (Array.isArray((field as any).options)) {
-    return (field as any).options.map((option: any) => String(option.id));
+    return (field as any).options
+      .filter((option: any) => option && option.isActive !== false)
+      .map((option: any) => String(option.id));
   }
 
   const extra = getFieldExtra(field);
@@ -141,7 +140,7 @@ const getConnectedOptionIds = (
 };
 
 const getConnectedOptionLabelMap = (options: string[]): Record<string, string> => {
-  return Object.fromEntries(options.map((option) => [option, option]));
+  return Object.fromEntries(options.map((option) => [option, formatOptionLabel(option)]));
 };
 
 export const useCellEditors = ({
@@ -248,22 +247,35 @@ export const useCellEditors = ({
           break;
 
         case fieldType.Options: {
-          const linkedOptionsField = isLinkedOptionsField(formField);
+          const linkedOptionsFieldId = fieldExtra.linkedOptionsFieldId;
+          const isExternallyConnected = linkedOptionsFieldId
+            ? !formFields?.some((f) => String(f.id) === String(linkedOptionsFieldId))
+            : false;
 
-          const options = linkedOptionsField
-            ? getConnectedOptionIds(String(formField.id), fieldOptions)
-            : getOptionIds(formField);
+          if (isExternallyConnected && linkedOptionsFieldId) {
+            editor = (
+              <ConnectedOptionsCellEditor
+                linkedOptionsFieldId={linkedOptionsFieldId}
+                value={getOptionResponseRawValue(params.value) as string | string[]}
+                onChange={handleChange}
+                selectionMode={selectionMode}
+                isRequired={formField.isRequired}
+                errorMessage={errorMessage}
+              />
+            );
+            break;
+          }
 
-          const optionLabels = linkedOptionsField
-            ? getConnectedOptionLabelMap(options)
-            : getOptionLabelMap(formField);
+
+          let options = getOptionIds(formField);
+          const optionLabelMap = getOptionLabelMap(formField);
 
           editor = (
             <OptionsCellEditor
               value={getOptionResponseRawValue(params.value) as string | string[]}
               onChange={handleChange}
               options={options}
-              optionLabels={optionLabels}
+              optionLabels={optionLabelMap}
               selectionMode={selectionMode}
               isRequired={formField.isRequired}
               errorMessage={errorMessage}

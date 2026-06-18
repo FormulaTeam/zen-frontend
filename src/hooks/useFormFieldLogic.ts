@@ -43,7 +43,9 @@ export const useFormFieldLogic = ({
 
     const extra = field.extra ?? {};
     const isMultiSelect = extra.selectionMode === selectionMode.Multiple;
-    let options = extra.options || [];
+    let options = Array.isArray((field as any).options)
+      ? (field as any).options.filter((o: any) => o.isActive !== false).map((o: any) => o.id)
+      : [];
 
     const parentFieldId = extra.parentFieldId;
     const parentDependencies = extra.parentDependencies;
@@ -59,8 +61,9 @@ export const useFormFieldLogic = ({
       const allowedOptions = new Set();
 
       if (parentField) {
-        const parentExtra = parentField.extra ?? {};
-        const parentOptions = parentExtra.options || [];
+        const parentOptions = Array.isArray((parentField as any).options)
+          ? (parentField as any).options.filter((o: any) => o.isActive !== false).map((o: any) => o.id)
+          : [];
         const parentValues = Array.isArray(parentValue) ? parentValue : [parentValue];
 
         parentValues.forEach((val) => {
