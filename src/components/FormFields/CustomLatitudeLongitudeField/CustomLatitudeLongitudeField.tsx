@@ -32,10 +32,13 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
   errorDetail,
   label,
   isRequired,
+  locationFormat = "utm",
   isTabularEdit = false,
 }) => {
   const [yValue, setYValue] = useState(value?.y || "");
   const [xValue, setXValue] = useState(value?.x || "");
+
+  const locationPlaceholder = locationFormat === "wkt" ? "34.781256" : "123456";
 
   useEffect(() => {
     setYValue(value?.y || "");
@@ -79,7 +82,7 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
           disabled={isDisabled}
           adornment={isTabularEdit ? undefined : "Y"}
           size={isTabularEdit ? "small" : undefined}
-          placeholder={isTabularEdit ? "Y" : undefined}
+          placeholder={isTabularEdit ? `Y - ${locationPlaceholder}` : locationPlaceholder}
         />
       </Box>
 
@@ -96,7 +99,7 @@ const CustomLatitudeLongitudeField: React.FC<CustomLatitudeLongitudeFieldProps> 
           disabled={isDisabled}
           adornment={isTabularEdit ? undefined : "X"}
           size={isTabularEdit ? "small" : undefined}
-          placeholder={isTabularEdit ? "X" : undefined}
+          placeholder={isTabularEdit ? `X - ${locationPlaceholder}` : locationPlaceholder}
         />
       </Box>
     </div>
