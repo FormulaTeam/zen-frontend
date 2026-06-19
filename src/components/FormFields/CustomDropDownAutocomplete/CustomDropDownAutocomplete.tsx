@@ -57,7 +57,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   loading,
   inputValue,
   filterOptions,
-  noOptionsText
+  noOptionsText,
 }) => {
   const [selectedValues, setSelectedValues] = useState<string[]>(normalizeToArray(value));
   const hasTriggeredBlurRef = useRef(false);
@@ -75,9 +75,10 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
 
     if (isMultiple) {
       onChangeHandler(normalized);
-    } else {
-      onChangeHandler(normalized[0] ?? "");
+      return;
     }
+
+    onChangeHandler(normalized[0] ?? "");
   };
 
   const onSelectHandler = (
@@ -109,16 +110,12 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
     }
   };
 
-  const handleListboxScroll = (
-    event: React.UIEvent<HTMLUListElement>
-  ) => {
+  const handleListboxScroll = (event: React.UIEvent<HTMLUListElement>) => {
     const listboxNode = event.currentTarget;
 
     if (
       onScrollToBottom &&
-      listboxNode.scrollTop +
-      listboxNode.clientHeight >=
-      listboxNode.scrollHeight - 10
+      listboxNode.scrollTop + listboxNode.clientHeight >= listboxNode.scrollHeight - 10
     ) {
       onScrollToBottom();
     }
@@ -159,28 +156,38 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
             component: StyledListbox,
             onScroll: handleListboxScroll,
             sx: {
-              p: "6px",
+              p: "4px",
+              direction: "ltr",
+              textAlign: "left",
+
               "& .MuiAutocomplete-option": {
-                minHeight: "45px",
+                minHeight: isTabularEdit ? "36px" : "42px",
                 borderRadius: "8px",
-                px: "12px",
-                py: "8px",
-                fontSize: "1.1rem",
+                px: "10px",
+                py: "7px",
+                fontSize: isTabularEdit ? "0.95rem" : "1rem",
                 justifyContent: "flex-start",
+                direction: "ltr",
+                textAlign: "left",
 
                 '&[aria-selected="true"]': {
                   fontWeight: 600,
+                  backgroundColor: "rgba(30, 136, 229, 0.08)",
+                },
+
+                "&.Mui-focused": {
+                  backgroundColor: "rgba(148, 163, 184, 0.12)",
                 },
               },
             },
           },
           paper: {
             sx: {
-              mt: "8px",
-              borderRadius: "12px",
-              boxShadow: "0 10px 30px rgba(15, 23, 42, 0.14)",
+              mt: "6px",
+              borderRadius: "10px",
+              boxShadow: "0 10px 28px rgba(15, 23, 42, 0.1)",
               border: "1px solid",
-              borderColor: "divider",
+              borderColor: "rgba(148, 163, 184, 0.35)",
               overflow: "hidden",
             },
           },
@@ -200,7 +207,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         value={autocompleteValue}
         {...(inputValue !== undefined ? { inputValue } : {})}
         {...(filterOptions ? { filterOptions } : {})}
-        onChange={(event: any, nextValue: any, reason: string) => {
+        onChange={(event: any, nextValue: any, _reason: string) => {
           hasTriggeredBlurRef.current = false;
           onSelectHandler(event, nextValue);
         }}
@@ -215,15 +222,23 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         size={isTabularEdit ? "small" : "medium"}
         sx={{
           width: "100%",
+          direction: "ltr",
 
           "& .MuiAutocomplete-inputRoot": {
             minHeight: isTabularEdit ? "40px" : "50px",
-            borderRadius: isTabularEdit ? "0" : "12px",
-            backgroundColor: isTabularEdit ? "transparent" : "background.paper",
+            borderRadius: isTabularEdit ? "8px" : "12px",
+            backgroundColor: "background.paper",
             border: isTabularEdit ? "none" : "1px solid",
             borderColor: validationMessage ? "error.main" : "divider",
-            px: isTabularEdit ? "6px" : "12px",
+            px: isTabularEdit ? "8px" : "12px",
             py: isMultiple ? "6px" : "0",
+            paddingLeft: isTabularEdit ? "10px !important" : "12px !important",
+            paddingRight: isTabularEdit ? "58px !important" : "64px !important",
+            display: "flex !important",
+            alignItems: "center",
+            flexWrap: isMultiple ? "wrap" : "nowrap",
+            gap: isMultiple ? "4px" : 0,
+            direction: "ltr",
             transition:
               "border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease",
 
@@ -257,69 +272,97 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
           },
 
           "& .MuiAutocomplete-input": {
-            textAlign: isTabularEdit ? "center" : "right",
-            fontSize: isTabularEdit ? "1rem" : "1.2rem",
+            minWidth: isMultiple ? "70px !important" : "0 !important",
+            flexGrow: 1,
+            textAlign: "left",
+            direction: "ltr",
+            fontSize: isTabularEdit ? "0.95rem" : "1rem",
             color: "text.primary",
-            py: "10px !important",
+            py: isTabularEdit ? "6px !important" : "10px !important",
+            px: "0 !important",
           },
 
           "& .MuiAutocomplete-endAdornment": {
-            left: "8px",
-            right: "auto",
+            right: isTabularEdit ? "8px" : "10px",
+            left: "auto",
+            top: "50%",
+            transform: "translateY(-50%)",
+            display: "flex",
+            alignItems: "center",
+            gap: "2px",
           },
 
           "& .MuiAutocomplete-clearIndicator, & .MuiAutocomplete-popupIndicator": {
+            width: isTabularEdit ? "24px" : "28px",
+            height: isTabularEdit ? "24px" : "28px",
             color: "text.secondary",
-            p: "4px",
+            p: 0,
+            borderRadius: "8px",
 
             "&:hover": {
-              backgroundColor: "action.hover",
+              backgroundColor: "rgba(30, 136, 229, 0.08)",
+              color: "primary.main",
             },
+          },
+
+          "& .MuiAutocomplete-tag": {
+            m: "2px",
+            maxWidth: isTabularEdit ? "110px" : "160px",
           },
 
           ...(isTabularEdit && {
             "& .MuiAutocomplete-inputRoot": {
               minHeight: "40px !important",
               border: "none !important",
-              borderRadius: "0 !important",
               boxShadow: "none !important",
               backgroundColor: "transparent !important",
             },
 
             "& .MuiInputBase-input": {
-              textAlign: "center",
-              padding: "8px 12px !important",
+              textAlign: "left !important",
+              direction: "ltr !important",
+              padding: "6px 0 !important",
             },
           }),
         }}
         renderTags={(tagValue: any, getTagProps) =>
           tagValue.map((option: string, index: number) => {
             const { key, ...tagProps } = getTagProps({ index });
+            const labelText = option === texts.heb.emptyValue ? "" : getLabel(option);
 
             return (
               <Chip
                 key={key}
-                label={option === texts.heb.emptyValue ? "" : getLabel(option)}
+                label={labelText}
                 {...tagProps}
                 onDelete={() => onDeleteHandler(index)}
                 size={isTabularEdit ? "small" : "medium"}
                 sx={{
+                  maxWidth: isTabularEdit ? "110px" : "160px",
+                  height: isTabularEdit ? "26px" : "30px",
                   borderRadius: "8px",
                   fontSize: isTabularEdit ? "0.82rem" : "0.9rem",
                   fontWeight: 500,
-                  height: isTabularEdit ? "24px" : "28px",
-                  backgroundColor: "action.selected",
-                  maxWidth: "140px",
+                  backgroundColor: "rgba(30, 136, 229, 0.08)",
+                  border: "1px solid rgba(30, 136, 229, 0.18)",
+                  color: "text.primary",
+                  direction: "ltr",
 
                   "& .MuiChip-label": {
                     px: "8px",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
                   },
 
                   "& .MuiChip-deleteIcon": {
                     mx: "2px",
-                    fontSize: "18px",
+                    fontSize: "17px",
+                    color: "text.secondary",
+
+                    "&:hover": {
+                      color: "primary.main",
+                    },
                   },
                 }}
               />
@@ -338,11 +381,12 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
             }}
             inputProps={{
               ...params.inputProps,
-              value: inputValue !== undefined
-                ? String(params.inputProps.value)
-                : isMultiple || params.inputProps.value !== texts.heb.emptyValue
+              value:
+                inputValue !== undefined
                   ? String(params.inputProps.value)
-                  : "",
+                  : isMultiple || params.inputProps.value !== texts.heb.emptyValue
+                    ? String(params.inputProps.value)
+                    : "",
             }}
           />
         )}
