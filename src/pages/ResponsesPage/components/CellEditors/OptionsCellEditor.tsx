@@ -18,8 +18,11 @@ interface OptionsCellEditorProps {
   onScrollToBottom?: () => void;
 }
 
+const OPTIONS_DROPDOWN_MIN_WIDTH = 190;
+
 const normalizeValue = (value: string | string[], mode: string): string | string[] => {
   const isMultiSelect = mode === selectionMode.Multiple;
+
   if (isMultiSelect) {
     if (Array.isArray(value)) {
       return value.filter((item) => typeof item === "string");
@@ -35,23 +38,27 @@ const normalizeValue = (value: string | string[], mode: string): string | string
   return value || "";
 };
 
-const Listbox = React.forwardRef
-  <HTMLUListElement,
-    React.HTMLAttributes<HTMLUListElement> & { onLoadMore?: () => void }
-  >(function Listbox({ children, onLoadMore, ...props }, ref) {
-    const listRef = useRef<HTMLUListElement>(null);
-    const sentinelRef = useRef<HTMLLIElement>(null);
+const Listbox = React.forwardRef<
+  HTMLUListElement,
+  React.HTMLAttributes<HTMLUListElement> & { onLoadMore?: () => void }
+>(function Listbox({ children, onLoadMore, ...props }, ref) {
+  const listRef = useRef<HTMLUListElement>(null);
+  const sentinelRef = useRef<HTMLLIElement>(null);
 
-    useImperativeHandle(ref, () => listRef.current as HTMLUListElement);
-    useLoadMoreOnVisible(listRef, sentinelRef, onLoadMore);
+  useImperativeHandle(ref, () => listRef.current as HTMLUListElement);
+  useLoadMoreOnVisible(listRef, sentinelRef, onLoadMore);
 
-    return (
-      <ul ref={listRef} {...props}>
-        {children}
-        <li aria-hidden ref={sentinelRef} style={{ height: 1, padding: 0, margin: 0, listStyle: "none" }} />
-      </ul>
-    );
-  });
+  return (
+    <ul ref={listRef} {...props}>
+      {children}
+      <li
+        aria-hidden
+        ref={sentinelRef}
+        style={{ height: 1, padding: 0, margin: 0, listStyle: "none" }}
+      />
+    </ul>
+  );
+});
 
 const basePopperSlotProps = {
   clearIndicator: {
@@ -62,41 +69,45 @@ const basePopperSlotProps = {
   },
   popper: {
     sx: {
+      minWidth: OPTIONS_DROPDOWN_MIN_WIDTH,
+      maxWidth: "calc(100vw - 32px)",
+
       "& .MuiAutocomplete-paper": {
-        mt: "6px",
-        borderRadius: "12px",
-        border: "1px solid #d7deea",
-        boxShadow: "0 12px 32px rgba(15, 23, 42, 0.12)",
+        mt: "4px",
+        borderRadius: "10px",
+        border: "1px solid #e2e8f0",
+        boxShadow: "0 8px 20px rgba(15, 23, 42, 0.1)",
         overflow: "hidden",
       },
 
       "& .MuiAutocomplete-listbox": {
-        p: "2px",
+        p: "4px",
         direction: "rtl",
         textAlign: "right",
       },
 
       "& .MuiAutocomplete-option": {
-        minHeight: "40px",
-        borderRadius: "8px",
+        minHeight: "34px",
+        borderRadius: "7px",
         mx: 0,
-        my: "2px",
-        px: "10px",
-        py: "8px",
-        fontSize: "1rem",
+        my: "1px",
+        px: "9px",
+        py: "6px",
+        fontSize: "0.95rem",
         lineHeight: 1.35,
         direction: "rtl",
         textAlign: "right",
-        whiteSpace: "normal",
-        overflowWrap: "anywhere",
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
 
         "&[aria-selected='true']": {
-          backgroundColor: "#eaf2ff",
+          backgroundColor: "#eef4ff",
           fontWeight: 600,
         },
 
         "&.Mui-focused": {
-          backgroundColor: "#f3f7fd",
+          backgroundColor: "#f8fafc",
         },
       },
     },
@@ -113,68 +124,68 @@ const getTextFieldSx = ({
   hasSelectedValue: boolean;
 }) => ({
   "& .MuiInputBase-root": {
-    minHeight: "40px",
-    borderRadius: "10px",
+    minHeight: "36px",
+    borderRadius: "8px",
     border: "1px solid",
-    borderColor: hasError ? "#d32f2f" : "#d7deea",
+    borderColor: hasError ? "#d32f2f" : "#d8dee9",
     backgroundColor: "#fff",
-    fontSize: "1rem",
+    fontSize: "0.95rem",
     direction: "rtl",
-    boxShadow: "0 1px 2px rgba(16, 24, 40, 0.04)",
+    boxShadow: "none",
     transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
     display: "flex",
     flexDirection: "row-reverse",
 
     ...(isMultiSelect
       ? {
-        alignItems: "flex-start",
-        flexWrap: "wrap",
-        gap: "6px",
-        maxHeight: "160px",
-        overflowY: "auto",
-        overflowX: "hidden",
-        padding: "8px 10px !important",
-        overscrollBehavior: "contain",
-        scrollbarWidth: "thin",
-        scrollbarColor: "#cbd5e1 transparent",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          gap: "5px",
+          maxHeight: "140px",
+          overflowY: "auto",
+          overflowX: "hidden",
+          padding: "6px 8px !important",
+          overscrollBehavior: "contain",
+          scrollbarWidth: "thin",
+          scrollbarColor: "#cbd5e1 transparent",
 
-        "&::-webkit-scrollbar": {
-          width: "8px",
-        },
+          "&::-webkit-scrollbar": {
+            width: "8px",
+          },
 
-        "&::-webkit-scrollbar-track": {
-          backgroundColor: "transparent",
-        },
+          "&::-webkit-scrollbar-track": {
+            backgroundColor: "transparent",
+          },
 
-        "&::-webkit-scrollbar-thumb": {
-          backgroundColor: "#cbd5e1",
-          borderRadius: "999px",
-          border: "2px solid #ffffff",
-        },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "#cbd5e1",
+            borderRadius: "999px",
+            border: "2px solid #ffffff",
+          },
 
-        "&::-webkit-scrollbar-thumb:hover": {
-          backgroundColor: "#94a3b8",
-        },
-      }
+          "&::-webkit-scrollbar-thumb:hover": {
+            backgroundColor: "#94a3b8",
+          },
+        }
       : {
-        alignItems: hasSelectedValue ? "flex-start" : "center",
-        flexWrap: "nowrap",
-        maxHeight: "132px",
-        overflowY: hasSelectedValue ? "auto" : "hidden",
-        overflowX: "hidden",
-        padding: hasSelectedValue ? "8px 10px !important" : "0 10px !important",
-      }),
+          alignItems: "center",
+          flexWrap: "nowrap",
+          maxHeight: "120px",
+          overflowY: hasSelectedValue ? "auto" : "hidden",
+          overflowX: "hidden",
+          padding: hasSelectedValue ? "6px 8px !important" : "0 8px !important",
+        }),
 
     "&:hover": {
-      borderColor: hasError ? "#d32f2f" : "#b8c4d6",
-      backgroundColor: "#fbfcfe",
+      borderColor: hasError ? "#d32f2f" : "#cbd5e1",
+      backgroundColor: "#fff",
     },
 
     "&.Mui-focused": {
       borderColor: hasError ? "#d32f2f" : "#7c9cc9",
       boxShadow: hasError
-        ? "0 0 0 3px rgba(211, 47, 47, 0.14)"
-        : "0 0 0 3px rgba(124, 156, 201, 0.16)",
+        ? "0 0 0 2px rgba(211, 47, 47, 0.12)"
+        : "0 0 0 2px rgba(124, 156, 201, 0.14)",
     },
 
     "&::before, &::after": {
@@ -187,40 +198,40 @@ const getTextFieldSx = ({
   },
 
   "& .MuiAutocomplete-input": {
-    fontSize: "1rem",
+    fontSize: "0.95rem",
     textAlign: "right",
     direction: "rtl",
     caretColor: "transparent",
 
     ...(hasSelectedValue
       ? {
-        width: "0 !important",
-        minWidth: "0 !important",
-        flexGrow: "0 !important",
-        padding: "0 !important",
-      }
+          width: "0 !important",
+          minWidth: "0 !important",
+          flexGrow: "0 !important",
+          padding: "0 !important",
+        }
       : {
-        minWidth: "120px !important",
-        flexGrow: 1,
-        padding: isMultiSelect ? "0 !important" : "7px 0 !important",
-      }),
+          minWidth: "0 !important",
+          flexGrow: 1,
+          padding: isMultiSelect ? "0 !important" : "6px 0 !important",
+        }),
   },
 });
 
 const iconButtonSx = {
-  width: 28,
-  height: 28,
+  width: 24,
+  height: 24,
   color: "#64748b",
-  borderRadius: "8px",
+  borderRadius: "6px",
   padding: 0,
 
   "&:hover": {
-    backgroundColor: "#eef4ff",
+    backgroundColor: "#f1f5f9",
     color: "#334155",
   },
 
   "& .MuiSvgIcon-root": {
-    fontSize: 18,
+    fontSize: 17,
   },
 };
 
@@ -229,11 +240,12 @@ const selectedTextSx = {
   minWidth: 0,
   direction: "rtl",
   textAlign: "right",
-  fontSize: "1rem",
+  fontSize: "0.95rem",
   lineHeight: 1.35,
   color: "#0f172a",
-  whiteSpace: "normal",
-  overflowWrap: "anywhere",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
   userSelect: "none",
   pointerEvents: "none",
 };
@@ -241,16 +253,16 @@ const selectedTextSx = {
 const selectedTagSx = {
   width: "100%",
   maxWidth: "100%",
-  minHeight: 32,
-  borderRadius: "8px",
-  backgroundColor: "#eef4ff",
-  border: "1px solid #d4e3ff",
+  minHeight: 28,
+  borderRadius: "7px",
+  backgroundColor: "#f1f5ff",
+  border: "1px solid #dbe7ff",
   display: "grid",
   gridTemplateColumns: "1fr auto",
   alignItems: "center",
-  gap: "6px",
-  px: "8px",
-  py: "4px",
+  gap: "5px",
+  px: "7px",
+  py: "3px",
   boxSizing: "border-box",
   direction: "rtl",
 };
@@ -301,7 +313,8 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
           display: "flex",
           justifyContent: "flex-start",
           width: "100%",
-          whiteSpace: "normal",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
         }}>
         <span
           style={{
@@ -309,8 +322,9 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             width: "100%",
             direction: "rtl",
             textAlign: "right",
-            whiteSpace: "normal",
-            overflowWrap: "anywhere",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}>
           {getOptionLabel(option)}
         </span>
@@ -388,12 +402,14 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
         alignItems: "flex-start",
         gap: "4px",
         direction: "ltr",
-        padding: "6px 8px",
+        padding: "4px 6px",
         boxSizing: "border-box",
+        position: "relative",
+        zIndex: 5,
       }}>
       <Box
         sx={{
-          width: 30,
+          width: 26,
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",
@@ -461,11 +477,12 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                       component="span"
                       sx={{
                         minWidth: 0,
-                        fontSize: "0.95rem",
+                        fontSize: "0.9rem",
                         lineHeight: 1.35,
                         color: "#0f172a",
-                        whiteSpace: "normal",
-                        overflowWrap: "anywhere",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
                       }}>
                       {label}
                     </Box>
@@ -479,17 +496,17 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                         onDelete(event);
                       }}
                       sx={{
-                        width: 22,
-                        height: 22,
+                        width: 20,
+                        height: 20,
                         color: "#64748b",
                         padding: 0,
 
                         "& .MuiSvgIcon-root": {
-                          fontSize: 16,
+                          fontSize: 15,
                         },
 
                         "&:hover": {
-                          backgroundColor: "#dceaff",
+                          backgroundColor: "#e2e8f0",
                           color: "#334155",
                         },
                       }}>

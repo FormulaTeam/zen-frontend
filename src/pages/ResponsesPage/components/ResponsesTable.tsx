@@ -143,6 +143,18 @@ const isSortable = (typeId?: number): boolean => {
 const EmptyColumnHeaderFilterIconButton = () => null;
 const EmptyColumnFilteredIcon = () => null;
 
+const NORMAL_FIELD_COLUMN_MIN_WIDTH = 120;
+const QUICK_EDIT_FIELD_COLUMN_WIDTH = 190;
+const FIELD_COLUMN_MAX_WIDTH = 450;
+
+const getFieldColumnWidth = (isInEditMode: boolean, savedWidth?: number): number | undefined => {
+  if (!isInEditMode) {
+    return savedWidth;
+  }
+
+  return Math.max(savedWidth ?? QUICK_EDIT_FIELD_COLUMN_WIDTH, QUICK_EDIT_FIELD_COLUMN_WIDTH);
+};
+
 type Row = GridRowModel & {
   id: string | number;
   parentResponse?: string | null;
@@ -592,9 +604,9 @@ export const ResponsesTable = React.memo(
         const col: GridColDef = {
           field: gridField,
           headerName: field.displayName,
-          width: columnWidths.current[gridField],
-          minWidth: 120,
-          maxWidth: 450,
+          width: getFieldColumnWidth(isInEditMode, columnWidths.current[gridField]),
+          minWidth: isInEditMode ? QUICK_EDIT_FIELD_COLUMN_WIDTH : NORMAL_FIELD_COLUMN_MIN_WIDTH,
+          maxWidth: FIELD_COLUMN_MAX_WIDTH,
           editable: true,
           sortable: isSortable(field.fieldType),
           ...getResponseFilterColumnProps(field, formFields),
@@ -752,16 +764,16 @@ export const ResponsesTable = React.memo(
 
       const parentResponseColumns: GridColDef[] = hasParentResponses
         ? [
-          {
-            field: "parentResponse",
-            headerName: "תגובת אב",
-            width: columnWidths.current["parentResponse"] || 200,
-            editable: false,
-            filterable: false,
-            sortable: false,
-            renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
-          },
-        ]
+            {
+              field: "parentResponse",
+              headerName: "תגובת אב",
+              width: columnWidths.current["parentResponse"] || 200,
+              editable: false,
+              filterable: false,
+              sortable: false,
+              renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
+            },
+          ]
         : [];
 
       let resultColumns: GridColDef[] = [];
@@ -1302,21 +1314,21 @@ export const ResponsesTable = React.memo(
 
                 ...(isInEditMode
                   ? {
-                    "& .active-editing-row .MuiDataGrid-cell": {
-                      py: "4px",
-                      alignItems: "center",
-                    },
-                    "& .active-editing-row .MuiDataGrid-cell--editing": {
-                      p: "4px 6px",
-                      overflow: "visible",
-                    },
-                    "& .active-editing-row .MuiDataGrid-cell--editing:focus-within": {
-                      outline: "none",
-                    },
-                    "& .active-editing-row .MuiDataGrid-cell--editing .MuiInputBase-root": {
-                      boxShadow: "none",
-                    },
-                  }
+                      "& .active-editing-row .MuiDataGrid-cell": {
+                        py: "4px",
+                        alignItems: "center",
+                      },
+                      "& .active-editing-row .MuiDataGrid-cell--editing": {
+                        p: "4px 6px",
+                        overflow: "visible",
+                      },
+                      "& .active-editing-row .MuiDataGrid-cell--editing:focus-within": {
+                        outline: "none",
+                      },
+                      "& .active-editing-row .MuiDataGrid-cell--editing .MuiInputBase-root": {
+                        boxShadow: "none",
+                      },
+                    }
                   : {}),
               }}
             />
