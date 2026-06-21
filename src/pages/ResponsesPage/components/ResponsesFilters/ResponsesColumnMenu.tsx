@@ -97,14 +97,6 @@ export const ResponsesColumnMenu: React.FC<ResponsesColumnMenuProps> = (props) =
   return (
     <GridColumnMenu
       {...gridColumnMenuProps}
-      sx={{
-        "& .MuiDivider-root": {
-          display: "none",
-        },
-        "& .MuiDivider-root:first-of-type": {
-          display: "block",
-        },
-      }}
       slots={{
         ...slots,
         columnMenuColumnsItem: null,

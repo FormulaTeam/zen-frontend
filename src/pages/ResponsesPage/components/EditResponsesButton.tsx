@@ -14,6 +14,9 @@ import { Permission, permission } from "formula-gear";
 import { useNavigate } from "react-router-dom";
 import { useFormStore } from "../stores/form.store";
 
+const ACTION_BUTTON_BACKGROUND = "#DFECF9";
+const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
+
 interface EditResponsesButtonProps {
   isInEditMode: boolean;
   hasUnsavedChanges: boolean;
@@ -148,7 +151,24 @@ export const EditResponsesButton = ({
       requiredPermissions={[permission.UpdateAnyResponse]}>
       <UnifiedButton
         startIcon={<img src={TableEditIconSvg} alt="edit" style={{ width: 20, height: 20 }} />}
-        onClick={onToggleEditMode}>
+        onClick={onToggleEditMode}
+        sx={{
+          backgroundColor: ACTION_BUTTON_BACKGROUND,
+          border: "none",
+          boxShadow: "none",
+
+          "&:hover": {
+            backgroundColor: ACTION_BUTTON_HOVER_BACKGROUND,
+            border: "none",
+            boxShadow: "none",
+          },
+
+          "&:focus, &:focus-visible": {
+            outline: "none",
+            border: "none",
+            boxShadow: "none",
+          },
+        }}>
         עריכה מהירה
       </UnifiedButton>
     </PermissionGate>

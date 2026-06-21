@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Box, Tooltip, IconButton } from "@mui/material";
 import Delete from "@mui/icons-material/Delete";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import { StatusCodes } from "http-status-codes";
 import { IOrderBy } from "../../types/enums/filtersAndSorts.enum";
 
@@ -33,6 +34,9 @@ import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner"
 import { getQuickEditDraft, clearQuickEditDraft } from "../FormEditor/utils/draftPersistence";
 import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialog";
 import ConfirmDeleteDialog from "../../components/BasePopup/ConfirmDeleteDialog";
+
+const ACTION_BUTTON_BACKGROUND = "#DFECF9";
+const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
 
 type SidePanelForm = Pick<FormDto, "id" | "name"> & {
   fields: FormFieldDto[];
@@ -87,7 +91,14 @@ const ResponsesPageContent = (): JSX.Element => {
     ids: new Set<GridRowId>(),
   });
 
-  const { rows: storeRows, form, permissions, filter, setFilter } = useFormStore();
+  const {
+    rows: storeRows,
+    form,
+    permissions,
+    filter,
+    setFilter,
+    setResponseFilters,
+  } = useFormStore();
   const { user } = useAuth();
 
   const handleSearch = (val: string) => {
@@ -128,6 +139,29 @@ const ResponsesPageContent = (): JSX.Element => {
     cancelDelete,
   } = useResponsesEdit();
 
+  const [showFilters, setShowFilters] = useState(false);
+  const activeFiltersCount = filter?.responseFilters?.items?.length ?? 0;
+
+  useEffect(() => {
+    if (activeFiltersCount > 0) {
+      setShowFilters(true);
+    }
+  }, [activeFiltersCount]);
+
+  useEffect(() => {
+    if (isInEditMode) {
+      setShowFilters(false);
+    }
+  }, [isInEditMode]);
+
+  const handleToggleFilters = useCallback(() => {
+    setShowFilters((prev) => !prev);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setResponseFilters(null);
+  }, [setResponseFilters]);
+
   const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<any>(null);
   const [showBackCancelDialog, setShowBackCancelDialog] = useState(false);
@@ -158,7 +192,6 @@ const ResponsesPageContent = (): JSX.Element => {
     setShowBackCancelDialog(false);
   }, []);
 
-  // Hook to block navigation if there are unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
@@ -170,7 +203,7 @@ const ResponsesPageContent = (): JSX.Element => {
     const handlePopState = () => {
       if (hasUnsavedChanges) {
         window.history.pushState(null, "", window.location.href);
-        handleToggleEditMode(); // This triggers the showCancelDialog internally via useResponsesEdit
+        handleToggleEditMode();
       }
     };
 
@@ -227,7 +260,6 @@ const ResponsesPageContent = (): JSX.Element => {
     currentView,
   } = useResponsesViews();
 
-  // 1. Initial Load: Read from URL and write to Zustand Filter (page & pageSize only)
   useEffect(() => {
     const pageParam = searchParams.get("page");
     const pageSizeParam = searchParams.get("pageSize");
@@ -249,30 +281,31 @@ const ResponsesPageContent = (): JSX.Element => {
     }
   }, []);
 
-  // 2. Continuous Sync: Sync Zustand Filter changes to URL (page & pageSize only)
   useEffect(() => {
     if (!filter) return;
 
-    setSearchParams((prev) => {
-      const updated = new URLSearchParams(prev);
+    setSearchParams(
+      (prev) => {
+        const updated = new URLSearchParams(prev);
 
-      if (filter.pageNumber && filter.pageNumber !== 1) {
-        updated.set("page", String(filter.pageNumber));
-      } else {
-        updated.delete("page");
-      }
+        if (filter.pageNumber && filter.pageNumber !== 1) {
+          updated.set("page", String(filter.pageNumber));
+        } else {
+          updated.delete("page");
+        }
 
-      if (filter.pageSize && filter.pageSize !== 25) {
-        updated.set("pageSize", String(filter.pageSize));
-      } else {
-        updated.delete("pageSize");
-      }
+        if (filter.pageSize && filter.pageSize !== 25) {
+          updated.set("pageSize", String(filter.pageSize));
+        } else {
+          updated.delete("pageSize");
+        }
 
-      return updated;
-    }, { replace: true });
+        return updated;
+      },
+      { replace: true },
+    );
   }, [filter, setSearchParams]);
 
-  // 3. Sync Drawer and Mode to/from URL
   useEffect(() => {
     const drawerParam = searchParams.get("drawer");
     const targetSidePanelOpen = drawerParam === "views";
@@ -288,23 +321,26 @@ const ResponsesPageContent = (): JSX.Element => {
   }, [searchParams]);
 
   useEffect(() => {
-    setSearchParams((prev) => {
-      const updated = new URLSearchParams(prev);
+    setSearchParams(
+      (prev) => {
+        const updated = new URLSearchParams(prev);
 
-      if (isSidePanelOpen) {
-        updated.set("drawer", "views");
-      } else {
-        updated.delete("drawer");
-      }
+        if (isSidePanelOpen) {
+          updated.set("drawer", "views");
+        } else {
+          updated.delete("drawer");
+        }
 
-      if (isInEditMode) {
-        updated.set("mode", "quick-edit");
-      } else {
-        updated.delete("mode");
-      }
+        if (isInEditMode) {
+          updated.set("mode", "quick-edit");
+        } else {
+          updated.delete("mode");
+        }
 
-      return updated;
-    }, { replace: true });
+        return updated;
+      },
+      { replace: true },
+    );
   }, [isSidePanelOpen, isInEditMode, setSearchParams]);
 
   useEffect(() => {
@@ -387,15 +423,105 @@ const ResponsesPageContent = (): JSX.Element => {
 
             <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <SearchInfo search={filter?.query || ""} setSearch={handleSearch} />
-              <ViewsButton
-                isSidePanelOpen={isSidePanelOpen}
-                setIsSidePanelOpen={setIsSidePanelOpen}
-                hasSavedViews={hasSavedViews}
-                savedViews={savedViews}
-                selectedViewId={selectedViewId}
-                defaultViewId={defaultViewId}
-                handleViewDropdownChange={handleViewDropdownChange}
-              />
+
+              {!isInEditMode && (
+                <Box
+                  style={{
+                    position: "relative",
+                    width: 44,
+                    height: 44,
+                    flexShrink: 0,
+                    overflow: "visible",
+                  }}>
+                  <Tooltip title={showFilters ? "הסתר סינון" : "הצג סינון"} arrow>
+                    <IconButton
+                      aria-label={showFilters ? "הסתר סינון" : "הצג סינון"}
+                      onClick={handleToggleFilters}
+                      sx={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: "14px",
+                        backgroundColor: ACTION_BUTTON_BACKGROUND,
+                        color: "#020618",
+                        border: "none",
+                        boxShadow: "none",
+
+                        "&:hover": {
+                          backgroundColor: ACTION_BUTTON_HOVER_BACKGROUND,
+                          border: "none",
+                          boxShadow: "none",
+                        },
+
+                        "&:focus, &:focus-visible": {
+                          outline: "none",
+                          border: "none",
+                          boxShadow: "none",
+                        },
+                      }}>
+                      <FilterListRoundedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+
+                  {activeFiltersCount > 0 && (
+                    <Box
+                      component="span"
+                      style={{
+                        position: "absolute",
+                        top: -8,
+                        right: -8,
+                        minWidth: 22,
+                        height: 22,
+                        padding: "0 6px",
+                        borderRadius: 999,
+                        backgroundColor: "#1E88E5",
+                        color: "#fff",
+                        border: "2px solid #f8fbff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "0.78rem",
+                        fontWeight: 800,
+                        lineHeight: 1,
+                        boxSizing: "border-box",
+                        pointerEvents: "none",
+                      }}>
+                      {activeFiltersCount}
+                    </Box>
+                  )}
+                </Box>
+              )}
+
+              <Box
+                sx={{
+                  "& .MuiButton-root": {
+                    backgroundColor: `${ACTION_BUTTON_BACKGROUND} !important`,
+                    borderColor: "transparent !important",
+                    border: "none !important",
+                    boxShadow: "none !important",
+                  },
+                  "& .MuiButton-root:hover": {
+                    backgroundColor: `${ACTION_BUTTON_HOVER_BACKGROUND} !important`,
+                    borderColor: "transparent !important",
+                    border: "none !important",
+                    boxShadow: "none !important",
+                  },
+                  "& .MuiButton-root:focus, & .MuiButton-root:focus-visible": {
+                    outline: "none !important",
+                    borderColor: "transparent !important",
+                    border: "none !important",
+                    boxShadow: "none !important",
+                  },
+                }}>
+                <ViewsButton
+                  isSidePanelOpen={isSidePanelOpen}
+                  setIsSidePanelOpen={setIsSidePanelOpen}
+                  hasSavedViews={hasSavedViews}
+                  savedViews={savedViews}
+                  selectedViewId={selectedViewId}
+                  defaultViewId={defaultViewId}
+                  handleViewDropdownChange={handleViewDropdownChange}
+                />
+              </Box>
             </Box>
           </ActionLine>
         </TopSection>
@@ -411,6 +537,10 @@ const ResponsesPageContent = (): JSX.Element => {
           validationErrors={validationErrors}
           currentView={currentView}
           deletedRowIds={deletedRowIds}
+          showFilters={showFilters}
+          activeFiltersCount={activeFiltersCount}
+          onToggleFilters={handleToggleFilters}
+          onClearFilters={handleClearFilters}
         />
 
         <UnsavedChangesDialog

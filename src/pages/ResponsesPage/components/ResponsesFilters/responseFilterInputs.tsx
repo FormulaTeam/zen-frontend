@@ -487,7 +487,15 @@ export const TimeRangeFilterInput: React.FC<FilterInputProps & { timePrecision?:
   );
 };
 export const SingleOptionFilterInput: React.FC<FilterInputProps> = (props) => {
-  const { item, applyValue, options = [], headerFilterMenu, clearButton, loading, onLoadMore } = props;
+  const {
+    item,
+    applyValue,
+    options = [],
+    headerFilterMenu,
+    clearButton,
+    loading,
+    onLoadMore,
+  } = props;
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [paperNode, setPaperNode] = React.useState<HTMLElement | null>(null);
   const [sentinelNode, setSentinelNode] = React.useState<HTMLElement | null>(null);
@@ -525,12 +533,20 @@ export const SingleOptionFilterInput: React.FC<FilterInputProps> = (props) => {
           />
         </Select>
       </FormControl>
-    </HeaderFilterInputShell >
+    </HeaderFilterInputShell>
   );
 };
 
 export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
-  const { item, applyValue, options = [], headerFilterMenu, clearButton, loading, onLoadMore } = props;
+  const {
+    item,
+    applyValue,
+    options = [],
+    headerFilterMenu,
+    clearButton,
+    loading,
+    onLoadMore,
+  } = props;
   const selectedValues = Array.isArray(item.value) ? item.value.map(String) : [];
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [paperNode, setPaperNode] = React.useState<HTMLElement | null>(null);

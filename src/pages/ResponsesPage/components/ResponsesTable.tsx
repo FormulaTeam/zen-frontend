@@ -143,16 +143,11 @@ const isSortable = (typeId?: number): boolean => {
 const EmptyColumnHeaderFilterIconButton = () => null;
 const EmptyColumnFilteredIcon = () => null;
 
-const NORMAL_FIELD_COLUMN_MIN_WIDTH = 120;
-const QUICK_EDIT_FIELD_COLUMN_WIDTH = 190;
+const FIELD_COLUMN_WIDTH = 190;
 const FIELD_COLUMN_MAX_WIDTH = 450;
 
-const getFieldColumnWidth = (isInEditMode: boolean, savedWidth?: number): number | undefined => {
-  if (!isInEditMode) {
-    return savedWidth;
-  }
-
-  return Math.max(savedWidth ?? QUICK_EDIT_FIELD_COLUMN_WIDTH, QUICK_EDIT_FIELD_COLUMN_WIDTH);
+const getFieldColumnWidth = (savedWidth?: number): number => {
+  return Math.max(savedWidth ?? FIELD_COLUMN_WIDTH, FIELD_COLUMN_WIDTH);
 };
 
 type Row = GridRowModel & {
@@ -189,6 +184,10 @@ interface ResponsesTableProps {
   rowSelectionModel?: GridRowSelectionModel;
   currentView?: ResponsesView;
   deletedRowIds?: (string | number)[];
+  showFilters: boolean;
+  activeFiltersCount: number;
+  onToggleFilters: () => void;
+  onClearFilters: () => void;
 }
 
 const SyncStatusIcon: React.FC<{ pushedToMetro?: string | null }> = ({ pushedToMetro }) => (
@@ -225,6 +224,10 @@ export const ResponsesTable = React.memo(
     rowSelectionModel,
     currentView,
     deletedRowIds = [],
+    showFilters,
+    activeFiltersCount,
+    onToggleFilters,
+    onClearFilters,
   }: ResponsesTableProps) => {
     const { form, rows, pageInfo, filter, setFilter, setResponseFilters, isRowsLoading } =
       useFormStore();
@@ -247,25 +250,10 @@ export const ResponsesTable = React.memo(
     if (!form) return null;
 
     const [isNavigating, setIsNavigating] = useState(false);
-    const [showFilters, setShowFilters] = useState(false);
 
     const transitionInProgress = useRef(false);
     const lastIntendedPageNumber = useRef(filter?.pageNumber ?? 1);
     const lastFetchStartedRef = useRef(false);
-
-    const activeFiltersCount = filter?.responseFilters?.items?.length ?? 0;
-
-    useEffect(() => {
-      if (activeFiltersCount > 0) {
-        setShowFilters(true);
-      }
-    }, [activeFiltersCount]);
-
-    useEffect(() => {
-      if (isInEditMode) {
-        setShowFilters(false);
-      }
-    }, [isInEditMode]);
 
     useEffect(() => {
       lastIntendedPageNumber.current = filter?.pageNumber ?? 1;
@@ -329,14 +317,6 @@ export const ResponsesTable = React.memo(
         });
       }
     }, [pageInfo, filter, setFilter, isRowsLoading]);
-
-    const handleToggleFilters = useCallback(() => {
-      setShowFilters((prev) => !prev);
-    }, []);
-
-    const handleClearFilters = useCallback(() => {
-      setResponseFilters(null);
-    }, [setResponseFilters]);
 
     const formFields = useMemo<FormFieldDto[]>(() => {
       const sectionsFields = (form?.sections ?? []).flatMap((section) => section.fields ?? []);
@@ -604,8 +584,8 @@ export const ResponsesTable = React.memo(
         const col: GridColDef = {
           field: gridField,
           headerName: field.displayName,
-          width: getFieldColumnWidth(isInEditMode, columnWidths.current[gridField]),
-          minWidth: isInEditMode ? QUICK_EDIT_FIELD_COLUMN_WIDTH : NORMAL_FIELD_COLUMN_MIN_WIDTH,
+          width: getFieldColumnWidth(columnWidths.current[gridField]),
+          minWidth: FIELD_COLUMN_WIDTH,
           maxWidth: FIELD_COLUMN_MAX_WIDTH,
           editable: true,
           sortable: isSortable(field.fieldType),
@@ -751,6 +731,7 @@ export const ResponsesTable = React.memo(
         field: `${prefixes.Meta}id`,
         headerName: "ID",
         width: columnWidths.current[`${prefixes.Meta}id`] || 150,
+        minWidth: 150,
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.id,
@@ -1284,8 +1265,8 @@ export const ResponsesTable = React.memo(
                   showFilters,
                   activeFiltersCount,
                   disabled: isInEditMode,
-                  onToggleFilters: handleToggleFilters,
-                  onClearFilters: handleClearFilters,
+                  onToggleFilters,
+                  onClearFilters,
                 } as any,
                 row: {},
               }}
