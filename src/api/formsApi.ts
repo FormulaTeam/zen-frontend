@@ -319,6 +319,7 @@ export const useUpdateForm = () => {
       });
 
       queryClient.invalidateQueries({ queryKey: ["forms"] });
+      queryClient.invalidateQueries({ queryKey: ["responses", stringId] });
     },
     onError: (error) => {
       console.error("Failed to update form:", error);
