@@ -63,7 +63,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   loading,
   inputValue,
   filterOptions,
-  noOptionsText,
+  noOptionsText = "אין אפשרויות",
 }) => {
   const [selectedValues, setSelectedValues] = useState<string[]>(normalizeToArray(value));
   const hasTriggeredBlurRef = useRef(false);
