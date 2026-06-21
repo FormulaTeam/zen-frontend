@@ -1,8 +1,12 @@
 .displayInternalNames {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-block-start: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-block-start: 0;
+}
+
+.displaySectionTitle {
+  margin-block-end: 4px !important;
 }
 
 .logicSectionTitle {

@@ -44,20 +44,29 @@ export const getOptionResponseSubmitValue = (value: unknown): unknown => {
   return isOptionResponseValue(value) ? value.id : value;
 };
 
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const ISO_DATE_TIME_PATTERN =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:?\d{2})?$/;
+
 export const formatOptionLabel = (option: string): string => {
   if (typeof option !== "string" || option.trim() === "") {
     return option;
   }
 
-  const isIsoDate = moment(option, [moment.ISO_8601, "YYYY-MM-DD"], true).isValid();
+  const trimmedOption = option.trim();
+  const isDateOnly = DATE_ONLY_PATTERN.test(trimmedOption);
+  const isDateTime = ISO_DATE_TIME_PATTERN.test(trimmedOption);
 
-  if (isIsoDate) {
-    const parsed = moment(option);
-    const isMidnightLocal = parsed.hour() === 0 && parsed.minute() === 0;
-    const isDateTime = option.includes("T") && !isMidnightLocal;
-
-    return parsed.format(isDateTime ? DEFAULT_DATE_TIME_FORMAT : DEFAULT_DATE_FORMAT);
+  if (!isDateOnly && !isDateTime) {
+    return option;
   }
 
-  return option;
+  const parsed = moment(trimmedOption, isDateOnly ? "YYYY-MM-DD" : moment.ISO_8601, true);
+
+  if (!parsed.isValid()) {
+    return option;
+  }
+
+  return parsed.format(isDateTime ? DEFAULT_DATE_TIME_FORMAT : DEFAULT_DATE_FORMAT);
 };

@@ -9,7 +9,9 @@ function FormSandboxSidebar() {
 
   return (
     <div className={styles.sidebar}>
-      <Typography variant="subtitle1" className={styles.logicSectionTitle}>
+      <Typography
+        variant="subtitle1"
+        className={`${styles.logicSectionTitle} ${styles.displaySectionTitle}`}>
         תצוגה
       </Typography>
 

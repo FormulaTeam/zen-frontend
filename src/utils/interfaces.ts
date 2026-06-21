@@ -501,7 +501,7 @@ export const FORM_ELEMENTS: FormElements = {
     fieldType: FieldDataTypes.string,
   },
   [FieldTypeIds.shortText]: {
-    name: "שורה אחת",
+    name: "טקסט קצר",
     icon: "dragHandle",
     fieldType: FieldDataTypes.string,
   },
