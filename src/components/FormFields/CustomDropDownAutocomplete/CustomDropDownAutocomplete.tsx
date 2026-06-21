@@ -5,11 +5,11 @@ import FieldErrorText from "../FieldErrorText/FieldErrorText";
 import {
   StyledFormHelperText,
   StyledInputLabel,
-  StyledListbox,
   StyledTextField,
   StyledAutocomplete,
 } from "./styled";
 import { selectionMode } from "formula-gear";
+import { PaginatedAutocompleteListbox } from "@src/components/PaginatedAutocompleteListbox";
 
 interface CustomDropDownAutocompleteProps {
   value: string | string[];
@@ -110,17 +110,6 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
     }
   };
 
-  const handleListboxScroll = (event: React.UIEvent<HTMLUListElement>) => {
-    const listboxNode = event.currentTarget;
-
-    if (
-      onScrollToBottom &&
-      listboxNode.scrollTop + listboxNode.clientHeight >= listboxNode.scrollHeight - 10
-    ) {
-      onScrollToBottom();
-    }
-  };
-
   return (
     <FormControl
       fullWidth
@@ -151,36 +140,18 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
       )}
 
       <StyledAutocomplete
-        slotProps={{
-          listbox: {
-            component: StyledListbox,
-            onScroll: handleListboxScroll,
-            sx: {
-              p: "4px",
-              direction: "ltr",
-              textAlign: "left",
-
-              "& .MuiAutocomplete-option": {
-                minHeight: isTabularEdit ? "36px" : "42px",
-                borderRadius: "8px",
-                px: "10px",
-                py: "7px",
-                fontSize: isTabularEdit ? "0.95rem" : "1rem",
-                justifyContent: "flex-start",
-                direction: "ltr",
-                textAlign: "left",
-
-                '&[aria-selected="true"]': {
-                  fontWeight: 600,
-                  backgroundColor: "rgba(30, 136, 229, 0.08)",
-                },
-
-                "&.Mui-focused": {
-                  backgroundColor: "rgba(148, 163, 184, 0.12)",
-                },
-              },
-            },
+        ListboxComponent={PaginatedAutocompleteListbox}
+        ListboxProps={{
+          onLoadMore: onScrollToBottom,
+          style: {
+            maxHeight: 320,
+            overflowY: "auto",
+            padding: 4,
+            direction: "rtl",
+            textAlign: "right",
           },
+        } as any}
+        slotProps={{
           paper: {
             sx: {
               mt: "6px",
@@ -223,7 +194,25 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         sx={{
           width: "100%",
           direction: "ltr",
+          "& .MuiAutocomplete-option": {
+            minHeight: isTabularEdit ? "36px" : "42px",
+            borderRadius: "8px",
+            paddingInline: "10px",
+            paddingBlock: "7px",
+            fontSize: isTabularEdit ? "0.95rem" : "1rem",
+            justifyContent: "flex-start",
+            direction: "rtl",
+            textAlign: "right",
 
+            '&[aria-selected="true"]': {
+              fontWeight: 600,
+              backgroundColor: "rgba(30, 136, 229, 0.08)",
+            },
+
+            "&.Mui-focused": {
+              backgroundColor: "rgba(148, 163, 184, 0.12)",
+            },
+          },
           "& .MuiAutocomplete-inputRoot": {
             minHeight: isTabularEdit ? "40px" : "50px",
             borderRadius: isTabularEdit ? "8px" : "12px",

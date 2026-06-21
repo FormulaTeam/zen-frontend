@@ -10,13 +10,6 @@ export const StyledFormHelperText = styled(FormHelperText)`
   margin-top: 15px;
 `;
 
-export const StyledListbox = styled("ul")`
-  .MuiAutocomplete-option:hover {
-    background-color: ${({ theme }) => theme.palette.primary.main + " !important"};
-    color: ${({ theme }) => theme.palette.white};
-  }
-`;
-
 export const StyledInputLabel = styled(InputLabel)`
   top: -14px;
   left: 5px;
