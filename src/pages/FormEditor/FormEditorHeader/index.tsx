@@ -11,7 +11,9 @@ import {
   DialogContentText,
   DialogTitle,
   Typography,
+  IconButton,
 } from "@mui/material";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { FormMetadata, useFormStructureContext } from "../context/FormStructureContext";
 import { useEffect, useMemo, useState } from "react";
 import { useFormEditor } from "../hooks/useFormEditor";
@@ -44,6 +46,8 @@ const METADATA_FIELD_LABELS: Record<string, string> = {
   title: "שם הטופס",
   description: "תיאור הטופס",
 };
+
+const DEFAULT_UNTITLED_FORM_TITLE = "טופס ללא שם";
 
 const headerActionButtonBaseSx = {
   height: 42,
@@ -148,7 +152,7 @@ function FormEditorHeader() {
   const [showAlertMsg, setShowAlertMsg] = useState(false);
   const [showValidationErrorsPopup, setShowValidationErrorsPopup] = useState(false);
   const [showUntitledFormPopup, setShowUntitledFormPopup] = useState(false);
-  const [suggestedTitle, setSuggestedTitle] = useState("טופס ללא שם");
+  const [suggestedTitle, setSuggestedTitle] = useState(DEFAULT_UNTITLED_FORM_TITLE);
   const [saveOptionsAfterTitlePopup, setSaveOptionsAfterTitlePopup] = useState<{
     navigateToResponses?: boolean;
   }>({});
@@ -256,6 +260,7 @@ function FormEditorHeader() {
     }
 
     if (metadataErrors?.title && title.trim() === "") {
+      setSuggestedTitle(DEFAULT_UNTITLED_FORM_TITLE);
       setSaveOptionsAfterTitlePopup(options ?? {});
       setShowUntitledFormPopup(true);
       return;
@@ -550,55 +555,28 @@ function FormEditorHeader() {
       open={showUntitledFormPopup}
       onClose={() => setShowUntitledFormPopup(false)}
       PaperProps={{
-        sx: {
-          width: "100%",
-          maxWidth: 460,
-          borderRadius: "18px",
-          backgroundColor: "#ffffff",
-          boxShadow: "0 20px 55px rgba(15, 23, 42, 0.18), 0 8px 22px rgba(15, 23, 42, 0.08)",
-          overflow: "hidden",
-        },
+        className: styles.untitledFormDialogPaper,
       }}>
-      <DialogTitle
-        sx={{
-          px: 4,
-          pt: 4,
-          pb: 1,
-          textAlign: "center",
-        }}>
-        <Typography
-          sx={{
-            fontSize: "1.35rem",
-            fontWeight: 750,
-            color: "#0f172a",
-            lineHeight: 1.35,
-          }}>
-          שם לטופס
-        </Typography>
+      <IconButton
+        aria-label="סגירה"
+        onClick={() => setShowUntitledFormPopup(false)}
+        className={styles.untitledFormDialogCloseButton}>
+        <CloseRoundedIcon className={styles.untitledFormDialogCloseIcon} />
+      </IconButton>
+
+      <DialogTitle className={styles.untitledFormDialogTitle}>
+        <Typography className={styles.untitledFormDialogTitleText}>שם לטופס</Typography>
       </DialogTitle>
 
-      <DialogContent
-        sx={{
-          px: 4,
-          pt: 1,
-          pb: 0,
-        }}>
-        <DialogContentText
-          sx={{
-            mb: 2.5,
-            textAlign: "center",
-            color: "#64748b",
-            fontSize: "0.98rem",
-            lineHeight: 1.6,
-            fontWeight: 400,
-          }}>
-          נראה שלטופס אין עדיין שם. איך לקרוא לו?
+      <DialogContent className={styles.untitledFormDialogContent}>
+        <DialogContentText className={styles.untitledFormDialogDescription}>
+          הטופס נותר ללא שם. איך נקרא לו?
         </DialogContentText>
 
         <TextField
           autoFocus
           fullWidth
-          label="שם הטופס"
+          placeholder="שם הטופס"
           value={suggestedTitle}
           onChange={(e) => setSuggestedTitle(e.target.value.trimStart())}
           onBlur={(e) => setSuggestedTitle(e.target.value.trim())}
@@ -606,79 +584,26 @@ function FormEditorHeader() {
           inputProps={{
             maxLength: 60,
           }}
-          sx={{
-            mt: 0.5,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "12px",
-              backgroundColor: "#f8fafc",
-              minHeight: "52px",
-              "& fieldset": {
-                borderColor: "#d8e2ef",
-              },
-              "&:hover fieldset": {
-                borderColor: "#b8c7da",
-              },
-              "&.Mui-focused fieldset": {
-                borderWidth: "1.5px",
-              },
-            },
-            "& .MuiInputLabel-root": {
-              color: "#64748b",
-              fontWeight: 500,
-            },
-            "& .MuiInputBase-input": {
-              fontWeight: 600,
-              color: "#0f172a",
-            },
-          }}
+          className={styles.untitledFormTextField}
         />
       </DialogContent>
 
-      <DialogActions
-        sx={{
-          justifyContent: "center",
-          gap: 1.5,
-          px: 4,
-          pt: 3,
-          pb: 4,
-        }}>
+      <DialogActions className={styles.untitledFormDialogActions}>
+        <Button
+          onClick={handleAcceptSuggestedTitle}
+          variant="contained"
+          disableElevation
+          disabled={!suggestedTitle.trim()}
+          className={styles.untitledFormSaveButton}>
+          שמירה
+        </Button>
+
         <Button
           onClick={() => setShowUntitledFormPopup(false)}
           variant="outlined"
           disableElevation
-          sx={{
-            minWidth: "92px",
-            height: "40px",
-            borderRadius: "9px",
-            fontSize: "0.95rem",
-            fontWeight: 700,
-            textTransform: "none",
-            color: "#0f172a",
-            borderColor: "#d8e2ef",
-            backgroundColor: "#ffffff",
-            "&:hover": {
-              borderColor: "#cbd5e1",
-              backgroundColor: "#f8fafc",
-            },
-          }}>
+          className={styles.untitledFormCancelButton}>
           ביטול
-        </Button>
-
-        <Button
-          onClick={handleAcceptSuggestedTitle}
-          variant="contained"
-          color="primary"
-          disableElevation
-          disabled={!suggestedTitle.trim()}
-          sx={{
-            minWidth: "96px",
-            height: "40px",
-            borderRadius: "9px",
-            fontSize: "0.95rem",
-            fontWeight: 700,
-            textTransform: "none",
-          }}>
-          שמירה
         </Button>
       </DialogActions>
     </Dialog>
