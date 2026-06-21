@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
+import { useLinkedFieldValueOptions } from "../../hooks/useLinkedFieldValueOptions";
 import type { FormFieldDto } from "../../types/shared";
 import {
   connectionTypes,
@@ -23,9 +24,6 @@ import CustomTextField from "../FormFields/CustomTextField/CustomTextField";
 import CustomTimePicker from "../FormFields/CustomTimePicker/CustomTimePicker";
 import LinkTextField from "../FormFields/LinkTextField/LinkTextField";
 import { FormFieldWrapper, StyledBox } from "./FormFieldRenderer.styled";
-import { formatOptionLabel } from "../../utils/optionResponseValue";
-import { useGetInfiniteFieldValues } from "@src/api/responsesApi";
-import { useFindOwnerFormId } from "../../hooks/useFindOwnerFormId";
 
 type OptionItem = {
   id: string;
@@ -155,9 +153,6 @@ const getFieldOptions = (field: FormFieldDto): string[] =>
 const getFieldOptionLabelMap = (field: FormFieldDto): Record<string, string> =>
   Object.fromEntries(getFieldOptionItems(field, true).map((item) => [item.id, item.text]));
 
-const getConnectedOptionLabelMap = (options: string[]): Record<string, string> =>
-  Object.fromEntries(options.map((option) => [option, formatOptionLabel(option)]));
-
 const getParentDependencies = (field: FormFieldDto): any[] => {
   const extra = getFieldExtra(field);
   return Array.isArray(extra.parentDependencies) ? extra.parentDependencies : [];
@@ -245,36 +240,12 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   const linkedOptionsFieldId = connectedToForm ? formFieldExtra.linkedOptionsFieldId ?? undefined : undefined;
 
   const [searchTerm, setSearchTerm] = useState("");
-  const { findOwnerFormIdByFieldId } = useFindOwnerFormId();
-  const [ownerFormId, setOwnerFormId] = useState<number | undefined>(undefined);
-
-  useEffect(() => {
-    if (!linkedOptionsFieldId) {
-      setOwnerFormId(undefined);
-      return;
-    }
-
-    let isCancelled = false;
-    findOwnerFormIdByFieldId(linkedOptionsFieldId).then((formId) => {
-      if (!isCancelled) setOwnerFormId(formId);
-    });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [linkedOptionsFieldId, findOwnerFormIdByFieldId]);
 
   const {
-    data: connectedData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
+    options: connectedOptions,
     isLoading: isLoadingConnected,
-  } = useGetInfiniteFieldValues(
-    connectedToForm ? ownerFormId : undefined,
-    linkedOptionsFieldId,
-    searchTerm,
-  )
+    loadMore: loadMoreConnectedOptions,
+  } = useLinkedFieldValueOptions(linkedOptionsFieldId, connectedToForm, searchTerm);
 
   field.name = formField.name;
 
@@ -363,9 +334,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 
       let availableOptions: string[] = connectedToForm
         ? (
-          connectedData?.pages.flatMap((page) =>
-            page.data.map((item: any) => String(item.value))
-          ) ?? []
+          connectedOptions.map((option) => option.id)
         )
         : getFieldOptions(formField);
 
@@ -563,7 +532,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           }
         } else {
           availableOptions = connectedToForm
-            ? getConnectedFieldOptions(fieldId, fieldOptions)
+            ? connectedOptions.map((option) => option.id)
             : getFieldOptions(formField);
         }
       }
@@ -574,7 +543,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       availableOptions = availableOptions.filter((optionId) => !inactiveOptionIds.includes(optionId));
 
       const optionLabels = connectedToForm
-        ? getConnectedOptionLabelMap(availableOptions)
+        ? Object.fromEntries(connectedOptions.map((option) => [option.id, option.text]))
         : getFieldOptionLabelMap(formField);
 
       const defaultValue = formFieldExtra.options?.defaultValue ?? formFieldExtra.defaultValue;
@@ -606,7 +575,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           validationMessage={validationMessage}
           validationDetail={validationDetail}
           isTabularEdit={isTabularEdit}
-          loading={isLoadingConnected || isFetchingNextPage}
+          loading={isLoadingConnected}
           filterOptions={(options) => options}
           onInputChange={(_, value, reason) => {
             if (reason === "input") {
@@ -615,11 +584,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
               setSearchTerm("");
             }
           }}
-          onScrollToBottom={() => {
-            if (hasNextPage && !isFetchingNextPage) {
-              fetchNextPage();
-            }
-          }}
+          onScrollToBottom={loadMoreConnectedOptions}
         />
       );
       break;
@@ -883,4 +848,4 @@ const shouldSkipRerenderHOF = (
   );
 };
 
-export default React.memo(FormFieldRenderer, shouldSkipRerenderHOF);
+export default React.memo(FormFieldRenderer);

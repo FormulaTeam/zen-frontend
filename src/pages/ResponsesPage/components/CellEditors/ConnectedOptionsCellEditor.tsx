@@ -1,9 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 
-import { useGetInfiniteFieldValues } from "@api/responsesApi";
-import { useFindOwnerFormId } from "@src/hooks/useFindOwnerFormId";
-import { formatOptionLabel } from "@src/utils/optionResponseValue";
 import { OptionsCellEditor } from "./OptionsCellEditor";
+import { useLinkedFieldValueOptions } from "@src/hooks/useLinkedFieldValueOptions";
 
 interface ConnectedOptionsCellEditorProps {
     linkedOptionsFieldId: string;
@@ -18,52 +16,25 @@ export const ConnectedOptionsCellEditor: React.FC<ConnectedOptionsCellEditorProp
     linkedOptionsFieldId,
     ...rest
 }) => {
-    const { findOwnerFormIdByFieldId } = useFindOwnerFormId();
-    const [ownerFormId, setOwnerFormId] = useState<number | undefined>(undefined);
+    const {
+        options: optionObjects,
+        isLoading,
+        loadMore,
+    } = useLinkedFieldValueOptions(linkedOptionsFieldId);
 
-    useEffect(() => {
-        let isCancelled = false;
+    const options = optionObjects.map((option) => option.id);
 
-        findOwnerFormIdByFieldId(linkedOptionsFieldId).then((resolvedFormId) => {
-            if (!isCancelled) setOwnerFormId(resolvedFormId);
-        });
-
-        return () => {
-            isCancelled = true;
-        };
-    }, [linkedOptionsFieldId, findOwnerFormIdByFieldId]);
-
-    const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-        useGetInfiniteFieldValues(ownerFormId, linkedOptionsFieldId, "");
-
-    const options = useMemo(
-        () =>
-            Array.from(
-                new Set(
-                    data?.pages.flatMap((page) => page.data.map((item: any) => String(item.value))) ?? [],
-                ),
-            ),
-        [data],
+    const optionLabels = Object.fromEntries(
+        optionObjects.map((option) => [option.id, option.text]),
     );
-
-    const optionLabels = useMemo(
-        () => Object.fromEntries(options.map((option) => [option, formatOptionLabel(option)])),
-        [options],
-    );
-
-    const handleScrollToBottom = (): void => {
-        if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
-        }
-    };
 
     return (
         <OptionsCellEditor
             {...rest}
             options={options}
             optionLabels={optionLabels}
-            loading={isLoading || isFetchingNextPage}
-            onScrollToBottom={handleScrollToBottom}
+            loading={isLoading}
+            onScrollToBottom={loadMore}
         />
     );
 };

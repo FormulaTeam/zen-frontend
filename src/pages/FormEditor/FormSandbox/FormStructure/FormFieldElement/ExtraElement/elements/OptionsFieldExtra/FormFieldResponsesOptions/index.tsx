@@ -20,7 +20,7 @@ import { fieldType } from "formula-gear";
 import { OptionsFieldTypeId } from "../index";
 import { FormFieldExtra } from "@pages/FormEditor/schemas/fields";
 import { usePaginatedFieldValueOptions } from "@src/hooks/usePaginatedFieldValueOptions";
-import { useLoadMoreOnVisible } from "@src/pages/ResponsesPage/hooks/useLoadMoreOnVisible";
+import { PaginatedAutocompleteListbox } from "@src/components/PaginatedAutocompleteListbox";
 
 interface Props {
   linkedOptionsFieldId: string | null | undefined;
@@ -40,34 +40,6 @@ const linkedOptionsOwnerFormIdCache = new Map<string, number>();
 const getFieldsFromForm = (form: FormDto): FormFieldDto[] => {
   return (form.sections ?? []).flatMap((section: FormSectionDto) => section.fields ?? []);
 };
-
-const Listbox = React.forwardRef<
-  HTMLUListElement,
-  React.HTMLAttributes<HTMLUListElement> & { onLoadMore?: () => void }
->(function Listbox({ children, onLoadMore, ...props }, ref) {
-  const listRef = useRef<HTMLUListElement>(null);
-  const sentinelRef = useRef<HTMLLIElement>(null);
-
-  useImperativeHandle(ref, () => listRef.current as HTMLUListElement);
-
-  useLoadMoreOnVisible(listRef, sentinelRef, onLoadMore);
-
-  return (
-    <ul ref={listRef} {...props}>
-      {children}
-      <li
-        aria-hidden
-        ref={sentinelRef}
-        style={{
-          height: 1,
-          padding: 0,
-          margin: 0,
-          listStyle: "none",
-        }}
-      />
-    </ul>
-  );
-});
 
 function FormFieldResponsesOptions(props: Props) {
   const {
@@ -406,7 +378,7 @@ function FormFieldResponsesOptions(props: Props) {
                     : [],
               });
             }}
-            ListboxComponent={Listbox}
+            ListboxComponent={PaginatedAutocompleteListbox}
             ListboxProps={{ onLoadMore: loadMoreDefaultValues } as any}
             renderInput={(params) => (
               <TextField {...params} label="ברירת מחדל" variant="standard" />
