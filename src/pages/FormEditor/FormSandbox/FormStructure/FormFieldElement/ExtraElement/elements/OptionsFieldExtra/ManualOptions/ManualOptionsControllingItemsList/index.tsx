@@ -1,7 +1,7 @@
 import { ChangeEvent, memo } from "react";
 import { Checkbox, FormControlLabel, Typography } from "@mui/material";
 import { ManualItems } from "../index";
-import { ArrayElement } from "../../../../../../../../../../types/utils";
+import { ArrayElement } from "@src/types/utils";
 import styles from "./style.module.css";
 
 interface Props {
@@ -17,28 +17,33 @@ const ManualOptionsControllingItemsList = memo(({
   onCheckChange,
   onCheckAllChange,
 }: Props) => {
-  const disabled: boolean = !item.text?.length || !controllingFieldItems?.length;
+
+  const activeControllingFieldItems = controllingFieldItems.filter(
+    (controllingItem) => controllingItem.isActive !== false,
+  );
+
+  const disabled: boolean = !item.text?.length || !activeControllingFieldItems?.length;
 
   return (
     <div className={styles.controllingItemsContainer}>
       {
-        controllingFieldItems.length ? (
+        activeControllingFieldItems.length ? (
           <>
             <FormControlLabel label="הכל"
               disabled={disabled}
               control={
                 <Checkbox
-                  checked={disabled || item.controllingItemsIds?.length === controllingFieldItems?.length}
+                  checked={disabled || item.controllingItemsIds?.length === activeControllingFieldItems.length}
                   indeterminate={
                     !disabled &&
                     !!item.controllingItemsIds?.length &&
-                    item.controllingItemsIds?.length < controllingFieldItems.length
+                    item.controllingItemsIds?.length < activeControllingFieldItems.length
                   }
                   onChange={onCheckAllChange} />
               } />
             <div className={styles.controllingItemsWrapper}>
               {
-                controllingFieldItems.map((controllingItem) => {
+                activeControllingFieldItems.map((controllingItem) => {
                   const checked = disabled || (item.controllingItemsIds?.includes(controllingItem.id) ?? false);
 
                   return (

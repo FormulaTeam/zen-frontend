@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { ManualOptions } from "./ManualOptions";
 import { Info } from "@mui/icons-material";
-import { selectionMode } from "formula-gear";
+import { selectionMode, optionsSource, OptionsSource } from "formula-gear";
 
 type FieldTypeId = typeof FieldTypeIds.options;
 
@@ -38,24 +38,24 @@ function OptionsFieldExtra({
     source,
   } = extra as any;
 
-  const [isLinkedToForm, setIsLinkedToForm] = useState(source === 2);
+  const [selectedSource, setSelectedSource] = useState<OptionsSource>(
+    linkedOptionsFieldId || source === optionsSource.FormFieldResponses
+      ? optionsSource.FormFieldResponses
+      : optionsSource.Manual,
+  );
 
+  const isLinkedToForm =
+    selectedSource === optionsSource.FormFieldResponses;
   const multiple = mode === selectionMode.Multiple;
 
-  const handleSourceChange = (isLinked: boolean) => {
-    setIsLinkedToForm(isLinked);
-
-    if (isLinked) {
-      onChange({
-        linkedOptionsFieldId: linkedOptionsFieldId ?? null,
-        defaultValue: [],
-      });
-
-      return;
-    }
+  const handleSourceChange = (nextSource: OptionsSource) => {
+    setSelectedSource(nextSource);
 
     onChange({
-      linkedOptionsFieldId: null,
+      linkedOptionsFieldId:
+        nextSource === optionsSource.FormFieldResponses
+          ? linkedOptionsFieldId ?? null
+          : null,
       defaultValue: [],
     });
   };
@@ -64,17 +64,17 @@ function OptionsFieldExtra({
     <>
       <FormControl disabled={disabled} style={{ gridColumn: "1 / -1" }}>
         <FormLabel>מקור אפשרויות</FormLabel>
-
         <RadioGroup
           row
-          value={isLinkedToForm ? "linked" : "manual"}
+          value={selectedSource}
           onChange={(event) => {
-            handleSourceChange(event.target.value === "linked");
-          }}>
-          <FormControlLabel value="manual" control={<Radio />} label="ידני" />
+            handleSourceChange(Number(event.target.value) as OptionsSource);
+          }}
+        >
+          <FormControlLabel value={optionsSource.Manual} control={<Radio />} label="ידני" />
 
           <FormControlLabel
-            value="linked"
+            value={optionsSource.FormFieldResponses}
             control={<Radio />}
             label={
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -93,6 +93,8 @@ function OptionsFieldExtra({
       {isLinkedToForm ? (
         <FormFieldResponsesOptions
           linkedOptionsFieldId={linkedOptionsFieldId}
+          defaultValue={defaultValue}
+          selectionMode={mode}
           validationErrors={validationErrors as any}
           onChange={onChange}
         />
