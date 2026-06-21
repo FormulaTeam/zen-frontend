@@ -79,6 +79,7 @@ import {
   useResponsesTableFilters,
 } from "./ResponsesFilters";
 import { useConnectedFormOptions } from "@src/hooks/useConnectedFormOptions";
+import "./responsesTableFilters.css";
 
 const responseHeaderFilterLocaleText = {
   headerFilterOperatorContains: "מכיל",
@@ -643,8 +644,9 @@ export const ResponsesTable = React.memo(
             <span>מזהה</span>
           </HeaderFlex>
         ),
-        width: columnWidths.current[`${prefixes.Meta}index`] || 160,
-        minWidth: 100,
+        width: columnWidths.current[`${prefixes.Meta}index`] || 190,
+        minWidth: 180,
+        maxWidth: 220,
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.index,
@@ -1270,37 +1272,16 @@ export const ResponsesTable = React.memo(
                 } as any,
                 row: {},
               }}
-              sx={{
-                "& .MuiDataGrid-headerFilterCell": {
-                  overflow: "hidden",
-                  px: 0.5,
-                  minWidth: 0,
-                },
-                "& .MuiDataGrid-headerFilterCell .MuiInputBase-root": {
-                  backgroundColor: "transparent",
-                  width: "100%",
-                  minWidth: 0,
-                },
-                "& .MuiDataGrid-headerFilterCell .MuiFormControl-root": {
-                  width: "100%",
-                  minWidth: 0,
-                },
-                "& .MuiDataGrid-headerFilterCell .MuiStack-root": {
-                  minWidth: 0,
-                },
-                "& .MuiDataGrid-headerFilterCell input": {
-                  backgroundColor: "transparent",
-                  minWidth: 0,
-                },
-
-                ...(isInEditMode
+              sx={
+                isInEditMode
                   ? {
                       "& .active-editing-row .MuiDataGrid-cell": {
-                        py: "4px",
+                        paddingTop: "4px",
+                        paddingBottom: "4px",
                         alignItems: "center",
                       },
                       "& .active-editing-row .MuiDataGrid-cell--editing": {
-                        p: "4px 6px",
+                        padding: "4px 6px",
                         overflow: "visible",
                       },
                       "& .active-editing-row .MuiDataGrid-cell--editing:focus-within": {
@@ -1310,8 +1291,8 @@ export const ResponsesTable = React.memo(
                         boxShadow: "none",
                       },
                     }
-                  : {}),
-              }}
+                  : undefined
+              }
             />
           </TableContainer>
         </MainContent>

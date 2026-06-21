@@ -1,0 +1,195 @@
+.MuiDataGrid-root .MuiDataGrid-headerFilterRow {
+  min-height: 58px !important;
+  max-height: 58px !important;
+  background-color: #f8fbff;
+  border-bottom: 1px solid #d7e4f2;
+}
+
+.MuiDataGrid-root .MuiDataGrid-headerFilterCell {
+  padding: 9px 10px;
+  background-color: #f8fbff;
+  border-bottom: none;
+  border-right: none;
+  overflow: hidden;
+}
+
+.MuiDataGrid-root .responses-header-filter-shell {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  direction: rtl;
+  overflow: hidden;
+}
+
+.MuiDataGrid-root .responses-header-filter-shell--no-value {
+  justify-content: flex-start;
+}
+
+.MuiDataGrid-root .responses-header-filter-menu {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.MuiDataGrid-root .responses-header-filter-menu .MuiIconButton-root {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 11px;
+  color: #1e88e5;
+  background-color: #eaf4ff;
+  border: 1px solid #d7e4f2;
+}
+
+.MuiDataGrid-root .responses-header-filter-menu .MuiButtonBase-root {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 11px;
+  color: #1e88e5;
+  background-color: #eaf4ff;
+  border: 1px solid #d7e4f2;
+}
+
+.MuiDataGrid-root .responses-header-filter-menu .MuiIconButton-root:hover,
+.MuiDataGrid-root .responses-header-filter-menu .MuiButtonBase-root:hover {
+  background-color: #dfecf9;
+}
+
+.MuiDataGrid-root .responses-header-filter-value {
+  min-width: 0;
+  flex: 1 1 0;
+  max-width: 100%;
+  height: 40px;
+  overflow: hidden;
+}
+
+.MuiDataGrid-root .responses-header-filter-clear {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.MuiDataGrid-root .responses-header-filter-clear .MuiIconButton-root {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 10px;
+  color: #64748b;
+}
+
+.MuiDataGrid-root .responses-header-filter-clear .MuiIconButton-root:hover {
+  color: #dc2626;
+  background-color: rgba(239, 68, 68, 0.08);
+}
+
+.MuiDataGrid-root .responses-header-filter-shell .MuiFormControl-root {
+  width: 100%;
+  min-width: 0;
+}
+
+.MuiDataGrid-root .responses-header-filter-shell .MuiInputBase-root {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  min-height: 40px;
+  border-radius: 12px;
+  border: 1px solid #d7e4f2;
+  background-color: #ffffff;
+  color: #0f172a;
+  font-size: 13.5px;
+  padding: 0 12px;
+  box-shadow: none;
+}
+
+.MuiDataGrid-root .responses-header-filter-shell .MuiInputBase-root:hover {
+  border-color: #9fc7ee;
+  background-color: #ffffff;
+}
+
+.MuiDataGrid-root .responses-header-filter-shell .MuiInputBase-root.Mui-focused {
+  border-color: #1e88e5;
+  box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.08);
+  background-color: #ffffff;
+}
+
+.MuiDataGrid-root .responses-header-filter-shell .MuiInputBase-input {
+  min-width: 0;
+  height: 40px;
+  padding: 0 !important;
+  color: #0f172a;
+  font-size: 13.5px;
+  line-height: 1.4;
+  text-align: right;
+  direction: rtl;
+}
+
+.MuiDataGrid-root .responses-header-filter-shell .MuiInputBase-input::placeholder {
+  color: #94a3b8;
+  opacity: 1;
+}
+
+.MuiDataGrid-root .responses-header-filter-shell .MuiSelect-select {
+  min-width: 0;
+  min-height: 40px !important;
+  height: 40px !important;
+  display: flex;
+  align-items: center;
+  padding: 0 10px 0 30px !important;
+  color: #0f172a;
+  font-size: 13.5px;
+  text-align: right;
+  direction: rtl;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.MuiDataGrid-root .responses-header-filter-shell .MuiSelect-icon {
+  left: 8px;
+  right: auto;
+  color: #64748b;
+  font-size: 20px;
+}
+
+.MuiDataGrid-root .responses-header-filter-picker {
+  width: 100%;
+  min-width: 0;
+}
+
+.MuiDataGrid-root .responses-header-filter-picker .MuiInputAdornment-root {
+  margin-left: 2px;
+}
+
+.MuiDataGrid-root .responses-header-filter-picker .MuiIconButton-root {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: #64748b;
+}
+
+.MuiDataGrid-root .responses-header-filter-range {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  direction: rtl;
+  overflow: hidden;
+}
+
+.MuiDataGrid-root .responses-header-filter-range .MuiFormControl-root {
+  min-width: 0;
+  flex: 1;
+}
+
+.MuiDataGrid-root .responses-header-filter-range .MuiTextField-root {
+  min-width: 0;
+  flex: 1;
+}

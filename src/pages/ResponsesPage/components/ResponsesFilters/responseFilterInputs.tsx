@@ -1,15 +1,13 @@
-import React, { useRef } from "react";
+import React from "react";
 import {
   Box,
   Checkbox,
   FormControl,
-  InputLabel,
   ListItemText,
   MenuItem,
   Select,
   Stack,
   TextField,
-  styled,
 } from "@mui/material";
 import { DatePicker, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -44,97 +42,68 @@ const applyFilterValue = (item: any, applyValue: (item: any) => void, value: unk
   });
 };
 
+const getSelectMenuProps = (
+  setPaperNode: React.Dispatch<React.SetStateAction<HTMLElement | null>>,
+) => ({
+  PaperProps: {
+    ref: setPaperNode,
+    style: {
+      marginTop: 4,
+      borderRadius: 10,
+      border: "1px solid #d7e4f2",
+      backgroundColor: "#ffffff",
+      boxShadow: "0 10px 28px rgba(15, 23, 42, 0.1)",
+      overflow: "hidden",
+      direction: "rtl" as const,
+    },
+  },
+  MenuListProps: {
+    style: {
+      padding: 4,
+    },
+  },
+});
+
 const HeaderFilterInputShell: React.FC<{
   headerFilterMenu?: React.ReactNode;
   clearButton?: React.ReactNode;
   children: React.ReactNode;
-}> = ({ headerFilterMenu, clearButton, children }) => {
+  noValue?: boolean;
+}> = ({ headerFilterMenu, clearButton, children, noValue = false }) => {
   return (
     <Stack
       direction="row"
-      spacing={0.5}
       alignItems="center"
-      sx={{
-        width: "100%",
-        minWidth: 0,
-        maxWidth: "100%",
-        overflow: "hidden",
-      }}>
-      {headerFilterMenu && (
-        <Box
-          sx={{
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-          }}>
-          {headerFilterMenu}
-        </Box>
-      )}
+      className={
+        noValue
+          ? "responses-header-filter-shell responses-header-filter-shell--no-value"
+          : "responses-header-filter-shell"
+      }>
+      {headerFilterMenu && <Box className="responses-header-filter-menu">{headerFilterMenu}</Box>}
 
-      <Box
-        sx={{
-          minWidth: 0,
-          flex: "1 1 0",
-          maxWidth: "100%",
-          overflow: "hidden",
-          "& .MuiFormControl-root": {
-            minWidth: 0,
-            width: "100%",
-          },
-          "& .MuiInputBase-root": {
-            minWidth: 0,
-            width: "100%",
-          },
-        }}>
-        {children}
-      </Box>
+      {!noValue && <Box className="responses-header-filter-value">{children}</Box>}
 
-      {clearButton && (
-        <Box
-          sx={{
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-          }}>
-          {clearButton}
-        </Box>
-      )}
+      {clearButton && <Box className="responses-header-filter-clear">{clearButton}</Box>}
     </Stack>
   );
 };
 
-const HeaderFilterPickerContainer = styled(Box)({
-  width: "100%",
-  minWidth: 0,
-  "& .MuiInputBase-root": {
-    fontSize: "1.2rem",
-    padding: "4px 8px",
-    minHeight: "32px",
-  },
-  "& .MuiInputBase-input": {
-    textAlign: "right",
-    direction: "rtl",
-    padding: 0,
-    minWidth: 0,
-  },
-  "& .MuiInputAdornment-root": {
-    marginLeft: 0,
-  },
-  "& .MuiIconButton-root": {
-    padding: 0,
-  },
-});
+const HeaderFilterPickerContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return <Box className="responses-header-filter-picker">{children}</Box>;
+};
 
-const DateTimeRangeContainer = styled(Stack)({
-  width: "100%",
-  minWidth: 0,
-  maxWidth: "100%",
-  overflow: "hidden",
-  "& .MuiFormControl-root": {
-    minWidth: 0,
-    flex: 1,
-  },
-});
+type DateTimeRangeContainerProps = React.ComponentProps<typeof Stack>;
+
+const DateTimeRangeContainer: React.FC<DateTimeRangeContainerProps> = ({ className, ...props }) => {
+  return (
+    <Stack
+      {...props}
+      className={
+        className ? `responses-header-filter-range ${className}` : "responses-header-filter-range"
+      }
+    />
+  );
+};
 
 const parseDateFilterValue = (value: unknown): Dayjs | null => {
   if (typeof value !== "string" || value.trim() === "") {
@@ -204,11 +173,11 @@ const commonPickerSlotProps = (props: FilterInputProps, placeholder?: string) =>
   popper: {
     placement: "bottom-start" as const,
   },
-  inputAdornment: {
-    sx: {
-      ".MuiIconButton-root": {
-        p: 0,
-      },
+  openPickerButton: {
+    style: {
+      width: 24,
+      height: 24,
+      padding: 0,
     },
   },
 });
@@ -216,7 +185,11 @@ const commonPickerSlotProps = (props: FilterInputProps, placeholder?: string) =>
 const PickerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <LocalizationProvider
-      localeText={{ okButtonLabel: "אישור" }}
+      localeText={{
+        okButtonLabel: "אישור",
+        clearButtonLabel: "ניקוי",
+        todayButtonLabel: "היום",
+      }}
       dateAdapter={AdapterDayjs}
       adapterLocale="he">
       {children}
@@ -228,17 +201,8 @@ export const NoValueFilterInput: React.FC<FilterInputProps> = (props) => {
   const { headerFilterMenu, clearButton } = props;
 
   return (
-    <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
-      <Box
-        sx={{
-          width: 0,
-          minWidth: 0,
-          maxWidth: 0,
-          flex: "0 1 0",
-          overflow: "hidden",
-          height: 32,
-        }}
-      />
+    <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton} noValue>
+      <span />
     </HeaderFilterInputShell>
   );
 };
@@ -254,7 +218,9 @@ export const TextFilterInput: React.FC<FilterInputProps> = (props) => {
         onChange={(event) => applyFilterValue(item, applyValue, event.target.value)}
         size="small"
         variant="standard"
+        placeholder="ערך"
         fullWidth
+        InputProps={{ disableUnderline: true }}
       />
     </HeaderFilterInputShell>
   );
@@ -272,13 +238,9 @@ export const NumberFilterInput: React.FC<FilterInputProps> = (props) => {
         onChange={(event) => applyFilterValue(item, applyValue, event.target.value)}
         size="small"
         variant="standard"
+        placeholder="מספר"
         fullWidth
-        sx={{
-          "& input": {
-            textAlign: "right",
-            direction: "rtl",
-          },
-        }}
+        InputProps={{ disableUnderline: true }}
       />
     </HeaderFilterInputShell>
   );
@@ -297,7 +259,7 @@ export const DateFilterInput: React.FC<FilterInputProps> = (props) => {
               applyFilterValue(item, applyValue, formatDateFilterValue(newValue))
             }
             format="DD/MM/YYYY"
-            slotProps={commonPickerSlotProps(props)}
+            slotProps={commonPickerSlotProps(props, "תאריך")}
           />
         </PickerProvider>
       </HeaderFilterPickerContainer>
@@ -320,7 +282,7 @@ export const TimeFilterInput: React.FC<FilterInputProps & { timePrecision?: stri
             }
             views={showSeconds ? ["hours", "minutes", "seconds"] : ["hours", "minutes"]}
             ampm={false}
-            slotProps={commonPickerSlotProps(props)}
+            slotProps={commonPickerSlotProps(props, "שעה")}
           />
         </PickerProvider>
       </HeaderFilterPickerContainer>
@@ -338,19 +300,7 @@ const RangeFilterInput: React.FC<RangeFilterInputProps> = (props) => {
 
   return (
     <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
-      <Stack
-        direction="row"
-        spacing={0.5}
-        sx={{
-          width: "100%",
-          minWidth: 0,
-          maxWidth: "100%",
-          overflow: "hidden",
-          "& .MuiTextField-root": {
-            minWidth: 0,
-            flex: 1,
-          },
-        }}>
+      <Stack direction="row" className="responses-header-filter-range">
         <TextField
           inputRef={getInputRef(props)}
           type={inputType}
@@ -365,13 +315,7 @@ const RangeFilterInput: React.FC<RangeFilterInputProps> = (props) => {
           variant="standard"
           placeholder="מ"
           fullWidth
-          InputLabelProps={{ shrink: true }}
-          sx={{
-            "& input": {
-              textAlign: "right",
-              direction: "rtl",
-            },
-          }}
+          InputProps={{ disableUnderline: true }}
         />
 
         <TextField
@@ -387,13 +331,7 @@ const RangeFilterInput: React.FC<RangeFilterInputProps> = (props) => {
           variant="standard"
           placeholder="עד"
           fullWidth
-          InputLabelProps={{ shrink: true }}
-          sx={{
-            "& input": {
-              textAlign: "right",
-              direction: "rtl",
-            },
-          }}
+          InputProps={{ disableUnderline: true }}
         />
       </Stack>
     </HeaderFilterInputShell>
@@ -412,7 +350,7 @@ export const DateRangeFilterInput: React.FC<FilterInputProps> = (props) => {
     <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
       <HeaderFilterPickerContainer>
         <PickerProvider>
-          <DateTimeRangeContainer direction="row" spacing={0.5}>
+          <DateTimeRangeContainer direction="row">
             <DatePicker
               value={parseDateFilterValue(range.from)}
               onChange={(newValue) =>
@@ -454,7 +392,7 @@ export const TimeRangeFilterInput: React.FC<FilterInputProps & { timePrecision?:
     <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
       <HeaderFilterPickerContainer>
         <PickerProvider>
-          <DateTimeRangeContainer direction="row" spacing={0.5}>
+          <DateTimeRangeContainer direction="row">
             <TimePicker
               value={parseTimeFilterValue(range.from)}
               onChange={(newValue) =>
@@ -486,6 +424,7 @@ export const TimeRangeFilterInput: React.FC<FilterInputProps & { timePrecision?:
     </HeaderFilterInputShell>
   );
 };
+
 export const SingleOptionFilterInput: React.FC<FilterInputProps> = (props) => {
   const {
     item,
@@ -502,23 +441,23 @@ export const SingleOptionFilterInput: React.FC<FilterInputProps> = (props) => {
 
   useLoadMoreOnVisible(paperNode, sentinelNode, onLoadMore, menuOpen);
 
+  const selectedOption = options.find((option) => String(option.id) === String(item.value));
+
   return (
     <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
       <FormControl size="small" variant="standard" fullWidth>
-        <InputLabel>ערך</InputLabel>
-
         <Select
-          label="ערך"
+          displayEmpty
+          disableUnderline
           value={item.value ?? ""}
           onChange={(event) => applyFilterValue(item, applyValue, event.target.value)}
           open={menuOpen}
           onOpen={() => setMenuOpen(true)}
           onClose={() => setMenuOpen(false)}
-          MenuProps={{
-            PaperProps: {
-              ref: setPaperNode,
-            },
-          }}>
+          MenuProps={getSelectMenuProps(setPaperNode)}
+          renderValue={() => selectedOption?.text || "ערך"}>
+          {loading && <MenuItem disabled>טוען...</MenuItem>}
+
           {options.map((option) => (
             <MenuItem key={option.id} value={option.id}>
               {option.text}
@@ -529,7 +468,7 @@ export const SingleOptionFilterInput: React.FC<FilterInputProps> = (props) => {
             disabled
             aria-hidden
             ref={setSentinelNode}
-            sx={{ minHeight: 1, height: 1, p: 0, opacity: 0 }}
+            style={{ minHeight: 1, height: 1, padding: 0, opacity: 0 }}
           />
         </Select>
       </FormControl>
@@ -553,14 +492,14 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
   const [sentinelNode, setSentinelNode] = React.useState<HTMLElement | null>(null);
 
   useLoadMoreOnVisible(paperNode, sentinelNode, onLoadMore, menuOpen);
+
   return (
     <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
       <FormControl size="small" variant="standard" fullWidth>
-        <InputLabel>ערכים</InputLabel>
-
         <Select
           multiple
-          label="ערכים"
+          displayEmpty
+          disableUnderline
           value={selectedValues}
           onChange={(event) => {
             const rawValue = event.target.value;
@@ -574,20 +513,19 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
           open={menuOpen}
           onOpen={() => setMenuOpen(true)}
           onClose={() => setMenuOpen(false)}
-          MenuProps={{
-            PaperProps: {
-              ref: setPaperNode,
-            },
-          }}
-          renderValue={(selected) =>
-            options
-              .filter((option) => (selected as string[]).includes(option.id))
-              .map((option) => option.text)
-              .join(", ")
-          }>
+          MenuProps={getSelectMenuProps(setPaperNode)}
+          renderValue={(selected) => {
+            const selectedLabels = options
+              .filter((option) => (selected as string[]).includes(String(option.id)))
+              .map((option) => option.text);
+
+            return selectedLabels.length > 0 ? selectedLabels.join(", ") : "ערכים";
+          }}>
+          {loading && <MenuItem disabled>טוען...</MenuItem>}
+
           {options.map((option) => (
             <MenuItem key={option.id} value={option.id}>
-              <Checkbox checked={selectedValues.includes(option.id)} />
+              <Checkbox checked={selectedValues.includes(String(option.id))} size="small" />
               <ListItemText primary={option.text} />
             </MenuItem>
           ))}
@@ -596,7 +534,7 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
             disabled
             aria-hidden
             ref={setSentinelNode}
-            sx={{ minHeight: 1, height: 1, p: 0, opacity: 0 }}
+            style={{ minHeight: 1, height: 1, padding: 0, opacity: 0 }}
           />
         </Select>
       </FormControl>
