@@ -41,101 +41,128 @@ import {
   StatusTitle,
   StatusWrapper,
 } from "./styled";
+import Download from "@mui/icons-material/FileDownloadOutlined";
 
 const StyledDialog = styled(Dialog)(() => ({
   "& .MuiPaper-root": {
-    borderRadius: "16px",
-    maxWidth: "760px",
-    width: "calc(100% - 40px)",
-    maxHeight: "min(720px, calc(100vh - 80px))",
-    backgroundColor: "#ffffff",
-    boxShadow: "0 20px 55px rgba(15, 23, 42, 0.18), 0 8px 22px rgba(15, 23, 42, 0.08)",
+    width: "920px",
+    maxWidth: "calc(100vw - 48px)",
+    maxHeight: "min(760px, calc(100vh - 48px))",
+    borderRadius: "24px",
+    backgroundColor: "#F1F5F9",
+    boxShadow: "0 18px 45px rgba(15, 23, 42, 0.14)",
     overflow: "hidden",
     display: "flex",
     flexDirection: "column",
+    direction: "rtl",
   },
 }));
 
 const StyledDialogTitle = styled(DialogTitle)(() => ({
   position: "relative",
-  padding: "28px 32px 12px",
+  padding: "34px 36px 18px",
+  textAlign: "center",
 }));
 
 const CloseButton = styled(IconButton)(() => ({
   position: "absolute",
-  insetInlineEnd: "18px",
-  top: "18px",
-  color: "#64748b",
-  padding: "6px",
-  borderRadius: "10px",
+  right: "24px",
+  top: "24px",
+  width: "36px",
+  height: "36px",
+  padding: 0,
+  color: "#111827",
+  backgroundColor: "transparent",
+  borderRadius: 0,
   "&:hover": {
-    backgroundColor: "rgba(100, 116, 139, 0.08)",
+    backgroundColor: "transparent",
+    color: "#475569",
   },
   "& svg": {
-    fontSize: "26px",
+    fontSize: "34px",
   },
 }));
 
 const HeaderText = styled(Box)(() => ({
-  paddingInlineEnd: "42px",
+  paddingInlineEnd: 0,
 }));
 
 const TitleText = styled(Typography)(() => ({
-  fontWeight: 700,
-  fontSize: "1.28rem",
-  lineHeight: 1.35,
-  color: "#0f172a",
+  fontWeight: 800,
+  fontSize: "44px",
+  lineHeight: "54px",
+  color: "#020617",
+  letterSpacing: "-0.02em",
+
+  "& span": {
+    display: "inline-block",
+  },
 }));
 
 const SubtitleText = styled(Typography)(() => ({
-  marginTop: "8px",
-  color: "#64748b",
+  marginTop: "12px",
+  color: "#62748E",
   fontWeight: 400,
-  fontSize: "0.96rem",
-  lineHeight: 1.55,
+  fontSize: "17px",
+  lineHeight: "28px",
 }));
 
 const Content = styled(DialogContent)(() => ({
-  padding: "18px 32px 0",
+  padding: "18px 36px 0",
   flex: 1,
   minHeight: 0,
-  maxHeight: "min(560px, calc(100vh - 240px))",
+  maxHeight: "min(560px, calc(100vh - 250px))",
   overflowY: "auto",
   overflowX: "hidden",
 }));
 
 const Actions = styled(DialogActions)(() => ({
-  padding: "30px 32px 30px",
-  gap: "10px",
-  justifyContent: "center",
+  padding: "32px 36px 36px",
+  gap: "12px",
+  justifyContent: "flex-start",
+  direction: "rtl",
 }));
 
 const SecondaryButton = styled(Button)(() => ({
-  minWidth: "112px",
+  minWidth: "150px",
   height: "40px",
-  borderRadius: "9px",
-  fontSize: "0.95rem",
-  fontWeight: 700,
+  padding: "0 18px",
+  borderRadius: "8px",
+  fontSize: "16px",
+  fontWeight: 600,
   textTransform: "none",
-  color: "#0f172a",
+  color: "#020617",
   borderColor: "#d8e2ef",
   backgroundColor: "#ffffff",
-  boxShadow: "none",
+  boxShadow: "0 2px 6px rgba(15, 23, 42, 0.08)",
+  direction: "ltr",
+  gap: "8px",
+
+  "& .MuiButton-startIcon": {
+    margin: 0,
+  },
+
+  "& .MuiButton-startIcon svg": {
+    fontSize: "22px",
+  },
+
   "&:hover": {
     borderColor: "#cbd5e1",
-    backgroundColor: "#f8fafc",
-    boxShadow: "none",
+    backgroundColor: "#ffffff",
+    boxShadow: "0 4px 10px rgba(15, 23, 42, 0.1)",
   },
 }));
 
 const PrimaryButton = styled(Button)(({ theme }) => ({
-  minWidth: "112px",
+  minWidth: "132px",
   height: "40px",
-  borderRadius: "9px",
-  fontSize: "0.95rem",
-  fontWeight: 700,
+  padding: "0 20px",
+  borderRadius: "8px",
+  fontSize: "16px",
+  fontWeight: 600,
   textTransform: "none",
   backgroundColor: theme.palette.primary.main,
+  color: "#ffffff",
   boxShadow: "none",
   "&:hover": {
     backgroundColor: theme.palette.primary.dark,
@@ -429,7 +456,11 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
       </ErrorGroupsWrapper>
     </StatusWrapper>
   ) : (
-    <ExcelImportContent showErrorFileTooBig={showFileTooBig} />
+    <ExcelImportContent
+      showErrorFileTooBig={showFileTooBig}
+      onDownloadTemplate={handleDownload}
+      isDownloadTemplateDisabled={!canPerformActions}
+    />
   );
 
   return (
@@ -440,7 +471,7 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
         </CloseButton>
 
         <HeaderText>
-          <TitleText>ייבוא נתונים מאקסל</TitleText>
+          <TitleText>Excel-ייבוא נתונים מ</TitleText>
           <SubtitleText>{popupSubtitle}</SubtitleText>
         </HeaderText>
       </StyledDialogTitle>
@@ -450,14 +481,6 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
       </Content>
 
       <Actions>
-        <SecondaryButton
-          onClick={handleDownload}
-          variant="outlined"
-          disableElevation
-          disabled={!canPerformActions}>
-          {downloadButtonLabel}
-        </SecondaryButton>
-
         <PrimaryButton
           onClick={triggerUpload}
           variant="contained"
@@ -465,6 +488,15 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
           disabled={!canPerformActions}>
           {mainButtonLabel}
         </PrimaryButton>
+
+        <SecondaryButton
+          onClick={handleDownload}
+          variant="outlined"
+          disableElevation
+          disabled={!canPerformActions}
+          startIcon={<Download />}>
+          {downloadButtonLabel}
+        </SecondaryButton>
       </Actions>
     </StyledDialog>
   );

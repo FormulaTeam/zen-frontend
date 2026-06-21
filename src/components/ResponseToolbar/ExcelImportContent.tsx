@@ -1,180 +1,137 @@
 import React from "react";
 import styled from "styled-components";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
-import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
-import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
-import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
+import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutlineOutlined";
+import { CloudUpload, Download, MousePointerClick, Table2 } from "lucide-react";
 
 const Wrapper = styled("div")`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   text-align: right;
-  color: #0f172a;
+  color: #020617;
 `;
 
-const HeroCard = styled("div")`
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 16px;
-  padding: 20px 22px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  background:
-    radial-gradient(circle at top left, rgba(30, 136, 229, 0.12), transparent 34%),
-    linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045);
-`;
-
-const HeroContent = styled("div")`
-  position: relative;
-  z-index: 1;
+const StepCard = styled("div")`
+  width: 100%;
+  min-height: 82px;
+  box-sizing: border-box;
+  padding: 18px 22px;
+  border-radius: 8px;
+  background-color: #ffffff;
   display: flex;
   align-items: flex-start;
   gap: 16px;
+  direction: rtl;
 `;
 
-const HeroIconWrapper = styled("div")`
-  width: 54px;
-  height: 54px;
-  min-width: 54px;
-  border-radius: 16px;
-  background-color: rgba(30, 136, 229, 0.1);
-  color: #1e88e5;
+const StepIcon = styled("div")`
+  width: 34px;
+  height: 26px;
+  min-width: 34px;
+  color: #020617;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 24px rgba(30, 136, 229, 0.12);
+  margin-top: 0;
 
   svg {
-    font-size: 31px;
+    width: 28px;
+    height: 28px;
   }
 `;
 
-const HeroText = styled("div")`
+const StepText = styled("div")`
   min-width: 0;
+  flex: 1;
 `;
 
-const HeroTitle = styled("div")`
-  margin-bottom: 7px;
-  font-size: 17.5px;
-  line-height: 1.45;
+const StepTitle = styled("div")`
+  margin-bottom: 6px;
+  color: #020617;
+  font-size: 18px;
+  line-height: 26px;
   font-weight: 700;
-  color: #0f172a;
 `;
 
-const HeroDescription = styled("div")`
-  max-width: 560px;
-  font-size: 15.8px;
-  line-height: 1.7;
+const StepDescription = styled("div")`
+  color: #62748e;
+  font-size: 16px;
+  line-height: 25px;
   font-weight: 400;
-  color: #475569;
 `;
 
-const MiniFlow = styled("div")`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px;
-  flex-wrap: wrap;
-`;
-
-const FlowChip = styled("div")`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
-  border-radius: 999px;
+const DownloadIconButton = styled("button")`
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 6px;
+  border: 1px solid #d8e2ef;
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  color: #334155;
-  font-size: 13.5px;
-  line-height: 1;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.035);
-
-  svg {
-    font-size: 17px;
-    color: #1e88e5;
-  }
-`;
-
-const FlowArrow = styled("span")`
-  color: #94a3b8;
-  font-size: 15px;
-  font-weight: 700;
-`;
-
-const InfoGrid = styled("div")`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-
-  @media (max-width: 680px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const InfoCard = styled("div")`
-  padding: 15px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background-color: #ffffff;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.025);
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    border-color 180ms ease,
-    background-color 180ms ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    border-color: rgba(30, 136, 229, 0.36);
-    background-color: rgba(30, 136, 229, 0.018);
-    box-shadow: 0 12px 26px rgba(30, 136, 229, 0.08);
-  }
-`;
-
-const InfoHeader = styled("div")`
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-bottom: 8px;
-`;
-
-const InfoIcon = styled("div")`
-  width: 30px;
-  height: 30px;
-  min-width: 30px;
-  border-radius: 10px;
-  background-color: rgba(30, 136, 229, 0.08);
-  color: #1e88e5;
+  color: #020617;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-inline-start: auto;
+  align-self: center;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background-color 140ms ease,
+    transform 140ms ease;
 
   svg {
-    font-size: 20px;
+    font-size: 28px;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: #cbd5e1;
+    background-color: #ffffff;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.1);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 `;
 
-const InfoTitle = styled("div")`
-  font-size: 15.8px;
-  line-height: 1.45;
-  font-weight: 650;
-  color: #0f172a;
-`;
-
-const InfoText = styled("div")`
-  font-size: 15.2px;
-  line-height: 1.65;
+const InfoNote = styled("div")`
+  width: 100%;
+  box-sizing: border-box;
+  padding: 18px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  direction: rtl;
+  color: #62748e;
+  font-size: 16px;
+  line-height: 25px;
   font-weight: 400;
-  color: #475569;
+  text-align: right;
+
+  svg {
+    font-size: 22px;
+    color: #62748e;
+    flex-shrink: 0;
+  }
 `;
 
 const ErrorBox = styled("div")`
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 4px;
   padding: 13px 15px;
   border: 1px solid rgba(239, 68, 68, 0.26);
   border-radius: 12px;
@@ -183,7 +140,6 @@ const ErrorBox = styled("div")`
   font-size: 15px;
   line-height: 1.55;
   font-weight: 500;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.035);
 
   svg {
     margin-top: 1px;
@@ -194,71 +150,66 @@ const ErrorBox = styled("div")`
 
 interface ExcelImportContentProps {
   showErrorFileTooBig?: boolean;
+  onDownloadTemplate?: () => void;
+  isDownloadTemplateDisabled?: boolean;
 }
 
-const ExcelImportContent: React.FC<ExcelImportContentProps> = ({ showErrorFileTooBig }) => {
+const ExcelImportContent: React.FC<ExcelImportContentProps> = ({
+  showErrorFileTooBig,
+  onDownloadTemplate,
+  isDownloadTemplateDisabled,
+}) => {
   return (
     <Wrapper>
-      <HeroCard>
-        <HeroContent>
-          <HeroIconWrapper>
-            <CloudUploadOutlinedIcon />
-          </HeroIconWrapper>
+      <StepCard>
+        <StepIcon>
+          <Table2 />
+        </StepIcon>
 
-          <HeroText>
-            <HeroTitle>ייבוא נתונים מתבנית אקסל</HeroTitle>
-            <HeroDescription>
-              הורידו תבנית שמותאמת למבנה הטופס, מלאו את הנתונים לפי העמודות, ולאחר מכן ייבאו את
-              הקובץ כדי ליצור תגובות חדשות במערכת ZEN.
-            </HeroDescription>
+        <StepText>
+          <StepTitle>הורדת תבנית Excel</StepTitle>
+          <StepDescription>
+            לפני ייבוא הנתונים, יש להוריד תבנית Excel. התבנית תהיה מותאמת לטופס.
+          </StepDescription>
+        </StepText>
 
-            <MiniFlow>
-              <FlowChip>
-                <DescriptionOutlinedIcon />
-                הורדת תבנית
-              </FlowChip>
-              <FlowArrow>←</FlowArrow>
-              <FlowChip>
-                <CheckCircleOutlineOutlinedIcon />
-                מילוי נתונים
-              </FlowChip>
-              <FlowArrow>←</FlowArrow>
-              <FlowChip>
-                <CloudUploadOutlinedIcon />
-                ייבוא למערכת
-              </FlowChip>
-            </MiniFlow>
-          </HeroText>
-        </HeroContent>
-      </HeroCard>
+        <DownloadIconButton
+          type="button"
+          aria-label="הורדת תבנית Excel"
+          onClick={onDownloadTemplate}
+          disabled={isDownloadTemplateDisabled}>
+          <Download />
+        </DownloadIconButton>
+      </StepCard>
 
-      <InfoGrid>
-        <InfoCard>
-          <InfoHeader>
-            <InfoIcon>
-              <CheckCircleOutlineOutlinedIcon />
-            </InfoIcon>
-            <InfoTitle>התאמה להגדרות הטופס</InfoTitle>
-          </InfoHeader>
+      <StepCard>
+        <StepIcon>
+          <MousePointerClick />
+        </StepIcon>
 
-          <InfoText>
-            מלאו את התבנית בהתאם לשדות החובה, ההגבלות, התנאים והאפשרויות שהוגדרו בטופס.
-          </InfoText>
-        </InfoCard>
+        <StepText>
+          <StepTitle>הזנת נתונים</StepTitle>
+          <StepDescription>
+            בטבלה ניתן להזין את המידע בהתאם לשדות החובה, להגבלות, לתנאים ולאפשרויות שהוגדרו בטופס.
+          </StepDescription>
+        </StepText>
+      </StepCard>
 
-        <InfoCard>
-          <InfoHeader>
-            <InfoIcon>
-              <ShieldOutlinedIcon />
-            </InfoIcon>
-            <InfoTitle>ייבוא בטוח</InfoTitle>
-          </InfoHeader>
+      <StepCard>
+        <StepIcon>
+          <CloudUpload />
+        </StepIcon>
 
-          <InfoText>
-            הייבוא יוצר תגובות חדשות בלבד, ואינו דורס תגובות קיימות עם אותו התוכן.
-          </InfoText>
-        </InfoCard>
-      </InfoGrid>
+        <StepText>
+          <StepTitle>ייבוא</StepTitle>
+          <StepDescription>אחרי הזנת הנתונים בטבלה, ניתן להעלות את הקובץ בבטחה.</StepDescription>
+        </StepText>
+      </StepCard>
+
+      <InfoNote>
+        <InfoOutlinedIcon />
+        <span>לאחר הייבוא יתווספו תגובות חדשות בלבד. תגובות קיימות זהות לא יידרסו.</span>
+      </InfoNote>
 
       {showErrorFileTooBig && (
         <ErrorBox>
