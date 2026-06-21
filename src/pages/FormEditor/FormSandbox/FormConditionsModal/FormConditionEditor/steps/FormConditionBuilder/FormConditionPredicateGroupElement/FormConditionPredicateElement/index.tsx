@@ -24,6 +24,7 @@ import { FormFieldExtra } from "../../../../../../../schemas/fields";
 import { OptionsFieldTypeId } from "../../../../../../FormStructure/FormFieldElement/ExtraElement/elements/OptionsFieldExtra";
 import { GroupItemValidationErrors } from "../../types";
 import { optionsSource } from "formula-gear";
+import { useLinkedFieldValueOptions } from "@src/hooks/useLinkedFieldValueOptions";
 
 interface Props {
   condition: DeepPartial<ArrayElement<FormConditionPredicateGroup["predicates"]>>;
@@ -70,6 +71,34 @@ function FormConditionPredicateElement({
       comparatorOptions[condition.field?.typeId].optionsProperties[comparator].requiresTargetValue
     );
 
+  const selectedField = condition.field?.id ? fields[condition.field.id] : undefined;
+
+  const selectedFieldExtra = selectedField?.data?.extra as
+    | FormFieldExtra<OptionsFieldTypeId>
+    | undefined;
+
+  const linkedOptionsFieldId =
+    condition.field?.typeId === ConditionFieldTypeIds.options
+      ? selectedFieldExtra?.linkedOptionsFieldId ?? undefined
+      : undefined;
+
+  const isLinkedOptionsField = Boolean(linkedOptionsFieldId);
+
+  const {
+    options: linkedOptions,
+    isLoading: isLoadingLinkedOptions,
+    loadMore: loadMoreLinkedOptions,
+  } = useLinkedFieldValueOptions(linkedOptionsFieldId, isLinkedOptionsField);
+
+  const conditionOptionItems = isLinkedOptionsField
+    ? linkedOptions.map((option) => ({
+      id: option.id,
+      text: option.text,
+      isActive: true,
+      controllingItemsIds: [],
+    }))
+    : selectedField?.data?.options;
+
   const renderTargetValueField = useMemo(() => {
     const disabled =
       !condition.field?.typeId || getIsTargetValueNotRequired(condition.field.comparator);
@@ -86,8 +115,10 @@ function FormConditionPredicateElement({
       label: "ערך",
       ...(condition.field?.typeId === ConditionFieldTypeIds.options && condition.field.id
         ? {
-            items: fields[condition.field.id].data.options,
-          }
+          items: conditionOptionItems,
+          loading: isLoadingLinkedOptions,
+          onLoadMore: loadMoreLinkedOptions,
+        }
         : undefined),
       onChange: (e) =>
         setData((prev) => {
@@ -99,8 +130,8 @@ function FormConditionPredicateElement({
             targetValue:
               e.target.value != undefined
                 ? (comparatorOptions[condition.field!.typeId!].valueProperties.valueTransformer(
-                    e.target.value,
-                  ) as any)
+                  e.target.value,
+                ) as any)
                 : "",
           };
           group.predicates = group.predicates!.toSpliced(index, 1, { ...modifiedCondition });
@@ -115,6 +146,9 @@ function FormConditionPredicateElement({
     parentGroupIndex,
     condition,
     validationErrors,
+    conditionOptionItems,
+    isLoadingLinkedOptions,
+    loadMoreLinkedOptions,
   ]);
 
   useEffect(() => {
