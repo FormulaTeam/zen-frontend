@@ -117,12 +117,68 @@ interface ComparatorValueComponentProps {
   onChange: (e: { target: { value: string | unknown } }) => void;
   error?: boolean;
   helperText?: string;
+  items?: Pick<ArrayElement<ManualItems>, "id" | "text">[];
+  loading?: boolean;
+  onLoadMore?: () => void;
 }
 
 interface ComparatorValueProperty {
   valueTransformer: (value: unknown) => any;
   inputComponent: FunctionComponent<ComparatorValueComponentProps>;
 }
+
+const OptionsComparatorValueInput: FunctionComponent<ComparatorValueComponentProps> = ({
+  disabled,
+  error,
+  label,
+  items = [],
+  helperText,
+  loading,
+  onLoadMore,
+  ...restProps
+}) => {
+  return (
+    <FormControl disabled={disabled} error={error} fullWidth sx={{ marginTop: 1 }}>
+      <InputLabel id="options-value-label">{label}</InputLabel>
+
+      <Select
+        labelId="options-value-label"
+        fullWidth
+        aria-describedby="options-value-helper-text"
+        label={label}
+        MenuProps={{
+          PaperProps: {
+            style: {
+              maxHeight: 320,
+              overflowY: "auto" as const,
+            },
+            onScroll: (event) => {
+              const target = event.currentTarget;
+
+              const isNearBottom =
+                target.scrollTop + target.clientHeight >= target.scrollHeight - 50;
+
+              if (isNearBottom) {
+                onLoadMore?.();
+              }
+            },
+          },
+        }}
+        {...restProps}
+      >
+        {items.map((item) => (
+          <MenuItem key={item.id} value={item.id}>
+            {item.text}
+          </MenuItem>
+        ))}
+
+        {loading && <MenuItem disabled>טוען...</MenuItem>}
+      </Select>
+
+      <FormHelperText id="options-value-helper-text">{helperText}</FormHelperText>
+    </FormControl>
+  );
+};
 
 const ComparatorValueProperties = {
   [FieldTypeIds.longText]: {
@@ -170,33 +226,7 @@ const ComparatorValueProperties = {
   },
   [FieldTypeIds.options]: {
     valueTransformer: String,
-    inputComponent: ({
-      disabled,
-      error,
-      label,
-      items,
-      helperText,
-      ...restProps
-    }: ComparatorValueComponentProps & {
-      items?: Pick<ArrayElement<ManualItems>, "id" | "text">[];
-    }) => (
-      <FormControl disabled={disabled} error={error} fullWidth sx={{ marginTop: 1 }}>
-        <InputLabel id="options-value-label">{label}</InputLabel>
-        <Select
-          labelId="options-value-label"
-          fullWidth
-          aria-describedby="options-value-helper-text"
-          label={label}
-          {...restProps}>
-          {items?.map((item) => (
-            <MenuItem key={item.id} value={item.id}>
-              {item.text}
-            </MenuItem>
-          ))}
-        </Select>
-        <FormHelperText id="options-value-helper-text">{helperText}</FormHelperText>
-      </FormControl>
-    ),
+    inputComponent: OptionsComparatorValueInput,
   },
   [FieldTypeIds.checkbox]: {
     valueTransformer: Boolean,
