@@ -146,8 +146,24 @@ const EmptyColumnFilteredIcon = () => null;
 const FIELD_COLUMN_WIDTH = 190;
 const FIELD_COLUMN_MAX_WIDTH = 450;
 
-const getFieldColumnWidth = (savedWidth?: number): number => {
-  return Math.max(savedWidth ?? FIELD_COLUMN_WIDTH, FIELD_COLUMN_WIDTH);
+const getResponsiveColumnProps = (
+  minWidth: number,
+  savedWidth?: number,
+  maxWidth?: number,
+  flex = 1,
+): Pick<GridColDef, "width" | "minWidth" | "maxWidth" | "flex"> => {
+  if (savedWidth) {
+    return {
+      width: Math.max(savedWidth, minWidth),
+      minWidth,
+      maxWidth,
+    };
+  }
+
+  return {
+    minWidth,
+    flex,
+  };
 };
 
 type Row = GridRowModel & {
@@ -584,9 +600,11 @@ export const ResponsesTable = React.memo(
         const col: GridColDef = {
           field: gridField,
           headerName: field.displayName,
-          width: getFieldColumnWidth(columnWidths.current[gridField]),
-          minWidth: FIELD_COLUMN_WIDTH,
-          maxWidth: FIELD_COLUMN_MAX_WIDTH,
+          ...getResponsiveColumnProps(
+            FIELD_COLUMN_WIDTH,
+            columnWidths.current[gridField],
+            FIELD_COLUMN_MAX_WIDTH,
+          ),
           editable: true,
           sortable: isSortable(field.fieldType),
           ...getResponseFilterColumnProps(field, formFields),
@@ -644,7 +662,7 @@ export const ResponsesTable = React.memo(
           </HeaderFlex>
         ),
         width: columnWidths.current[`${prefixes.Meta}index`] || 190,
-        minWidth: 180,
+        minWidth: 170,
         maxWidth: 220,
         editable: false,
         sortable: true,
@@ -655,8 +673,12 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}created_by`, {
         field: `${prefixes.Meta}created_by`,
         headerName: "נוצר ע״י",
-        width: columnWidths.current[`${prefixes.Meta}created_by`] || 200,
-        minWidth: 150,
+        ...getResponsiveColumnProps(
+          180,
+          columnWidths.current[`${prefixes.Meta}created_by`],
+          280,
+          0.9,
+        ),
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.createdByName,
@@ -666,8 +688,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}created_at`, {
         field: `${prefixes.Meta}created_at`,
         headerName: "תאריך יצירה",
-        width: columnWidths.current[`${prefixes.Meta}created_at`] || 200,
-        minWidth: 150,
+        ...getResponsiveColumnProps(190, columnWidths.current[`${prefixes.Meta}created_at`], 300),
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.created,
@@ -690,8 +711,9 @@ export const ResponsesTable = React.memo(
             <CloudIcon fontSize="small" />
           </HeaderFlex>
         ),
-        minWidth: 150,
-        width: columnWidths.current["sync"] || 150,
+        minWidth: 90,
+        width: columnWidths.current["sync"] || 90,
+        maxWidth: 110,
         editable: false,
         sortable: true,
         filterable: false,
@@ -703,8 +725,12 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}updated_by`, {
         field: `${prefixes.Meta}updated_by`,
         headerName: "השתנה ע״י",
-        width: columnWidths.current[`${prefixes.Meta}updated_by`] || 200,
-        minWidth: 150,
+        ...getResponsiveColumnProps(
+          180,
+          columnWidths.current[`${prefixes.Meta}updated_by`],
+          280,
+          0.9,
+        ),
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.editedByName,
@@ -714,8 +740,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}updated_at`, {
         field: `${prefixes.Meta}updated_at`,
         headerName: "תאריך שינוי",
-        width: columnWidths.current[`${prefixes.Meta}updated_at`] || 200,
-        minWidth: 150,
+        ...getResponsiveColumnProps(190, columnWidths.current[`${prefixes.Meta}updated_at`], 300),
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.edited,
@@ -731,8 +756,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}id`, {
         field: `${prefixes.Meta}id`,
         headerName: "ID",
-        width: columnWidths.current[`${prefixes.Meta}id`] || 150,
-        minWidth: 150,
+        ...getResponsiveColumnProps(180, columnWidths.current[`${prefixes.Meta}id`], 300, 0.9),
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.id,
@@ -749,7 +773,7 @@ export const ResponsesTable = React.memo(
             {
               field: "parentResponse",
               headerName: "תגובת אב",
-              width: columnWidths.current["parentResponse"] || 200,
+              ...getResponsiveColumnProps(190, columnWidths.current["parentResponse"]),
               editable: false,
               filterable: false,
               sortable: false,
@@ -814,20 +838,6 @@ export const ResponsesTable = React.memo(
       navigateToCreateResponseCopy,
       navigate,
     ]);
-
-    useEffect(() => {
-      if (isRowsLoading || displayRows.length === 0 || isInEditMode) return;
-
-      const timer = setTimeout(() => {
-        apiRef.current?.autosizeColumns({
-          includeHeaders: true,
-          includeOutliers: true,
-          expand: false,
-        });
-      }, 100);
-
-      return () => clearTimeout(timer);
-    }, [apiRef, isRowsLoading, displayRows.length]);
 
     const editableColumnFields = useMemo(
       () =>
@@ -1164,7 +1174,7 @@ export const ResponsesTable = React.memo(
               autosizeOptions={{
                 includeHeaders: true,
                 includeOutliers: true,
-                expand: false,
+                expand: true,
               }}
               columnBufferPx={5000}
               initialState={{
