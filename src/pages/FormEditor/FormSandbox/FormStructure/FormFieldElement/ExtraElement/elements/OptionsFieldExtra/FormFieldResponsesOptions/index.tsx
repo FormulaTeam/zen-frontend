@@ -111,13 +111,20 @@ function FormFieldResponsesOptions(props: Props) {
     fieldId: selectedFieldId,
   });
 
-  const selectedDefaultValueOptions = useMemo(
-    () =>
-      defaultValueOptions.filter((option) =>
-        defaultValue.map(String).includes(option.id),
-      ),
-    [defaultValueOptions, defaultValue],
-  );
+  const selectedDefaultValueOptions = useMemo(() => {
+    const loadedOptionsById = new Map(
+      defaultValueOptions.map((option) => [option.id, option]),
+    );
+
+    return defaultValue.map(String).map((value) => {
+      return (
+        loadedOptionsById.get(value) ?? {
+          id: value,
+          text: value,
+        }
+      );
+    });
+  }, [defaultValueOptions, defaultValue]);
 
   useEffect(() => {
     setSelectedFieldId(linkedOptionsFieldId ?? undefined);
