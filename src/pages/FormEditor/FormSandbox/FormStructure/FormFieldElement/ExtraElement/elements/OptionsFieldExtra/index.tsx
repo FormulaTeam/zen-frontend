@@ -93,6 +93,8 @@ function OptionsFieldExtra({
       {isLinkedToForm ? (
         <FormFieldResponsesOptions
           linkedOptionsFieldId={linkedOptionsFieldId}
+          defaultValue={defaultValue}
+          selectionMode={mode}
           validationErrors={validationErrors as any}
           onChange={onChange}
         />

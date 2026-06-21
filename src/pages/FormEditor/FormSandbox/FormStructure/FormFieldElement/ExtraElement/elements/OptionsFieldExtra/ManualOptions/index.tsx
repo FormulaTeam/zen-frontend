@@ -42,7 +42,7 @@ function ManualOptions(props: Props) {
   } = props;
 
   const { formStructure } = useFormStructureContext();
-  
+
   const currentField = formStructure.fields[id];
   const extra = (currentField?.data?.extra as FormFieldExtra<OptionsFieldTypeId>) ?? {};
 
@@ -147,10 +147,10 @@ function ManualOptions(props: Props) {
     } else {
       const newOptionId = generateOptionItemId();
       const newOption = { id: newOptionId, text: newText, isActive: true };
-      
+
       const archivedOption = { id: item.id, text: originalText, isActive: false };
       const updatedActiveItems = items.toSpliced(index, 1, newOption);
-      
+
       onDataChange?.({
         options: [...updatedActiveItems, ...inactiveItems, archivedOption],
       });
@@ -236,8 +236,8 @@ function ManualOptions(props: Props) {
                       {...params}
                       disabled={!otherManualOptionsFieldsIds.length}
                       label={
-                        <Tooltip title={"שדה אפשרויות מוביל"}>
-                          <span>שדה אפשרויות מוביל</span>
+                        <Tooltip title={"שדה אפשרויות נשלט"}>
+                          <span>שדה אפשרויות נשלט</span>
                         </Tooltip>
                       }
                       variant="standard"
