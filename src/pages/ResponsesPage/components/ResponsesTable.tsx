@@ -1263,6 +1263,9 @@ export const ResponsesTable = React.memo(
                   variant: "skeleton",
                   noRowsVariant: "skeleton",
                 },
+                headerFilterCell: {
+                  showClearIcon: true,
+                } as any,
                 columnMenu: {
                   showFilters,
                   activeFiltersCount,
