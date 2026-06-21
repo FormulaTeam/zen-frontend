@@ -1,4 +1,16 @@
-import { Button, FormControl, Tooltip, Autocomplete, TextField, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, IconButton } from "@mui/material";
+import {
+  Button,
+  FormControl,
+  Tooltip,
+  Autocomplete,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  IconButton,
+} from "@mui/material";
 import { OptionsFieldTypeId } from "../index";
 import { Close } from "@mui/icons-material";
 import { generateOptionItemId } from "../../../../../../../utils";
@@ -31,6 +43,47 @@ function generateEmptyItem(): ArrayElement<ManualItems> {
   };
 }
 
+const DUPLICATE_OPTION_TEXT_ERROR = "שם האפשרות חייב להיות ייחודי בשדה";
+
+const normalizeOptionText = (text?: string): string => text?.trim().toLocaleLowerCase("he") ?? "";
+
+const getDuplicateOptionIndexes = (items: ManualItems): Set<number> => {
+  const indexesByText = new Map<string, number[]>();
+
+  items.forEach((item, index) => {
+    const normalizedText = normalizeOptionText(item.text);
+
+    if (!normalizedText) return;
+
+    const indexes = indexesByText.get(normalizedText) ?? [];
+    indexes.push(index);
+    indexesByText.set(normalizedText, indexes);
+  });
+
+  const duplicateIndexes = new Set<number>();
+
+  indexesByText.forEach((indexes) => {
+    if (indexes.length > 1) {
+      indexes.forEach((index) => duplicateIndexes.add(index));
+    }
+  });
+
+  return duplicateIndexes;
+};
+
+const addValidationError = (validationErrors: any, message: string) => {
+  const currentErrors = validationErrors?.errors ?? [];
+
+  if (currentErrors.includes(message)) {
+    return validationErrors;
+  }
+
+  return {
+    ...(validationErrors ?? {}),
+    errors: [...currentErrors, message],
+  };
+};
+
 function ManualOptions(props: Props) {
   const {
     defaultValue,
@@ -46,7 +99,10 @@ function ManualOptions(props: Props) {
   const currentField = formStructure.fields[id];
   const extra = (currentField?.data?.extra as FormFieldExtra<OptionsFieldTypeId>) ?? {};
 
-  const rawItems = (currentField?.data?.options as ManualItems) ?? [generateEmptyItem(), generateEmptyItem()];
+  const rawItems = (currentField?.data?.options as ManualItems) ?? [
+    generateEmptyItem(),
+    generateEmptyItem(),
+  ];
 
   const items = useMemo(() => {
     return rawItems.filter((item) => item.isActive !== false);
@@ -56,11 +112,14 @@ function ManualOptions(props: Props) {
     return rawItems.filter((item) => item.isActive === false);
   }, [rawItems]);
 
-  const updateOptionsData = useCallback((activeItems: ManualItems) => {
-    onDataChange?.({
-      options: [...activeItems, ...inactiveItems],
-    });
-  }, [inactiveItems, onDataChange]);
+  const updateOptionsData = useCallback(
+    (activeItems: ManualItems) => {
+      onDataChange?.({
+        options: [...activeItems, ...inactiveItems],
+      });
+    },
+    [inactiveItems, onDataChange],
+  );
 
   const [selectedControlledItemIndex, setSelectedControlledItemIndex] = useState<number>(0);
 
@@ -73,19 +132,25 @@ function ManualOptions(props: Props) {
     originalText: string;
   } | null>(null);
 
-  const otherManualOptionsFieldsIds = useMemo(() => Object.keys(formStructure.fields)?.filter((fieldId) => {
-    const fieldData = formStructure.fields[fieldId].data;
-    const fieldExtra = fieldData.extra as FormFieldExtra<OptionsFieldTypeId> | undefined;
+  const otherManualOptionsFieldsIds = useMemo(
+    () =>
+      Object.keys(formStructure.fields)?.filter((fieldId) => {
+        const fieldData = formStructure.fields[fieldId].data;
+        const fieldExtra = fieldData.extra as FormFieldExtra<OptionsFieldTypeId> | undefined;
 
-    return (
-      fieldId !== id &&
-      fieldData.typeId === FieldTypeIds.options &&
-      fieldExtra?.linkedOptionsFieldId === undefined &&
-      fieldData.displayName
-    );
-  }), [formStructure.fields, id]);
+        return (
+          fieldId !== id &&
+          fieldData.typeId === FieldTypeIds.options &&
+          fieldExtra?.linkedOptionsFieldId === undefined &&
+          fieldData.displayName
+        );
+      }),
+    [formStructure.fields, id],
+  );
 
   const definedItems = useMemo(() => items?.filter((item) => !!item.text), [items]);
+
+  const duplicateOptionIndexes = useMemo(() => getDuplicateOptionIndexes(items), [items]);
 
   useEffect(() => {
     if (!currentField?.data?.options) {
@@ -112,30 +177,40 @@ function ManualOptions(props: Props) {
       .filter((item) => !!item.text?.length);
   }, [extra.linkedOptionsFieldId, formStructure.fields]);
 
-  const handleItemChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number, item: ArrayElement<ManualItems>) => {
-    const newText = e.target.value.trimStart();
-    const updatedItem = { ...item, text: newText };
-    const newActiveItems = items.toSpliced(index, 1, updatedItem);
+  const handleItemChange = useCallback(
+    (
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+      index: number,
+      item: ArrayElement<ManualItems>,
+    ) => {
+      const newText = e.target.value.trimStart();
+      const updatedItem = { ...item, text: newText };
+      const newActiveItems = items.toSpliced(index, 1, updatedItem);
 
-    updateOptionsData(newActiveItems);
-  }, [items, updateOptionsData]);
+      updateOptionsData(newActiveItems);
+    },
+    [items, updateOptionsData],
+  );
 
-  const handleItemBlur = useCallback((index: number, item: ArrayElement<ManualItems>) => {
-    const originalText = originalItemTexts[item.id];
-    const currentText = item.text;
+  const handleItemBlur = useCallback(
+    (index: number, item: ArrayElement<ManualItems>) => {
+      const originalText = originalItemTexts[item.id];
+      const currentText = item.text;
 
-    const isExistingForm = Boolean(formStructure?.metadata?.id);
+      const isExistingForm = Boolean(formStructure?.metadata?.id);
 
-    if (isExistingForm && originalText && currentText && originalText !== currentText) {
-      setRenameRenameData({
-        index,
-        item,
-        newText: currentText,
-        originalText,
-      });
-      setRenameDialogOpen(true);
-    }
-  }, [originalItemTexts, formStructure?.metadata?.id]);
+      if (isExistingForm && originalText && currentText && originalText !== currentText) {
+        setRenameRenameData({
+          index,
+          item,
+          newText: currentText,
+          originalText,
+        });
+        setRenameDialogOpen(true);
+      }
+    },
+    [originalItemTexts, formStructure?.metadata?.id],
+  );
 
   const handleConfirmRename = (retroactive: boolean) => {
     if (!renameData) return;
@@ -176,49 +251,77 @@ function ManualOptions(props: Props) {
     setRenameDialogOpen(false);
   };
 
-  const itemFields = useMemo(() => (
-    items.map((item, index) => (
-      <ManualOptionsItemField index={index}
-        item={item}
-        validationErrors={validationErrors?.properties?.options?.items?.[index]?.properties?.text}
-        isDeletable={items.length > 2}
-        onChange={(e) => handleItemChange(e, index, item)}
-        onFocus={() => {
-          setSelectedControlledItemIndex(index);
-          if (!originalItemTexts[item.id]) {
-            setOriginalItemTexts(prev => ({ ...prev, [item.id]: item.text ?? "" }));
-          }
-        }}
-        onBlur={() => handleItemBlur(index, item)}
-        onDelete={() => {
-          if (items.length > 2) {
-            const newActiveItems = items.toSpliced(index, 1);
-            updateOptionsData(newActiveItems);
+  const itemFields = useMemo(
+    () =>
+      items.map((item, index) => {
+        const textValidationErrors =
+          validationErrors?.properties?.options?.items?.[index]?.properties?.text;
 
-            if (defaultValue.includes(item.id)) {
-              onChange({ defaultValue: defaultValue.filter(id => id !== item.id) });
+        const itemValidationErrors = duplicateOptionIndexes.has(index)
+          ? addValidationError(textValidationErrors, DUPLICATE_OPTION_TEXT_ERROR)
+          : textValidationErrors;
+
+        return (
+          <ManualOptionsItemField
+            index={index}
+            item={item}
+            validationErrors={itemValidationErrors}
+            isDeletable={items.length > 2}
+            onChange={(e) => handleItemChange(e, index, item)}
+            onFocus={() => {
+              setSelectedControlledItemIndex(index);
+
+              if (!originalItemTexts[item.id]) {
+                setOriginalItemTexts((prev) => ({ ...prev, [item.id]: item.text ?? "" }));
+              }
+            }}
+            onBlur={() => handleItemBlur(index, item)}
+            onDelete={() => {
+              if (items.length > 2) {
+                const newActiveItems = items.toSpliced(index, 1);
+                updateOptionsData(newActiveItems);
+
+                if (defaultValue.includes(item.id)) {
+                  onChange({ defaultValue: defaultValue.filter((id) => id !== item.id) });
+                }
+              }
+            }}
+            isSelectedControlledItem={
+              !!extra.linkedOptionsFieldId ? selectedControlledItemIndex === index : undefined
             }
-          }
-        }}
-        isSelectedControlledItem={
-          !!extra.linkedOptionsFieldId ?
-            selectedControlledItemIndex === index :
-            undefined
-        }
-        onSelectControlledItem={() => {
-          setSelectedControlledItemIndex(index);
-        }} />
-    ))
-  ), [items, validationErrors, handleItemChange, updateOptionsData, onChange, defaultValue, extra.linkedOptionsFieldId, selectedControlledItemIndex, originalItemTexts, handleItemBlur]);
+            onSelectControlledItem={() => {
+              setSelectedControlledItemIndex(index);
+            }}
+          />
+        );
+      }),
+    [
+      items,
+      validationErrors,
+      duplicateOptionIndexes,
+      handleItemChange,
+      updateOptionsData,
+      onChange,
+      defaultValue,
+      extra.linkedOptionsFieldId,
+      selectedControlledItemIndex,
+      originalItemTexts,
+      handleItemBlur,
+    ],
+  );
 
   return (
     <>
       <div className={styles.controllingFieldContainer}>
-        <div className={styles.controllingFieldWrapper}
+        <div
+          className={styles.controllingFieldWrapper}
           style={{ borderColor: extra.linkedOptionsFieldId ? "#e1e7ec" : "transparent" }}>
-          <Tooltip title={!otherManualOptionsFieldsIds.length ? "לא קיים שדה אפשרויות נוסף" : ""} placement="top">
-            <span style={{ flex: 1, display: 'flex' }}>
-              <FormControl className={styles.controllingFieldFormControl}
+          <Tooltip
+            title={!otherManualOptionsFieldsIds.length ? "לא קיים שדה אפשרויות נוסף" : ""}
+            placement="top">
+            <span style={{ flex: 1, display: "flex" }}>
+              <FormControl
+                className={styles.controllingFieldFormControl}
                 disabled={!otherManualOptionsFieldsIds.length}>
                 <Autocomplete
                   disabled={!otherManualOptionsFieldsIds.length}
@@ -247,9 +350,9 @@ function ManualOptions(props: Props) {
               </FormControl>
             </span>
           </Tooltip>
-          {
-            extra.linkedOptionsFieldId &&
-            <Button className={styles.button}
+          {extra.linkedOptionsFieldId && (
+            <Button
+              className={styles.button}
               onClick={(_) => {
                 onChange({
                   linkedOptionsFieldId: undefined,
@@ -257,21 +360,17 @@ function ManualOptions(props: Props) {
               }}>
               <Close sx={{ fontSize: 20, color: "#a54160" }} />
             </Button>
-          }
+          )}
         </div>
-        {
-          extra.linkedOptionsFieldId &&
-          <div className={styles.controllingFieldConnector} />
-        }
+        {extra.linkedOptionsFieldId && <div className={styles.controllingFieldConnector} />}
       </div>
 
       <div className={styles.itemsContainer}>
         <div>
-          <div className={styles.itemsWrapper}>
-            {itemFields}
-          </div>
+          <div className={styles.itemsWrapper}>{itemFields}</div>
           <div className={styles.appendItemButtonWrapper}>
-            <Button size={"large"}
+            <Button
+              size={"large"}
               variant={"outlined"}
               className={styles.appendItemButton}
               onClick={(_) => {
@@ -282,12 +381,14 @@ function ManualOptions(props: Props) {
             </Button>
           </div>
         </div>
-        {
-          !!controllingFieldItems && !!items[selectedControlledItemIndex] &&
-          <ManualOptionsControllingItemsList item={items[selectedControlledItemIndex]}
+        {!!controllingFieldItems && !!items[selectedControlledItemIndex] && (
+          <ManualOptionsControllingItemsList
+            item={items[selectedControlledItemIndex]}
             controllingFieldItems={controllingFieldItems}
             onCheckChange={(e, controllingItem: ArrayElement<ManualItems>) => {
-              const controllingItemsIds = [...(items[selectedControlledItemIndex].controllingItemsIds ?? [])];
+              const controllingItemsIds = [
+                ...(items[selectedControlledItemIndex].controllingItemsIds ?? []),
+              ];
 
               if (e.target.checked) {
                 controllingItemsIds.push(controllingItem.id);
@@ -315,26 +416,30 @@ function ManualOptions(props: Props) {
               });
 
               onDataChange?.({ options: updatedItems });
-            }} />
-        }
+            }}
+          />
+        )}
       </div>
 
       <div className={styles.defaultFieldContainer}>
         <Tooltip title={!definedItems.length ? "יש להזין אפשרויות" : ""} placement="top">
-          <div className={styles.defaultFieldWrapper} style={{ display: 'flex' }}>
-            <span style={{ width: '100%', display: 'flex' }}>
-              <FormControl disabled={!definedItems.length}
-                style={{ width: '100%' }}>
+          <div className={styles.defaultFieldWrapper} style={{ display: "flex" }}>
+            <span style={{ width: "100%", display: "flex" }}>
+              <FormControl disabled={!definedItems.length} style={{ width: "100%" }}>
                 <Autocomplete
                   disabled={!definedItems.length}
                   multiple={mode === selectionMode.Multiple}
                   options={definedItems.map((item) => item.id)}
-                  getOptionLabel={(optionId) => definedItems.find((item) => item.id === optionId)?.text || ""}
-                  value={mode === selectionMode.Multiple ? (defaultValue || []) : (defaultValue?.[0] || null)}
+                  getOptionLabel={(optionId) =>
+                    definedItems.find((item) => item.id === optionId)?.text || ""
+                  }
+                  value={
+                    mode === selectionMode.Multiple ? defaultValue || [] : defaultValue?.[0] || null
+                  }
                   noOptionsText={"לא נמצאו אפשרויות"}
                   onChange={(_, newValue) => {
                     if (mode === selectionMode.Multiple) {
-                      onChange({ defaultValue: newValue as string[] || [] });
+                      onChange({ defaultValue: (newValue as string[]) || [] });
                     } else {
                       onChange({ defaultValue: newValue ? [newValue as string] : [] });
                     }
@@ -352,15 +457,15 @@ function ManualOptions(props: Props) {
             </span>
           </div>
         </Tooltip>
-        {
-          defaultValue && defaultValue.length > 0 &&
-          <Button className={styles.button}
+        {defaultValue && defaultValue.length > 0 && (
+          <Button
+            className={styles.button}
             onClick={(_) => {
               onChange({ defaultValue: [] });
             }}>
             <Close sx={{ fontSize: 20, color: "#a54160" }} />
           </Button>
-        }
+        )}
       </div>
 
       <Dialog
@@ -377,8 +482,7 @@ function ManualOptions(props: Props) {
             right: 12,
             top: 12,
             color: (theme) => theme.palette.grey[500],
-          }}
-        >
+          }}>
           <Close sx={{ fontSize: 20 }} />
         </IconButton>
         <DialogTitle id="rename-dialog-title" sx={{ pr: 6 }}>
@@ -393,7 +497,11 @@ function ManualOptions(props: Props) {
           <Button onClick={() => handleConfirmRename(true)} color="primary">
             {"שינוי רטרואקטיבי"}
           </Button>
-          <Button onClick={() => handleConfirmRename(false)} color="primary" variant="contained" autoFocus>
+          <Button
+            onClick={() => handleConfirmRename(false)}
+            color="primary"
+            variant="contained"
+            autoFocus>
             {"ללא שינוי רטרואקטיבי"}
           </Button>
         </DialogActions>
