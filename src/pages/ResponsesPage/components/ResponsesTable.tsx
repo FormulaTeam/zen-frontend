@@ -75,7 +75,6 @@ import * as Gear from "formula-gear";
 import {
   getResponseFilterColumnProps,
   getResponseMetaFilterColumnProps,
-  ResponsesColumnMenu,
   useResponsesTableFilters,
 } from "./ResponsesFilters";
 import { useConnectedFormOptions } from "@src/hooks/useConnectedFormOptions";
@@ -1157,7 +1156,7 @@ export const ResponsesTable = React.memo(
             <StyledDataGrid
               apiRef={apiRef}
               className={clsx({ "MuiDataGrid-root--edit-mode": isInEditMode })}
-              disableColumnMenu={isInEditMode}
+              disableColumnMenu
               disableColumnSorting={isInEditMode}
               disableColumnFilter={isInEditMode}
               disableColumnPinning
@@ -1247,7 +1246,6 @@ export const ResponsesTable = React.memo(
               sortModel={sortModel}
               rows={displayRows}
               slots={{
-                columnMenu: ResponsesColumnMenu,
                 columnHeaderFilterIconButton: EmptyColumnHeaderFilterIconButton,
                 columnFilteredIcon: EmptyColumnFilteredIcon,
                 footer: CustomFooter,
@@ -1265,13 +1263,6 @@ export const ResponsesTable = React.memo(
                 },
                 headerFilterCell: {
                   showClearIcon: true,
-                } as any,
-                columnMenu: {
-                  showFilters,
-                  activeFiltersCount,
-                  disabled: isInEditMode,
-                  onToggleFilters,
-                  onClearFilters,
                 } as any,
                 row: {},
               }}
