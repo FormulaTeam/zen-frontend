@@ -131,7 +131,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
   const handleSaveAndExit = async () => {
     setShowAlertMsg(false);
-    await saveAll();
+    setTimeout(async () => {
+      await saveAll();
+    }, 300);
     // note: saveAll sets setChildFormsSaving(true) if there are child forms.
     // if no child forms, it should ideally navigate back.
     // However, the current saveAll logic is a bit complex with child forms.
@@ -167,6 +169,8 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       if (errorMessages.length > 0) {
         setValidationErrors(errorMessages);
         setShowValidationPopup(true);
+        setShowAlertMsg(false);
+        setShowRestoreBanner(false);
       }
 
       setShowLoadingSaveBtn(false);
@@ -209,7 +213,6 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       if (error?.response?.data?.error?.includes("Metro")) {
         navigate(`/forms/${form?.id ?? formId}/responses`);
       } else {
-        showErrorNotification("משהו השתבש");
         setShowLoadingSaveBtn(false);
       }
     }
@@ -290,6 +293,8 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       if (errorMessages.length > 0) {
         setValidationErrors(errorMessages);
         setShowValidationPopup(true);
+        setShowAlertMsg(false);
+        setShowRestoreBanner(false);
       }
     }
   }, [childForms, childFormsValidate, generateValidationErrorMessages]);
@@ -302,18 +307,21 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
   const closeValidationPopup = () => {
     setShowValidationPopup(false);
-    setValidationErrors([]);
 
-    setChildForms((prev) =>
-      prev.map((childForm) =>
-        childForm.shown
-          ? {
-              ...childForm,
-              valid: [],
-            }
-          : childForm,
-      ),
-    );
+    // Defer clearing errors and sub-form valid states until after the dialog transition finishes (250ms)
+    setTimeout(() => {
+      setValidationErrors([]);
+      setChildForms((prev) =>
+        prev.map((childForm) =>
+          childForm.shown
+            ? {
+                ...childForm,
+                valid: [],
+              }
+            : childForm,
+        ),
+      );
+    }, 250);
   };
 
   const getChildFormTitle = (childFormId: number) =>

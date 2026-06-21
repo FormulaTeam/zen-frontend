@@ -175,14 +175,8 @@ export const softDeleteResponses = async (
   formId: number,
   dto: SoftDeleteResponsesDto,
 ): Promise<void> => {
-  const ids = dto.responsesIds ?? [];
-
-  if (ids.length === 0) return;
-
   try {
-    await Promise.all(
-      ids.map((id) => apiClient.post(`/forms/${formId}/responses/${id}/soft-delete`))
-    );
+    await apiClient.post(`/forms/${formId}/responses/soft-delete`, dto);
   } catch (error) {
     console.error("Failed to soft-delete responses:", error);
     throw error;
@@ -202,12 +196,11 @@ export const restoreResponses = async (
   responsesIds: string[],
   scope?: string,
 ): Promise<void> => {
-  if (responsesIds.length === 0) return;
-
   try {
-    await Promise.all(
-      responsesIds.map((id) => apiClient.post(`/forms/${formId}/responses/${id}/restore`))
-    );
+    await apiClient.post(`/forms/${formId}/responses/restore`, {
+      responsesIds,
+      scope,
+    });
   } catch (error) {
     console.error("Failed to restore responses:", error);
     throw error;

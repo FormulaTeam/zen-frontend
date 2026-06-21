@@ -29,7 +29,7 @@ interface NoResultsStateProps {
 export function NoResultsState({ onClearSearch, setScope, isSuperAdmin }: NoResultsStateProps) {
   const handleCtaClick = () => {
     onClearSearch();
-    setScope(isSuperAdmin ? formsScopeOption.AllForms : formsScopeOption.MyForms);
+    setScope(formsScopeOption.AccessibleForms);
   };
 
   return (

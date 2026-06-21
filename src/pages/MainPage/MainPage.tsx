@@ -46,8 +46,8 @@ function MainPage({
   setShouldRefreshPage,
   resetSearchValue,
 }) {
-  const [sortBy, setSortBy] = useState<FormsSortOption>(formsSortOption.Name);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(sortDirectionOption.Ascending);
+  const [sortBy, setSortBy] = useState<FormsSortOption>(formsSortOption.CreatedAt);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(sortDirectionOption.Descending);
 
   const { isSuperAdmin } = useSuperAdmin();
   const navigate = useNavigate();
