@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useImperativeHandle } from "react";
 import {
   FormControl,
   CircularProgress,
@@ -19,11 +19,15 @@ import { LoaderContainer, Container, FieldControl } from "./styled";
 import { fieldType } from "formula-gear";
 import { OptionsFieldTypeId } from "../index";
 import { FormFieldExtra } from "@pages/FormEditor/schemas/fields";
+import { usePaginatedFieldValueOptions } from "@src/hooks/usePaginatedFieldValueOptions";
+import { useLoadMoreOnVisible } from "@src/pages/ResponsesPage/hooks/useLoadMoreOnVisible";
 
 interface Props {
   linkedOptionsFieldId: string | null | undefined;
   onChange: (extra: Partial<FormFieldExtra<OptionsFieldTypeId>>) => void;
   validationErrors: any;
+  defaultValue?: string[];
+  selectionMode: "single" | "multiple";
 }
 
 interface ValidField {
@@ -37,8 +41,42 @@ const getFieldsFromForm = (form: FormDto): FormFieldDto[] => {
   return (form.sections ?? []).flatMap((section: FormSectionDto) => section.fields ?? []);
 };
 
+const Listbox = React.forwardRef<
+  HTMLUListElement,
+  React.HTMLAttributes<HTMLUListElement> & { onLoadMore?: () => void }
+>(function Listbox({ children, onLoadMore, ...props }, ref) {
+  const listRef = useRef<HTMLUListElement>(null);
+  const sentinelRef = useRef<HTMLLIElement>(null);
+
+  useImperativeHandle(ref, () => listRef.current as HTMLUListElement);
+
+  useLoadMoreOnVisible(listRef, sentinelRef, onLoadMore);
+
+  return (
+    <ul ref={listRef} {...props}>
+      {children}
+      <li
+        aria-hidden
+        ref={sentinelRef}
+        style={{
+          height: 1,
+          padding: 0,
+          margin: 0,
+          listStyle: "none",
+        }}
+      />
+    </ul>
+  );
+});
+
 function FormFieldResponsesOptions(props: Props) {
-  const { linkedOptionsFieldId, validationErrors, onChange } = props;
+  const {
+    linkedOptionsFieldId,
+    validationErrors,
+    onChange,
+    defaultValue = [],
+    selectionMode,
+  } = props;
 
   const { formStructure } = useFormStructureContext();
 
@@ -46,7 +84,6 @@ function FormFieldResponsesOptions(props: Props) {
 
   const [selectedFormId, setSelectedFormId] = useState<number | undefined>(() => {
     if (!linkedOptionsFieldId) return undefined;
-
     return linkedOptionsOwnerFormIdCache.get(linkedOptionsFieldId);
   });
 
@@ -64,6 +101,23 @@ function FormFieldResponsesOptions(props: Props) {
     scope: formsScopeOption.LinkableForms,
     enabled: true,
   });
+
+  const {
+    options: defaultValueOptions,
+    isLoading: isLoadingDefaultValues,
+    loadMore: loadMoreDefaultValues,
+  } = usePaginatedFieldValueOptions({
+    formId: selectedFormId,
+    fieldId: selectedFieldId,
+  });
+
+  const selectedDefaultValueOptions = useMemo(
+    () =>
+      defaultValueOptions.filter((option) =>
+        defaultValue.map(String).includes(option.id),
+      ),
+    [defaultValueOptions, defaultValue],
+  );
 
   useEffect(() => {
     setSelectedFieldId(linkedOptionsFieldId ?? undefined);
@@ -109,9 +163,7 @@ function FormFieldResponsesOptions(props: Props) {
         for (const formOverview of allForms) {
           const formId = Number(formOverview.id);
 
-          if (!formId) {
-            continue;
-          }
+          if (!formId) continue;
 
           const response = await apiClient.get<FormDto>(`/forms/${formId}`, {
             params: {
@@ -121,6 +173,7 @@ function FormFieldResponsesOptions(props: Props) {
 
           const form = response.data;
           const fields = getFieldsFromForm(form);
+
           const hasLinkedField = fields.some(
             (field) => String(field.id) === String(linkedOptionsFieldId),
           );
@@ -156,7 +209,10 @@ function FormFieldResponsesOptions(props: Props) {
       ? allForms.filter((form) => form.id !== formStructure.metadata.id)
       : allForms;
 
-    return list.map((form) => ({ id: form.id.toString(), name: form.name }));
+    return list.map((form) => ({
+      id: form.id.toString(),
+      name: form.name,
+    }));
   }, [allForms, formStructure?.metadata?.id]);
 
   const { data: selectedForm, isLoading: isInitializing } = useGetForm({
@@ -187,19 +243,16 @@ function FormFieldResponsesOptions(props: Props) {
       fieldType.Link,
     ];
 
-    const filtered = fields.filter((field) =>
-      allowedTypes.some((type) => type === field.fieldType),
-    );
-
-    return filtered.map((field: FormFieldDto) => ({
-      id: field.id.toString(),
-      displayName: field.displayName,
-    }));
+    return fields
+      .filter((field) => allowedTypes.some((type) => type === field.fieldType))
+      .map((field) => ({
+        id: field.id.toString(),
+        displayName: field.displayName,
+      }));
   }, [selectedForm]);
 
   const selectedFieldOption = useMemo<ValidField | null>(() => {
     if (!selectedFieldId) return null;
-
     return availableFields.find((field) => field.id === selectedFieldId) ?? null;
   }, [availableFields, selectedFieldId]);
 
@@ -258,12 +311,12 @@ function FormFieldResponsesOptions(props: Props) {
             InputProps={{
               ...params.InputProps,
               endAdornment: (
-                <React.Fragment>
+                <>
                   {isLoadingForms || isInitializing ? (
                     <CircularProgress color="inherit" size={20} />
                   ) : null}
                   {params.InputProps.endAdornment}
-                </React.Fragment>
+                </>
               ),
             }}
           />
@@ -319,10 +372,49 @@ function FormFieldResponsesOptions(props: Props) {
     </FieldControl>
   );
 
+  const defaultValueSelect: JSX.Element = (
+    <FieldControl>
+      <Tooltip title={!selectedFieldId ? "יש לבחור שדה" : ""}>
+        <span style={{ display: "block" }}>
+          <Autocomplete
+            multiple={selectionMode === "multiple"}
+            options={defaultValueOptions}
+            getOptionLabel={(option) => option.text}
+            value={
+              selectionMode === "multiple"
+                ? selectedDefaultValueOptions
+                : selectedDefaultValueOptions[0] ?? null
+            }
+            loading={isLoadingDefaultValues}
+            loadingText="טוען..."
+            noOptionsText="אין ערכים זמינים"
+            disabled={!selectedFieldId}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            onChange={(_, value) => {
+              onChange({
+                defaultValue: Array.isArray(value)
+                  ? value.map((item) => item.id)
+                  : value
+                    ? [value.id]
+                    : [],
+              });
+            }}
+            ListboxComponent={Listbox}
+            ListboxProps={{ onLoadMore: loadMoreDefaultValues } as any}
+            renderInput={(params) => (
+              <TextField {...params} label="ברירת מחדל" variant="standard" />
+            )}
+          />
+        </span>
+      </Tooltip>
+    </FieldControl>
+  );
+
   return (
     <Container>
       {formSelector}
       {fieldSelect}
+      {defaultValueSelect}
     </Container>
   );
 }
