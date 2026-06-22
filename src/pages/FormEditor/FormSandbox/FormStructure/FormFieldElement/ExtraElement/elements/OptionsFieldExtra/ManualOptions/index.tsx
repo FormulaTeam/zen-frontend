@@ -365,10 +365,19 @@ function ManualOptions(props: Props) {
                     setDraftControlledFieldId(newValue ?? null);
                     setSelectedControlledItemIndex(0);
 
+                    const controllingItems =
+                      (newValue
+                        ? (
+                          formStructure.fields[newValue]?.data?.options as ManualItems | undefined
+                        )?.filter((item) => item.isActive !== false)
+                        : []) ?? [];
+
                     onDataChange?.({
                       options: items.map((item) => ({
                         ...item,
-                        controllingItemsIds: [],
+                        controllingItemsIds: controllingItems.map(
+                          (controllingItem) => controllingItem.id,
+                        ),
                       })),
                     });
                   }}
