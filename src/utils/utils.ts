@@ -1224,7 +1224,15 @@ export function generateNewFormFieldData(item: Partial<CustomFormField>) {
   }
 
   if (item.typeId === FieldTypeIds.location) {
-    newField.locationFormat = "utm";
+    const locationField = item as typeof item & {
+      locationFormat?: "utm" | "wkt";
+      extra?: {
+        locationFormat?: "utm" | "wkt";
+      };
+    };
+
+    newField.locationFormat =
+      locationField.locationFormat ?? locationField.extra?.locationFormat ?? "utm";
   }
 
   return newField;
