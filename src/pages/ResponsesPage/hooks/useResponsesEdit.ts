@@ -429,6 +429,7 @@ export const useResponsesEdit = () => {
   const { user } = useAuth();
 
   const [isInEditMode, setIsInEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editedRows, setEditedRows] = useState<Map<RowId, Row>>(new Map());
   const [localRows, setLocalRows] = useState<Row[]>([]);
   const [deletedRowIds, setDeletedRowIds] = useState<RowId[]>([]);
@@ -519,7 +520,6 @@ export const useResponsesEdit = () => {
 
     if (!nextEditMode) {
       setValidationErrors({});
-      newRowCounterRef.current = 0;
     }
   }, [isInEditMode, hasUnsavedChanges, responseRows]);
 
@@ -531,7 +531,6 @@ export const useResponsesEdit = () => {
     setShowCancelDialog(false);
     clearQuickEditDraft(dtoForm?.id);
     setValidationErrors({});
-    newRowCounterRef.current = 0;
   }, [responseRows, dtoForm?.id]);
 
   const closeCancelDialog = useCallback((): void => {
@@ -798,6 +797,12 @@ export const useResponsesEdit = () => {
   );
 
   const saveChanges = useCallback(async (): Promise<boolean> => {
+    if (isSaving) {
+      return false;
+    }
+
+    setIsSaving(true);
+
     try {
       if (!hasUnsavedChanges) {
         throw new NoUnsavedChangesError();
@@ -822,6 +827,7 @@ export const useResponsesEdit = () => {
       if (Object.keys(newValidationErrors).length > 0) {
         setValidationErrors(newValidationErrors);
         showErrorNotification("יש לתקן את השגיאות לפני השמירה");
+        setIsSaving(false);
         return false;
       }
 
@@ -956,8 +962,6 @@ export const useResponsesEdit = () => {
         } as any);
       }
 
-      newRowCounterRef.current = 0;
-
       const persistedLocalRows = localRows.filter((row) => !isTempRowId(row.id));
 
       setRows(persistedLocalRows as unknown as Parameters<typeof setRows>[0]);
@@ -970,8 +974,10 @@ export const useResponsesEdit = () => {
 
       showSuccessNotification("כל השינויים נשמרו בהצלחה!");
 
+      setIsSaving(false);
       return true;
     } catch (error) {
+      setIsSaving(false);
       if (error instanceof CustomError) {
         if (error instanceof NoUnsavedChangesError) {
           setShowCancelDialog(false);
@@ -988,6 +994,7 @@ export const useResponsesEdit = () => {
       return false;
     }
   }, [
+    isSaving,
     editedRows,
     deletedRowIds,
     hasUnsavedChanges,
@@ -1032,7 +1039,7 @@ export const useResponsesEdit = () => {
     validationErrors,
     handleCellLiveChange,
     handleDeleteResponses,
-    isUpdating: isUpdating || isCreating,
+    isUpdating: isUpdating || isCreating || isSaving,
     showCancelDialog,
     handleToggleEditMode: toggleEditMode,
     handleCellEditStart: startCellEdit,

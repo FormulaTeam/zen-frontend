@@ -1,6 +1,7 @@
 import React from "react";
-import { Box, Button } from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import { styled, useTheme } from "@mui/material/styles";
+import { Delete as DeleteIcon } from "@mui/icons-material";
 
 interface ConnectedFormHeaderProps {
   formsLength: number;
@@ -20,17 +21,6 @@ const ResponseLabel = styled(Box)`
   font-weight: 500;
 `;
 
-const DeleteButton = styled(Button)<{ $color: string; $hoverColor: string }>`
-  border-color: ${({ $color }) => $color};
-  color: ${({ $color }) => $color};
-  align-self: center;
-
-  &:hover {
-    border-color: ${({ $hoverColor }) => $hoverColor};
-    color: ${({ $hoverColor }) => $hoverColor};
-  }
-`;
-
 const ConnectedFormHeader: React.FC<ConnectedFormHeaderProps> = ({
   formsLength,
   index,
@@ -43,14 +33,26 @@ const ConnectedFormHeader: React.FC<ConnectedFormHeaderProps> = ({
     <HeaderContainer>
       <ResponseLabel>{formsLength > 1 ? `#תגובה ${index + 1}` : ""}</ResponseLabel>
       {!viewMode && (
-        <DeleteButton
-          $hoverColor={theme.palette.error.dark}
-          $color={theme.palette.error.main}
-          variant="outlined"
-          size="small"
-          onClick={onDelete}>
-          מחיקה
-        </DeleteButton>
+        <Tooltip title="מחיקה" arrow placement="top">
+          <IconButton
+            color="error"
+            size="small"
+            onClick={onDelete}
+            sx={{
+              alignSelf: "center",
+              border: `1px solid ${theme.palette.error.main}`,
+              borderRadius: "8px",
+              padding: "6px",
+              color: theme.palette.error.main,
+              "&:hover": {
+                borderColor: theme.palette.error.dark,
+                color: theme.palette.error.dark,
+                backgroundColor: "rgba(211, 47, 47, 0.04)",
+              },
+            }}>
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       )}
     </HeaderContainer>
   );

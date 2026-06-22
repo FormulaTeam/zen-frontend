@@ -35,6 +35,21 @@ interface Props {
 }
 
 function FormSectionElement({ id }: Props) {
+
+  const {
+    formStructure,
+    deleteSection,
+    renameSection,
+    toggleSectionExpanded,
+    deleteField,
+    setFieldData,
+  } = useFormStructureContext();
+
+  const { active: draggingElement } = useDndContext();
+
+  const self = formStructure.sections[id];
+  const activeElementType = (draggingElement?.data.current as DraggableElementData | undefined)?.elementType;
+
   const {
     attributes,
     listeners,
@@ -48,18 +63,8 @@ function FormSectionElement({ id }: Props) {
     id,
     data: { elementType: "section" } as DraggableElementData,
     resizeObserverConfig: undefined as any,
+    disabled: activeElementType !== undefined && activeElementType !== "section",
   });
-
-  const {
-    formStructure,
-    deleteSection,
-    renameSection,
-    toggleSectionExpanded,
-    deleteField,
-    setFieldData,
-  } = useFormStructureContext();
-
-  const { active: draggingElement } = useDndContext();
 
   const { originalFieldIds } = useContext(FormEditorContext) || {};
   const { requestConfirm, ConfirmDialog } = useConfirmDeleteExistingField();
@@ -70,8 +75,6 @@ function FormSectionElement({ id }: Props) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [isTitleHovered, setIsTitleHovered] = useState(false);
-
-  const self = useMemo(() => formStructure.sections[id], [formStructure.sections, id]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -328,28 +331,27 @@ function FormSectionElement({ id }: Props) {
         {...attributes}>
         <StyledAccordionSummary
           ref={setActivatorNodeRef}
-          onClick={(e) => e.preventDefault()}
           {...listeners}>
           <div className={styles.title}>{sectionTitle}</div>
           {toggleExpandButton}
           {deleteSectionButton}
         </StyledAccordionSummary>
 
-        <SortableContext
-          items={formStructure.sections[id].fieldIds}
-          strategy={verticalListSortingStrategy}
-          disabled={
-            (draggingElement?.data.current as DraggableElementData)?.elementType === "section"
-          }>
-          <StyledResizable
-            minHeight={200}
-            enable={{ bottom: true }}
-            handleComponent={{
-              bottom: resizeHandle,
-            }}>
-            {self.fieldIds.length ? fieldsList : emptyPlaceholder}
-          </StyledResizable>
-        </SortableContext>
+        {self.expanded && (
+          <SortableContext
+            items={self.fieldIds}
+            strategy={verticalListSortingStrategy}
+            disabled={activeElementType === "section"}>
+            <StyledResizable
+              minHeight={200}
+              enable={{ bottom: true }}
+              handleComponent={{
+                bottom: resizeHandle,
+              }}>
+              {self.fieldIds.length ? fieldsList : emptyPlaceholder}
+            </StyledResizable>
+          </SortableContext>
+        )}
       </StyledAccordion>
     </>
   );
