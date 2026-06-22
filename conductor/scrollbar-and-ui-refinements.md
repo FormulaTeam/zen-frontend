@@ -18,6 +18,7 @@ This task involved removing scrollbars from the entire system while preserving t
 ### 3. Form Editor Fixes
 - **Section Rename Bug**: Added a visible placeholder ("מקטע ללא שם") for empty section names to ensure they remain clickable and editable.
 - **Placeholder Styling**: Added italicized and greyed-out styling for the empty section title placeholder.
+- **Tall Section Spacing**: Added a generous bottom padding (`padding-bottom: 40vh`) to the scroll container (`FormStructureContainer`) to ensure there is sufficient space below tall sections when scrolling.
 
 ### 4. Responses Page Layout
 - **Search Bar Repositioning**: Moved the response search bar from the middle of the second line to the left side of the third line (next to view management).
@@ -46,6 +47,7 @@ This task involved removing scrollbars from the entire system while preserving t
 - [x] "Create New Form" button uses the correct system font.
 - [x] Easter egg triggers pink navbar when title matches "נפל לך הקליפס".
 - [x] "תגובת אב" column appears as the last column when parent responses exist.
+- [x] Tall sections have sufficient scrollable bottom padding/spacing below them in the Form Editor.
 
 
 

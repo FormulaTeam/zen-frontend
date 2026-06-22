@@ -103,8 +103,8 @@ export const getDeletedForms = async (filter?: Filter): Promise<FormDto[]> => {
     search: searchParam,
     sortBy: sortBy,
     orderBy: filter?.orderBy,
-    pageSize: filter?.pageSize,
-    pageNumber: filter?.pageNumber,
+    limit: filter?.pageSize,
+    offset: filter?.pageNumber !== undefined && filter?.pageSize !== undefined ? (filter.pageNumber - 1) * filter.pageSize : undefined,
   };
 
   try {
