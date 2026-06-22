@@ -386,8 +386,8 @@ function ManualOptions(props: Props) {
                       {...params}
                       disabled={!otherManualOptionsFieldsIds.length}
                       label={
-                        <Tooltip title={"שדה אפשרויות נשלט"}>
-                          <span>שדה אפשרויות נשלט</span>
+                        <Tooltip title={"שדה אפשרויות מוביל"}>
+                          <span>שדה אפשרויות מוביל</span>
                         </Tooltip>
                       }
                       variant="standard"
