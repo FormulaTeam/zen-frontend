@@ -1,25 +1,16 @@
 import { useQuery, UseQueryOptions, UseQueryResult, useMutation } from "@tanstack/react-query";
 import { CreateFormSchema, formsScopeOption } from "formula-gear";
-import { useMemo } from "react";
 import { z } from "zod";
 import { ComparatorsByFieldTypeDto, FormDto, FormOverviewDto } from "../types/shared";
 import {
   Filter,
-  Form,
   MetroReturnedData,
-  NewForm,
-  UpdateFormPayload,
   User,
 } from "../utils/interfaces";
 import { useCreate } from "../utils/useCreate";
 import { useFetch } from "../utils/useFetch";
 import apiClient from "./config";
 import queryClient from "./queryClient";
-
-const stringifyQuery = (query: any): string => {
-  if (query && typeof query === "object") return JSON.stringify(query);
-  return query || "";
-};
 
 /**
  * Fetch all forms with optional query parameters.

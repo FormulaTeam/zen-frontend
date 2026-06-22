@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fieldType } from "formula-gear";
-import type { FormDto, FormFieldDto, ResponseDto, UserRoleDto } from "../types/shared";
+import type { FormFieldDto } from "../types/shared";
 import { NotificationTexts } from "../utils/interfaces";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
-import { deleteResponse, getForms, getLinkableForms, getResponses, getResponseById } from "../api";
+import { deleteResponse, getLinkableForms, getResponseById } from "../api";
 import { User } from "../contexts/AuthContext";
 
 type ChildFormChildProps = FormFieldDto & {
@@ -122,6 +122,11 @@ export const useChildForms = ({
     [connectedFields],
   );
 
+  const childFormIdsKey = useMemo(
+    () => childFormIds.join(","),
+    [childFormIds],
+  );
+
   useEffect(() => {
     if (lastViewModeRef.current !== viewMode) {
       lastLoadedSavedParentRef.current = undefined;
@@ -224,29 +229,29 @@ export const useChildForms = ({
         const parentResponse = await getResponseById(Number(formId), id);
         const linkedChildResponses = (parentResponse as any).childResponses ?? [];
 
-          const childResponses = childFormIds
-            .filter((childFormId) => availableChildFormIds.has(childFormId))
-            .map((childFormId) => {
-              const templateField = connectedFields.find(
-                (field) => getLinkedFormId(field) === childFormId,
-              );
+        const childResponses = childFormIds
+          .filter((childFormId) => availableChildFormIds.has(childFormId))
+          .map((childFormId) => {
+            const templateField = connectedFields.find(
+              (field) => getLinkedFormId(field) === childFormId,
+            );
 
-              const matchingResponses = linkedChildResponses.filter(
-                (response) => Number(response.formId || response.form_id) === Number(childFormId),
-              );
+            const matchingResponses = linkedChildResponses.filter(
+              (response) => Number(response.formId || response.form_id) === Number(childFormId),
+            );
 
-              const children = templateField
-                ? matchingResponses.map((response) => createChildInstance(templateField, response.id))
-                : [];
+            const children = templateField
+              ? matchingResponses.map((response) => createChildInstance(templateField, response.id))
+              : [];
 
-              return {
-                formId: childFormId,
-                children,
-                saved: [] as Array<boolean | undefined>,
-                valid: [] as Array<boolean | undefined>,
-                shown: children.length > 0,
-              };
-            });
+            return {
+              formId: childFormId,
+              children,
+              saved: [] as Array<boolean | undefined>,
+              valid: [] as Array<boolean | undefined>,
+              shown: children.length > 0,
+            };
+          });
 
         setChildForms((prev) =>
           childResponses.map((nextChildForm) => {
@@ -273,7 +278,7 @@ export const useChildForms = ({
     };
 
     void loadChildForms();
-  }, [childFormIds, connectedFields, id, formId, isSuperAdmin, user, copyMode, viewMode]);
+  }, [childFormIdsKey, id, formId, isSuperAdmin, user, copyMode, viewMode]);
 
   useEffect(() => {
     const runSaveAllOnce = async () => {
