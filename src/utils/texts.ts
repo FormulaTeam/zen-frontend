@@ -20,7 +20,7 @@ export const texts = {
     emptyFormAlert: "יש למלא שם טופס בעברית",
     emptySectionAlert: "מקטע חייב להכיל לפחות שדה אחד",
     noHebrewTextAlert: "שם הטופס מורכב מאותיות שאינן עברית",
-    fiveLettersMinAlert: "שם הטופס קצר מחמש אותיות",
+    fiveLettersMinAlert: "שם הטופס קצר מחמישה תווים",
     formNameLabel: "שם טופס",
     onlyHebrewError: "ניתן להזין רק אותיות בעברית",
     noDescription: "ללא תיאור",
