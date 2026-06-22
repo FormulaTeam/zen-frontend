@@ -28,6 +28,7 @@ import {
   TopSection,
   MetadataLine,
   ActionLine,
+  UnifiedButton,
 } from "./styled";
 import { FormDto, FormFieldDto } from "../../types/shared";
 import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner";
@@ -428,38 +429,42 @@ const ResponsesPageContent = (): JSX.Element => {
                 <Box
                   style={{
                     position: "relative",
-                    width: 44,
-                    height: 44,
+                    width: 40,
+                    height: 40,
                     flexShrink: 0,
                     overflow: "visible",
                   }}>
                   <Tooltip title={showFilters ? "הסתר סינון" : "הצג סינון"} arrow>
-                    <IconButton
+                    <UnifiedButton
                       aria-label={showFilters ? "הסתר סינון" : "הצג סינון"}
                       onClick={handleToggleFilters}
                       sx={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: "14px",
-                        backgroundColor: ACTION_BUTTON_BACKGROUND,
-                        color: "#020618",
-                        border: "none",
-                        boxShadow: "none",
+                        minWidth: "40px",
+                        width: "40px",
+                        height: "40px",
+                        padding: 0,
+                        backgroundColor: `${ACTION_BUTTON_BACKGROUND} !important`,
+                        border: "none !important",
+                        borderColor: "transparent !important",
+                        boxShadow: "none !important",
 
                         "&:hover": {
-                          backgroundColor: ACTION_BUTTON_HOVER_BACKGROUND,
-                          border: "none",
-                          boxShadow: "none",
+                          backgroundColor: `${ACTION_BUTTON_HOVER_BACKGROUND} !important`,
+                          border: "none !important",
+                          borderColor: "transparent !important",
+                          boxShadow: "none !important",
                         },
 
                         "&:focus, &:focus-visible": {
-                          outline: "none",
-                          border: "none",
-                          boxShadow: "none",
+                          outline: "none !important",
+                          backgroundColor: `${ACTION_BUTTON_BACKGROUND} !important`,
+                          border: "none !important",
+                          borderColor: "transparent !important",
+                          boxShadow: "none !important",
                         },
                       }}>
                       <FilterListRoundedIcon fontSize="small" />
-                    </IconButton>
+                    </UnifiedButton>
                   </Tooltip>
 
                   {activeFiltersCount > 0 && (
