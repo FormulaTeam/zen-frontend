@@ -132,10 +132,10 @@ export interface UserPickerOption {
 }
 
 export const sortByOptions: any[] = [
-  { value: 5, label: "מועד יצירה (חדש-ישן)" },
-  { value: 6, label: "מועד יצירה (ישן-חדש)" },
-  { value: 1, label: "שם הטופס (א-ת)" },
-  { value: 2, label: "שם הטופס (ת-א)" },
+  { value: 1, label: "מועד יצירה (חדש-ישן)" },
+  { value: 2, label: "מועד יצירה (ישן-חדש)" },
+  { value: 3, label: "שם הטופס (א-ת)" },
+  { value: 4, label: "שם הטופס (ת-א)" },
 ];
 
 export const permissionsOptions = [
