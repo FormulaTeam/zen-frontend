@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import ReactLoading from "react-loading";
 import Grid from "@mui/material/Grid";
 import { Box, IconButton, Tab, Tabs, Tooltip, Typography, useTheme } from "@mui/material";
@@ -46,8 +46,34 @@ function MainPage({
   setShouldRefreshPage,
   resetSearchValue,
 }) {
-  const [sortBy, setSortBy] = useState<FormsSortOption>(formsSortOption.CreatedAt);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(sortDirectionOption.Descending);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sortByParam = searchParams.get("sortBy") as FormsSortOption | null;
+  const sortDirectionParam = searchParams.get("sortDirection") as SortDirection | null;
+
+  const getInitialSortBy = (): FormsSortOption => {
+    if (sortByParam && Object.values(formsSortOption).includes(sortByParam)) {
+      return sortByParam;
+    }
+    const stored = sessionStorage.getItem("formula-forms-sort-by") as FormsSortOption | null;
+    if (stored && Object.values(formsSortOption).includes(stored)) {
+      return stored;
+    }
+    return formsSortOption.CreatedAt;
+  };
+
+  const getInitialSortDirection = (): SortDirection => {
+    if (sortDirectionParam && Object.values(sortDirectionOption).includes(sortDirectionParam)) {
+      return sortDirectionParam;
+    }
+    const stored = sessionStorage.getItem("formula-forms-sort-direction") as SortDirection | null;
+    if (stored && Object.values(sortDirectionOption).includes(stored)) {
+      return stored;
+    }
+    return sortDirectionOption.Descending;
+  };
+
+  const [sortBy, setSortBy] = useState<FormsSortOption>(getInitialSortBy());
+  const [sortDirection, setSortDirection] = useState<SortDirection>(getInitialSortDirection());
 
   const { isSuperAdmin } = useSuperAdmin();
   const navigate = useNavigate();
@@ -56,6 +82,25 @@ function MainPage({
   const { data: myPersonal } = useGetMyPersonal({ enabled: !!user });
 
   const { scope, setScope } = useFormsScope({ isSuperAdmin: !!isSuperAdmin });
+
+  useEffect(() => {
+    let activeSortBy = sortByParam;
+    let activeSortDirection = sortDirectionParam;
+
+    if (!activeSortBy) {
+      activeSortBy = sessionStorage.getItem("formula-forms-sort-by") as FormsSortOption | null;
+    }
+    if (!activeSortDirection) {
+      activeSortDirection = sessionStorage.getItem("formula-forms-sort-direction") as SortDirection | null;
+    }
+
+    if (activeSortBy && Object.values(formsSortOption).includes(activeSortBy)) {
+      setSortBy(activeSortBy);
+    }
+    if (activeSortDirection && Object.values(sortDirectionOption).includes(activeSortDirection)) {
+      setSortDirection(activeSortDirection);
+    }
+  }, [sortByParam, sortDirectionParam]);
 
   const { formsData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetFormsData({
     scope: scope,
@@ -76,6 +121,19 @@ function MainPage({
   const handleSortChange = (newSortBy: FormsSortOption, newSortDirection: SortDirection) => {
     setSortBy(newSortBy);
     setSortDirection(newSortDirection);
+
+    sessionStorage.setItem("formula-forms-sort-by", newSortBy);
+    sessionStorage.setItem("formula-forms-sort-direction", newSortDirection);
+
+    setSearchParams(
+      (prev) => {
+        const updated = new URLSearchParams(prev);
+        updated.set("sortBy", newSortBy);
+        updated.set("sortDirection", newSortDirection);
+        return updated;
+      },
+      { replace: true }
+    );
   };
 
   // Queries to determine if the user has NO forms at all in any category
@@ -153,7 +211,12 @@ function MainPage({
               onChange={setScope}
               isSuperAdmin={!!isSuperAdmin}
             />
-            <MainSortSelect onSortChange={handleSortChange} dataTestId="sort-forms" />
+            <MainSortSelect
+              sortBy={sortBy}
+              sortDirection={sortDirection}
+              onSortChange={handleSortChange}
+              dataTestId="sort-forms"
+            />
           </SortControlsBox>
         </RowBox>
       </Box>

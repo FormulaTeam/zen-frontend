@@ -1,26 +1,25 @@
 import { MenuItem, SelectChangeEvent } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { useState } from "react";
 
 import { sortByOptions } from "../../utils/utils";
-import { FormsSortOption, SortDirection, sortValueToEnums } from "./sortUtils";
+import { FormsSortOption, SortDirection, getSortConfigByValue, getSortValueByEnums } from "./sortUtils";
 import { StyledFormControl, StyledSelect } from "./styled";
 
 interface MainSortSelectProps {
+  sortBy: FormsSortOption;
+  sortDirection: SortDirection;
   onSortChange: (sortBy: FormsSortOption, sortDirection: SortDirection) => void;
   dataTestId?: string;
 }
 
-const MainSortSelect = ({ onSortChange, dataTestId }: MainSortSelectProps) => {
-  const [sortValue, setSortValue] = useState<number>(5);
+const MainSortSelect = ({ sortBy, sortDirection, onSortChange, dataTestId }: MainSortSelectProps) => {
+  const sortValue = getSortValueByEnums(sortBy, sortDirection);
 
   const handleChange = (event: SelectChangeEvent<number>) => {
     const value = event.target.value as number;
-    setSortValue(value);
-
-    const mapped = sortValueToEnums[value];
-    if (mapped) {
-      onSortChange(mapped.sortBy, mapped.sortDirection);
+    const config = getSortConfigByValue(value);
+    if (config) {
+      onSortChange(config.sortBy, config.sortDirection);
     }
   };
 
