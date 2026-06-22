@@ -23,7 +23,7 @@ const StyledDialog = styled(Dialog)(() => ({
     maxWidth: "540px",
     width: "calc(100% - 40px)",
     maxHeight: "min(620px, calc(100vh - 80px))",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#F1F5F9",
     boxShadow: "0 20px 55px rgba(15, 23, 42, 0.18), 0 8px 22px rgba(15, 23, 42, 0.08)",
     overflow: "hidden",
   },

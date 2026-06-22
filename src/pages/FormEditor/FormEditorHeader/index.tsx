@@ -260,7 +260,9 @@ function FormEditorHeader() {
     }
 
     if (metadataErrors?.title && title.trim() === "") {
-      setSuggestedTitle(DEFAULT_UNTITLED_FORM_TITLE);
+      const defaultTitle = DEFAULT_UNTITLED_FORM_TITLE;
+      setFormMetadata({ title: defaultTitle });
+      setSuggestedTitle(defaultTitle);
       setSaveOptionsAfterTitlePopup(options ?? {});
       setShowUntitledFormPopup(true);
       return;
@@ -580,14 +582,26 @@ function FormEditorHeader() {
           fullWidth
           placeholder="שם הטופס"
           value={suggestedTitle}
-          onChange={(e) => setSuggestedTitle(e.target.value.trimStart())}
+          onChange={(e) => {
+            const nextVal = e.target.value.trimStart();
+            setSuggestedTitle(nextVal);
+            setFormMetadata({ title: nextVal });
+          }}
           onBlur={(e) => setSuggestedTitle(e.target.value.trim())}
           variant="outlined"
+          error={!!validationErrors?.title}
           inputProps={{
             maxLength: 60,
           }}
           className={styles.untitledFormTextField}
         />
+        <div className={styles.untitledFormPopupErrorContainer}>
+          {validationErrors?.title && (
+            <Typography variant="body2" color="error" className={styles.untitledFormPopupErrorText}>
+              {validationErrors.title[0]}
+            </Typography>
+          )}
+        </div>
       </DialogContent>
 
       <DialogActions className={styles.untitledFormDialogActions}>

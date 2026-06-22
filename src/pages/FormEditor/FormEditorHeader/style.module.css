@@ -155,7 +155,6 @@
 
 .untitledFormTextField {
   width: 100% !important;
-  height: 48px !important;
 }
 
 .untitledFormTextField :global(.MuiOutlinedInput-root) {
@@ -214,4 +213,16 @@
   border-color: #cbd5e1 !important;
   background-color: #ffffff !important;
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.1) !important;
+}
+
+.untitledFormPopupErrorContainer {
+  height: 28px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.untitledFormPopupErrorText {
+  font-size: 15px !important;
+  font-weight: 500 !important;
 }
