@@ -85,11 +85,33 @@ function ManualOptions(props: Props) {
     );
   }), [formStructure.fields, id]);
 
+  const inferredControlledFieldId = useMemo(() => {
+    const controllingItemsIds = new Set(
+      items.flatMap((item) => item.controllingItemsIds ?? []),
+    );
+
+    if (!controllingItemsIds.size) {
+      return undefined;
+    }
+
+    return otherManualOptionsFieldsIds.find((candidateFieldId) => {
+      const candidateItems =
+        formStructure.fields[candidateFieldId]?.data?.options as ManualItems | undefined;
+
+      return candidateItems?.some((candidateItem) =>
+        controllingItemsIds.has(candidateItem.id),
+      );
+    });
+  }, [items, otherManualOptionsFieldsIds, formStructure.fields]);
+
+  const [draftControlledFieldId, setDraftControlledFieldId] = useState<string | undefined>();
+
+  const controlledFieldId = draftControlledFieldId ?? inferredControlledFieldId;
   const definedItems = useMemo(() => items?.filter((item) => !!item.text), [items]);
 
   useEffect(() => {
-    if (!currentField?.data?.options) {
-      updateOptionsData(items);
+    if (!currentField?.data?.options?.length) {
+      updateOptionsData([generateEmptyItem(), generateEmptyItem()]);
     }
   }, []);
 
@@ -101,16 +123,15 @@ function ManualOptions(props: Props) {
   }, [mode]);
 
   const controllingFieldItems = useMemo(() => {
-    const linkedOptionsFieldId = extra.linkedOptionsFieldId;
-    if (!linkedOptionsFieldId) return undefined;
+    if (!controlledFieldId) return undefined;
 
-    const linkedField = formStructure.fields[linkedOptionsFieldId];
+    const linkedField = formStructure.fields[controlledFieldId];
     const parentRawItems = (linkedField?.data?.options as ManualItems) ?? [];
     const parentInactiveOptionIds = (linkedField?.data?.extra as any)?.inactiveOptionIds ?? [];
     return parentRawItems
       .filter((item) => !parentInactiveOptionIds.includes(item.id))
       .filter((item) => !!item.text?.length);
-  }, [extra.linkedOptionsFieldId, formStructure.fields]);
+  }, [controlledFieldId, formStructure.fields]);
 
   const handleItemChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number, item: ArrayElement<ManualItems>) => {
     const newText = e.target.value.trimStart();
@@ -201,7 +222,7 @@ function ManualOptions(props: Props) {
           }
         }}
         isSelectedControlledItem={
-          !!extra.linkedOptionsFieldId ?
+          !!controlledFieldId ?
             selectedControlledItemIndex === index :
             undefined
         }
@@ -209,13 +230,13 @@ function ManualOptions(props: Props) {
           setSelectedControlledItemIndex(index);
         }} />
     ))
-  ), [items, validationErrors, handleItemChange, updateOptionsData, onChange, defaultValue, extra.linkedOptionsFieldId, selectedControlledItemIndex, originalItemTexts, handleItemBlur]);
+  ), [items, validationErrors, handleItemChange, updateOptionsData, onChange, defaultValue, controlledFieldId, selectedControlledItemIndex, originalItemTexts, handleItemBlur]);
 
   return (
     <>
       <div className={styles.controllingFieldContainer}>
         <div className={styles.controllingFieldWrapper}
-          style={{ borderColor: extra.linkedOptionsFieldId ? "#e1e7ec" : "transparent" }}>
+          style={{ borderColor: controlledFieldId ? "#e1e7ec" : "transparent" }}>
           <Tooltip title={!otherManualOptionsFieldsIds.length ? "לא קיים שדה אפשרויות נוסף" : ""} placement="top">
             <span style={{ flex: 1, display: 'flex' }}>
               <FormControl className={styles.controllingFieldFormControl}
@@ -224,11 +245,17 @@ function ManualOptions(props: Props) {
                   disabled={!otherManualOptionsFieldsIds.length}
                   options={otherManualOptionsFieldsIds}
                   getOptionLabel={(option) => formStructure.fields[option]?.data?.displayName || ""}
-                  value={extra.linkedOptionsFieldId || null}
                   noOptionsText={"לא נמצאו שדות מתאימים"}
+                  value={controlledFieldId || null}
                   onChange={(_, newValue) => {
-                    onChange({
-                      linkedOptionsFieldId: newValue || undefined,
+                    setDraftControlledFieldId(newValue ?? undefined);
+                    setSelectedControlledItemIndex(0);
+
+                    onDataChange?.({
+                      options: items.map((item) => ({
+                        ...item,
+                        controllingItemsIds: [],
+                      })),
                     });
                   }}
                   renderInput={(params) => (
@@ -248,11 +275,16 @@ function ManualOptions(props: Props) {
             </span>
           </Tooltip>
           {
-            extra.linkedOptionsFieldId &&
+            controlledFieldId &&
             <Button className={styles.button}
-              onClick={(_) => {
-                onChange({
-                  linkedOptionsFieldId: undefined,
+              onClick={() => {
+                setDraftControlledFieldId(undefined);
+
+                onDataChange?.({
+                  options: items.map((item) => ({
+                    ...item,
+                    controllingItemsIds: [],
+                  })),
                 });
               }}>
               <Close sx={{ fontSize: 20, color: "#a54160" }} />
@@ -260,10 +292,10 @@ function ManualOptions(props: Props) {
           }
         </div>
         {
-          extra.linkedOptionsFieldId &&
+          controlledFieldId &&
           <div className={styles.controllingFieldConnector} />
         }
-      </div>
+      </div >
 
       <div className={styles.itemsContainer}>
         <div>
