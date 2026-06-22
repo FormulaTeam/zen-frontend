@@ -100,20 +100,7 @@ const optionAutocompleteSlotProps = {
   clearIndicator: {
     title: "",
     sx: {
-      width: 20,
-      height: 20,
-      padding: 0,
-      margin: 0,
-      color: "#64748b",
-
-      "& .MuiSvgIcon-root": {
-        fontSize: 16,
-      },
-
-      "&:hover": {
-        backgroundColor: "#f1f5f9",
-        color: "#334155",
-      },
+      display: "none",
     },
   },
   popupIndicator: {
