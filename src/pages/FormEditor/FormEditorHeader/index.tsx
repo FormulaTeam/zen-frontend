@@ -355,13 +355,13 @@ function FormEditorHeader() {
       <div
         onClick={() => setShowPickIcon(true)}
         style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
-        <IconComponent color="primary" style={{ fontSize: 40 }} />
+        <IconComponent color="primary" style={{ fontSize: 56 }} />
       </div>
     );
   };
 
   const formIcon: JSX.Element = (
-    <div className={styles.formIconWrapper}>
+    <div className={`${styles.formIconWrapper} ${isEditingMetadata ? styles.formIconWrapperEditing : ""}`}>
       <Tooltip title="לחץ על מנת לשנות אייקון">
         {isEditingMetadata ? renderIcon(editedMetadata.iconId) : renderIcon(iconId)}
       </Tooltip>
@@ -486,18 +486,20 @@ function FormEditorHeader() {
           </OverflowTooltip>
         )}
 
-        <div className={styles.formErrorContainer}>
-          {validationErrors?.title ? (
-            <Typography variant="body2" color="error">
-              {validationErrors.title[0]}
-            </Typography>
-          ) : null}
-          {validationErrors?.description ? (
-            <Typography variant="body2" color="error">
-              {validationErrors.description[0]}
-            </Typography>
-          ) : null}
-        </div>
+        {(validationErrors?.title || validationErrors?.description) && (
+          <div className={styles.formErrorContainer}>
+            {validationErrors?.title ? (
+              <Typography variant="body2" color="error">
+                {validationErrors.title[0]}
+              </Typography>
+            ) : null}
+            {validationErrors?.description ? (
+              <Typography variant="body2" color="error">
+                {validationErrors.description[0]}
+              </Typography>
+            ) : null}
+          </div>
+        )}
       </MetadataContainer>
     </Tooltip>
   );

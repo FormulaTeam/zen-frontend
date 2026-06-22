@@ -4,6 +4,7 @@ import { alpha } from "@mui/material/styles";
 export const MetadataContainer = styled(Box)({
   flex: 1,
   minWidth: 0,
+  position: "relative",
 });
 
 export const SeamlessTitleInput = styled(InputBase)(({ theme }) => ({
