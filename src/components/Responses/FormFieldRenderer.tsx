@@ -328,12 +328,26 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       const parentDependencies = getParentDependencies(formField);
 
       const childOptionItemsForCheck = getFieldOptionItems(formField, true);
-      const hasControllingItems = childOptionItemsForCheck.some(
+      const fieldIsDependentByControllingItems = childOptionItemsForCheck.some(
         (opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0,
       );
 
-      // Detect if this field is a dependent by finding a controlling field that points to it
-      const controllingFieldForThisField = !hasControllingItems
+      const inferredParentFieldByControllingItems = fieldIsDependentByControllingItems
+        ? formFields.find((candidateField) => {
+          if (candidateField.id === fieldId) return false;
+
+          const candidateOptionIds = getFieldOptions(candidateField);
+
+          return childOptionItemsForCheck.some((childOption) =>
+            (childOption.controllingItemsIds ?? []).some((controllingItemId) =>
+              candidateOptionIds.includes(controllingItemId),
+            ),
+          );
+        }) ?? null
+        : null;
+
+      // Detect legacy dependency by finding a controlling field that points to this field.
+      const controllingFieldForThisField = !fieldIsDependentByControllingItems
         ? formFields.find((f) => {
           const extra = getFieldExtra(f);
           return (
@@ -350,11 +364,12 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       const parentFieldId =
         formFieldExtra.parentFieldId ??
         (linkedFieldExists ? formFieldExtra.linkedOptionsFieldId : null) ??
+        inferredParentFieldByControllingItems?.id ??
         controllingFieldForThisField?.id ??
         null;
 
-      // Only enter the filtering block if this field is a dependent (not a controlling field).
-      if (parentFieldId && !hasControllingItems && (parentDependencies.length > 0 || true)) {
+      // Enter the filtering block only when this field has a parent/dependency source.
+      if (parentFieldId) {
         const parentField = formFields.find(
           (candidateField) => candidateField.id === parentFieldId,
         );
@@ -465,6 +480,14 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
                     }
                   });
                 }
+              }
+            });
+          } else if (fieldIsDependentByControllingItems) {
+            childOptionItemsForCheck.forEach((childOption) => {
+              const controllingIds = childOption.controllingItemsIds ?? [];
+
+              if (controllingIds.some((controllingId) => parentValues.includes(controllingId))) {
+                allowedOptions.add(childOption.id);
               }
             });
           } else if (parentField) {
@@ -799,6 +822,20 @@ const shouldSkipRerenderHOF = (
     (opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0,
   );
 
+  const inferredParentFieldForRerender = fieldHasControllingItems
+    ? prevProps.formFields.find((candidateField) => {
+      if (candidateField.id === fieldId) return false;
+
+      const candidateOptionIds = getFieldOptions(candidateField);
+
+      return childOptionItemsForCheck.some((childOption) =>
+        (childOption.controllingItemsIds ?? []).some((controllingItemId) =>
+          candidateOptionIds.includes(controllingItemId),
+        ),
+      );
+    }) ?? null
+    : null;
+
   const controllingFieldForRerender = !fieldHasControllingItems
     ? prevProps.formFields.find((f) => {
       const extra = getFieldExtra(f);
@@ -813,14 +850,12 @@ const shouldSkipRerenderHOF = (
     (f) => String(f.id) === String(prevExtra.linkedOptionsFieldId),
   );
 
-  const parentId = fieldHasControllingItems
-    ? (prevExtra.parentFieldId ?? null)
-    : (
-      prevExtra.parentFieldId ??
-      (linkedFieldExists ? prevExtra.linkedOptionsFieldId : null) ??
-      controllingFieldForRerender?.id ??
-      null
-    );
+  const parentId =
+    prevExtra.parentFieldId ??
+    (linkedFieldExists ? prevExtra.linkedOptionsFieldId : null) ??
+    inferredParentFieldForRerender?.id ??
+    controllingFieldForRerender?.id ??
+    null;
 
   let parentValueChanged = false;
 
@@ -835,4 +870,4 @@ const shouldSkipRerenderHOF = (
   );
 };
 
-export default React.memo(FormFieldRenderer);
+export default FormFieldRenderer;
