@@ -118,105 +118,111 @@ const getTextFieldSx = ({
   hasError,
   isMultiSelect,
   hasSelectedValue,
+  isSearching,
 }: {
   hasError: boolean;
   isMultiSelect: boolean;
   hasSelectedValue: boolean;
-}) => ({
-  "& .MuiInputBase-root": {
-    minHeight: "36px",
-    borderRadius: "8px",
-    border: "1px solid",
-    borderColor: hasError ? "#d32f2f" : "#d8dee9",
-    backgroundColor: "#fff",
-    fontSize: "0.95rem",
-    direction: "rtl",
-    boxShadow: "none",
-    transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
-    display: "flex",
-    flexDirection: "row-reverse",
+  isSearching: boolean;
+}) => {
+  const shouldHideInput = hasSelectedValue && !isSearching;
 
-    ...(isMultiSelect
-      ? {
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-          gap: "5px",
-          maxHeight: "140px",
-          overflowY: "auto",
-          overflowX: "hidden",
-          padding: "6px 8px !important",
-          overscrollBehavior: "contain",
-          scrollbarWidth: "thin",
-          scrollbarColor: "#cbd5e1 transparent",
-
-          "&::-webkit-scrollbar": {
-            width: "8px",
-          },
-
-          "&::-webkit-scrollbar-track": {
-            backgroundColor: "transparent",
-          },
-
-          "&::-webkit-scrollbar-thumb": {
-            backgroundColor: "#cbd5e1",
-            borderRadius: "999px",
-            border: "2px solid #ffffff",
-          },
-
-          "&::-webkit-scrollbar-thumb:hover": {
-            backgroundColor: "#94a3b8",
-          },
-        }
-      : {
-          alignItems: "center",
-          flexWrap: "nowrap",
-          maxHeight: "120px",
-          overflowY: hasSelectedValue ? "auto" : "hidden",
-          overflowX: "hidden",
-          padding: hasSelectedValue ? "6px 8px !important" : "0 8px !important",
-        }),
-
-    "&:hover": {
-      borderColor: hasError ? "#d32f2f" : "#cbd5e1",
+  return {
+    "& .MuiInputBase-root": {
+      minHeight: "36px",
+      borderRadius: "8px",
+      border: "1px solid",
+      borderColor: hasError ? "#d32f2f" : "#d8dee9",
       backgroundColor: "#fff",
+      fontSize: "0.95rem",
+      direction: "rtl",
+      boxShadow: "none",
+      transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
+      display: "flex",
+      flexDirection: "row-reverse",
+
+      ...(isMultiSelect
+        ? {
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            gap: "5px",
+            maxHeight: "140px",
+            overflowY: "auto",
+            overflowX: "hidden",
+            padding: "6px 8px !important",
+            overscrollBehavior: "contain",
+            scrollbarWidth: "thin",
+            scrollbarColor: "#cbd5e1 transparent",
+
+            "&::-webkit-scrollbar": {
+              width: "8px",
+            },
+
+            "&::-webkit-scrollbar-track": {
+              backgroundColor: "transparent",
+            },
+
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: "#cbd5e1",
+              borderRadius: "999px",
+              border: "2px solid #ffffff",
+            },
+
+            "&::-webkit-scrollbar-thumb:hover": {
+              backgroundColor: "#94a3b8",
+            },
+          }
+        : {
+            alignItems: "center",
+            flexWrap: "nowrap",
+            maxHeight: "120px",
+            overflowY: hasSelectedValue ? "auto" : "hidden",
+            overflowX: "hidden",
+            padding: hasSelectedValue ? "6px 8px !important" : "0 8px !important",
+          }),
+
+      "&:hover": {
+        borderColor: hasError ? "#d32f2f" : "#cbd5e1",
+        backgroundColor: "#fff",
+      },
+
+      "&.Mui-focused": {
+        borderColor: hasError ? "#d32f2f" : "#7c9cc9",
+        boxShadow: hasError
+          ? "0 0 0 2px rgba(211, 47, 47, 0.12)"
+          : "0 0 0 2px rgba(124, 156, 201, 0.14)",
+      },
+
+      "&::before, &::after": {
+        display: "none",
+      },
     },
 
-    "&.Mui-focused": {
-      borderColor: hasError ? "#d32f2f" : "#7c9cc9",
-      boxShadow: hasError
-        ? "0 0 0 2px rgba(211, 47, 47, 0.12)"
-        : "0 0 0 2px rgba(124, 156, 201, 0.14)",
-    },
-
-    "&::before, &::after": {
+    "& .MuiAutocomplete-endAdornment": {
       display: "none",
     },
-  },
 
-  "& .MuiAutocomplete-endAdornment": {
-    display: "none",
-  },
+    "& .MuiAutocomplete-input": {
+      fontSize: "0.95rem",
+      textAlign: "right",
+      direction: "rtl",
+      caretColor: shouldHideInput ? "transparent" : "auto",
 
-  "& .MuiAutocomplete-input": {
-    fontSize: "0.95rem",
-    textAlign: "right",
-    direction: "rtl",
-    caretColor: "transparent",
-
-    ...(hasSelectedValue
-      ? {
-          width: "0 !important",
-          minWidth: "0 !important",
-          flexGrow: "0 !important",
-          padding: "0 !important",
-        }
-      : {
-          minWidth: "0 !important",
-          flexGrow: 1,
-          padding: isMultiSelect ? "0 !important" : "6px 0 !important",
-        }),
-  },
-});
+      ...(shouldHideInput
+        ? {
+            width: "0 !important",
+            minWidth: "0 !important",
+            flexGrow: "0 !important",
+            padding: "0 !important",
+          }
+        : {
+            minWidth: "0 !important",
+            flexGrow: 1,
+            padding: isMultiSelect ? "0 !important" : "6px 0 !important",
+          }),
+    },
+  };
+};
 
 const iconButtonSx = {
   width: 24,
@@ -465,6 +471,7 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             ListboxProps={{ onLoadMore: onScrollToBottom } as any}
             loading={loading}
             loadingText="טוען אפשרויות..."
+            noOptionsText="אין אפשרויות"
             sx={{ width: "100%" }}
             renderTags={(tagValue, getTagProps) =>
               tagValue.map((option, index) => {
@@ -526,11 +533,10 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                 placeholder={hasSelectedValue ? "" : "בחר אפשרויות"}
                 inputProps={{
                   ...params.inputProps,
-                  readOnly: true,
                   style: {
                     textAlign: "right",
                     direction: "rtl",
-                    caretColor: "transparent",
+                    caretColor: "auto",
                   },
                 }}
                 InputProps={{
@@ -542,6 +548,7 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                   hasError: !!errorMessage,
                   isMultiSelect: true,
                   hasSelectedValue,
+                  isSearching: open,
                 })}
               />
             )}
@@ -567,6 +574,7 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             ListboxProps={{ onLoadMore: onScrollToBottom } as any}
             loading={loading}
             loadingText="טוען אפשרויות..."
+            noOptionsText="אין אפשרויות"
             sx={{ width: "100%" }}
             renderInput={(params) => (
               <TextField
@@ -578,18 +586,18 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                 placeholder="בחר אפשרות"
                 inputProps={{
                   ...params.inputProps,
-                  readOnly: true,
                   style: {
                     textAlign: "right",
                     direction: "rtl",
-                    caretColor: "transparent",
+                    caretColor: "auto",
                   },
                 }}
                 InputProps={{
                   ...params.InputProps,
-                  startAdornment: hasSelectedValue
-                    ? renderSelectedSingleValue()
-                    : params.InputProps.startAdornment,
+                  startAdornment:
+                    hasSelectedValue && !open
+                      ? renderSelectedSingleValue()
+                      : params.InputProps.startAdornment,
                   disableUnderline: true,
                   endAdornment: null,
                 }}
@@ -597,6 +605,7 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                   hasError: !!errorMessage,
                   isMultiSelect: false,
                   hasSelectedValue,
+                  isSearching: open,
                 })}
               />
             )}

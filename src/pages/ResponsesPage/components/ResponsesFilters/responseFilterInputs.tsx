@@ -1,14 +1,5 @@
 import React from "react";
-import {
-  Box,
-  Checkbox,
-  FormControl,
-  ListItemText,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-} from "@mui/material";
+import { Autocomplete, Box, Checkbox, FormControl, Stack, TextField } from "@mui/material";
 import { DatePicker, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
@@ -41,29 +32,6 @@ const applyFilterValue = (item: any, applyValue: (item: any) => void, value: unk
     value,
   });
 };
-
-const getSelectMenuProps = (
-  setPaperNode: React.Dispatch<React.SetStateAction<HTMLElement | null>>,
-) => ({
-  PaperProps: {
-    ref: setPaperNode,
-    style: {
-      marginTop: 4,
-      borderRadius: 10,
-      border: "1px solid #d7e4f2",
-      backgroundColor: "#ffffff",
-      boxShadow: "0 10px 28px rgba(15, 23, 42, 0.1)",
-      maxHeight: 320,
-      overflowY: "auto" as const,
-      direction: "rtl" as const,
-    },
-  },
-  MenuListProps: {
-    style: {
-      padding: 4,
-    },
-  },
-});
 
 const HeaderFilterInputShell: React.FC<{
   headerFilterMenu?: React.ReactNode;
@@ -105,6 +73,112 @@ const DateTimeRangeContainer: React.FC<DateTimeRangeContainerProps> = ({ classNa
     />
   );
 };
+
+const PaginatedAutocompleteListbox = React.forwardRef<
+  HTMLUListElement,
+  React.HTMLAttributes<HTMLUListElement> & { onLoadMore?: () => void }
+>(function PaginatedAutocompleteListbox({ children, onLoadMore, ...props }, ref) {
+  const listRef = React.useRef<HTMLUListElement>(null);
+  const sentinelRef = React.useRef<HTMLLIElement>(null);
+
+  React.useImperativeHandle(ref, () => listRef.current as HTMLUListElement);
+  useLoadMoreOnVisible(listRef, sentinelRef, onLoadMore);
+
+  return (
+    <ul ref={listRef} {...props}>
+      {children}
+      <li
+        aria-hidden
+        ref={sentinelRef}
+        style={{ height: 1, padding: 0, margin: 0, listStyle: "none" }}
+      />
+    </ul>
+  );
+});
+
+const optionAutocompleteSlotProps = {
+  clearIndicator: {
+    title: "",
+    sx: {
+      width: 20,
+      height: 20,
+      padding: 0,
+      margin: 0,
+      color: "#64748b",
+
+      "& .MuiSvgIcon-root": {
+        fontSize: 16,
+      },
+
+      "&:hover": {
+        backgroundColor: "#f1f5f9",
+        color: "#334155",
+      },
+    },
+  },
+  popupIndicator: {
+    title: "",
+    sx: {
+      width: 20,
+      height: 20,
+      padding: 0,
+      margin: 0,
+      color: "#64748b",
+
+      "& .MuiSvgIcon-root": {
+        fontSize: 18,
+      },
+
+      "&:hover": {
+        backgroundColor: "#f1f5f9",
+        color: "#334155",
+      },
+    },
+  },
+  popper: {
+    placement: "bottom-start" as const,
+    sx: {
+      minWidth: 190,
+      maxWidth: "calc(100vw - 32px)",
+
+      "& .MuiAutocomplete-paper": {
+        mt: "4px",
+        borderRadius: "10px",
+        border: "1px solid #d7e4f2",
+        boxShadow: "0 10px 28px rgba(15, 23, 42, 0.1)",
+        overflow: "hidden",
+        direction: "rtl",
+      },
+
+      "& .MuiAutocomplete-listbox": {
+        p: "4px",
+        direction: "rtl",
+        textAlign: "right",
+      },
+
+      "& .MuiAutocomplete-option": {
+        minHeight: "34px",
+        borderRadius: "7px",
+        mx: 0,
+        my: "1px",
+        px: "9px",
+        py: "6px",
+        fontSize: "0.95rem",
+        direction: "rtl",
+        textAlign: "right",
+
+        "&[aria-selected='true']": {
+          backgroundColor: "#eef4ff",
+          fontWeight: 600,
+        },
+
+        "&.Mui-focused": {
+          backgroundColor: "#f8fafc",
+        },
+      },
+    },
+  },
+} as const;
 
 const parseDateFilterValue = (value: unknown): Dayjs | null => {
   if (typeof value !== "string" || value.trim() === "") {
@@ -436,42 +510,50 @@ export const SingleOptionFilterInput: React.FC<FilterInputProps> = (props) => {
     loading,
     onLoadMore,
   } = props;
-  const [menuOpen, setMenuOpen] = React.useState(false);
-  const [paperNode, setPaperNode] = React.useState<HTMLElement | null>(null);
-  const [sentinelNode, setSentinelNode] = React.useState<HTMLElement | null>(null);
 
-  useLoadMoreOnVisible(paperNode, sentinelNode, onLoadMore, menuOpen);
-
-  const selectedOption = options.find((option) => String(option.id) === String(item.value));
+  const selectedOption = options.find((option) => String(option.id) === String(item.value)) ?? null;
 
   return (
     <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
       <FormControl size="small" variant="standard" fullWidth>
-        <Select
-          displayEmpty
-          disableUnderline
-          value={item.value ?? ""}
-          onChange={(event) => applyFilterValue(item, applyValue, event.target.value)}
-          open={menuOpen}
-          onOpen={() => setMenuOpen(true)}
-          onClose={() => setMenuOpen(false)}
-          MenuProps={getSelectMenuProps(setPaperNode)}
-          renderValue={() => selectedOption?.text || "ערך"}>
-          {loading && <MenuItem disabled>טוען...</MenuItem>}
-
-          {options.map((option) => (
-            <MenuItem key={option.id} value={option.id}>
-              {option.text}
-            </MenuItem>
-          ))}
-
-          <MenuItem
-            disabled
-            aria-hidden
-            ref={setSentinelNode}
-            style={{ minHeight: 1, height: 1, padding: 0, opacity: 0 }}
-          />
-        </Select>
+        <Autocomplete<OptionResponseValue, false, false, false>
+          fullWidth
+          options={options}
+          value={selectedOption}
+          loading={loading}
+          loadingText="טוען..."
+          noOptionsText="אין אפשרויות"
+          getOptionLabel={(option) => option.text ?? ""}
+          isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
+          onChange={(_, newValue) => {
+            applyFilterValue(item, applyValue, newValue?.id ?? "");
+          }}
+          slotProps={optionAutocompleteSlotProps}
+          ListboxComponent={PaginatedAutocompleteListbox}
+          ListboxProps={{ onLoadMore } as any}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              inputRef={getInputRef(props)}
+              size="small"
+              variant="standard"
+              placeholder="ערך"
+              fullWidth
+              InputProps={{
+                ...params.InputProps,
+                disableUnderline: true,
+              }}
+              inputProps={{
+                ...params.inputProps,
+                style: {
+                  ...params.inputProps.style,
+                  textAlign: "right",
+                  direction: "rtl",
+                },
+              }}
+            />
+          )}
+        />
       </FormControl>
     </HeaderFilterInputShell>
   );
@@ -487,57 +569,88 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
     loading,
     onLoadMore,
   } = props;
-  const selectedValues = Array.isArray(item.value) ? item.value.map(String) : [];
-  const [menuOpen, setMenuOpen] = React.useState(false);
-  const [paperNode, setPaperNode] = React.useState<HTMLElement | null>(null);
-  const [sentinelNode, setSentinelNode] = React.useState<HTMLElement | null>(null);
 
-  useLoadMoreOnVisible(paperNode, sentinelNode, onLoadMore, menuOpen);
+  const selectedValues = Array.isArray(item.value) ? item.value.map(String) : [];
+
+  const selectedOptions = options.filter((option) => selectedValues.includes(String(option.id)));
 
   return (
     <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
       <FormControl size="small" variant="standard" fullWidth>
-        <Select
+        <Autocomplete<OptionResponseValue, true, false, false>
+          fullWidth
           multiple
-          displayEmpty
-          disableUnderline
-          value={selectedValues}
-          onChange={(event) => {
-            const rawValue = event.target.value;
-
+          disableCloseOnSelect
+          options={options}
+          value={selectedOptions}
+          loading={loading}
+          loadingText="טוען..."
+          noOptionsText="אין אפשרויות"
+          getOptionLabel={(option) => option.text ?? ""}
+          isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
+          onChange={(_, newValue) => {
             applyFilterValue(
               item,
               applyValue,
-              typeof rawValue === "string" ? rawValue.split(",") : rawValue,
+              newValue.map((option) => option.id),
             );
           }}
-          open={menuOpen}
-          onOpen={() => setMenuOpen(true)}
-          onClose={() => setMenuOpen(false)}
-          MenuProps={getSelectMenuProps(setPaperNode)}
-          renderValue={(selected) => {
-            const selectedLabels = options
-              .filter((option) => (selected as string[]).includes(String(option.id)))
-              .map((option) => option.text);
+          slotProps={optionAutocompleteSlotProps}
+          ListboxComponent={PaginatedAutocompleteListbox}
+          ListboxProps={{ onLoadMore } as any}
+          renderOption={(props, option, { selected }) => {
+            const { key, ...optionProps } = props;
 
-            return selectedLabels.length > 0 ? selectedLabels.join(", ") : "ערכים";
-          }}>
-          {loading && <MenuItem disabled>טוען...</MenuItem>}
+            return (
+              <li key={key} {...optionProps}>
+                <Checkbox checked={selected} size="small" />
+                <Box component="span" sx={{ minWidth: 0 }}>
+                  {option.text}
+                </Box>
+              </li>
+            );
+          }}
+          renderTags={(tagValue) => {
+            const labels = tagValue.map((option) => option.text).filter(Boolean);
 
-          {options.map((option) => (
-            <MenuItem key={option.id} value={option.id}>
-              <Checkbox checked={selectedValues.includes(String(option.id))} size="small" />
-              <ListItemText primary={option.text} />
-            </MenuItem>
-          ))}
-
-          <MenuItem
-            disabled
-            aria-hidden
-            ref={setSentinelNode}
-            style={{ minHeight: 1, height: 1, padding: 0, opacity: 0 }}
-          />
-        </Select>
+            return (
+              <Box
+                component="span"
+                sx={{
+                  minWidth: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  direction: "rtl",
+                  textAlign: "right",
+                }}>
+                {labels.length > 0 ? labels.join(", ") : ""}
+              </Box>
+            );
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              inputRef={getInputRef(props)}
+              size="small"
+              variant="standard"
+              placeholder="ערכים"
+              fullWidth
+              InputProps={{
+                ...params.InputProps,
+                disableUnderline: true,
+              }}
+              inputProps={{
+                ...params.inputProps,
+                style: {
+                  ...params.inputProps.style,
+                  textAlign: "right",
+                  direction: "rtl",
+                },
+              }}
+            />
+          )}
+        />
       </FormControl>
     </HeaderFilterInputShell>
   );
