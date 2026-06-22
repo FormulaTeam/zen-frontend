@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Box, Button, Grid, Tab, Tabs, Typography, useTheme, Stack } from "@mui/material";
-import {
-  ArrowBack as ArrowBackIcon,
-} from "@mui/icons-material";
+import { Box, Button, Grid, Tab, Tabs, Typography, useTheme, Stack, Tooltip } from "@mui/material";
+import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { getDeletedForms, restoreForm } from "../../api/formsApi";
 import { getSoftDeletedResponsesGlobal, restoreResponse } from "../../api/responsesApi";
 import { StyledCard } from "../../components/FormCard/styled";
@@ -214,12 +212,20 @@ function DeletedForms({ user }: { user: any }) {
         {activeTab === 0 ? (
           forms.length > 0 ? (
             <>
-              <Grid container className="forms-grid" onScroll={handleScroll} spacing={2} columns={12}>
+              <Grid
+                container
+                className="forms-grid"
+                onScroll={handleScroll}
+                spacing={2}
+                columns={12}>
                 {forms.map((form: any) => {
                   const deletedDateObj = form.deletedAt ? new Date(form.deletedAt) : null;
                   const formattedDate = deletedDateObj
                     ? deletedDateObj.toLocaleDateString("he-IL")
-                    : "N/A";
+                    : "תאריך לא ידוע";
+                  const formattedTime = deletedDateObj
+                    ? deletedDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })
+                    : "";
 
                   return (
                     <Grid key={form.id} size={{ xs: 12 }}>
@@ -251,12 +257,31 @@ function DeletedForms({ user }: { user: any }) {
                               color: "#62748E",
                               fontFamily: "Heebo, sans-serif",
                               display: "flex",
-                              gap: 1,
+                              alignItems: "center",
+                              gap: "6px",
                             }}>
-                            נמחק ב:
+                            נמחק ב-
                             <span style={{ color: "#020618", fontWeight: 500 }}>
                               {formattedDate}
                             </span>
+                            {formattedTime && (
+                              <>
+                                <span>בשעה</span>
+                                <span style={{ color: "#020618", fontWeight: 500 }}>
+                                  {formattedTime}
+                                </span>
+                              </>
+                            )}
+                            {form.deletedBy && (
+                              <>
+                                <span>על ידי</span>
+                                <Tooltip title={form.deletedBy.upn || ""} arrow placement="top">
+                                  <span style={{ color: "#020618", fontWeight: 500, cursor: "pointer" }}>
+                                    {form.deletedBy.name || form.deletedBy.upn || "משתמש בזן"}
+                                  </span>
+                                </Tooltip>
+                              </>
+                            )}
                           </Typography>
                         </Stack>
                         <Button
@@ -284,19 +309,11 @@ function DeletedForms({ user }: { user: any }) {
               </Grid>
 
               {isFormsLoading && (
-                <Box className="main-page-loading" sx={{ py: 4 }}>
-                  <Typography sx={{ color: "text.secondary", fontFamily: "Heebo, sans-serif" }}>
-                    טוען עוד טפסים...
-                  </Typography>
-                </Box>
+                <Box className="main-page-loading" sx={{ py: 4 }} />
               )}
             </>
           ) : isFormsLoading ? (
-            <Box className="main-page-loading" sx={{ py: 8 }}>
-              <Typography sx={{ color: "text.secondary", fontFamily: "Heebo, sans-serif" }}>
-                טוען טפסים...
-              </Typography>
-            </Box>
+            <Box className="main-page-loading" sx={{ py: 8 }} />
           ) : (
             <Box
               sx={{
@@ -343,6 +360,9 @@ function DeletedForms({ user }: { user: any }) {
                     const formattedDate = deletedDateObj
                       ? deletedDateObj.toLocaleDateString("he-IL")
                       : "N/A";
+                    const formattedTime = deletedDateObj
+                      ? deletedDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })
+                      : "";
 
                     return (
                       <Grid key={item.id} size={{ xs: 12 }}>
@@ -357,14 +377,18 @@ function DeletedForms({ user }: { user: any }) {
                             justifyContent: "space-between",
                             width: "100%",
                           }}>
-                          <Stack direction="row" spacing={4} alignItems="center" sx={{ flexGrow: 1 }}>
+                          <Stack
+                            direction="row"
+                            spacing={4}
+                            alignItems="center"
+                            sx={{ flexGrow: 1 }}>
                             <Typography
                               variant="h6"
                               sx={{
                                 fontWeight: 600,
                                 fontFamily: "Heebo, sans-serif",
                                 color: "#020618",
-                                minWidth: "150px",
+                                minWidth: "50px",
                               }}>
                               תגובה #{item.index}
                             </Typography>
@@ -374,12 +398,33 @@ function DeletedForms({ user }: { user: any }) {
                                 color: "#62748E",
                                 fontFamily: "Heebo, sans-serif",
                                 display: "flex",
-                                gap: 1,
+                                alignItems: "center",
+                                gap: "6px",
                               }}>
-                              נמחק ב:
+                              נמחק ב-
                               <span style={{ color: "#020618", fontWeight: 500 }}>
                                 {formattedDate}
                               </span>
+                              {formattedTime && (
+                                <>
+                                  <span>בשעה</span>
+                                  <span style={{ color: "#020618", fontWeight: 500 }}>
+                                    {formattedTime}
+                                  </span>
+                                </>
+                              )}
+                              {item.deletedResponse?.deletedBy && (
+                                <>
+                                  <span>על ידי</span>
+                                  <Tooltip title={item.deletedResponse.deletedBy.upn || ""} arrow placement="top">
+                                    <span style={{ color: "#020618", fontWeight: 500, cursor: "pointer" }}>
+                                      {item.deletedResponse.deletedBy.name ||
+                                        item.deletedResponse.deletedBy.upn ||
+                                        "משתמש בזן"}
+                                    </span>
+                                  </Tooltip>
+                                </>
+                              )}
                             </Typography>
                           </Stack>
                           <Button
@@ -409,19 +454,11 @@ function DeletedForms({ user }: { user: any }) {
             ))}
 
             {isResponsesLoading && (
-              <Box className="main-page-loading" sx={{ py: 4 }}>
-                <Typography sx={{ color: "text.secondary", fontFamily: "Heebo, sans-serif" }}>
-                  טוען עוד תגובות...
-                </Typography>
-              </Box>
+              <Box className="main-page-loading" sx={{ py: 4 }} />
             )}
           </Box>
         ) : isResponsesLoading ? (
-          <Box className="main-page-loading" sx={{ py: 8 }}>
-            <Typography sx={{ color: "text.secondary", fontFamily: "Heebo, sans-serif" }}>
-              טוען תגובות...
-            </Typography>
-          </Box>
+          <Box className="main-page-loading" sx={{ py: 8 }} />
         ) : (
           <Box
             sx={{
