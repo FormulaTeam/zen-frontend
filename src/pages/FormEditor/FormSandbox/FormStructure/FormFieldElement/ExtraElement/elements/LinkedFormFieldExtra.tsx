@@ -64,11 +64,28 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
           isOptionEqualToValue={(option, value) => option?.id === value?.id}
           renderOption={(props, option: any) => (
             <li {...props}>
-              <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
-                <Typography component="span">{option.name}</Typography>
+              <Box
+                component="span"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  width: "100%",
+                }}
+              >
+                <Typography component="span">
+                  {option.name}
+                </Typography>
+
                 <Typography
                   component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.75rem", mt: "2px" }}>
+                  sx={{
+                    marginInlineStart: "auto",
+                    paddingInlineStart: 2,
+                    color: "text.secondary",
+                    fontSize: "0.75rem",
+                    flexShrink: 0,
+                  }}
+                >
                   {option.id}
                 </Typography>
               </Box>
