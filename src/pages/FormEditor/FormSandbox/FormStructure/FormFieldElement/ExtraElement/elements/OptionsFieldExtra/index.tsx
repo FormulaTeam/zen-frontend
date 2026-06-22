@@ -51,13 +51,18 @@ function OptionsFieldExtra({
   const handleSourceChange = (nextSource: OptionsSource) => {
     setSelectedSource(nextSource);
 
+    const isFormFieldResponses = nextSource === optionsSource.FormFieldResponses;
+
     onChange({
-      linkedOptionsFieldId:
-        nextSource === optionsSource.FormFieldResponses
-          ? linkedOptionsFieldId ?? null
-          : null,
+      linkedOptionsFieldId: isFormFieldResponses ? linkedOptionsFieldId ?? null : null,
       defaultValue: [],
     });
+
+    if (isFormFieldResponses) {
+      onDataChange?.({
+        options: [],
+      });
+    }
   };
 
   return (

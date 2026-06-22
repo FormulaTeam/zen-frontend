@@ -56,6 +56,7 @@ const getDuplicateOptionIndexes = (items: ManualItems): Set<number> => {
     if (!normalizedText) return;
 
     const indexes = indexesByText.get(normalizedText) ?? [];
+
     indexes.push(index);
     indexesByText.set(normalizedText, indexes);
   });
@@ -97,7 +98,6 @@ function ManualOptions(props: Props) {
   const { formStructure } = useFormStructureContext();
 
   const currentField = formStructure.fields[id];
-  const extra = (currentField?.data?.extra as FormFieldExtra<OptionsFieldTypeId>) ?? {};
 
   const rawItems = (currentField?.data?.options as ManualItems) ?? [
     generateEmptyItem(),
@@ -122,7 +122,6 @@ function ManualOptions(props: Props) {
   );
 
   const [selectedControlledItemIndex, setSelectedControlledItemIndex] = useState<number>(0);
-
   const [originalItemTexts, setOriginalItemTexts] = useState<Record<string, string>>({});
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameData, setRenameRenameData] = useState<{
@@ -148,34 +147,54 @@ function ManualOptions(props: Props) {
     [formStructure.fields, id],
   );
 
+  const inferredControlledFieldId = useMemo(() => {
+    const controllingItemsIds = new Set(items.flatMap((item) => item.controllingItemsIds ?? []));
+
+    if (!controllingItemsIds.size) {
+      return undefined;
+    }
+
+    return otherManualOptionsFieldsIds.find((candidateFieldId) => {
+      const candidateItems = formStructure.fields[candidateFieldId]?.data?.options as
+        | ManualItems
+        | undefined;
+
+      return candidateItems?.some((candidateItem) => controllingItemsIds.has(candidateItem.id));
+    });
+  }, [items, otherManualOptionsFieldsIds, formStructure.fields]);
+
+  const [draftControlledFieldId, setDraftControlledFieldId] = useState<string | null>();
+
+  const controlledFieldId =
+    draftControlledFieldId === undefined ? inferredControlledFieldId : draftControlledFieldId;
+
   const definedItems = useMemo(() => items?.filter((item) => !!item.text), [items]);
 
   const duplicateOptionIndexes = useMemo(() => getDuplicateOptionIndexes(items), [items]);
 
   useEffect(() => {
-    if (!currentField?.data?.options) {
-      updateOptionsData(items);
+    if (!currentField?.data?.options?.length) {
+      updateOptionsData([generateEmptyItem(), generateEmptyItem()]);
     }
   }, []);
 
   useEffect(() => {
-    // Selection mode check for default value
     if (mode === selectionMode.Single && defaultValue.length > 1) {
       onChange({ defaultValue: [defaultValue[0]] });
     }
   }, [mode]);
 
   const controllingFieldItems = useMemo(() => {
-    const linkedOptionsFieldId = extra.linkedOptionsFieldId;
-    if (!linkedOptionsFieldId) return undefined;
+    if (!controlledFieldId) return undefined;
 
-    const linkedField = formStructure.fields[linkedOptionsFieldId];
+    const linkedField = formStructure.fields[controlledFieldId];
     const parentRawItems = (linkedField?.data?.options as ManualItems) ?? [];
     const parentInactiveOptionIds = (linkedField?.data?.extra as any)?.inactiveOptionIds ?? [];
+
     return parentRawItems
       .filter((item) => !parentInactiveOptionIds.includes(item.id))
       .filter((item) => !!item.text?.length);
-  }, [extra.linkedOptionsFieldId, formStructure.fields]);
+  }, [controlledFieldId, formStructure.fields]);
 
   const handleItemChange = useCallback(
     (
@@ -251,6 +270,18 @@ function ManualOptions(props: Props) {
     setRenameDialogOpen(false);
   };
 
+  const clearControlledField = () => {
+    setDraftControlledFieldId(null);
+    setSelectedControlledItemIndex(0);
+
+    onDataChange?.({
+      options: items.map((item) => ({
+        ...item,
+        controllingItemsIds: [],
+      })),
+    });
+  };
+
   const itemFields = useMemo(
     () =>
       items.map((item, index) => {
@@ -279,6 +310,7 @@ function ManualOptions(props: Props) {
             onDelete={() => {
               if (items.length > 2) {
                 const newActiveItems = items.toSpliced(index, 1);
+
                 updateOptionsData(newActiveItems);
 
                 if (defaultValue.includes(item.id)) {
@@ -287,7 +319,7 @@ function ManualOptions(props: Props) {
               }
             }}
             isSelectedControlledItem={
-              !!extra.linkedOptionsFieldId ? selectedControlledItemIndex === index : undefined
+              !!controlledFieldId ? selectedControlledItemIndex === index : undefined
             }
             onSelectControlledItem={() => {
               setSelectedControlledItemIndex(index);
@@ -303,7 +335,7 @@ function ManualOptions(props: Props) {
       updateOptionsData,
       onChange,
       defaultValue,
-      extra.linkedOptionsFieldId,
+      controlledFieldId,
       selectedControlledItemIndex,
       originalItemTexts,
       handleItemBlur,
@@ -315,7 +347,7 @@ function ManualOptions(props: Props) {
       <div className={styles.controllingFieldContainer}>
         <div
           className={styles.controllingFieldWrapper}
-          style={{ borderColor: extra.linkedOptionsFieldId ? "#e1e7ec" : "transparent" }}>
+          style={{ borderColor: controlledFieldId ? "#e1e7ec" : "transparent" }}>
           <Tooltip
             title={!otherManualOptionsFieldsIds.length ? "לא קיים שדה אפשרויות נוסף" : ""}
             placement="top">
@@ -327,11 +359,17 @@ function ManualOptions(props: Props) {
                   disabled={!otherManualOptionsFieldsIds.length}
                   options={otherManualOptionsFieldsIds}
                   getOptionLabel={(option) => formStructure.fields[option]?.data?.displayName || ""}
-                  value={extra.linkedOptionsFieldId || null}
                   noOptionsText={"לא נמצאו שדות מתאימים"}
+                  value={controlledFieldId || null}
                   onChange={(_, newValue) => {
-                    onChange({
-                      linkedOptionsFieldId: newValue || undefined,
+                    setDraftControlledFieldId(newValue ?? null);
+                    setSelectedControlledItemIndex(0);
+
+                    onDataChange?.({
+                      options: items.map((item) => ({
+                        ...item,
+                        controllingItemsIds: [],
+                      })),
                     });
                   }}
                   renderInput={(params) => (
@@ -350,24 +388,21 @@ function ManualOptions(props: Props) {
               </FormControl>
             </span>
           </Tooltip>
-          {extra.linkedOptionsFieldId && (
-            <Button
-              className={styles.button}
-              onClick={(_) => {
-                onChange({
-                  linkedOptionsFieldId: undefined,
-                });
-              }}>
+
+          {controlledFieldId && (
+            <Button className={styles.button} onClick={clearControlledField}>
               <Close sx={{ fontSize: 20, color: "#a54160" }} />
             </Button>
           )}
         </div>
-        {extra.linkedOptionsFieldId && <div className={styles.controllingFieldConnector} />}
+
+        {controlledFieldId && <div className={styles.controllingFieldConnector} />}
       </div>
 
       <div className={styles.itemsContainer}>
         <div>
           <div className={styles.itemsWrapper}>{itemFields}</div>
+
           <div className={styles.appendItemButtonWrapper}>
             <Button
               size={"large"}
@@ -375,12 +410,14 @@ function ManualOptions(props: Props) {
               className={styles.appendItemButton}
               onClick={(_) => {
                 const newItems = [...items, generateEmptyItem()];
+
                 onDataChange?.({ options: newItems });
               }}>
               + הוסף אפשרות
             </Button>
           </div>
         </div>
+
         {!!controllingFieldItems && !!items[selectedControlledItemIndex] && (
           <ManualOptionsControllingItemsList
             item={items[selectedControlledItemIndex]}
@@ -394,12 +431,14 @@ function ManualOptions(props: Props) {
                 controllingItemsIds.push(controllingItem.id);
               } else {
                 const indexToRemove = controllingItemsIds.indexOf(controllingItem.id);
+
                 if (indexToRemove !== -1) {
                   controllingItemsIds.splice(indexToRemove, 1);
                 }
               }
 
               const updatedItems = [...items];
+
               updatedItems[selectedControlledItemIndex] = {
                 ...updatedItems[selectedControlledItemIndex],
                 controllingItemsIds,
@@ -457,6 +496,7 @@ function ManualOptions(props: Props) {
             </span>
           </div>
         </Tooltip>
+
         {defaultValue && defaultValue.length > 0 && (
           <Button
             className={styles.button}
@@ -485,18 +525,22 @@ function ManualOptions(props: Props) {
           }}>
           <Close sx={{ fontSize: 20 }} />
         </IconButton>
+
         <DialogTitle id="rename-dialog-title" sx={{ pr: 6 }}>
           {"עדכון שם האפשרות"}
         </DialogTitle>
+
         <DialogContent>
           <DialogContentText id="rename-dialog-description" sx={{ color: "text.primary" }}>
             {`בוצע שינוי של שם האפשרות מ-"${renameData?.originalText}" ל-"${renameData?.newText}". האם ברצונך להחיל את השינוי באופן רטרואקטיבי על תגובות עבר?`}
           </DialogContentText>
         </DialogContent>
+
         <DialogActions sx={{ p: 2, gap: 1 }}>
           <Button onClick={() => handleConfirmRename(true)} color="primary">
             {"שינוי רטרואקטיבי"}
           </Button>
+
           <Button
             onClick={() => handleConfirmRename(false)}
             color="primary"

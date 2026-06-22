@@ -110,19 +110,6 @@ const isConnectedToForm = (field: FormFieldDto, formFields?: FormFieldDto[]): bo
   return true;
 };
 
-const getConnectedFieldOptions = (
-  fieldId: string,
-  fieldOptions: Record<string, FieldOptionValue[]>,
-): string[] => {
-  const options =
-    fieldOptions[fieldId]
-      ?.map((optionField) => optionField.value)
-      .filter((value) => value !== undefined && value !== null && String(value).trim() !== "")
-      .map((value) => String(value)) ?? [];
-
-  return Array.from(new Set(options));
-};
-
 const getFieldOptionItems = (field: FormFieldDto, includeInactive = false): OptionItem[] => {
   if (Array.isArray((field as any).options)) {
     return (field as any).options
