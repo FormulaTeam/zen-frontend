@@ -335,22 +335,28 @@ export const useResponseSave = (
       const createdResponse = await createRequestCache.get(createKey)!;
 
       if (createdResponse?.id && fileUploadDrafts.some((draft) => draft.files.length > 0)) {
-        const uploadedByFieldId = await uploadDraftFiles(
-          Number(formId),
-          createdResponse.id,
-          fileUploadDrafts,
-        );
-        let nextFieldValues = fieldValues;
+        try {
+          const uploadedByFieldId = await uploadDraftFiles(
+            Number(formId),
+            createdResponse.id,
+            fileUploadDrafts,
+          );
+          let nextFieldValues = fieldValues;
 
-        uploadedByFieldId.forEach((files, fieldId) => {
-          nextFieldValues = replaceFieldValue(nextFieldValues, fieldId, buildFileValue(files));
-        });
+          uploadedByFieldId.forEach((files, fieldId) => {
+            nextFieldValues = replaceFieldValue(nextFieldValues, fieldId, buildFileValue(files));
+          });
 
-        const updatedResponses = (await mutateUpdateResponsesAsync({
-          responses: [{ responseId: createdResponse.id, fieldValues: nextFieldValues }],
-        })) as ResponseDto[];
+          const updatedResponses = (await mutateUpdateResponsesAsync({
+            responses: [{ responseId: createdResponse.id, fieldValues: nextFieldValues }],
+          })) as ResponseDto[];
 
-        return updatedResponses[0] ?? createdResponse;
+          return updatedResponses[0] ?? createdResponse;
+        } catch (uploadError) {
+          console.error("File upload failed after response creation:", uploadError);
+          showErrorNotification("התגובה נוצרה בהצלחה, אך העלאת הקבצים נכשלה. ניתן לנסות להעלותם שוב בעריכת התגובה.");
+          return createdResponse;
+        }
       }
 
       return createdResponse;
