@@ -519,7 +519,6 @@ export const useResponsesEdit = () => {
 
     if (!nextEditMode) {
       setValidationErrors({});
-      newRowCounterRef.current = 0;
     }
   }, [isInEditMode, hasUnsavedChanges, responseRows]);
 
@@ -531,7 +530,6 @@ export const useResponsesEdit = () => {
     setShowCancelDialog(false);
     clearQuickEditDraft(dtoForm?.id);
     setValidationErrors({});
-    newRowCounterRef.current = 0;
   }, [responseRows, dtoForm?.id]);
 
   const closeCancelDialog = useCallback((): void => {
@@ -955,8 +953,6 @@ export const useResponsesEdit = () => {
           lastInteractionAt: moment().toISOString(),
         } as any);
       }
-
-      newRowCounterRef.current = 0;
 
       const persistedLocalRows = localRows.filter((row) => !isTempRowId(row.id));
 

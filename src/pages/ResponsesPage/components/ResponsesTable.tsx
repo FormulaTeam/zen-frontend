@@ -386,6 +386,29 @@ export const ResponsesTable = React.memo(
     const [cellModesModel, setCellModesModel] = useState<GridCellModesModel>({});
     const [expandedRows, setExpandedRows] = useState<Record<string | number, Set<string>>>({});
 
+    const filteredCellModesModel = useMemo(() => {
+      if (!isInEditMode) {
+        return {};
+      }
+
+      const validRowIds = new Set(displayRows.map((row) => String(row.id)));
+      const filtered: GridCellModesModel = {};
+
+      Object.entries(cellModesModel).forEach(([rowId, fields]) => {
+        if (validRowIds.has(String(rowId))) {
+          filtered[rowId] = fields;
+        }
+      });
+
+      return filtered;
+    }, [cellModesModel, displayRows, isInEditMode]);
+
+    useEffect(() => {
+      if (!isInEditMode) {
+        setCellModesModel({});
+      }
+    }, [isInEditMode]);
+
     const handleCellExpandToggle = useCallback(
       (rowId: string | number, fieldId: string, isExpanded: boolean) => {
         const stringRowId = String(rowId);
@@ -420,7 +443,7 @@ export const ResponsesTable = React.memo(
     const activeEditingRowIds = useMemo(() => {
       const rowIds = new Set<string>();
 
-      Object.entries(cellModesModel).forEach(([rowId, fields]) => {
+      Object.entries(filteredCellModesModel).forEach(([rowId, fields]) => {
         const isRowEditing = Object.values(fields).some(
           (fieldMode) => fieldMode.mode === GridCellModes.Edit,
         );
@@ -431,7 +454,7 @@ export const ResponsesTable = React.memo(
       });
 
       return rowIds;
-    }, [cellModesModel]);
+    }, [filteredCellModesModel]);
 
     useEffect(() => {
       apiRef.current?.resetRowHeights();
@@ -1189,7 +1212,7 @@ export const ResponsesTable = React.memo(
               filterModel={filterModel}
               onFilterModelChange={handleFilterModelChange}
               editMode="cell"
-              cellModesModel={cellModesModel}
+              cellModesModel={filteredCellModesModel}
               onCellModesModelChange={handleCellModesModelChange}
               onCellClick={handleCellClick}
               onCellDoubleClick={handleCellDoubleClick}
