@@ -236,13 +236,14 @@ export const deleteResponse = async (formId: number, responseId: string): Promis
 /**
  * Fetch all deleted responses based on the provided filter.
  */
-export const getAllDeletedResponses = async (filter: Filter): Promise<any> => {
+export const getAllDeletedResponses = async (filter: Filter & { offset?: number }): Promise<any> => {
   try {
     const formId = filter?.form_id;
     if (!formId) throw new Error("form_id is required for getAllDeletedResponses");
 
     const params = {
       ...formatParams(filter),
+      offset: filter.offset ?? (filter.pageNumber && filter.pageSize ? (filter.pageNumber - 1) * filter.pageSize : undefined),
     };
     delete params.softDeleted; // ensure softDeleted is not passed
 
@@ -251,6 +252,24 @@ export const getAllDeletedResponses = async (filter: Filter): Promise<any> => {
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch deleted responses:", error);
+    throw error;
+  }
+};
+
+/**
+ * Fetch all soft-deleted responses across all active forms.
+ */
+export const getSoftDeletedResponsesGlobal = async (filter?: Filter): Promise<any> => {
+  try {
+    const params = {
+      limit: filter?.pageSize ?? 20,
+      offset: filter?.pageNumber !== undefined && filter?.pageSize !== undefined ? (filter.pageNumber - 1) * filter.pageSize : undefined,
+    };
+
+    const response = await apiClient.get(`/forms/responses/soft-deleted`, { params });
+    return response?.data || [];
+  } catch (error) {
+    console.error("Failed to fetch global soft-deleted responses:", error);
     throw error;
   }
 };

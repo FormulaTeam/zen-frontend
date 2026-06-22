@@ -160,6 +160,11 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   }, [id]);
 
   const saveAll = useCallback(async () => {
+    if (showLoadingSaveBtn) {
+      return;
+    }
+
+    setShowLoadingSaveBtn(true);
     const validationResult = validateAllFieldsBeforeSubmit();
 
     if (!validationResult.isValid || !form) {
@@ -204,6 +209,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
       clearResponseDraft(formId, id);
       setSavedParentResponseId(result.id);
+      if (!id) {
+        navigate(`/forms/${formId}/responses/${result.id}/edit`, { replace: true });
+      }
       setChildFormsSaving(true);
     } catch (error: any) {
       if (copyMode) {
@@ -223,6 +231,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     formId,
     navigate,
     saveResponse,
+    showLoadingSaveBtn,
     validateAllFieldsBeforeSubmit,
   ]);
 
@@ -302,6 +311,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   const onEdit = () => navigate(`/forms/${formId}/responses/${id}/edit`);
 
   const onSaveAndClose = () => {
+    if (showLoadingSaveBtn) {
+      return;
+    }
     childForms.length > 0 ? setChildFormsValidate(true) : saveAll();
   };
 
