@@ -228,6 +228,19 @@ const CenteredBox = styled(Box)({
 });
 
 const getFileDisplayItems = (value: unknown): Array<StoredFile | LocalDisplayFile> => {
+  if (Array.isArray(value)) {
+    return value.map((file: any) => ({
+      id: file.id,
+      responseId: file.responseId,
+      name: file.fileName || file.name || file.id || "",
+      fileName: file.fileName || file.name || file.id || "",
+      path: file.id || file.path || "",
+      mimeType: file.mimeType,
+      sizeInBytes: file.sizeInBytes,
+      uploadedAt: file.uploadedAt,
+    }));
+  }
+
   if (isFileDraftValue(value)) {
     return [
       ...value.files.attachedFiles,

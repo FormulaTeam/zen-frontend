@@ -129,21 +129,13 @@ const isStoredFile = (value: unknown): value is StoredFile => {
   return (
     typeof value === "object" &&
     value !== null &&
-    "name" in value &&
-    "path" in value &&
-    typeof value.name === "string" &&
-    typeof value.path === "string"
+    ("name" in value || "fileName" in value) &&
+    ("path" in value || "id" in value)
   );
 };
 
-const isFileFieldValue = (value: unknown): value is FileFieldValue => {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "files" in value &&
-    Array.isArray(value.files) &&
-    value.files.every(isStoredFile)
-  );
+const isFileFieldValue = (value: unknown): value is any[] => {
+  return Array.isArray(value) && value.every(isStoredFile);
 };
 
 const isFileDraftValue = (value: unknown): value is FileDraftValue => {
@@ -178,7 +170,16 @@ const getFileDraftParts = (
   if (isFileFieldValue(value)) {
     return {
       newFiles: [],
-      attachedFiles: value.files,
+      attachedFiles: value.map((file: any) => ({
+        id: file.id,
+        responseId: file.responseId,
+        name: file.fileName || file.name || "",
+        path: file.id || file.path || "",
+        fileName: file.fileName || file.name || "",
+        mimeType: file.mimeType,
+        sizeInBytes: file.sizeInBytes,
+        uploadedAt: file.uploadedAt,
+      })),
     };
   }
 
@@ -195,24 +196,28 @@ const getFileDraftParts = (
   };
 };
 
-const buildFileFieldValue = (value: unknown): FileFieldValue | null => {
+const buildFileFieldValue = (value: unknown): string[] | null => {
   const { newFiles, attachedFiles } = getFileDraftParts(value);
 
   const newStoredFiles = newFiles.map(toStoredFileFromBrowserFile);
   const allFiles = [...attachedFiles, ...newStoredFiles];
 
-  return allFiles.length > 0 ? { files: allFiles } : null;
+  return allFiles.length > 0
+    ? (allFiles.map((f) => f.id || f.path).filter(Boolean) as string[])
+    : null;
 };
 
 const buildPersistedFileFieldValue = async (
   formId: number,
   responseId: string,
   value: unknown,
-): Promise<FileFieldValue | null> => {
+): Promise<string[] | null> => {
   const { newFiles, attachedFiles } = getFileDraftParts(value);
 
   if (newFiles.length === 0) {
-    return attachedFiles.length > 0 ? { files: attachedFiles } : null;
+    return attachedFiles.length > 0
+      ? (attachedFiles.map((f) => f.id || f.path).filter(Boolean) as string[])
+      : null;
   }
 
   const uploadedFiles = await Promise.all(
@@ -221,7 +226,9 @@ const buildPersistedFileFieldValue = async (
 
   const allFiles = [...attachedFiles, ...uploadedFiles.map(toStoredFile)];
 
-  return allFiles.length > 0 ? { files: allFiles } : null;
+  return allFiles.length > 0
+    ? (allFiles.map((f) => f.id || f.path).filter(Boolean) as string[])
+    : null;
 };
 
 const toValidatorField = (field: FormFieldDto): FormFieldLike => ({
@@ -923,12 +930,11 @@ export const useResponsesEdit = () => {
             );
 
             const hasUploadedFiles = fieldValues.some((fieldValue) => {
-              const value = fieldValue.value as FileFieldValue | null;
+              const field = formFields.find((f) => f.id === fieldValue.fieldId);
               return (
-                value &&
-                typeof value === "object" &&
-                Array.isArray(value.files) &&
-                value.files.some((file) => file.responseId === createdResponse.id)
+                field?.fieldType === fieldType.File &&
+                Array.isArray(fieldValue.value) &&
+                fieldValue.value.length > 0
               );
             });
 

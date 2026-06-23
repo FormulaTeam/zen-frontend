@@ -48,22 +48,25 @@ const isStoredFile = (value: unknown): value is StoredFile => {
   return (
     typeof value === "object" &&
     value !== null &&
-    "name" in value &&
-    "path" in value &&
-    typeof value.name === "string" &&
-    typeof value.path === "string"
+    ("name" in value || "fileName" in value) &&
+    ("path" in value || "id" in value)
   );
 };
 
-const isFileFieldValue = (value: unknown): value is FileFieldValue => {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "files" in value &&
-    Array.isArray(value.files) &&
-    value.files.every(isStoredFile)
-  );
+const isFileFieldValue = (value: unknown): value is any[] => {
+  return Array.isArray(value) && value.every(isStoredFile);
 };
+
+const mapToFileRow = (file: any): StoredFile => ({
+  id: file.id,
+  responseId: file.responseId,
+  name: file.fileName || file.name || "",
+  path: file.id || file.path || "",
+  fileName: file.fileName || file.name || "",
+  mimeType: file.mimeType,
+  sizeInBytes: file.sizeInBytes,
+  uploadedAt: file.uploadedAt,
+});
 
 const formatTimeValue = (value: unknown, timePrecision: "seconds" | "minutes"): string => {
   const format = timePrecision === "seconds" ? "HH:mm:ss" : "HH:mm";
@@ -164,13 +167,15 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
 
   const formatFileCell = useCallback(
     (value: unknown): React.ReactElement => {
-      if (!isFileFieldValue(value) || value.files.length === 0) {
+      if (!isFileFieldValue(value) || value.length === 0) {
         return <Box component="span" className="cell-box" />;
       }
 
+      const files = value.map(mapToFileRow);
+
       return (
         <FileCellWrapper>
-          {value.files.map((file) => (
+          {files.map((file) => (
             <FileRow key={file.path}>
               <CarouselNoPad
                 formId={linkedFormId}
@@ -262,7 +267,7 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
 
       case fieldType.File:
         if (isFileFieldValue(value)) {
-          return highlightText(value.files.map((file) => file.name).join(", "));
+          return highlightText(value.map((file) => file.fileName || file.name).join(", "));
         }
 
         return "";

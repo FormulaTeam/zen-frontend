@@ -133,9 +133,11 @@ const getFileUploadDraft = (fieldId: string, value: any): FileFieldUploadDraft =
   return { fieldId, files, attachedFiles };
 };
 
-const buildFileValue = (files: StoredFile[]): { files: StoredFile[] } => ({
-  files,
-});
+const buildFileValue = (files: StoredFile[]): string[] => {
+  return files
+    .map((f) => f.id || f.path)
+    .filter((id): id is string => typeof id === "string" && id !== "");
+};
 
 const replaceFieldValue = (
   fieldValues: ResponseFieldValueDto[],
