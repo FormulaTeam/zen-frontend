@@ -203,6 +203,7 @@ export interface ImportFromExcelPopupProps {
   errors?: ExcelImportPopupError[];
   mainButtonLabel?: string;
   downloadButtonLabel?: string;
+  isLuckyImport?: boolean;
 }
 
 function hasFormFields(form?: StoreForm) {
@@ -309,6 +310,7 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
   errors = [],
   mainButtonLabel = DEFAULT_MAIN_LABEL,
   downloadButtonLabel = DEFAULT_DOWNLOAD_LABEL,
+  isLuckyImport = false,
 }) => {
   const canPerformActions = hasFormFields(form);
   const [openFields, setOpenFields] = useState<Set<string>>(new Set());
@@ -375,7 +377,26 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
       : "הורידו תבנית, מלאו את הנתונים בהתאם לעמודות, ולאחר מכן ייבאו את הקובץ.";
 
   const popupContent = isLoading ? (
-    <Loader />
+    isLuckyImport ? (
+      <StatusWrapper>
+        <StatusHeader>
+          <StatusIcon>
+            <InfoOutlinedIcon />
+          </StatusIcon>
+
+          <Box>
+            <StatusTitle>מסדרים שיהיה לנו מה זה אחלה יום...</StatusTitle>
+            <StatusDescription>הקובץ התקבל עם אנרגיות טובות ✨</StatusDescription>
+          </Box>
+        </StatusHeader>
+
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+          <Loader />
+        </Box>
+      </StatusWrapper>
+    ) : (
+      <Loader />
+    )
   ) : hasGeneralErrors ? (
     <StatusWrapper>
       <StatusHeader>
