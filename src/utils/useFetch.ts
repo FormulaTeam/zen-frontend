@@ -12,7 +12,6 @@ interface UseFetchOptions<TParams = undefined, TResponse = unknown> {
   headers?: Record<string, string>;
 }
 
-// Generic useFetch hook
 export function useFetch<TParams = undefined, TResponse = unknown>({
   queryKey,
   endpoint,
@@ -22,10 +21,11 @@ export function useFetch<TParams = undefined, TResponse = unknown>({
 }: UseFetchOptions<TParams, TResponse>): UseQueryResult<TResponse, Error> {
   return useQuery({
     queryKey: queryKey(params),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const response = await apiClient.get<TResponse>(endpoint, {
         params: params as Record<string, any>,
         headers,
+        signal,
       });
       return response.data;
     },

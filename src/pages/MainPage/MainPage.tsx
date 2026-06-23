@@ -37,6 +37,7 @@ import { FormOverviewDto } from "@src/types/shared";
 import { IPath } from "../../types/enums/global.enums";
 import { EmptyState } from "../../components/MainPage/EmptyState";
 import { NoResultsState } from "../../components/MainPage/NoResultsState";
+import { useDebounce } from "@src/hooks/utilsHooks/useDebounce";
 
 function MainPage({
   user,
@@ -75,6 +76,8 @@ function MainPage({
   const [sortBy, setSortBy] = useState<FormsSortOption>(getInitialSortBy());
   const [sortDirection, setSortDirection] = useState<SortDirection>(getInitialSortDirection());
 
+  const debouncedSearchValue = useDebounce(searchValue, 500);
+
   const { isSuperAdmin } = useSuperAdmin();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -104,7 +107,7 @@ function MainPage({
 
   const { formsData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetFormsData({
     scope: scope,
-    searchQuery: searchValue || undefined,
+    searchQuery: debouncedSearchValue || undefined,
     sortBy,
     sortDirection,
     enabled: !!user,
@@ -167,7 +170,7 @@ function MainPage({
   ]);
 
   const showNoResults = useMemo(() => {
-    if (searchValue && searchValue.trim() !== "") {
+    if (debouncedSearchValue && debouncedSearchValue.trim() !== "") {
       return true;
     }
 
@@ -176,7 +179,7 @@ function MainPage({
     }
 
     return false;
-  }, [searchValue, scope]);
+  }, [debouncedSearchValue, scope]);
 
   return (
     <Box className="main-page-container">
@@ -276,7 +279,7 @@ function MainPage({
 
       <BasePopup
         open={false}
-        onClose={() => {}}
+        onClose={() => { }}
         title="סנכרון נתונים למטרו"
         content={
           <Box className="gifs-div">

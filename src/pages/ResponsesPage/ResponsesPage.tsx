@@ -1,11 +1,9 @@
-import { GridRowId, GridRowModel, GridRowSelectionModel } from "@mui/x-data-grid-pro";
+import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Box, Tooltip, IconButton } from "@mui/material";
-import Delete from "@mui/icons-material/Delete";
+import { Box, Tooltip } from "@mui/material";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import { StatusCodes } from "http-status-codes";
-import { IOrderBy } from "../../types/enums/filtersAndSorts.enum";
 
 import SidePanel from "../../components/SidePanel/SidePanel";
 import SearchInfo from "../../components/Responses/SearchInfo";
@@ -35,6 +33,7 @@ import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner"
 import { getQuickEditDraft, clearQuickEditDraft } from "../FormEditor/utils/draftPersistence";
 import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialog";
 import ConfirmDeleteDialog from "../../components/BasePopup/ConfirmDeleteDialog";
+import { useDebounce } from "@src/hooks/utilsHooks/useDebounce";
 
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
 const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
@@ -102,15 +101,24 @@ const ResponsesPageContent = (): JSX.Element => {
   } = useFormStore();
   const { user } = useAuth();
 
+  const [searchInput, setSearchInput] = useState(filter?.query || "");
+  const debouncedSearchInput = useDebounce(searchInput, 500);
+
   const handleSearch = (val: string) => {
+    setSearchInput(val);
+  };
+
+  useEffect(() => {
+    if ((filter?.query || "") === debouncedSearchInput) return;
+
     setFilter({
       ...(filter || {}),
-      query: val,
+      query: debouncedSearchInput,
       pageNumber: 1,
       before: undefined,
       after: undefined,
     });
-  };
+  }, [debouncedSearchInput]);
 
   const {
     isInEditMode,
@@ -423,7 +431,7 @@ const ResponsesPageContent = (): JSX.Element => {
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <SearchInfo search={filter?.query || ""} setSearch={handleSearch} />
+              <SearchInfo search={searchInput} setSearch={handleSearch} />
 
               {!isInEditMode && (
                 <Box
