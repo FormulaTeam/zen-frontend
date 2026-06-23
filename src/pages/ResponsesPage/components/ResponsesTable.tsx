@@ -690,6 +690,11 @@ export const ResponsesTable = React.memo(
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.index,
+        renderCell: (params: GridRenderCellParams) => (
+          <Box component="span" className="cell-box" dir="ltr">
+            {params.value}
+          </Box>
+        ),
         ...getResponseMetaFilterColumnProps("index"),
       });
 

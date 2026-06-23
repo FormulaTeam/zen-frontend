@@ -390,6 +390,7 @@ export const useCreateResponse = (formId?: number, hiddenFieldIds?: string[]) =>
 
       queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
       queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
+      queryClient.invalidateQueries({ queryKey: ["fieldValues"] });
     },
   });
 };
@@ -418,6 +419,8 @@ export const useUpdateResponses = (formId?: number, hiddenFieldIds?: string[]) =
         queryClient.invalidateQueries({ queryKey: ["responses", String(formId)] });
         queryClient.invalidateQueries({ queryKey: [String(formId)] });
       }
+
+      queryClient.invalidateQueries({ queryKey: ["fieldValues"] });
     },
     onError: (error) => {
       console.error("Failed to update responses:", error);
@@ -433,6 +436,7 @@ export const useSoftDeleteResponses = (formId: number | string) => {
 
       queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
       queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
+      queryClient.invalidateQueries({ queryKey: ["fieldValues"] });
     },
   });
 };
@@ -445,6 +449,7 @@ export const useRestoreResponses = (formId: number) => {
 
       queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
       queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
+      queryClient.invalidateQueries({ queryKey: ["fieldValues"] });
     },
   });
 };
@@ -463,6 +468,7 @@ export const useImportResponsesFromFile = ({ formId }: { formId: string }) => {
 
       queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
       queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
+      queryClient.invalidateQueries({ queryKey: ["fieldValues"] });
     },
   });
 };
