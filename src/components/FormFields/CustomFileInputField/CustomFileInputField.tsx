@@ -82,6 +82,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
 }) => {
   const theme = useTheme();
   const [files, setFiles] = useState<FileItem[]>(() => normalizeIncomingValue(value));
+  const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
     const normalized = normalizeIncomingValue(value);
@@ -99,7 +100,21 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   );
 
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
+    (acceptedFiles: File[], fileRejections: any[]) => {
+      setLocalError(null);
+
+      if (fileRejections && fileRejections.length > 0) {
+        const hasSizeError = fileRejections.some((rejection) =>
+          rejection.errors.some((e: any) => e.code === "file-too-large")
+        );
+
+        if (hasSizeError) {
+          setLocalError("גודל הקובץ חורג מהרף המותר (10MB)");
+        } else {
+          setLocalError("קובץ לא תקין");
+        }
+      }
+
       const droppedFiles: FileItem[] = acceptedFiles.map((file) => {
         const relativePath =
           (file as File & { webkitRelativePath?: string }).webkitRelativePath || "";
@@ -120,6 +135,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   const deleteFile = useCallback(
     (event: React.MouseEvent, index: number) => {
       event.stopPropagation();
+      setLocalError(null);
       emitChange(files.filter((_, idx) => idx !== index));
       onBlurHandler?.();
     },
@@ -129,6 +145,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     disabled: isDisabled,
+    maxSize: 10 * 1024 * 1024,
   });
 
   return (
@@ -186,7 +203,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
             {...getRootProps()}
             className={classes["file-input-container"]}>
             <input {...getInputProps()} disabled={isDisabled} />
-            <section>
+            <section style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               {isDragActive ? (
                 <Typography variant="subtitle2">שחרר את הקבצים כאן...</Typography>
               ) : (
@@ -195,6 +212,11 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
                   <Typography variant={isTabularEdit ? "caption" : "subtitle2"}>
                     {isTabularEdit ? "עלה קבצים" : "גרור את הקבצים או לחץ כאן"}
                   </Typography>
+                  {!isTabularEdit && (
+                    <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.5 }}>
+                      גודל קובץ מקסימלי: 10MB
+                    </Typography>
+                  )}
                 </>
               )}
             </section>
@@ -229,7 +251,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
       )}
 
       <FormHelperText>
-        <FieldErrorText message={validationMessage} detail={validationDetail} />
+        <FieldErrorText message={localError || validationMessage} detail={validationDetail} />
       </FormHelperText>
     </FormControl>
   );

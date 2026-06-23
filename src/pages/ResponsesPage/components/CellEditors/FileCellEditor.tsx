@@ -216,6 +216,7 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
   const [files, setFiles] = useState<File[]>(parsedValue.newFiles);
   const [responseFiles, setResponseFiles] = useState<StoredFile[]>(parsedValue.attachedFiles);
   const [deletedFiles, setDeletedFiles] = useState<StoredFile[]>(parsedValue.deletedFiles);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const lastEmittedSignatureRef = useRef(
     buildFilesSignature(parsedValue.newFiles, parsedValue.attachedFiles, parsedValue.deletedFiles),
@@ -256,15 +257,31 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
     onChange(payload, isValid);
   }, [files, responseFiles, deletedFiles, isRequired, onChange]);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
+    setLocalError(null);
+
+    if (fileRejections && fileRejections.length > 0) {
+      const hasSizeError = fileRejections.some((rejection) =>
+        rejection.errors.some((e: any) => e.code === "file-too-large")
+      );
+
+      if (hasSizeError) {
+        setLocalError("גודל הקובץ חורג מהרף המותר (10MB)");
+      } else {
+        setLocalError("קובץ לא תקין");
+      }
+    }
+
     setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
   }, []);
 
   const deleteNewFile = (index: number) => {
+    setLocalError(null);
     setFiles((prevFiles) => prevFiles.filter((_, currentIndex) => currentIndex !== index));
   };
 
   const deleteAttachedFile = (file: StoredFile, index: number) => {
+    setLocalError(null);
     setResponseFiles((prevFiles) => prevFiles.filter((_, currentIndex) => currentIndex !== index));
     setDeletedFiles((prevFiles) => [...prevFiles, file]);
   };
@@ -273,13 +290,15 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
     onDrop,
     noClick: false,
     noKeyboard: true,
+    maxSize: 10 * 1024 * 1024,
   });
 
   const handleClick = (event: React.MouseEvent) => {
     event.stopPropagation();
   };
 
-  const hasError = !!errorMessage;
+  const displayError = localError || errorMessage;
+  const hasError = !!displayError;
   const hasFiles = files.length > 0 || responseFiles.length > 0;
   const filesCount = files.length + responseFiles.length;
 
@@ -358,7 +377,7 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
             ? "שחרר קבצים כאן..."
             : filesCount > 0
               ? `הוסף קבצים (${filesCount})`
-              : "לחץ או גרור קבצים"}
+              : "לחץ או גרור קבצים (עד 10MB)"}
         </Box>
       </Box>
 
@@ -409,24 +428,24 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
                 onDelete: () => deleteAttachedFile(file, index),
               }),
             )}
-
-            {errorMessage && (
-              <Box
-                component="span"
-                sx={{
-                  width: "100%",
-                  fontSize: "0.8rem",
-                  lineHeight: 1.2,
-                  color: "#d32f2f",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  textAlign: "right",
-                }}>
-                {errorMessage}
-              </Box>
-            )}
           </>
+        )}
+
+        {displayError && (
+          <Box
+            component="span"
+            sx={{
+              width: "100%",
+              fontSize: "0.8rem",
+              lineHeight: 1.2,
+              color: "#d32f2f",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              textAlign: "right",
+            }}>
+            {displayError}
+          </Box>
         )}
       </Box>
     </Box>
