@@ -1,56 +1,106 @@
 .file-input-container {
   width: 100%;
-  border: 1px dashed;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
   display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 0.5rem 1rem;
+  padding: 6px 12px;
+  min-height: 38px;
+  box-sizing: border-box;
+  background-color: #f8fafc;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #3b82f6;
+    background-color: #f1f5f9;
+  }
 
   img {
-    width: 25px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
   }
 }
 
 section {
   display: flex;
-  justify-content: center;
   align-items: center;
-  text-align: center;
+  justify-content: center;
   gap: 8px;
-  flex-wrap: wrap;
-  cursor: pointer;
-
-  span {
-    color: blue;
-    text-decoration: underline;
-  }
+  flex-wrap: nowrap;
+  width: 100%;
 }
 
 .items-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  width: 100%;
+
   .file-item {
-    width: 23%;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    border-radius: 10px;
-    flex-direction: row-reverse;
+    gap: 6px;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 2px 4px 2px 6px;
+    max-width: 160px;
+    height: 24px;
+    box-sizing: border-box;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+
+    &:hover {
+      background-color: #e2e8f0;
+      border-color: #cbd5e1;
+    }
 
     .file-info {
       display: flex;
       align-items: center;
-      gap: 8px;
-      direction: ltr;
+      gap: 5px;
       overflow: hidden;
+      direction: ltr;
+      flex: 1;
 
       svg {
-        width: 15px;
+        width: 11px !important;
+        height: 13px !important;
         flex-shrink: 0;
       }
 
       p {
-        font-size: 14px;
+        font-size: 11px;
+        font-weight: 500;
+        color: #334155;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        margin: 0;
+      }
+    }
+
+    button {
+      padding: 0 !important;
+      width: 14px !important;
+      height: 14px !important;
+      min-width: 14px !important;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      
+      &:hover {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+      }
+
+      svg {
+        font-size: 9px !important;
       }
     }
   }
@@ -58,14 +108,24 @@ section {
 
 .disabled {
   pointer-events: none;
+  opacity: 0.6;
 }
 
 .invalid {
-  color: red;
+  color: #ef4444;
+  
+  .file-input-container {
+    border-color: #f87171;
+    background-color: #fef2f2;
+    
+    &:hover {
+      border-color: #ef4444;
+    }
+  }
 }
 
 .view-only {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 8px;
 }

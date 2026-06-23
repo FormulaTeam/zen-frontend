@@ -194,28 +194,31 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
         <>
           <Box
             sx={{
-              backgroundColor: theme.palette.shadow,
               ...(isTabularEdit && {
                 border: "none",
-                minHeight: "32px",
+                minHeight: "28px",
+                padding: "2px 8px",
               }),
             }}
             {...getRootProps()}
             className={classes["file-input-container"]}>
             <input {...getInputProps()} disabled={isDisabled} />
-            <section style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <section>
               {isDragActive ? (
-                <Typography variant="subtitle2">שחרר את הקבצים כאן...</Typography>
+                <Typography variant="body2" sx={{ fontSize: "0.85rem", fontWeight: 500 }}>שחרר את הקבצים כאן...</Typography>
               ) : (
                 <>
-                  {files.length === 0 && <img src={UploadIcon} />}
-                  <Typography variant={isTabularEdit ? "caption" : "subtitle2"}>
-                    {isTabularEdit ? "עלה קבצים" : "גרור את הקבצים או לחץ כאן"}
+                  {files.length === 0 && <img src={UploadIcon} alt="upload" />}
+                  <Typography variant="body2" sx={{ fontSize: isTabularEdit ? "0.8rem" : "0.85rem", fontWeight: 500, color: "#1e293b" }}>
+                    {isTabularEdit ? "העלאת קבצים" : "גרור קבצים או לחץ כאן"}
                   </Typography>
                   {!isTabularEdit && (
-                    <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.5 }}>
-                      גודל קובץ מקסימלי: 10MB
-                    </Typography>
+                    <>
+                      <Box component="span" sx={{ color: "#94a3b8", fontSize: "0.85rem" }}>•</Box>
+                      <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 400 }}>
+                        עד 10MB
+                      </Typography>
+                    </>
                   )}
                 </>
               )}
