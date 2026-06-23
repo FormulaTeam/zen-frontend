@@ -13,9 +13,7 @@ import {
 } from "@mui/x-data-grid-pro";
 import { useFormStore, useInitiateFormStore } from "../stores/form.store";
 import clsx from "clsx";
-import CloudIcon from "@mui/icons-material/Cloud";
-import CloudDoneIcon from "@mui/icons-material/CloudDone";
-import CloudOffIcon from "@mui/icons-material/CloudOff";
+import { Cloud, CloudOff, RefreshCw } from "lucide-react";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import Visibility from "@mui/icons-material/Visibility";
 import Edit from "@mui/icons-material/Edit";
@@ -169,7 +167,8 @@ const getResponsiveColumnProps = (
 type Row = GridRowModel & {
   id: string | number;
   parentResponse?: string | null;
-  pushed_to_metro?: string | null;
+  syncStatusId?: number | null;
+  syncStatusDescription?: string | null;
   editedByName?: string;
   edited?: string;
   [key: string]: unknown;
@@ -206,11 +205,47 @@ interface ResponsesTableProps {
   onClearFilters: () => void;
 }
 
-const SyncStatusIcon: React.FC<{ pushedToMetro?: string | null }> = ({ pushedToMetro }) => (
-  <SyncStatusIconBox>
-    {pushedToMetro ? <CloudDoneIcon fontSize="small" /> : <CloudOffIcon fontSize="small" />}
-  </SyncStatusIconBox>
-);
+const SYNC_STATUS_HEBREW_LABELS: Record<number, string> = {
+  0: "ממתין לסנכרון",
+  1: "בתור לסנכרון",
+  2: "נשלח ל-Metro",
+  3: "נשלח ל-Dataverse",
+  4: "הסנכרון נכשל",
+  5: "הסנכרון הושלם",
+};
+
+const getSyncStatusLabel = (
+  statusId?: number | null,
+  statusDescription?: string | null,
+): string => {
+  if (typeof statusId === "number") {
+    return SYNC_STATUS_HEBREW_LABELS[statusId] ?? statusDescription ?? "סטטוס סנכרון לא ידוע";
+  }
+
+  return statusDescription ?? "סטטוס סנכרון לא ידוע";
+};
+
+const SyncStatusIcon: React.FC<{
+  statusId?: number | null;
+  statusDescription?: string | null;
+}> = ({ statusId, statusDescription }) => {
+  const label = getSyncStatusLabel(statusId, statusDescription);
+
+  const icon =
+    statusId === 5 ? (
+      <Cloud size={18} strokeWidth={2.3} />
+    ) : statusId === 4 ? (
+      <CloudOff size={18} strokeWidth={2.3} />
+    ) : (
+      <RefreshCw size={18} strokeWidth={2.3} />
+    );
+
+  return (
+    <Tooltip title={label} arrow placement="top">
+      <SyncStatusIconBox>{icon}</SyncStatusIconBox>
+    </Tooltip>
+  );
+};
 
 const isInputLikeTarget = (target: EventTarget | null): boolean => {
   const element = target as HTMLElement | null;
@@ -731,7 +766,7 @@ export const ResponsesTable = React.memo(
         headerAlign: "left",
         renderHeader: () => (
           <HeaderFlex sx={{ justifyContent: "flex-start", width: "100%" }}>
-            <CloudIcon fontSize="small" />
+            <Cloud size={18} strokeWidth={2.2} />
           </HeaderFlex>
         ),
         minWidth: 90,
@@ -741,7 +776,10 @@ export const ResponsesTable = React.memo(
         sortable: true,
         filterable: false,
         renderCell: (params: GridRenderCellParams) => (
-          <SyncStatusIcon pushedToMetro={params.row?.pushed_to_metro} />
+          <SyncStatusIcon
+            statusId={params.row?.syncStatusId}
+            statusDescription={params.row?.syncStatusDescription}
+          />
         ),
       });
 

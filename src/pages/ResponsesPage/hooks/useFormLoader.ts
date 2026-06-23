@@ -80,6 +80,9 @@ export function useFormLoader(formId: string) {
         : null;
 
       const rows: Row[] = responses.map((node: any) => {
+        const rawSyncStatusId =
+          node.syncStatusId ?? node.sync_status_id ?? node.syncStatus?.id ?? node.sync_status?.id;
+
         const row: Row = {
           id: node.id,
           edited: node.updated_at || node.updatedAt,
@@ -91,6 +94,18 @@ export function useFormLoader(formId: string) {
           form_id: node.form_id || node.formId,
           childResponses: node.childResponses || node.child_responses || [],
           parentResponse: node.parentResponse || node.parent_response || null,
+
+          syncStatusId:
+            rawSyncStatusId === undefined || rawSyncStatusId === null
+              ? null
+              : Number(rawSyncStatusId),
+
+          syncStatusDescription:
+            node.syncStatus?.description ??
+            node.sync_status?.description ??
+            node.syncStatusDescription ??
+            node.sync_status_description ??
+            null,
         };
 
         const fieldValues = node.fieldValues || node.field_values || node.data || [];
@@ -149,9 +164,7 @@ export function useFormLoader(formId: string) {
         const flattenedFields =
           sortedSections.length > 0
             ? sortedSections.flatMap((section) => section.fields)
-            : [...((formData as any).fields || [])].sort(
-                (a, b) => (a.index ?? 0) - (b.index ?? 0),
-              );
+            : [...((formData as any).fields || [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
 
         const columns = flattenedFields.map((field) => ({
           field: getFieldColumnKey(String(field.id)),
