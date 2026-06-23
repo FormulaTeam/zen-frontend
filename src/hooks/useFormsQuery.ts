@@ -27,10 +27,11 @@ export function useGetFormsQuery({ enabled = true, searchQuery, softDeleted, ...
 
   return useInfiniteQuery({
     queryKey: softDeleted ? ["forms", "deleted", queryParams] : ["forms", queryParams],
-    queryFn: async ({ pageParam = 0 }) => {
+    queryFn: async ({ pageParam = 0, signal }) => {
       const endpoint = softDeleted ? "/forms/soft-deleted" : "/forms";
       const response = await apiClient.get<FormOverviewDto[]>(endpoint, {
         params: { ...queryParams, limit: FORMS_PAGINATION_LIMIT, offset: pageParam },
+        signal,
       });
       return response.data;
     },
