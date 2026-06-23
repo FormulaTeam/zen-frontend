@@ -312,14 +312,15 @@ export const useResponseSave = (
             })) as ResponseDto[];
 
             return updatedResponses[0] ?? createdResponse;
-          } catch (uploadError) {
+          } catch (uploadError: any) {
             console.error("File upload failed after response creation:", uploadError);
             try {
               await softDeleteResponses(Number(formId), { responsesIds: [createdResponse.id] });
             } catch (deleteError) {
               console.error("Failed to delete response during rollback:", deleteError);
             }
-            throw new Error("העלאת הקבצים נכשלה, יצירת התגובה בוטלה.");
+            const reason = uploadError?.response?.data?.message || uploadError?.message || "שגיאת שרת";
+            throw new Error(`העלאת הקבצים נכשלה, יצירת התגובה בוטלה. סיבה: ${reason}`);
           }
         }
 
@@ -362,20 +363,21 @@ export const useResponseSave = (
           })) as ResponseDto[];
 
           return updatedResponses[0] ?? createdResponse;
-        } catch (uploadError) {
+        } catch (uploadError: any) {
           console.error("File upload failed after response creation:", uploadError);
           try {
             await softDeleteResponses(Number(formId), { responsesIds: [createdResponse.id] });
           } catch (deleteError) {
             console.error("Failed to delete response during rollback:", deleteError);
           }
-          throw new Error("העלאת הקבצים נכשלה, יצירת התגובה בוטלה.");
+          const reason = uploadError?.response?.data?.message || uploadError?.message || "שגיאת שרת";
+          throw new Error(`העלאת הקבצים נכשלה, יצירת התגובה בוטלה. סיבה: ${reason}`);
         }
       }
 
       return createdResponse;
     } catch (error: any) {
-      if (error?.message === "העלאת הקבצים נכשלה, יצירת התגובה בוטלה.") {
+      if (error?.message?.startsWith("העלאת הקבצים נכשלה")) {
         showErrorNotification(error.message);
       } else if (error?.response?.data?.error?.includes("Metro")) {
         showErrorNotification(
