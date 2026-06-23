@@ -772,6 +772,12 @@ const formatExcelExportCell = (value: unknown): ExcelExportCell => {
   if (typeof value === "object") {
     const objectValue = value as Record<string, unknown>;
 
+    if (typeof objectValue.fileName === "string" || typeof objectValue.name === "string") {
+      return {
+        value: safeString(objectValue.fileName ?? objectValue.name),
+      };
+    }
+
     if (typeof objectValue.link === "string" && objectValue.link.trim()) {
       return {
         value:
