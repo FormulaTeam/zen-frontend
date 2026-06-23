@@ -157,6 +157,27 @@ export const getLinkableForms = async (
 };
 
 /**
+ * Find the form ID that owns a field.
+ *
+ * @param fieldId - The field ID.
+ * @returns The owning form ID if found, otherwise null.
+ */
+export const getFormIdByFieldId = async (
+  fieldId: string,
+): Promise<number | null> => {
+  try {
+    const response = await apiClient.get<number | null>(
+      `/forms/fields/${fieldId}/form-id`,
+    );
+
+    return response.data ?? null;
+  } catch (error) {
+    console.error("Failed to fetch form ID by field ID:", error);
+    throw error;
+  }
+};
+
+/**
  * Restores a soft-deleted form.
  *
  * @param id - The ID of the form to restore.

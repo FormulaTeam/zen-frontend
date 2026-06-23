@@ -8,8 +8,7 @@ import {
   Typography,
   Box,
 } from "@mui/material";
-import { useGetForm } from "@api/formsApi";
-import apiClient from "@api/config";
+import { getFormIdByFieldId, useGetForm } from "@api/formsApi";
 import { useGetFormsData } from "@hooks/useGetFormsData";
 import { formsScopeOption } from "@src/types/enums/filtersAndSorts.enum";
 import { FormSectionDto, FormFieldDto, FormDto } from "@src/types/shared";
@@ -53,6 +52,7 @@ function FormFieldResponsesOptions(props: Props) {
   const { formStructure } = useFormStructureContext();
 
   const [searchText, setSearchText] = useState("");
+  const [isFormSelectorOpen, setIsFormSelectorOpen] = useState(false);
 
   const [selectedFormId, setSelectedFormId] = useState<number | undefined>(() => {
     if (!linkedOptionsFieldId) return undefined;
@@ -71,7 +71,7 @@ function FormFieldResponsesOptions(props: Props) {
   const { formsData: allForms, isLoading: isLoadingForms } = useGetFormsData({
     searchQuery: searchText || undefined,
     scope: formsScopeOption.LinkableForms,
-    enabled: true,
+    enabled: isFormSelectorOpen,
   });
 
   const {
@@ -116,9 +116,7 @@ function FormFieldResponsesOptions(props: Props) {
   }, [linkedOptionsFieldId]);
 
   useEffect(() => {
-    if (!linkedOptionsFieldId || allForms.length === 0) {
-      return;
-    }
+    if (!linkedOptionsFieldId) return;
 
     const cachedOwnerFormId = linkedOptionsOwnerFormIdCache.get(linkedOptionsFieldId);
 
@@ -139,34 +137,15 @@ function FormFieldResponsesOptions(props: Props) {
       setIsResolvingInitialSelection(true);
 
       try {
-        for (const formOverview of allForms) {
-          const formId = Number(formOverview.id);
+        const formId = await getFormIdByFieldId(linkedOptionsFieldId);
 
-          if (!formId) continue;
+        if (formId) {
+          linkedOptionsOwnerFormIdCache.set(linkedOptionsFieldId, formId);
 
-          const response = await apiClient.get<FormDto>(`/forms/${formId}`, {
-            params: {
-              includePermissions: true,
-            },
-          });
-
-          const form = response.data;
-          const fields = getFieldsFromForm(form);
-
-          const hasLinkedField = fields.some(
-            (field) => String(field.id) === String(linkedOptionsFieldId),
-          );
-
-          if (hasLinkedField) {
-            linkedOptionsOwnerFormIdCache.set(linkedOptionsFieldId, formId);
-
-            if (isMounted) {
-              setSelectedFormId(formId);
-              setSelectedFieldId(linkedOptionsFieldId);
-              resolvedFieldIdRef.current = linkedOptionsFieldId;
-            }
-
-            return;
+          if (isMounted) {
+            setSelectedFormId(formId);
+            setSelectedFieldId(linkedOptionsFieldId);
+            resolvedFieldIdRef.current = linkedOptionsFieldId;
           }
         }
       } finally {
@@ -181,7 +160,7 @@ function FormFieldResponsesOptions(props: Props) {
     return () => {
       isMounted = false;
     };
-  }, [allForms, linkedOptionsFieldId, selectedFormId]);
+  }, [linkedOptionsFieldId, selectedFormId]);
 
   const availableForms = useMemo<FormOption[]>(() => {
     const list = formStructure?.metadata?.id
@@ -255,6 +234,8 @@ function FormFieldResponsesOptions(props: Props) {
         onInputChange={(_, newInputValue) => {
           setSearchText(newInputValue);
         }}
+        onOpen={() => setIsFormSelectorOpen(true)}
+        onClose={() => setIsFormSelectorOpen(false)}
         onChange={(_, newValue) => {
           const nextFormId = newValue ? Number(newValue.id) : undefined;
 
