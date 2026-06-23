@@ -59,16 +59,13 @@ export default function ResponsesPage({
 
   const navigate = useNavigate();
   const { formId } = useParams<string>();
-  const { isLoading, isError, error } = useFormLoader(formId || "");
+  const { isLoading, isError } = useFormLoader(formId || "");
 
   useEffect(() => {
-    if (isError && error) {
-      const status = (error as any).response?.status;
-      if (status === StatusCodes.NOT_FOUND || status === StatusCodes.FORBIDDEN) {
-        navigate("/error", { replace: true });
-      }
+    if (isError) {
+      navigate("/error", { replace: true });
     }
-  }, [isError, error, navigate]);
+  }, [isError, navigate]);
 
   if (isLoading) {
     return (
@@ -78,7 +75,9 @@ export default function ResponsesPage({
     );
   }
 
-  if (isError) return <div>Error loading form data.</div>;
+  if (isError) {
+    return null;
+  }
 
   return <ResponsesPageContent />;
 }

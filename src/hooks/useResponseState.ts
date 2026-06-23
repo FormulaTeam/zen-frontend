@@ -487,20 +487,16 @@ export const useResponseState = (
   const {
     data: formFromQuery,
     isError: isFormError,
-    error: formError,
   } = useGetForm({
     formId,
     includePermissions: true,
   });
 
   useEffect(() => {
-    if (isFormError && formError) {
-      const status = (formError as any).response?.status;
-      if (status === StatusCodes.NOT_FOUND || status === StatusCodes.FORBIDDEN) {
-        navigate(IPath.ERROR, { replace: true });
-      }
+    if (isFormError) {
+      navigate(IPath.ERROR, { replace: true });
     }
-  }, [isFormError, formError, navigate]);
+  }, [isFormError, navigate]);
 
   useEffect(() => {
     if (initialResponse !== undefined) {
