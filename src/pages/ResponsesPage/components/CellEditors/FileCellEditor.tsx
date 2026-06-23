@@ -127,30 +127,29 @@ const getUploadRowSx = ({
 }) => ({
   width: "100%",
   minWidth: 0,
-  height: 34,
-  borderRadius: "10px",
-  border: "1px dashed",
-  borderColor: hasError ? "#d32f2f" : isDragActive ? "#7c9cc9" : "#d7deea",
-  backgroundColor: isDragActive ? "#f3f7fd" : "#ffffff",
-  padding: "0 8px",
-  boxShadow: hasError ? "0 0 0 2px rgba(211, 47, 47, 0.14)" : "0 1px 2px rgba(16, 24, 40, 0.04)",
-  display: "grid",
-  gridTemplateColumns: "18px minmax(0, 1fr)",
+  height: 36,
+  borderRadius: "8px",
+  border: "1.5px dashed",
+  borderColor: hasError ? "#ef4444" : isDragActive ? "#3b82f6" : "#cbd5e1",
+  backgroundColor: isDragActive ? "#eff6ff" : "#f8fafc",
+  padding: "0 12px",
+  display: "flex",
   alignItems: "center",
-  gap: "6px",
+  justifyContent: "center",
+  gap: "8px",
   boxSizing: "border-box",
   cursor: "pointer",
-  transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
+  transition: "border-color 0.2s ease, background-color 0.2s ease",
   overflow: "hidden",
 
   "&:hover": {
-    borderColor: hasError ? "#d32f2f" : "#b8c4d6",
-    backgroundColor: "#fbfcfe",
+    borderColor: hasError ? "#ef4444" : "#3b82f6",
+    backgroundColor: "#f1f5f9",
   },
 
   "& .MuiSvgIcon-root": {
-    fontSize: 17,
-    color: hasError ? "#d32f2f" : "#64748b",
+    fontSize: 18,
+    color: hasError ? "#ef4444" : isDragActive ? "#3b82f6" : "#64748b",
   },
 });
 
@@ -216,6 +215,7 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
   const [files, setFiles] = useState<File[]>(parsedValue.newFiles);
   const [responseFiles, setResponseFiles] = useState<StoredFile[]>(parsedValue.attachedFiles);
   const [deletedFiles, setDeletedFiles] = useState<StoredFile[]>(parsedValue.deletedFiles);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const lastEmittedSignatureRef = useRef(
     buildFilesSignature(parsedValue.newFiles, parsedValue.attachedFiles, parsedValue.deletedFiles),
@@ -256,15 +256,31 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
     onChange(payload, isValid);
   }, [files, responseFiles, deletedFiles, isRequired, onChange]);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
+    setLocalError(null);
+
+    if (fileRejections && fileRejections.length > 0) {
+      const hasSizeError = fileRejections.some((rejection) =>
+        rejection.errors.some((e: any) => e.code === "file-too-large")
+      );
+
+      if (hasSizeError) {
+        setLocalError("גודל הקובץ חורג מהרף המותר (10MB)");
+      } else {
+        setLocalError("קובץ לא תקין");
+      }
+    }
+
     setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
   }, []);
 
   const deleteNewFile = (index: number) => {
+    setLocalError(null);
     setFiles((prevFiles) => prevFiles.filter((_, currentIndex) => currentIndex !== index));
   };
 
   const deleteAttachedFile = (file: StoredFile, index: number) => {
+    setLocalError(null);
     setResponseFiles((prevFiles) => prevFiles.filter((_, currentIndex) => currentIndex !== index));
     setDeletedFiles((prevFiles) => [...prevFiles, file]);
   };
@@ -273,13 +289,15 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
     onDrop,
     noClick: false,
     noKeyboard: true,
+    maxSize: 10 * 1024 * 1024,
   });
 
   const handleClick = (event: React.MouseEvent) => {
     event.stopPropagation();
   };
 
-  const hasError = !!errorMessage;
+  const displayError = localError || errorMessage;
+  const hasError = !!displayError;
   const hasFiles = files.length > 0 || responseFiles.length > 0;
   const filesCount = files.length + responseFiles.length;
 
@@ -358,7 +376,7 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
             ? "שחרר קבצים כאן..."
             : filesCount > 0
               ? `הוסף קבצים (${filesCount})`
-              : "לחץ או גרור קבצים"}
+              : "לחץ או גרור קבצים (עד 10MB)"}
         </Box>
       </Box>
 
@@ -409,24 +427,24 @@ export const FileCellEditor: React.FC<FileCellEditorProps> = ({
                 onDelete: () => deleteAttachedFile(file, index),
               }),
             )}
-
-            {errorMessage && (
-              <Box
-                component="span"
-                sx={{
-                  width: "100%",
-                  fontSize: "0.8rem",
-                  lineHeight: 1.2,
-                  color: "#d32f2f",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  textAlign: "right",
-                }}>
-                {errorMessage}
-              </Box>
-            )}
           </>
+        )}
+
+        {displayError && (
+          <Box
+            component="span"
+            sx={{
+              width: "100%",
+              fontSize: "0.8rem",
+              lineHeight: 1.2,
+              color: "#d32f2f",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              textAlign: "right",
+            }}>
+            {displayError}
+          </Box>
         )}
       </Box>
     </Box>

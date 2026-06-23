@@ -1,4 +1,4 @@
-import { useCreateResponse, useUpdateResponses } from "../api";
+import { useCreateResponse, useUpdateResponses, softDeleteResponses } from "../api";
 import { showErrorNotification, getUserName } from "../utils/utils";
 import { NotificationTexts } from "../utils/interfaces";
 import { toStoredFile, uploadFile, type ResponseFileDto, type StoredFile } from "../api/filesApi";
@@ -295,22 +295,33 @@ export const useResponseSave = (
         const createdResponse = results[0];
 
         if (createdResponse?.id && fileUploadDrafts.some((draft) => draft.files.length > 0)) {
-          const uploadedByFieldId = await uploadDraftFiles(
-            Number(formId),
-            createdResponse.id,
-            fileUploadDrafts,
-          );
-          let nextFieldValues = fieldValues;
+          try {
+            const uploadedByFieldId = await uploadDraftFiles(
+              Number(formId),
+              createdResponse.id,
+              fileUploadDrafts,
+            );
+            let nextFieldValues = fieldValues;
 
-          uploadedByFieldId.forEach((files, fieldId) => {
-            nextFieldValues = replaceFieldValue(nextFieldValues, fieldId, buildFileValue(files));
-          });
+            uploadedByFieldId.forEach((files, fieldId) => {
+              nextFieldValues = replaceFieldValue(nextFieldValues, fieldId, buildFileValue(files));
+            });
 
-          const updatedResponses = (await mutateUpdateResponsesAsync({
-            responses: [{ responseId: createdResponse.id, fieldValues: nextFieldValues }],
-          })) as ResponseDto[];
+            const updatedResponses = (await mutateUpdateResponsesAsync({
+              responses: [{ responseId: createdResponse.id, fieldValues: nextFieldValues }],
+            })) as ResponseDto[];
 
-          return updatedResponses[0] ?? createdResponse;
+            return updatedResponses[0] ?? createdResponse;
+          } catch (uploadError: any) {
+            console.error("File upload failed after response creation:", uploadError);
+            try {
+              await softDeleteResponses(Number(formId), { responsesIds: [createdResponse.id] });
+            } catch (deleteError) {
+              console.error("Failed to delete response during rollback:", deleteError);
+            }
+            const reason = uploadError?.response?.data?.message || uploadError?.message || "שגיאת שרת";
+            throw new Error(`העלאת הקבצים נכשלה, יצירת התגובה בוטלה. סיבה: ${reason}`);
+          }
         }
 
         return createdResponse;
@@ -352,16 +363,23 @@ export const useResponseSave = (
           })) as ResponseDto[];
 
           return updatedResponses[0] ?? createdResponse;
-        } catch (uploadError) {
+        } catch (uploadError: any) {
           console.error("File upload failed after response creation:", uploadError);
-          showErrorNotification("התגובה נוצרה בהצלחה, אך העלאת הקבצים נכשלה. ניתן לנסות להעלותם שוב בעריכת התגובה.");
-          return createdResponse;
+          try {
+            await softDeleteResponses(Number(formId), { responsesIds: [createdResponse.id] });
+          } catch (deleteError) {
+            console.error("Failed to delete response during rollback:", deleteError);
+          }
+          const reason = uploadError?.response?.data?.message || uploadError?.message || "שגיאת שרת";
+          throw new Error(`העלאת הקבצים נכשלה, יצירת התגובה בוטלה. סיבה: ${reason}`);
         }
       }
 
       return createdResponse;
     } catch (error: any) {
-      if (error?.response?.data?.error?.includes("Metro")) {
+      if (error?.message?.startsWith("העלאת הקבצים נכשלה")) {
+        showErrorNotification(error.message);
+      } else if (error?.response?.data?.error?.includes("Metro")) {
         showErrorNotification(
           response ? NotificationTexts.UpdateButSyncFaild : NotificationTexts.CreatedButSyncFaild,
         );

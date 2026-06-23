@@ -12,8 +12,8 @@ import {
   FormHelperText,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import { FileIcon, defaultStyles } from "react-file-icon";
-import UploadIcon from "../../../images/Upload-icon.svg";
 import { downloadFileFromResponse } from "../../../api/filesApi";
 import FieldErrorText from "../FieldErrorText/FieldErrorText";
 
@@ -82,6 +82,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
 }) => {
   const theme = useTheme();
   const [files, setFiles] = useState<FileItem[]>(() => normalizeIncomingValue(value));
+  const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
     const normalized = normalizeIncomingValue(value);
@@ -99,7 +100,21 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   );
 
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
+    (acceptedFiles: File[], fileRejections: any[]) => {
+      setLocalError(null);
+
+      if (fileRejections && fileRejections.length > 0) {
+        const hasSizeError = fileRejections.some((rejection) =>
+          rejection.errors.some((e: any) => e.code === "file-too-large")
+        );
+
+        if (hasSizeError) {
+          setLocalError("גודל הקובץ חורג מהרף המותר (10MB)");
+        } else {
+          setLocalError("קובץ לא תקין");
+        }
+      }
+
       const droppedFiles: FileItem[] = acceptedFiles.map((file) => {
         const relativePath =
           (file as File & { webkitRelativePath?: string }).webkitRelativePath || "";
@@ -120,6 +135,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   const deleteFile = useCallback(
     (event: React.MouseEvent, index: number) => {
       event.stopPropagation();
+      setLocalError(null);
       emitChange(files.filter((_, idx) => idx !== index));
       onBlurHandler?.();
     },
@@ -129,6 +145,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     disabled: isDisabled,
+    maxSize: 10 * 1024 * 1024,
   });
 
   return (
@@ -177,10 +194,10 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
         <>
           <Box
             sx={{
-              backgroundColor: theme.palette.shadow,
               ...(isTabularEdit && {
                 border: "none",
-                minHeight: "32px",
+                minHeight: "28px",
+                padding: "2px 8px",
               }),
             }}
             {...getRootProps()}
@@ -188,13 +205,21 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
             <input {...getInputProps()} disabled={isDisabled} />
             <section>
               {isDragActive ? (
-                <Typography variant="subtitle2">שחרר את הקבצים כאן...</Typography>
+                <Typography variant="body2" sx={{ fontSize: "0.85rem", fontWeight: 500 }}>שחרר את הקבצים כאן...</Typography>
               ) : (
                 <>
-                  {files.length === 0 && <img src={UploadIcon} />}
-                  <Typography variant={isTabularEdit ? "caption" : "subtitle2"}>
-                    {isTabularEdit ? "עלה קבצים" : "גרור את הקבצים או לחץ כאן"}
+                  {files.length === 0 && <CloudUploadOutlinedIcon sx={{ fontSize: 18, color: "#64748b" }} />}
+                  <Typography variant="body2" sx={{ fontSize: isTabularEdit ? "0.8rem" : "0.85rem", fontWeight: 500, color: "#1e293b" }}>
+                    {isTabularEdit ? "העלאת קבצים" : "גרור קבצים או לחץ כאן"}
                   </Typography>
+                  {!isTabularEdit && (
+                    <>
+                      <Box component="span" sx={{ color: "#94a3b8", fontSize: "0.85rem" }}>•</Box>
+                      <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 400 }}>
+                        עד 10MB
+                      </Typography>
+                    </>
+                  )}
                 </>
               )}
             </section>
@@ -229,7 +254,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
       )}
 
       <FormHelperText>
-        <FieldErrorText message={validationMessage} detail={validationDetail} />
+        <FieldErrorText message={localError || validationMessage} detail={validationDetail} />
       </FormHelperText>
     </FormControl>
   );
