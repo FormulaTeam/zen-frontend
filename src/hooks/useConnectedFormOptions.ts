@@ -60,7 +60,7 @@ export const useConnectedFormOptions = ({
   const offsetRef = useRef<Record<string, number>>({});
   const loadedFieldsRef = useRef<Set<string>>(new Set());
 
-  const { findOwnerFormIdByFieldId, isLoadingForms, allForms } = useFindOwnerFormId();
+  const { findOwnerFormIdByFieldId, isLoadingForms } = useFindOwnerFormId();
 
   const loadOptionsForField = useCallback(
     async (field: ConnectedFormField, search?: string, offset = 0): Promise<void> => {
@@ -114,7 +114,7 @@ export const useConnectedFormOptions = ({
   };
 
   useEffect(() => {
-    if (!formFields || formFields.length === 0 || isLoadingForms || allForms.length === 0) return;
+    if (!formFields || formFields.length === 0) return;
 
     const connectedFields = formFields.filter(
       (field) => isConnectedToForm(field, formFields) && !loadedFieldsRef.current.has(String(field.id)),
@@ -139,7 +139,7 @@ export const useConnectedFormOptions = ({
     };
 
     void loadAll();
-  }, [formFields, allForms, isLoadingForms, loadOptionsForField]);
+  }, [formFields, loadOptionsForField]);
 
   return { fieldOptions, isLoading: isLoading || isLoadingForms, error, loadMoreOptions };
 };
