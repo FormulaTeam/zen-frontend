@@ -12,8 +12,8 @@ import {
   FormHelperText,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import { FileIcon, defaultStyles } from "react-file-icon";
-import UploadIcon from "../../../images/Upload-icon.svg";
 import { downloadFileFromResponse } from "../../../api/filesApi";
 import FieldErrorText from "../FieldErrorText/FieldErrorText";
 
@@ -208,7 +208,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
                 <Typography variant="body2" sx={{ fontSize: "0.85rem", fontWeight: 500 }}>שחרר את הקבצים כאן...</Typography>
               ) : (
                 <>
-                  {files.length === 0 && <img src={UploadIcon} alt="upload" />}
+                  {files.length === 0 && <CloudUploadOutlinedIcon sx={{ fontSize: 18, color: "#64748b" }} />}
                   <Typography variant="body2" sx={{ fontSize: isTabularEdit ? "0.8rem" : "0.85rem", fontWeight: 500, color: "#1e293b" }}>
                     {isTabularEdit ? "העלאת קבצים" : "גרור קבצים או לחץ כאן"}
                   </Typography>
