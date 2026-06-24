@@ -143,11 +143,10 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
   };
 
   const getPlaceholder = (axis: "x" | "y") => {
-    if (locationFormat === "UTM") {
-      return axis === "x" ? "X (לדוגמה: 200000)" : "Y (לדוגמה: 500000)";
-    }
+    const normalizedLocationFormat = locationFormat.toLowerCase();
+    const locationPlaceholder = normalizedLocationFormat === "wkt" ? "34.781256" : "123456";
 
-    return axis === "x" ? "X (לדוגמה: 34.8)" : "Y (לדוגמה: 31.5)";
+    return `${axis.toUpperCase()} - ${locationPlaceholder}`;
   };
 
   return (
