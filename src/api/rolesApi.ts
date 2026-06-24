@@ -44,6 +44,11 @@ export const useUpsertFormRoles = (formId: number) => {
     mutationFn: (roles: FormRolesQuery) => upsertFormRoles(formId, roles),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["form-roles", formId] });
+      queryClient.invalidateQueries({ queryKey: [formId] });
+      queryClient.invalidateQueries({ queryKey: [formId.toString()] });
+      queryClient.invalidateQueries({ queryKey: ["forms"] });
+      queryClient.invalidateQueries({ queryKey: ["responses-views", formId] });
+      queryClient.invalidateQueries({ queryKey: ["responses-views", formId.toString()] });
     },
   });
 };
