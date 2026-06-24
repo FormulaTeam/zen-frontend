@@ -16,6 +16,7 @@ import {
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { FormMetadata, useFormStructureContext } from "../context/FormStructureContext";
 import { useEffect, useMemo, useState } from "react";
+import { fieldType } from "formula-gear";
 import { useFormEditor } from "../hooks/useFormEditor";
 import IconsGrid from "../../../components/IconsGrid/IconsGrid";
 import { OverflowTooltip } from "../../../components/OverflowTooltip";
@@ -195,9 +196,15 @@ function FormEditorHeader() {
   const validationPopupErrors = useMemo<ValidationError[]>(() => {
     const errors: ValidationError[] = [];
 
-    if (Object.keys(formStructure.fields).length === 0) {
+    const fieldValues = Object.values(formStructure.fields);
+
+    if (fieldValues.length === 0) {
       errors.push({
         message: "לא ניתן לשמור טופס ללא שדות",
+      });
+    } else if (fieldValues.length === 1 && fieldValues[0].data?.typeId === fieldType.Form) {
+      errors.push({
+        message: "לא ניתן לשמור טופס עם שדה מסוג 'טופס בתוך טופס' כשדה יחיד",
       });
     }
 

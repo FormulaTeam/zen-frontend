@@ -149,11 +149,21 @@ theme.components = {
   MuiTooltip: {
     styleOverrides: {
       tooltip: {
-        "&": {
-          fontSize: "1rem",
-          "&.font-lg": {
-            fontSize: "1.25rem",
-          },
+        fontSize: "1rem",
+        backgroundColor: "#ffffff",
+        color: "#0f172a",
+        boxShadow: "0px 4px 16px rgba(2, 6, 24, 0.12)",
+        border: "1px solid #e2e8f0",
+        borderRadius: "8px",
+        padding: "4px 10px",
+        "&.font-lg": {
+          fontSize: "1.25rem",
+        },
+      },
+      arrow: {
+        color: "#ffffff",
+        "&::before": {
+          border: "1px solid #e2e8f0",
         },
       },
     },

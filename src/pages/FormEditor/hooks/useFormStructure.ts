@@ -3,6 +3,8 @@ import { z } from "zod";
 import { $ZodErrorTree } from "zod/v4/core";
 import { cloneDeep, isEqual } from "lodash";
 
+import { fieldType } from "formula-gear";
+
 import { FormField, FormMetadata, FormStructure, Section } from "../context/FormStructureContext";
 import { getEmptyForm } from "../context/utils";
 import { texts } from "@utils/texts";
@@ -763,7 +765,11 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     const metadataErrors = validateMetadata(metadata) || {};
     const hasMetadataErrors = Object.keys(metadataErrors).length > 0;
     const hasFields = Object.keys(fields).length > 0;
-    const isValid = fieldsValid && sectionsValid && !hasMetadataErrors && hasFields;
+
+    const fieldValues = Object.values(fields);
+    const hasOnlyFormInFormField = fieldValues.length === 1 && fieldValues[0].data?.typeId === fieldType.Form;
+
+    const isValid = fieldsValid && sectionsValid && !hasMetadataErrors && hasFields && !hasOnlyFormInFormField;
 
     setFormStructure((prev) => {
       const updatedFields = { ...prev.fields };
