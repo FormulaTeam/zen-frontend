@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Box, Button, Grid, Tab, Tabs, Typography, useTheme, Stack, Tooltip, IconButton } from "@mui/material";
 import { ArrowBack as ArrowBackIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from "@mui/icons-material";
@@ -37,7 +37,9 @@ function DeletedForms({ user }: { user: any }) {
   const navigate = useNavigate();
   const theme = useTheme();
 
-  const [activeTab, setActiveTab] = useState<number>(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const activeTab = tabParam === "responses" ? 1 : 0;
 
   // Soft-deleted forms state
   const [forms, setForms] = useState<any[]>([]);
@@ -139,7 +141,7 @@ function DeletedForms({ user }: { user: any }) {
   };
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
+    setSearchParams({ tab: newValue === 1 ? "responses" : "forms" }, { replace: true });
   };
 
   const handleRestoreFormClick = async (formId: number) => {
