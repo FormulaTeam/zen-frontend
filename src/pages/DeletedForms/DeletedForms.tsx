@@ -6,6 +6,7 @@ import { ArrowBack as ArrowBackIcon, ExpandMore as ExpandMoreIcon, ExpandLess as
 import { getDeletedForms, restoreForm } from "../../api/formsApi";
 import { getSoftDeletedResponsesGlobal, restoreResponse } from "../../api/responsesApi";
 import { StyledCard } from "../../components/FormCard/styled";
+import { CustomIcon } from "../../theme/icons";
 
 const MynaUiUndoIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -191,24 +192,11 @@ function DeletedForms({ user }: { user: any }) {
             סל המיחזור
           </Typography>
 
-          <Button
-            onClick={() => navigate("/forms")}
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
-            sx={{
-              borderColor: "rgba(2, 6, 24, 0.15)",
-              color: "#020618",
-              textTransform: "none",
-              borderRadius: "10px",
-              fontFamily: "Heebo, sans-serif",
-              fontWeight: 500,
-              "&:hover": {
-                backgroundColor: "rgba(2, 6, 24, 0.04)",
-                borderColor: "rgba(2, 6, 24, 0.25)",
-              },
-            }}>
-            חזרה לטפסים שלי
-          </Button>
+          <Tooltip title="חזרה" arrow placement="top">
+            <Button onClick={() => navigate("/forms")} variant="customIcon">
+              <CustomIcon iconName="arrowBack" forcePointer />
+            </Button>
+          </Tooltip>
         </Stack>
 
         <Tabs
@@ -267,21 +255,19 @@ function DeletedForms({ user }: { user: any }) {
                           justifyContent: "space-between",
                           width: "100%",
                         }}>
-                        <Stack direction="column" spacing={0.5} sx={{ flexGrow: 1 }}>
+                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexGrow: 1, flexWrap: "nowrap", overflow: "hidden" }}>
+                          <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569", backgroundColor: "#f1f5f9", padding: "3px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", whiteSpace: "nowrap" }}>
+                            #{form.id}
+                          </span>
                           <Typography
                             variant="h6"
                             sx={{
                               fontWeight: 600,
                               fontFamily: "Heebo, sans-serif",
                               color: "#020618",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
+                              whiteSpace: "nowrap",
                             }}>
                             {form.name}
-                            <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "#94a3b8", backgroundColor: "#f8fafc", padding: "2px 8px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
-                              #{form.id}
-                            </span>
                           </Typography>
                           <Typography
                             variant="body2"
@@ -291,6 +277,7 @@ function DeletedForms({ user }: { user: any }) {
                               display: "flex",
                               alignItems: "center",
                               gap: "6px",
+                              whiteSpace: "nowrap",
                             }}>
                             נמחק ב-
                             <span style={{ color: "#020618", fontWeight: 500 }}>
@@ -316,22 +303,28 @@ function DeletedForms({ user }: { user: any }) {
                             )}
                           </Typography>
                         </Stack>
-                        <Tooltip title="שחזור" arrow placement="top">
-                          <IconButton
-                            onClick={() => handleRestoreFormClick(form.id)}
-                            sx={{
-                              backgroundColor: theme.palette.primary.main,
-                              color: "white",
-                              borderRadius: "10px",
-                              width: "40px",
-                              height: "40px",
-                              "&:hover": {
-                                backgroundColor: theme.palette.primary.dark,
-                              },
-                            }}>
-                            <MynaUiUndoIcon />
-                          </IconButton>
-                        </Tooltip>
+                        <Button
+                          onClick={() => handleRestoreFormClick(form.id)}
+                          variant="contained"
+                          sx={{
+                            backgroundColor: theme.palette.primary.main,
+                            color: "white",
+                            borderRadius: "10px",
+                            px: 3,
+                            py: 0.75,
+                            fontFamily: "Heebo, sans-serif",
+                            fontWeight: 500,
+                            minWidth: "150px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            "&:hover": {
+                              backgroundColor: theme.palette.primary.dark,
+                            },
+                          }}>
+                          <MynaUiUndoIcon />
+                          שחזור טופס
+                        </Button>
                       </StyledCard>
                     </Grid>
                   );
@@ -375,18 +368,25 @@ function DeletedForms({ user }: { user: any }) {
                   <Stack
                     direction="row"
                     alignItems="center"
-                    spacing={1}
+                    spacing={1.5}
                     onClick={() => toggleFormExpanded(group.formId)}
                     sx={{
                       cursor: "pointer",
-                      borderBottom: "2px solid rgba(2, 6, 24, 0.05)",
-                      pb: 1,
+                      backgroundColor: isExpanded ? "#f1f5f9" : "#f8fafc",
+                      border: "1px solid",
+                      borderColor: isExpanded ? "rgba(30, 136, 229, 0.2)" : "#e2e8f0",
+                      borderRadius: "8px",
+                      px: 2,
+                      py: 1.25,
                       mb: 1.5,
                       userSelect: "none",
                       color: isExpanded ? theme.palette.primary.main : "#62748E",
-                      transition: "color 0.2s ease-in-out",
+                      transition: "all 0.2s ease-in-out",
+                      boxShadow: isExpanded ? "0px 2px 8px rgba(30, 136, 229, 0.05)" : "none",
                       "&:hover": {
                         color: theme.palette.primary.main,
+                        backgroundColor: "#f1f5f9",
+                        borderColor: "rgba(30, 136, 229, 0.2)",
                       },
                     }}
                   >
@@ -403,10 +403,10 @@ function DeletedForms({ user }: { user: any }) {
                         gap: "8px",
                       }}
                     >
-                      {group.formName}
-                      <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "#94a3b8", backgroundColor: "#f8fafc", padding: "2px 8px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                      <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569", backgroundColor: "#f1f5f9", padding: "3px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
                         #{group.formId}
                       </span>
+                      {group.formName}
                       <span style={{ fontSize: "0.8rem", fontWeight: 500, color: theme.palette.primary.main, backgroundColor: "#e0f2fe", padding: "2px 10px", borderRadius: "999px" }}>
                         {group.items.length} {group.items.length === 1 ? "תגובה" : "תגובות"}
                       </span>
@@ -489,22 +489,28 @@ function DeletedForms({ user }: { user: any }) {
                                   )}
                                 </Typography>
                               </Stack>
-                              <Tooltip title="שחזור" arrow placement="top">
-                                <IconButton
-                                  onClick={() => handleRestoreResponseClick(item.formId, item.id)}
-                                  sx={{
-                                    backgroundColor: theme.palette.primary.main,
-                                    color: "white",
-                                    borderRadius: "10px",
-                                    width: "40px",
-                                    height: "40px",
-                                    "&:hover": {
-                                      backgroundColor: theme.palette.primary.dark,
-                                    },
-                                  }}>
-                                  <MynaUiUndoIcon />
-                                </IconButton>
-                              </Tooltip>
+                              <Button
+                                onClick={() => handleRestoreResponseClick(item.formId, item.id)}
+                                variant="contained"
+                                sx={{
+                                  backgroundColor: theme.palette.primary.main,
+                                  color: "white",
+                                  borderRadius: "10px",
+                                  px: 3,
+                                  py: 0.75,
+                                  fontFamily: "Heebo, sans-serif",
+                                  fontWeight: 500,
+                                  minWidth: "150px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "8px",
+                                  "&:hover": {
+                                    backgroundColor: theme.palette.primary.dark,
+                                  },
+                                }}>
+                                <MynaUiUndoIcon />
+                                שחזור תגובה
+                              </Button>
                             </StyledCard>
                           </Grid>
                         );
