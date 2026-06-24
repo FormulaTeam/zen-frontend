@@ -455,6 +455,9 @@ function DeletedForms({ user }: { user: any }) {
                     onClick={() => toggleFormExpanded(group.formId)}
                     sx={{
                       cursor: "pointer",
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 2,
                       backgroundColor: "#ffffff",
                       border: "1px solid",
                       borderColor: isExpanded ? "#1e88e5" : "rgba(2, 6, 24, 0.08)",
