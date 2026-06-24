@@ -1,11 +1,29 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Box, Button, Grid, Tab, Tabs, Typography, useTheme, Stack, Tooltip } from "@mui/material";
-import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
+import { Box, Button, Grid, Tab, Tabs, Typography, useTheme, Stack, Tooltip, IconButton } from "@mui/material";
+import { ArrowBack as ArrowBackIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from "@mui/icons-material";
 import { getDeletedForms, restoreForm } from "../../api/formsApi";
 import { getSoftDeletedResponsesGlobal, restoreResponse } from "../../api/responsesApi";
 import { StyledCard } from "../../components/FormCard/styled";
+
+const MynaUiUndoIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M7 10L3 14L7 18" />
+    <path d="M3 14H15C18.3137 14 21 11.3137 21 8C21 4.68629 18.3137 2 15 2" />
+  </svg>
+);
 
 /**
  * Main Trash Page displaying soft-deleted forms and responses in tabs.
@@ -31,6 +49,15 @@ function DeletedForms({ user }: { user: any }) {
   const [isResponsesLoading, setIsResponsesLoading] = useState<boolean>(false);
   const [responsesPage, setResponsesPage] = useState<number>(1);
   const [responsesHasNext, setResponsesHasNext] = useState<boolean>(false);
+
+  const [expandedForms, setExpandedForms] = useState<Record<number, boolean>>({});
+
+  const toggleFormExpanded = (formId: number) => {
+    setExpandedForms((prev) => ({
+      ...prev,
+      [formId]: !prev[formId],
+    }));
+  };
 
   const pageSize = 20;
 
@@ -240,16 +267,21 @@ function DeletedForms({ user }: { user: any }) {
                           justifyContent: "space-between",
                           width: "100%",
                         }}>
-                        <Stack direction="row" spacing={4} alignItems="center" sx={{ flexGrow: 1 }}>
+                        <Stack direction="column" spacing={0.5} sx={{ flexGrow: 1 }}>
                           <Typography
                             variant="h6"
                             sx={{
                               fontWeight: 600,
                               fontFamily: "Heebo, sans-serif",
                               color: "#020618",
-                              minWidth: "250px",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
                             }}>
                             {form.name}
+                            <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "#94a3b8", backgroundColor: "#f8fafc", padding: "2px 8px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                              #{form.id}
+                            </span>
                           </Typography>
                           <Typography
                             variant="body2"
@@ -284,24 +316,22 @@ function DeletedForms({ user }: { user: any }) {
                             )}
                           </Typography>
                         </Stack>
-                        <Button
-                          onClick={() => handleRestoreFormClick(form.id)}
-                          variant="contained"
-                          sx={{
-                            backgroundColor: theme.palette.primary.main,
-                            color: "white",
-                            borderRadius: "10px",
-                            px: 4,
-                            py: 0.75,
-                            fontFamily: "Heebo, sans-serif",
-                            fontWeight: 500,
-                            minWidth: "120px",
-                            "&:hover": {
-                              backgroundColor: theme.palette.primary.dark,
-                            },
-                          }}>
-                          שחזור
-                        </Button>
+                        <Tooltip title="שחזור" arrow placement="top">
+                          <IconButton
+                            onClick={() => handleRestoreFormClick(form.id)}
+                            sx={{
+                              backgroundColor: theme.palette.primary.main,
+                              color: "white",
+                              borderRadius: "10px",
+                              width: "40px",
+                              height: "40px",
+                              "&:hover": {
+                                backgroundColor: theme.palette.primary.dark,
+                              },
+                            }}>
+                            <MynaUiUndoIcon />
+                          </IconButton>
+                        </Tooltip>
                       </StyledCard>
                     </Grid>
                   );
@@ -331,127 +361,159 @@ function DeletedForms({ user }: { user: any }) {
               <Typography
                 variant="body2"
                 sx={{ color: "text.secondary", fontFamily: "Heebo, sans-serif" }}>
-                לא נמצאו טפסים שנמחקו.
+                לא נמצאו טפסים שנמחקו
               </Typography>
             </Box>
           )
         ) : responses.length > 0 ? (
           <Box className="forms-grid" onScroll={handleScroll} sx={{ margin: 0, padding: 0 }}>
-            {Object.values(groupedResponses).map((group: any) => (
-              <Box key={group.formId} sx={{ mb: 4 }}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 600,
-                    color: "#62748E",
-                    mb: 1.5,
-                    fontFamily: "Heebo, sans-serif",
-                    borderBottom: "2px solid rgba(2, 6, 24, 0.05)",
-                    pb: 1,
-                  }}>
-                  {group.formName} ({group.items.length})
-                </Typography>
+            {Object.values(groupedResponses).map((group: any) => {
+              const isExpanded = !!expandedForms[group.formId];
 
-                <Grid container spacing={1.5} columns={12}>
-                  {group.items.map((item: any) => {
-                    const deletedDateObj = item.deletedResponse?.deletedAt
-                      ? new Date(item.deletedResponse.deletedAt)
-                      : null;
-                    const formattedDate = deletedDateObj
-                      ? deletedDateObj.toLocaleDateString("he-IL")
-                      : "N/A";
-                    const formattedTime = deletedDateObj
-                      ? deletedDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })
-                      : "";
+              return (
+                <Box key={group.formId} sx={{ mb: 2 }}>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={1}
+                    onClick={() => toggleFormExpanded(group.formId)}
+                    sx={{
+                      cursor: "pointer",
+                      borderBottom: "2px solid rgba(2, 6, 24, 0.05)",
+                      pb: 1,
+                      mb: 1.5,
+                      userSelect: "none",
+                      color: isExpanded ? theme.palette.primary.main : "#62748E",
+                      transition: "color 0.2s ease-in-out",
+                      "&:hover": {
+                        color: theme.palette.primary.main,
+                      },
+                    }}
+                  >
+                    {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 600,
+                        fontFamily: "Heebo, sans-serif",
+                        color: "inherit",
+                        mb: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      {group.formName}
+                      <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "#94a3b8", backgroundColor: "#f8fafc", padding: "2px 8px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                        #{group.formId}
+                      </span>
+                      <span style={{ fontSize: "0.8rem", fontWeight: 500, color: theme.palette.primary.main, backgroundColor: "#e0f2fe", padding: "2px 10px", borderRadius: "999px" }}>
+                        {group.items.length} {group.items.length === 1 ? "תגובה" : "תגובות"}
+                      </span>
+                    </Typography>
+                  </Stack>
 
-                    return (
-                      <Grid key={item.id} size={{ xs: 12 }}>
-                        <StyledCard
-                          sx={{
-                            minHeight: "auto",
-                            py: 1.5,
-                            px: 3,
-                            display: "flex",
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            width: "100%",
-                          }}>
-                          <Stack
-                            direction="row"
-                            spacing={4}
-                            alignItems="center"
-                            sx={{ flexGrow: 1 }}>
-                            <Typography
-                              variant="h6"
+                  {isExpanded && (
+                    <Grid container spacing={1.5} columns={12} sx={{ mb: 2 }}>
+                      {group.items.map((item: any) => {
+                        const deletedDateObj = item.deletedResponse?.deletedAt
+                          ? new Date(item.deletedResponse.deletedAt)
+                          : null;
+                        const formattedDate = deletedDateObj
+                          ? deletedDateObj.toLocaleDateString("he-IL")
+                          : "N/A";
+                        const formattedTime = deletedDateObj
+                          ? deletedDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })
+                          : "";
+
+                        return (
+                          <Grid key={item.id} size={{ xs: 12 }}>
+                            <StyledCard
                               sx={{
-                                fontWeight: 600,
-                                fontFamily: "Heebo, sans-serif",
-                                color: "#020618",
-                                minWidth: "50px",
-                              }}>
-                              תגובה #{item.index}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                color: "#62748E",
-                                fontFamily: "Heebo, sans-serif",
+                                minHeight: "auto",
+                                py: 1.5,
+                                px: 3,
                                 display: "flex",
+                                flexDirection: "row",
                                 alignItems: "center",
-                                gap: "6px",
+                                justifyContent: "space-between",
+                                width: "100%",
                               }}>
-                              נמחק ב-
-                              <span style={{ color: "#020618", fontWeight: 500 }}>
-                                {formattedDate}
-                              </span>
-                              {formattedTime && (
-                                <>
-                                  <span>בשעה</span>
+                              <Stack
+                                direction="row"
+                                spacing={4}
+                                alignItems="center"
+                                sx={{ flexGrow: 1 }}>
+                                <Typography
+                                  variant="h6"
+                                  sx={{
+                                    fontWeight: 600,
+                                    fontFamily: "Heebo, sans-serif",
+                                    color: "#020618",
+                                    minWidth: "50px",
+                                  }}>
+                                  תגובה {item.index}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color: "#62748E",
+                                    fontFamily: "Heebo, sans-serif",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                  }}>
+                                  נמחק ב-
                                   <span style={{ color: "#020618", fontWeight: 500 }}>
-                                    {formattedTime}
+                                    {formattedDate}
                                   </span>
-                                </>
-                              )}
-                              {item.deletedResponse?.deletedBy && (
-                                <>
-                                  <span>על ידי</span>
-                                  <Tooltip title={item.deletedResponse.deletedBy.upn || ""} arrow placement="top">
-                                    <span style={{ color: "#020618", fontWeight: 500, cursor: "pointer" }}>
-                                      {item.deletedResponse.deletedBy.name ||
-                                        item.deletedResponse.deletedBy.upn ||
-                                        "משתמש בזן"}
-                                    </span>
-                                  </Tooltip>
-                                </>
-                              )}
-                            </Typography>
-                          </Stack>
-                          <Button
-                            onClick={() => handleRestoreResponseClick(item.formId, item.id)}
-                            variant="contained"
-                            sx={{
-                              backgroundColor: theme.palette.primary.main,
-                              color: "white",
-                              borderRadius: "10px",
-                              px: 4,
-                              py: 0.75,
-                              fontFamily: "Heebo, sans-serif",
-                              fontWeight: 500,
-                              minWidth: "120px",
-                              "&:hover": {
-                                backgroundColor: theme.palette.primary.dark,
-                              },
-                            }}>
-                            שחזור
-                          </Button>
-                        </StyledCard>
-                      </Grid>
-                    );
-                  })}
-                </Grid>
-              </Box>
-            ))}
+                                  {formattedTime && (
+                                    <>
+                                      <span>בשעה</span>
+                                      <span style={{ color: "#020618", fontWeight: 500 }}>
+                                        {formattedTime}
+                                      </span>
+                                    </>
+                                  )}
+                                  {item.deletedResponse?.deletedBy && (
+                                    <>
+                                      <span>על ידי</span>
+                                      <Tooltip title={item.deletedResponse.deletedBy.upn || ""} arrow placement="top">
+                                        <span style={{ color: "#020618", fontWeight: 500, cursor: "pointer" }}>
+                                          {item.deletedResponse.deletedBy.name ||
+                                            item.deletedResponse.deletedBy.upn ||
+                                            "משתמש בזן"}
+                                        </span>
+                                      </Tooltip>
+                                    </>
+                                  )}
+                                </Typography>
+                              </Stack>
+                              <Tooltip title="שחזור" arrow placement="top">
+                                <IconButton
+                                  onClick={() => handleRestoreResponseClick(item.formId, item.id)}
+                                  sx={{
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: "white",
+                                    borderRadius: "10px",
+                                    width: "40px",
+                                    height: "40px",
+                                    "&:hover": {
+                                      backgroundColor: theme.palette.primary.dark,
+                                    },
+                                  }}>
+                                  <MynaUiUndoIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </StyledCard>
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                  )}
+                </Box>
+              );
+            })}
 
             {isResponsesLoading && (
               <Box className="main-page-loading" sx={{ py: 4 }} />
