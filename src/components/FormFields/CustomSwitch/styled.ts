@@ -24,6 +24,9 @@ export const StyledLabel = styled(Typography)(({ theme }) => ({
   lineHeight: 1.2,
   display: "block",
   width: "100%",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
 }));
 
 export const StyledFormControlLabel = styled(FormControlLabel, {
