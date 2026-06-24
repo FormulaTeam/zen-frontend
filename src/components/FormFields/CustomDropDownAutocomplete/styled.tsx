@@ -14,6 +14,10 @@ export const StyledFormHelperText = styled(FormHelperText)`
 export const StyledInputLabel = styled(InputLabel)`
   top: -14px;
   left: 5px;
+  max-width: calc(100% - 16px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 1.3rem;
   font-weight: 600;
   color: ${({ theme }) => theme.palette.text.primary};
