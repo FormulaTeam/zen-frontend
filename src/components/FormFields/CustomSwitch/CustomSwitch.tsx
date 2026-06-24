@@ -37,7 +37,7 @@ const CustomSwitch: React.FC<CustomSwitchProps> = ({
 
   return (
     <StyledFormControl isTabularEdit={isTabularEdit}>
-      {!isTabularEdit && <StyledLabel>{label}</StyledLabel>}
+      {!isTabularEdit && <StyledLabel title={label}>{label}</StyledLabel>}
       <StyledFormControlLabel
         isTabularEdit={isTabularEdit}
         control={

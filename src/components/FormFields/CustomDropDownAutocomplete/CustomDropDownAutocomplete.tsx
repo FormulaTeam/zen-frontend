@@ -125,6 +125,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
       {!isTabularEdit && (
         <StyledInputLabel
           shrink
+          title={label}
           error={Boolean(validationMessage)}
           required={isRequired}
           id={`select-helper-label-${label}`}>

@@ -15,6 +15,7 @@ const BaseFieldInput = React.forwardRef<HTMLDivElement, BaseFieldInputProps>(
     const theme = useTheme();
     const borderColor = disabled ? theme.palette.input?.border : theme.palette.primary.main;
     const borderWeight = disabled ? "1px" : "2px";
+    const labelTitle = typeof props.label === "string" ? props.label : undefined;
 
     return (
       <TextField
@@ -26,10 +27,15 @@ const BaseFieldInput = React.forwardRef<HTMLDivElement, BaseFieldInputProps>(
           ...(slotProps || {}),
           inputLabel: {
             shrink: true,
+            title: labelTitle,
             sx: {
               left: '5px',
               display: isTabularEdit ? "none" : "block",
               top: '-14px',
+              maxWidth: "calc(100% - 16px)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
               fontSize: '1.3rem',
               fontWeight: 600,
               color: theme.palette.text.primary,
