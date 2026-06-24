@@ -1,12 +1,58 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Box, Button, Grid, Tab, Tabs, Typography, useTheme, Stack, Tooltip, IconButton } from "@mui/material";
-import { ArrowBack as ArrowBackIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from "@mui/icons-material";
+import { Box, Button, Grid, Typography, useTheme, Stack, Tooltip, IconButton, CircularProgress, MenuItem, Select, SelectChangeEvent } from "@mui/material";
+import { styled } from "@mui/material/styles";
+import { ArrowBack as ArrowBackIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, AutoDelete as AutoDeleteIcon, KeyboardArrowDown as KeyboardArrowDownIcon } from "@mui/icons-material";
 import { getDeletedForms, restoreForm } from "../../api/formsApi";
 import { getSoftDeletedResponsesGlobal, restoreResponse } from "../../api/responsesApi";
 import { StyledCard } from "../../components/FormCard/styled";
 import { CustomIcon } from "../../theme/icons";
+
+const StyledFormControl = styled(Box)(({ theme }) => ({
+  width: 190,
+  position: "relative",
+}));
+
+const StyledSelect = styled(Select<string>)(({ theme }) => ({
+  width: "100%",
+  borderRadius: 8,
+  height: 40,
+  backgroundColor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
+
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: "#D1D1D1",
+    borderWidth: 1,
+  },
+
+  "&:hover .MuiOutlinedInput-notchedOutline": {
+    borderColor: "#62748E",
+  },
+
+  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+    borderColor: "#020618",
+    borderWidth: 2,
+  },
+
+  "& .MuiSelect-select": {
+    display: "flex",
+    alignItems: "center",
+    fontSize: "16px",
+    fontWeight: 600,
+    paddingTop: 8,
+    paddingBottom: 8,
+    paddingRight: "32px !important",
+    paddingLeft: "8px !important",
+  },
+
+  "& .MuiSelect-icon": {
+    right: "7px",
+    left: "auto",
+    fontSize: "24px",
+    color: "#020618",
+  },
+}));
 
 const MynaUiUndoIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -38,8 +84,11 @@ function DeletedForms({ user }: { user: any }) {
   const theme = useTheme();
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabParam = searchParams.get("tab");
-  const activeTab = tabParam === "responses" ? 1 : 0;
+  const scopeParam = searchParams.get("scope") || "forms";
+  const activeTab = scopeParam === "responses" ? 1 : 0;
+
+  const [restoringFormId, setRestoringFormId] = useState<number | null>(null);
+  const [restoringResponseId, setRestoringResponseId] = useState<string | null>(null);
 
   // Soft-deleted forms state
   const [forms, setForms] = useState<any[]>([]);
@@ -140,8 +189,8 @@ function DeletedForms({ user }: { user: any }) {
     }
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setSearchParams({ tab: newValue === 1 ? "responses" : "forms" }, { replace: true });
+  const handleDropdownChange = (event: SelectChangeEvent<string>) => {
+    setSearchParams({ scope: event.target.value }, { replace: true });
   };
 
   const handleRestoreFormClick = async (formId: number) => {
@@ -188,11 +237,59 @@ function DeletedForms({ user }: { user: any }) {
 
   return (
     <Box className="main-page-container">
-      <Box className="tabs-and-select-div" sx={{ py: 2 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h4" sx={{ fontWeight: 600, color: "#020618" }}>
-            סל המיחזור
-          </Typography>
+      <Box className="tabs-and-select-div" sx={{ px: 4, pt: 4, pb: 1, mt: 3, borderBottom: "1px solid rgba(2, 6, 24, 0.05)", backgroundColor: "#ffffff", borderRadius: "16px 16px 0 0" }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+          <Stack direction="row" spacing={3} alignItems="center">
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(30, 136, 229, 0.08)",
+                  color: "#1e88e5",
+                  flexShrink: 0,
+                }}
+              >
+                <AutoDeleteIcon sx={{ fontSize: "24px" }} />
+              </Box>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "1.8rem",
+                  fontFamily: "Heebo, sans-serif",
+                  color: "#020618",
+                }}>
+                סל המיחזור
+              </Typography>
+            </Box>
+
+            <StyledFormControl>
+              <StyledSelect
+                id="trash-tab-select"
+                value={scopeParam === "responses" ? "responses" : "forms"}
+                onChange={handleDropdownChange}
+                IconComponent={KeyboardArrowDownIcon}
+              >
+                <MenuItem value="forms" sx={{ fontSize: "16px", fontWeight: 600, fontFamily: "Heebo, sans-serif" }}>
+                  טפסים שנמחקו
+                </MenuItem>
+                <MenuItem value="responses" sx={{ fontSize: "16px", fontWeight: 600, fontFamily: "Heebo, sans-serif" }}>
+                  תגובות שנמחקו
+                </MenuItem>
+              </StyledSelect>
+            </StyledFormControl>
+          </Stack>
 
           <Tooltip title="חזרה" arrow placement="top">
             <Button onClick={() => navigate("/forms")} variant="customIcon">
@@ -200,32 +297,9 @@ function DeletedForms({ user }: { user: any }) {
             </Button>
           </Tooltip>
         </Stack>
-
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          sx={{
-            mt: 2,
-            borderBottom: "1px solid rgba(2, 6, 24, 0.08)",
-            "& .MuiTabs-indicator": {
-              backgroundColor: theme.palette.primary.main,
-            },
-            "& .MuiTab-root": {
-              fontFamily: "Heebo, sans-serif",
-              fontWeight: 500,
-              fontSize: "1rem",
-              color: "#62748E",
-              "&.Mui-selected": {
-                color: theme.palette.primary.main,
-              },
-            },
-          }}>
-          <Tab label="טפסים שנמחקו" />
-          <Tab label="תגובות שנמחקו" />
-        </Tabs>
       </Box>
 
-      <Box className="main-page-content-wrapper" sx={{ px: 4, pt: 2 }}>
+      <Box className="main-page-content-wrapper" sx={{ px: 4, pt: 3 }}>
         {activeTab === 0 ? (
           forms.length > 0 ? (
             <>
@@ -258,9 +332,11 @@ function DeletedForms({ user }: { user: any }) {
                           width: "100%",
                         }}>
                         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexGrow: 1, flexWrap: "nowrap", overflow: "hidden" }}>
-                          <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569", backgroundColor: "#f1f5f9", padding: "3px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", whiteSpace: "nowrap" }}>
-                            #{form.id}
-                          </span>
+                          <Tooltip title="מזהה הטופס" arrow placement="top">
+                            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569", backgroundColor: "#f1f5f9", padding: "3px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", whiteSpace: "nowrap" }}>
+                              #{form.id}
+                            </span>
+                          </Tooltip>
                           <Typography
                             variant="h6"
                             sx={{
@@ -306,6 +382,7 @@ function DeletedForms({ user }: { user: any }) {
                           </Typography>
                         </Stack>
                         <Button
+                          disabled={restoringFormId === form.id}
                           onClick={() => handleRestoreFormClick(form.id)}
                           variant="contained"
                           sx={{
@@ -324,8 +401,12 @@ function DeletedForms({ user }: { user: any }) {
                               backgroundColor: theme.palette.primary.dark,
                             },
                           }}>
-                          <MynaUiUndoIcon />
-                          שחזור טופס
+                          {restoringFormId === form.id ? (
+                            <CircularProgress size={20} color="inherit" />
+                          ) : (
+                            <MynaUiUndoIcon />
+                          )}
+                          {restoringFormId === form.id ? "משחזר..." : "שחזור טופס"}
                         </Button>
                       </StyledCard>
                     </Grid>
@@ -374,21 +455,20 @@ function DeletedForms({ user }: { user: any }) {
                     onClick={() => toggleFormExpanded(group.formId)}
                     sx={{
                       cursor: "pointer",
-                      backgroundColor: isExpanded ? "#f1f5f9" : "#f8fafc",
+                      backgroundColor: "#ffffff",
                       border: "1px solid",
-                      borderColor: isExpanded ? "rgba(30, 136, 229, 0.2)" : "#e2e8f0",
-                      borderRadius: "8px",
-                      px: 2,
-                      py: 1.25,
+                      borderColor: isExpanded ? "#1e88e5" : "rgba(2, 6, 24, 0.08)",
+                      borderRadius: "15px",
+                      px: 3,
+                      py: 1.75,
                       mb: 1.5,
                       userSelect: "none",
                       color: isExpanded ? theme.palette.primary.main : "#62748E",
                       transition: "all 0.2s ease-in-out",
                       boxShadow: isExpanded ? "0px 2px 8px rgba(30, 136, 229, 0.05)" : "none",
                       "&:hover": {
+                        borderColor: "#1e88e5",
                         color: theme.palette.primary.main,
-                        backgroundColor: "#f1f5f9",
-                        borderColor: "rgba(30, 136, 229, 0.2)",
                       },
                     }}
                   >
@@ -398,16 +478,18 @@ function DeletedForms({ user }: { user: any }) {
                       sx={{
                         fontWeight: 600,
                         fontFamily: "Heebo, sans-serif",
-                        color: "inherit",
+                        color: "#020618",
                         mb: 0,
                         display: "flex",
                         alignItems: "center",
                         gap: "8px",
                       }}
                     >
-                      <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569", backgroundColor: "#f1f5f9", padding: "3px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
-                        #{group.formId}
-                      </span>
+                      <Tooltip title="מזהה הטופס" arrow placement="top">
+                        <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569", backgroundColor: "#f1f5f9", padding: "3px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
+                          #{group.formId}
+                        </span>
+                      </Tooltip>
                       {group.formName}
                       <span style={{ fontSize: "0.8rem", fontWeight: 500, color: theme.palette.primary.main, backgroundColor: "#e0f2fe", padding: "2px 10px", borderRadius: "999px" }}>
                         {group.items.length} {group.items.length === 1 ? "תגובה" : "תגובות"}
@@ -492,6 +574,7 @@ function DeletedForms({ user }: { user: any }) {
                                 </Typography>
                               </Stack>
                               <Button
+                                disabled={restoringResponseId === item.id}
                                 onClick={() => handleRestoreResponseClick(item.formId, item.id)}
                                 variant="contained"
                                 sx={{
@@ -510,8 +593,12 @@ function DeletedForms({ user }: { user: any }) {
                                     backgroundColor: theme.palette.primary.dark,
                                   },
                                 }}>
-                                <MynaUiUndoIcon />
-                                שחזור תגובה
+                                {restoringResponseId === item.id ? (
+                                  <CircularProgress size={20} color="inherit" />
+                                ) : (
+                                  <MynaUiUndoIcon />
+                                )}
+                                {restoringResponseId === item.id ? "משחזר..." : "שחזור תגובה"}
                               </Button>
                             </StyledCard>
                           </Grid>
