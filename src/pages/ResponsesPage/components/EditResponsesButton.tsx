@@ -13,6 +13,8 @@ import { PermissionGate } from "@components/PermissionGate/PermissionGate";
 import { Permission, permission } from "formula-gear";
 import { useNavigate } from "react-router-dom";
 import { useFormStore } from "../stores/form.store";
+import { useAuth } from "../../../contexts/AuthContext";
+import { useSuperAdmin } from "../../../contexts/SuperAdminContext";
 
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
 const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
@@ -44,8 +46,36 @@ export const EditResponsesButton = ({
 }: EditResponsesButtonProps) => {
   const navigate = useNavigate();
   const { form } = useFormStore();
+  const { user } = useAuth();
+  const { isSuperAdmin } = useSuperAdmin();
+
+  const currentUserUpn = user?.upn;
   const hasSelection = selectedRows.length > 0;
   const isSingleSelection = selectedRows.length === 1;
+
+  const responseCreatedByCurrentUser = !!(
+    currentUserUpn &&
+    isSingleSelection &&
+    (selectedRows[0].upn === currentUserUpn || selectedRows[0].createdByUpn === currentUserUpn)
+  );
+
+  const canView =
+    !!isSuperAdmin ||
+    (permissions && permissions.some((p) => p === permission.ReadAnyResponse || p === permission.ReadForm));
+
+  const canEdit =
+    !!isSuperAdmin ||
+    (permissions &&
+      (permissions.includes(permission.UpdateAnyResponse) ||
+        (permissions.includes(permission.UpdateMyResponse) && responseCreatedByCurrentUser)));
+
+  const canDelete =
+    !!isSuperAdmin ||
+    (permissions && permissions.includes(permission.DeleteAnyResponse));
+
+  const canCreate =
+    !!isSuperAdmin ||
+    (permissions && permissions.includes(permission.CreateResponse));
 
   const onEditResponse = () => {
     if (isSingleSelection && form?.id) {
@@ -73,11 +103,13 @@ export const EditResponsesButton = ({
   if (isInEditMode) {
     return (
       <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
-        <UnifiedButton
-          onClick={onAddNewResponse}
-          startIcon={<CustomIcon iconName="newComment" style={{ width: 22, height: 22 }} />}>
-          הוספת שורה חדשה
-        </UnifiedButton>
+        {canCreate && (
+          <UnifiedButton
+            onClick={onAddNewResponse}
+            startIcon={<CustomIcon iconName="newComment" style={{ width: 22, height: 22 }} />}>
+            הוספת שורה חדשה
+          </UnifiedButton>
+        )}
 
         <UnifiedButton
           $isPrimary
@@ -91,7 +123,7 @@ export const EditResponsesButton = ({
           ביטול
         </UnifiedButton>
 
-        {hasSelection && (
+        {hasSelection && canDelete && (
           <UnifiedButton
             onClick={() => handleDeleteResponses(selectedRows.map((r) => r.id))}
             startIcon={<DeleteIcon />}
@@ -100,7 +132,7 @@ export const EditResponsesButton = ({
           </UnifiedButton>
         )}
 
-        {isSingleSelection && (
+        {isSingleSelection && canCreate && (
           <UnifiedButton onClick={onDuplicateResponse} startIcon={<ContentCopyIcon />}>
             שכפול
           </UnifiedButton>
@@ -113,33 +145,41 @@ export const EditResponsesButton = ({
   if (hasSelection) {
     return (
       <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
-        <UnifiedButton
-          disabled={!isSingleSelection}
-          onClick={onViewResponse}
-          startIcon={<VisibilityIcon />}>
-          צפייה
-        </UnifiedButton>
+        {canView && (
+          <UnifiedButton
+            disabled={!isSingleSelection}
+            onClick={onViewResponse}
+            startIcon={<VisibilityIcon />}>
+            צפייה
+          </UnifiedButton>
+        )}
 
-        <UnifiedButton
-          disabled={!isSingleSelection}
-          onClick={onEditResponse}
-          startIcon={<EditIcon />}>
-          עריכה
-        </UnifiedButton>
+        {canEdit && (
+          <UnifiedButton
+            disabled={!isSingleSelection}
+            onClick={onEditResponse}
+            startIcon={<EditIcon />}>
+            עריכה
+          </UnifiedButton>
+        )}
 
-        <UnifiedButton
-          onClick={() => handleDeleteResponses(selectedRows.map((r) => r.id))}
-          startIcon={<DeleteIcon />}
-          sx={{ color: "#d32f2f" }}>
-          מחיקה
-        </UnifiedButton>
+        {canDelete && (
+          <UnifiedButton
+            onClick={() => handleDeleteResponses(selectedRows.map((r) => r.id))}
+            startIcon={<DeleteIcon />}
+            sx={{ color: "#d32f2f" }}>
+            מחיקה
+          </UnifiedButton>
+        )}
 
-        <UnifiedButton
-          disabled={!isSingleSelection}
-          onClick={onDuplicateResponse}
-          startIcon={<ContentCopyIcon />}>
-          שכפול
-        </UnifiedButton>
+        {canCreate && (
+          <UnifiedButton
+            disabled={!isSingleSelection}
+            onClick={onDuplicateResponse}
+            startIcon={<ContentCopyIcon />}>
+            שכפול
+          </UnifiedButton>
+        )}
       </Box>
     );
   }
