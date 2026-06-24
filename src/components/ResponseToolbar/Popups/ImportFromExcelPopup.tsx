@@ -12,6 +12,7 @@ import {
 import { styled } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { FileSpreadsheet, Sparkles, WandSparkles } from "lucide-react";
 
 import { createExcelMold } from "../../../utils/utils";
 import ExcelImportContent from "../ExcelImportContent";
@@ -170,6 +171,170 @@ const PrimaryButton = styled(Button)(({ theme }) => ({
   },
 }));
 
+const LuckyLoadingCard = styled(Box)(() => ({
+  width: "100%",
+  boxSizing: "border-box",
+  minHeight: "270px",
+  padding: "34px 32px",
+  borderRadius: "22px",
+  background:
+    "radial-gradient(circle at 20% 20%, rgba(30, 136, 229, 0.14), transparent 32%), linear-gradient(135deg, #ffffff 0%, #f8fbff 48%, #eef7ff 100%)",
+  border: "1px solid rgba(30, 136, 229, 0.16)",
+  boxShadow: "0 16px 36px rgba(15, 23, 42, 0.08)",
+  color: "#020617",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  textAlign: "center",
+  position: "relative",
+  overflow: "hidden",
+  direction: "rtl",
+
+  "&::before": {
+    content: '""',
+    position: "absolute",
+    inset: 0,
+    background:
+      "linear-gradient(110deg, transparent 0%, transparent 38%, rgba(255,255,255,0.74) 48%, transparent 58%, transparent 100%)",
+    transform: "translateX(90%)",
+    animation: "luckyShine 2.4s ease-in-out infinite",
+  },
+
+  "@keyframes luckyShine": {
+    "0%": {
+      transform: "translateX(90%)",
+    },
+    "55%": {
+      transform: "translateX(-90%)",
+    },
+    "100%": {
+      transform: "translateX(-90%)",
+    },
+  },
+}));
+
+const LuckyTopBadge = styled(Box)(() => ({
+  height: "30px",
+  padding: "0 13px",
+  borderRadius: "999px",
+  backgroundColor: "rgba(30, 136, 229, 0.09)",
+  color: "#1E5FA8",
+  fontSize: "14px",
+  lineHeight: "30px",
+  fontWeight: 800,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "7px",
+  marginBottom: "18px",
+  position: "relative",
+  zIndex: 1,
+
+  "& svg": {
+    width: "16px",
+    height: "16px",
+  },
+}));
+
+const LuckyIconCircle = styled(Box)(() => ({
+  width: "82px",
+  height: "82px",
+  borderRadius: "26px",
+  backgroundColor: "#ffffff",
+  color: "#020617",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxShadow: "0 12px 28px rgba(30, 136, 229, 0.18)",
+  border: "1px solid rgba(30, 136, 229, 0.14)",
+  marginBottom: "20px",
+  position: "relative",
+  zIndex: 1,
+  animation: "luckyFloat 2.3s ease-in-out infinite",
+
+  "& svg": {
+    width: "40px",
+    height: "40px",
+  },
+
+  "@keyframes luckyFloat": {
+    "0%, 100%": {
+      transform: "translateY(0)",
+    },
+    "50%": {
+      transform: "translateY(-7px)",
+    },
+  },
+}));
+
+const LuckySparkle = styled(Box)(() => ({
+  position: "absolute",
+  top: "-9px",
+  left: "-9px",
+  width: "30px",
+  height: "30px",
+  borderRadius: "999px",
+  backgroundColor: "#EAF4FF",
+  color: "#1E88E5",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxShadow: "0 7px 18px rgba(30, 136, 229, 0.18)",
+
+  "& svg": {
+    width: "17px",
+    height: "17px",
+  },
+}));
+
+const LuckyTitle = styled(Typography)(() => ({
+  color: "#020617",
+  fontSize: "25px",
+  lineHeight: "34px",
+  fontWeight: 900,
+  letterSpacing: "-0.01em",
+  marginBottom: "9px",
+  position: "relative",
+  zIndex: 1,
+}));
+
+const LuckyProgressTrack = styled(Box)(() => ({
+  width: "min(360px, 100%)",
+  height: "9px",
+  borderRadius: "999px",
+  backgroundColor: "rgba(30, 136, 229, 0.12)",
+  overflow: "hidden",
+  position: "relative",
+  zIndex: 1,
+}));
+
+const LuckyProgressBar = styled(Box)(() => ({
+  height: "100%",
+  width: "42%",
+  borderRadius: "999px",
+  backgroundColor: "#1E88E5",
+  animation: "luckyProgress 1.2s ease-in-out infinite",
+
+  "@keyframes luckyProgress": {
+    "0%": {
+      transform: "translateX(145%)",
+    },
+    "100%": {
+      transform: "translateX(-250%)",
+    },
+  },
+}));
+
+const LuckySmallText = styled(Typography)(() => ({
+  marginTop: "13px",
+  color: "#64748B",
+  fontSize: "14px",
+  lineHeight: "22px",
+  fontWeight: 600,
+  position: "relative",
+  zIndex: 1,
+}));
+
 export type ExcelImportPopupError = {
   rowNumber?: number;
   fieldName?: string;
@@ -298,6 +463,65 @@ const getUniqueFailedRowsCount = (errors: ExcelImportPopupError[]): number => {
   return new Set(rowNumbers).size;
 };
 
+const LuckyImportLoading = () => (
+  <LuckyLoadingCard>
+    <Box
+      sx={{
+        position: "absolute",
+        top: 28,
+        right: 42,
+        fontSize: "28px",
+        animation: "luckyFloat 2.1s ease-in-out infinite",
+      }}>
+      ✨
+    </Box>
+
+    <Box
+      sx={{
+        position: "absolute",
+        bottom: 38,
+        left: 54,
+        fontSize: "26px",
+        animation: "luckyFloat 2.4s ease-in-out infinite",
+        animationDelay: "0.35s",
+      }}>
+      🍀
+    </Box>
+
+    <Box
+      sx={{
+        position: "absolute",
+        top: 54,
+        left: 86,
+        fontSize: "24px",
+        animation: "luckyFloat 2.7s ease-in-out infinite",
+        animationDelay: "0.7s",
+      }}>
+      📊
+    </Box>
+
+    <LuckyTopBadge>
+      <WandSparkles />
+      <span>מה זה אחלה מוד הופעל</span>
+    </LuckyTopBadge>
+
+    <LuckyIconCircle>
+      <FileSpreadsheet />
+      <LuckySparkle>
+        <Sparkles />
+      </LuckySparkle>
+    </LuckyIconCircle>
+
+    <LuckyTitle>...רגע, עושים מה זה קסם</LuckyTitle>
+
+    <LuckyProgressTrack>
+      <LuckyProgressBar />
+    </LuckyProgressTrack>
+
+    <LuckySmallText>האקסל מתבשל מה זה יפה 😌</LuckySmallText>
+  </LuckyLoadingCard>
+);
+
 const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
   form,
   isOpen,
@@ -372,28 +596,15 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
   }, []);
 
   const popupSubtitle =
-    hasGeneralErrors || hasFieldErrors
-      ? "לא נוצרו תגובות. תקנו את הערכים בקובץ ונסו לייבא שוב."
-      : "הורידו תבנית, מלאו את הנתונים בהתאם לעמודות, ולאחר מכן ייבאו את הקובץ.";
+    isLoading && isLuckyImport
+      ? "הקובץ מה זה עושה ייבוא"
+      : hasGeneralErrors || hasFieldErrors
+        ? "לא נוצרו תגובות. תקנו את הערכים בקובץ ונסו לייבא שוב."
+        : "הורידו תבנית, מלאו את הנתונים בהתאם לעמודות, ולאחר מכן ייבאו את הקובץ.";
 
   const popupContent = isLoading ? (
     isLuckyImport ? (
-      <StatusWrapper>
-        <StatusHeader>
-          <StatusIcon>
-            <InfoOutlinedIcon />
-          </StatusIcon>
-
-          <Box>
-            <StatusTitle>מסדרים שיהיה לנו מה זה אחלה יום...</StatusTitle>
-            <StatusDescription>הקובץ התקבל עם אנרגיות טובות ✨</StatusDescription>
-          </Box>
-        </StatusHeader>
-
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-          <Loader />
-        </Box>
-      </StatusWrapper>
+      <LuckyImportLoading />
     ) : (
       <Loader />
     )
@@ -506,7 +717,7 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
           onClick={triggerUpload}
           variant="contained"
           disableElevation
-          disabled={!canPerformActions}>
+          disabled={!canPerformActions || isLoading}>
           {mainButtonLabel}
         </PrimaryButton>
 
@@ -514,7 +725,7 @@ const ImportFromExcelPopupInner: React.FC<ImportFromExcelPopupProps> = ({
           onClick={handleDownload}
           variant="outlined"
           disableElevation
-          disabled={!canPerformActions}
+          disabled={!canPerformActions || isLoading}
           startIcon={<Download />}>
           {downloadButtonLabel}
         </SecondaryButton>
