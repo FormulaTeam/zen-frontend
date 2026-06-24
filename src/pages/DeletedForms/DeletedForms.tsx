@@ -1,9 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Box, Button, Grid, Typography, useTheme, Stack, Tooltip, IconButton, CircularProgress, MenuItem, Select, SelectChangeEvent } from "@mui/material";
+import {
+  Box,
+  Button,
+  Grid,
+  Typography,
+  useTheme,
+  Stack,
+  Tooltip,
+  IconButton,
+  CircularProgress,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+} from "@mui/material";
 import { styled } from "@mui/material/styles";
-import { ArrowBack as ArrowBackIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, AutoDelete as AutoDeleteIcon, KeyboardArrowDown as KeyboardArrowDownIcon } from "@mui/icons-material";
+import {
+  ArrowBack as ArrowBackIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  AutoDelete as AutoDeleteIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
+} from "@mui/icons-material";
 import { getDeletedForms, restoreForm } from "../../api/formsApi";
 import { getSoftDeletedResponsesGlobal, restoreResponse } from "../../api/responsesApi";
 import { StyledCard } from "../../components/FormCard/styled";
@@ -65,8 +84,7 @@ const MynaUiUndoIcon = (props: React.SVGProps<SVGSVGElement>) => (
     strokeWidth="1.5"
     strokeLinecap="round"
     strokeLinejoin="round"
-    {...props}
-  >
+    {...props}>
     <path d="M7 10L3 14L7 18" />
     <path d="M3 14H15C18.3137 14 21 11.3137 21 8C21 4.68629 18.3137 2 15 2" />
   </svg>
@@ -194,6 +212,7 @@ function DeletedForms({ user }: { user: any }) {
   };
 
   const handleRestoreFormClick = async (formId: number) => {
+    setRestoringFormId(formId);
     try {
       await restoreForm(formId);
       toast.success("הטופס שוחזר בהצלחה");
@@ -201,10 +220,13 @@ function DeletedForms({ user }: { user: any }) {
       setForms((prevForms) => prevForms.filter((form) => form.id !== formId));
     } catch (error) {
       toast.error("שחזור הטופס נכשל");
+    } finally {
+      setRestoringFormId(null);
     }
   };
 
   const handleRestoreResponseClick = async (formId: number, responseId: string) => {
+    setRestoringResponseId(responseId);
     try {
       await restoreResponse(formId, responseId);
       toast.success("התגובה שוחזרה בהצלחה");
@@ -212,6 +234,8 @@ function DeletedForms({ user }: { user: any }) {
       setResponses((prevResponses) => prevResponses.filter((item) => item.id !== responseId));
     } catch (error) {
       toast.error("שחזור התגובה נכשל");
+    } finally {
+      setRestoringResponseId(null);
     }
   };
 
@@ -237,7 +261,17 @@ function DeletedForms({ user }: { user: any }) {
 
   return (
     <Box className="main-page-container">
-      <Box className="tabs-and-select-div" sx={{ px: 4, pt: 4, pb: 1, mt: 3, borderBottom: "1px solid rgba(2, 6, 24, 0.05)", backgroundColor: "#ffffff", borderRadius: "16px 16px 0 0" }}>
+      <Box
+        className="tabs-and-select-div"
+        sx={{
+          px: 4,
+          pt: 4,
+          pb: 1,
+          mt: 3,
+          borderBottom: "1px solid rgba(2, 6, 24, 0.05)",
+          backgroundColor: "#ffffff",
+          borderRadius: "16px 16px 0 0",
+        }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Stack direction="row" spacing={3} alignItems="center">
             <Box
@@ -245,8 +279,7 @@ function DeletedForms({ user }: { user: any }) {
                 display: "flex",
                 alignItems: "center",
                 gap: "12px",
-              }}
-            >
+              }}>
               <Box
                 sx={{
                   display: "flex",
@@ -258,15 +291,14 @@ function DeletedForms({ user }: { user: any }) {
                   backgroundColor: "rgba(30, 136, 229, 0.08)",
                   color: "#1e88e5",
                   flexShrink: 0,
-                }}
-              >
+                }}>
                 <AutoDeleteIcon sx={{ fontSize: "24px" }} />
               </Box>
               <Typography
                 variant="h4"
                 sx={{
-                  fontWeight: 700,
-                  fontSize: "1.8rem",
+                  fontWeight: 650,
+                  fontSize: "1.6rem",
                   fontFamily: "Heebo, sans-serif",
                   color: "#020618",
                 }}>
@@ -279,12 +311,15 @@ function DeletedForms({ user }: { user: any }) {
                 id="trash-tab-select"
                 value={scopeParam === "responses" ? "responses" : "forms"}
                 onChange={handleDropdownChange}
-                IconComponent={KeyboardArrowDownIcon}
-              >
-                <MenuItem value="forms" sx={{ fontSize: "16px", fontWeight: 600, fontFamily: "Heebo, sans-serif" }}>
+                IconComponent={KeyboardArrowDownIcon}>
+                <MenuItem
+                  value="forms"
+                  sx={{ fontSize: "16px", fontWeight: 600, fontFamily: "Heebo, sans-serif" }}>
                   טפסים שנמחקו
                 </MenuItem>
-                <MenuItem value="responses" sx={{ fontSize: "16px", fontWeight: 600, fontFamily: "Heebo, sans-serif" }}>
+                <MenuItem
+                  value="responses"
+                  sx={{ fontSize: "16px", fontWeight: 600, fontFamily: "Heebo, sans-serif" }}>
                   תגובות שנמחקו
                 </MenuItem>
               </StyledSelect>
@@ -315,7 +350,10 @@ function DeletedForms({ user }: { user: any }) {
                     ? deletedDateObj.toLocaleDateString("he-IL")
                     : "תאריך לא ידוע";
                   const formattedTime = deletedDateObj
-                    ? deletedDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })
+                    ? deletedDateObj.toLocaleTimeString("he-IL", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
                     : "";
 
                   return (
@@ -331,9 +369,23 @@ function DeletedForms({ user }: { user: any }) {
                           justifyContent: "space-between",
                           width: "100%",
                         }}>
-                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexGrow: 1, flexWrap: "nowrap", overflow: "hidden" }}>
+                        <Stack
+                          direction="row"
+                          spacing={1.5}
+                          alignItems="center"
+                          sx={{ flexGrow: 1, flexWrap: "nowrap", overflow: "hidden" }}>
                           <Tooltip title="מזהה הטופס" arrow placement="top">
-                            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569", backgroundColor: "#f1f5f9", padding: "3px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", whiteSpace: "nowrap" }}>
+                            <span
+                              style={{
+                                fontSize: "0.85rem",
+                                fontWeight: 600,
+                                color: "#475569",
+                                backgroundColor: "#f1f5f9",
+                                padding: "3px 10px",
+                                borderRadius: "6px",
+                                border: "1px solid #cbd5e1",
+                                whiteSpace: "nowrap",
+                              }}>
                               #{form.id}
                             </span>
                           </Tooltip>
@@ -373,7 +425,12 @@ function DeletedForms({ user }: { user: any }) {
                               <>
                                 <span>על ידי</span>
                                 <Tooltip title={form.deletedBy.upn || ""} arrow placement="top">
-                                  <span style={{ color: "#020618", fontWeight: 500, cursor: "pointer" }}>
+                                  <span
+                                    style={{
+                                      color: "#020618",
+                                      fontWeight: 500,
+                                      cursor: "pointer",
+                                    }}>
                                     {form.deletedBy.name || form.deletedBy.upn || "משתמש בזן"}
                                   </span>
                                 </Tooltip>
@@ -414,9 +471,7 @@ function DeletedForms({ user }: { user: any }) {
                 })}
               </Grid>
 
-              {isFormsLoading && (
-                <Box className="main-page-loading" sx={{ py: 4 }} />
-              )}
+              {isFormsLoading && <Box className="main-page-loading" sx={{ py: 4 }} />}
             </>
           ) : isFormsLoading ? (
             <Box className="main-page-loading" sx={{ py: 8 }} />
@@ -455,6 +510,9 @@ function DeletedForms({ user }: { user: any }) {
                     onClick={() => toggleFormExpanded(group.formId)}
                     sx={{
                       cursor: "pointer",
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 2,
                       backgroundColor: "#ffffff",
                       border: "1px solid",
                       borderColor: isExpanded ? "#1e88e5" : "rgba(2, 6, 24, 0.08)",
@@ -470,8 +528,7 @@ function DeletedForms({ user }: { user: any }) {
                         borderColor: "#1e88e5",
                         color: theme.palette.primary.main,
                       },
-                    }}
-                  >
+                    }}>
                     {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                     <Typography
                       variant="h6"
@@ -483,15 +540,31 @@ function DeletedForms({ user }: { user: any }) {
                         display: "flex",
                         alignItems: "center",
                         gap: "8px",
-                      }}
-                    >
+                      }}>
                       <Tooltip title="מזהה הטופס" arrow placement="top">
-                        <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569", backgroundColor: "#f1f5f9", padding: "3px 10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
+                        <span
+                          style={{
+                            fontSize: "0.85rem",
+                            fontWeight: 600,
+                            color: "#475569",
+                            backgroundColor: "#f1f5f9",
+                            padding: "3px 10px",
+                            borderRadius: "6px",
+                            border: "1px solid #cbd5e1",
+                          }}>
                           #{group.formId}
                         </span>
                       </Tooltip>
                       {group.formName}
-                      <span style={{ fontSize: "0.8rem", fontWeight: 500, color: theme.palette.primary.main, backgroundColor: "#e0f2fe", padding: "2px 10px", borderRadius: "999px" }}>
+                      <span
+                        style={{
+                          fontSize: "0.8rem",
+                          fontWeight: 500,
+                          color: theme.palette.primary.main,
+                          backgroundColor: "#e0f2fe",
+                          padding: "2px 10px",
+                          borderRadius: "999px",
+                        }}>
                         {group.items.length} {group.items.length === 1 ? "תגובה" : "תגובות"}
                       </span>
                     </Typography>
@@ -507,7 +580,10 @@ function DeletedForms({ user }: { user: any }) {
                           ? deletedDateObj.toLocaleDateString("he-IL")
                           : "N/A";
                         const formattedTime = deletedDateObj
-                          ? deletedDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })
+                          ? deletedDateObj.toLocaleTimeString("he-IL", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
                           : "";
 
                         return (
@@ -562,8 +638,16 @@ function DeletedForms({ user }: { user: any }) {
                                   {item.deletedResponse?.deletedBy && (
                                     <>
                                       <span>על ידי</span>
-                                      <Tooltip title={item.deletedResponse.deletedBy.upn || ""} arrow placement="top">
-                                        <span style={{ color: "#020618", fontWeight: 500, cursor: "pointer" }}>
+                                      <Tooltip
+                                        title={item.deletedResponse.deletedBy.upn || ""}
+                                        arrow
+                                        placement="top">
+                                        <span
+                                          style={{
+                                            color: "#020618",
+                                            fontWeight: 500,
+                                            cursor: "pointer",
+                                          }}>
                                           {item.deletedResponse.deletedBy.name ||
                                             item.deletedResponse.deletedBy.upn ||
                                             "משתמש בזן"}
@@ -610,9 +694,7 @@ function DeletedForms({ user }: { user: any }) {
               );
             })}
 
-            {isResponsesLoading && (
-              <Box className="main-page-loading" sx={{ py: 4 }} />
-            )}
+            {isResponsesLoading && <Box className="main-page-loading" sx={{ py: 4 }} />}
           </Box>
         ) : isResponsesLoading ? (
           <Box className="main-page-loading" sx={{ py: 8 }} />
