@@ -178,7 +178,7 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
         }}
         sx={getInputSx({
           hasError: !!errorMessage,
-          direction: "ltr",
+          direction: "rtl",
         })}
       />
 
@@ -198,7 +198,7 @@ export const LocationCellEditor: React.FC<LocationCellEditorProps> = ({
         }}
         sx={getInputSx({
           hasError: !!errorMessage,
-          direction: "ltr",
+          direction: "rtl",
         })}
       />
     </Box>
