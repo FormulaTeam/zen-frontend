@@ -471,7 +471,7 @@ function DeletedForms({ user }: { user: any }) {
             <Typography
               variant="h6"
               sx={{ color: "text.secondary", fontFamily: "Heebo, sans-serif" }}>
-              לא נמצאו תגובות שנמחקו.
+              לא נמצאו תגובות שנמחקו
             </Typography>
           </Box>
         )}
