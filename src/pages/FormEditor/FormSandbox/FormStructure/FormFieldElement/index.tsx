@@ -103,8 +103,8 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
                 className={styles.input}
                 variant={"standard"}
                 label={"שם פנימי"}
-                error={!!field.validationErrors?.name}
-                helperText={field.validationErrors?.name?.errors[0]}
+                error={!field.data.name || field.data.name.trim() === "" || !!field.validationErrors?.name}
+                helperText={(!field.data.name || field.data.name.trim() === "") ? "שם פנימי חסר" : field.validationErrors?.name?.errors[0]}
                 disabled={isInputDisabled}
                 onChange={(e) => onDataChange({ name: e.target.value.trimStart() })}
                 onBlur={(e) => onDataChange({ name: e.target.value.trim() })}
