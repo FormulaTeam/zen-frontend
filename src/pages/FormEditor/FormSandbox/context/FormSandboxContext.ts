@@ -2,7 +2,7 @@ import { createContext, useContext } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 
 export type DraggableElementType = "field" | "section" | "catalogItem";
-export type DroppableElementType = DraggableElementType | "sectionBottom";
+export type DroppableElementType = DraggableElementType | "sectionBottom" | "formStructure";
 
 interface DraggingElement {
   type: DraggableElementType;
