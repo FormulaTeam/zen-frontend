@@ -27,9 +27,7 @@ export const NavToolbar = styled(Toolbar)`
 
 export const LogoContainer = styled.a<{ disabled: boolean }>`
   cursor: ${({ disabled }) => (disabled ? "default" : "pointer")};
-  flex: 1;
   display: flex;
-  justify-content: flex-start;
   align-items: center;
   text-decoration: none;
 `;
