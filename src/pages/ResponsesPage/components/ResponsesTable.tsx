@@ -439,10 +439,10 @@ export const ResponsesTable = React.memo(
     }, [cellModesModel, displayRows, isInEditMode]);
 
     useEffect(() => {
-      if (!isInEditMode) {
+      if (!isInEditMode && Object.keys(cellModesModel).length > 0) {
         setCellModesModel({});
       }
-    }, [isInEditMode]);
+    }, [cellModesModel, isInEditMode]);
 
     const handleCellExpandToggle = useCallback(
       (rowId: string | number, fieldId: string, isExpanded: boolean) => {
@@ -1233,6 +1233,7 @@ export const ResponsesTable = React.memo(
         <MainContent>
           <TableContainer>
             <StyledDataGrid
+              key={isInEditMode ? "quick-edit-grid" : "view-grid"}
               apiRef={apiRef}
               className={clsx({ "MuiDataGrid-root--edit-mode": isInEditMode })}
               disableColumnMenu
