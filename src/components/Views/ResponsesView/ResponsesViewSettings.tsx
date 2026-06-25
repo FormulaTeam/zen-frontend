@@ -129,31 +129,43 @@ export function ResponsesViewSettings({
 
       <BaseFieldInput
         value={viewName}
-        onChange={(event) => setViewName(event.target.value)}
+        onChange={(event) => setViewName(event.target.value.slice(0, 25))}
         fullWidth
         placeholder={VIEW_NAME_PLACEHOLDER}
         disabled={!canEdit}
+        inputProps={{ maxLength: 25 }}
       />
 
-      {viewNameError && (
-        <div
-          dir="rtl"
-          style={{
-            width: "100%",
-            boxSizing: "border-box",
-            display: "block",
-            marginTop: "4px",
-            color: "#d32f2f",
-            fontSize: "0.8rem",
-            lineHeight: 1.3,
-            fontWeight: 400,
-            textAlign: "right",
-            direction: "rtl",
-            unicodeBidi: "plaintext",
-          }}>
-          {viewNameError}
-        </div>
-      )}
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mt={0.5}>
+        <Box flex={1} minWidth={0}>
+          {viewNameError && (
+            <Typography
+              variant="caption"
+              color="error"
+              sx={{
+                display: "block",
+                textAlign: "right",
+                direction: "rtl",
+                unicodeBidi: "plaintext",
+              }}
+            >
+              {viewNameError}
+            </Typography>
+          )}
+        </Box>
+        <Typography
+          variant="caption"
+          sx={{
+            color: viewName.length === 25 ? "error.main" : "text.secondary",
+            fontWeight: viewName.length === 25 ? 600 : 400,
+            transition: "color 160ms ease, font-weight 160ms ease",
+            ml: 2,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {viewName.length}/25
+        </Typography>
+      </Box>
 
       {canEdit && canManagePublicViews && (
         <Stack spacing={-4}>
