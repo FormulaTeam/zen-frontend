@@ -159,8 +159,21 @@ function FormEditorHeader() {
     navigateToResponses?: boolean;
   }>({});
   const [isMetadataHovered, setIsMetadataHovered] = useState(false);
+  const [focusTarget, setFocusTarget] = useState<"title" | "description">("title");
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const descriptionInputRef = useRef<HTMLInputElement | null>(null);
 
   const { title, description, iconId, validationErrors } = formStructure.metadata;
+
+  useEffect(() => {
+    if (isEditingMetadata) {
+      if (focusTarget === "description") {
+        descriptionInputRef.current?.focus();
+      } else {
+        titleInputRef.current?.focus();
+      }
+    }
+  }, [isEditingMetadata, focusTarget]);
 
   useEffect(() => {
     if (title === "נפל לך הקליפס") {
@@ -444,6 +457,7 @@ function FormEditorHeader() {
         }}
         onClick={() => {
           if (!isEditingMetadata) {
+            setFocusTarget("title");
             setEditedMetadata({ title, description, iconId });
             setIsEditingMetadata(true);
           }
@@ -464,7 +478,7 @@ function FormEditorHeader() {
               }}>
               {isEditingMetadata ? (
                 <SeamlessTitleInput
-                  autoFocus
+                  inputRef={titleInputRef}
                   value={editedMetadata.title}
                   inputProps={{
                     maxLength: 60,
@@ -487,7 +501,17 @@ function FormEditorHeader() {
                 />
               ) : (
                 <OverflowTooltip title={title || texts.heb.formNameLabel} placement="top">
-                  <StyledTitleText variant="h5">{title || texts.heb.formNameLabel}</StyledTitleText>
+                  <StyledTitleText
+                    variant="h5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFocusTarget("title");
+                      setEditedMetadata({ title, description, iconId });
+                      setIsEditingMetadata(true);
+                    }}
+                  >
+                    {title || texts.heb.formNameLabel}
+                  </StyledTitleText>
                 </OverflowTooltip>
               )}
             </div>
@@ -517,6 +541,7 @@ function FormEditorHeader() {
 
         {isEditingMetadata ? (
           <SeamlessDescriptionInput
+            inputRef={descriptionInputRef}
             value={editedMetadata.description}
             inputProps={{
               maxLength: 255,
@@ -539,7 +564,15 @@ function FormEditorHeader() {
           />
         ) : (
           <OverflowTooltip title={description || "ללא תיאור"} placement="bottom">
-            <StyledDescriptionText variant="subtitle1">
+            <StyledDescriptionText
+              variant="subtitle1"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFocusTarget("description");
+                setEditedMetadata({ title, description, iconId });
+                setIsEditingMetadata(true);
+              }}
+            >
               {description ?? "ללא תיאור"}
             </StyledDescriptionText>
           </OverflowTooltip>
