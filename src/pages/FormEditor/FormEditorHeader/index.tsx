@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { FormMetadata, useFormStructureContext } from "../context/FormStructureContext";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { fieldType } from "formula-gear";
 import { useFormEditor } from "../hooks/useFormEditor";
 import IconsGrid from "../../../components/IconsGrid/IconsGrid";
@@ -32,6 +32,7 @@ import ValidationErrorsDialog, {
   type ValidationError,
 } from "../../../components/BasePopup/ValidationErrorsDialog";
 import UnsavedChangesDialog from "../../../components/BasePopup/UnsavedChangesDialog";
+import { clearFormDraft } from "../utils/draftPersistence";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { Save } from "lucide-react";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
@@ -308,6 +309,55 @@ function FormEditorHeader() {
     await runSaveFlow({ navigateToResponses: true });
   };
 
+  const [logoNavigateCallback, setLogoNavigateCallback] = useState<(() => void) | null>(null);
+
+  useEffect(() => {
+    const handleLogoClick = (e: Event) => {
+      if (checkHasChanges()) {
+        e.preventDefault();
+        setShowAlertMsg(true);
+        setLogoNavigateCallback(() => (e as CustomEvent).detail.navigate);
+      }
+    };
+
+    window.addEventListener("logo-click", handleLogoClick);
+    return () => window.removeEventListener("logo-click", handleLogoClick);
+  }, [checkHasChanges]);
+
+  const handleDiscard = () => {
+    setShowAlertMsg(false);
+
+    if (logoNavigateCallback) {
+      clearFormDraft(formStructure.metadata.id);
+      logoNavigateCallback();
+      setLogoNavigateCallback(null);
+      return;
+    }
+
+    handleDiscardAndExit();
+  };
+
+  const handleSave = async () => {
+    setShowAlertMsg(false);
+
+    const { isValid, fieldsValid, metadataErrors, hasFields } = normalizeValidationResult(
+      validateForm() as boolean | Partial<FormValidationResult>,
+    );
+
+    if (isValid) {
+      await handleSaveForm();
+      if (logoNavigateCallback) {
+        logoNavigateCallback();
+        setLogoNavigateCallback(null);
+      }
+      return;
+    }
+
+    if (!fieldsValid || !hasFields || metadataErrors) {
+      setShowValidationErrorsPopup(true);
+    }
+  };
+
   const onExitClick = () => {
     if (checkHasChanges()) {
       setShowAlertMsg(true);
@@ -544,11 +594,8 @@ function FormEditorHeader() {
     <UnsavedChangesDialog
       open={showAlertMsg}
       onClose={() => setShowAlertMsg(false)}
-      onSave={handleSaveAndExit}
-      onDiscard={() => {
-        setShowAlertMsg(false);
-        handleDiscardAndExit();
-      }}
+      onSave={handleSave}
+      onDiscard={handleDiscard}
       message="יש לך שינויים שלא נשמרו בטופס"
     />
   );

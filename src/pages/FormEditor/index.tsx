@@ -53,6 +53,16 @@ function FormEditor({ mode, editedForm }: Props) {
     setPendingDraft(null);
   };
 
+  const hasChanges = formStructure.checkHasChanges();
+
+  useEffect(() => {
+    (window as any).hasUnsavedChanges = hasChanges;
+
+    return () => {
+      (window as any).hasUnsavedChanges = false;
+    };
+  }, [hasChanges]);
+
   const originalFieldIds = useMemo<Set<string>>(() => {
     if (!editedForm?.sections) {
       return new Set<string>();
