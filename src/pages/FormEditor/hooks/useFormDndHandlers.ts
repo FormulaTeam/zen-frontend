@@ -1,5 +1,5 @@
 import { FormField, useFormStructureContext } from "../context/FormStructureContext";
-import { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
+import { DragCancelEvent, DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
 import { DraggableElementData, DraggingElement } from "../FormSandbox/context/FormSandboxContext";
 import { arrayMove } from "@dnd-kit/sortable";
 import { PLACEHOLDER_FIELD_ID } from "../context/constants";
@@ -15,6 +15,34 @@ const moveItem = <T,>(items: T[], fromIndex: number, toIndex: number): T[] | nul
   return arrayMove(items, fromIndex, toIndex);
 };
 
+const removePlaceholderField = (
+  prevFormStructure: ReturnType<typeof useFormStructureContext>["formStructure"],
+) => {
+  if (!(PLACEHOLDER_FIELD_ID in prevFormStructure.fields)) {
+    return prevFormStructure;
+  }
+
+  const fields = { ...prevFormStructure.fields };
+  const parentSectionId = fields[PLACEHOLDER_FIELD_ID].parentSectionId;
+  const parentSection = {
+    ...prevFormStructure.sections[parentSectionId],
+    fieldIds: prevFormStructure.sections[parentSectionId].fieldIds.filter(
+      (fieldId) => fieldId !== PLACEHOLDER_FIELD_ID,
+    ),
+  };
+
+  delete fields[PLACEHOLDER_FIELD_ID];
+
+  return {
+    ...prevFormStructure,
+    sections: {
+      ...prevFormStructure.sections,
+      [parentSectionId]: parentSection,
+    },
+    fields,
+  };
+};
+
 function useFormDndHandlers() {
   const { setFormStructure } = useFormStructureContext();
   const [draggingElement, setDraggingElement] = useState<DraggingElement | null>(null);
@@ -22,17 +50,25 @@ function useFormDndHandlers() {
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
 
-    setDraggingElement({ id: active.id, type: (active.data.current as DraggableElementData).elementType });
+    setDraggingElement({
+      id: active.id,
+      type: (active.data.current as DraggableElementData).elementType as DraggingElement["type"],
+    });
   }, [setDraggingElement]);
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
     const { active, over } = event;
+    const activeElementType = (active.data.current as DraggableElementData).elementType;
+    const overElementType = over
+      ? (over.data.current as DraggableElementData | undefined)?.elementType
+      : undefined;
+
+    if (activeElementType === "field" && (!over || overElementType === "section")) {
+      return;
+    }
 
     if (active.id !== over?.id && over?.id !== PLACEHOLDER_FIELD_ID) {
       setFormStructure((prevFormStructure) => {
-
-        const activeElementType = (active.data.current as DraggableElementData).elementType;
-
         if (over && activeElementType === "section") {
           let sectionId: string;
 
@@ -74,6 +110,9 @@ function useFormDndHandlers() {
               if (newParentSection.fieldIds.length == 0 && newParentSection.expanded) {
                 return prevFormStructure;
               }
+            }
+            if (overElementType === "sectionBottom") {
+              return prevFormStructure;
             }
             if (overElementType === "field") {
               const overFieldId = over.id as string;
@@ -181,6 +220,62 @@ function useFormDndHandlers() {
                 }
 
                 return prevFormStructure;
+              } else if (overElementType === "sectionBottom") {
+                const sectionId = (over.data.current as DraggableElementData).sectionId;
+
+                if (!sectionId) {
+                  return prevFormStructure;
+                }
+
+                const fields = { ...prevFormStructure.fields };
+                const sections = { ...prevFormStructure.sections };
+                const targetSection = {
+                  ...sections[sectionId],
+                  fieldIds: [...sections[sectionId].fieldIds],
+                };
+
+                if (!(PLACEHOLDER_FIELD_ID in fields)) {
+                  fields[PLACEHOLDER_FIELD_ID] = {
+                    id: PLACEHOLDER_FIELD_ID,
+                    parentSectionId: sectionId,
+                    data: generateNewFieldData(+active.id as FormFieldTypeId),
+                  };
+
+                  targetSection.fieldIds.push(PLACEHOLDER_FIELD_ID);
+                } else if (fields[PLACEHOLDER_FIELD_ID].parentSectionId !== sectionId) {
+                  const oldParentSectionId = fields[PLACEHOLDER_FIELD_ID].parentSectionId;
+                  const oldParentSection = {
+                    ...sections[oldParentSectionId],
+                    fieldIds: [...sections[oldParentSectionId].fieldIds],
+                  };
+
+                  oldParentSection.fieldIds = oldParentSection.fieldIds.filter(
+                    (fieldId) => fieldId !== PLACEHOLDER_FIELD_ID,
+                  );
+                  sections[oldParentSectionId] = oldParentSection;
+
+                  fields[PLACEHOLDER_FIELD_ID] = {
+                    ...fields[PLACEHOLDER_FIELD_ID],
+                    parentSectionId: sectionId,
+                  };
+
+                  targetSection.fieldIds.push(PLACEHOLDER_FIELD_ID);
+                } else if (targetSection.fieldIds.at(-1) !== PLACEHOLDER_FIELD_ID) {
+                  targetSection.fieldIds = targetSection.fieldIds.filter(
+                    (fieldId) => fieldId !== PLACEHOLDER_FIELD_ID,
+                  );
+                  targetSection.fieldIds.push(PLACEHOLDER_FIELD_ID);
+                } else {
+                  return prevFormStructure;
+                }
+
+                sections[sectionId] = targetSection;
+
+                return {
+                  ...prevFormStructure,
+                  sections,
+                  fields,
+                };
               } else if (overElementType === "field") {
                 const fields = { ...prevFormStructure.fields };
                 const sections = { ...prevFormStructure.sections };
@@ -234,30 +329,7 @@ function useFormDndHandlers() {
                   fields,
                 };
               }
-            } else { // remove element placeholder when dragging outside the dnd context area
-              const fields = { ...prevFormStructure.fields };
-
-              if (PLACEHOLDER_FIELD_ID in fields) {
-                const parentSectionId = fields[PLACEHOLDER_FIELD_ID].parentSectionId;
-                const parentSection = {
-                  ...prevFormStructure.sections[parentSectionId],
-                  fieldIds: [...prevFormStructure.sections[parentSectionId].fieldIds],
-                };
-
-                parentSection.fieldIds.splice(parentSection.fieldIds.indexOf(PLACEHOLDER_FIELD_ID), 1);
-
-                delete fields[PLACEHOLDER_FIELD_ID];
-
-                return {
-                  ...prevFormStructure,
-                  sections: {
-                    ...prevFormStructure.sections,
-                    [parentSectionId]: parentSection,
-                  },
-                  fields,
-                };
-              }
-
+            } else {
               return prevFormStructure;
             }
           }
@@ -288,6 +360,8 @@ function useFormDndHandlers() {
           const targetSectionId =
             overElementType === "section"
               ? (over.id as string)
+              : overElementType === "sectionBottom"
+                ? (over.data.current as DraggableElementData | undefined)?.sectionId
               : overElementType === "field"
                 ? prevFormStructure.fields[over.id as string]?.parentSectionId
                 : undefined;
@@ -371,9 +445,19 @@ function useFormDndHandlers() {
             };
           }
 
-          return prevFormStructure;
+          return removePlaceholderField(prevFormStructure);
         });
       }
+    }
+
+    setDraggingElement(null);
+  }, [setDraggingElement, setFormStructure]);
+
+  const handleDragCancel = useCallback((event: DragCancelEvent) => {
+    const activeElementType = (event.active.data.current as DraggableElementData).elementType;
+
+    if (activeElementType === "catalogItem") {
+      setFormStructure(removePlaceholderField);
     }
 
     setDraggingElement(null);
@@ -383,6 +467,7 @@ function useFormDndHandlers() {
     handleDragStart,
     handleDragOver,
     handleDragEnd,
+    handleDragCancel,
     draggingElement,
   };
 }

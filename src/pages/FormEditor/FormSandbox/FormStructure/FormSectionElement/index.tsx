@@ -12,7 +12,7 @@ import { FormEditorContext } from "@src/pages/FormEditor/context/FormEditorConte
 import { useConfirmDeleteExistingField } from "@src/pages/FormEditor/hooks/useConfirmDeleteExistingField";
 import { FormFieldElement } from "../FormFieldElement";
 import { DraggableElementData } from "../../context/FormSandboxContext";
-import { useDndContext } from "@dnd-kit/core";
+import { useDndContext, useDroppable } from "@dnd-kit/core";
 import { FormFieldData } from "../../../schemas/fields";
 import { OverflowTooltip } from "@components/OverflowTooltip";
 import {
@@ -64,6 +64,16 @@ function FormSectionElement({ id }: Props) {
     data: { elementType: "section" } as DraggableElementData,
     resizeObserverConfig: undefined as any,
     disabled: activeElementType !== undefined && activeElementType !== "section",
+  });
+  const {
+    setNodeRef: setBottomDropZoneRef,
+  } = useDroppable({
+    id: `${id}-bottom-drop-zone`,
+    data: {
+      elementType: "sectionBottom",
+      sectionId: id,
+    } as DraggableElementData,
+    disabled: !self.expanded || self.fieldIds.length === 0 || activeElementType === "section",
   });
 
   const { originalFieldIds } = useContext(FormEditorContext) || {};
@@ -279,6 +289,10 @@ function FormSectionElement({ id }: Props) {
     </ResizeHandleWrapper>
   );
 
+  const bottomDropZone: JSX.Element | null = self.fieldIds.length ? (
+    <div ref={setBottomDropZoneRef} className={styles.bottomDropZone} />
+  ) : null;
+
   const fieldsList: JSX.Element = (
     <AccordionDetails className={styles.content}>
       {self.fieldIds.map((fieldId: string) => {
@@ -300,6 +314,7 @@ function FormSectionElement({ id }: Props) {
           />
         );
       })}
+      {bottomDropZone}
     </AccordionDetails>
   );
 
@@ -346,7 +361,7 @@ function FormSectionElement({ id }: Props) {
             disabled={activeElementType === "section"}>
             <StyledResizable
               minHeight={200}
-              enable={{ bottom: true }}
+              enable={{ bottom: !activeElementType }}
               handleComponent={{
                 bottom: resizeHandle,
               }}>

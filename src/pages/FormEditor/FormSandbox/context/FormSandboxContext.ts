@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 
 export type DraggableElementType = "field" | "section" | "catalogItem";
+export type DroppableElementType = DraggableElementType | "sectionBottom";
 
 interface DraggingElement {
   type: DraggableElementType;
@@ -16,7 +17,8 @@ interface FormSandboxContext {
 }
 
 interface DraggableElementData {
-  elementType: DraggableElementType;
+  elementType: DroppableElementType;
+  sectionId?: string;
 }
 
 const FormSandboxContext = createContext<FormSandboxContext>({
