@@ -1,6 +1,7 @@
 import { FieldTypeIds } from "@utils/interfaces";
 import React, { useState, useMemo } from "react";
-import { FormControl, CircularProgress, Autocomplete, TextField, Box, Typography } from "@mui/material";
+import { FormControl, CircularProgress, Autocomplete, TextField, Box, Typography, Tooltip, IconButton } from "@mui/material";
+import { InfoOutlined as InfoIcon } from "@mui/icons-material";
 import { ExtraElementProps } from "../index";
 import { useGetForm, useGetLinkableForms } from "@api/formsApi";
 import { useFormStructureContext } from "@pages/FormEditor/context/FormStructureContext";
@@ -45,8 +46,8 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
   }
 
   return (
-    <>
-      <FormControl disabled={disabled} error={!!validationErrors?.properties?.linkedFormId}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
+      <FormControl disabled={disabled} error={!!validationErrors?.properties?.linkedFormId} sx={{ flexGrow: 1, minWidth: 0 }}>
         <Autocomplete
           options={availableForms}
           getOptionLabel={(option: any) => {
@@ -70,11 +71,8 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
                   display: "flex",
                   alignItems: "center",
                   width: "100%",
-                }}
-              >
-                <Typography component="span">
-                  {option.name}
-                </Typography>
+                }}>
+                <Typography component="span">{option.name}</Typography>
 
                 <Typography
                   component="span"
@@ -84,8 +82,7 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
                     color: "text.secondary",
                     fontSize: "0.75rem",
                     flexShrink: 0,
-                  }}
-                >
+                  }}>
                   {option.id}
                 </Typography>
               </Box>
@@ -111,11 +108,37 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
           )}
         />
       </FormControl>
-      <WarningText>
-        שימו לב! על מנת שמשתמש יוכל ליצור תגובות בטופס שנבחר, נדרש שיהיו לו הרשאות מתאימות לטופס
-        שנבחר
-      </WarningText>
-    </>
+
+      <Tooltip
+        title={
+          <Box
+            sx={{ display: "flex", flexDirection: "column", py: 0.5, px: 0.5, direction: "ltr" }}>
+            <ul style={{ margin: 0, padding: 0, listStyleType: "disc", listStylePosition: "inside" }}>
+              <li style={{ marginBottom: "6px" }}>
+                <Typography variant="caption" sx={{ fontSize: "0.8rem", lineHeight: 1.4 }}>
+                  על הטפסים המוצעים יש לך הרשאת שליטה מלאה
+                </Typography>
+              </li>
+              <li style={{ marginBottom: "6px" }}>
+                <Typography variant="caption" sx={{ fontSize: "0.8rem", lineHeight: 1.4 }}>
+                  הטפסים המוצעים לא מכילים בעצם שדה מסוג טופס מקושר
+                </Typography>
+              </li>
+              <li>
+                <Typography variant="caption" sx={{ fontSize: "0.8rem", lineHeight: 1.4 }}>
+                  השדה יוצג רק לבעלי יכולת יצירת תגובה לטופס הנבחר
+                </Typography>
+              </li>
+            </ul>
+          </Box>
+        }
+        placement="top"
+        arrow>
+        <IconButton size="small" sx={{ color: "text.secondary", flexShrink: 0, mt: 1 }}>
+          <InfoIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    </Box>
   );
 }
 
