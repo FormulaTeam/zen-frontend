@@ -222,6 +222,24 @@ const toValidatorField = (
   } as unknown as FormFieldLike;
 };
 
+const getValueForValidation = (field: FormFieldDto, rawValue: unknown): unknown => {
+  if (field.fieldType === fieldType.File || getFieldType(field) === fieldType.File) {
+    if (rawValue && typeof rawValue === "object" && "files" in rawValue && Array.isArray((rawValue as any).files)) {
+      return (rawValue as any).files
+        .map((f: any) => f?.id || f?.path)
+        .filter((id): id is string => typeof id === "string" && id !== "");
+    }
+
+    if (Array.isArray(rawValue)) {
+      return rawValue;
+    }
+
+    return [];
+  }
+
+  return rawValue;
+};
+
 const toFieldValidationError = (
   issues: readonly { path: readonly PropertyKey[]; message: string }[],
 ): FieldValidationError => {
@@ -873,9 +891,10 @@ export const useResponseState = (
 
     const valuesMap = valuesMapOverride ?? formFieldsValuesMapRef.current;
     const rawValue = valuesMap.get(normalizedFieldId);
+    const valueForValidation = getValueForValidation(field, rawValue);
     const result = validateFormFieldValue(
-      toValidatorField(field, fieldOptions, rawValue),
-      rawValue,
+      toValidatorField(field, fieldOptions, valueForValidation),
+      valueForValidation,
     );
 
     if (markTouched) {
@@ -1025,9 +1044,10 @@ export const useResponseState = (
       nextTouchedMap.set(currentFieldId, true);
 
       const rawValue = nextParsedValuesMap.get(currentFieldId);
+      const valueForValidation = getValueForValidation(field, rawValue);
       const result = validateFormFieldValue(
-        toValidatorField(field, fieldOptions, rawValue),
-        rawValue,
+        toValidatorField(field, fieldOptions, valueForValidation),
+        valueForValidation,
       );
 
       if (result.success) {
