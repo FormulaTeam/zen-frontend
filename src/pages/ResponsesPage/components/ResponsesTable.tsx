@@ -829,8 +829,11 @@ export const ResponsesTable = React.memo(
         ...getResponseMetaFilterColumnProps("id"),
       });
 
+      const indexColumnConfig = currentViewConfig?.find((vc) => vc.metaColumnId === 1);
+      const isIndexVisible = indexColumnConfig ? indexColumnConfig.isVisible : true;
+
       const structuralColumns: GridColDef[] = [
-        metaColumnsMap.get(`${prefixes.Meta}index`)!,
+        ...(isIndexVisible ? [metaColumnsMap.get(`${prefixes.Meta}index`)!] : []),
         ...(expandColumn ? [{ ...expandColumn, filterable: false }] : []),
       ];
 
