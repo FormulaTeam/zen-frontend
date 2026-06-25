@@ -41,6 +41,19 @@ type FileItem = {
   [key: string]: any;
 };
 
+const generateUUID = (): string => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+
+    return v.toString(16);
+  });
+};
+
 const normalizeIncomingValue = (value: any): FileItem[] => {
   if (!Array.isArray(value?.files)) {
     return [];
@@ -120,6 +133,7 @@ const CustomFileInputField: React.FC<CustomFileInputFieldProps> = ({
           (file as File & { webkitRelativePath?: string }).webkitRelativePath || "";
 
         return {
+          id: generateUUID(),
           name: file.name,
           path: relativePath || `./${file.name}`,
           file,
