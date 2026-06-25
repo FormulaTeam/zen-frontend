@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { FormMetadata, useFormStructureContext } from "../context/FormStructureContext";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { fieldType } from "formula-gear";
 import { useFormEditor } from "../hooks/useFormEditor";
 import IconsGrid from "../../../components/IconsGrid/IconsGrid";
@@ -32,6 +32,7 @@ import ValidationErrorsDialog, {
   type ValidationError,
 } from "../../../components/BasePopup/ValidationErrorsDialog";
 import UnsavedChangesDialog from "../../../components/BasePopup/UnsavedChangesDialog";
+import { clearFormDraft } from "../utils/draftPersistence";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { Save } from "lucide-react";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
@@ -158,8 +159,21 @@ function FormEditorHeader() {
     navigateToResponses?: boolean;
   }>({});
   const [isMetadataHovered, setIsMetadataHovered] = useState(false);
+  const [focusTarget, setFocusTarget] = useState<"title" | "description">("title");
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const descriptionInputRef = useRef<HTMLInputElement | null>(null);
 
   const { title, description, iconId, validationErrors } = formStructure.metadata;
+
+  useEffect(() => {
+    if (isEditingMetadata) {
+      if (focusTarget === "description") {
+        descriptionInputRef.current?.focus();
+      } else {
+        titleInputRef.current?.focus();
+      }
+    }
+  }, [isEditingMetadata, focusTarget]);
 
   useEffect(() => {
     if (title === "נפל לך הקליפס") {
@@ -308,6 +322,55 @@ function FormEditorHeader() {
     await runSaveFlow({ navigateToResponses: true });
   };
 
+  const [logoNavigateCallback, setLogoNavigateCallback] = useState<(() => void) | null>(null);
+
+  useEffect(() => {
+    const handleLogoClick = (e: Event) => {
+      if (checkHasChanges()) {
+        e.preventDefault();
+        setShowAlertMsg(true);
+        setLogoNavigateCallback(() => (e as CustomEvent).detail.navigate);
+      }
+    };
+
+    window.addEventListener("logo-click", handleLogoClick);
+    return () => window.removeEventListener("logo-click", handleLogoClick);
+  }, [checkHasChanges]);
+
+  const handleDiscard = () => {
+    setShowAlertMsg(false);
+
+    if (logoNavigateCallback) {
+      clearFormDraft(formStructure.metadata.id);
+      logoNavigateCallback();
+      setLogoNavigateCallback(null);
+      return;
+    }
+
+    handleDiscardAndExit();
+  };
+
+  const handleSave = async () => {
+    setShowAlertMsg(false);
+
+    const { isValid, fieldsValid, metadataErrors, hasFields } = normalizeValidationResult(
+      validateForm() as boolean | Partial<FormValidationResult>,
+    );
+
+    if (isValid) {
+      await handleSaveForm();
+      if (logoNavigateCallback) {
+        logoNavigateCallback();
+        setLogoNavigateCallback(null);
+      }
+      return;
+    }
+
+    if (!fieldsValid || !hasFields || metadataErrors) {
+      setShowValidationErrorsPopup(true);
+    }
+  };
+
   const onExitClick = () => {
     if (checkHasChanges()) {
       setShowAlertMsg(true);
@@ -394,6 +457,7 @@ function FormEditorHeader() {
         }}
         onClick={() => {
           if (!isEditingMetadata) {
+            setFocusTarget("title");
             setEditedMetadata({ title, description, iconId });
             setIsEditingMetadata(true);
           }
@@ -414,7 +478,7 @@ function FormEditorHeader() {
               }}>
               {isEditingMetadata ? (
                 <SeamlessTitleInput
-                  autoFocus
+                  inputRef={titleInputRef}
                   value={editedMetadata.title}
                   inputProps={{
                     maxLength: 60,
@@ -437,7 +501,17 @@ function FormEditorHeader() {
                 />
               ) : (
                 <OverflowTooltip title={title || texts.heb.formNameLabel} placement="top">
-                  <StyledTitleText variant="h5">{title || texts.heb.formNameLabel}</StyledTitleText>
+                  <StyledTitleText
+                    variant="h5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFocusTarget("title");
+                      setEditedMetadata({ title, description, iconId });
+                      setIsEditingMetadata(true);
+                    }}
+                  >
+                    {title || texts.heb.formNameLabel}
+                  </StyledTitleText>
                 </OverflowTooltip>
               )}
             </div>
@@ -467,6 +541,7 @@ function FormEditorHeader() {
 
         {isEditingMetadata ? (
           <SeamlessDescriptionInput
+            inputRef={descriptionInputRef}
             value={editedMetadata.description}
             inputProps={{
               maxLength: 255,
@@ -489,7 +564,15 @@ function FormEditorHeader() {
           />
         ) : (
           <OverflowTooltip title={description || "ללא תיאור"} placement="bottom">
-            <StyledDescriptionText variant="subtitle1">
+            <StyledDescriptionText
+              variant="subtitle1"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFocusTarget("description");
+                setEditedMetadata({ title, description, iconId });
+                setIsEditingMetadata(true);
+              }}
+            >
               {description ?? "ללא תיאור"}
             </StyledDescriptionText>
           </OverflowTooltip>
@@ -544,11 +627,8 @@ function FormEditorHeader() {
     <UnsavedChangesDialog
       open={showAlertMsg}
       onClose={() => setShowAlertMsg(false)}
-      onSave={handleSaveAndExit}
-      onDiscard={() => {
-        setShowAlertMsg(false);
-        handleDiscardAndExit();
-      }}
+      onSave={handleSave}
+      onDiscard={handleDiscard}
       message="יש לך שינויים שלא נשמרו בטופס"
     />
   );

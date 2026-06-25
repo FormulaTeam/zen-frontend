@@ -49,6 +49,14 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   const [showAlertMsg, setShowAlertMsg] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  useEffect(() => {
+    (window as any).hasUnsavedChanges = hasUnsavedChanges;
+
+    return () => {
+      (window as any).hasUnsavedChanges = false;
+    };
+  }, [hasUnsavedChanges]);
+
   const location = useLocation();
   const navigate = useNavigate();
   const { isSuperAdmin } = useSuperAdmin();
@@ -109,6 +117,21 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     setPendingDraft(null);
   };
 
+  const logoNavigateCallbackRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    const handleLogoClick = (e: Event) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        setShowAlertMsg(true);
+        logoNavigateCallbackRef.current = (e as CustomEvent).detail.navigate;
+      }
+    };
+
+    window.addEventListener("logo-click", handleLogoClick);
+    return () => window.removeEventListener("logo-click", handleLogoClick);
+  }, [hasUnsavedChanges]);
+
   const onBack = () => {
     location.state?.parentFormId
       ? navigate(`/forms/${location.state.parentFormId}/responses`, {})
@@ -126,18 +149,27 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   const handleDiscardAndExit = () => {
     clearResponseDraft(formId, id);
     setShowAlertMsg(false);
+
+    if (logoNavigateCallbackRef.current) {
+      logoNavigateCallbackRef.current();
+      logoNavigateCallbackRef.current = null;
+      return;
+    }
+
     onBack();
   };
 
   const handleSaveAndExit = async () => {
     setShowAlertMsg(false);
+
     setTimeout(async () => {
       await saveAll();
+
+      if (logoNavigateCallbackRef.current) {
+        logoNavigateCallbackRef.current();
+        logoNavigateCallbackRef.current = null;
+      }
     }, 300);
-    // note: saveAll sets setChildFormsSaving(true) if there are child forms.
-    // if no child forms, it should ideally navigate back.
-    // However, the current saveAll logic is a bit complex with child forms.
-    // For now, let's just trigger the save.
   };
 
   const { saveResponse, isSaving } = useResponseSave(

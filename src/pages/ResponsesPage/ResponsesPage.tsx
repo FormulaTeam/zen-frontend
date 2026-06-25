@@ -1,5 +1,5 @@
 import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Box, Tooltip } from "@mui/material";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
@@ -173,6 +173,20 @@ const ResponsesPageContent = (): JSX.Element => {
   const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<any>(null);
   const [showBackCancelDialog, setShowBackCancelDialog] = useState(false);
+  const logoNavigateCallbackRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    const handleLogoClick = (e: Event) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        setShowBackCancelDialog(true);
+        logoNavigateCallbackRef.current = (e as CustomEvent).detail.navigate;
+      }
+    };
+
+    window.addEventListener("logo-click", handleLogoClick);
+    return () => window.removeEventListener("logo-click", handleLogoClick);
+  }, [hasUnsavedChanges]);
 
   const handleBackClick = useCallback(() => {
     if (hasUnsavedChanges) {
@@ -183,18 +197,34 @@ const ResponsesPageContent = (): JSX.Element => {
   }, [hasUnsavedChanges, navigate]);
 
   const handleBackDiscard = useCallback(() => {
-    handleConfirmCancel();
+    clearQuickEditDraft(form?.id);
     setShowBackCancelDialog(false);
+
+    if (logoNavigateCallbackRef.current) {
+      logoNavigateCallbackRef.current();
+      logoNavigateCallbackRef.current = null;
+      return;
+    }
+
     navigate("/");
-  }, [handleConfirmCancel, navigate]);
+  }, [form?.id, navigate]);
 
   const handleBackSave = useCallback(async () => {
     const success = await handleSaveChanges();
+
     if (success) {
+      clearQuickEditDraft(form?.id);
       setShowBackCancelDialog(false);
+
+      if (logoNavigateCallbackRef.current) {
+        logoNavigateCallbackRef.current();
+        logoNavigateCallbackRef.current = null;
+        return;
+      }
+
       navigate("/");
     }
-  }, [handleSaveChanges, navigate]);
+  }, [handleSaveChanges, navigate, form?.id]);
 
   const handleBackCancelDialogClose = useCallback(() => {
     setShowBackCancelDialog(false);
@@ -226,6 +256,14 @@ const ResponsesPageContent = (): JSX.Element => {
       window.removeEventListener("popstate", handlePopState);
     };
   }, [hasUnsavedChanges, handleToggleEditMode]);
+
+  useEffect(() => {
+    (window as any).hasUnsavedChanges = hasUnsavedChanges;
+
+    return () => {
+      (window as any).hasUnsavedChanges = false;
+    };
+  }, [hasUnsavedChanges]);
 
   useEffect(() => {
     const draft = getQuickEditDraft(form?.id);

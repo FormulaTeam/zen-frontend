@@ -28,7 +28,20 @@ const Navbar = () => {
 
   const navigateToHome = (e: React.MouseEvent) => {
     e.preventDefault();
-    navigate(IPath.HOME, { replace: true });
+
+    const logoClickEvent = new CustomEvent("logo-click", {
+      cancelable: true,
+      detail: {
+        navigate: () => navigate(IPath.HOME, { replace: true }),
+      },
+    });
+
+    window.dispatchEvent(logoClickEvent);
+
+    if (!logoClickEvent.defaultPrevented) {
+      (window as any).hasUnsavedChanges = false;
+      navigate(IPath.HOME, { replace: true });
+    }
   };
 
   const greeting = myPersonal?.name ? `היי ${myPersonal.name.split(" ")[0]}` : "היי";
