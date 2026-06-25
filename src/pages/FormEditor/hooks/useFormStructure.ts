@@ -37,7 +37,7 @@ type UniqueFieldProperty = "name" | "displayName";
 
 const DUPLICATE_FIELD_ERROR_MESSAGES: Record<UniqueFieldProperty, string> = {
   name: "שם פנימי חייב להיות ייחודי בטופס",
-  displayName: "שם תצוגה חייב להיות ייחודי בטופס",
+  displayName: "שם שדה חייב להיות ייחודי בטופס",
 };
 
 function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
