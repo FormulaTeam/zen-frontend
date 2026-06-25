@@ -325,10 +325,14 @@ export const useUpdateForm = () => {
       queryClient.setQueryData([stringId, null], data);
 
       const existingWithPermissions = queryClient.getQueryData<FormDto>([stringId, true]);
-      queryClient.setQueryData([stringId, true], {
-        ...data,
-        permissions: existingWithPermissions?.permissions,
-      });
+      if (existingWithPermissions?.permissions) {
+        queryClient.setQueryData([stringId, true], {
+          ...data,
+          permissions: existingWithPermissions.permissions,
+        });
+      } else {
+        queryClient.removeQueries({ queryKey: [stringId, true], exact: true });
+      }
 
       queryClient.invalidateQueries({ queryKey: ["forms"] });
       queryClient.invalidateQueries({ queryKey: ["responses", stringId] });

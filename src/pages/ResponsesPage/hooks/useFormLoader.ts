@@ -188,6 +188,10 @@ export function useFormLoader(formId: string) {
       } else if (form) {
         const anyFormData = formData as any;
 
+        if ("permissions" in anyFormData && Array.isArray(anyFormData.permissions)) {
+          setPermissions(anyFormData.permissions as Parameters<typeof setPermissions>[0]);
+        }
+
         if (
           form.responsesCount !== anyFormData.responsesCount ||
           form.lastInteractionAt !== anyFormData.lastInteractionAt ||
