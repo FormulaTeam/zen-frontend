@@ -342,11 +342,12 @@ function useFormDndHandlers() {
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
+    const activeElementType = (active.data.current as DraggableElementData).elementType;
+    const overElementType = over
+      ? (over.data.current as DraggableElementData | undefined)?.elementType
+      : undefined;
 
     if (over && active.id !== over.id) {
-      const activeElementType = (active.data.current as DraggableElementData).elementType;
-      const overElementType = (over.data.current as DraggableElementData | undefined)?.elementType;
-
       if (activeElementType === "field") {
         setFormStructure((prevFormStructure) => {
           const activeFieldId = active.id as string;
@@ -410,44 +411,54 @@ function useFormDndHandlers() {
         });
       }
 
-      if (activeElementType === "catalogItem") {
-        setFormStructure((prevFormStructure) => {
-          const fields = { ...prevFormStructure.fields };
+    }
 
-          if (PLACEHOLDER_FIELD_ID in fields) {
-            const placeholderFieldTypeId = fields[PLACEHOLDER_FIELD_ID].data.typeId;
-            const parentSectionId = fields[PLACEHOLDER_FIELD_ID].parentSectionId;
+    if (activeElementType === "catalogItem") {
+      setFormStructure((prevFormStructure) => {
+        const isValidFormDropTarget =
+          over &&
+          active.id !== over.id &&
+          (overElementType === "section" || overElementType === "sectionBottom" || overElementType === "field");
 
-            delete fields[PLACEHOLDER_FIELD_ID];
-
-            const newField: FormField = {
-              id: generateFieldId(),
-              parentSectionId,
-              data: generateNewFieldData(placeholderFieldTypeId),
-            };
-
-            fields[newField.id] = newField;
-
-            const editedParentSection = {
-              ...prevFormStructure.sections[parentSectionId],
-              fieldIds: [...prevFormStructure.sections[parentSectionId].fieldIds],
-            };
-
-            editedParentSection.fieldIds.splice(editedParentSection.fieldIds.indexOf(PLACEHOLDER_FIELD_ID), 1, newField.id);
-
-            return {
-              ...prevFormStructure,
-              sections: {
-                ...prevFormStructure.sections,
-                [parentSectionId]: editedParentSection,
-              },
-              fields,
-            };
-          }
-
+        if (!isValidFormDropTarget) {
           return removePlaceholderField(prevFormStructure);
-        });
-      }
+        }
+
+        const fields = { ...prevFormStructure.fields };
+
+        if (PLACEHOLDER_FIELD_ID in fields) {
+          const placeholderFieldTypeId = fields[PLACEHOLDER_FIELD_ID].data.typeId;
+          const parentSectionId = fields[PLACEHOLDER_FIELD_ID].parentSectionId;
+
+          delete fields[PLACEHOLDER_FIELD_ID];
+
+          const newField: FormField = {
+            id: generateFieldId(),
+            parentSectionId,
+            data: generateNewFieldData(placeholderFieldTypeId),
+          };
+
+          fields[newField.id] = newField;
+
+          const editedParentSection = {
+            ...prevFormStructure.sections[parentSectionId],
+            fieldIds: [...prevFormStructure.sections[parentSectionId].fieldIds],
+          };
+
+          editedParentSection.fieldIds.splice(editedParentSection.fieldIds.indexOf(PLACEHOLDER_FIELD_ID), 1, newField.id);
+
+          return {
+            ...prevFormStructure,
+            sections: {
+              ...prevFormStructure.sections,
+              [parentSectionId]: editedParentSection,
+            },
+            fields,
+          };
+        }
+
+        return removePlaceholderField(prevFormStructure);
+      });
     }
 
     setDraggingElement(null);
