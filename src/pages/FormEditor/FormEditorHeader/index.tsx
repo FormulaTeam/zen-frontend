@@ -218,7 +218,7 @@ function FormEditorHeader() {
       });
     } else if (fieldValues.length === 1 && fieldValues[0].data?.typeId === fieldType.Form) {
       errors.push({
-        message: "לא ניתן לשמור טופס עם שדה מסוג 'טופס בתוך טופס' כשדה יחיד",
+        message: "לא ניתן לשמור טופס עם שדה מסוג 'טופס מקושר' כשדה יחיד",
       });
     }
 
@@ -433,7 +433,8 @@ function FormEditorHeader() {
   };
 
   const formIcon: JSX.Element = (
-    <div className={`${styles.formIconWrapper} ${isEditingMetadata ? styles.formIconWrapperEditing : ""}`}>
+    <div
+      className={`${styles.formIconWrapper} ${isEditingMetadata ? styles.formIconWrapperEditing : ""}`}>
       <Tooltip title="לחץ על מנת לשנות אייקון">
         {isEditingMetadata ? renderIcon(editedMetadata.iconId) : renderIcon(iconId)}
       </Tooltip>
@@ -508,8 +509,7 @@ function FormEditorHeader() {
                       setFocusTarget("title");
                       setEditedMetadata({ title, description, iconId });
                       setIsEditingMetadata(true);
-                    }}
-                  >
+                    }}>
                     {title || texts.heb.formNameLabel}
                   </StyledTitleText>
                 </OverflowTooltip>
@@ -571,8 +571,7 @@ function FormEditorHeader() {
                 setFocusTarget("description");
                 setEditedMetadata({ title, description, iconId });
                 setIsEditingMetadata(true);
-              }}
-            >
+              }}>
               {description ?? "ללא תיאור"}
             </StyledDescriptionText>
           </OverflowTooltip>

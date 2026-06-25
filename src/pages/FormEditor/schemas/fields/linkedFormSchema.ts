@@ -12,7 +12,7 @@ const linkedFormSchema = baseFormFieldSchema
     }),
   })
   .refine((data) => !data.required, {
-    message: "שדה טופס בתוך טופס לא יכול להיות שדה חובה",
+    message: "שדה טופס מקושר לא יכול להיות שדה חובה",
     path: ["required"],
   });
 
