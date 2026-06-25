@@ -52,9 +52,29 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
   useEffect(() => {
     setNodeRef(containerRef.current);
 
-    field.id !== PLACEHOLDER_FIELD_ID &&
+    !active &&
+      field.id !== PLACEHOLDER_FIELD_ID &&
       containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
+
+  if (isPlaceholder) {
+    return (
+      <div ref={containerRef} className={styles.container} style={style}>
+        <div className={styles.dragHandle} ref={setActivatorNodeRef} {...listeners} {...attributes}>
+          <DragIndicator />
+        </div>
+        <div className={`${styles.field} ${styles.placeholderField}`}>
+          <div className={styles.title}>
+            {FORM_ELEMENT_ICONS[FORM_ELEMENTS[field.data.typeId].icon]}
+            <Typography variant={"subtitle1"} align={"center"} sx={{ userSelect: "none" }}>
+              {FORM_ELEMENTS[field.data.typeId].name}
+            </Typography>
+          </div>
+        </div>
+        <div className={styles.deleteButtonContainer} />
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className={styles.container} style={style}>

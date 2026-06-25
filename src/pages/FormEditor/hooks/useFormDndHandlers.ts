@@ -7,6 +7,14 @@ import { FormFieldTypeId } from "../../../utils/interfaces";
 import { generateFieldId, generateNewFieldData } from "../utils";
 import { useCallback, useState } from "react";
 
+const moveItem = <T,>(items: T[], fromIndex: number, toIndex: number): T[] | null => {
+  if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) {
+    return null;
+  }
+
+  return arrayMove(items, fromIndex, toIndex);
+};
+
 function useFormDndHandlers() {
   const { setFormStructure } = useFormStructureContext();
   const [draggingElement, setDraggingElement] = useState<DraggingElement | null>(null);
@@ -35,14 +43,19 @@ function useFormDndHandlers() {
           }
 
           const orderedSectionIds = [...prevFormStructure.orderedSectionIds];
+          const movedSectionIds = moveItem(
+            orderedSectionIds,
+            orderedSectionIds.indexOf(active.id as string),
+            orderedSectionIds.indexOf(sectionId),
+          );
+
+          if (!movedSectionIds) {
+            return prevFormStructure;
+          }
 
           return {
             ...prevFormStructure,
-            orderedSectionIds: arrayMove(
-              orderedSectionIds,
-              orderedSectionIds.indexOf(active.id as string),
-              orderedSectionIds.indexOf(sectionId),
-            ),
+            orderedSectionIds: movedSectionIds,
           };
         } else if (activeElementType === "field" || activeElementType === "catalogItem") {
           if (activeElementType === "field" && over) {
@@ -59,27 +72,7 @@ function useFormDndHandlers() {
               const newParentSection = { ...prevFormStructure.sections[newParentSectionId] };
 
               if (newParentSection.fieldIds.length == 0 && newParentSection.expanded) {
-                // insert field id into the current section
-                newParentSection.fieldIds = [activeFieldId];
-
-                // If field is already defined, remove it from the previous parent section
-                oldParentSection.fieldIds.splice(oldParentSection.fieldIds.indexOf(activeFieldId), 1);
-
-                return {
-                  ...prevFormStructure,
-                  sections: {
-                    ...prevFormStructure.sections,
-                    [newParentSectionId]: newParentSection,
-                    [oldParentSectionId]: oldParentSection,
-                  },
-                  fields: {
-                    ...prevFormStructure.fields,
-                    [activeFieldId]: {
-                      ...prevFormStructure.fields[activeFieldId],
-                      parentSectionId: newParentSectionId,
-                    },
-                  },
-                };
+                return prevFormStructure;
               }
             }
             if (overElementType === "field") {
@@ -91,9 +84,17 @@ function useFormDndHandlers() {
               };
 
               if (newParentSectionId === oldParentSectionId) {
-                newParentSection.fieldIds = arrayMove(oldParentSection.fieldIds,
+                const movedFieldIds = moveItem(
+                  oldParentSection.fieldIds,
                   oldParentSection.fieldIds.indexOf(activeFieldId),
-                  oldParentSection.fieldIds.indexOf(overFieldId));
+                  oldParentSection.fieldIds.indexOf(overFieldId),
+                );
+
+                if (!movedFieldIds) {
+                  return prevFormStructure;
+                }
+
+                newParentSection.fieldIds = movedFieldIds;
 
                 return {
                   ...prevFormStructure,
@@ -105,7 +106,7 @@ function useFormDndHandlers() {
               }
 
               oldParentSection.fieldIds.splice(oldParentSection.fieldIds.indexOf(activeFieldId), 1);
-              newParentSection.fieldIds.splice(oldParentSection.fieldIds.indexOf(overFieldId), 0, activeFieldId);
+              newParentSection.fieldIds.splice(newParentSection.fieldIds.indexOf(overFieldId), 0, activeFieldId);
 
               return {
                 ...prevFormStructure,
@@ -212,7 +213,17 @@ function useFormDndHandlers() {
 
                   fields[PLACEHOLDER_FIELD_ID].parentSectionId = newParentSectionId;
                 } else {
-                  newParentSection.fieldIds = arrayMove(newParentSection.fieldIds, newParentSection.fieldIds.indexOf(PLACEHOLDER_FIELD_ID), newParentSection.fieldIds.indexOf(over.id as string));
+                  const movedFieldIds = moveItem(
+                    newParentSection.fieldIds,
+                    newParentSection.fieldIds.indexOf(PLACEHOLDER_FIELD_ID),
+                    newParentSection.fieldIds.indexOf(over.id as string),
+                  );
+
+                  if (!movedFieldIds) {
+                    return prevFormStructure;
+                  }
+
+                  newParentSection.fieldIds = movedFieldIds;
                 }
 
                 sections[newParentSectionId] = newParentSection;
@@ -261,7 +272,71 @@ function useFormDndHandlers() {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      if ((active.data.current as DraggableElementData).elementType === "catalogItem") {
+      const activeElementType = (active.data.current as DraggableElementData).elementType;
+      const overElementType = (over.data.current as DraggableElementData | undefined)?.elementType;
+
+      if (activeElementType === "field") {
+        setFormStructure((prevFormStructure) => {
+          const activeFieldId = active.id as string;
+          const activeField = prevFormStructure.fields[activeFieldId];
+
+          if (!activeField) {
+            return prevFormStructure;
+          }
+
+          const oldParentSectionId = activeField.parentSectionId;
+          const targetSectionId =
+            overElementType === "section"
+              ? (over.id as string)
+              : overElementType === "field"
+                ? prevFormStructure.fields[over.id as string]?.parentSectionId
+                : undefined;
+
+          if (!targetSectionId || targetSectionId === oldParentSectionId) {
+            return prevFormStructure;
+          }
+
+          const oldParentSection = {
+            ...prevFormStructure.sections[oldParentSectionId],
+            fieldIds: [...prevFormStructure.sections[oldParentSectionId].fieldIds],
+          };
+          const newParentSection = {
+            ...prevFormStructure.sections[targetSectionId],
+            fieldIds: [...prevFormStructure.sections[targetSectionId].fieldIds],
+          };
+
+          oldParentSection.fieldIds = oldParentSection.fieldIds.filter(
+            (fieldId) => fieldId !== activeFieldId,
+          );
+
+          if (overElementType === "field") {
+            const overFieldIndex = newParentSection.fieldIds.indexOf(over.id as string);
+            const insertIndex = overFieldIndex === -1 ? newParentSection.fieldIds.length : overFieldIndex;
+
+            newParentSection.fieldIds.splice(insertIndex, 0, activeFieldId);
+          } else {
+            newParentSection.fieldIds.push(activeFieldId);
+          }
+
+          return {
+            ...prevFormStructure,
+            sections: {
+              ...prevFormStructure.sections,
+              [oldParentSectionId]: oldParentSection,
+              [targetSectionId]: newParentSection,
+            },
+            fields: {
+              ...prevFormStructure.fields,
+              [activeFieldId]: {
+                ...activeField,
+                parentSectionId: targetSectionId,
+              },
+            },
+          };
+        });
+      }
+
+      if (activeElementType === "catalogItem") {
         setFormStructure((prevFormStructure) => {
           const fields = { ...prevFormStructure.fields };
 

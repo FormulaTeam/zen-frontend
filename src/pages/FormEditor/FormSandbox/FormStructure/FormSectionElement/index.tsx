@@ -82,7 +82,9 @@ function FormSectionElement({ id }: Props) {
 
   useEffect(() => {
     setNodeRef(containerRef.current);
-    containerRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!active) {
+      containerRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, []);
 
   useEffect(() => {
