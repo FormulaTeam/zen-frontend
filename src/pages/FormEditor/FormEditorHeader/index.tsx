@@ -204,7 +204,7 @@ function FormEditorHeader() {
       });
     } else if (fieldValues.length === 1 && fieldValues[0].data?.typeId === fieldType.Form) {
       errors.push({
-        message: "לא ניתן לשמור טופס עם שדה מסוג 'טופס בתוך טופס' כשדה יחיד",
+        message: "לא ניתן לשמור טופס עם שדה מסוג 'טופס מקושר' כשדה יחיד",
       });
     }
 
@@ -237,10 +237,10 @@ function FormEditorHeader() {
     return errors.length > 0
       ? errors
       : [
-          {
-            message: "נא לתקן את השדות המסומנים באדום",
-          },
-        ];
+        {
+          message: "נא לתקן את השדות המסומנים באדום",
+        },
+      ];
   }, [formStructure.fields, formStructure.metadata.validationErrors, formStructure.sections]);
 
   const runSaveFlow = async (options?: { navigateToResponses?: boolean }) => {

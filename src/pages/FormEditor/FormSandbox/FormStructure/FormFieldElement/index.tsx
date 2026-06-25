@@ -85,7 +85,7 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
             <TextField value={field.data.displayName}
               className={styles.input}
               variant={"standard"}
-              label={"שם תצוגה"}
+              label={"שם שדה"}
               error={!!field.validationErrors?.displayName}
               helperText={field.validationErrors?.displayName?.errors[0]}
               disabled={isInputDisabled}
@@ -123,8 +123,8 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
       <div className={styles.deleteButtonContainer}>
         {
           <Button className={styles.deleteButton}
-                  onClick={onDelete}
-                  disabled={isInputDisabled}>
+            onClick={onDelete}
+            disabled={isInputDisabled}>
             <DeleteOutlined />
           </Button>
         }

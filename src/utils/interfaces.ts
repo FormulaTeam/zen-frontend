@@ -551,7 +551,7 @@ export const FORM_ELEMENTS: FormElements = {
     fieldType: FieldDataTypes.file,
   },
   [FieldTypeIds.linkedForm]: {
-    name: "טופס בתוך טופס",
+    name: "טופס מקושר",
     icon: "forms",
     fieldType: FieldDataTypes.string,
   },
