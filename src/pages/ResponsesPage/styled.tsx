@@ -70,11 +70,14 @@ export const UnifiedButton = styled(Button)<{ $isPrimary?: boolean }>(({ theme, 
   height: "40px",
   borderRadius: "10px",
   padding: "6px 16px",
+  paddingInlineStart: "10px",
+  paddingInlineEnd: "16px",
   fontSize: "0.95rem",
   fontWeight: 600,
-  display: "flex",
+  display: "inline-flex",
   alignItems: "center",
-  gap: "10px",
+  justifyContent: "center",
+  gap: "8px",
   textTransform: "none",
   whiteSpace: "nowrap",
   transition: "all 0.2s ease",
@@ -90,7 +93,15 @@ export const UnifiedButton = styled(Button)<{ $isPrimary?: boolean }>(({ theme, 
 
   "& .MuiButton-startIcon, & .MuiButton-endIcon": {
     margin: 0,
-    fontSize: "18px",
+    width: "20px",
+    height: "20px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  "& .MuiButton-startIcon > svg, & .MuiButton-endIcon > svg": {
+    fontSize: "20px",
   },
 
   "&.Mui-disabled": {
@@ -332,7 +343,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     "& .MuiDataGrid-columnHeaders": {
       borderBottom: "none",
       backgroundImage: "none",
-      backgroundColor: "#e1f0ff",
+      backgroundColor: "#D6E7F6",
     },
     "& .MuiDataGrid-columnHeaderRow": {
       borderBottom: "none",
@@ -344,15 +355,15 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     },
   },
   "& .MuiDataGrid-columnHeaders": {
-    backgroundColor: "#e1f0ff",
+    backgroundColor: "#D6E7F6",
     borderBottom: "none",
     "& .MuiDataGrid-filler": {
-      backgroundColor: "#e1f0ff",
+      backgroundColor: "#D6E7F6",
       borderBottom: "none",
     },
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-columnHeaders": {
-    backgroundColor: "#e1f0ff",
+    backgroundColor: "#D6E7F6",
     color: "#020618",
     "& .MuiDataGrid-columnHeaderTitle": {
       color: "#020618",

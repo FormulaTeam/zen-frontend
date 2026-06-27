@@ -5,9 +5,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import AddIcon from "@mui/icons-material/Add";
 import { UnifiedButton } from "../styled";
-import TableEditIconSvg from "../../../icons/tableEdit.svg";
 import { CustomIcon } from "@theme/icons";
 import { PermissionGate } from "@components/PermissionGate/PermissionGate";
 import { Permission, permission } from "formula-gear";
@@ -15,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useFormStore } from "../stores/form.store";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useSuperAdmin } from "../../../contexts/SuperAdminContext";
+import { SquarePen } from "lucide-react";
 
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
 const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
@@ -61,7 +60,8 @@ export const EditResponsesButton = ({
 
   const canView =
     !!isSuperAdmin ||
-    (permissions && permissions.some((p) => p === permission.ReadAnyResponse || p === permission.ReadForm));
+    (permissions &&
+      permissions.some((p) => p === permission.ReadAnyResponse || p === permission.ReadForm));
 
   const canEdit =
     !!isSuperAdmin ||
@@ -70,12 +70,10 @@ export const EditResponsesButton = ({
         (permissions.includes(permission.UpdateMyResponse) && responseCreatedByCurrentUser)));
 
   const canDelete =
-    !!isSuperAdmin ||
-    (permissions && permissions.includes(permission.DeleteAnyResponse));
+    !!isSuperAdmin || (permissions && permissions.includes(permission.DeleteAnyResponse));
 
   const canCreate =
-    !!isSuperAdmin ||
-    (permissions && permissions.includes(permission.CreateResponse));
+    !!isSuperAdmin || (permissions && permissions.includes(permission.CreateResponse));
 
   const onEditResponse = () => {
     if (isSingleSelection && form?.id) {
@@ -190,7 +188,7 @@ export const EditResponsesButton = ({
       userPermissions={permissions ?? []}
       requiredPermissions={[permission.UpdateAnyResponse]}>
       <UnifiedButton
-        startIcon={<img src={TableEditIconSvg} alt="edit" style={{ width: 20, height: 20 }} />}
+        startIcon={<SquarePen size={20} strokeWidth={2.2} />}
         onClick={onToggleEditMode}
         sx={{
           backgroundColor: ACTION_BUTTON_BACKGROUND,

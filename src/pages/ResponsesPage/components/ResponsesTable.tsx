@@ -13,7 +13,7 @@ import {
 } from "@mui/x-data-grid-pro";
 import { useFormStore, useInitiateFormStore } from "../stores/form.store";
 import clsx from "clsx";
-import { Cloud, CloudOff, RefreshCw } from "lucide-react";
+import { ArrowDown, ArrowDownUp, ArrowUp, Cloud, CloudOff, RefreshCw } from "lucide-react";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import Visibility from "@mui/icons-material/Visibility";
 import Edit from "@mui/icons-material/Edit";
@@ -140,6 +140,10 @@ const isSortable = (typeId?: number): boolean => {
 
 const EmptyColumnHeaderFilterIconButton = () => null;
 const EmptyColumnFilteredIcon = () => null;
+
+const SortUnsortedIcon = () => <ArrowDownUp size={16} strokeWidth={2.2} />;
+const SortAscendingIcon = () => <ArrowUp size={16} strokeWidth={2.2} />;
+const SortDescendingIcon = () => <ArrowDown size={16} strokeWidth={2.2} />;
 
 const FIELD_COLUMN_WIDTH = 190;
 const FIELD_COLUMN_MAX_WIDTH = 450;
@@ -844,6 +848,7 @@ export const ResponsesTable = React.memo(
         const col: GridColDef = {
           field: gridField,
           headerName: field.displayName,
+          headerClassName: "response-field-column-header",
           ...getResponsiveColumnProps(
             FIELD_COLUMN_WIDTH,
             columnWidths.current[gridField],
@@ -1515,6 +1520,9 @@ export const ResponsesTable = React.memo(
               slots={{
                 columnHeaderFilterIconButton: EmptyColumnHeaderFilterIconButton,
                 columnFilteredIcon: EmptyColumnFilteredIcon,
+                columnUnsortedIcon: SortUnsortedIcon,
+                columnSortedAscendingIcon: SortAscendingIcon,
+                columnSortedDescendingIcon: SortDescendingIcon,
                 footer: CustomFooter,
               }}
               {...(hasFormInFormFields && {
@@ -1533,8 +1541,52 @@ export const ResponsesTable = React.memo(
                 } as any,
                 row: {},
               }}
-              sx={
-                isInEditMode
+              sx={{
+                "& .MuiDataGrid-columnHeader .MuiDataGrid-iconButtonContainer .MuiIconButton-root":
+                  {
+                    backgroundColor: "transparent !important",
+                    boxShadow: "none !important",
+                    border: "none !important",
+                  },
+
+                "& .MuiDataGrid-columnHeader .MuiDataGrid-iconButtonContainer .MuiIconButton-root:hover":
+                  {
+                    backgroundColor: "rgba(15, 23, 42, 0.06) !important",
+                    boxShadow: "none !important",
+                  },
+
+                "& .response-field-column-header .MuiDataGrid-iconButtonContainer": {
+                  visibility: "visible",
+                  width: 0,
+                  opacity: 0,
+                  transition: "opacity 0.15s ease, width 0.15s ease",
+                },
+
+                "& .response-field-column-header:hover .MuiDataGrid-iconButtonContainer, & .response-field-column-header.MuiDataGrid-columnHeader--sorted .MuiDataGrid-iconButtonContainer":
+                  {
+                    width: 24,
+                    opacity: 1,
+                  },
+
+                "& .response-field-column-header .MuiDataGrid-sortButton": {
+                  width: 24,
+                  height: 24,
+                  padding: 0,
+                  borderRadius: "6px",
+                  backgroundColor: "transparent !important",
+                  boxShadow: "none !important",
+                  color: "#334155",
+                },
+
+                "& .response-field-column-header .MuiDataGrid-sortButton:hover": {
+                  backgroundColor: "rgba(15, 23, 42, 0.06) !important",
+                },
+
+                "& .response-field-column-header .MuiDataGrid-sortButton svg": {
+                  color: "currentColor",
+                },
+
+                ...(isInEditMode
                   ? {
                       "& .active-editing-row .MuiDataGrid-cell": {
                         paddingTop: "4px",
@@ -1552,8 +1604,8 @@ export const ResponsesTable = React.memo(
                         boxShadow: "none",
                       },
                     }
-                  : undefined
-              }
+                  : {}),
+              }}
             />
             <Box
               ref={customScrollbarTrackRef}
