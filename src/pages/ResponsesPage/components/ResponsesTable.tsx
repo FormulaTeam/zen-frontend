@@ -305,6 +305,11 @@ export const ResponsesTable = React.memo(
     const transitionInProgress = useRef(false);
     const lastIntendedPageNumber = useRef(filter?.pageNumber ?? 1);
     const lastFetchStartedRef = useRef(false);
+    const customScrollbarTrackRef = useRef<HTMLDivElement | null>(null);
+    const customScrollbarThumbRef = useRef<HTMLDivElement | null>(null);
+    const scrollbarAnimationFrame = useRef<number | null>(null);
+    const customHorizontalScrollbarTrackRef = useRef<HTMLDivElement | null>(null);
+    const customHorizontalScrollbarThumbRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
       lastIntendedPageNumber.current = filter?.pageNumber ?? 1;
@@ -403,6 +408,187 @@ export const ResponsesTable = React.memo(
     const shouldUseHeaderFilters = showFilters && !isInEditMode;
     const shouldRequestTableSkeleton = !isInEditMode && isRowsLoading;
     const [showTableSkeleton, setShowTableSkeleton] = useState(false);
+
+    useEffect(() => {
+      let scroller: HTMLElement | null = null;
+      let root: HTMLElement | null = null;
+      let retryCount = 0;
+      let cancelled = false;
+      let initFrame: number | null = null;
+
+      const updateThumbPosition = () => {
+        const currentScroller = scroller;
+
+        if (!currentScroller || scrollbarAnimationFrame.current !== null) return;
+
+        scrollbarAnimationFrame.current = window.requestAnimationFrame(() => {
+          scrollbarAnimationFrame.current = null;
+
+          const verticalTrack = customScrollbarTrackRef.current;
+          const verticalThumb = customScrollbarThumbRef.current;
+
+          if (verticalTrack && verticalThumb) {
+            const maxScrollTop = currentScroller.scrollHeight - currentScroller.clientHeight;
+
+            if (maxScrollTop > 1) {
+              const trackHeight = verticalTrack.clientHeight;
+              const thumbHeight = verticalThumb.offsetHeight;
+              const maxThumbTop = trackHeight - thumbHeight;
+              const thumbTop = (currentScroller.scrollTop / maxScrollTop) * maxThumbTop;
+
+              verticalThumb.style.transform = `translate3d(0, ${thumbTop}px, 0)`;
+            }
+          }
+
+          const horizontalTrack = customHorizontalScrollbarTrackRef.current;
+          const horizontalThumb = customHorizontalScrollbarThumbRef.current;
+
+          if (horizontalTrack && horizontalThumb) {
+            const maxScrollLeft = currentScroller.scrollWidth - currentScroller.clientWidth;
+
+            if (maxScrollLeft > 1) {
+              const trackWidth = horizontalTrack.clientWidth;
+              const thumbWidth = horizontalThumb.offsetWidth;
+              const maxThumbLeft = trackWidth - thumbWidth;
+
+              const normalizedScrollLeft = Math.min(
+                Math.abs(currentScroller.scrollLeft),
+                maxScrollLeft,
+              );
+
+              const thumbLeft =
+                maxThumbLeft - (normalizedScrollLeft / maxScrollLeft) * maxThumbLeft;
+
+              horizontalThumb.style.transform = `translate3d(${thumbLeft}px, 0, 0)`;
+            }
+          }
+        });
+      };
+
+      const updateLayout = () => {
+        const track = customScrollbarTrackRef.current;
+        const thumb = customScrollbarThumbRef.current;
+
+        if (!root || !scroller || !track || !thumb) return;
+
+        const maxScrollTop = scroller.scrollHeight - scroller.clientHeight;
+
+        if (maxScrollTop <= 1) {
+          track.style.display = "none";
+          return;
+        }
+
+        const containerRect = track.parentElement?.getBoundingClientRect();
+        const scrollerRect = scroller.getBoundingClientRect();
+        const headers = root.querySelector(".MuiDataGrid-columnHeaders") as HTMLElement | null;
+        const headersRect = headers?.getBoundingClientRect();
+
+        const rootRect = root.getBoundingClientRect();
+
+        if (!containerRect) return;
+
+        const bodyTop = headersRect ? headersRect.bottom : scrollerRect.top;
+        const bodyHeight = scrollerRect.bottom - bodyTop;
+
+        if (bodyHeight <= 0) {
+          track.style.display = "none";
+          return;
+        }
+
+        const horizontalTrackHeight = 21;
+        const horizontalTrackTop =
+          scrollerRect.bottom - containerRect.top - horizontalTrackHeight - 4;
+
+        const verticalTrackTop = bodyTop - containerRect.top + 4;
+        const verticalTrackBottom = horizontalTrackTop - 6;
+        const trackHeight = Math.max(verticalTrackBottom - verticalTrackTop, 48);
+
+        const thumbHeight = Math.max(
+          (scroller.clientHeight / scroller.scrollHeight) * trackHeight,
+          48,
+        );
+
+        track.style.display = "block";
+        track.style.top = `${verticalTrackTop}px`;
+        track.style.height = `${trackHeight}px`;
+        track.style.left = `${rootRect.left - containerRect.left}px`;
+        track.style.right = "auto";
+
+        thumb.style.height = `${thumbHeight}px`;
+
+        const horizontalTrack = customHorizontalScrollbarTrackRef.current;
+        const horizontalThumb = customHorizontalScrollbarThumbRef.current;
+
+        if (horizontalTrack && horizontalThumb) {
+          const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+
+          if (maxScrollLeft <= 1) {
+            horizontalTrack.style.display = "none";
+          } else {
+            const horizontalLeft = rootRect.left - containerRect.left;
+            const horizontalWidth = rootRect.width;
+
+            const horizontalThumbWidth = Math.max(
+              (scroller.clientWidth / scroller.scrollWidth) * horizontalWidth,
+              60,
+            );
+
+            horizontalTrack.style.display = "block";
+            horizontalTrack.style.top = `${
+              scrollerRect.bottom - containerRect.top - horizontalTrackHeight - 4
+            }px`;
+            horizontalTrack.style.left = `${horizontalLeft}px`;
+            horizontalTrack.style.right = "auto";
+            horizontalTrack.style.width = `${horizontalWidth}px`;
+            horizontalTrack.style.height = `${horizontalTrackHeight}px`;
+
+            horizontalThumb.style.width = `${horizontalThumbWidth}px`;
+            horizontalThumb.style.left = "0px";
+            horizontalThumb.style.right = "auto";
+          }
+        }
+
+        updateThumbPosition();
+      };
+
+      const init = () => {
+        if (cancelled) return;
+
+        root = apiRef.current?.rootElementRef?.current ?? null;
+        scroller = root?.querySelector(".MuiDataGrid-virtualScroller") as HTMLElement | null;
+
+        if (!root || !scroller) {
+          if (retryCount < 20) {
+            retryCount += 1;
+            initFrame = window.requestAnimationFrame(init);
+          }
+          return;
+        }
+
+        updateLayout();
+
+        scroller.addEventListener("scroll", updateThumbPosition, { passive: true });
+        window.addEventListener("resize", updateLayout);
+      };
+
+      initFrame = window.requestAnimationFrame(init);
+
+      return () => {
+        cancelled = true;
+
+        if (initFrame !== null) {
+          window.cancelAnimationFrame(initFrame);
+        }
+
+        if (scrollbarAnimationFrame.current !== null) {
+          window.cancelAnimationFrame(scrollbarAnimationFrame.current);
+          scrollbarAnimationFrame.current = null;
+        }
+
+        scroller?.removeEventListener("scroll", updateThumbPosition);
+        window.removeEventListener("resize", updateLayout);
+      };
+    }, [apiRef, displayRows.length, showTableSkeleton]);
 
     useEffect(() => {
       if (!shouldRequestTableSkeleton) {
@@ -1233,6 +1419,7 @@ export const ResponsesTable = React.memo(
         <MainContent>
           <TableContainer>
             <StyledDataGrid
+              scrollbarSize={14}
               key={isInEditMode ? "quick-edit-grid" : "view-grid"}
               apiRef={apiRef}
               className={clsx({ "MuiDataGrid-root--edit-mode": isInEditMode })}
@@ -1368,6 +1555,62 @@ export const ResponsesTable = React.memo(
                   : undefined
               }
             />
+            <Box
+              ref={customScrollbarTrackRef}
+              sx={{
+                position: "absolute",
+                top: 0,
+                width: "21px",
+                height: 0,
+                display: "none",
+                pointerEvents: "none",
+                zIndex: 10,
+                backgroundColor: "#ffffff",
+                borderRadius: "999px",
+              }}>
+              <Box
+                ref={customScrollbarThumbRef}
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: "4px",
+                  width: "13px",
+                  height: 0,
+                  borderRadius: "999px",
+                  backgroundColor: "#E2E8F0",
+                  transform: "translate3d(0, 0, 0)",
+                  willChange: "transform",
+                }}
+              />
+            </Box>
+            <Box
+              ref={customHorizontalScrollbarTrackRef}
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: 0,
+                height: "21px",
+                display: "none",
+                pointerEvents: "none",
+                zIndex: 10,
+                backgroundColor: "#ffffff",
+                borderRadius: "999px",
+              }}>
+              <Box
+                ref={customHorizontalScrollbarThumbRef}
+                sx={{
+                  position: "absolute",
+                  top: "4px",
+                  width: 0,
+                  height: "13px",
+                  borderRadius: "999px",
+                  backgroundColor: "#E2E8F0",
+                  transform: "translate3d(0, 0, 0)",
+                  willChange: "transform",
+                }}
+              />
+            </Box>
           </TableContainer>
         </MainContent>
       </ContentContainer>

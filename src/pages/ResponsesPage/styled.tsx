@@ -201,6 +201,7 @@ export const MainContent = styled(Box)<MainContentProps>(() => ({
   display: "flex",
   flexDirection: "column",
   minWidth: 0,
+  minHeight: 0,
   overflow: "hidden",
 }));
 
@@ -212,6 +213,7 @@ export const TableContainer = styled(Box)<BoxProps>(() => ({
   display: "flex",
   flexDirection: "column",
   padding: "0 24px",
+  position: "relative",
 }));
 
 export const PageWrapper = styled(Box)<BoxProps>(() => ({
@@ -242,6 +244,8 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     "& .MuiDataGrid-filler--pinnedLeft": {
       display: "none !important",
     },
+    height: "100%",
+    minHeight: 0,
     width: "100%",
     maxWidth: "100%",
     fontSize: "18px",
@@ -458,8 +462,8 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
       pointerEvents: "none",
     },
   },
-  "& .MuiDataGrid-scrollbar--vertical": {
-    display: "none",
+  "& .MuiDataGrid-scrollbar.MuiDataGrid-scrollbar--vertical": {
+    display: "none !important",
   },
   "& .MuiDataGrid-scrollbar.MuiDataGrid-scrollbar--horizontal": {
     display: "none !important",
