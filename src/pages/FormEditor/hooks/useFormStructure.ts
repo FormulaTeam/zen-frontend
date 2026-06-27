@@ -40,6 +40,11 @@ const DUPLICATE_FIELD_ERROR_MESSAGES: Record<UniqueFieldProperty, string> = {
   displayName: "שם שדה חייב להיות ייחודי בטופס",
 };
 
+const DUPLICATE_SECTION_TITLE_ERROR_MESSAGE = "שם מקטע חייב להיות ייחודי בטופס";
+
+const normalizeStructureText = (value?: string): string =>
+  value?.trim().toLocaleLowerCase("he") ?? "";
+
 function yieldFormStructure(form?: ExtendedFormDto): FormStructure {
   const metadata = {
     id: form?.id,
@@ -287,6 +292,73 @@ const applyDuplicateFieldErrors = (
   return updatedFields;
 };
 
+const getDuplicateSectionIdsByTitle = (sections: Record<string, Section>): Set<string> => {
+  const sectionIdsByTitle = new Map<string, string[]>();
+
+  Object.entries(sections).forEach(([sectionId, section]) => {
+    const normalizedTitle = normalizeStructureText(section.title);
+
+    if (!normalizedTitle) {
+      return;
+    }
+
+    sectionIdsByTitle.set(normalizedTitle, [
+      ...(sectionIdsByTitle.get(normalizedTitle) ?? []),
+      sectionId,
+    ]);
+  });
+
+  const duplicateSectionIds = new Set<string>();
+
+  sectionIdsByTitle.forEach((sectionIds) => {
+    if (sectionIds.length > 1) {
+      sectionIds.forEach((sectionId) => duplicateSectionIds.add(sectionId));
+    }
+  });
+
+  return duplicateSectionIds;
+};
+
+const removeDuplicateSectionTitleError = (validationErrors?: string[] | null): string[] | null => {
+  const filteredErrors = (validationErrors ?? []).filter(
+    (error) => error !== DUPLICATE_SECTION_TITLE_ERROR_MESSAGE,
+  );
+
+  return filteredErrors.length > 0 ? filteredErrors : null;
+};
+
+const addDuplicateSectionTitleError = (validationErrors?: string[] | null): string[] => {
+  const errors = validationErrors ?? [];
+
+  if (errors.includes(DUPLICATE_SECTION_TITLE_ERROR_MESSAGE)) {
+    return errors;
+  }
+
+  return [...errors, DUPLICATE_SECTION_TITLE_ERROR_MESSAGE];
+};
+
+const applyDuplicateSectionErrors = (
+  sections: Record<string, Section>,
+): Record<string, Section> => {
+  const duplicateSectionIds = getDuplicateSectionIdsByTitle(sections);
+  const updatedSections: Record<string, Section> = {};
+
+  Object.entries(sections).forEach(([sectionId, section]) => {
+    let validationErrors = removeDuplicateSectionTitleError(section.validationErrors);
+
+    if (duplicateSectionIds.has(sectionId)) {
+      validationErrors = addDuplicateSectionTitleError(validationErrors);
+    }
+
+    updatedSections[sectionId] = {
+      ...section,
+      validationErrors,
+    };
+  });
+
+  return updatedSections;
+};
+
 const hasFieldValidationErrors = (
   validationErrors?: $ZodErrorTree<FormFieldData>["properties"] | null,
 ) => !!validationErrors && Object.keys(validationErrors).length > 0;
@@ -453,13 +525,14 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
         expanded: true,
         fieldIds: [],
       };
+      const sections = applyDuplicateSectionErrors({
+        ...prev.sections,
+        [newSectionId]: newSection,
+      });
 
       return {
         ...prev,
-        sections: {
-          ...prev.sections,
-          [newSectionId]: newSection,
-        },
+        sections,
         orderedSectionIds: [...prev.orderedSectionIds, newSectionId],
       };
     });
@@ -485,7 +558,7 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
 
         return {
           ...prev,
-          sections,
+          sections: applyDuplicateSectionErrors(sections),
           fields,
           orderedSectionIds,
           conditions,
@@ -498,16 +571,20 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
 
   const renameSection = useCallback(
     (sectionId: string, title: string) => {
-      setFormStructure((prev) => ({
-        ...prev,
-        sections: {
+      setFormStructure((prev) => {
+        const sections = applyDuplicateSectionErrors({
           ...prev.sections,
           [sectionId]: {
             ...prev.sections[sectionId],
             title,
           },
-        },
-      }));
+        });
+
+        return {
+          ...prev,
+          sections,
+        };
+      });
     },
     [setFormStructure],
   );
@@ -743,23 +820,28 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     });
 
     let sectionsValid = true;
-    const updatedSections = { ...formStructure.sections };
+    const updatedSections = applyDuplicateSectionErrors({ ...formStructure.sections });
 
     Object.keys(updatedSections).forEach((sectionId) => {
       const section = updatedSections[sectionId];
+      const validationErrors = (section.validationErrors ?? []).filter(
+        (error) => error !== texts.heb.emptySectionAlert,
+      );
 
       if (section.fieldIds.length === 0) {
-        updatedSections[sectionId] = {
-          ...section,
-          validationErrors: [texts.heb.emptySectionAlert],
-        };
-        sectionsValid = false;
-      } else {
-        updatedSections[sectionId] = {
-          ...section,
-          validationErrors: null,
-        };
+        validationErrors.push(texts.heb.emptySectionAlert);
       }
+
+      const uniqueValidationErrors = Array.from(new Set(validationErrors));
+
+      if (uniqueValidationErrors.length > 0) {
+        sectionsValid = false;
+      }
+
+      updatedSections[sectionId] = {
+        ...section,
+        validationErrors: uniqueValidationErrors.length > 0 ? uniqueValidationErrors : null,
+      };
     });
 
     const metadataErrors = validateMetadata(metadata) || {};
@@ -767,9 +849,11 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     const hasFields = Object.keys(fields).length > 0;
 
     const fieldValues = Object.values(fields);
-    const hasOnlyFormInFormField = fieldValues.length === 1 && fieldValues[0].data?.typeId === fieldType.Form;
+    const hasOnlyFormInFormField =
+      fieldValues.length === 1 && fieldValues[0].data?.typeId === fieldType.Form;
 
-    const isValid = fieldsValid && sectionsValid && !hasMetadataErrors && hasFields && !hasOnlyFormInFormField;
+    const isValid =
+      fieldsValid && sectionsValid && !hasMetadataErrors && hasFields && !hasOnlyFormInFormField;
 
     setFormStructure((prev) => {
       const updatedFields = { ...prev.fields };

@@ -35,7 +35,6 @@ interface Props {
 }
 
 function FormSectionElement({ id }: Props) {
-
   const {
     formStructure,
     deleteSection,
@@ -48,7 +47,8 @@ function FormSectionElement({ id }: Props) {
   const { active: draggingElement } = useDndContext();
 
   const self = formStructure.sections[id];
-  const activeElementType = (draggingElement?.data.current as DraggableElementData | undefined)?.elementType;
+  const activeElementType = (draggingElement?.data.current as DraggableElementData | undefined)
+    ?.elementType;
 
   const {
     attributes,
@@ -65,9 +65,7 @@ function FormSectionElement({ id }: Props) {
     resizeObserverConfig: undefined as any,
     disabled: activeElementType !== undefined && activeElementType !== "section",
   });
-  const {
-    setNodeRef: setBottomDropZoneRef,
-  } = useDroppable({
+  const { setNodeRef: setBottomDropZoneRef } = useDroppable({
     id: `${id}-bottom-drop-zone`,
     data: {
       elementType: "sectionBottom",
@@ -124,6 +122,11 @@ function FormSectionElement({ id }: Props) {
   };
 
   const isEditedTitleEmpty = editedTitle.trim().length === 0;
+  const sectionTitleError = useMemo(
+    () => self.validationErrors?.find((error) => error !== texts.heb.emptySectionAlert) ?? null,
+    [self.validationErrors],
+  );
+  const hasSectionTitleError = !!sectionTitleError;
 
   const handleFieldDataChange = useCallback(
     (fieldId: string) => (data: Partial<FormFieldData>) => setFieldData(fieldId, data),
@@ -176,13 +179,13 @@ function FormSectionElement({ id }: Props) {
             maxWidth: "100%",
           }}>
           {isEditingTitle ? (
-            <FormControl error={isEditedTitleEmpty} variant="standard">
+            <FormControl error={isEditedTitleEmpty || hasSectionTitleError} variant="standard">
               <SectionTitleInput
                 value={editedTitle}
                 autoFocus
                 inputRef={titleInputRef}
                 placeholder={texts.heb.undefinedSection}
-                error={isEditedTitleEmpty}
+                error={isEditedTitleEmpty || hasSectionTitleError}
                 inputProps={{
                   maxLength: 255,
                 }}
@@ -206,16 +209,35 @@ function FormSectionElement({ id }: Props) {
                 }}
               />
 
-              {isEditedTitleEmpty ? <FormHelperText>שם מקטע הוא שדה חובה</FormHelperText> : null}
+              {isEditedTitleEmpty ? (
+                <FormHelperText>שם מקטע הוא שדה חובה</FormHelperText>
+              ) : sectionTitleError ? (
+                <FormHelperText>{sectionTitleError}</FormHelperText>
+              ) : null}
             </FormControl>
           ) : (
-            <SectionTitleText variant="body1">
-              <OverflowTooltip title={self.title || texts.heb.undefinedSection} placement="top">
-                <span className={!self.title ? styles.emptyTitle : ""}>
-                  {self.title || texts.heb.undefinedSection}
-                </span>
-              </OverflowTooltip>
-            </SectionTitleText>
+            <>
+              <SectionTitleText variant="body1">
+                <OverflowTooltip title={self.title || texts.heb.undefinedSection} placement="top">
+                  <span className={!self.title ? styles.emptyTitle : ""}>
+                    {self.title || texts.heb.undefinedSection}
+                  </span>
+                </OverflowTooltip>
+              </SectionTitleText>
+
+              {sectionTitleError ? (
+                <FormHelperText
+                  error
+                  sx={{
+                    m: 0,
+                    mt: 0.25,
+                    textAlign: "right",
+                    lineHeight: 1.2,
+                  }}>
+                  {sectionTitleError}
+                </FormHelperText>
+              ) : null}
+            </>
           )}
         </div>
 
@@ -320,17 +342,9 @@ function FormSectionElement({ id }: Props) {
 
   const emptyPlaceholder: JSX.Element = (
     <div className={styles.emptySectionPlaceholder} style={{ flexDirection: "column", gap: "8px" }}>
-      <CatalogArrowIcon
-        className={styles.catalogArrowIcon}
-        style={self.validationErrors?.length ? { color: "#d32f2f" } : undefined}
-      />
-      <EmptyPlaceholderText
-        color={self.validationErrors?.length ? "#d32f2f" : "#a7abb1"}
-        variant="h5"
-        align="center">
-        {self.validationErrors?.length
-          ? self.validationErrors[0]
-          : "ניתן להוסיף שדה למקטע באמצעות גרירה מקטלוג השדות בצד"}
+      <CatalogArrowIcon className={styles.catalogArrowIcon} />
+      <EmptyPlaceholderText color="#a7abb1" variant="h5" align="center">
+        ניתן להוסיף שדה למקטע באמצעות גרירה מקטלוג השדות בצד
       </EmptyPlaceholderText>
     </div>
   );
@@ -346,9 +360,7 @@ function FormSectionElement({ id }: Props) {
         ref={containerRef}
         style={style}
         {...attributes}>
-        <StyledAccordionSummary
-          ref={setActivatorNodeRef}
-          {...listeners}>
+        <StyledAccordionSummary ref={setActivatorNodeRef} {...listeners}>
           <div className={styles.title}>{sectionTitle}</div>
           {toggleExpandButton}
           {deleteSectionButton}
