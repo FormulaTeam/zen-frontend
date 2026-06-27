@@ -13,27 +13,18 @@ import {
 } from "@mui/x-data-grid-pro";
 import { useFormStore, useInitiateFormStore } from "../stores/form.store";
 import clsx from "clsx";
-import { ArrowDown, ArrowDownUp, ArrowUp, Cloud, CloudOff, RefreshCw } from "lucide-react";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import Visibility from "@mui/icons-material/Visibility";
-import Edit from "@mui/icons-material/Edit";
-import Delete from "@mui/icons-material/Delete";
+import { ArrowDown, ArrowDownUp, ArrowUp, Cloud, CloudDownload, CloudOff, RefreshCw } from "lucide-react";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "@components/formInForm/ZoomCell";
 import {
   Box,
-  Menu,
   MenuItem,
-  ListItemIcon,
-  ListItemText,
   Stack,
   Typography,
   Select,
   Tooltip,
-  IconButton,
-  Checkbox,
 } from "@mui/material";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
@@ -51,7 +42,6 @@ import {
   CellErrorText,
   CellErrorInfoIcon,
   CellValueFlex,
-  PaginationContainer,
   FooterInfoContainer,
   PaginationButton,
   CellErrorHeader,
@@ -239,7 +229,7 @@ const SyncStatusIcon: React.FC<{
     statusId === 5 ? (
       <Cloud size={18} strokeWidth={2.3} />
     ) : statusId === 4 ? (
-      <CloudOff size={18} strokeWidth={2.3} />
+      <CloudOff size={18} strokeWidth={2.3} color={"#E7000B"} />
     ) : (
       <RefreshCw size={18} strokeWidth={2.3} />
     );
@@ -962,7 +952,7 @@ export const ResponsesTable = React.memo(
         headerAlign: "left",
         renderHeader: () => (
           <HeaderFlex sx={{ justifyContent: "flex-start", width: "100%" }}>
-            <Cloud size={18} strokeWidth={2.2} />
+            <CloudDownload size={20} strokeWidth={2.2} />
           </HeaderFlex>
         ),
         minWidth: 90,

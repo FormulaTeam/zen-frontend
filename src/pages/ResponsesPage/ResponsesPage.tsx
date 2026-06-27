@@ -436,6 +436,18 @@ const ResponsesPageContent = (): JSX.Element => {
 
   const showStandardActions = !isInEditMode && selectedRows.length === 0;
 
+  const ToolbarDivider = () => (
+    <Box
+      sx={{
+        width: "1px",
+        height: "24px",
+        backgroundColor: "rgba(0, 0, 0, 0.12)",
+        mx: 0.5,
+        flexShrink: 0,
+      }}
+    />
+  );
+
   return (
     <PageWrapper>
       <MainContentWrapper>
@@ -469,6 +481,8 @@ const ResponsesPageContent = (): JSX.Element => {
 
             <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <SearchInfo search={searchInput} setSearch={handleSearch} />
+
+              {!isInEditMode && <ToolbarDivider />}
 
               {!isInEditMode && (
                 <Box
@@ -540,6 +554,8 @@ const ResponsesPageContent = (): JSX.Element => {
                   )}
                 </Box>
               )}
+
+              {!isInEditMode && <ToolbarDivider />}
 
               <Box
                 sx={{
