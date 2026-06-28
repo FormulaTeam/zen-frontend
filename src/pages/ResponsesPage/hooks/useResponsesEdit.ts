@@ -1,7 +1,12 @@
 import { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import { GridRowModel } from "@mui/x-data-grid-pro";
 import { showSuccessNotification, showErrorNotification } from "@utils/utils";
-import { useUpdateResponses, useCreateResponse, useSoftDeleteResponses } from "@api/responsesApi";
+import {
+  useUpdateResponses,
+  useCreateResponse,
+  useCreateResponseWithFiles,
+  useSoftDeleteResponses,
+} from "@api/responsesApi";
 import { toStoredFile, uploadFile, type ResponseFileDto, type StoredFile } from "@api/filesApi";
 import { useFormStore } from "../stores/form.store";
 import { useAuth } from "@contexts/AuthContext";
@@ -383,7 +388,9 @@ const getDefaultFieldValue = (field: FormFieldDto): unknown => {
         : undefined;
 
     if (defaultValue && Array.isArray(defaultValue)) {
-      return extra.selectionMode === selectionMode.Multiple ? defaultValue : (defaultValue[0] ?? "");
+      return extra.selectionMode === selectionMode.Multiple
+        ? defaultValue
+        : (defaultValue[0] ?? "");
     }
 
     return getEmptyFieldValue(field);
@@ -484,6 +491,8 @@ export const useResponsesEdit = () => {
 
   const { mutateAsync: updateResponses, isPending: isUpdating } = useUpdateResponses(dtoForm?.id);
   const { mutateAsync: createResponse, isPending: isCreating } = useCreateResponse(dtoForm?.id);
+  const { mutateAsync: createResponseWithFiles, isPending: isCreatingWithFiles } =
+    useCreateResponseWithFiles(dtoForm?.id);
   const { mutateAsync: softDeleteResponses } = useSoftDeleteResponses(Number(dtoForm?.id ?? 0));
 
   const responseRows: Row[] = useMemo(
@@ -567,7 +576,7 @@ export const useResponsesEdit = () => {
 
   const confirmDelete = useCallback(async (): Promise<void> => {
     if (!pendingDeleteIds) return;
-    
+
     const stringIds = pendingDeleteIds.map((id) => String(id));
 
     if (isInEditMode) {
@@ -591,7 +600,7 @@ export const useResponsesEdit = () => {
           return next;
         });
       }
-      
+
       setPendingDeleteIds(null);
       return;
     }
@@ -616,12 +625,9 @@ export const useResponsesEdit = () => {
     setPendingDeleteIds(null);
   }, []);
 
-  const handleDeleteResponses = useCallback(
-    (ids: RowId[]): void => {
-      setPendingDeleteIds(ids);
-    },
-    [],
-  );
+  const handleDeleteResponses = useCallback((ids: RowId[]): void => {
+    setPendingDeleteIds(ids);
+  }, []);
 
   const handleCellLiveChange = useCallback(
     <T>(rowId: RowId, columnName: string, value: T): void => {
@@ -737,19 +743,21 @@ export const useResponsesEdit = () => {
 
       const rowForSubmit = getMergedRow(rowId, editedRow);
 
-      const updatedFieldValues = await Promise.all(formFields.map(async (formField) => {
-        const rawValue = rowForSubmit[getFieldColumnKey(formField)];
+      const updatedFieldValues = await Promise.all(
+        formFields.map(async (formField) => {
+          const rawValue = rowForSubmit[getFieldColumnKey(formField)];
 
-        return {
-          fieldId: formField.id,
-          value: await getPersistedSubmitFieldValue(
-            dtoForm.id,
-            rowId,
-            formField,
-            rawValue ?? null,
-          ),
-        };
-      }));
+          return {
+            fieldId: formField.id,
+            value: await getPersistedSubmitFieldValue(
+              dtoForm.id,
+              rowId,
+              formField,
+              rawValue ?? null,
+            ),
+          };
+        }),
+      );
 
       return {
         responseId: String(rowId),
@@ -916,59 +924,37 @@ export const useResponsesEdit = () => {
       );
 
       if (newResponsesPayloads.length > 0) {
-        const createdResponses = (await createResponse(newResponsesPayloads)) as ResponseDto[];
+        const files: File[] = [];
+        const fileAttachments: { responseIndex: number; fieldId: string; fileIndex: number }[] = [];
 
-        const fileUpdates: Array<UpdateOneResponseDto | null> = await Promise.all(
-          sortedNewRowEntries.map(async ([rowId, editedRow], index) => {
-            const createdResponse = createdResponses[index];
+        sortedNewRowEntries.forEach(([rowId, editedRow], responseIndex) => {
+          const rowForCreate = getMergedRow(rowId, editedRow);
 
-            if (!createdResponse?.id) {
-              return null;
-            }
+          formFields.forEach((field) => {
+            if (field.fieldType !== fieldType.File) return;
 
-            const rowForCreate = getMergedRow(rowId, editedRow);
-            const fieldValues = await Promise.all(
-              formFields.map(async (field) => {
-                const rawValue = rowForCreate[getFieldColumnKey(field)];
+            const rawValue = rowForCreate[getFieldColumnKey(field)] ?? getDefaultFieldValue(field);
+            const { newFiles } = getFileDraftParts(rawValue);
 
-                return {
-                  fieldId: field.id,
-                  value: await getPersistedSubmitFieldValue(
-                    dtoForm.id,
-                    createdResponse.id,
-                    field,
-                    rawValue ?? getDefaultFieldValue(field),
-                  ),
-                };
-              }),
-            );
-
-            const hasUploadedFiles = fieldValues.some((fieldValue) => {
-              const field = formFields.find((f) => f.id === fieldValue.fieldId);
-              return (
-                field?.fieldType === fieldType.File &&
-                Array.isArray(fieldValue.value) &&
-                fieldValue.value.length > 0
-              );
+            newFiles.forEach((file) => {
+              fileAttachments.push({
+                responseIndex,
+                fieldId: field.id,
+                fileIndex: files.length,
+              });
+              files.push(file);
             });
+          });
+        });
 
-            if (!hasUploadedFiles) {
-              return null;
-            }
-
-            return {
-              responseId: createdResponse.id,
-              fieldValues,
-            };
-          }),
-        );
-
-        const fileUpdatesToSend = fileUpdates.filter(
-          (update): update is UpdateOneResponseDto => update !== null,
-        );
-
-        if (fileUpdatesToSend.length > 0) {
-          await updateResponses({ responses: fileUpdatesToSend });
+        if (files.length > 0) {
+          await createResponseWithFiles({
+            responseData: newResponsesPayloads,
+            files,
+            fileAttachments,
+          });
+        } else {
+          await createResponse(newResponsesPayloads);
         }
       }
 
@@ -1023,6 +1009,7 @@ export const useResponsesEdit = () => {
     buildResponseUpdatePayload,
     updateResponses,
     createResponse,
+    createResponseWithFiles,
     softDeleteResponses,
     localRows,
     setRows,
@@ -1059,7 +1046,7 @@ export const useResponsesEdit = () => {
     validationErrors,
     handleCellLiveChange,
     handleDeleteResponses,
-    isUpdating: isUpdating || isCreating || isSaving,
+    isUpdating: isUpdating || isCreating || isCreatingWithFiles || isSaving,
     showCancelDialog,
     handleToggleEditMode: toggleEditMode,
     handleCellEditStart: startCellEdit,
