@@ -10,10 +10,8 @@ import { LoadingContainer } from "../../pages/Response/styled";
 import FormFieldRenderer from "../Responses/FormFieldRenderer";
 import ConnectedFormHeader from "./ConnectedFormHeader";
 import {
+  ConnectedFormCard,
   ConnectedFormFieldsWrapper,
-  ConnectedFormTitle,
-  ConnectedFormWrapper,
-  ConnectedResponseDivider,
 } from "./ConnectedFormSection.styled";
 
 type ConnectedChildField = FormFieldDto & {
@@ -249,16 +247,8 @@ function ConnectedFormSection({
     return null;
   }
 
-  if (isContentLoading) {
-    return null;
-  }
-
   return (
-    <ConnectedFormWrapper>
-      {formsLength > 1 && index > 0 && <ConnectedResponseDivider />}
-
-      {index === 0 && <ConnectedFormTitle>{field.displayName}</ConnectedFormTitle>}
-
+    <ConnectedFormCard>
       <ConnectedFormHeader
         formsLength={formsLength}
         index={index}
@@ -267,7 +257,7 @@ function ConnectedFormSection({
       />
 
       {!valid && (
-        <Typography variant="subtitle2" color="error">
+        <Typography variant="subtitle2" color="error" sx={{ mt: 1, mb: 1 }}>
           שימו לב! יש למלא את כל השדות בצורה תקינה ולאחר מכן ניתן לנסות שוב לשמור
         </Typography>
       )}
@@ -299,15 +289,19 @@ function ConnectedFormSection({
           </Box>
         )}
 
-        {saved && <Typography variant="subtitle1">נשמר בהצלחה</Typography>}
+        {saved && (
+          <Typography variant="subtitle1" sx={{ mt: 2 }}>
+            נשמר בהצלחה
+          </Typography>
+        )}
 
         {error && (
-          <Typography variant="subtitle1" color="error">
+          <Typography variant="subtitle1" color="error" sx={{ mt: 2 }}>
             שגיאה בשמירה
           </Typography>
         )}
       </ConnectedFormFieldsWrapper>
-    </ConnectedFormWrapper>
+    </ConnectedFormCard>
   );
 }
 
