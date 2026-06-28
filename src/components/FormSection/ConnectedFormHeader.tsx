@@ -1,7 +1,7 @@
 import React from "react";
-import { Box, IconButton, Tooltip } from "@mui/material";
-import { styled, useTheme } from "@mui/material/styles";
+import { IconButton, Tooltip, Typography } from "@mui/material";
 import { Delete as DeleteIcon } from "@mui/icons-material";
+import { CardHeaderContainer } from "./ConnectedFormSection.styled";
 
 interface ConnectedFormHeaderProps {
   formsLength: number;
@@ -10,51 +10,42 @@ interface ConnectedFormHeaderProps {
   viewMode?: boolean;
 }
 
-const HeaderContainer = styled(Box)`
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const ResponseLabel = styled(Box)`
-  font-weight: 500;
-`;
-
 const ConnectedFormHeader: React.FC<ConnectedFormHeaderProps> = ({
   formsLength,
   index,
   onDelete,
   viewMode,
 }) => {
-  const theme = useTheme();
-
   return (
-    <HeaderContainer>
-      <ResponseLabel>{formsLength > 1 ? `#תגובה ${index + 1}` : ""}</ResponseLabel>
+    <CardHeaderContainer>
+      <Typography sx={{ fontWeight: 700, color: "#333", fontSize: "1rem" }}>
+        {formsLength > 1 ? `#תגובה ${index + 1}` : ""}
+      </Typography>
       {!viewMode && (
         <Tooltip title="מחיקה" arrow placement="top">
           <IconButton
-            color="error"
-            size="small"
             onClick={onDelete}
             sx={{
-              alignSelf: "center",
-              border: `1px solid ${theme.palette.error.main}`,
+              color: "#d32f2f",
+              background: "#fff5f5",
+              border: "1px solid #ffcdd2",
               borderRadius: "8px",
-              padding: "6px",
-              color: theme.palette.error.main,
+              padding: "6px 12px",
+              fontSize: "0.8125rem",
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
               "&:hover": {
-                borderColor: theme.palette.error.dark,
-                color: theme.palette.error.dark,
-                backgroundColor: "rgba(211, 47, 47, 0.04)",
+                background: "#ffebee",
               },
             }}>
             <DeleteIcon fontSize="small" />
+            מחיקה
           </IconButton>
         </Tooltip>
       )}
-    </HeaderContainer>
+    </CardHeaderContainer>
   );
 };
 
