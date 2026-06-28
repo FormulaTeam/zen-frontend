@@ -197,8 +197,6 @@ function FormFieldResponsesOptions(props: Props) {
       fieldType.LongText,
       fieldType.Date,
       fieldType.Time,
-      fieldType.Location,
-      fieldType.Link,
     ];
 
     return fields
