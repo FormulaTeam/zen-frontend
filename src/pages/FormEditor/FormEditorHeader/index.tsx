@@ -36,6 +36,7 @@ import { clearFormDraft } from "../utils/draftPersistence";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { Save } from "lucide-react";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
+import { FormMetadataSchema } from "../schemas/metadata";
 
 type FormValidationResult = {
   isValid: boolean;
@@ -303,18 +304,29 @@ function FormEditorHeader() {
       return;
     }
 
-    if (setFormMetadata({ title: trimmedTitle })) {
-      setShowUntitledFormPopup(false);
-      setIsEditingMetadata(false);
-      setEditedMetadata((prev) => ({ ...prev, title: trimmedTitle }));
+    const nextMetadata = {
+      id: formStructure.metadata.id,
+      title: trimmedTitle,
+      description,
+      iconId,
+    };
 
-      await handleSaveForm({
-        ...saveOptionsAfterTitlePopup,
-        title: trimmedTitle,
-      });
+    setFormMetadata({ title: trimmedTitle });
 
-      setSaveOptionsAfterTitlePopup({});
+    if (!FormMetadataSchema.safeParse(nextMetadata).success) {
+      return;
     }
+
+    setShowUntitledFormPopup(false);
+    setIsEditingMetadata(false);
+    setEditedMetadata((prev) => ({ ...prev, title: trimmedTitle }));
+
+    await handleSaveForm({
+      ...saveOptionsAfterTitlePopup,
+      title: trimmedTitle,
+    });
+
+    setSaveOptionsAfterTitlePopup({});
   };
 
   const handleSaveAndExit = async () => {
