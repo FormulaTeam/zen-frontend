@@ -416,10 +416,16 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
         )}
 
         {!isLoading && !viewMode && childFormData.canCreate && (
-          <Box sx={{ borderTop: "1px solid #f0f0f0", mt: 2, pt: 2 }}>
+          <Box
+            sx={{
+              borderTop: "1px solid #f0f0f0",
+              mt: 2,
+              pt: 2,
+              display: "flex",
+              justifyContent: "flex-start",
+            }}>
             <Button
-              variant="outlined"
-              fullWidth
+              variant="text"
               startIcon={<Add />}
               onClick={(e) => {
                 e.preventDefault();
@@ -427,17 +433,15 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
                 handleAddChildForm(childFormData.formId);
               }}
               sx={{
-                height: "50px",
-                borderColor: "primary.main",
+                height: "44px",
+                px: 2,
                 color: "primary.main",
-                borderRadius: "8px",
-                fontWeight: 500,
+                borderRadius: "10px",
+                fontWeight: 700,
                 fontSize: "0.9375rem",
                 textTransform: "none",
-                backgroundColor: "#FFFFFF",
                 "&:hover": {
                   backgroundColor: "secondary.main",
-                  borderColor: "primary.main",
                 },
               }}>
               {addResponseTitle}
@@ -461,19 +465,19 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
 
   return (
     <div className="response-page">
-      <PageContainer maxWidth={false}>
-        <ResponseHeader
-          formTitle={formTitle}
-          viewMode={viewMode}
-          isEdit={!!id && !viewMode && !copyMode}
-          isCopy={copyMode}
-          permissionTypes={permissionTypes}
-          onEdit={onEdit}
-          onBack={onExitClick}
-          onSaveAndClose={onSaveAndClose}
-          saveDisabled={isSaving || childFormsSaving || showLoadingSaveBtn}
-        />
+      <ResponseHeader
+        formTitle={formTitle}
+        viewMode={viewMode}
+        isEdit={!!id && !viewMode && !copyMode}
+        isCopy={copyMode}
+        permissionTypes={permissionTypes}
+        onEdit={onEdit}
+        onBack={onExitClick}
+        onSaveAndClose={onSaveAndClose}
+        saveDisabled={isSaving || childFormsSaving || showLoadingSaveBtn}
+      />
 
+      <PageContainer maxWidth={false}>
         <FormSectionsContainer>
           {sortedSections.map(([sectionId, section], sectionIdx) => (
             <ResponseSection

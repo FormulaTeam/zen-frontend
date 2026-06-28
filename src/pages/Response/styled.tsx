@@ -59,7 +59,6 @@ export const PageContainer = styled(Container)(({ theme }) => ({
   minHeight: "100vh",
   display: "flex",
   flexDirection: "column",
-  paddingTop: theme.spacing(3),
   paddingBottom: theme.spacing(3),
   gap: theme.spacing(3),
   width: "90% !important",
@@ -72,12 +71,19 @@ export const PageContainer = styled(Container)(({ theme }) => ({
 
 export const Header = styled(Box)(({ theme }) => ({
   position: "sticky",
-  top: theme.spacing(3),
+  top: 0,
   zIndex: 1100,
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  width: "100%",
+  width: "90%",
+  backgroundColor: "#F8FAFC",
+  paddingTop: theme.spacing(3),
+  paddingBottom: theme.spacing(2),
+  margin: "0 auto",
+  [theme.breakpoints.down("md")]: {
+    width: "98%",
+  },
 }));
 
 export const HeaderSection = styled(Box)(({ theme }) => ({
