@@ -425,7 +425,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
               justifyContent: "flex-start",
             }}>
             <Button
-              variant="text"
+              variant="outlined"
               startIcon={<Add />}
               onClick={(e) => {
                 e.preventDefault();
@@ -433,15 +433,19 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
                 handleAddChildForm(childFormData.formId);
               }}
               sx={{
-                height: "44px",
-                px: 2,
-                color: "primary.main",
+                height: "42px",
+                px: 2.5,
+                backgroundColor: "#FFFFFF !important",
+                color: "#020618",
+                borderColor: "#e2e8f0 !important",
                 borderRadius: "10px",
-                fontWeight: 700,
+                fontWeight: 600,
                 fontSize: "0.9375rem",
                 textTransform: "none",
+                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
                 "&:hover": {
-                  backgroundColor: "secondary.main",
+                  backgroundColor: "#f8fafc !important",
+                  borderColor: "#cbd5e1 !important",
                 },
               }}>
               {addResponseTitle}
@@ -464,7 +468,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   );
 
   return (
-    <div className="response-page">
+    <div className="response-page" style={{ overflowY: "auto", height: "100%", backgroundColor: "#f1f5f9" }}>
       <ResponseHeader
         formTitle={formTitle}
         viewMode={viewMode}
