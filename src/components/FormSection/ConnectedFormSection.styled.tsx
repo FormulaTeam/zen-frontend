@@ -11,11 +11,11 @@ export const ConnectedFormFieldsWrapper = styled(Box)<BoxProps>(({ theme }) => (
 }));
 
 export const ConnectedFormSegmentBox = styled(Box)(({ theme }) => ({
-  background: "#FFFFFF",
-  border: "1px solid #e0e0e0",
+  background: "#F8FAFC",
+  border: "1px solid #e2e8f0",
   borderRadius: "16px",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-  padding: theme.spacing(2.5),
+  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+  padding: theme.spacing(3),
   marginBottom: theme.spacing(4),
   width: "100%",
 }));
