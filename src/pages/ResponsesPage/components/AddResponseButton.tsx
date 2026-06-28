@@ -22,11 +22,7 @@ export const AddResponseButton: React.FC = () => {
     <UnifiedButton
       $isPrimary
       startIcon={<AddIcon />}
-      onClick={() => navigate(`/forms/${form.id}/responses/new`)}
-      sx={{
-        paddingInlineStart: "16px",
-        paddingInlineEnd: "10px",
-      }}>
+      onClick={() => navigate(`/forms/${form.id}/responses/new`)}>
       תגובה חדשה
     </UnifiedButton>
   );

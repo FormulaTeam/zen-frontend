@@ -69,20 +69,18 @@ export const ActionLine = styled(LineRow)(({ theme }) => ({
 export const UnifiedButton = styled(Button)<{ $isPrimary?: boolean }>(({ theme, $isPrimary }) => ({
   height: "40px",
   borderRadius: "10px",
-  padding: "6px 16px",
-  paddingInlineStart: "10px",
-  paddingInlineEnd: "16px",
+  padding: "0 16px",
   fontSize: "0.95rem",
   fontWeight: 600,
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: "8px",
+  gap: "10px",
   textTransform: "none",
   whiteSpace: "nowrap",
   transition: "all 0.2s ease",
 
-  backgroundColor: $isPrimary ? "#1E88E5" : "rgba(30, 136, 229, 0.08)",
+  backgroundColor: $isPrimary ? "#1E88E5" : "rgba(30, 136, 229, 0.04)",
   color: $isPrimary ? "#ffffff" : "#020618",
   border: $isPrimary ? "none" : "1px solid rgba(30, 136, 229, 0.15)",
 

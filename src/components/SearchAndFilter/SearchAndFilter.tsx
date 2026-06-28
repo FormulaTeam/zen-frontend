@@ -9,6 +9,7 @@ interface SearchAndFilterProps {
   borderType?: "" | "none";
   variant?: "standard" | "outlined" | "filled";
   dataTestId?: string;
+  disabled?: boolean;
 }
 const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
   handleSearch,
@@ -17,6 +18,7 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
   borderType,
   variant = "outlined",
   dataTestId,
+  disabled,
 }) => {
   const theme = useTheme();
 
@@ -33,6 +35,7 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
         placeholder={placeholder}
         value={searchValue}
         onChange={(e: any) => handleSearch(e?.target?.value || "")}
+        disabled={disabled}
         sx={{
           width: "340px",
           "& .MuiOutlinedInput-root": {
@@ -50,6 +53,12 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
             "&.Mui-focused fieldset": {
               borderColor: "#020618 !important",
               borderWidth: "2px !important",
+            },
+            "&.Mui-disabled": {
+              backgroundColor: "rgba(0, 0, 0, 0.04)",
+              "& fieldset": {
+                borderColor: "rgba(0, 0, 0, 0.12) !important",
+              },
             },
           },
         }}

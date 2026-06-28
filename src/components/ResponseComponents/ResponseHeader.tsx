@@ -44,12 +44,14 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
   return (
     <Header>
       <HeaderSection sx={{ gap: 1 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, fontSize: "1.5rem", color: "#020618" }}>
-          {formTitle}
-          <Box component="span" sx={{ mx: 2, color: "#94a3b8", fontWeight: 400 }}>
+        <Typography variant="h5" sx={{ fontSize: "1.5rem" }}>
+          <Box component="span" sx={{ fontWeight: 400, color: "#64748b" }}>
+            {formTitle}
+          </Box>
+          <Box component="span" sx={{ mx: 2, color: "#020618", fontWeight: 400 }}>
             ←
           </Box>
-          <Box component="span" sx={{ fontWeight: 500, color: "#475569" }}>
+          <Box component="span" sx={{ fontWeight: 700, color: "#020618" }}>
             {modeLabel}
           </Box>
         </Typography>

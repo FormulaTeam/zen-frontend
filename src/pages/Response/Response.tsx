@@ -415,12 +415,33 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
             ),
         )}
 
-        {!isLoading && !viewMode && (
+        {!isLoading && !viewMode && childFormData.canCreate && (
           <Box sx={{ borderTop: "1px solid #f0f0f0", mt: 2, pt: 2 }}>
-            <AddResponseButton onClick={() => handleAddChildForm(childFormIndex)}>
-              <Add />
+            <Button
+              variant="outlined"
+              fullWidth
+              startIcon={<Add />}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleAddChildForm(childFormData.formId);
+              }}
+              sx={{
+                height: "50px",
+                borderColor: "primary.main",
+                color: "primary.main",
+                borderRadius: "8px",
+                fontWeight: 500,
+                fontSize: "0.9375rem",
+                textTransform: "none",
+                backgroundColor: "#FFFFFF",
+                "&:hover": {
+                  backgroundColor: "secondary.main",
+                  borderColor: "primary.main",
+                },
+              }}>
               {addResponseTitle}
-            </AddResponseButton>
+            </Button>
           </Box>
         )}
       </ConnectedFormSegment>
