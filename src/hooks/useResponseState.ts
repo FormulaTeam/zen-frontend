@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   FormDto,
   FormFieldDto,
@@ -518,6 +518,7 @@ export const useResponseState = (
   setHasUnsavedChanges?: (hasUnsavedChanges: boolean) => void,
   hasUnsavedChanges?: boolean,
   initialResponse?: UseResponseStateInitialResponse,
+  preventNavigationOnError?: boolean,
 ) => {
   const [form, setForm] = useState<FormDto | null>(null);
   const formTitle = form?.name || "";
@@ -563,16 +564,20 @@ export const useResponseState = (
     formFieldsValuesMapRef.current = formFieldsValuesMap;
   }, [formFieldsValuesMap]);
 
-  const { data: formFromQuery, isError: isFormError } = useGetForm({
+  const {
+    data: formFromQuery,
+    isError: isFormError,
+    isLoading: isFormLoading,
+  } = useGetForm({
     formId,
     includePermissions: true,
   });
 
   useEffect(() => {
-    if (isFormError) {
+    if (isFormError && !preventNavigationOnError) {
       navigate(IPath.ERROR, { replace: true });
     }
-  }, [isFormError, navigate]);
+  }, [isFormError, navigate, preventNavigationOnError]);
 
   useEffect(() => {
     if (initialResponse !== undefined) {
@@ -584,49 +589,36 @@ export const useResponseState = (
     let isMounted = true;
 
     const loadData = async () => {
+      if (!responseId || !formId || initialResponse !== undefined) {
+        return;
+      }
+
       setLoading(true);
 
       try {
-        if (formFromQuery && isMounted) {
-          setForm(formFromQuery);
-        }
+        const found = await getResponseById(Number(formId), responseId);
 
-        if (initialResponse !== undefined) {
-          if (isMounted) {
-            if (initialResponse && copyMode) {
-              setResponse({
-                ...initialResponse,
-                id: null as unknown as ResponseDto["id"],
-              });
-            } else {
-              setResponse(initialResponse ?? null);
-            }
+        if (isMounted && found) {
+          if (copyMode) {
+            setResponse({
+              ...found,
+              id: null as unknown as ResponseDto["id"],
+            });
+          } else {
+            setResponse(found);
           }
-        } else if (responseId && formId) {
-          try {
-            const found = await getResponseById(Number(formId), responseId);
-
-            if (isMounted && found) {
-              if (copyMode) {
-                setResponse({
-                  ...found,
-                  id: null as unknown as ResponseDto["id"],
-                });
-              } else {
-                setResponse(found);
-              }
-            }
-          } catch (error: any) {
-            const status = error.response?.status;
-            if (status === StatusCodes.NOT_FOUND || status === StatusCodes.FORBIDDEN) {
-              navigate(IPath.ERROR, { replace: true });
-            }
-          }
-        } else if (isMounted) {
-          setResponse(null);
         }
-      } finally {
-        // keep loading true until initialization below completes
+      } catch (error: any) {
+        const status = error.response?.status;
+        if (status === StatusCodes.NOT_FOUND || status === StatusCodes.FORBIDDEN) {
+          if (!preventNavigationOnError) {
+            navigate(IPath.ERROR, { replace: true });
+          } else {
+            setLoading(false);
+          }
+        } else if (preventNavigationOnError) {
+          setLoading(false);
+        }
       }
     };
 
@@ -635,10 +627,23 @@ export const useResponseState = (
     return () => {
       isMounted = false;
     };
-  }, [formFromQuery, responseId, copyMode, formId, initialResponse, navigate, viewMode]);
+  }, [responseId, copyMode, formId, initialResponse, navigate, preventNavigationOnError]);
 
   useEffect(() => {
-    if (!form) return;
+    if (formFromQuery) {
+      setForm(formFromQuery);
+    } else if (!isFormLoading && isFormError) {
+      setLoading(false);
+    }
+  }, [formFromQuery, isFormLoading, isFormError]);
+
+  useEffect(() => {
+    if (!form) {
+      if (!isFormLoading && (isFormError || !formId)) {
+        setLoading(false);
+      }
+      return;
+    }
 
     if (roles && roles.length > 0) {
       const hasPermissions = checkUserAccessForResponse(
@@ -651,7 +656,11 @@ export const useResponseState = (
       );
 
       if (!hasPermissions) {
-        navigate(IPath.ERROR, { replace: true });
+        if (!preventNavigationOnError) {
+          navigate(IPath.ERROR, { replace: true });
+        } else {
+          setLoading(false);
+        }
         return;
       }
     }
@@ -763,6 +772,10 @@ export const useResponseState = (
     user,
     isSuperAdmin,
     navigate,
+    preventNavigationOnError,
+    isFormLoading,
+    isFormError,
+    formId,
   ]);
 
   const evaluateFieldVisibility = (
@@ -1190,7 +1203,8 @@ export const useResponseState = (
     onChangeHandler,
     onBlurHandler,
     validateAllFieldsBeforeSubmit,
-    loading,
+    loading: loading || isFormLoading,
+    isError: isFormError,
     form,
     response,
     fieldOptions,
