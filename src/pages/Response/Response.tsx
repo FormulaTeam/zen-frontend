@@ -416,10 +416,16 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
         )}
 
         {!isLoading && !viewMode && childFormData.canCreate && (
-          <Box sx={{ borderTop: "1px solid #f0f0f0", mt: 2, pt: 2 }}>
+          <Box
+            sx={{
+              borderTop: "1px solid #f0f0f0",
+              mt: 2,
+              pt: 2,
+              display: "flex",
+              justifyContent: "flex-start",
+            }}>
             <Button
               variant="outlined"
-              fullWidth
               startIcon={<Add />}
               onClick={(e) => {
                 e.preventDefault();
@@ -427,17 +433,19 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
                 handleAddChildForm(childFormData.formId);
               }}
               sx={{
-                height: "50px",
-                borderColor: "primary.main",
-                color: "primary.main",
-                borderRadius: "8px",
-                fontWeight: 500,
+                height: "42px",
+                px: 2.5,
+                backgroundColor: "#FFFFFF !important",
+                color: "#020618",
+                borderColor: "#e2e8f0 !important",
+                borderRadius: "10px",
+                fontWeight: 600,
                 fontSize: "0.9375rem",
                 textTransform: "none",
-                backgroundColor: "#FFFFFF",
+                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
                 "&:hover": {
-                  backgroundColor: "secondary.main",
-                  borderColor: "primary.main",
+                  backgroundColor: "#f8fafc !important",
+                  borderColor: "#cbd5e1 !important",
                 },
               }}>
               {addResponseTitle}
@@ -460,20 +468,20 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   );
 
   return (
-    <div className="response-page">
-      <PageContainer maxWidth={false}>
-        <ResponseHeader
-          formTitle={formTitle}
-          viewMode={viewMode}
-          isEdit={!!id && !viewMode && !copyMode}
-          isCopy={copyMode}
-          permissionTypes={permissionTypes}
-          onEdit={onEdit}
-          onBack={onExitClick}
-          onSaveAndClose={onSaveAndClose}
-          saveDisabled={isSaving || childFormsSaving || showLoadingSaveBtn}
-        />
+    <div className="response-page" style={{ overflowY: "auto", height: "100%", backgroundColor: "#f1f5f9" }}>
+      <ResponseHeader
+        formTitle={formTitle}
+        viewMode={viewMode}
+        isEdit={!!id && !viewMode && !copyMode}
+        isCopy={copyMode}
+        permissionTypes={permissionTypes}
+        onEdit={onEdit}
+        onBack={onExitClick}
+        onSaveAndClose={onSaveAndClose}
+        saveDisabled={isSaving || childFormsSaving || showLoadingSaveBtn}
+      />
 
+      <PageContainer maxWidth={false}>
         <FormSectionsContainer>
           {sortedSections.map(([sectionId, section], sectionIdx) => (
             <ResponseSection

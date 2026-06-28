@@ -94,6 +94,7 @@ function ConnectedFormSection({
     fieldOptions,
     loadingConnections,
     responsSections,
+    isError,
   } = useResponseState(
     linkedFormId?.toString() ?? "",
     id,
@@ -105,6 +106,7 @@ function ConnectedFormSection({
     undefined,
     undefined,
     initialResponse,
+    true,
   );
 
   const { isSaving, saveResponse } = useResponseSave(
@@ -252,6 +254,11 @@ function ConnectedFormSection({
     return null;
   }
 
+  // If there's an error and we're not loading, hide the section to prevent a stuck loader
+  if (isError && !loading) {
+    return null;
+  }
+
   return (
     <ConnectedFormCard>
       <ConnectedFormHeader
@@ -269,8 +276,8 @@ function ConnectedFormSection({
 
       <ConnectedFormFieldsWrapper>
         {isContentLoading ? (
-          <LoadingContainer>
-            <CircularProgress />
+          <LoadingContainer sx={{ py: 6 }}>
+            <CircularProgress size={30} thickness={4} />
           </LoadingContainer>
         ) : (
           <Box>
