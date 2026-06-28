@@ -1,6 +1,6 @@
 import SyncIcon from "@mui/icons-material/Sync";
 import { Box, Tooltip } from "@mui/material";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import ShareIcon from "@mui/icons-material/Share";
@@ -57,6 +57,16 @@ export const responseIconButtonSx = {
   },
 };
 
+const toolbarDividerSx = {
+  width: "1px",
+  height: "24px",
+  backgroundColor: "rgba(0, 0, 0, 0.12)",
+  mx: 0.5,
+  flexShrink: 0,
+};
+
+const ToolbarDivider = () => <Box sx={toolbarDividerSx} />;
+
 export type SourceOperationStatusType =
   (typeof SourceOperationStatus)[keyof typeof SourceOperationStatus];
 
@@ -107,81 +117,129 @@ export const FormActionsToolbar = () => {
     handleCloseMoreActions();
   };
 
+  const hasPermission = (requiredPermission: (typeof permission)[keyof typeof permission]) =>
+    permissions.includes(requiredPermission);
+
+  const canShowMoreOptions = [
+    permission.SyncForm,
+    permission.DeleteForm,
+    permission.ShareForm,
+    permission.ExportForm,
+    permission.ImportResponses,
+    permission.DeleteAnyResponse,
+  ].some(hasPermission);
+
+  const canEditForm = hasPermission(permission.UpdateForm);
+  const canShareForm = hasPermission(permission.ShareForm);
+
+  const toolbarActions = [
+    canShowMoreOptions
+      ? {
+          key: "more",
+          element: (
+            <PermissionGate
+              requiredPermissions={[
+                permission.SyncForm,
+                permission.DeleteForm,
+                permission.ShareForm,
+                permission.ExportForm,
+                permission.ImportResponses,
+                permission.DeleteAnyResponse,
+              ]}
+              userPermissions={permissions}>
+              <MoreOptions
+                setAnchorElSourceType={setAnchorElSourceType}
+                pushToMetro={pushToMetro}
+                sourceOperationStatus={sourceOperationStatus}
+                buttonSx={responseIconButtonSx}
+              />
+            </PermissionGate>
+          ),
+        }
+      : null,
+
+    canEditForm
+      ? {
+          key: "edit",
+          element: (
+            <PermissionGate
+              requiredPermissions={[permission.UpdateForm]}
+              userPermissions={permissions}>
+              <Tooltip title="עריכת טופס">
+                <IconOnlyButton
+                  sx={responseIconButtonSx}
+                  onClick={() =>
+                    navigate(`/forms/${formId}/edit`, {
+                      state: { from: location.pathname },
+                    })
+                  }>
+                  <EditIcon />
+                </IconOnlyButton>
+              </Tooltip>
+            </PermissionGate>
+          ),
+        }
+      : null,
+
+    canShareForm
+      ? {
+          key: "share",
+          element: (
+            <PermissionGate
+              requiredPermissions={[permission.ShareForm]}
+              userPermissions={permissions}>
+              <Tooltip title="שיתוף">
+                <IconOnlyButton
+                  sx={responseIconButtonSx}
+                  disabled={!hasFormFields}
+                  onClick={() => {
+                    setSearchParams(
+                      (prev) => {
+                        const updated = new URLSearchParams(prev);
+                        updated.set("modal", "permissions");
+                        return updated;
+                      },
+                      { replace: true },
+                    );
+                  }}>
+                  <ShareIcon />
+                </IconOnlyButton>
+              </Tooltip>
+
+              {showSharePopup && (
+                <UserPicker
+                  form={form}
+                  closeSharePopupAndRefreshForm={(users, updatedForm) => {
+                    const formToUpdate = updatedForm || form;
+                    setForm(formToUpdate as typeof form);
+
+                    setSearchParams(
+                      (prev) => {
+                        const updated = new URLSearchParams(prev);
+                        updated.delete("modal");
+                        return updated;
+                      },
+                      { replace: true },
+                    );
+                  }}
+                />
+              )}
+            </PermissionGate>
+          ),
+        }
+      : null,
+  ].filter((action): action is { key: string; element: JSX.Element } => action !== null);
+
   return (
-    <Box sx={{ display: "flex", gap: "8px", alignItems: "center" }}>
-      {/* More options (now first) */}
-      <PermissionGate
-        requiredPermissions={[
-          permission.SyncForm,
-          permission.DeleteForm,
-          permission.ShareForm,
-          permission.ExportForm,
-          permission.ImportResponses,
-          permission.DeleteAnyResponse,
-        ]}
-        userPermissions={permissions}>
-        <MoreOptions
-          setAnchorElSourceType={setAnchorElSourceType}
-          pushToMetro={pushToMetro}
-          sourceOperationStatus={sourceOperationStatus}
-          buttonSx={responseIconButtonSx}
-        />
-      </PermissionGate>
-
-      {/* Edit */}
-      <PermissionGate requiredPermissions={[permission.UpdateForm]} userPermissions={permissions}>
-        <Tooltip title="עריכת טופס">
-          <IconOnlyButton
-            sx={responseIconButtonSx}
-            onClick={() =>
-              navigate(`/forms/${formId}/edit`, {
-                state: { from: location.pathname },
-              })
-            }>
-            <EditIcon />
-          </IconOnlyButton>
-        </Tooltip>
-      </PermissionGate>
-
-      {/* Share */}
-      <PermissionGate requiredPermissions={[permission.ShareForm]} userPermissions={permissions}>
-        <Tooltip title="שיתוף">
-          <IconOnlyButton
-            sx={responseIconButtonSx}
-            disabled={!hasFormFields}
-            onClick={() => {
-              setSearchParams(
-                (prev) => {
-                  const updated = new URLSearchParams(prev);
-                  updated.set("modal", "permissions");
-                  return updated;
-                },
-                { replace: true },
-              );
-            }}>
-            <ShareIcon />
-          </IconOnlyButton>
-        </Tooltip>
-
-        {showSharePopup && (
-          <UserPicker
-            form={form}
-            closeSharePopupAndRefreshForm={(users, updatedForm) => {
-              const formToUpdate = updatedForm || form;
-              setForm(formToUpdate as typeof form);
-
-              setSearchParams(
-                (prev) => {
-                  const updated = new URLSearchParams(prev);
-                  updated.delete("modal");
-                  return updated;
-                },
-                { replace: true },
-              );
-            }}
-          />
-        )}
-      </PermissionGate>
+    <>
+      <Box sx={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        {toolbarActions.map((action, index) => (
+          <Fragment key={action.key}>
+            {index > 0 && <ToolbarDivider />}
+            {action.element}
+          </Fragment>
+        ))}
+      </Box>
 
       <SyncTypeMenu
         anchorElSourceType={anchorElSourceType}
@@ -190,6 +248,6 @@ export const FormActionsToolbar = () => {
       />
 
       {showMetroPopup && <MetroSyncingPopup setShowMetroPopup={setShowMetroPopup} />}
-    </Box>
+    </>
   );
 };
