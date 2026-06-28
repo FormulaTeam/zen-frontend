@@ -1,7 +1,7 @@
 import React from "react";
-import { Box, IconButton, Tooltip } from "@mui/material";
-import { styled, useTheme } from "@mui/material/styles";
-import { Delete as DeleteIcon } from "@mui/icons-material";
+import { IconButton, Tooltip, Typography } from "@mui/material";
+import { Close as CloseIcon } from "@mui/icons-material";
+import { CardHeaderContainer } from "./ConnectedFormSection.styled";
 
 interface ConnectedFormHeaderProps {
   formsLength: number;
@@ -10,51 +10,40 @@ interface ConnectedFormHeaderProps {
   viewMode?: boolean;
 }
 
-const HeaderContainer = styled(Box)`
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const ResponseLabel = styled(Box)`
-  font-weight: 500;
-`;
-
 const ConnectedFormHeader: React.FC<ConnectedFormHeaderProps> = ({
   formsLength,
   index,
   onDelete,
   viewMode,
 }) => {
-  const theme = useTheme();
-
   return (
-    <HeaderContainer>
-      <ResponseLabel>{formsLength > 1 ? `#תגובה ${index + 1}` : ""}</ResponseLabel>
+    <CardHeaderContainer>
+      <Typography sx={{ fontWeight: 700, color: "#333", fontSize: "1rem" }}>
+        {formsLength > 1 ? `תגובה ${index + 1}` : ""}
+      </Typography>
       {!viewMode && (
         <Tooltip title="מחיקה" arrow placement="top">
           <IconButton
-            color="error"
-            size="small"
             onClick={onDelete}
+            size="small"
             sx={{
-              alignSelf: "center",
-              border: `1px solid ${theme.palette.error.main}`,
-              borderRadius: "8px",
-              padding: "6px",
-              color: theme.palette.error.main,
+              color: "#666",
+              background: "#f5f5f5",
+              borderRadius: "6px",
+              width: "32px",
+              height: "32px",
+              transition: "all 0.2s",
               "&:hover": {
-                borderColor: theme.palette.error.dark,
-                color: theme.palette.error.dark,
-                backgroundColor: "rgba(211, 47, 47, 0.04)",
+                color: "#d32f2f",
+                background: "#fff5f5",
               },
-            }}>
-            <DeleteIcon fontSize="small" />
+            }}
+          >
+            <CloseIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
-    </HeaderContainer>
+    </CardHeaderContainer>
   );
 };
 

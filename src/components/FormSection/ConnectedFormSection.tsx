@@ -7,13 +7,12 @@ import type { FormFieldDto, ResponseDto } from "../../types/shared";
 import { useResponseSave, type ParentResponseRef } from "../../hooks/useResponseSave";
 import { useResponseState } from "../../hooks/useResponseState";
 import { LoadingContainer } from "../../pages/Response/styled";
+import { NOT_A_SECTION_ID } from "../../utils/sections/consts";
 import FormFieldRenderer from "../Responses/FormFieldRenderer";
 import ConnectedFormHeader from "./ConnectedFormHeader";
 import {
+  ConnectedFormCard,
   ConnectedFormFieldsWrapper,
-  ConnectedFormTitle,
-  ConnectedFormWrapper,
-  ConnectedResponseDivider,
 } from "./ConnectedFormSection.styled";
 
 type ConnectedChildField = FormFieldDto & {
@@ -94,6 +93,7 @@ function ConnectedFormSection({
     response,
     fieldOptions,
     loadingConnections,
+    responsSections,
   } = useResponseState(
     linkedFormId?.toString() ?? "",
     id,
@@ -121,12 +121,15 @@ function ConnectedFormSection({
   const hasTriggeredSaveRef = useRef(false);
   const hasTriggeredValidateRef = useRef(false);
 
-  const normalFields = useMemo(
+  const sortedSections = useMemo(
     () =>
-      [...(formFields ?? [])]
-        .filter((formField) => formField.fieldType !== fieldType.Form)
-        .sort((a, b) => (a.index ?? 0) - (b.index ?? 0)),
-    [formFields],
+      Object.entries(responsSections).sort(([idA, a], [idB, b]) => {
+        const orderA = a.order ?? 0;
+        const orderB = b.order ?? 0;
+
+        return orderA === orderB ? idA.localeCompare(idB) : orderA - orderB;
+      }),
+    [responsSections],
   );
 
   const saveCurrentResponse = useCallback(async (): Promise<ResponseDto | null> => {
@@ -249,16 +252,8 @@ function ConnectedFormSection({
     return null;
   }
 
-  if (isContentLoading) {
-    return null;
-  }
-
   return (
-    <ConnectedFormWrapper>
-      {formsLength > 1 && index > 0 && <ConnectedResponseDivider />}
-
-      {index === 0 && <ConnectedFormTitle>{field.displayName}</ConnectedFormTitle>}
-
+    <ConnectedFormCard>
       <ConnectedFormHeader
         formsLength={formsLength}
         index={index}
@@ -267,7 +262,7 @@ function ConnectedFormSection({
       />
 
       {!valid && (
-        <Typography variant="subtitle2" color="error">
+        <Typography variant="subtitle2" color="error" sx={{ mt: 1, mb: 1 }}>
           שימו לב! יש למלא את כל השדות בצורה תקינה ולאחר מכן ניתן לנסות שוב לשמור
         </Typography>
       )}
@@ -279,35 +274,68 @@ function ConnectedFormSection({
           </LoadingContainer>
         ) : (
           <Box>
-            <Masonry columns={3} spacing={2} sequential>
-              {normalFields.map((formField, fieldIndex) => (
-                <FormFieldRenderer
-                  key={formField.id ?? fieldIndex}
-                  formField={formField}
-                  formFieldsByIdMap={formFieldsByIdMap}
-                  formFieldsValuesMap={formFieldsValuesMap}
-                  formFieldsValidMap={formFieldsValidMap}
-                  onChangeHandler={onChangeHandler}
-                  onBlurHandler={onBlurHandler}
-                  viewMode={viewMode}
-                  fieldOptions={fieldOptions}
-                  formFields={formFields}
-                  index={fieldIndex}
-                />
-              ))}
-            </Masonry>
+            {sortedSections.map(([sectionId, section]) => {
+              const sectionFields = section.fields
+                .filter((formField) => formField.fieldType !== fieldType.Form)
+                .sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+
+              if (sectionFields.length === 0) {
+                return null;
+              }
+
+              return (
+                <Box key={sectionId} sx={{ mb: sectionId !== NOT_A_SECTION_ID ? 4 : 0 }}>
+                  {sectionId !== NOT_A_SECTION_ID && section.name && (
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        mb: 2,
+                        fontWeight: 700,
+                        color: "text.secondary",
+                        fontSize: "0.9rem",
+                        borderBottom: "1px solid #f0f0f0",
+                        pb: 0.5,
+                      }}>
+                      {section.name}
+                    </Typography>
+                  )}
+
+                  <Masonry columns={3} spacing={2} sequential>
+                    {sectionFields.map((formField, fieldIndex) => (
+                      <FormFieldRenderer
+                        key={formField.id ?? fieldIndex}
+                        formField={formField}
+                        formFieldsByIdMap={formFieldsByIdMap}
+                        formFieldsValuesMap={formFieldsValuesMap}
+                        formFieldsValidMap={formFieldsValidMap}
+                        onChangeHandler={onChangeHandler}
+                        onBlurHandler={onBlurHandler}
+                        viewMode={viewMode}
+                        fieldOptions={fieldOptions}
+                        formFields={formFields}
+                        index={fieldIndex}
+                      />
+                    ))}
+                  </Masonry>
+                </Box>
+              );
+            })}
           </Box>
         )}
 
-        {saved && <Typography variant="subtitle1">נשמר בהצלחה</Typography>}
+        {saved && (
+          <Typography variant="subtitle1" sx={{ mt: 2 }}>
+            נשמר בהצלחה
+          </Typography>
+        )}
 
         {error && (
-          <Typography variant="subtitle1" color="error">
+          <Typography variant="subtitle1" color="error" sx={{ mt: 2 }}>
             שגיאה בשמירה
           </Typography>
         )}
       </ConnectedFormFieldsWrapper>
-    </ConnectedFormWrapper>
+    </ConnectedFormCard>
   );
 }
 

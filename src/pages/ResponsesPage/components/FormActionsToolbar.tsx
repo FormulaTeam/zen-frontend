@@ -133,31 +133,6 @@ export const FormActionsToolbar = () => {
   const canShareForm = hasPermission(permission.ShareForm);
 
   const toolbarActions = [
-    canShowMoreOptions
-      ? {
-          key: "more",
-          element: (
-            <PermissionGate
-              requiredPermissions={[
-                permission.SyncForm,
-                permission.DeleteForm,
-                permission.ShareForm,
-                permission.ExportForm,
-                permission.ImportResponses,
-                permission.DeleteAnyResponse,
-              ]}
-              userPermissions={permissions}>
-              <MoreOptions
-                setAnchorElSourceType={setAnchorElSourceType}
-                pushToMetro={pushToMetro}
-                sourceOperationStatus={sourceOperationStatus}
-                buttonSx={responseIconButtonSx}
-              />
-            </PermissionGate>
-          ),
-        }
-      : null,
-
     canEditForm
       ? {
           key: "edit",
@@ -228,16 +203,38 @@ export const FormActionsToolbar = () => {
           ),
         }
       : null,
+
+    canShowMoreOptions
+      ? {
+          key: "more",
+          element: (
+            <PermissionGate
+              requiredPermissions={[
+                permission.SyncForm,
+                permission.DeleteForm,
+                permission.ShareForm,
+                permission.ExportForm,
+                permission.ImportResponses,
+                permission.DeleteAnyResponse,
+              ]}
+              userPermissions={permissions}>
+              <MoreOptions
+                setAnchorElSourceType={setAnchorElSourceType}
+                pushToMetro={pushToMetro}
+                sourceOperationStatus={sourceOperationStatus}
+                buttonSx={responseIconButtonSx}
+              />
+            </PermissionGate>
+          ),
+        }
+      : null,
   ].filter((action): action is { key: string; element: JSX.Element } => action !== null);
 
   return (
     <>
       <Box sx={{ display: "flex", gap: "8px", alignItems: "center" }}>
-        {toolbarActions.map((action, index) => (
-          <Fragment key={action.key}>
-            {index > 0 && <ToolbarDivider />}
-            {action.element}
-          </Fragment>
+        {toolbarActions.map((action) => (
+          <Fragment key={action.key}>{action.element}</Fragment>
         ))}
       </Box>
 

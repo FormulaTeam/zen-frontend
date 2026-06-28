@@ -21,13 +21,13 @@ export const AddResponseButton: React.FC = () => {
   return (
     <UnifiedButton
       $isPrimary
-      endIcon={<AddIcon />}
+      startIcon={<AddIcon />}
       onClick={() => navigate(`/forms/${form.id}/responses/new`)}
       sx={{
         paddingInlineStart: "16px",
         paddingInlineEnd: "10px",
       }}>
-      הוספת תגובה
+      תגובה חדשה
     </UnifiedButton>
   );
 };

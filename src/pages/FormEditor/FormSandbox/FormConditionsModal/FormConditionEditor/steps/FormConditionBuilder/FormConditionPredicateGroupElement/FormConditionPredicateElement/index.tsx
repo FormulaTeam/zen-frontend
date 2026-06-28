@@ -218,7 +218,7 @@ function FormConditionPredicateElement({
                   id: fieldId,
                   typeId,
                   comparator: newComparator,
-                  targetValue: undefined,
+                  targetValue: typeId === FieldTypeIds.checkbox ? false : undefined,
                 } as FormConditionField;
               } else {
                 modifiedCondition.field = undefined;
