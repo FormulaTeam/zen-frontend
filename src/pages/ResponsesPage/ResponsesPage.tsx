@@ -497,82 +497,86 @@ const ResponsesPageContent = (): JSX.Element => {
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <SearchInfo search={searchInput} setSearch={handleSearch} />
+              <SearchInfo search={searchInput} setSearch={handleSearch} disabled={isInEditMode} />
 
-              {!isInEditMode && <ToolbarDivider />}
+              <ToolbarDivider />
 
-              {!isInEditMode && (
-                <Box
-                  style={{
-                    position: "relative",
-                    width: 40,
-                    height: 40,
-                    flexShrink: 0,
-                    overflow: "visible",
-                  }}>
-                  <Tooltip title={showFilters ? "הסתר סינון" : "הצג סינון"} arrow>
-                    <UnifiedButton
-                      aria-label={showFilters ? "הסתר סינון" : "הצג סינון"}
-                      onClick={handleToggleFilters}
-                      sx={{
-                        minWidth: "40px",
-                        width: "40px",
-                        height: "40px",
-                        padding: 0,
+              <Box
+                style={{
+                  position: "relative",
+                  width: 40,
+                  height: 40,
+                  flexShrink: 0,
+                  overflow: "visible",
+                }}>
+                <Tooltip title={showFilters ? "הסתר סינון" : "הצג סינון"} arrow>
+                  <UnifiedButton
+                    aria-label={showFilters ? "הסתר סינון" : "הצג סינון"}
+                    onClick={handleToggleFilters}
+                    disabled={isInEditMode}
+                    sx={{
+                      minWidth: "40px",
+                      width: "40px",
+                      height: "40px",
+                      padding: 0,
+                      backgroundColor: `${ACTION_BUTTON_BACKGROUND} !important`,
+                      border: "none !important",
+                      borderColor: "transparent !important",
+                      boxShadow: "none !important",
+
+                      "&:hover": {
+                        backgroundColor: `${ACTION_BUTTON_HOVER_BACKGROUND} !important`,
+                        border: "none !important",
+                        borderColor: "transparent !important",
+                        boxShadow: "none !important",
+                      },
+
+                      "&:focus, &:focus-visible": {
+                        outline: "none !important",
                         backgroundColor: `${ACTION_BUTTON_BACKGROUND} !important`,
                         border: "none !important",
                         borderColor: "transparent !important",
                         boxShadow: "none !important",
+                      },
 
-                        "&:hover": {
-                          backgroundColor: `${ACTION_BUTTON_HOVER_BACKGROUND} !important`,
-                          border: "none !important",
-                          borderColor: "transparent !important",
-                          boxShadow: "none !important",
-                        },
+                      "&.Mui-disabled": {
+                        backgroundColor: "rgba(0, 0, 0, 0.04) !important",
+                        color: "rgba(0, 0, 0, 0.26) !important",
+                      },
+                    }}>
+                    <FilterListRoundedIcon fontSize="small" />
+                  </UnifiedButton>
+                </Tooltip>
 
-                        "&:focus, &:focus-visible": {
-                          outline: "none !important",
-                          backgroundColor: `${ACTION_BUTTON_BACKGROUND} !important`,
-                          border: "none !important",
-                          borderColor: "transparent !important",
-                          boxShadow: "none !important",
-                        },
-                      }}>
-                      <FilterListRoundedIcon fontSize="small" />
-                    </UnifiedButton>
-                  </Tooltip>
+                {activeFiltersCount > 0 && (
+                  <Box
+                    component="span"
+                    style={{
+                      position: "absolute",
+                      top: -8,
+                      right: -8,
+                      minWidth: 22,
+                      height: 22,
+                      padding: "0 6px",
+                      borderRadius: 999,
+                      backgroundColor: isInEditMode ? "#94a3b8" : "#1E88E5",
+                      color: "#fff",
+                      border: "2px solid #f8fbff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "0.78rem",
+                      fontWeight: 800,
+                      lineHeight: 1,
+                      boxSizing: "border-box",
+                      pointerEvents: "none",
+                    }}>
+                    {activeFiltersCount}
+                  </Box>
+                )}
+              </Box>
 
-                  {activeFiltersCount > 0 && (
-                    <Box
-                      component="span"
-                      style={{
-                        position: "absolute",
-                        top: -8,
-                        right: -8,
-                        minWidth: 22,
-                        height: 22,
-                        padding: "0 6px",
-                        borderRadius: 999,
-                        backgroundColor: "#1E88E5",
-                        color: "#fff",
-                        border: "2px solid #f8fbff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "0.78rem",
-                        fontWeight: 800,
-                        lineHeight: 1,
-                        boxSizing: "border-box",
-                        pointerEvents: "none",
-                      }}>
-                      {activeFiltersCount}
-                    </Box>
-                  )}
-                </Box>
-              )}
-
-              {!isInEditMode && <ToolbarDivider />}
+              <ToolbarDivider />
 
               <Box
                 sx={{
@@ -594,6 +598,10 @@ const ResponsesPageContent = (): JSX.Element => {
                     border: "none !important",
                     boxShadow: "none !important",
                   },
+                  "& .MuiButton-root.Mui-disabled": {
+                    backgroundColor: "rgba(0, 0, 0, 0.04) !important",
+                    color: "rgba(0, 0, 0, 0.26) !important",
+                  },
                 }}>
                 <ViewsButton
                   isSidePanelOpen={isSidePanelOpen}
@@ -603,6 +611,7 @@ const ResponsesPageContent = (): JSX.Element => {
                   selectedViewId={selectedViewId}
                   defaultViewId={defaultViewId}
                   handleViewDropdownChange={handleViewDropdownChange}
+                  disabled={isInEditMode}
                 />
               </Box>
             </Box>

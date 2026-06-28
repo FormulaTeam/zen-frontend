@@ -14,7 +14,9 @@ interface ViewsButtonProps extends Pick<
   | "selectedViewId"
   | "defaultViewId"
   | "handleViewDropdownChange"
-> {}
+> {
+  disabled?: boolean;
+}
 
 const MANAGE_VIEWS_LABEL = "ניהול תצוגות";
 const SELECT_VIEW_LABEL = "בחר תצוגה";
@@ -45,6 +47,7 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
   savedViews,
   selectedViewId,
   handleViewDropdownChange,
+  disabled,
 }) => {
   const activeViewId = selectedViewId || "";
 
@@ -57,6 +60,7 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
           size="small"
           variant="outlined"
           displayEmpty
+          disabled={disabled}
           sx={{
             minWidth: 200,
             height: "40px",
@@ -72,6 +76,12 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
               color: "#020618",
               display: "flex",
               alignItems: "center",
+            },
+            "&.Mui-disabled": {
+              backgroundColor: "rgba(0, 0, 0, 0.04)",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(0, 0, 0, 0.12)",
+              },
             },
           }}
           MenuProps={{
@@ -101,7 +111,7 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
           {hasSavedViews ? (
             <UnifiedButton
               onClick={() => setIsSidePanelOpen(true)}
-              disabled={isSidePanelOpen}
+              disabled={disabled || isSidePanelOpen}
               sx={viewIconOnlyButtonSx}
               aria-label={MANAGE_VIEWS_LABEL}>
               <Layers2 strokeWidth={2.2} />
@@ -109,7 +119,7 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
           ) : (
             <UnifiedButton
               onClick={() => setIsSidePanelOpen(true)}
-              disabled={isSidePanelOpen}
+              disabled={disabled || isSidePanelOpen}
               startIcon={<Layers2 size={21} strokeWidth={2.2} />}>
               {MANAGE_VIEWS_LABEL}
             </UnifiedButton>
