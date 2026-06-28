@@ -1,7 +1,5 @@
 import React from "react";
 import { Tooltip, Stack, Select, MenuItem } from "@mui/material";
-import { BackupTable } from "@mui/icons-material";
-import { ViewManageButton } from "@components/Responses/styled";
 import { UseResponsesViewsReturn } from "../hooks/useResponsesViews";
 
 interface ViewsButtonProps
@@ -16,6 +14,7 @@ interface ViewsButtonProps
     > { }
 
 import { UnifiedButton } from "../styled";
+import { Layers2 } from "lucide-react";
 
 const MANAGE_VIEWS_LABEL = "ניהול תצוגות";
 const SELECT_VIEW_LABEL = "בחר תצוגה";
@@ -84,7 +83,7 @@ export const ViewsButton: React.FC<ViewsButtonProps> = ({
                     <UnifiedButton
                         onClick={() => setIsSidePanelOpen(true)}
                         disabled={isSidePanelOpen}
-                        startIcon={<BackupTable />}
+                        startIcon={<Layers2 />}
                         sx={hasSavedViews ? { minWidth: "40px", width: "40px", padding: 0 } : {}}
                     >
                         {!hasSavedViews && MANAGE_VIEWS_LABEL}

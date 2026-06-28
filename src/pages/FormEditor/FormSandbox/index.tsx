@@ -31,7 +31,7 @@ function FormSandbox() {
     }, { replace: true });
   }, [setSearchParams]);
 
-  const { handleDragStart, handleDragOver, handleDragEnd, draggingElement } = useFormDndHandlers();
+  const { handleDragStart, handleDragOver, handleDragEnd, handleDragCancel, draggingElement } = useFormDndHandlers();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -56,7 +56,8 @@ function FormSandbox() {
                   }
                   onDragStart={handleDragStart}
                   onDragOver={handleDragOver}
-                  onDragEnd={handleDragEnd}>
+                  onDragEnd={handleDragEnd}
+                  onDragCancel={handleDragCancel}>
         <FormSandboxSidebar />
         <FormStructureContainer />
         {

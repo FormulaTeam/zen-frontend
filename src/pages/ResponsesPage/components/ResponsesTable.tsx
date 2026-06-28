@@ -13,27 +13,18 @@ import {
 } from "@mui/x-data-grid-pro";
 import { useFormStore, useInitiateFormStore } from "../stores/form.store";
 import clsx from "clsx";
-import { Cloud, CloudOff, RefreshCw } from "lucide-react";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import Visibility from "@mui/icons-material/Visibility";
-import Edit from "@mui/icons-material/Edit";
-import Delete from "@mui/icons-material/Delete";
+import { ArrowDown, ArrowDownUp, ArrowUp, Cloud, CloudDownload, CloudOff, RefreshCw } from "lucide-react";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "@components/formInForm/ZoomCell";
 import {
   Box,
-  Menu,
   MenuItem,
-  ListItemIcon,
-  ListItemText,
   Stack,
   Typography,
   Select,
   Tooltip,
-  IconButton,
-  Checkbox,
 } from "@mui/material";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
@@ -51,7 +42,6 @@ import {
   CellErrorText,
   CellErrorInfoIcon,
   CellValueFlex,
-  PaginationContainer,
   FooterInfoContainer,
   PaginationButton,
   CellErrorHeader,
@@ -140,6 +130,10 @@ const isSortable = (typeId?: number): boolean => {
 
 const EmptyColumnHeaderFilterIconButton = () => null;
 const EmptyColumnFilteredIcon = () => null;
+
+const SortUnsortedIcon = () => <ArrowDownUp size={16} strokeWidth={2.2} />;
+const SortAscendingIcon = () => <ArrowUp size={16} strokeWidth={2.2} />;
+const SortDescendingIcon = () => <ArrowDown size={16} strokeWidth={2.2} />;
 
 const FIELD_COLUMN_WIDTH = 190;
 const FIELD_COLUMN_MAX_WIDTH = 450;
@@ -235,7 +229,7 @@ const SyncStatusIcon: React.FC<{
     statusId === 5 ? (
       <Cloud size={18} strokeWidth={2.3} />
     ) : statusId === 4 ? (
-      <CloudOff size={18} strokeWidth={2.3} />
+      <CloudOff size={18} strokeWidth={2.3} color={"#E7000B"} />
     ) : (
       <RefreshCw size={18} strokeWidth={2.3} />
     );
@@ -305,6 +299,11 @@ export const ResponsesTable = React.memo(
     const transitionInProgress = useRef(false);
     const lastIntendedPageNumber = useRef(filter?.pageNumber ?? 1);
     const lastFetchStartedRef = useRef(false);
+    const customScrollbarTrackRef = useRef<HTMLDivElement | null>(null);
+    const customScrollbarThumbRef = useRef<HTMLDivElement | null>(null);
+    const scrollbarAnimationFrame = useRef<number | null>(null);
+    const customHorizontalScrollbarTrackRef = useRef<HTMLDivElement | null>(null);
+    const customHorizontalScrollbarThumbRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
       lastIntendedPageNumber.current = filter?.pageNumber ?? 1;
@@ -405,6 +404,187 @@ export const ResponsesTable = React.memo(
     const [showTableSkeleton, setShowTableSkeleton] = useState(false);
 
     useEffect(() => {
+      let scroller: HTMLElement | null = null;
+      let root: HTMLElement | null = null;
+      let retryCount = 0;
+      let cancelled = false;
+      let initFrame: number | null = null;
+
+      const updateThumbPosition = () => {
+        const currentScroller = scroller;
+
+        if (!currentScroller || scrollbarAnimationFrame.current !== null) return;
+
+        scrollbarAnimationFrame.current = window.requestAnimationFrame(() => {
+          scrollbarAnimationFrame.current = null;
+
+          const verticalTrack = customScrollbarTrackRef.current;
+          const verticalThumb = customScrollbarThumbRef.current;
+
+          if (verticalTrack && verticalThumb) {
+            const maxScrollTop = currentScroller.scrollHeight - currentScroller.clientHeight;
+
+            if (maxScrollTop > 1) {
+              const trackHeight = verticalTrack.clientHeight;
+              const thumbHeight = verticalThumb.offsetHeight;
+              const maxThumbTop = trackHeight - thumbHeight;
+              const thumbTop = (currentScroller.scrollTop / maxScrollTop) * maxThumbTop;
+
+              verticalThumb.style.transform = `translate3d(0, ${thumbTop}px, 0)`;
+            }
+          }
+
+          const horizontalTrack = customHorizontalScrollbarTrackRef.current;
+          const horizontalThumb = customHorizontalScrollbarThumbRef.current;
+
+          if (horizontalTrack && horizontalThumb) {
+            const maxScrollLeft = currentScroller.scrollWidth - currentScroller.clientWidth;
+
+            if (maxScrollLeft > 1) {
+              const trackWidth = horizontalTrack.clientWidth;
+              const thumbWidth = horizontalThumb.offsetWidth;
+              const maxThumbLeft = trackWidth - thumbWidth;
+
+              const normalizedScrollLeft = Math.min(
+                Math.abs(currentScroller.scrollLeft),
+                maxScrollLeft,
+              );
+
+              const thumbLeft =
+                maxThumbLeft - (normalizedScrollLeft / maxScrollLeft) * maxThumbLeft;
+
+              horizontalThumb.style.transform = `translate3d(${thumbLeft}px, 0, 0)`;
+            }
+          }
+        });
+      };
+
+      const updateLayout = () => {
+        const track = customScrollbarTrackRef.current;
+        const thumb = customScrollbarThumbRef.current;
+
+        if (!root || !scroller || !track || !thumb) return;
+
+        const maxScrollTop = scroller.scrollHeight - scroller.clientHeight;
+
+        if (maxScrollTop <= 1) {
+          track.style.display = "none";
+          return;
+        }
+
+        const containerRect = track.parentElement?.getBoundingClientRect();
+        const scrollerRect = scroller.getBoundingClientRect();
+        const headers = root.querySelector(".MuiDataGrid-columnHeaders") as HTMLElement | null;
+        const headersRect = headers?.getBoundingClientRect();
+
+        const rootRect = root.getBoundingClientRect();
+
+        if (!containerRect) return;
+
+        const bodyTop = headersRect ? headersRect.bottom : scrollerRect.top;
+        const bodyHeight = scrollerRect.bottom - bodyTop;
+
+        if (bodyHeight <= 0) {
+          track.style.display = "none";
+          return;
+        }
+
+        const horizontalTrackHeight = 21;
+        const horizontalTrackTop =
+          scrollerRect.bottom - containerRect.top - horizontalTrackHeight - 4;
+
+        const verticalTrackTop = bodyTop - containerRect.top + 4;
+        const verticalTrackBottom = horizontalTrackTop - 6;
+        const trackHeight = Math.max(verticalTrackBottom - verticalTrackTop, 48);
+
+        const thumbHeight = Math.max(
+          (scroller.clientHeight / scroller.scrollHeight) * trackHeight,
+          48,
+        );
+
+        track.style.display = "block";
+        track.style.top = `${verticalTrackTop}px`;
+        track.style.height = `${trackHeight}px`;
+        track.style.left = `${rootRect.left - containerRect.left}px`;
+        track.style.right = "auto";
+
+        thumb.style.height = `${thumbHeight}px`;
+
+        const horizontalTrack = customHorizontalScrollbarTrackRef.current;
+        const horizontalThumb = customHorizontalScrollbarThumbRef.current;
+
+        if (horizontalTrack && horizontalThumb) {
+          const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+
+          if (maxScrollLeft <= 1) {
+            horizontalTrack.style.display = "none";
+          } else {
+            const horizontalLeft = rootRect.left - containerRect.left;
+            const horizontalWidth = rootRect.width;
+
+            const horizontalThumbWidth = Math.max(
+              (scroller.clientWidth / scroller.scrollWidth) * horizontalWidth,
+              60,
+            );
+
+            horizontalTrack.style.display = "block";
+            horizontalTrack.style.top = `${
+              scrollerRect.bottom - containerRect.top - horizontalTrackHeight - 4
+            }px`;
+            horizontalTrack.style.left = `${horizontalLeft}px`;
+            horizontalTrack.style.right = "auto";
+            horizontalTrack.style.width = `${horizontalWidth}px`;
+            horizontalTrack.style.height = `${horizontalTrackHeight}px`;
+
+            horizontalThumb.style.width = `${horizontalThumbWidth}px`;
+            horizontalThumb.style.left = "0px";
+            horizontalThumb.style.right = "auto";
+          }
+        }
+
+        updateThumbPosition();
+      };
+
+      const init = () => {
+        if (cancelled) return;
+
+        root = apiRef.current?.rootElementRef?.current ?? null;
+        scroller = root?.querySelector(".MuiDataGrid-virtualScroller") as HTMLElement | null;
+
+        if (!root || !scroller) {
+          if (retryCount < 20) {
+            retryCount += 1;
+            initFrame = window.requestAnimationFrame(init);
+          }
+          return;
+        }
+
+        updateLayout();
+
+        scroller.addEventListener("scroll", updateThumbPosition, { passive: true });
+        window.addEventListener("resize", updateLayout);
+      };
+
+      initFrame = window.requestAnimationFrame(init);
+
+      return () => {
+        cancelled = true;
+
+        if (initFrame !== null) {
+          window.cancelAnimationFrame(initFrame);
+        }
+
+        if (scrollbarAnimationFrame.current !== null) {
+          window.cancelAnimationFrame(scrollbarAnimationFrame.current);
+          scrollbarAnimationFrame.current = null;
+        }
+
+        scroller?.removeEventListener("scroll", updateThumbPosition);
+        window.removeEventListener("resize", updateLayout);
+      };
+    }, [apiRef, displayRows.length, showTableSkeleton]);
+
+    useEffect(() => {
       if (!shouldRequestTableSkeleton) {
         setShowTableSkeleton(false);
         return;
@@ -439,10 +619,10 @@ export const ResponsesTable = React.memo(
     }, [cellModesModel, displayRows, isInEditMode]);
 
     useEffect(() => {
-      if (!isInEditMode) {
+      if (!isInEditMode && Object.keys(cellModesModel).length > 0) {
         setCellModesModel({});
       }
-    }, [isInEditMode]);
+    }, [cellModesModel, isInEditMode]);
 
     const handleCellExpandToggle = useCallback(
       (rowId: string | number, fieldId: string, isExpanded: boolean) => {
@@ -658,6 +838,7 @@ export const ResponsesTable = React.memo(
         const col: GridColDef = {
           field: gridField,
           headerName: field.displayName,
+          headerClassName: "response-field-column-header",
           ...getResponsiveColumnProps(
             FIELD_COLUMN_WIDTH,
             columnWidths.current[gridField],
@@ -771,7 +952,7 @@ export const ResponsesTable = React.memo(
         headerAlign: "left",
         renderHeader: () => (
           <HeaderFlex sx={{ justifyContent: "flex-start", width: "100%" }}>
-            <Cloud size={18} strokeWidth={2.2} />
+            <CloudDownload size={20} strokeWidth={2.2} />
           </HeaderFlex>
         ),
         minWidth: 90,
@@ -1233,6 +1414,8 @@ export const ResponsesTable = React.memo(
         <MainContent>
           <TableContainer>
             <StyledDataGrid
+              scrollbarSize={14}
+              key={isInEditMode ? "quick-edit-grid" : "view-grid"}
               apiRef={apiRef}
               className={clsx({ "MuiDataGrid-root--edit-mode": isInEditMode })}
               disableColumnMenu
@@ -1327,6 +1510,9 @@ export const ResponsesTable = React.memo(
               slots={{
                 columnHeaderFilterIconButton: EmptyColumnHeaderFilterIconButton,
                 columnFilteredIcon: EmptyColumnFilteredIcon,
+                columnUnsortedIcon: SortUnsortedIcon,
+                columnSortedAscendingIcon: SortAscendingIcon,
+                columnSortedDescendingIcon: SortDescendingIcon,
                 footer: CustomFooter,
               }}
               {...(hasFormInFormFields && {
@@ -1345,8 +1531,52 @@ export const ResponsesTable = React.memo(
                 } as any,
                 row: {},
               }}
-              sx={
-                isInEditMode
+              sx={{
+                "& .MuiDataGrid-columnHeader .MuiDataGrid-iconButtonContainer .MuiIconButton-root":
+                  {
+                    backgroundColor: "transparent !important",
+                    boxShadow: "none !important",
+                    border: "none !important",
+                  },
+
+                "& .MuiDataGrid-columnHeader .MuiDataGrid-iconButtonContainer .MuiIconButton-root:hover":
+                  {
+                    backgroundColor: "rgba(15, 23, 42, 0.06) !important",
+                    boxShadow: "none !important",
+                  },
+
+                "& .response-field-column-header .MuiDataGrid-iconButtonContainer": {
+                  visibility: "visible",
+                  width: 0,
+                  opacity: 0,
+                  transition: "opacity 0.15s ease, width 0.15s ease",
+                },
+
+                "& .response-field-column-header:hover .MuiDataGrid-iconButtonContainer, & .response-field-column-header.MuiDataGrid-columnHeader--sorted .MuiDataGrid-iconButtonContainer":
+                  {
+                    width: 24,
+                    opacity: 1,
+                  },
+
+                "& .response-field-column-header .MuiDataGrid-sortButton": {
+                  width: 24,
+                  height: 24,
+                  padding: 0,
+                  borderRadius: "6px",
+                  backgroundColor: "transparent !important",
+                  boxShadow: "none !important",
+                  color: "#334155",
+                },
+
+                "& .response-field-column-header .MuiDataGrid-sortButton:hover": {
+                  backgroundColor: "rgba(15, 23, 42, 0.06) !important",
+                },
+
+                "& .response-field-column-header .MuiDataGrid-sortButton svg": {
+                  color: "currentColor",
+                },
+
+                ...(isInEditMode
                   ? {
                       "& .active-editing-row .MuiDataGrid-cell": {
                         paddingTop: "4px",
@@ -1364,9 +1594,65 @@ export const ResponsesTable = React.memo(
                         boxShadow: "none",
                       },
                     }
-                  : undefined
-              }
+                  : {}),
+              }}
             />
+            <Box
+              ref={customScrollbarTrackRef}
+              sx={{
+                position: "absolute",
+                top: 0,
+                width: "21px",
+                height: 0,
+                display: "none",
+                pointerEvents: "none",
+                zIndex: 10,
+                backgroundColor: "#ffffff",
+                borderRadius: "999px",
+              }}>
+              <Box
+                ref={customScrollbarThumbRef}
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: "4px",
+                  width: "13px",
+                  height: 0,
+                  borderRadius: "999px",
+                  backgroundColor: "#E2E8F0",
+                  transform: "translate3d(0, 0, 0)",
+                  willChange: "transform",
+                }}
+              />
+            </Box>
+            <Box
+              ref={customHorizontalScrollbarTrackRef}
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: 0,
+                height: "21px",
+                display: "none",
+                pointerEvents: "none",
+                zIndex: 10,
+                backgroundColor: "#ffffff",
+                borderRadius: "999px",
+              }}>
+              <Box
+                ref={customHorizontalScrollbarThumbRef}
+                sx={{
+                  position: "absolute",
+                  top: "4px",
+                  width: 0,
+                  height: "13px",
+                  borderRadius: "999px",
+                  backgroundColor: "#E2E8F0",
+                  transform: "translate3d(0, 0, 0)",
+                  willChange: "transform",
+                }}
+              />
+            </Box>
           </TableContainer>
         </MainContent>
       </ContentContainer>

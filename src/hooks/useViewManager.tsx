@@ -96,6 +96,9 @@ export const useViewManager = ({
   const [currentView, setCurrentView] = useState<ResponsesView>();
   const [currentViewConfig, setCurrentViewConfig] = useState<ViewColumn[]>();
   const [selectedViewId, setSelectedViewId] = useState<string>("");
+  const previousFormId = useRef(formId);
+  const hasAttemptedInitialLoad = useRef(false);
+  const lastAppliedViewId = useRef<string | number | undefined>(undefined);
 
   const { data: formViews = [], error } = useGetResponsesViews(formId);
 
@@ -112,10 +115,18 @@ export const useViewManager = ({
     }
   }, [error]);
 
+  const normalizeViewForCurrentForm = useCallback(
+    (view: ResponsesView): ResponsesView => ({
+      ...view,
+      formId: String((view as any).formId ?? (view as any).form_id ?? formId),
+    }),
+    [formId],
+  );
+
   const availableViews = useMemo(() => {
     const userUpn = ((user as any)?.upn || (user as any)?.UPN || "").toLowerCase();
 
-    return [...formViews].sort((a, b) => {
+    return formViews.map(normalizeViewForCurrentForm).sort((a, b) => {
       if (a.isDefault && !b.isDefault) return -1;
       if (!a.isDefault && b.isDefault) return 1;
 
@@ -131,11 +142,23 @@ export const useViewManager = ({
 
       return a.name.localeCompare(b.name);
     });
-  }, [formViews, user]);
+  }, [formViews, normalizeViewForCurrentForm, user]);
 
   useEffect(() => {
     onViewConfigChange?.(currentViewConfig);
   }, [currentViewConfig, onViewConfigChange]);
+
+  useEffect(() => {
+    if (previousFormId.current === formId) return;
+
+    previousFormId.current = formId;
+    hasAttemptedInitialLoad.current = false;
+    lastAppliedViewId.current = undefined;
+    setCurrentView(undefined);
+    setCurrentViewConfig(undefined);
+    setSelectedViewId("");
+    setSorting?.([]);
+  }, [formId, setSorting]);
 
   const handleSaveView = useCallback(
     async (view: ResponsesView) => {
@@ -175,9 +198,11 @@ export const useViewManager = ({
           payload.id ? HebrewMessages.UpdateViewSuccess : HebrewMessages.SaveViewSuccess,
         );
 
-        setCurrentView(saved);
-        setSelectedViewId(saved.id ? String(saved.id) : "");
-        setCurrentViewConfig(getViewConfigColumns(saved));
+        const normalizedSaved = normalizeViewForCurrentForm(saved);
+
+        setCurrentView(normalizedSaved);
+        setSelectedViewId(normalizedSaved.id ? String(normalizedSaved.id) : "");
+        setCurrentViewConfig(getViewConfigColumns(normalizedSaved));
       } catch (err) {
         console.error(err);
 
@@ -190,23 +215,23 @@ export const useViewManager = ({
         throw err;
       }
     },
-    [form, user, createView, updateView],
+    [form, user, createView, updateView, normalizeViewForCurrentForm],
   );
 
   const handleLoadView = useCallback(
     (view: ResponsesView) => {
-      setCurrentView(view);
-      setCurrentViewConfig(getViewConfigColumns(view));
-      setSelectedViewId(view.id ? String(view.id) : "");
+      const normalizedView = normalizeViewForCurrentForm(view);
+
+      setCurrentView(normalizedView);
+      setCurrentViewConfig(getViewConfigColumns(normalizedView));
+      setSelectedViewId(normalizedView.id ? String(normalizedView.id) : "");
 
       if (setSorting && tableColumns?.length) {
-        applyViewSorting(setSorting, view, tableColumns);
+        applyViewSorting(setSorting, normalizedView, tableColumns);
       }
     },
-    [setSorting, tableColumns],
+    [normalizeViewForCurrentForm, setSorting, tableColumns],
   );
-
-  const hasAttemptedInitialLoad = useRef(false);
 
   useEffect(() => {
     if (hasAttemptedInitialLoad.current) return;
@@ -221,8 +246,6 @@ export const useViewManager = ({
       }
     }
   }, [availableViews, handleLoadView]);
-
-  const lastAppliedViewId = useRef<string | number | undefined>(undefined);
 
   useEffect(() => {
     if (!setSorting) return;
@@ -264,14 +287,16 @@ export const useViewManager = ({
 
   const handleApplyView = useCallback(
     (view: ResponsesView) => {
-      setCurrentView(view);
-      setCurrentViewConfig(getViewConfigColumns(view));
+      const normalizedView = normalizeViewForCurrentForm(view);
+
+      setCurrentView(normalizedView);
+      setCurrentViewConfig(getViewConfigColumns(normalizedView));
 
       if (setSorting && tableColumns?.length) {
-        applyViewSorting(setSorting, view, tableColumns);
+        applyViewSorting(setSorting, normalizedView, tableColumns);
       }
     },
-    [setSorting, tableColumns],
+    [normalizeViewForCurrentForm, setSorting, tableColumns],
   );
 
   const handleDeleteView = useCallback(
@@ -302,11 +327,21 @@ export const useViewManager = ({
     return defaultView?.id ? String(defaultView.id) : "";
   }, [availableViews]);
 
+  const scopedCurrentView = useMemo(() => {
+    if (!currentView || String(currentView.formId) !== formId) {
+      return undefined;
+    }
+
+    return currentView;
+  }, [currentView, formId]);
+
+  const scopedCurrentViewConfig = scopedCurrentView ? currentViewConfig : undefined;
+
   return {
-    currentView,
+    currentView: scopedCurrentView,
     savedViews: availableViews,
-    currentViewConfig,
-    selectedViewId,
+    currentViewConfig: scopedCurrentViewConfig,
+    selectedViewId: scopedCurrentView ? selectedViewId : "",
     defaultViewId,
     isSaving,
     handleSaveView,

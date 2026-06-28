@@ -37,6 +37,11 @@
     width: 100%;
 }
 
+.bottomDropZone {
+    height: 20px;
+    flex-shrink: 0;
+}
+
 .emptySectionPlaceholder {
     display: flex;
     flex: 1;

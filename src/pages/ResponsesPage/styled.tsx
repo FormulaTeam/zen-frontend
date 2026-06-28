@@ -70,11 +70,14 @@ export const UnifiedButton = styled(Button)<{ $isPrimary?: boolean }>(({ theme, 
   height: "40px",
   borderRadius: "10px",
   padding: "6px 16px",
+  paddingInlineStart: "10px",
+  paddingInlineEnd: "16px",
   fontSize: "0.95rem",
   fontWeight: 600,
-  display: "flex",
+  display: "inline-flex",
   alignItems: "center",
-  gap: "10px",
+  justifyContent: "center",
+  gap: "8px",
   textTransform: "none",
   whiteSpace: "nowrap",
   transition: "all 0.2s ease",
@@ -90,7 +93,15 @@ export const UnifiedButton = styled(Button)<{ $isPrimary?: boolean }>(({ theme, 
 
   "& .MuiButton-startIcon, & .MuiButton-endIcon": {
     margin: 0,
-    fontSize: "18px",
+    width: "20px",
+    height: "20px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  "& .MuiButton-startIcon > svg, & .MuiButton-endIcon > svg": {
+    fontSize: "20px",
   },
 
   "&.Mui-disabled": {
@@ -201,6 +212,7 @@ export const MainContent = styled(Box)<MainContentProps>(() => ({
   display: "flex",
   flexDirection: "column",
   minWidth: 0,
+  minHeight: 0,
   overflow: "hidden",
 }));
 
@@ -212,6 +224,7 @@ export const TableContainer = styled(Box)<BoxProps>(() => ({
   display: "flex",
   flexDirection: "column",
   padding: "0 24px",
+  position: "relative",
 }));
 
 export const PageWrapper = styled(Box)<BoxProps>(() => ({
@@ -242,6 +255,8 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     "& .MuiDataGrid-filler--pinnedLeft": {
       display: "none !important",
     },
+    height: "100%",
+    minHeight: 0,
     width: "100%",
     maxWidth: "100%",
     fontSize: "18px",
@@ -328,7 +343,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     "& .MuiDataGrid-columnHeaders": {
       borderBottom: "none",
       backgroundImage: "none",
-      backgroundColor: "#e1f0ff",
+      backgroundColor: "#D6E7F6",
     },
     "& .MuiDataGrid-columnHeaderRow": {
       borderBottom: "none",
@@ -340,15 +355,15 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     },
   },
   "& .MuiDataGrid-columnHeaders": {
-    backgroundColor: "#e1f0ff",
+    backgroundColor: "#D6E7F6",
     borderBottom: "none",
     "& .MuiDataGrid-filler": {
-      backgroundColor: "#e1f0ff",
+      backgroundColor: "#D6E7F6",
       borderBottom: "none",
     },
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-columnHeaders": {
-    backgroundColor: "#e1f0ff",
+    backgroundColor: "#D6E7F6",
     color: "#020618",
     "& .MuiDataGrid-columnHeaderTitle": {
       color: "#020618",
@@ -458,8 +473,8 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
       pointerEvents: "none",
     },
   },
-  "& .MuiDataGrid-scrollbar--vertical": {
-    display: "none",
+  "& .MuiDataGrid-scrollbar.MuiDataGrid-scrollbar--vertical": {
+    display: "none !important",
   },
   "& .MuiDataGrid-scrollbar.MuiDataGrid-scrollbar--horizontal": {
     display: "none !important",
@@ -587,12 +602,12 @@ export const ExpandIconBox = styled(Box)(() => ({
 }));
 
 export const SyncStatusIconBox = styled(Box)(() => ({
-  display: "flex",
+  display: "inline-flex",
   alignItems: "center",
-  justifyContent: "flex-start",
-  height: "100%",
-  width: "100%",
-  paddingRight: "12px",
+  justifyContent: "center",
+  width: "24px",
+  height: "24px",
+  padding: 0,
 }));
 
 export const FormInfoContentBox = styled(Box)(() => ({

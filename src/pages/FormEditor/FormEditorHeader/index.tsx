@@ -251,10 +251,10 @@ function FormEditorHeader() {
     return errors.length > 0
       ? errors
       : [
-          {
-            message: "נא לתקן את השדות המסומנים באדום",
-          },
-        ];
+        {
+          message: "נא לתקן את השדות המסומנים באדום",
+        },
+      ];
   }, [formStructure.fields, formStructure.metadata.validationErrors, formStructure.sections]);
 
   const runSaveFlow = async (options?: { navigateToResponses?: boolean }) => {

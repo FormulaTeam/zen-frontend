@@ -19,6 +19,10 @@ interface Props {
 }
 
 function FormFieldElement({ field, onDelete, onDataChange }: Props) {
+  if (field.id === PLACEHOLDER_FIELD_ID) {
+    return <PlaceholderFieldElement field={field} />;
+  }
+
   const {
     attributes,
     listeners,
@@ -38,21 +42,18 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const isPlaceholder = field.id === PLACEHOLDER_FIELD_ID;
-
   const isInputDisabled = !!active;
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging || isPlaceholder ? 0.5 : 1,
-    filter: isPlaceholder ? "sepia(100%) brightness(90%) hue-rotate(170deg) saturate(500%)" : "none",
+    opacity: isDragging ? 0.5 : 1,
   };
 
   useEffect(() => {
     setNodeRef(containerRef.current);
 
-    field.id !== PLACEHOLDER_FIELD_ID &&
+    !active &&
       containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
 
@@ -84,7 +85,7 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
             <TextField value={field.data.displayName}
               className={styles.input}
               variant={"standard"}
-              label={"שם תצוגה"}
+              label={"שם שדה"}
               error={!!field.validationErrors?.displayName}
               helperText={field.validationErrors?.displayName?.errors[0]}
               disabled={isInputDisabled}
@@ -121,7 +122,6 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
       </div>
       <div className={styles.deleteButtonContainer}>
         {
-          !isPlaceholder &&
           <Button className={styles.deleteButton}
             onClick={onDelete}
             disabled={isInputDisabled}>
@@ -129,6 +129,25 @@ function FormFieldElement({ field, onDelete, onDataChange }: Props) {
           </Button>
         }
       </div>
+    </div>
+  );
+}
+
+function PlaceholderFieldElement({ field }: { field: FormField }) {
+  return (
+    <div className={`${styles.container} ${styles.placeholderContainer}`}>
+      <div className={styles.dragHandle}>
+        <DragIndicator />
+      </div>
+      <div className={`${styles.field} ${styles.placeholderField}`}>
+        <div className={styles.title}>
+          {FORM_ELEMENT_ICONS[FORM_ELEMENTS[field.data.typeId].icon]}
+          <Typography variant={"subtitle1"} align={"center"} sx={{ userSelect: "none" }}>
+            {FORM_ELEMENTS[field.data.typeId].name}
+          </Typography>
+        </div>
+      </div>
+      <div className={styles.deleteButtonContainer} />
     </div>
   );
 }

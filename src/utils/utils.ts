@@ -447,8 +447,10 @@ export const cellLinkStyle = {
 
 export const HEBREW_TITLES = {
   isSynchronized: "סונכרן",
-  updated: "השתנה",
-  updated_by: 'השתנה ע"י',
+  created: "נוצר בתאריך",
+  created_by: "נוצר על ידי",
+  updated: "השתנה בתאריך",
+  updated_by: "השתנה על ידי",
 };
 
 function preferredOrder(obj, order) {
@@ -884,11 +886,20 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
   const data: any[] = [];
 
   sortedResponses.forEach((element, i) => {
-    //add columns isSynchronized, updated_by, updated
+    const syncStatusId = element.syncStatusId ?? element.syncStatus?.id;
+    const isSynced = syncStatusId === 5;
+
     data[i] = {
       [RESPONSE_INDEX_COLUMN]: element.index ? `\u202B${String(element.index)}\u202C` : "",
+      [HEBREW_TITLES.isSynchronized]: isSynced ? "כן" : "לא",
+      [HEBREW_TITLES.created_by]: element.createdBy?.name ?? "",
+      [HEBREW_TITLES.created]: element.createdAt
+        ? moment(element.createdAt).format(DEFAULT_DATE_TIME_FORMAT)
+        : "",
       [HEBREW_TITLES.updated_by]: element.updatedBy?.name ?? "",
-      [HEBREW_TITLES.updated]: moment(element.updatedAt).format("DD.MM.YY"),
+      [HEBREW_TITLES.updated]: element.updatedAt
+        ? moment(element.updatedAt).format(DEFAULT_DATE_TIME_FORMAT)
+        : "",
     };
 
     //add column for each field and save fields order with arr of names
@@ -911,7 +922,12 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
       [RESPONSE_INDEX_COLUMN]
         .concat([HEBREW_TITLES.isSynchronized])
         .concat(names)
-        .concat([HEBREW_TITLES.updated_by, HEBREW_TITLES.updated]),
+        .concat([
+          HEBREW_TITLES.created_by,
+          HEBREW_TITLES.created,
+          HEBREW_TITLES.updated_by,
+          HEBREW_TITLES.updated,
+        ]),
     );
   });
 

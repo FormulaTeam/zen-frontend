@@ -43,26 +43,16 @@ const getGridFieldFromMetaName = (metaName?: string, prefixes?: ColumnPrefixes):
   const prefix = prefixes?.Meta ?? "meta:";
 
   switch (metaName) {
-    case "index":
-      return `${prefix}index`;
-
-    case "created_at":
-      return "created";
-
-    case "updated_at":
-      return "edited";
-
-    case "created_by":
-      return "createdByName";
-
-    case "updated_by":
-      return "editedByName";
-
     case "pushed_to_metro":
       return "sync";
 
+    case "index":
+    case "created_at":
+    case "updated_at":
+    case "created_by":
+    case "updated_by":
     case "id":
-      return "id";
+      return `${prefix}${metaName}`;
 
     default:
       return metaName;
@@ -71,26 +61,8 @@ const getGridFieldFromMetaName = (metaName?: string, prefixes?: ColumnPrefixes):
 
 const getBackendMetaNameFromGridField = (field: string): string => {
   switch (field) {
-    case "index":
-      return "index";
-
-    case "created":
-      return "created_at";
-
-    case "edited":
-      return "updated_at";
-
-    case "createdByName":
-      return "created_by";
-
-    case "editedByName":
-      return "updated_by";
-
     case "sync":
       return "pushed_to_metro";
-
-    case "id":
-      return "id";
 
     default:
       return field;
