@@ -1,23 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ResponseDto } from "../../types/shared";
 import { fieldType } from "formula-gear";
-import {
-  Box,
-  Button,
-  Container,
-  Tooltip,
-  Typography,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-} from "@mui/material";
+import { Box, Button, Tooltip, Typography } from "@mui/material";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useResponseSave, type ParentResponseRef } from "../../hooks/useResponseSave";
 import { useResponseState } from "../../hooks/useResponseState";
-import { showErrorNotification } from "../../utils/utils";
-import { Close, Edit, Error as ErrorIcon, Add } from "@mui/icons-material";
+import { Error as ErrorIcon, Add } from "@mui/icons-material";
 import { FormSectionsContainer, PageContainer } from "./styled";
 import ConnectedFormSection from "../../components/FormSection/ConnectedFormSection";
 import { useChildForms } from "../../hooks/useChildForms";

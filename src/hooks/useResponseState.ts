@@ -191,6 +191,62 @@ const getDefaultFieldValue = (field: FormFieldWithSectionDto) => {
   return extra.value;
 };
 
+const normalizeFileValue = (value: any, response?: ResponseDto | null) => {
+  if (value && typeof value === "object" && Array.isArray(value.files)) {
+    return {
+      files: value.files,
+    };
+  }
+
+  const responseFiles = Array.isArray((response as any)?.files) ? (response as any).files : [];
+
+  const rawFiles = Array.isArray(value) ? value : value ? [value] : [];
+
+  const files = rawFiles
+    .map((fileValue: any) => {
+      if (fileValue && typeof fileValue === "object") {
+        const name = fileValue.name || fileValue.fileName || "";
+        const path = fileValue.path || fileValue.relativePath || fileValue.id || name;
+
+        return {
+          ...fileValue,
+          name,
+          path,
+        };
+      }
+
+      const matchingResponseFile = responseFiles.find(
+        (file: any) => String(file.id) === String(fileValue),
+      );
+
+      if (matchingResponseFile) {
+        const name = matchingResponseFile.name || matchingResponseFile.fileName || "";
+        const path =
+          matchingResponseFile.path ||
+          matchingResponseFile.relativePath ||
+          matchingResponseFile.id ||
+          name;
+
+        return {
+          ...matchingResponseFile,
+          name,
+          path,
+        };
+      }
+
+      return {
+        id: String(fileValue),
+        name: String(fileValue),
+        path: String(fileValue),
+      };
+    })
+    .filter((file: any) => file.name && file.path);
+
+  return {
+    files,
+  };
+};
+
 const toValidatorField = (
   field: FormFieldDto,
   fieldOptions?: Record<string, any[]>,
@@ -224,7 +280,12 @@ const toValidatorField = (
 
 const getValueForValidation = (field: FormFieldDto, rawValue: unknown): unknown => {
   if (field.fieldType === fieldType.File || getFieldType(field) === fieldType.File) {
-    if (rawValue && typeof rawValue === "object" && "files" in rawValue && Array.isArray((rawValue as any).files)) {
+    if (
+      rawValue &&
+      typeof rawValue === "object" &&
+      "files" in rawValue &&
+      Array.isArray((rawValue as any).files)
+    ) {
       return (rawValue as any).files
         .map((f: any) => f?.id || f?.path)
         .filter((id): id is string => typeof id === "string" && id !== "");
@@ -502,10 +563,7 @@ export const useResponseState = (
     formFieldsValuesMapRef.current = formFieldsValuesMap;
   }, [formFieldsValuesMap]);
 
-  const {
-    data: formFromQuery,
-    isError: isFormError,
-  } = useGetForm({
+  const { data: formFromQuery, isError: isFormError } = useGetForm({
     formId,
     includePermissions: true,
   });
@@ -672,6 +730,10 @@ export const useResponseState = (
               }
               break;
 
+            case fieldType.File:
+              value = normalizeFileValue(value, response);
+              break;
+
             default:
               break;
           }
@@ -716,8 +778,8 @@ export const useResponseState = (
 
     const affectingSectionConditions = field.sectionId
       ? formConditions.filter((condition: FormCondition) =>
-        condition.dependantComponents?.section?.includes(String(field.sectionId)),
-      )
+          condition.dependantComponents?.section?.includes(String(field.sectionId)),
+        )
       : [];
 
     if (affectingFieldConditions.length === 0 && affectingSectionConditions.length === 0) {
@@ -964,18 +1026,25 @@ export const useResponseState = (
 
             const controllingOptionItems: any[] = (childField as any).options ?? [];
 
-            const parentFieldDef = formFields.find(f => String(f.id) === normalizedFieldId);
+            const parentFieldDef = formFields.find((f) => String(f.id) === normalizedFieldId);
             const parentOptionItems: any[] = (parentFieldDef as any)?.options ?? [];
             const parentValues = Array.isArray(value) ? value : value ? [value] : [];
 
             parentOptionItems.forEach((parentOpt: any) => {
-              if (parentValues.includes(parentOpt.id) && Array.isArray(parentOpt.controllingItemsIds)) {
+              if (
+                parentValues.includes(parentOpt.id) &&
+                Array.isArray(parentOpt.controllingItemsIds)
+              ) {
                 parentOpt.controllingItemsIds.forEach((depId: string) => allowedOptions.add(depId));
               }
             });
 
             // Fall back to parentDependencies if no controllingItemsIds found
-            if (allowedOptions.size === 0 && childExtra.parentDependencies && childExtra.parentDependencies.length > 0) {
+            if (
+              allowedOptions.size === 0 &&
+              childExtra.parentDependencies &&
+              childExtra.parentDependencies.length > 0
+            ) {
               const parentOptions = getOptionIds(parentFieldDef ?? childField);
               const childOptions = getOptionIds(childField);
               parentValues.forEach((parentValue: string) => {
@@ -993,18 +1062,39 @@ export const useResponseState = (
 
             if (allowedOptions.size > 0) {
               if (currentChildValue) {
-                const childValues = Array.isArray(currentChildValue) ? currentChildValue : [currentChildValue];
+                const childValues = Array.isArray(currentChildValue)
+                  ? currentChildValue
+                  : [currentChildValue];
                 const validValues = childValues.filter((val: string) => allowedOptions.has(val));
                 if (validValues.length !== childValues.length) {
-                  newFormFieldsValuesMap.set(childFieldId, isMultiple ? validValues : validValues[0] ?? "");
-                  setFormFieldsValidMap((prev) => { const next = new Map(prev); next.set(childFieldId, null); return next; });
-                  setFormFieldsTouchedMap((prev) => { const next = new Map(prev); next.set(childFieldId, false); return next; });
+                  newFormFieldsValuesMap.set(
+                    childFieldId,
+                    isMultiple ? validValues : (validValues[0] ?? ""),
+                  );
+                  setFormFieldsValidMap((prev) => {
+                    const next = new Map(prev);
+                    next.set(childFieldId, null);
+                    return next;
+                  });
+                  setFormFieldsTouchedMap((prev) => {
+                    const next = new Map(prev);
+                    next.set(childFieldId, false);
+                    return next;
+                  });
                 }
               }
             } else if (parentValues.length > 0) {
               newFormFieldsValuesMap.set(childFieldId, isMultiple ? [] : "");
-              setFormFieldsValidMap((prev) => { const next = new Map(prev); next.set(childFieldId, null); return next; });
-              setFormFieldsTouchedMap((prev) => { const next = new Map(prev); next.set(childFieldId, false); return next; });
+              setFormFieldsValidMap((prev) => {
+                const next = new Map(prev);
+                next.set(childFieldId, null);
+                return next;
+              });
+              setFormFieldsTouchedMap((prev) => {
+                const next = new Map(prev);
+                next.set(childFieldId, false);
+                return next;
+              });
             }
           });
         }
