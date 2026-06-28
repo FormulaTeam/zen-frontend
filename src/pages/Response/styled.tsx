@@ -77,10 +77,11 @@ export const Header = styled(Box)(({ theme }) => ({
   alignItems: "center",
   justifyContent: "space-between",
   width: "90%",
-  backgroundColor: "#F8FAFC",
+  backgroundColor: "#f1f5f9",
   paddingTop: theme.spacing(3),
   paddingBottom: theme.spacing(2),
   margin: "0 auto",
+  boxShadow: "0 8px 16px -4px rgba(0, 0, 0, 0.04)",
   [theme.breakpoints.down("md")]: {
     width: "98%",
   },
