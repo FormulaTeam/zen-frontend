@@ -409,7 +409,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
             ),
         )}
 
-        {!isLoading && !viewMode && (
+        {!isLoading && !viewMode && childFormData.canCreate && (
           <Button
             variant="text"
             size="small"

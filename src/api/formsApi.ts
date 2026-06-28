@@ -129,6 +129,20 @@ export const getFormById = async (formId?: number): Promise<FormDto | null> => {
   }
 };
 
+export const getCreatableLinkedResponseForms = async (
+  formId: number,
+): Promise<FormOverviewDto[]> => {
+  try {
+    const response = await apiClient.get<FormOverviewDto[]>(
+      `/forms/${formId}/creatable-linked-response-forms`,
+    );
+    return response?.data || [];
+  } catch (error) {
+    console.error("Failed to fetch creatable linked response forms:", error);
+    throw error;
+  }
+};
+
 /**
  * Fetch linkable forms for a given form ID.
  *

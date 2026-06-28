@@ -4,7 +4,7 @@ import { fieldType } from "formula-gear";
 import type { FormFieldDto } from "../types/shared";
 import { NotificationTexts } from "../utils/interfaces";
 import { showErrorNotification, showSuccessNotification } from "../utils/utils";
-import { deleteResponse, getLinkableForms, getResponseById } from "../api";
+import { deleteResponse, getCreatableLinkedResponseForms, getResponseById } from "../api";
 import { User } from "../contexts/AuthContext";
 
 type ChildFormChildProps = FormFieldDto & {
@@ -18,6 +18,7 @@ type ChildFormProps = {
   saved: Array<boolean | undefined>;
   valid: Array<boolean | undefined>;
   shown: boolean;
+  canCreate: boolean;
 };
 
 type UseChildFormsParams = {
@@ -156,6 +157,7 @@ export const useChildForms = ({
         saved: [] as Array<boolean | undefined>,
         valid: [] as Array<boolean | undefined>,
         shown: false,
+        canCreate: false,
       }));
 
       setChildForms((prev) =>
@@ -168,6 +170,7 @@ export const useChildForms = ({
             children: existing?.children ?? nextChildForm.children,
             saved: existing?.saved ?? nextChildForm.saved,
             valid: existing?.valid ?? nextChildForm.valid,
+            canCreate: nextChildForm.canCreate,
           };
         }),
       );
@@ -182,10 +185,9 @@ export const useChildForms = ({
       }
 
       try {
-        const allLinkableForms = await getLinkableForms(Number(formId));
-        const formsResponse = allLinkableForms.filter((f) => childFormIds.includes(f.id));
-
-        const availableChildFormIds = new Set(formsResponse.map((form) => form.id));
+        const availableChildFormIds = new Set(childFormIds);
+        const creatableForms = await getCreatableLinkedResponseForms(Number(formId));
+        const creatableChildFormIds = new Set(creatableForms.map((form) => form.id));
 
         if (!id || copyMode) {
           if (initializedUnsavedRef.current) {
@@ -200,6 +202,7 @@ export const useChildForms = ({
               saved: [] as Array<boolean | undefined>,
               valid: [] as Array<boolean | undefined>,
               shown: false,
+              canCreate: creatableChildFormIds.has(childFormId),
             }));
 
           setChildForms((prev) =>
@@ -212,6 +215,7 @@ export const useChildForms = ({
                 children: existing?.children ?? nextChildForm.children,
                 saved: existing?.saved ?? nextChildForm.saved,
                 valid: existing?.valid ?? nextChildForm.valid,
+                canCreate: nextChildForm.canCreate,
               };
             }),
           );
@@ -250,6 +254,7 @@ export const useChildForms = ({
               saved: [] as Array<boolean | undefined>,
               valid: [] as Array<boolean | undefined>,
               shown: children.length > 0,
+              canCreate: creatableChildFormIds.has(childFormId),
             };
           });
 
@@ -266,6 +271,7 @@ export const useChildForms = ({
                   : nextChildForm.children,
               saved: existing?.saved ?? nextChildForm.saved,
               valid: existing?.valid ?? nextChildForm.valid,
+              canCreate: nextChildForm.canCreate,
             };
           }),
         );
@@ -453,6 +459,10 @@ export const useChildForms = ({
       const childForm = newChildForms[index];
 
       if (!childForm) {
+        return prev;
+      }
+
+      if (!childForm.canCreate) {
         return prev;
       }
 
