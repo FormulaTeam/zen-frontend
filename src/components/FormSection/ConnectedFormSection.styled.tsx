@@ -31,8 +31,8 @@ export const SegmentHeaderContainer = styled(Box)(({ theme }) => ({
 }));
 
 export const ResponseCountBadge = styled(Box)(({ theme }) => ({
-  background: "#f0f0f0",
-  color: "#666",
+  background: theme.palette.secondary.main,
+  color: theme.palette.primary.main,
   padding: "2px 10px",
   borderRadius: "12px",
   fontSize: "0.75rem",

@@ -7,6 +7,7 @@ import type { FormFieldDto, ResponseDto } from "../../types/shared";
 import { useResponseSave, type ParentResponseRef } from "../../hooks/useResponseSave";
 import { useResponseState } from "../../hooks/useResponseState";
 import { LoadingContainer } from "../../pages/Response/styled";
+import { NOT_A_SECTION_ID } from "../../utils/sections/consts";
 import FormFieldRenderer from "../Responses/FormFieldRenderer";
 import ConnectedFormHeader from "./ConnectedFormHeader";
 import {
@@ -92,6 +93,7 @@ function ConnectedFormSection({
     response,
     fieldOptions,
     loadingConnections,
+    responsSections,
   } = useResponseState(
     linkedFormId?.toString() ?? "",
     id,
@@ -119,12 +121,15 @@ function ConnectedFormSection({
   const hasTriggeredSaveRef = useRef(false);
   const hasTriggeredValidateRef = useRef(false);
 
-  const normalFields = useMemo(
+  const sortedSections = useMemo(
     () =>
-      [...(formFields ?? [])]
-        .filter((formField) => formField.fieldType !== fieldType.Form)
-        .sort((a, b) => (a.index ?? 0) - (b.index ?? 0)),
-    [formFields],
+      Object.entries(responsSections).sort(([idA, a], [idB, b]) => {
+        const orderA = a.order ?? 0;
+        const orderB = b.order ?? 0;
+
+        return orderA === orderB ? idA.localeCompare(idB) : orderA - orderB;
+      }),
+    [responsSections],
   );
 
   const saveCurrentResponse = useCallback(async (): Promise<ResponseDto | null> => {
@@ -269,23 +274,52 @@ function ConnectedFormSection({
           </LoadingContainer>
         ) : (
           <Box>
-            <Masonry columns={3} spacing={2} sequential>
-              {normalFields.map((formField, fieldIndex) => (
-                <FormFieldRenderer
-                  key={formField.id ?? fieldIndex}
-                  formField={formField}
-                  formFieldsByIdMap={formFieldsByIdMap}
-                  formFieldsValuesMap={formFieldsValuesMap}
-                  formFieldsValidMap={formFieldsValidMap}
-                  onChangeHandler={onChangeHandler}
-                  onBlurHandler={onBlurHandler}
-                  viewMode={viewMode}
-                  fieldOptions={fieldOptions}
-                  formFields={formFields}
-                  index={fieldIndex}
-                />
-              ))}
-            </Masonry>
+            {sortedSections.map(([sectionId, section]) => {
+              const sectionFields = section.fields
+                .filter((formField) => formField.fieldType !== fieldType.Form)
+                .sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+
+              if (sectionFields.length === 0) {
+                return null;
+              }
+
+              return (
+                <Box key={sectionId} sx={{ mb: sectionId !== NOT_A_SECTION_ID ? 4 : 0 }}>
+                  {sectionId !== NOT_A_SECTION_ID && section.name && (
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        mb: 2,
+                        fontWeight: 700,
+                        color: "text.secondary",
+                        fontSize: "0.9rem",
+                        borderBottom: "1px solid #f0f0f0",
+                        pb: 0.5,
+                      }}>
+                      {section.name}
+                    </Typography>
+                  )}
+
+                  <Masonry columns={3} spacing={2} sequential>
+                    {sectionFields.map((formField, fieldIndex) => (
+                      <FormFieldRenderer
+                        key={formField.id ?? fieldIndex}
+                        formField={formField}
+                        formFieldsByIdMap={formFieldsByIdMap}
+                        formFieldsValuesMap={formFieldsValuesMap}
+                        formFieldsValidMap={formFieldsValidMap}
+                        onChangeHandler={onChangeHandler}
+                        onBlurHandler={onBlurHandler}
+                        viewMode={viewMode}
+                        fieldOptions={fieldOptions}
+                        formFields={formFields}
+                        index={fieldIndex}
+                      />
+                    ))}
+                  </Masonry>
+                </Box>
+              );
+            })}
           </Box>
         )}
 

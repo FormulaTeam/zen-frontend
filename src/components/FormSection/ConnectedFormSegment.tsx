@@ -31,7 +31,7 @@ export const ConnectedFormSegment: React.FC<ConnectedFormSegmentProps> = ({ titl
     <ConnectedFormSegmentBox>
       <SegmentHeaderContainer onClick={toggleExpansion}>
         <Box display="flex" alignItems="center">
-          <Typography variant="h6" fontWeight={600} color="textSecondary">
+          <Typography variant="h6" fontWeight={700} color="textPrimary">
             {title}
           </Typography>
 
