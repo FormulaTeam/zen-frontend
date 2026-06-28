@@ -8,7 +8,8 @@ import { useResponseState } from "../../hooks/useResponseState";
 import { Error as ErrorIcon, Add } from "@mui/icons-material";
 import { FormSectionsContainer, PageContainer } from "./styled";
 import ConnectedFormSection from "../../components/FormSection/ConnectedFormSection";
-import { AddResponseButton, ConnectedFormTitle } from "../../components/FormSection/ConnectedFormSection.styled";
+import ConnectedFormSegment from "../../components/FormSection/ConnectedFormSegment";
+import { AddResponseButton } from "../../components/FormSection/ConnectedFormSection.styled";
 import { useChildForms } from "../../hooks/useChildForms";
 import ResponseHeader from "../../components/ResponseComponents/ResponseHeader";
 import ResponseSection from "../../components/ResponseComponents/ResponseSection";
@@ -385,9 +386,11 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       : undefined;
 
     return (
-      <Box key={`child-form-${linkedFormId}`} sx={{ mt: 2, mb: 4, width: "100%" }}>
-        <ConnectedFormTitle sx={{ mb: 2, ml: 1 }}>{childFormTitle}</ConnectedFormTitle>
-
+      <ConnectedFormSegment
+        key={`child-form-${linkedFormId}`}
+        title={childFormTitle}
+        count={childFormData.children.length}
+      >
         {childFormData.children.map(
           (child, index) =>
             childFormData.shown && (
@@ -420,7 +423,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
             </AddResponseButton>
           </Box>
         )}
-      </Box>
+      </ConnectedFormSegment>
     );
   };
 
