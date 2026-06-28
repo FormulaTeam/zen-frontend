@@ -532,6 +532,7 @@ export const SingleOptionFilterInput: React.FC<FilterInputProps> = (props) => {
               }}
               inputProps={{
                 ...params.inputProps,
+                readOnly: true,
                 style: {
                   ...params.inputProps.style,
                   textAlign: "right",
@@ -629,6 +630,7 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
               }}
               inputProps={{
                 ...params.inputProps,
+                readOnly: true,
                 style: {
                   ...params.inputProps.style,
                   textAlign: "right",
