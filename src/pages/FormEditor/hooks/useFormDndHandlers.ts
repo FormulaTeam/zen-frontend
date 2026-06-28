@@ -89,7 +89,7 @@ function useFormDndHandlers() {
       ? (over.data.current as DraggableElementData | undefined)?.elementType
       : undefined;
 
-    if (activeElementType === "field" && (!over || overElementType === "section")) {
+    if (activeElementType === "field" && !over) {
       return;
     }
 
@@ -136,11 +136,33 @@ function useFormDndHandlers() {
 
             if (overElementType === "section") {
               const newParentSectionId = over.id as string;
-              const newParentSection = { ...prevFormStructure.sections[newParentSectionId] };
+              const newParentSection = {
+                ...prevFormStructure.sections[newParentSectionId],
+                fieldIds: [...prevFormStructure.sections[newParentSectionId].fieldIds],
+              };
 
-              if (newParentSection.fieldIds.length == 0 && newParentSection.expanded) {
+              if (newParentSectionId === oldParentSectionId || newParentSection.fieldIds.length > 0 || !newParentSection.expanded) {
                 return prevFormStructure;
               }
+
+              oldParentSection.fieldIds.splice(oldParentSection.fieldIds.indexOf(activeFieldId), 1);
+              newParentSection.fieldIds.push(activeFieldId);
+
+              return {
+                ...prevFormStructure,
+                sections: {
+                  ...prevFormStructure.sections,
+                  [oldParentSectionId]: oldParentSection,
+                  [newParentSectionId]: newParentSection,
+                },
+                fields: {
+                  ...prevFormStructure.fields,
+                  [activeFieldId]: {
+                    ...prevFormStructure.fields[activeFieldId],
+                    parentSectionId: newParentSectionId,
+                  },
+                },
+              };
             }
             if (overElementType === "sectionBottom") {
               return prevFormStructure;
