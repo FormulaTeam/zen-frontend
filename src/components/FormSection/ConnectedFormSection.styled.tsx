@@ -10,6 +10,36 @@ export const ConnectedFormFieldsWrapper = styled(Box)<BoxProps>(({ theme }) => (
   gap: theme.spacing(3),
 }));
 
+export const ConnectedFormSegmentBox = styled(Box)(({ theme }) => ({
+  background: "#FFFFFF",
+  border: "1px solid #e0e0e0",
+  borderRadius: "16px",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+  padding: theme.spacing(2.5),
+  marginBottom: theme.spacing(4),
+  width: "100%",
+}));
+
+export const SegmentHeaderContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  cursor: "pointer",
+  paddingBottom: theme.spacing(1.5),
+  borderBottom: "1px solid #f9f9f9",
+  marginBottom: theme.spacing(2.5),
+}));
+
+export const ResponseCountBadge = styled(Box)(({ theme }) => ({
+  background: "#f0f0f0",
+  color: "#666",
+  padding: "2px 10px",
+  borderRadius: "12px",
+  fontSize: "0.75rem",
+  fontWeight: 600,
+  marginLeft: theme.spacing(1.5),
+}));
+
 export const ConnectedFormCard = styled(Box)<BoxProps>(({ theme }) => ({
   background: "#FFFFFF",
   border: "1px solid #e0e0e0",
