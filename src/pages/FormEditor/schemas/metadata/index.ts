@@ -4,7 +4,7 @@ import { texts } from "@utils/texts";
 const formMetadataSchema = strictObject({
   id: number().optional(),
   title: string()
-    .regex(/^[\u0590-\u05FF\s]*$/, texts.heb.onlyHebrewError)
+    .regex(/^[\u05D0-\u05EA\s]*$/, texts.heb.onlyHebrewError)
     .refine((v) => v.trim().length >= 5, texts.heb.fiveLettersMinAlert)
     .max(60, "סך התווים המקסימלי הוא 60"),
   description: string()

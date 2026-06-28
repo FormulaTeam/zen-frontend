@@ -7,9 +7,7 @@ const linkedFormSchema = baseFormFieldSchema
   .safeExtend({
     typeId: literal(FieldTypeIds.linkedForm),
 
-    extra: FormFieldExtraSchema.default({
-      linkedFormId: 0,
-    }),
+    extra: FormFieldExtraSchema,
   })
   .refine((data) => !data.required, {
     message: "שדה טופס מקושר לא יכול להיות שדה חובה",
