@@ -8,6 +8,7 @@ import { useResponseState } from "../../hooks/useResponseState";
 import { Error as ErrorIcon, Add } from "@mui/icons-material";
 import { FormSectionsContainer, PageContainer } from "./styled";
 import ConnectedFormSection from "../../components/FormSection/ConnectedFormSection";
+import { AddResponseButton, ConnectedFormTitle } from "../../components/FormSection/ConnectedFormSection.styled";
 import { useChildForms } from "../../hooks/useChildForms";
 import ResponseHeader from "../../components/ResponseComponents/ResponseHeader";
 import ResponseSection from "../../components/ResponseComponents/ResponseSection";
@@ -374,7 +375,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     }
 
     const childFormTitle = getChildFormTitle(childFormData.formId);
-    const addResponseTitle = `הוספת תגובה${childFormTitle ? ` - ${childFormTitle}` : ""}`;
+    const addResponseTitle = `תגובה חדשה ב${childFormTitle || ""}`;
 
     const parentResponse: ParentResponseRef | undefined = savedParentResponseId
       ? {
@@ -384,7 +385,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       : undefined;
 
     return (
-      <Box key={`child-form-${linkedFormId}`}>
+      <Box key={`child-form-${linkedFormId}`} sx={{ mt: 2, mb: 4, width: "100%" }}>
+        <ConnectedFormTitle sx={{ mb: 2, ml: 1 }}>{childFormTitle}</ConnectedFormTitle>
+
         {childFormData.children.map(
           (child, index) =>
             childFormData.shown && (
@@ -410,18 +413,12 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
         )}
 
         {!isLoading && !viewMode && (
-          <Button
-            variant="text"
-            size="small"
-            startIcon={<Add />}
-            sx={{ minWidth: "auto", padding: "8px" }}
-            onClick={() => handleAddChildForm(childFormIndex)}>
-            <Tooltip title={addResponseTitle}>
-              <Typography variant="subtitle2" fontWeight={600}>
-                {addResponseTitle}
-              </Typography>
-            </Tooltip>
-          </Button>
+          <Box sx={{ borderTop: "1px solid #f0f0f0", mt: 2, pt: 2 }}>
+            <AddResponseButton onClick={() => handleAddChildForm(childFormIndex)}>
+              <Add />
+              {addResponseTitle}
+            </AddResponseButton>
+          </Box>
         )}
       </Box>
     );
