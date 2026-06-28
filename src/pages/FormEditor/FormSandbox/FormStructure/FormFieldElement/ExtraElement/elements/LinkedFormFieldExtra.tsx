@@ -121,7 +121,7 @@ function LinkedFormFieldExtra({ extra, onChange, validationErrors, disabled }: P
               </li>
               <li style={{ marginBottom: "6px" }}>
                 <Typography variant="caption" sx={{ fontSize: "0.8rem", lineHeight: 1.4 }}>
-                  הטפסים המוצעים לא מכילים בעצם שדה מסוג טופס מקושר
+                  הטפסים המוצעים לא מכילים בעצמם שדה מסוג טופס מקושר
                 </Typography>
               </li>
               <li>

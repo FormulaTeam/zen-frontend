@@ -849,11 +849,11 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
     const hasFields = Object.keys(fields).length > 0;
 
     const fieldValues = Object.values(fields);
-    const hasOnlyFormInFormField =
-      fieldValues.length === 1 && fieldValues[0].data?.typeId === fieldType.Form;
+    const hasOnlyFormInFormFields =
+      fieldValues.length > 0 && fieldValues.every((field) => field.data?.typeId === fieldType.Form);
 
     const isValid =
-      fieldsValid && sectionsValid && !hasMetadataErrors && hasFields && !hasOnlyFormInFormField;
+      fieldsValid && sectionsValid && !hasMetadataErrors && hasFields && !hasOnlyFormInFormFields;
 
     setFormStructure((prev) => {
       const updatedFields = { ...prev.fields };

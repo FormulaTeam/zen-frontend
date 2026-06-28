@@ -216,9 +216,9 @@ function FormEditorHeader() {
       errors.push({
         message: "לא ניתן לשמור טופס ללא שדות",
       });
-    } else if (fieldValues.length === 1 && fieldValues[0].data?.typeId === fieldType.Form) {
+    } else if (fieldValues.length > 0 && fieldValues.every((field) => field.data?.typeId === fieldType.Form)) {
       errors.push({
-        message: "לא ניתן לשמור טופס עם שדה מסוג 'טופס מקושר' כשדה יחיד",
+        message: "לא ניתן לשמור טופס המכיל שדות מסוג 'טופס מקושר' בלבד",
       });
     }
 

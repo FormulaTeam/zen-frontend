@@ -82,6 +82,29 @@ export const useDetailPanel = ({
     return visibleIds;
   }, [currentViewConfig]);
 
+  const hasVisibleFormInFormFields = useMemo(() => {
+    if (!hasFormInFormFields) {
+      return false;
+    }
+
+    if (!currentViewConfig || currentViewConfig.length === 0) {
+      return true;
+    }
+
+    if (visibleFormInFormFieldIds === null) {
+      return true;
+    }
+
+    return formFields.some((field) => {
+      const isFormType =
+        field.fieldType === fieldType.Form ||
+        (field as any).typeId === FieldTypeIds.linkedForm ||
+        (field as any).fieldType === FieldTypeIds.linkedForm;
+
+      return isFormType && visibleFormInFormFieldIds.has(field.id);
+    });
+  }, [hasFormInFormFields, currentViewConfig, visibleFormInFormFieldIds, formFields]);
+
   const getChildRowsForParent = useCallback(
     (parentRowId: string | number, linkedFormId: number | string): Row[] => {
       const parentRow = rows.find((r) => String(r.id) === String(parentRowId));
@@ -269,7 +292,7 @@ export const useDetailPanel = ({
   }, [hasFormInFormFields, allExpanded, toggleAllExpanded]);
 
   const expandColumn: GridColDef | null = useMemo(() => {
-    if (!hasFormInFormFields) {
+    if (!hasVisibleFormInFormFields) {
       return null;
     }
 
@@ -287,11 +310,11 @@ export const useDetailPanel = ({
       renderHeader: () => renderExpandAllHeader(),
       renderCell: ({ row }: { row: Row }) => renderRowExpandIcon(row),
     };
-  }, [hasFormInFormFields, renderExpandAllHeader, renderRowExpandIcon]);
+  }, [hasVisibleFormInFormFields, renderExpandAllHeader, renderRowExpandIcon]);
 
   const getDetailPanelContent = useCallback(
     (params: GridRowParams): JSX.Element => {
-      if (!hasFormInFormFields || !form) {
+      if (!hasVisibleFormInFormFields || !form) {
         return <Box />;
       }
 
@@ -321,7 +344,7 @@ export const useDetailPanel = ({
       );
     },
     [
-      hasFormInFormFields,
+      hasVisibleFormInFormFields,
       form,
       formFields,
       childrenFormsData,
@@ -355,14 +378,14 @@ export const useDetailPanel = ({
   return useMemo(
     () => ({
       expandColumn,
-      getDetailPanelContent: hasFormInFormFields ? getDetailPanelContent : undefined,
-      getDetailPanelHeight: hasFormInFormFields ? getDetailPanelHeight : undefined,
+      getDetailPanelContent: hasVisibleFormInFormFields ? getDetailPanelContent : undefined,
+      getDetailPanelHeight: hasVisibleFormInFormFields ? getDetailPanelHeight : undefined,
       detailPanelExpandedRowIds,
       handleDetailPanelExpandedRowIdsChange,
     }),
     [
       expandColumn,
-      hasFormInFormFields,
+      hasVisibleFormInFormFields,
       getDetailPanelContent,
       getDetailPanelHeight,
       detailPanelExpandedRowIds,
