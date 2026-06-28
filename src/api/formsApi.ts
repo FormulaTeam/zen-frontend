@@ -134,11 +134,11 @@ export const getCreatableLinkedResponseForms = async (
 ): Promise<FormOverviewDto[]> => {
   try {
     const response = await apiClient.get<FormOverviewDto[]>(
-      `/forms/${formId}/creatable-linked-response-forms`,
+      `/forms/${formId}/writable`,
     );
     return response?.data || [];
   } catch (error) {
-    console.error("Failed to fetch creatable linked response forms:", error);
+    console.error("Failed to fetch writable linked response forms:", error);
     throw error;
   }
 };
