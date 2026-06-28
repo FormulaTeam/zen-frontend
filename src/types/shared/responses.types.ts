@@ -20,6 +20,12 @@ export type CreateResponseDto = {
   parentResponse?: ParentResponseDto;
 };
 
+export type CreateResponseFileAttachmentDto = {
+  responseIndex: number;
+  fieldId: string;
+  fileIndex: number;
+};
+
 export type ResponseDto = z.infer<typeof ResponseSchema>;
 export type ResponseFieldValueDto = z.infer<typeof ResponseFieldValueSchema>;
 

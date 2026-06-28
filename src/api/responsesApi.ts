@@ -16,7 +16,13 @@ import {
   ResponseFieldValue,
   Row,
 } from "../utils/interfaces";
-import { BulkUpdateResponsesDto, CreateResponseDto, FormDto, ResponseDto } from "../types/shared";
+import {
+  BulkUpdateResponsesDto,
+  CreateResponseDto,
+  CreateResponseFileAttachmentDto,
+  FormDto,
+  ResponseDto,
+} from "../types/shared";
 
 const FIELD_COLUMN_PREFIX = "field:";
 
@@ -144,6 +150,41 @@ export const createResponse = async (
   }
 };
 
+export const createResponseWithFiles = async (
+  formId: number,
+  responseData: CreateResponseDto[],
+  files: File[],
+  fileAttachments: CreateResponseFileAttachmentDto[],
+  hiddenFieldIds?: string[],
+): Promise<ResponseDto[]> => {
+  try {
+    const params = hiddenFieldIds?.length
+      ? { hiddenFieldIds: hiddenFieldIds.join(",") }
+      : undefined;
+    const formData = new FormData();
+
+    formData.append("responses", JSON.stringify(responseData));
+    formData.append("fileAttachments", JSON.stringify(fileAttachments));
+    files.forEach((file) => formData.append("files", file));
+
+    const response = await apiClient.post<ResponseDto[]>(
+      `/forms/${formId}/responses/with-files`,
+      formData,
+      {
+        params,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Failed to create responses with files:", error);
+    throw error;
+  }
+};
+
 /**
  * Update responses.
  *
@@ -236,14 +277,20 @@ export const deleteResponse = async (formId: number, responseId: string): Promis
 /**
  * Fetch all deleted responses based on the provided filter.
  */
-export const getAllDeletedResponses = async (filter: Filter & { offset?: number }): Promise<any> => {
+export const getAllDeletedResponses = async (
+  filter: Filter & { offset?: number },
+): Promise<any> => {
   try {
     const formId = filter?.form_id;
     if (!formId) throw new Error("form_id is required for getAllDeletedResponses");
 
     const params = {
       ...formatParams(filter),
-      offset: filter.offset ?? (filter.pageNumber && filter.pageSize ? (filter.pageNumber - 1) * filter.pageSize : undefined),
+      offset:
+        filter.offset ??
+        (filter.pageNumber && filter.pageSize
+          ? (filter.pageNumber - 1) * filter.pageSize
+          : undefined),
     };
     delete params.softDeleted; // ensure softDeleted is not passed
 
@@ -263,7 +310,10 @@ export const getSoftDeletedResponsesGlobal = async (filter?: Filter): Promise<an
   try {
     const params = {
       limit: filter?.pageSize ?? 20,
-      offset: filter?.pageNumber !== undefined && filter?.pageSize !== undefined ? (filter.pageNumber - 1) * filter.pageSize : undefined,
+      offset:
+        filter?.pageNumber !== undefined && filter?.pageSize !== undefined
+          ? (filter.pageNumber - 1) * filter.pageSize
+          : undefined,
     };
 
     const response = await apiClient.get(`/forms/responses/soft-deleted`, { params });
@@ -370,7 +420,9 @@ export const useGetResponses = ({ filter }: { filter?: Filter }) => {
     endpoint: `/forms/${formId}/responses`,
     queryKey: () => ["responses", filter],
     params,
-    queryOptions: { enabled: !!formId && String(formId) !== "undefined" && String(formId) !== "null" },
+    queryOptions: {
+      enabled: !!formId && String(formId) !== "undefined" && String(formId) !== "null",
+    },
   });
 };
 
@@ -385,6 +437,43 @@ export const useCreateResponse = (formId?: number, hiddenFieldIds?: string[]) =>
     },
     onSuccess: (_, variables) => {
       const dataArray = Array.isArray(variables) ? variables : [variables];
+      const targetFormId = formId || (dataArray[0] as any).form_id;
+      const targetFormIdStr = String(targetFormId);
+
+      queryClient.invalidateQueries({ queryKey: ["responses", targetFormIdStr] });
+      queryClient.invalidateQueries({ queryKey: [targetFormIdStr] });
+      queryClient.invalidateQueries({ queryKey: ["fieldValues"] });
+    },
+  });
+};
+
+export const useCreateResponseWithFiles = (formId?: number, hiddenFieldIds?: string[]) => {
+  return useMutation({
+    mutationFn: ({
+      responseData,
+      files,
+      fileAttachments,
+    }: {
+      responseData: CreateResponseDto | CreateResponseDto[];
+      files: File[];
+      fileAttachments: CreateResponseFileAttachmentDto[];
+    }) => {
+      const dataArray = Array.isArray(responseData) ? responseData : [responseData];
+      const targetFormId = formId || (dataArray[0] as any).form_id;
+      if (!targetFormId) throw new Error("formId is required for createResponseWithFiles");
+
+      return createResponseWithFiles(
+        targetFormId,
+        dataArray,
+        files,
+        fileAttachments,
+        hiddenFieldIds,
+      );
+    },
+    onSuccess: (_, variables) => {
+      const dataArray = Array.isArray(variables.responseData)
+        ? variables.responseData
+        : [variables.responseData];
       const targetFormId = formId || (dataArray[0] as any).form_id;
       const targetFormIdStr = String(targetFormId);
 

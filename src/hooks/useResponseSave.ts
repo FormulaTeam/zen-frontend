@@ -1,4 +1,4 @@
-import { useCreateResponse, useUpdateResponses, softDeleteResponses } from "../api";
+import { useCreateResponse, useCreateResponseWithFiles, useUpdateResponses } from "../api";
 import { showErrorNotification, getUserName } from "../utils/utils";
 import { NotificationTexts } from "../utils/interfaces";
 import { toStoredFile, uploadFile, type ResponseFileDto, type StoredFile } from "../api/filesApi";
@@ -57,7 +57,27 @@ type FileFieldUploadDraft = {
   attachedFiles: StoredFile[];
 };
 
-const parseParentResponse = (parentResponse?: string | ParentResponseRef): ParentResponseRef | undefined => {
+const buildCreateFilesPayload = (drafts: FileFieldUploadDraft[]) => {
+  const files: File[] = [];
+  const fileAttachments: { responseIndex: number; fieldId: string; fileIndex: number }[] = [];
+
+  drafts.forEach((draft) => {
+    draft.files.forEach((file) => {
+      fileAttachments.push({
+        responseIndex: 0,
+        fieldId: draft.fieldId,
+        fileIndex: files.length,
+      });
+      files.push(file);
+    });
+  });
+
+  return { files, fileAttachments };
+};
+
+const parseParentResponse = (
+  parentResponse?: string | ParentResponseRef,
+): ParentResponseRef | undefined => {
   if (!parentResponse) return undefined;
   if (typeof parentResponse === "object") return parentResponse;
 
@@ -195,6 +215,10 @@ export const useResponseSave = (
 
   const { mutateAsync: mutateCreateResponseAsync, isPending: isCreateResponsePending } =
     useCreateResponse(formId!, hiddenFieldIds);
+  const {
+    mutateAsync: mutateCreateResponseWithFilesAsync,
+    isPending: isCreateResponseWithFilesPending,
+  } = useCreateResponseWithFiles(formId!, hiddenFieldIds);
   const { mutateAsync: mutateUpdateResponsesAsync, isPending: isUpdateResponsePending } =
     useUpdateResponses(formId, hiddenFieldIds);
 
@@ -293,40 +317,29 @@ export const useResponseSave = (
       };
 
       if (parentResponse) {
-        const results = (await mutateCreateResponseAsync(newResponse)) as ResponseDto[];
-        const createdResponse = results[0];
+        if (fileUploadDrafts.some((draft) => draft.files.length > 0)) {
+          const createFilesPayload = buildCreateFilesPayload(fileUploadDrafts);
+          const results = (await mutateCreateResponseWithFilesAsync({
+            responseData: newResponse,
+            ...createFilesPayload,
+          })) as ResponseDto[];
 
-        if (createdResponse?.id && fileUploadDrafts.some((draft) => draft.files.length > 0)) {
-          try {
-            const uploadedByFieldId = await uploadDraftFiles(
-              Number(formId),
-              createdResponse.id,
-              fileUploadDrafts,
-            );
-            let nextFieldValues = fieldValues;
-
-            uploadedByFieldId.forEach((files, fieldId) => {
-              nextFieldValues = replaceFieldValue(nextFieldValues, fieldId, buildFileValue(files));
-            });
-
-            const updatedResponses = (await mutateUpdateResponsesAsync({
-              responses: [{ responseId: createdResponse.id, fieldValues: nextFieldValues }],
-            })) as ResponseDto[];
-
-            return updatedResponses[0] ?? createdResponse;
-          } catch (uploadError: any) {
-            console.error("File upload failed after response creation:", uploadError);
-            try {
-              await softDeleteResponses(Number(formId), { responsesIds: [createdResponse.id] });
-            } catch (deleteError) {
-              console.error("Failed to delete response during rollback:", deleteError);
-            }
-            const reason = uploadError?.response?.data?.message || uploadError?.message || "שגיאת שרת";
-            throw new Error(`העלאת הקבצים נכשלה, יצירת התגובה בוטלה. סיבה: ${reason}`);
-          }
+          return results[0];
         }
 
-        return createdResponse;
+        const results = (await mutateCreateResponseAsync(newResponse)) as ResponseDto[];
+
+        return results[0];
+      }
+
+      if (fileUploadDrafts.some((draft) => draft.files.length > 0)) {
+        const createFilesPayload = buildCreateFilesPayload(fileUploadDrafts);
+        const results = (await mutateCreateResponseWithFilesAsync({
+          responseData: newResponse,
+          ...createFilesPayload,
+        })) as ResponseDto[];
+
+        return results[0];
       }
 
       const createKey = `${formId}::${JSON.stringify(fieldValues)}::${getFileDraftSignature(fileUploadDrafts)}`;
@@ -346,36 +359,6 @@ export const useResponseSave = (
       }
 
       const createdResponse = await createRequestCache.get(createKey)!;
-
-      if (createdResponse?.id && fileUploadDrafts.some((draft) => draft.files.length > 0)) {
-        try {
-          const uploadedByFieldId = await uploadDraftFiles(
-            Number(formId),
-            createdResponse.id,
-            fileUploadDrafts,
-          );
-          let nextFieldValues = fieldValues;
-
-          uploadedByFieldId.forEach((files, fieldId) => {
-            nextFieldValues = replaceFieldValue(nextFieldValues, fieldId, buildFileValue(files));
-          });
-
-          const updatedResponses = (await mutateUpdateResponsesAsync({
-            responses: [{ responseId: createdResponse.id, fieldValues: nextFieldValues }],
-          })) as ResponseDto[];
-
-          return updatedResponses[0] ?? createdResponse;
-        } catch (uploadError: any) {
-          console.error("File upload failed after response creation:", uploadError);
-          try {
-            await softDeleteResponses(Number(formId), { responsesIds: [createdResponse.id] });
-          } catch (deleteError) {
-            console.error("Failed to delete response during rollback:", deleteError);
-          }
-          const reason = uploadError?.response?.data?.message || uploadError?.message || "שגיאת שרת";
-          throw new Error(`העלאת הקבצים נכשלה, יצירת התגובה בוטלה. סיבה: ${reason}`);
-        }
-      }
 
       return createdResponse;
     } catch (error: any) {
@@ -399,6 +382,7 @@ export const useResponseSave = (
 
   return {
     saveResponse,
-    isSaving: isCreateResponsePending || isUpdateResponsePending,
+    isSaving:
+      isCreateResponsePending || isCreateResponseWithFilesPending || isUpdateResponsePending,
   };
 };

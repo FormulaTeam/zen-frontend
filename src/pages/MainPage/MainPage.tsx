@@ -189,8 +189,8 @@ function MainPage({
             <PrimaryBlueButton
               onClick={() => navigate(IPath.FORM_CREATE)}
               data-testid="create-form-button">
-              טופס חדש
               <AddIcon sx={{ ml: 1, fontSize: "22px" }} />
+              טופס חדש
             </PrimaryBlueButton>
           </GreetingBox>
 

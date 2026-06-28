@@ -1,8 +1,9 @@
 import { Box, CircularProgress, Tooltip, Typography } from "@mui/material";
 import React from "react";
 import { permission } from "formula-gear";
-import { Edit, ChevronLeft as ChevronLeftIcon } from "@mui/icons-material";
+import { Edit } from "@mui/icons-material";
 import { Save } from "lucide-react";
+import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import { Header, HeaderSection, HeaderButton } from "../../pages/Response/styled";
 
 interface ResponseHeaderProps {
@@ -81,7 +82,7 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
         )}
 
         <HeaderButton onClick={onBack} size="small" sx={{ minWidth: "50px", p: 0 }}>
-          <ChevronLeftIcon sx={{ fontSize: "28px" }} />
+          <LogoutRoundedIcon sx={{ fontSize: "28px" }} />
         </HeaderButton>
       </HeaderSection>
     </Header>

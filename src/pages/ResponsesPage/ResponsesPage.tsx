@@ -34,7 +34,7 @@ import { getQuickEditDraft, clearQuickEditDraft } from "../FormEditor/utils/draf
 import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialog";
 import ConfirmDeleteDialog from "../../components/BasePopup/ConfirmDeleteDialog";
 import { useDebounce } from "@src/hooks/utilsHooks/useDebounce";
-import { ChevronRight } from 'lucide-react';
+import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
 const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
@@ -463,20 +463,19 @@ const ResponsesPageContent = (): JSX.Element => {
                 gap: "10px",
                 minWidth: 0,
               }}>
-              <Tooltip title="חזרה">
-                <IconOnlyButton
-                  sx={responseIconButtonSx}
-                  aria-label="חזרה"
-                  onClick={handleBackClick}>
-                  <ChevronRight />
-                </IconOnlyButton>
-              </Tooltip>
-
               <Header />
             </Box>
 
-            <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+            <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end", gap: "8px", alignItems: "center" }}>
               <FormActionsToolbar />
+              <Tooltip title="יציאה">
+                <IconOnlyButton
+                  sx={responseIconButtonSx}
+                  aria-label="יציאה"
+                  onClick={handleBackClick}>
+                  <LogoutRoundedIcon />
+                </IconOnlyButton>
+              </Tooltip>
             </Box>
           </MetadataLine>
 
