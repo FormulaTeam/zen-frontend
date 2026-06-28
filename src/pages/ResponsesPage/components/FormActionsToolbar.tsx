@@ -22,14 +22,45 @@ export const SourceOperationStatus = {
   EDITING: "editing",
 } as const;
 
+const headerActionButtonBaseSx = {
+  height: 42,
+  borderRadius: "10px",
+  backgroundColor: "#ffffff",
+  color: "#1a1a24",
+  border: "none",
+  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
+  textTransform: "none",
+  fontWeight: 600,
+  lineHeight: 1,
+  transition: "background-color 160ms ease, box-shadow 160ms ease",
+
+  "&:hover": {
+    backgroundColor: "#ffffff",
+    boxShadow: "0 6px 12px rgba(15, 23, 42, 0.08)",
+  },
+
+  "&.Mui-disabled": {
+    backgroundColor: "#f8fafc",
+    color: "#94a3b8",
+    boxShadow: "none",
+  },
+};
+
+export const responseIconButtonSx = {
+  ...headerActionButtonBaseSx,
+  width: 50,
+  minWidth: 50,
+  p: 0,
+
+  "& svg": {
+    fontSize: 24,
+  },
+};
+
 export type SourceOperationStatusType =
   (typeof SourceOperationStatus)[keyof typeof SourceOperationStatus];
 
-interface FormActionsToolbarProps {
-  onBackClick?: () => void;
-}
-
-export const FormActionsToolbar = ({ onBackClick }: FormActionsToolbarProps) => {
+export const FormActionsToolbar = () => {
   const { permissions, form, setForm } = useFormStore();
   const { formId } = useParams();
   const navigate = useNavigate();
@@ -93,6 +124,7 @@ export const FormActionsToolbar = ({ onBackClick }: FormActionsToolbarProps) => 
           setAnchorElSourceType={setAnchorElSourceType}
           pushToMetro={pushToMetro}
           sourceOperationStatus={sourceOperationStatus}
+          buttonSx={responseIconButtonSx}
         />
       </PermissionGate>
 
@@ -100,6 +132,7 @@ export const FormActionsToolbar = ({ onBackClick }: FormActionsToolbarProps) => 
       <PermissionGate requiredPermissions={[permission.UpdateForm]} userPermissions={permissions}>
         <Tooltip title="עריכת טופס">
           <IconOnlyButton
+            sx={responseIconButtonSx}
             onClick={() =>
               navigate(`/forms/${formId}/edit`, {
                 state: { from: location.pathname },
@@ -114,13 +147,17 @@ export const FormActionsToolbar = ({ onBackClick }: FormActionsToolbarProps) => 
       <PermissionGate requiredPermissions={[permission.ShareForm]} userPermissions={permissions}>
         <Tooltip title="שיתוף">
           <IconOnlyButton
+            sx={responseIconButtonSx}
             disabled={!hasFormFields}
             onClick={() => {
-              setSearchParams((prev) => {
-                const updated = new URLSearchParams(prev);
-                updated.set("modal", "permissions");
-                return updated;
-              }, { replace: true });
+              setSearchParams(
+                (prev) => {
+                  const updated = new URLSearchParams(prev);
+                  updated.set("modal", "permissions");
+                  return updated;
+                },
+                { replace: true },
+              );
             }}>
             <ShareIcon />
           </IconOnlyButton>
@@ -133,22 +170,18 @@ export const FormActionsToolbar = ({ onBackClick }: FormActionsToolbarProps) => 
               const formToUpdate = updatedForm || form;
               setForm(formToUpdate as typeof form);
 
-              setSearchParams((prev) => {
-                const updated = new URLSearchParams(prev);
-                updated.delete("modal");
-                return updated;
-              }, { replace: true });
+              setSearchParams(
+                (prev) => {
+                  const updated = new URLSearchParams(prev);
+                  updated.delete("modal");
+                  return updated;
+                },
+                { replace: true },
+              );
             }}
           />
         )}
       </PermissionGate>
-
-      {/* Back (now last) */}
-      <Tooltip title="חזרה">
-        <IconOnlyButton onClick={onBackClick ?? (() => navigate("/"))}>
-          <ArrowBackIcon />
-        </IconOnlyButton>
-      </Tooltip>
 
       <SyncTypeMenu
         anchorElSourceType={anchorElSourceType}

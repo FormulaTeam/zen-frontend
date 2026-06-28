@@ -7,7 +7,7 @@ import {
   TableView,
   UploadOutlined,
 } from "@mui/icons-material";
-import { ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
+import { ListItemIcon, ListItemText, Menu, MenuItem, SxProps, Tooltip, Theme } from "@mui/material";
 import { FC, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
@@ -26,12 +26,14 @@ interface MoreOptionsProps {
   setAnchorElSourceType: React.Dispatch<React.SetStateAction<HTMLElement | null>>;
   pushToMetro: () => Promise<void>;
   sourceOperationStatus: SourceOperationStatusType;
+  buttonSx?: SxProps<Theme>;
 }
 
 export const MoreOptions: FC<MoreOptionsProps> = ({
   setAnchorElSourceType,
   pushToMetro,
   sourceOperationStatus,
+  buttonSx,
 }: MoreOptionsProps) => {
   const { formId } = useParams();
   const navigate = useNavigate();
@@ -45,15 +47,18 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
   const [showDeleteResponsesPopup, setShowDeleteResponsesPopup] = useState(false);
 
   const setShowImportFromExcelPopup = (isOpen: boolean) => {
-    setSearchParams((prev) => {
-      const updated = new URLSearchParams(prev);
-      if (isOpen) {
-        updated.set("modal", "excel-import");
-      } else {
-        updated.delete("modal");
-      }
-      return updated;
-    }, { replace: true });
+    setSearchParams(
+      (prev) => {
+        const updated = new URLSearchParams(prev);
+        if (isOpen) {
+          updated.set("modal", "excel-import");
+        } else {
+          updated.delete("modal");
+        }
+        return updated;
+      },
+      { replace: true },
+    );
   };
 
   const { mutate: deleteForm } = useDeleteForm({ id: formId ?? "" });
@@ -89,11 +94,14 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
 
   const handleImportFromExcel = () => {
     closeMoreActionsMenu();
-    setSearchParams((prev) => {
-      const updated = new URLSearchParams(prev);
-      updated.set("modal", "excel-import");
-      return updated;
-    }, { replace: true });
+    setSearchParams(
+      (prev) => {
+        const updated = new URLSearchParams(prev);
+        updated.set("modal", "excel-import");
+        return updated;
+      },
+      { replace: true },
+    );
   };
 
   const handleDeleteForm = () => {
@@ -138,7 +146,9 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
   return (
     <>
       <Tooltip title="פעולות נוספות">
-        <IconOnlyButton onClick={(event) => setAnchorElMoreActions(event.currentTarget)}>
+        <IconOnlyButton
+          sx={buttonSx}
+          onClick={(event) => setAnchorElMoreActions(event.currentTarget)}>
           <MoreVert />
         </IconOnlyButton>
       </Tooltip>

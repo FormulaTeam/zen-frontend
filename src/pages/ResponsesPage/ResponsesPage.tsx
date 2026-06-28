@@ -3,14 +3,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Box, Tooltip } from "@mui/material";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
-import { StatusCodes } from "http-status-codes";
 
 import SidePanel from "../../components/SidePanel/SidePanel";
 import SearchInfo from "../../components/Responses/SearchInfo";
 import { useAuth } from "../../contexts/AuthContext";
 import { AddResponseButton } from "./components/AddResponseButton";
 import { EditResponsesButton } from "./components/EditResponsesButton";
-import { FormActionsToolbar } from "./components/FormActionsToolbar";
+import { FormActionsToolbar, responseIconButtonSx } from "./components/FormActionsToolbar";
 import Header from "./components/Header";
 import Loader from "../../components/Responses/Loader";
 import { ResponsesTable } from "./components/ResponsesTable";
@@ -27,6 +26,7 @@ import {
   MetadataLine,
   ActionLine,
   UnifiedButton,
+  IconOnlyButton,
 } from "./styled";
 import { FormDto, FormFieldDto } from "../../types/shared";
 import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner";
@@ -34,6 +34,7 @@ import { getQuickEditDraft, clearQuickEditDraft } from "../FormEditor/utils/draf
 import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialog";
 import ConfirmDeleteDialog from "../../components/BasePopup/ConfirmDeleteDialog";
 import { useDebounce } from "@src/hooks/utilsHooks/useDebounce";
+import { ChevronRight } from 'lucide-react';
 
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
 const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
@@ -453,12 +454,29 @@ const ResponsesPageContent = (): JSX.Element => {
       <MainContentWrapper>
         <TopSection>
           <MetadataLine>
-            <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                gap: "10px",
+                minWidth: 0,
+              }}>
+              <Tooltip title="חזרה">
+                <IconOnlyButton
+                  sx={responseIconButtonSx}
+                  aria-label="חזרה"
+                  onClick={handleBackClick}>
+                  <ChevronRight />
+                </IconOnlyButton>
+              </Tooltip>
+
               <Header />
             </Box>
 
             <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-              <FormActionsToolbar onBackClick={handleBackClick} />
+              <FormActionsToolbar />
             </Box>
           </MetadataLine>
 
