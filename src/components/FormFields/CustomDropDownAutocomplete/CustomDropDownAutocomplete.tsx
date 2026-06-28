@@ -196,6 +196,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
             }}
             inputProps={{
               ...params.inputProps,
+              readOnly: true,
               value:
                 inputValue !== undefined
                   ? String(params.inputProps.value)

@@ -148,7 +148,7 @@ const FormCard = ({
     (isSuperAdmin || isCreator ? Object.values(permission) : form.permissions) ?? [];
 
   const hasMenuPermissions = userPermissions.some((perm) =>
-    [permission.UpdateForm, permission.ShareForm].includes(perm as any),
+    [permission.UpdateForm, permission.ShareForm, permission.DeleteForm].includes(perm as any),
   );
 
   return (
@@ -236,7 +236,7 @@ const FormCard = ({
 
                   <PermissionGate
                     userPermissions={userPermissions}
-                    requiredPermissions={[permission.UpdateForm]}>
+                    requiredPermissions={[permission.DeleteForm]}>
                     <MenuItem
                       onClick={handleDeleteClick}
                       sx={{ fontSize: "14px", color: theme.palette.error.main, gap: 1 }}>
