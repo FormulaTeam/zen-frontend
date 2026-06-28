@@ -24,8 +24,12 @@ export const useViewPermissions = ({
   user,
   permissionTypes = [],
 }: UseViewPermissionsProps): UseViewPermissionsReturn => {
-  // Determine if user can manage public/default views (superadmin or has form update permissions)
-  const canManagePublicViews = Boolean(user?.isSuperAdmin || permissionTypes?.includes(permission.UpdateForm));
+  // Determine if user can manage public/default views (superadmin or has form update permissions or specific view public permission)
+  const canManagePublicViews = Boolean(
+    user?.isSuperAdmin ||
+      permissionTypes?.includes(permission.UpdateForm) ||
+      permissionTypes?.includes(permission.MarkMyResponsesViewPublic),
+  );
 
   // Helper function to check if user can edit/delete a specific view
   const canEditOrDeleteView = useCallback((view?: ResponsesView): boolean => {
