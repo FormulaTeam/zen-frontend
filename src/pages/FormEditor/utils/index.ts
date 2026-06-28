@@ -107,9 +107,7 @@ function generateNewFieldData(elementTypeId: FormFieldTypeId): FormFieldData {
       data = {
         ...baseData,
         typeId: FieldTypeIds.linkedForm,
-        extra: {
-          linkedFormId: 0,
-        },
+        extra: {},
       };
       break;
 
