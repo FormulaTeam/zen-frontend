@@ -15,6 +15,7 @@ export const NavAppBar = styled(AppBar)<AppBarProps>`
   background-color: ${({ $bgColor, $isPink }) => ($isPink ? "#FF69B4" : $bgColor)} !important;
   height: 60px;
   transition: background-color 0.5s ease;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05) !important;
 `;
 
 export const NavToolbar = styled(Toolbar)`
