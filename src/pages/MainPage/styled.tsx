@@ -55,7 +55,7 @@ export const PrimaryBlueButton = styled("button")(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
   color: "white",
   height: "40px",
-  padding: "0 30px",
+  padding: "0 20px",
   fontSize: "16px",
   fontFamily: "inherit",
   fontWeight: 700,
@@ -65,6 +65,7 @@ export const PrimaryBlueButton = styled("button")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  gap: "10px",
   transition: "background-color 0.2s",
   "&:hover": {
     backgroundColor: theme.palette.primary.dark || "#1565c0",
