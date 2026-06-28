@@ -62,9 +62,9 @@ export const CardHeaderContainer = styled(Box)(({ theme }) => ({
 export const AddResponseButton = styled(Button)(({ theme }) => ({
   width: "100%",
   height: "50px",
-  border: "1px solid #1a73e8",
+  border: `1px solid ${theme.palette.primary.main}`,
   background: "#FFFFFF",
-  color: "#1a73e8",
+  color: theme.palette.primary.main,
   borderRadius: "8px",
   fontWeight: 500,
   fontSize: "0.9375rem",
@@ -75,8 +75,8 @@ export const AddResponseButton = styled(Button)(({ theme }) => ({
   textTransform: "none",
   transition: "all 0.2s ease",
   "&:hover": {
-    background: "#f0f7ff",
-    borderColor: "#1a73e8",
+    background: theme.palette.secondary.main,
+    borderColor: theme.palette.primary.main,
   },
 }));
 
