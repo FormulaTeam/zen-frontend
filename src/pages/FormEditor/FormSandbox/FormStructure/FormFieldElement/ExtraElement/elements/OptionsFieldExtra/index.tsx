@@ -35,17 +35,13 @@ function OptionsFieldExtra({
     selectionMode: mode = selectionMode.Single,
     linkedOptionsFieldId,
     defaultValue = [],
-    source,
   } = extra as any;
 
   const [selectedSource, setSelectedSource] = useState<OptionsSource>(
-    linkedOptionsFieldId || source === optionsSource.FormFieldResponses
-      ? optionsSource.FormFieldResponses
-      : optionsSource.Manual,
+    linkedOptionsFieldId ? optionsSource.FormFieldResponses : optionsSource.Manual,
   );
 
-  const isLinkedToForm =
-    selectedSource === optionsSource.FormFieldResponses;
+  const isLinkedToForm = selectedSource === optionsSource.FormFieldResponses;
   const multiple = mode === selectionMode.Multiple;
 
   const handleSourceChange = (nextSource: OptionsSource) => {
@@ -54,7 +50,7 @@ function OptionsFieldExtra({
     const isFormFieldResponses = nextSource === optionsSource.FormFieldResponses;
 
     onChange({
-      linkedOptionsFieldId: isFormFieldResponses ? linkedOptionsFieldId ?? null : null,
+      linkedOptionsFieldId: isFormFieldResponses ? (linkedOptionsFieldId ?? null) : null,
       defaultValue: [],
     });
 
@@ -74,8 +70,7 @@ function OptionsFieldExtra({
           value={selectedSource}
           onChange={(event) => {
             handleSourceChange(Number(event.target.value) as OptionsSource);
-          }}
-        >
+          }}>
           <FormControlLabel value={optionsSource.Manual} control={<Radio />} label="ידני" />
 
           <FormControlLabel

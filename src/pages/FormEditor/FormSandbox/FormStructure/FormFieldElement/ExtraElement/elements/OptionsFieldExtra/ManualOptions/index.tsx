@@ -140,7 +140,7 @@ function ManualOptions(props: Props) {
         return (
           fieldId !== id &&
           fieldData.typeId === FieldTypeIds.options &&
-          fieldExtra?.linkedOptionsFieldId === undefined &&
+          fieldExtra?.linkedOptionsFieldId == null &&
           fieldData.displayName
         );
       }),
@@ -368,8 +368,8 @@ function ManualOptions(props: Props) {
                     const controllingItems =
                       (newValue
                         ? (
-                          formStructure.fields[newValue]?.data?.options as ManualItems | undefined
-                        )?.filter((item) => item.isActive !== false)
+                            formStructure.fields[newValue]?.data?.options as ManualItems | undefined
+                          )?.filter((item) => item.isActive !== false)
                         : []) ?? [];
 
                     onDataChange?.({
