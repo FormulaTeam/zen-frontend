@@ -453,14 +453,13 @@ export const useChildForms = ({
     });
   };
 
-  const handleAddChildForm = (index: number) => {
+  const handleAddChildForm = (targetFormId: number) => {
     setChildForms((prev) => {
+      const index = prev.findIndex((f) => f.formId === targetFormId);
+      if (index === -1) return prev;
+
       const newChildForms = [...prev];
       const childForm = newChildForms[index];
-
-      if (!childForm) {
-        return prev;
-      }
 
       if (!childForm.canCreate) {
         return prev;
