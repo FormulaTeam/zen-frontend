@@ -2,12 +2,11 @@ import styled from "styled-components";
 import { Box, Paper, Typography, Card, CardContent, Button } from "@mui/material";
 
 export const ViewManagerContainer = styled(Box)`
-  padding: 16px;
   height: 100%;
-  overflow-y: auto;
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  position: relative;
 `;
 
 // Saved Views Section
@@ -20,49 +19,99 @@ export const SavedViewsContainer = styled(Box)`
 `;
 
 export const SectionTitle = styled(Typography)`
-  font-weight: 500;
+  font-weight: 700;
+  font-size: 0.85rem;
   margin-bottom: 12px;
-  color: #666;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 `;
 
-export const ViewCard = styled(Card)<{ $isSelected?: boolean }>`
-  margin-bottom: 8px;
+export const ViewCard = styled(Paper)<{ $isSelected?: boolean }>`
+  margin-bottom: 12px;
   cursor: pointer;
-  border: ${(props) => (props.$isSelected ? "2px solid #1976d2" : "2px solid #e0e0e0")};
+  border-radius: 12px !important;
+  border: ${(props) => (props.$isSelected ? "2px solid #1976d2" : "1px solid #e2e8f0")} !important;
+  box-shadow: none !important;
+  transition: all 0.16s ease !important;
+  background-color: ${(props) => (props.$isSelected ? "#f0f7ff" : "#ffffff")} !important;
+
+  &:hover {
+    background-color: ${(props) => (props.$isSelected ? "#f0f7ff" : "#f8fafc")} !important;
+    border-color: ${(props) => (props.$isSelected ? "#1976d2" : "#cbd5e1")} !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
 export const ViewCardContent = styled(CardContent)`
-  padding: 8px 16px !important;
+  padding: 14px 16px !important;
+  &:last-child {
+    padding-bottom: 14px !important;
+  }
 `;
 
 export const ViewCardActions = styled(Box)`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 `;
 
-export const ViewCardInfo = styled(Box)``;
-
-export const ViewCardButtons = styled(Box)``;
-
-export const ViewNameTypography = styled(Typography)<{ $isDefault?: boolean }>`
-  font-weight: ${(props) => (props.$isDefault ? "bold" : "normal")};
+export const ViewCardInfo = styled(Box)`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 `;
 
-export const ViewChipsContainer = styled(Typography)`
-  gap: 8px;
+export const ViewCardButtons = styled(Box)`
   display: flex;
   align-items: center;
-  margin-top: 4px;
+  gap: 4px;
+`;
+
+export const ViewNameTypography = styled(Typography)<{ $isDefault?: boolean }>`
+  font-weight: ${(props) => (props.$isDefault ? 700 : 600)} !important;
+  font-size: 1rem !important;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+export const ViewChipsContainer = styled(Box)`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
 `;
 
 // Create New View Section
 export const CreateNewViewContainer = styled(Box)`
   margin: 24px 0;
+  padding: 0 4px;
 `;
 
 export const CreateNewViewButton = styled(Button)`
   width: 100%;
+  height: 44px;
+  border-radius: 12px !important;
+  text-transform: none !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+  transition: all 0.16s ease !important;
+
+  &:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    transform: translateY(-1px);
+  }
 `;
 
 // Create/Edit View Section
@@ -70,19 +119,28 @@ export const ViewFormHeader = styled(Box)`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 16px 0;
+  margin: 16px 0 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
 `;
 
 export const ViewFormTitle = styled(Typography)`
   margin-bottom: 0 !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
 `;
 
 export const ViewFormContainer = styled(Box)`
-  margin-y: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 24px;
 `;
 
 export const ViewFormDivider = styled(Box)`
-  margin: 16px 0;
+  height: 1px;
+  background-color: #e2e8f0;
+  margin: 8px 0;
 `;
 
 // Columns Section
@@ -95,44 +153,51 @@ export const ColumnsMainContainer = styled(Box)`
 `;
 
 export const ColumnsContainer = styled(Box)`
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  background-color: #fafafa;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #ffffff;
+  overflow: hidden;
 `;
 
 export const ColumnsHeader = styled(Box)`
   display: flex;
   align-items: center;
-  padding: 8px 16px;
-  background-color: rgba(225, 225, 225, 1);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 10px 16px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
 `;
 
 export const ColumnHeaderItem = styled(Box)<{ width?: string; flex?: number; textAlign?: string }>`
   ${(props) => props.width && `width: ${props.width};`}
   ${(props) => props.flex && `flex: ${props.flex};`}
   ${(props) => props.textAlign && `text-align: ${props.textAlign};`}
-  ${(props) => props.flex && `padding-left: 8px;`}
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
 `;
 
 export const ColumnListItem = styled(Box)`
   padding: 0;
+  border-bottom: 1px solid #f1f5f9;
+  &:last-child {
+    border-bottom: none;
+  }
 `;
 
-export const ColumnItem = styled(Paper)<{ $isDragging?: boolean }>`
+export const ColumnItem = styled(Box)<{ $isDragging?: boolean }>`
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  background-color: ${(props) => (props.$isDragging ? "#f5f5f5" : "white")};
-  border: 1px solid ${(props) => (props.$isDragging ? "#2196f3" : "#e0e0e0")};
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  background-color: ${(props) => (props.$isDragging ? "#f1f5f9" : "white")};
+  transition: background-color 0.16s ease;
   width: 100%;
   &:hover {
-    background-color: #f5f5f5;
+    background-color: #f8fafc;
   }
 `;
 
@@ -140,8 +205,15 @@ export const DragHandle = styled(Box)`
   display: flex;
   align-items: center;
   margin-right: 8px;
-  color: #999;
+  color: #94a3b8;
   cursor: grab;
+  padding: 4px;
+  border-radius: 4px;
+
+  &:hover {
+    background-color: #e2e8f0;
+    color: #475569;
+  }
 
   &:active {
     cursor: grabbing;
@@ -155,20 +227,24 @@ export const ColumnInfo = styled(Box)`
   min-width: 0;
   text-align: right;
   padding-right: 8px;
+  & .MuiTypography-root {
+    font-weight: 600;
+    color: #334155;
+  }
 `;
 
 export const OrderBadge = styled(Box)`
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  background-color: #e3f2fd;
-  color: #1976d2;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 600;
-  margin-right: 8px;
+  min-width: 20px;
+  height: 20px;
+  background-color: #f1f5f9;
+  color: #64748b;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-right: 12px;
 `;
 
 // Action Buttons
@@ -179,6 +255,8 @@ export const ViewActionsContainer = styled(Box)`
 `;
 
 export const SubtitlesTypography = styled(Typography)`
-  variant="subtitle2"
-  font-size: 25px;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  color: #64748b !important;
+  margin-bottom: 8px !important;
 `;
