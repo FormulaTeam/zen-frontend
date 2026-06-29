@@ -503,9 +503,9 @@ function applyComponentDeletionToConditions(
   return modifiedConditions;
 }
 
-function useFormStructure(editedForm?: ExtendedFormDto) {
+function useFormStructure(editedForm?: ExtendedFormDto, initialCreateFormStructure?: FormStructure) {
   const [initialFormStructure, setInitialFormStructure] = useState<FormStructure>(() =>
-    editedForm ? yieldFormStructure(editedForm) : { ...getEmptyForm() },
+    editedForm ? yieldFormStructure(editedForm) : cloneDeep(initialCreateFormStructure ?? getEmptyForm()),
   );
   const [formStructure, setFormStructure] = useState<FormStructure>(initialFormStructure);
 
@@ -516,6 +516,14 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
       setFormStructure(newStructure);
     }
   }, [editedForm]);
+
+  useEffect(() => {
+    if (!editedForm && initialCreateFormStructure) {
+      const newStructure = cloneDeep(initialCreateFormStructure);
+      setInitialFormStructure(newStructure);
+      setFormStructure(newStructure);
+    }
+  }, [editedForm, initialCreateFormStructure]);
 
   const appendSection = useCallback(() => {
     setFormStructure((prev) => {

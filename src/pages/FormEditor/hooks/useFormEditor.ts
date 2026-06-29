@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCreateForm, useUpdateForm } from "@api/formsApi";
+import { getFormRoles, upsertFormRoles } from "@api/rolesApi";
 import { FormMetadata, FormStructure } from "../context/FormStructureContext";
 import { showErrorNotification, showSuccessNotification } from "@utils/utils";
 import { convertFormStructureToCreateDto } from "../utils/formStructureToDto";
@@ -8,6 +9,7 @@ import { IPath } from "../../../types/enums/global.enums";
 import queryClient from "@api/queryClient";
 import { useFormEditorContext, FORM_EDITOR_MODE } from "../context/FormEditorContext";
 import { clearFormDraft } from "../utils/draftPersistence";
+import { formRolesToQuery } from "../utils/duplicateForm";
 
 interface SaveFormOptions extends Partial<Omit<FormMetadata, "validationErrors">> {
   navigateToResponses?: boolean;
@@ -24,7 +26,7 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
   const navigate = useNavigate();
   const { mutateAsync: mutateCreateFormAsync } = useCreateForm();
   const { mutateAsync: mutateUpdateFormAsync } = useUpdateForm();
-  const { mode } = useFormEditorContext();
+  const { mode, duplicateSourceFormId, duplicateCopyPermissions } = useFormEditorContext();
   const [isLoading, setIsLoading] = useState(false);
 
   const formStructureRef = useRef(formStructure);
@@ -52,7 +54,10 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
           };
         }
 
-        const payload = convertFormStructureToCreateDto(structureToSave);
+        const payload = {
+          ...convertFormStructureToCreateDto(structureToSave),
+          ...(duplicateSourceFormId ? { duplicateSourceFormId } : {}),
+        };
 
         if (mode === FORM_EDITOR_MODE.EDIT && structureToSave.metadata.id) {
           await mutateUpdateFormAsync({ id: structureToSave.metadata.id, payload });
@@ -67,6 +72,15 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
           }
         } else {
           const createdForm = await mutateCreateFormAsync(payload);
+
+          if (duplicateSourceFormId && duplicateCopyPermissions) {
+            const sourceRoles = await getFormRoles(duplicateSourceFormId);
+            await upsertFormRoles(
+              createdForm.id,
+              formRolesToQuery(sourceRoles, createdForm.createdBy?.upn),
+            );
+          }
+
           showSuccessNotification("הטופס נשמר בהצלחה!");
           clearFormDraft(undefined);
 
@@ -81,7 +95,14 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
         setIsLoading(false);
       }
     },
-    [mutateCreateFormAsync, mutateUpdateFormAsync, mode, navigate],
+    [
+      mutateCreateFormAsync,
+      mutateUpdateFormAsync,
+      mode,
+      navigate,
+      duplicateSourceFormId,
+      duplicateCopyPermissions,
+    ],
   );
 
   const handleExit = useCallback(() => {

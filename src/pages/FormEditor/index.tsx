@@ -3,11 +3,13 @@ import { FormEditorHeader } from "./FormEditorHeader";
 import { FormSandbox } from "./FormSandbox";
 import { FormEditorContext, FormEditorMode, FORM_EDITOR_MODE } from "./context/FormEditorContext";
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useFormStructure } from "./hooks/useFormStructure";
 import { FormStructureContext } from "./context/FormStructureContext";
 import type { FormDto } from "../../types/shared";
 import { clearFormDraft, getFormDraft } from "./utils/draftPersistence";
 import DraftRecoveryBanner from "../../components/BasePopup/DraftRecoveryBanner";
+import type { DuplicateFormRouteState } from "./utils/duplicateForm";
 
 interface EditorProps {
   mode: FormEditorMode;
@@ -27,7 +29,14 @@ interface CreateModeProps extends EditorProps {
 type Props = CreateModeProps | EditModeProps;
 
 function FormEditor({ mode, editedForm }: Props) {
-  const { setFormStructure, ...formStructure } = useFormStructure(editedForm);
+  const location = useLocation();
+  const duplicateRouteState = mode === FORM_EDITOR_MODE.CREATE
+    ? (location.state as Partial<DuplicateFormRouteState> | null)
+    : null;
+  const { setFormStructure, ...formStructure } = useFormStructure(
+    editedForm,
+    duplicateRouteState?.duplicateFormStructure,
+  );
   const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<any>(null);
 
@@ -82,7 +91,13 @@ function FormEditor({ mode, editedForm }: Props) {
 
   return (
     <div className={styles.editorContainer}>
-      <FormEditorContext.Provider value={{ mode, originalFieldIds }}>
+      <FormEditorContext.Provider
+        value={{
+          mode,
+          originalFieldIds,
+          duplicateSourceFormId: duplicateRouteState?.duplicateSourceFormId,
+          duplicateCopyPermissions: !!duplicateRouteState?.duplicateCopyPermissions,
+        }}>
         <FormStructureContext.Provider value={{
           setFormStructure,
           ...formStructure,

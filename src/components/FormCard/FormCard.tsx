@@ -13,10 +13,9 @@ import {
   useTheme,
 } from "@mui/material";
 import { MoreVert, ChatBubbleOutline, EditOutlined, ShareOutlined, DeleteOutline } from "@mui/icons-material";
+import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
 import { permission } from "formula-gear";
 import UserPicker from "../UserPicker/UserPicker";
-import ShareIcon from "../../icons/share.svg";
-import { CustomIcon } from "../../theme/icons";
 import { getFormIconByName } from "../../utils/utils";
 import { highlightText } from "../../utils/highlighting";
 import CardCreationDetails from "./CardCreationDetails";
@@ -36,11 +35,16 @@ import {
   ItemTitles,
   StyledCard,
 } from "./styled";
-import { GrayShareIcon } from "./styled";
 import { FormOverviewDto } from "@src/types/shared";
-import { useDeleteForm } from "../../api/formsApi";
+import { getFormById, useDeleteForm } from "../../api/formsApi";
 import { toast } from "sonner";
 import ConfirmDeleteDialog from "../BasePopup/ConfirmDeleteDialog";
+import DuplicateFormDialog from "./DuplicateFormDialog";
+import {
+  buildDuplicatedFormStructure,
+  type DuplicateFormSelections,
+} from "@pages/FormEditor/utils/duplicateForm";
+import { IPath } from "@src/types/enums/global.enums";
 
 const FormCard = ({
   form,
@@ -61,6 +65,7 @@ const FormCard = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const showSharePopup = searchParams.get("modal") === "permissions" && searchParams.get("formId") === form.id.toString();
   const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [showDuplicatePopup, setShowDuplicatePopup] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
 
@@ -92,6 +97,44 @@ const FormCard = ({
   const handleDeleteClick = async () => {
     handleMenuClose();
     setShowDeletePopup(true);
+  };
+
+  const handleDuplicateClick = () => {
+    handleMenuClose();
+    setShowDuplicatePopup(true);
+  };
+
+  const handleDuplicateConfirm = async ({
+    selections,
+    duplicateName,
+    duplicateDescription,
+  }: {
+    selections: DuplicateFormSelections;
+    duplicateName: string;
+    duplicateDescription: string;
+  }) => {
+    const sourceForm = await getFormById(form.id);
+
+    if (!sourceForm) {
+      toast.error("לא ניתן היה לטעון את הטופס לשכפול");
+      return;
+    }
+
+    const duplicateFormStructure = buildDuplicatedFormStructure(
+      sourceForm,
+      selections,
+      duplicateName,
+      duplicateDescription,
+    );
+
+    setShowDuplicatePopup(false);
+    navigate(IPath.FORM_CREATE, {
+      state: {
+        duplicateFormStructure,
+        duplicateSourceFormId: form.id,
+        duplicateCopyPermissions: selections.permissions,
+      },
+    });
   };
 
   const confirmDelete = async () => {
@@ -149,6 +192,10 @@ const FormCard = ({
 
   const hasMenuPermissions = userPermissions.some((perm) =>
     [permission.UpdateForm, permission.ShareForm, permission.DeleteForm].includes(perm as any),
+  );
+
+  const canDuplicateForm = [permission.UpdateForm, permission.ShareForm, permission.DeleteForm].every(
+    (perm) => userPermissions.includes(perm as any),
   );
 
   return (
@@ -234,6 +281,14 @@ const FormCard = ({
                     </MenuItem>
                   </PermissionGate>
 
+                  {canDuplicateForm && (
+                    <MenuItem
+                      onClick={handleDuplicateClick}
+                      sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
+                      <ContentCopyOutlinedIcon fontSize="small" /> שכפול טופס
+                    </MenuItem>
+                  )}
+
                   <PermissionGate
                     userPermissions={userPermissions}
                     requiredPermissions={[permission.DeleteForm]}>
@@ -294,6 +349,16 @@ const FormCard = ({
             />
           )}
 
+          {showDuplicatePopup && (
+            <DuplicateFormDialog
+              open={showDuplicatePopup}
+              formName={form.name}
+              formDescription={form.description}
+              onClose={() => setShowDuplicatePopup(false)}
+              onDuplicate={handleDuplicateConfirm}
+            />
+          )}
+
           <ItemBtnsDiv>
             <PermissionGate
               userPermissions={userPermissions}
@@ -322,7 +387,7 @@ const FormCard = ({
           </ItemBtnsDiv>
         </ItemBottomDiv>
       </Box>
-      </StyledCard>
-      );
-      };
+    </StyledCard>
+  );
+};
 export default FormCard;
