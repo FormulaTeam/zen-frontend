@@ -26,7 +26,7 @@ export function useConfirmDeleteExistingField() {
       <ConfirmDeleteDialog
         open={confirmOpen}
         title="אזהרה"
-        message="לתשומת לבך! ייתכן ושדה זה מכיל תוכן כחלק מהתגובות לטופס. לכן, מחיקת השדה תוביל למחיקה והסרת הנתונים מהטופס ללא יכולת שחזור. האם למחוק שדה זה מהטופס?"
+        message="מחיקת שדה זה תסיר גם את כל הנתונים שנאספו תחתיו. פעולה זו היא בלתי הפיכה. האם ברצונך להמשיך?"
         onConfirm={handleConfirm}
         onClose={handleClose}
         confirmText="מחק שדה"
