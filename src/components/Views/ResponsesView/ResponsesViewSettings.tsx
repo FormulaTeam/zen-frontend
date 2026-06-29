@@ -12,7 +12,7 @@ import {
   Tooltip,
   Stack,
 } from "@mui/material";
-import { ArrowUpward, ArrowDownward, InfoOutline } from "@mui/icons-material";
+import { ArrowUp, ArrowDown, Info } from "lucide-react";
 import BaseFieldInput from "../../FormFields/BaseFieldInput/BaseFieldInput";
 import CustomSwitch from "../../FormFields/CustomSwitch/CustomSwitch";
 import { ViewColumn } from "../../../types/interfaces/tableViews.types";
@@ -177,7 +177,7 @@ export function ResponsesViewSettings({
 
               <Tooltip title={HebrewTitles.PUBLIC_VIEW_TOOLTIP}>
                 <IconButton size="small">
-                  <InfoOutline fontSize="small" />
+                  <Info size={16} strokeWidth={2.4} />
                 </IconButton>
               </Tooltip>
             </Stack>
@@ -200,7 +200,7 @@ export function ResponsesViewSettings({
 
               <Tooltip title={HebrewTitles.DEFAULT_VIEW_TOOLTIP}>
                 <IconButton size="small" disabled={!isPublic || !canManagePublicViews}>
-                  <InfoOutline fontSize="small" />
+                  <Info size={16} strokeWidth={2.4} />
                 </IconButton>
               </Tooltip>
             </Stack>
@@ -273,14 +273,14 @@ export function ResponsesViewSettings({
               }}>
               <Tooltip title={HebrewTitles.INCREASING_ORDER_TOOLTIP} arrow>
                 <ToggleButton value="asc">
-                  <ArrowUpward fontSize="inherit" />
+                  <ArrowUp size={16} strokeWidth={2.4} />
                   {HebrewTitles.INCREASING_ORDER}
                 </ToggleButton>
               </Tooltip>
 
               <Tooltip title={HebrewTitles.DECREASING_ORDER_TOOLTIP} arrow>
                 <ToggleButton value="desc">
-                  <ArrowDownward fontSize="inherit" />
+                  <ArrowDown size={16} strokeWidth={2.4} />
                   {HebrewTitles.DECREASING_ORDER}
                 </ToggleButton>
               </Tooltip>

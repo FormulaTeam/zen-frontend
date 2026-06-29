@@ -1,8 +1,5 @@
 import { Typography, IconButton, Stack, Tooltip, Chip } from "@mui/material";
-import { Edit } from "@mui/icons-material";
-import PublicIcon from "@mui/icons-material/Public";
-import DeleteIcon from "@mui/icons-material/Delete";
-import PushPinIcon from "@mui/icons-material/PushPin";
+import { Globe, Pencil, Trash2 } from "lucide-react";
 import {
   ViewCard,
   ViewCardContent,
@@ -85,7 +82,7 @@ export function SavedViewCard({
                 </ViewNameTypography>
                 {view.isPublic && (
                   <Tooltip title={HebrewTitles.PUBLIC_VIEW}>
-                    <PublicIcon fontSize="small" />
+                    <Globe size={16} strokeWidth={2.4} />
                   </Tooltip>
                 )}
                 {view.isDefault && <Chip label={HebrewTitles.DEFAULT} size="small"></Chip>}
@@ -110,7 +107,7 @@ export function SavedViewCard({
                         stop(e);
                         onEditView(view);
                       }}>
-                      <Edit />
+                      <Pencil size={18} strokeWidth={2.4} />
                     </IconButton>
                   </Tooltip>
                 )}
@@ -118,7 +115,7 @@ export function SavedViewCard({
                 {onDeleteView && (
                   <Tooltip title={HebrewTitles.DELETE_VIEW}>
                     <IconButton size="small" color="error" onClick={openDeletePopup}>
-                      <DeleteIcon />
+                      <Trash2 size={18} strokeWidth={2.4} />
                     </IconButton>
                   </Tooltip>
                 )}

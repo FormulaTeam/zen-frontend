@@ -1,5 +1,5 @@
 import { Typography, IconButton, Box } from "@mui/material";
-import { ArrowForwardIos } from "@mui/icons-material";
+import { ChevronRight } from "lucide-react";
 import { ViewDisplayMode } from "../../../hooks/useViewMode";
 
 interface ViewModeHeaderProps {
@@ -21,7 +21,7 @@ export function ViewModeHeader({ mode, onBack }: ViewModeHeaderProps) {
     <Box display="flex" alignItems="center" gap={1} mb={2}>
       {showBackButton && (
         <IconButton onClick={onBack} size="small" aria-label="Back">
-          <ArrowForwardIos />
+          <ChevronRight size={20} strokeWidth={2.4} />
         </IconButton>
       )}
 

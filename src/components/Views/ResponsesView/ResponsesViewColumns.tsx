@@ -1,5 +1,5 @@
 import { Box, Typography, Checkbox, List, Stack } from "@mui/material";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import { GripVertical } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { ViewColumn } from "../../../types/interfaces/tableViews.types";
 import {
@@ -69,7 +69,7 @@ export function ResponsesViewColumns({
                           <OrderBadge>{index + 1}</OrderBadge>
 
                           <DragHandle {...dragHandleProps}>
-                            <DragIndicatorIcon fontSize="small" />
+                            <GripVertical size={18} strokeWidth={2.4} />
                           </DragHandle>
                         </ColumnItem>
                       </ColumnListItem>
