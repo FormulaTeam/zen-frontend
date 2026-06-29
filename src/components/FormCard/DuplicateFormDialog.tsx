@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  FormControlLabel,
   IconButton,
   TextField,
   Tooltip,
@@ -24,6 +23,21 @@ import type { DuplicateFormSelections } from "@pages/FormEditor/utils/duplicateF
 const DUPLICATE_SUFFIX = " העתק";
 const FIELDS_DEPENDENCY_HINT = "זמין רק כאשר שדות נבחרים לשכפול";
 const NO_SELECTION_ERROR = "לא נבחרו פריטים לשכפול.";
+const selectedInputSx = {
+  backgroundColor: "#F1F5F9",
+  "& .MuiOutlinedInput-root": {
+    backgroundColor: "#FFFFFF",
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#CAD5E2",
+      borderWidth: "2px",
+    },
+  },
+  "& .MuiFormHelperText-root": {
+    backgroundColor: "#F1F5F9",
+    margin: "4px 0 0",
+    paddingInline: "14px",
+  },
+};
 
 const initialSelections: DuplicateFormSelections = {
   name: true,
@@ -34,11 +48,19 @@ const initialSelections: DuplicateFormSelections = {
   colors: true,
 };
 
+const checklistSelectionKeys: Array<keyof DuplicateFormSelections> = [
+  "permissions",
+  "fields",
+  "conditions",
+  "colors",
+];
+
 type DuplicateFormDialogProps = {
   open: boolean;
   formName: string;
   formDescription?: string | null;
   onClose: () => void;
+  onDuplicateError?: (error: unknown) => void;
   onDuplicate: (params: {
     selections: DuplicateFormSelections;
     duplicateName: string;
@@ -52,16 +74,6 @@ const checklistItems: Array<{
   description: string;
   dependsOnFields?: boolean;
 }> = [
-    {
-      key: "name",
-      label: "שם הטופס",
-      description: "שם הטופס החדש ייטען לפי שם הטופס המקורי בתוספת \"העתק\".",
-    },
-    {
-      key: "description",
-      label: "תיאור",
-      description: "תיאור הטופס המקורי יועתק לשדה התיאור בטופס החדש.",
-    },
     {
       key: "permissions",
       label: "הרשאות",
@@ -81,7 +93,7 @@ const checklistItems: Array<{
     {
       key: "colors",
       label: "צבעים",
-      description: "חוקי צבע ותצוגה בטבלה, חוקי צבע ותצוגה בטבלה יועתקו לטופס החדש.",
+      description: "חוקי צבע ותצוגה בטבלה יועתקו לטופס החדש.",
       dependsOnFields: true,
     },
   ];
@@ -91,6 +103,7 @@ function DuplicateFormDialog({
   formName,
   formDescription,
   onClose,
+  onDuplicateError,
   onDuplicate,
 }: DuplicateFormDialogProps) {
   const [selections, setSelections] = useState<DuplicateFormSelections>(initialSelections);
@@ -98,6 +111,7 @@ function DuplicateFormDialog({
   const [duplicateDescription, setDuplicateDescription] = useState(formDescription ?? "");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [nameTouched, setNameTouched] = useState(false);
 
   React.useEffect(() => {
     if (!open) {
@@ -109,15 +123,19 @@ function DuplicateFormDialog({
     setDuplicateDescription(formDescription ?? "");
     setError("");
     setIsSubmitting(false);
+    setNameTouched(false);
   }, [formDescription, formName, open]);
 
   const allMainItemsSelected = useMemo(
-    () => Object.values(selections).every(Boolean),
+    () => checklistSelectionKeys.every((key) => selections[key]),
     [selections],
   );
 
+  const hasChecklistSelection = checklistSelectionKeys.some((key) => selections[key]);
+
   const nameValidation = FormMetadataSchema.shape.title.safeParse(duplicateName);
-  const nameError = duplicateName.trim() !== "" && !nameValidation.success
+  const shouldShowNameError = nameTouched && duplicateName.trim() !== "" && !nameValidation.success;
+  const nameError = shouldShowNameError
     ? nameValidation.error.issues[0]?.message
     : "";
 
@@ -133,14 +151,6 @@ function DuplicateFormDialog({
         };
       }
 
-      if (key === "name" && !checked) {
-        setDuplicateName("");
-      }
-
-      if (key === "description" && !checked) {
-        setDuplicateDescription("");
-      }
-
       return {
         ...prev,
         [key]: checked,
@@ -154,8 +164,8 @@ function DuplicateFormDialog({
       checked
         ? initialSelections
         : {
-          name: false,
-          description: false,
+          name: true,
+          description: true,
           permissions: false,
           fields: false,
           conditions: false,
@@ -167,12 +177,13 @@ function DuplicateFormDialog({
   const handleDuplicate = async () => {
     setError("");
 
-    if (!Object.values(selections).some(Boolean)) {
+    if (!hasChecklistSelection) {
       setError(NO_SELECTION_ERROR);
       return;
     }
 
     if (!nameValidation.success) {
+      setNameTouched(true);
       setError(nameValidation.error.issues[0]?.message ?? "שם הטופס אינו תקין");
       return;
     }
@@ -188,7 +199,11 @@ function DuplicateFormDialog({
 
 
     } catch (err) {
-      setError("לא ניתן היה לשכפל את הטופס. נסו שוב.");
+      if (onDuplicateError) {
+        onDuplicateError(err);
+      } else {
+        setError("לא ניתן היה לשכפל את הטופס. נסו שוב.");
+      }
       setIsSubmitting(false);
     }
   };
@@ -203,14 +218,17 @@ function DuplicateFormDialog({
         sx: {
           borderRadius: "8px",
           p: 1,
+          width: "min(960px, calc(100vw - 48px))",
+          backgroundColor: "#F1F5F9",
+          border: "1px solid #E2E8F0",
         },
       }}>
       <IconButton
         aria-label="סגירה"
         onClick={onClose}
         disabled={isSubmitting}
-        sx={{ position: "absolute", left: 12, top: 12 }}>
-        <CloseIcon />
+        sx={{ position: "absolute", right: 12, top: 12, width: 32, height: 32, p: 0.5 }}>
+        <CloseIcon sx={{ fontSize: 20 }} />
       </IconButton>
 
       <DialogTitle sx={{ textAlign: "center", pb: 0 }}>
@@ -222,82 +240,89 @@ function DuplicateFormDialog({
         </Typography>
       </DialogTitle>
 
-      <DialogContent sx={{ px: 4, pt: 3 }}>
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mb: 4 }}>
-          <TextField
-            label="שם הטופס"
-            value={duplicateName}
-            onChange={(event) => {
-              setDuplicateName(event.target.value.trimStart());
-              setSelections((prev) => ({ ...prev, name: true }));
-              setError("");
-            }}
-            error={!!nameError || error === nameError}
-            helperText={nameError}
-            disabled={isSubmitting}
-            inputProps={{ maxLength: 60 }}
-            fullWidth
-          />
-          <TextField
-            label="תיאור הטופס"
-            value={duplicateDescription}
-            onChange={(event) => {
-              setDuplicateDescription(event.target.value.trimStart());
-              setSelections((prev) => ({ ...prev, description: true }));
-              setError("");
-            }}
-            disabled={isSubmitting}
-            inputProps={{ maxLength: 255 }}
-            fullWidth
-          />
+      <DialogContent sx={{ px: 5, pt: '20px !important' }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2.5, mb: 8 }}>
+          <Box>
+            <Typography sx={{ mb: 1, fontSize: 15, fontWeight: 500, color: "#020618" }}>
+              שם הטופס
+            </Typography>
+            <TextField
+              value={duplicateName}
+              onChange={(event) => {
+                setDuplicateName(event.target.value.trimStart());
+                setNameTouched(true);
+                setSelections((prev) => ({ ...prev, name: true }));
+                setError("");
+              }}
+              onBlur={() => setNameTouched(true)}
+              error={shouldShowNameError}
+              helperText={nameError}
+              disabled={isSubmitting}
+              inputProps={{ maxLength: 60 }}
+              sx={selectedInputSx}
+              fullWidth
+            />
+          </Box>
+          <Box>
+            <Typography sx={{ mb: 1, fontSize: 15, fontWeight: 500, color: "#020618" }}>
+              תיאור הטופס
+            </Typography>
+            <TextField
+              value={duplicateDescription}
+              onChange={(event) => {
+                setDuplicateDescription(event.target.value.trimStart());
+                setSelections((prev) => ({ ...prev, description: true }));
+                setError("");
+              }}
+              placeholder="מלא תיאור טופס"
+              disabled={isSubmitting}
+              inputProps={{ maxLength: 255 }}
+              sx={selectedInputSx}
+              fullWidth
+            />
+          </Box>
         </Box>
 
-        <Box sx={{ borderBottom: "1px solid #d8e2ef", pb: 1.5, mb: 1 }}>
-          <FormControlLabel
-            label={<Typography sx={{ fontWeight: 600 }}>בחר את כל הרכיבים</Typography>}
-            control={
-              <Checkbox
-                checked={allMainItemsSelected}
-                indeterminate={!allMainItemsSelected && Object.values(selections).some(Boolean)}
-                onChange={(event) => toggleAll(event.target.checked)}
-                disabled={isSubmitting}
-              />
-            }
-          />
+        <Box sx={{ borderBottom: "1px solid #E2E8F0", py: 2, mb: 2 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "32px 180px 1fr", gap: 1.5, alignItems: "center" }}>
+            <Checkbox
+              checked={allMainItemsSelected}
+              indeterminate={!allMainItemsSelected && hasChecklistSelection}
+              onChange={(event) => toggleAll(event.target.checked)}
+              disabled={isSubmitting}
+              sx={{ p: 0 }}
+            />
+            <Typography sx={{ fontWeight: 500, fontSize: '1.2rem !important', color: "#020618" }}>
+              בחר את כל הרכיבים
+            </Typography>
+          </Box>
         </Box>
 
         {checklistItems.map((item) => {
           const disabled = item.dependsOnFields && !selections.fields;
           const control = (
-            <FormControlLabel
-              key={item.key}
+            <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: "auto 130px 1fr",
+                gridTemplateColumns: "32px 100px 1fr",
                 gap: 1.5,
-                mx: 0,
-                py: 1.1,
+                py: 0.8,
                 opacity: disabled ? 0.55 : 1,
                 alignItems: "center",
-              }}
-              label={
-                <>
-                  <Typography sx={{ fontSize: 15, fontWeight: 700, color: "#020618" }}>
-                    {item.label}
-                  </Typography>
-                  <Typography sx={{ fontSize: 14, color: "#64748b", lineHeight: 1.5 }}>
-                    {item.description}
-                  </Typography>
-                </>
-              }
-              control={
-                <Checkbox
-                  checked={selections[item.key]}
-                  onChange={(event) => updateSelection(item.key, event.target.checked)}
-                  disabled={disabled || isSubmitting}
-                />
-              }
-            />
+              }}>
+              <Checkbox
+                checked={selections[item.key]}
+                onChange={(event) => updateSelection(item.key, event.target.checked)}
+                disabled={disabled || isSubmitting}
+                sx={{ p: 0 }}
+              />
+              <Typography sx={{ fontSize: '1.2rem !important', fontWeight: 500, color: "#020618" }}>
+                {item.label}
+              </Typography>
+              <Typography sx={{ fontSize: '1.2rem !important', color: "#64748b", lineHeight: 1.35 }}>
+                {item.description}
+              </Typography>
+            </Box>
           );
 
           return (
@@ -309,12 +334,13 @@ function DuplicateFormDialog({
               ) : (
                 control
               )}
-              {item.key !== "colors" && <Divider />}
             </React.Fragment>
           );
         })}
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 3, color: "#64748b" }}>
+        <Divider sx={{ mt: 2.5, mb: 2.5, borderColor: "#E2E8F0" }} />
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "#62748E" }}>
           <InfoOutlinedIcon fontSize="small" />
           <Typography sx={{ fontSize: 15 }}>נתוני תגובות לא יועתקו בטופס החדש.</Typography>
         </Box>
@@ -327,7 +353,7 @@ function DuplicateFormDialog({
       </DialogContent>
 
       <DialogActions sx={{ justifyContent: "flex-end", px: 4, pb: 3, gap: 1 }}>
-        <Button variant="outlined" onClick={onClose} disabled={isSubmitting}>
+        <Button sx={{ color: '#0F172B', outline: '1px solid #E2E8F0 !important', px: 3, backgroundColor: "#FFFFFF" }} onClick={onClose} disabled={isSubmitting}>
           ביטול
         </Button>
 

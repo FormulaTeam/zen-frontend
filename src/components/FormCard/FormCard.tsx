@@ -116,8 +116,7 @@ const FormCard = ({
     const sourceForm = await getFormById(form.id);
 
     if (!sourceForm) {
-      toast.error("לא ניתן היה לטעון את הטופס לשכפול");
-      return;
+      throw new Error("Source form could not be loaded for duplication");
     }
 
     const duplicateFormStructure = buildDuplicatedFormStructure(
@@ -134,6 +133,14 @@ const FormCard = ({
         duplicateSourceFormId: form.id,
         duplicateCopyPermissions: selections.permissions,
       },
+    });
+  };
+
+  const handleDuplicateError = () => {
+    setShowDuplicatePopup(false);
+    toast.error(`לא ניתן היה לשכפל את הטופס "${form.name}".`, {
+      duration: 4000,
+      position: "top-right",
     });
   };
 
@@ -355,6 +362,7 @@ const FormCard = ({
               formName={form.name}
               formDescription={form.description}
               onClose={() => setShowDuplicatePopup(false)}
+              onDuplicateError={handleDuplicateError}
               onDuplicate={handleDuplicateConfirm}
             />
           )}
