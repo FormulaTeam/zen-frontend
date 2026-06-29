@@ -105,12 +105,12 @@ export const HeaderButton = styled(Button)(({ theme }) => ({
   borderRadius: "10px !important",
   fontWeight: "600 !important",
   textTransform: "none !important",
-  height: "42px",
+  height: "50px",
   boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important",
   display: "flex",
   alignItems: "center",
   transition: "all 0.2s ease-in-out !important",
-  padding: "0 16px !important",
+  padding: "0 16px",
 
   "&:hover": {
     backgroundColor: "#ffffff !important",

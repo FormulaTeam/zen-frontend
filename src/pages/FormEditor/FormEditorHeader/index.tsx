@@ -34,8 +34,7 @@ import ValidationErrorsDialog, {
 import UnsavedChangesDialog from "../../../components/BasePopup/UnsavedChangesDialog";
 import { clearFormDraft } from "../utils/draftPersistence";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import { Save } from "lucide-react";
-import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
+import { Save, LogOut } from "lucide-react";
 import { FormMetadataSchema } from "../schemas/metadata";
 
 type FormValidationResult = {
@@ -53,7 +52,7 @@ const METADATA_FIELD_LABELS: Record<string, string> = {
 const DEFAULT_UNTITLED_FORM_TITLE = "טופס ללא שם";
 
 const headerActionButtonBaseSx = {
-  height: 42,
+  height: 50,
   borderRadius: "10px",
   backgroundColor: "#ffffff",
   color: "#1a1a24",
@@ -627,7 +626,7 @@ function FormEditorHeader() {
             disableElevation
             aria-label="יציאה"
             sx={exitHeaderButtonSx}>
-            <LogoutRoundedIcon sx={{ fontSize: 28 }} />
+            <LogOut size={24} strokeWidth={2.4} />
           </Button>
         </span>
       </Tooltip>

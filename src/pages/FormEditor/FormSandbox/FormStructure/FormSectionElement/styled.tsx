@@ -1,6 +1,13 @@
 import { styled, Typography, Accordion, AccordionSummary, InputBase } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Check, Close, DeleteOutlined, DriveFileRenameOutline, ExpandMore, KeyboardDoubleArrowRight } from "@mui/icons-material";
+import {
+  Check as CheckIcon,
+  ChevronDown,
+  ChevronsRight,
+  Pencil,
+  Trash2,
+  X as XIcon,
+} from "lucide-react";
 import { Resizable } from "re-resizable";
 
 export const SectionTitleText = styled(Typography)({
@@ -85,38 +92,47 @@ export const StyledResizable = styled(Resizable)({
   paddingBottom: 20,
 });
 
-export const SaveButtonIcon = styled(Check)({
-  fontSize: 20,
-  color: "#308e63",
+const LucideIconWrapper = styled("div")({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 });
 
-export const CancelButtonIcon = styled(Close)({
-  fontSize: 20,
-  color: "#a54160",
-});
+export const SaveButtonIcon = (props: any) => (
+  <LucideIconWrapper>
+    <CheckIcon size={20} strokeWidth={2.4} color="#308e63" {...props} />
+  </LucideIconWrapper>
+);
 
-export const EditButtonIcon = styled(DriveFileRenameOutline)({
-  fontSize: 20,
-  color: "#506f9e",
-});
+export const CancelButtonIcon = (props: any) => (
+  <LucideIconWrapper>
+    <XIcon size={20} strokeWidth={2.4} color="#a54160" {...props} />
+  </LucideIconWrapper>
+);
 
-export const ExpandIcon = styled(ExpandMore)<{ expanded?: number }>(({ expanded }) => ({
-  fontSize: 25,
+export const EditButtonIcon = (props: any) => (
+  <LucideIconWrapper>
+    <Pencil size={20} strokeWidth={2.4} color="#506f9e" {...props} />
+  </LucideIconWrapper>
+);
+
+export const ExpandIcon = styled(({ expanded, ...props }: any) => (
+  <ChevronDown size={25} strokeWidth={2.4} {...props} />
+))(({ expanded }) => ({
   transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
   transition: "transform 0.3s ease",
 }));
 
-export const DeleteIcon = styled(DeleteOutlined, {
-  shouldForwardProp: (prop) => prop !== 'ownerState',
-})<{
-  ownerState?: { isLastSection?: boolean }
-}>(({ ownerState }) => ({
-  fontSize: 28,
+export const DeleteIcon = styled(({ ownerState, ...props }: any) => (
+  <Trash2 size={28} strokeWidth={2.4} {...props} />
+))(({ ownerState }) => ({
   transition: "color 0.2s",
   color: ownerState?.isLastSection ? "#85878D" : "#b53442",
 }));
-export const CatalogArrowIcon = styled(KeyboardDoubleArrowRight)({
-  fontSize: 35,
+
+export const CatalogArrowIcon = styled((props: any) => (
+  <ChevronsRight size={35} strokeWidth={2.4} {...props} />
+))({
   marginTop: 4,
   marginInlineEnd: 8,
   color: "#A3A6AE",

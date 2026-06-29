@@ -11,14 +11,15 @@ import {
   IconButton,
   Tooltip,
   Stack,
+  Switch,
 } from "@mui/material";
-import { ArrowUpward, ArrowDownward, InfoOutline } from "@mui/icons-material";
+import { ArrowUp, ArrowDown, Info, X } from "lucide-react";
 import BaseFieldInput from "../../FormFields/BaseFieldInput/BaseFieldInput";
-import CustomSwitch from "../../FormFields/CustomSwitch/CustomSwitch";
 import { ViewColumn } from "../../../types/interfaces/tableViews.types";
 import { SubtitlesTypography } from "../ViewManager/styled";
 import { FormFieldDto } from "../../../types/shared";
 import * as Gear from "formula-gear";
+import { IconOnlyButton, formInfoTooltipSlotProps } from "../../../pages/ResponsesPage/styled";
 
 const getGearConstant = (key: string) => {
   const g = Gear as any;
@@ -117,28 +118,40 @@ export function ResponsesViewSettings({
     <Box
       display="flex"
       flexDirection="column"
-      gap={-0.5}
       sx={{
         width: "100%",
         alignItems: "stretch",
+        gap: 2.5,
       }}>
-      <SubtitlesTypography>
-        {<span style={{ color: "rgba(222, 86, 75)" }}>✱ </span>}
-        {HebrewTitles.VIEW_NAME}
-      </SubtitlesTypography>
+      <Box>
+        <SubtitlesTypography>
+          {<span style={{ color: "rgba(222, 86, 75)" }}>✱ </span>}
+          {HebrewTitles.VIEW_NAME}
+        </SubtitlesTypography>
 
-      <BaseFieldInput
-        value={viewName}
-        onChange={(event) => setViewName(event.target.value.slice(0, 25))}
-        fullWidth
-        placeholder={VIEW_NAME_PLACEHOLDER}
-        disabled={!canEdit}
-        inputProps={{ maxLength: 25 }}
-      />
+        <BaseFieldInput
+          value={viewName}
+          onChange={(event) => setViewName(event.target.value.slice(0, 25))}
+          fullWidth
+          placeholder={VIEW_NAME_PLACEHOLDER}
+          disabled={!canEdit}
+          inputProps={{ maxLength: 25 }}
+          adornment={
+            <Typography
+              variant="caption"
+              sx={{
+                color: viewName.length === 25 ? "error.main" : "text.secondary",
+                fontWeight: viewName.length === 25 ? 600 : 400,
+                fontSize: "0.85rem",
+                mr: -1,
+              }}>
+              {viewName.length}/25
+            </Typography>
+          }
+        />
 
-      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mt={0.5}>
-        <Box flex={1} minWidth={0}>
-          {viewNameError && (
+        {viewNameError && (
+          <Box mt={0.5}>
             <Typography
               variant="caption"
               color="error"
@@ -147,162 +160,160 @@ export function ResponsesViewSettings({
                 textAlign: "right",
                 direction: "rtl",
                 unicodeBidi: "plaintext",
-              }}
-            >
+              }}>
               {viewNameError}
             </Typography>
-          )}
-        </Box>
-        <Typography
-          variant="caption"
-          sx={{
-            color: viewName.length === 25 ? "error.main" : "text.secondary",
-            fontWeight: viewName.length === 25 ? 600 : 400,
-            transition: "color 160ms ease, font-weight 160ms ease",
-            ml: 2,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {viewName.length}/25
-        </Typography>
+          </Box>
+        )}
       </Box>
 
       {canEdit && canManagePublicViews && (
-        <Stack spacing={-4}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Typography variant="subtitle1" noWrap color="text.primary">
+        <Box display="flex" flexDirection="column" gap={0.5} mt={1}>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Box display="flex" alignItems="center" gap={0.5}>
+              <Typography
+                variant="subtitle1"
+                noWrap
+                color="text.primary"
+                sx={{ fontWeight: 600, fontSize: "0.95rem" }}>
                 {HebrewTitles.PUBLIC_VIEW}
               </Typography>
 
-              <Tooltip title={HebrewTitles.PUBLIC_VIEW_TOOLTIP}>
-                <IconButton size="small">
-                  <InfoOutline fontSize="small" />
-                </IconButton>
+              <Tooltip title={HebrewTitles.PUBLIC_VIEW_TOOLTIP} slotProps={formInfoTooltipSlotProps} arrow>
+                <Box display="flex" sx={{ color: "#94a3b8", cursor: "help" }}>
+                  <Info size={14} strokeWidth={2.4} />
+                </Box>
               </Tooltip>
-            </Stack>
+            </Box>
 
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <CustomSwitch
-                label=""
-                isDisabled={!canManagePublicViews}
-                value={isPublic}
-                onChangeHandler={handleSwitchPublic}
-              />
-            </Stack>
-          </Stack>
+            <Switch
+              checked={isPublic}
+              onChange={(e) => handleSwitchPublic(e.target.checked)}
+              disabled={!canManagePublicViews}
+              sx={{ mr: -1.2 }}
+            />
+          </Box>
 
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Typography variant="subtitle1" noWrap color="text.primary">
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Box display="flex" alignItems="center" gap={0.5}>
+              <Typography
+                variant="subtitle1"
+                noWrap
+                color="text.primary"
+                sx={{ fontWeight: 600, fontSize: "0.95rem" }}>
                 {HebrewTitles.DEFAULT_VIEW}
               </Typography>
 
-              <Tooltip title={HebrewTitles.DEFAULT_VIEW_TOOLTIP}>
-                <IconButton size="small" disabled={!isPublic || !canManagePublicViews}>
-                  <InfoOutline fontSize="small" />
-                </IconButton>
+              <Tooltip title={HebrewTitles.DEFAULT_VIEW_TOOLTIP} slotProps={formInfoTooltipSlotProps} arrow>
+                <Box display="flex" sx={{ color: "#94a3b8", cursor: "help" }}>
+                  <Info size={14} strokeWidth={2.4} />
+                </Box>
               </Tooltip>
-            </Stack>
+            </Box>
 
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <CustomSwitch
-                label=""
-                value={isDefault}
-                onChangeHandler={setIsDefault}
-                isDisabled={!isPublic || !canManagePublicViews}
-              />
-            </Stack>
-          </Stack>
-        </Stack>
+            <Switch
+              checked={isDefault}
+              onChange={(e) => setIsDefault(e.target.checked)}
+              disabled={!isPublic || !canManagePublicViews}
+              sx={{ mr: -1.2 }}
+            />
+          </Box>
+        </Box>
       )}
 
-      <SubtitlesTypography mb={0.8}>{HebrewTitles.SORT_BY}</SubtitlesTypography>
+      <Box>
+        <SubtitlesTypography>{HebrewTitles.SORT_BY}</SubtitlesTypography>
 
-      <Box display="flex" flexDirection="column" gap={1}>
-        <FormControl size="small" sx={{ minWidth: 240, flexGrow: 1 }} disabled={!canEdit}>
-          <InputLabel>{HebrewTitles.CHOOSE_COLUMN}</InputLabel>
+        <Box display="flex" flexDirection="column" gap={1.5}>
+          <FormControl size="small" fullWidth disabled={!canEdit}>
+            <InputLabel>{HebrewTitles.CHOOSE_COLUMN}</InputLabel>
 
-          <Select
-            value={sortedColumn?.columnId ?? ""}
-            label={HebrewTitles.CHOOSE_COLUMN}
-            onChange={(event) =>
-              event.target.value ? setSortColumn(event.target.value as string, "asc") : clearSort()
-            }>
-            <MenuItem value="">
-              <em>{HebrewTitles.NO_SORTING}</em>
-            </MenuItem>
-
-            {visibleColumns.map((column: ViewColumn) => (
-              <MenuItem
-                key={column.columnId}
-                value={column.columnId}
-                disabled={!getIsColumnSortable(column.columnId)}>
-                {column.displayName}
+            <Select
+              value={sortedColumn?.columnId ?? ""}
+              label={HebrewTitles.CHOOSE_COLUMN}
+              onChange={(event) =>
+                event.target.value ? setSortColumn(event.target.value as string, "asc") : clearSort()
+              }>
+              <MenuItem value="">
+                <em>{HebrewTitles.NO_SORTING}</em>
               </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
 
-        {sortedColumn && (
-          <Box display="flex" gap={2} alignItems="center">
-            <ToggleButtonGroup
-              exclusive
-              value={sortedColumn.direction}
-              onChange={(_, value) => value && setSortColumn(sortedColumn.columnId, value)}
-              size="small"
-              disabled={!canEdit}
-              sx={{
-                border: "none",
-                "& .MuiToggleButton-root": {
-                  border: "none",
-                  textTransform: "none",
-                  px: 1.5,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  borderRadius: 0,
-                  backgroundColor: "transparent",
-                },
-                "& .MuiToggleButton-root.Mui-selected": {
-                  backgroundColor: "rgba(0,0,0,0.2)",
-                },
-                "& .MuiToggleButton-root:hover": {
-                  backgroundColor: "rgba(0,0,0,0.1)",
-                },
-              }}>
-              <Tooltip title={HebrewTitles.INCREASING_ORDER_TOOLTIP} arrow>
-                <ToggleButton value="asc">
-                  <ArrowUpward fontSize="inherit" />
-                  {HebrewTitles.INCREASING_ORDER}
-                </ToggleButton>
-              </Tooltip>
+              {visibleColumns.map((column: ViewColumn) => (
+                <MenuItem
+                  key={column.columnId}
+                  value={column.columnId}
+                  disabled={!getIsColumnSortable(column.columnId)}>
+                  {column.displayName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-              <Tooltip title={HebrewTitles.DECREASING_ORDER_TOOLTIP} arrow>
-                <ToggleButton value="desc">
-                  <ArrowDownward fontSize="inherit" />
-                  {HebrewTitles.DECREASING_ORDER}
-                </ToggleButton>
-              </Tooltip>
-            </ToggleButtonGroup>
-
-            <Tooltip title={HebrewTitles.CLEAR_SORT} arrow>
-              <IconButton
+          {sortedColumn && (
+            <Box display="flex" gap={1.5} alignItems="center" justifyContent="space-between">
+              <ToggleButtonGroup
+                exclusive
+                value={sortedColumn.direction}
+                onChange={(_, value) => value && setSortColumn(sortedColumn.columnId, value)}
                 size="small"
-                onClick={clearSort}
                 disabled={!canEdit}
                 sx={{
-                  borderRadius: 0,
-                  padding: 1,
-                  "&:hover": {
-                    backgroundColor: "rgba(0,0,0,0.08)",
+                  flex: 1,
+                  display: "flex",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                  "& .MuiToggleButton-root": {
+                    flex: 1,
+                    border: "none",
+                    textTransform: "none",
+                    height: 36,
+                    fontWeight: 600,
+                    gap: 1,
+                    color: "#64748b",
+                    "&.Mui-selected": {
+                      backgroundColor: "#f1f5f9",
+                      color: "#1e293b",
+                    },
+                    "&:hover": {
+                      backgroundColor: "#f8fafc",
+                    },
                   },
                 }}>
-                ✕
-              </IconButton>
-            </Tooltip>
-          </Box>
-        )}
+                <Tooltip title={HebrewTitles.INCREASING_ORDER_TOOLTIP} arrow>
+                  <ToggleButton value="asc">
+                    <ArrowUp size={14} strokeWidth={2.4} />
+                    {HebrewTitles.INCREASING_ORDER}
+                  </ToggleButton>
+                </Tooltip>
+
+                <Tooltip title={HebrewTitles.DECREASING_ORDER_TOOLTIP} arrow>
+                  <ToggleButton value="desc">
+                    <ArrowDown size={14} strokeWidth={2.4} />
+                    {HebrewTitles.DECREASING_ORDER}
+                  </ToggleButton>
+                </Tooltip>
+              </ToggleButtonGroup>
+
+              <Tooltip title={HebrewTitles.CLEAR_SORT} arrow>
+                <IconOnlyButton
+                  size="small"
+                  onClick={clearSort}
+                  disabled={!canEdit}
+                  $hoverColor="#ef4444"
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    backgroundColor: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "8px",
+                  }}>
+                  <X size={16} strokeWidth={2.4} />
+                </IconOnlyButton>
+              </Tooltip>
+            </Box>
+          )}
+        </Box>
       </Box>
     </Box>
   );

@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { IconButton, Typography } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { X } from "lucide-react";
 
 import { SidePanelContainer, SidePanelHeader, SidePanelContent } from "./styled";
 import { ViewManager } from "../Views/ViewManager/ViewManager";
@@ -73,7 +73,7 @@ const SidePanel: React.FC<SidePanelProps> = ({
         </Typography>
 
         <IconButton onClick={onClose} size="small">
-          <CloseIcon />
+          <X size={20} strokeWidth={2.4} />
         </IconButton>
       </SidePanelHeader>
 

@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { Add, AutoAwesome } from "@mui/icons-material";
+import { Plus, Sparkles } from "lucide-react";
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { useViewPermissions } from "../../../hooks/useViewPermissions";
 import {
@@ -93,7 +93,10 @@ export function SavedViewsList({
       {onCreateNew && (
         <CreateNewViewContainer>
           {hasViews ? (
-            <CreateNewViewButton variant="contained" startIcon={<Add />} onClick={onCreateNew}>
+            <CreateNewViewButton
+              variant="contained"
+              startIcon={<Plus size={20} strokeWidth={2.4} />}
+              onClick={onCreateNew}>
               {HebrewTitles.CreateNewView}
             </CreateNewViewButton>
           ) : (
@@ -103,8 +106,16 @@ export function SavedViewsList({
 
               <CreateFirstViewButton
                 variant="contained"
-                endIcon={<AutoAwesome />}
-                onClick={onCreateNew}>
+                endIcon={<Sparkles size={20} strokeWidth={2.4} />}
+                onClick={onCreateNew}
+                sx={{
+                  height: 48,
+                  borderRadius: "14px",
+                  px: 4,
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                }}>
                 {HebrewTitles.CreateFirstView}
               </CreateFirstViewButton>
             </EmptyViewsState>
