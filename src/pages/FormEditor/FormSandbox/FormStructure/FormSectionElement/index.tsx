@@ -303,7 +303,7 @@ function FormSectionElement({ id }: Props) {
         setShowAlertMsg(false);
       }}
       onClose={() => setShowAlertMsg(false)}
-      confirmText="מחק מקטע"
+      confirmText={texts.heb.deleteSection}
     />
   );
 
