@@ -1,4 +1,4 @@
-import { Typography, IconButton, Stack, Tooltip, Chip } from "@mui/material";
+import { Typography, Stack, Tooltip, Chip } from "@mui/material";
 import { Globe, Pencil, Trash2 } from "lucide-react";
 import {
   ViewCard,
@@ -12,6 +12,7 @@ import {
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { useState } from "react";
 import ConfirmDeleteDialog from "../../BasePopup/ConfirmDeleteDialog";
+import { IconOnlyButton } from "../../../pages/ResponsesPage/styled";
 
 enum HebrewTitles {
   EDIT_VIEW = "עריכת תצוגה",
@@ -101,22 +102,22 @@ export function SavedViewCard({
               <ViewCardButtons>
                 {onEditView && (
                   <Tooltip title={HebrewTitles.EDIT_VIEW}>
-                    <IconButton
+                    <IconOnlyButton
                       size="small"
                       onClick={(e) => {
                         stop(e);
                         onEditView(view);
                       }}>
                       <Pencil size={18} strokeWidth={2.4} />
-                    </IconButton>
+                    </IconOnlyButton>
                   </Tooltip>
                 )}
 
                 {onDeleteView && (
                   <Tooltip title={HebrewTitles.DELETE_VIEW}>
-                    <IconButton size="small" color="error" onClick={openDeletePopup}>
+                    <IconOnlyButton size="small" onClick={openDeletePopup} $hoverColor="red">
                       <Trash2 size={18} strokeWidth={2.4} />
-                    </IconButton>
+                    </IconOnlyButton>
                   </Tooltip>
                 )}
               </ViewCardButtons>

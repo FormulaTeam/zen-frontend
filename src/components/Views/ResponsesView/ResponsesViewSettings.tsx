@@ -134,38 +134,35 @@ export function ResponsesViewSettings({
         placeholder={VIEW_NAME_PLACEHOLDER}
         disabled={!canEdit}
         inputProps={{ maxLength: 25 }}
+        adornment={
+          <Typography
+            variant="caption"
+            sx={{
+              color: viewName.length === 25 ? "error.main" : "text.secondary",
+              fontWeight: viewName.length === 25 ? 600 : 400,
+              fontSize: "0.85rem",
+              mr: -1,
+            }}>
+            {viewName.length}/25
+          </Typography>
+        }
       />
 
-      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mt={0.5}>
-        <Box flex={1} minWidth={0}>
-          {viewNameError && (
-            <Typography
-              variant="caption"
-              color="error"
-              sx={{
-                display: "block",
-                textAlign: "right",
-                direction: "rtl",
-                unicodeBidi: "plaintext",
-              }}
-            >
-              {viewNameError}
-            </Typography>
-          )}
+      {viewNameError && (
+        <Box mt={0.5}>
+          <Typography
+            variant="caption"
+            color="error"
+            sx={{
+              display: "block",
+              textAlign: "right",
+              direction: "rtl",
+              unicodeBidi: "plaintext",
+            }}>
+            {viewNameError}
+          </Typography>
         </Box>
-        <Typography
-          variant="caption"
-          sx={{
-            color: viewName.length === 25 ? "error.main" : "text.secondary",
-            fontWeight: viewName.length === 25 ? 600 : 400,
-            transition: "color 160ms ease, font-weight 160ms ease",
-            ml: 2,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {viewName.length}/25
-        </Typography>
-      </Box>
+      )}
 
       {canEdit && canManagePublicViews && (
         <Stack spacing={-4}>
