@@ -190,8 +190,7 @@ export function ResponsesViewSettings({
               checked={isPublic}
               onChange={(e) => handleSwitchPublic(e.target.checked)}
               disabled={!canManagePublicViews}
-              size="small"
-              sx={{ mr: -1 }}
+              sx={{ mr: -1.2 }}
             />
           </Box>
 
@@ -216,8 +215,7 @@ export function ResponsesViewSettings({
               checked={isDefault}
               onChange={(e) => setIsDefault(e.target.checked)}
               disabled={!isPublic || !canManagePublicViews}
-              size="small"
-              sx={{ mr: -1 }}
+              sx={{ mr: -1.2 }}
             />
           </Box>
         </Box>
