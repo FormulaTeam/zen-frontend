@@ -74,7 +74,7 @@ function FormSectionElement({ id }: Props) {
     disabled: !self.expanded || self.fieldIds.length === 0 || activeElementType === "section",
   });
 
-  const { originalFieldIds } = useContext(FormEditorContext) || {};
+  const { originalFieldIds, originalSectionIds } = useContext(FormEditorContext) || {};
   const { requestConfirm, ConfirmDialog } = useConfirmDeleteExistingField();
 
   const isLastSection = Object.keys(formStructure.sections).length <= 1;
@@ -284,8 +284,16 @@ function FormSectionElement({ id }: Props) {
           color="error"
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
-            setShowAlertMsg(true);
             e.stopPropagation();
+
+            const isNewSection = !originalSectionIds || !originalSectionIds.has(id);
+            const isEmpty = self.fieldIds.length === 0;
+
+            if (isNewSection && isEmpty) {
+              deleteSection(id);
+            } else {
+              setShowAlertMsg(true);
+            }
           }}>
           <DeleteIcon ownerState={{ isLastSection }} />
         </Button>
