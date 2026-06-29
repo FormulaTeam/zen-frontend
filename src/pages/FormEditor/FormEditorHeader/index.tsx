@@ -52,7 +52,7 @@ const METADATA_FIELD_LABELS: Record<string, string> = {
 const DEFAULT_UNTITLED_FORM_TITLE = "טופס ללא שם";
 
 const headerActionButtonBaseSx = {
-  height: 42,
+  height: 50,
   borderRadius: "10px",
   backgroundColor: "#ffffff",
   color: "#1a1a24",
@@ -87,7 +87,6 @@ const exitHeaderButtonSx = {
   ...headerActionButtonBaseSx,
   width: 50,
   minWidth: 50,
-  height: 50,
   p: 0,
 };
 

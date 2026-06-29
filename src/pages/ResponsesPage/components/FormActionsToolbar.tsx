@@ -20,7 +20,7 @@ export const SourceOperationStatus = {
 } as const;
 
 const headerActionButtonBaseSx = {
-  height: 42,
+  height: 50,
   borderRadius: "10px",
   backgroundColor: "#ffffff",
   color: "#1a1a24",
@@ -47,12 +47,10 @@ export const responseIconButtonSx = {
   ...headerActionButtonBaseSx,
   width: 50,
   minWidth: 50,
-  height: 50,
-  p: 0,
-
-  "& svg": {
-    fontSize: 24,
-  },
+  p: "0 !important",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 };
 
 const toolbarDividerSx = {

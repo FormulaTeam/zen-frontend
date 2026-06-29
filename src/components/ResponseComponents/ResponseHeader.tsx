@@ -59,7 +59,7 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
         {viewMode ? (
           canEdit && (
             <Tooltip title="עריכת תגובה">
-              <HeaderButton onClick={onEdit} size="small" sx={{ minWidth: "50px", p: 0 }}>
+              <HeaderButton onClick={onEdit} size="small" sx={{ minWidth: "50px", p: "0 !important" }}>
                 <Pencil size={22} strokeWidth={2.4} />
               </HeaderButton>
             </Tooltip>
@@ -81,7 +81,7 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
           </HeaderButton>
         )}
 
-        <HeaderButton onClick={onBack} size="small" sx={{ minWidth: "50px", p: 0 }}>
+        <HeaderButton onClick={onBack} size="small" sx={{ minWidth: "50px", p: "0 !important" }}>
           <LogOut size={24} strokeWidth={2.4} />
         </HeaderButton>
       </HeaderSection>
