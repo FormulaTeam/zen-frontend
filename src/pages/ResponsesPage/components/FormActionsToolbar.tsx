@@ -50,6 +50,7 @@ export const responseIconButtonSx = {
   ...headerActionButtonBaseSx,
   width: 50,
   minWidth: 50,
+  height: 50,
   p: 0,
 
   "& svg": {
