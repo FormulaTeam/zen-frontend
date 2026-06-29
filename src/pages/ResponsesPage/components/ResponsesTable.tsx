@@ -131,9 +131,9 @@ const isSortable = (typeId?: number): boolean => {
 const EmptyColumnHeaderFilterIconButton = () => null;
 const EmptyColumnFilteredIcon = () => null;
 
-const SortUnsortedIcon = () => <ArrowDownUp size={16} strokeWidth={2.2} />;
-const SortAscendingIcon = () => <ArrowUp size={16} strokeWidth={2.2} />;
-const SortDescendingIcon = () => <ArrowDown size={16} strokeWidth={2.2} />;
+const SortUnsortedIcon = () => <ArrowDownUp size={16} strokeWidth={2.4} />;
+const SortAscendingIcon = () => <ArrowUp size={16} strokeWidth={2.4} />;
+const SortDescendingIcon = () => <ArrowDown size={16} strokeWidth={2.4} />;
 
 const FIELD_COLUMN_WIDTH = 190;
 const FIELD_COLUMN_MAX_WIDTH = 450;
@@ -227,11 +227,11 @@ const SyncStatusIcon: React.FC<{
 
   const icon =
     statusId === 5 ? (
-      <Cloud size={18} strokeWidth={2.3} />
+      <Cloud size={18} strokeWidth={2.4} />
     ) : statusId === 4 ? (
-      <CloudOff size={18} strokeWidth={2.3} color={"#E7000B"} />
+      <CloudOff size={18} strokeWidth={2.4} color={"#E7000B"} />
     ) : (
-      <RefreshCw size={18} strokeWidth={2.3} />
+      <RefreshCw size={18} strokeWidth={2.4} />
     );
 
   return (
@@ -953,7 +953,7 @@ export const ResponsesTable = React.memo(
         renderHeader: () => (
           <Tooltip title="סטטוס סנכרון">
             <SyncStatusIconBox>
-              <Cloud size={20} strokeWidth={2.2} />
+              <Cloud size={20} strokeWidth={2.4} />
             </SyncStatusIconBox>
           </Tooltip>
         ),

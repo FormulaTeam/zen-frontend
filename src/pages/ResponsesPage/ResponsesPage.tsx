@@ -34,7 +34,7 @@ import { getQuickEditDraft, clearQuickEditDraft } from "../FormEditor/utils/draf
 import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialog";
 import ConfirmDeleteDialog from "../../components/BasePopup/ConfirmDeleteDialog";
 import { useDebounce } from "@src/hooks/utilsHooks/useDebounce";
-import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
+import { LogOut } from "lucide-react";
 
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
 const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
@@ -473,7 +473,7 @@ const ResponsesPageContent = (): JSX.Element => {
                   sx={responseIconButtonSx}
                   aria-label="יציאה"
                   onClick={handleBackClick}>
-                  <LogoutRoundedIcon />
+                  <LogOut size={24} strokeWidth={2.4} />
                 </IconOnlyButton>
               </Tooltip>
             </Box>

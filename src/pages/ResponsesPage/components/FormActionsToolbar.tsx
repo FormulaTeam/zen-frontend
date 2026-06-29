@@ -1,10 +1,7 @@
-import SyncIcon from "@mui/icons-material/Sync";
 import { Box, Tooltip } from "@mui/material";
 import { Fragment, useState } from "react";
 import { useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
-import EditIcon from "@mui/icons-material/Edit";
-import ShareIcon from "@mui/icons-material/Share";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Pencil, RotateCw, Share2 } from "lucide-react";
 
 import MetroSyncingPopup from "@components/ResponseToolbar/Popups/MetroSyncingPopup";
 import SyncTypeMenu from "@components/ResponseToolbar/Menus/SyncTypeMenu";
@@ -92,16 +89,21 @@ export const FormActionsToolbar = () => {
       form,
       loadingIcon: (
         <div style={{ display: "flex", alignItems: "center" }}>
-          <SyncIcon
-            sx={{
-              fontSize: 30,
-              "@keyframes spin": {
-                from: { transform: "rotate(360deg)" },
-                to: { transform: "rotate(0deg)" },
-              },
+          <RotateCw
+            size={30}
+            strokeWidth={2.4}
+            style={{
               animation: "spin 1.2s linear infinite",
             }}
           />
+          <style>
+            {`
+              @keyframes spin {
+                from { transform: rotate(360deg); }
+                to { transform: rotate(0deg); }
+              }
+            `}
+          </style>
         </div>
       ),
       setSourceOperationStatus,
@@ -149,7 +151,7 @@ export const FormActionsToolbar = () => {
                       state: { from: location.pathname },
                     })
                   }>
-                  <EditIcon />
+                  <Pencil strokeWidth={2.4} />
                 </IconOnlyButton>
               </Tooltip>
             </PermissionGate>
@@ -178,7 +180,7 @@ export const FormActionsToolbar = () => {
                       { replace: true },
                     );
                   }}>
-                  <ShareIcon />
+                  <Share2 strokeWidth={2.4} />
                 </IconOnlyButton>
               </Tooltip>
 
