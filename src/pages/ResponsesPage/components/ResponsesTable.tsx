@@ -13,7 +13,7 @@ import {
 } from "@mui/x-data-grid-pro";
 import { useFormStore, useInitiateFormStore } from "../stores/form.store";
 import clsx from "clsx";
-import { ArrowDown, ArrowDownUp, ArrowUp, Cloud, CloudDownload, CloudOff, RefreshCw } from "lucide-react";
+import { ArrowDown, ArrowDownUp, ArrowUp, Cloud, CloudOff, RefreshCw } from "lucide-react";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { heIL } from "@mui/x-data-grid/locales";
@@ -951,9 +951,11 @@ export const ResponsesTable = React.memo(
         align: "left",
         headerAlign: "left",
         renderHeader: () => (
-          <HeaderFlex sx={{ justifyContent: "flex-start", width: "100%" }}>
-            <CloudDownload size={20} strokeWidth={2.2} />
-          </HeaderFlex>
+          <Tooltip title="סטטוס סנכרון">
+            <SyncStatusIconBox>
+              <Cloud size={20} strokeWidth={2.2} />
+            </SyncStatusIconBox>
+          </Tooltip>
         ),
         minWidth: 90,
         width: columnWidths.current["sync"] || 90,

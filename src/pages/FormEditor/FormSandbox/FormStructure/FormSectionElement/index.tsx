@@ -4,7 +4,7 @@ import { AccordionDetails, Button, FormControl, FormHelperText, Tooltip } from "
 import { FormField, useFormStructureContext } from "../../../context/FormStructureContext";
 import styles from "./style.module.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import AlertMsg from "@components/AlertMsg/AlertMsg";
+import ConfirmDeleteDialog from "@components/BasePopup/ConfirmDeleteDialog";
 
 import { texts } from "@utils/texts";
 import { useContext } from "react";
@@ -293,15 +293,17 @@ function FormSectionElement({ id }: Props) {
     </Tooltip>
   );
 
-  const alertMsgDialog = showAlertMsg && (
-    <AlertMsg
-      msg={[texts.heb.removeSectionAlert]}
-      closePopup={() => setShowAlertMsg(false)}
-      onOk={() => {
+  const alertMsgDialog = (
+    <ConfirmDeleteDialog
+      open={showAlertMsg}
+      title="מחיקת מקטע"
+      message={texts.heb.removeSectionAlert}
+      onConfirm={() => {
         deleteSection(id);
         setShowAlertMsg(false);
       }}
-      sectionId={id}
+      onClose={() => setShowAlertMsg(false)}
+      confirmText={texts.heb.deleteSection}
     />
   );
 

@@ -80,10 +80,15 @@ export const Header = styled(Box)(({ theme }) => ({
   backgroundColor: "#f1f5f9",
   paddingTop: theme.spacing(3),
   paddingBottom: theme.spacing(2),
+  paddingLeft: theme.spacing(3),
+  paddingRight: theme.spacing(3),
   margin: "0 auto",
-  boxShadow: "0 8px 16px -4px rgba(0, 0, 0, 0.04)",
+  boxShadow: "none",
+  borderBottom: "1px solid #e2e8f0",
   [theme.breakpoints.down("md")]: {
     width: "98%",
+    paddingLeft: theme.spacing(2),
+    paddingRight: theme.spacing(2),
   },
 }));
 
