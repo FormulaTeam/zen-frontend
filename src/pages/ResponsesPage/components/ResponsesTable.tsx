@@ -951,9 +951,11 @@ export const ResponsesTable = React.memo(
         align: "left",
         headerAlign: "left",
         renderHeader: () => (
-          <HeaderFlex sx={{ justifyContent: "flex-start", width: "100%" }}>
-            <Cloud size={20} strokeWidth={2.2} />
-          </HeaderFlex>
+          <Tooltip title="סטטוס סנכרון">
+            <SyncStatusIconBox>
+              <Cloud size={20} strokeWidth={2.2} />
+            </SyncStatusIconBox>
+          </Tooltip>
         ),
         minWidth: 90,
         width: columnWidths.current["sync"] || 90,
