@@ -1,7 +1,7 @@
 import { ListItemIcon, ListItemText, Menu, MenuItem, SxProps, Tooltip, Theme } from "@mui/material";
 import { FC, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { FileSpreadsheet, MoreVertical, RotateCw, Trash2, Upload } from "lucide-react";
+import { FileSpreadsheet, ListX, MoreVertical, RotateCw, Trash2, Upload } from "lucide-react";
 
 import { permission, responsesScopeOption } from "formula-gear";
 
@@ -203,7 +203,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           userPermissions={permissions}>
           <MenuItem onClick={handleDeleteResponses} disabled={rows.length === 0}>
             <ListItemIcon>
-              <Trash2 size={22} strokeWidth={2.4} color="red" />
+              <ListX size={22} strokeWidth={2.4} color="red" />
             </ListItemIcon>
             <ListItemText sx={{ color: "red" }}>מחיקת כל התגובות</ListItemText>
           </MenuItem>
