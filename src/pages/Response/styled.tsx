@@ -83,7 +83,7 @@ export const Header = styled(Box)(({ theme }) => ({
   paddingLeft: theme.spacing(3),
   paddingRight: theme.spacing(3),
   margin: "0 auto",
-  boxShadow: "none",
+  boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.05)",
   [theme.breakpoints.down("md")]: {
     width: "98%",
     paddingLeft: theme.spacing(2),
