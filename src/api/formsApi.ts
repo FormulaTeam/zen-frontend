@@ -2,11 +2,7 @@ import { useQuery, UseQueryOptions, UseQueryResult, useMutation } from "@tanstac
 import { CreateFormSchema, formsScopeOption } from "formula-gear";
 import { z } from "zod";
 import { ComparatorsByFieldTypeDto, FormDto, FormOverviewDto } from "../types/shared";
-import {
-  Filter,
-  MetroReturnedData,
-  User,
-} from "../utils/interfaces";
+import { Filter, MetroReturnedData, User } from "../utils/interfaces";
 import { useCreate } from "../utils/useCreate";
 import { useFetch } from "../utils/useFetch";
 import apiClient from "./config";
@@ -95,7 +91,10 @@ export const getDeletedForms = async (filter?: Filter): Promise<FormDto[]> => {
     sortBy: sortBy,
     orderBy: filter?.orderBy,
     limit: filter?.pageSize,
-    offset: filter?.pageNumber !== undefined && filter?.pageSize !== undefined ? (filter.pageNumber - 1) * filter.pageSize : undefined,
+    offset:
+      filter?.pageNumber !== undefined && filter?.pageSize !== undefined
+        ? (filter.pageNumber - 1) * filter.pageSize
+        : undefined,
   };
 
   try {
@@ -133,9 +132,7 @@ export const getCreatableLinkedResponseForms = async (
   formId: number,
 ): Promise<FormOverviewDto[]> => {
   try {
-    const response = await apiClient.get<FormOverviewDto[]>(
-      `/forms/${formId}/writable`,
-    );
+    const response = await apiClient.get<FormOverviewDto[]>(`/forms/${formId}/writable`);
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch writable linked response forms:", error);
@@ -176,13 +173,9 @@ export const getLinkableForms = async (
  * @param fieldId - The field ID.
  * @returns The owning form ID if found, otherwise null.
  */
-export const getFormIdByFieldId = async (
-  fieldId: string,
-): Promise<number | null> => {
+export const getFormIdByFieldId = async (fieldId: string): Promise<number | null> => {
   try {
-    const response = await apiClient.get<number | null>(
-      `/forms/fields/${fieldId}/form-id`,
-    );
+    const response = await apiClient.get<number | null>(`/forms/fields/${fieldId}/form-id`);
 
     return response.data ?? null;
   } catch (error) {
@@ -298,6 +291,18 @@ export const editSourceToMetro = async (id: number): Promise<any> => {
 
 // Gali's edits
 // ============================================================
+
+/**
+ * Manually sync form and responses to Oasis.
+ */
+export const syncFormToOasis = async (id: number): Promise<void> => {
+  try {
+    await apiClient.post(`/forms/${id}/oasis-sync`);
+  } catch (error) {
+    console.error("Failed to sync form to Oasis:", error);
+    throw error;
+  }
+};
 
 export type CreateFormDto = z.infer<typeof CreateFormSchema>;
 
