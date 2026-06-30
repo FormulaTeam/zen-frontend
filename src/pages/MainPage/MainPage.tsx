@@ -151,7 +151,7 @@ function MainPage({
   });
 
   const { formsData: allFormsCountData, isLoading: isAllFormsLoading } = useGetFormsData({
-    scope: formsScopeOption.AllForms,
+    scope: formsScopeOption.MyForms,
     enabled: !!user && !!isSuperAdmin,
   });
 

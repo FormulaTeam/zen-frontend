@@ -9,7 +9,7 @@ interface FormGroupSelectProps {
   isSuperAdmin: boolean;
 }
 
-const StyledFormControl = styled(Box)(({ theme }) => ({
+const StyledFormControl = styled(Box)(() => ({
   width: 190,
   position: "relative",
 }));
@@ -42,19 +42,19 @@ const StyledSelect = styled(Select<FormsScopeOption>)(({ theme }) => ({
     fontWeight: 600,
     paddingTop: 8,
     paddingBottom: 8,
-    paddingRight: "32px !important", // Space for icon on the right
+    paddingRight: "32px !important",
     paddingLeft: "8px !important",
   },
 
   "& .MuiSelect-icon": {
-    right: "7px", // Position on the right
+    right: "7px",
     left: "auto",
     fontSize: "24px",
     color: "#020618",
   },
 }));
 
-const FormGroupSelect = ({ value, onChange, isSuperAdmin }: FormGroupSelectProps) => {
+const FormGroupSelect = ({ value, onChange }: FormGroupSelectProps) => {
   const handleChange = (event: SelectChangeEvent<FormsScopeOption>) => {
     onChange(event.target.value as FormsScopeOption);
   };
@@ -66,20 +66,19 @@ const FormGroupSelect = ({ value, onChange, isSuperAdmin }: FormGroupSelectProps
         value={value}
         onChange={handleChange}
         IconComponent={KeyboardArrowDownIcon}>
-        <MenuItem value={formsScopeOption.AccessibleForms} sx={{ fontSize: "16px" }}>
-          כל הטפסים
-        </MenuItem>
         <MenuItem value={formsScopeOption.MyForms} sx={{ fontSize: "16px" }}>
           הטפסים שלי
         </MenuItem>
+
         <MenuItem value={formsScopeOption.SharedWithMeForms} sx={{ fontSize: "16px" }}>
           הטפסים ששותפו איתי
         </MenuItem>
-        {isSuperAdmin && (
-          <MenuItem value={formsScopeOption.AllForms} sx={{ fontSize: "16px" }}>
-            👈🏽👉🏽🥺
-          </MenuItem>
-        )}
+
+        {/*
+        <MenuItem value={formsScopeOption.AllForms} sx={{ fontSize: "16px" }}>
+          כל הטפסים
+        </MenuItem>
+        */}
       </StyledSelect>
     </StyledFormControl>
   );

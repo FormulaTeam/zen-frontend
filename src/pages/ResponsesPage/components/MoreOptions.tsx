@@ -80,11 +80,15 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
 
   if (!permissions || !form || !formId || !hasVisibleOptions) return null;
 
-  const hasMetroSource = !!(form.metro_access_url || form.oasisSourceKey);
   const hasFormFields = (form.sections ?? []).some((section) => (section.fields?.length ?? 0) > 0);
 
   const closeMoreActionsMenu = () => {
     setAnchorElMoreActions(null);
+  };
+
+  const handleSyncToOasis = () => {
+    closeMoreActionsMenu();
+    void pushToMetro();
   };
 
   const handleExportToExcel = async () => {
@@ -116,10 +120,10 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
 
   const getSourceOperationTooltip = (): string => {
     if (sourceOperationStatus === SourceOperationStatus.CREATING)
-      return "סנכרון נתונים למטרו יתאפשר לאחר סיום יצירת המקור";
+      return "סנכרון לאואזיס יתאפשר לאחר סיום יצירת המקור";
 
     if (sourceOperationStatus === SourceOperationStatus.EDITING)
-      return "סנכרון נתונים למטרו יתאפשר לאחר סיום עריכת המקור";
+      return "סנכרון לאואזיס יתאפשר לאחר סיום הפעולה הנוכחית";
 
     return "";
   };
@@ -128,19 +132,18 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
     () => (
       <MenuItem
         disabled={
-          !rows.length ||
+          !hasFormFields ||
           sourceOperationStatus === SourceOperationStatus.CREATING ||
-          sourceOperationStatus === SourceOperationStatus.EDITING ||
-          !hasMetroSource
+          sourceOperationStatus === SourceOperationStatus.EDITING
         }
-        onClick={pushToMetro}>
+        onClick={handleSyncToOasis}>
         <ListItemIcon>
           <SyncOutlined sx={{ fontSize: 22 }} />
         </ListItemIcon>
         <ListItemText>סנכרון לאואזיס</ListItemText>
       </MenuItem>
     ),
-    [rows.length, sourceOperationStatus, hasMetroSource, pushToMetro],
+    [hasFormFields, sourceOperationStatus, pushToMetro],
   );
 
   return (
