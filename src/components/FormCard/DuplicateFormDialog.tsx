@@ -87,7 +87,7 @@ const checklistItems: Array<{
     {
       key: "conditions",
       label: "התניות",
-      description: "חוקים שמציגים או מסתירים שדות לפי תשובות. התניות יועתקו יחד עם השדות הרלוונטיים בלבד.",
+      description: "התניות יועתקו יחד עם השדות הרלוונטיים בלבד.",
       dependsOnFields: true,
     },
     {
@@ -243,7 +243,7 @@ function DuplicateFormDialog({
       <DialogContent sx={{ px: 5, pt: '20px !important' }}>
         <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2.5, mb: 8 }}>
           <Box>
-            <Typography sx={{ mb: 1, fontSize: 15, fontWeight: 500, color: "#020618" }}>
+            <Typography sx={{ mb: 1, fontSize: '1.1rem !important', fontWeight: 500, color: "#020618" }}>
               שם הטופס
             </Typography>
             <TextField
@@ -264,7 +264,7 @@ function DuplicateFormDialog({
             />
           </Box>
           <Box>
-            <Typography sx={{ mb: 1, fontSize: 15, fontWeight: 500, color: "#020618" }}>
+            <Typography sx={{ mb: 1, fontSize: '1.1rem !important', fontWeight: 500, color: "#020618" }}>
               תיאור הטופס
             </Typography>
             <TextField
