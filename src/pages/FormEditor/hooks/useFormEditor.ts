@@ -56,12 +56,16 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
           duplicateSourceFormId ?? structureToSave.duplicate?.sourceFormId;
         const shouldCopyDuplicatePermissions =
           duplicateCopyPermissions || !!structureToSave.duplicate?.copyPermissions;
+        const duplicateSelections = structureToSave.duplicate?.selections;
 
         const payload = {
           ...convertFormStructureToCreateDto(structureToSave),
           ...(sourceDuplicateFormId ? { duplicateSourceFormId: sourceDuplicateFormId } : {}),
           ...(sourceDuplicateFormId
             ? { duplicateCopyPermissions: shouldCopyDuplicatePermissions }
+            : {}),
+          ...(sourceDuplicateFormId && duplicateSelections
+            ? { duplicateSelections }
             : {}),
         };
 

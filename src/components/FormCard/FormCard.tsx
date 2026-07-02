@@ -129,6 +129,7 @@ const FormCard = ({
     duplicateFormStructure.duplicate = {
       sourceFormId,
       copyPermissions: selections.permissions,
+      selections,
     };
 
     setShowDuplicatePopup(false);
@@ -137,6 +138,7 @@ const FormCard = ({
         duplicateFormStructure,
         duplicateSourceFormId: sourceFormId,
         duplicateCopyPermissions: selections.permissions,
+        duplicateSelections: selections,
       },
     });
   };

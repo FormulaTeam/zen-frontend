@@ -43,6 +43,7 @@ function FormEditor({ mode, editedForm }: Props) {
       duplicate: duplicateRouteState.duplicateFormStructure.duplicate ?? {
         sourceFormId: duplicateRouteState.duplicateSourceFormId as number,
         copyPermissions: !!duplicateRouteState.duplicateCopyPermissions,
+        selections: duplicateRouteState.duplicateSelections,
       },
     };
   }, [duplicateRouteState]);

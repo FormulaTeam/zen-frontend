@@ -30,6 +30,14 @@ interface FormStructure {
   duplicate?: {
     sourceFormId: number;
     copyPermissions: boolean;
+    selections?: {
+      name: boolean;
+      description: boolean;
+      permissions: boolean;
+      fields: boolean;
+      conditions: boolean;
+      colors: boolean;
+    };
   };
   sections: Record<string, Section>;
   orderedSectionIds: string[];

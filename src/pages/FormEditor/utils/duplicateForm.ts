@@ -19,6 +19,7 @@ export type DuplicateFormRouteState = {
   duplicateFormStructure: FormStructure;
   duplicateSourceFormId: number;
   duplicateCopyPermissions: boolean;
+  duplicateSelections: DuplicateFormSelections;
 };
 
 const remapConditionIds = (
