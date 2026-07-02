@@ -113,7 +113,8 @@ const FormCard = ({
     duplicateName: string;
     duplicateDescription: string;
   }) => {
-    const sourceForm = await getFormById(form.id);
+    const sourceFormId = Number(form.id);
+    const sourceForm = await getFormById(sourceFormId);
 
     if (!sourceForm) {
       throw new Error("Source form could not be loaded for duplication");
@@ -125,12 +126,16 @@ const FormCard = ({
       duplicateName,
       duplicateDescription,
     );
+    duplicateFormStructure.duplicate = {
+      sourceFormId,
+      copyPermissions: selections.permissions,
+    };
 
     setShowDuplicatePopup(false);
     navigate(IPath.FORM_CREATE, {
       state: {
         duplicateFormStructure,
-        duplicateSourceFormId: form.id,
+        duplicateSourceFormId: sourceFormId,
         duplicateCopyPermissions: selections.permissions,
       },
     });
@@ -276,7 +281,7 @@ const FormCard = ({
                     userPermissions={userPermissions}
                     requiredPermissions={[permission.UpdateForm]}>
                     <MenuItem onClick={handleEditClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
-                      <EditOutlined fontSize="small" /> עריכת טופס
+                      <EditOutlined fontSize="small" /> עריכה
                     </MenuItem>
                   </PermissionGate>
 
@@ -284,7 +289,7 @@ const FormCard = ({
                     userPermissions={userPermissions}
                     requiredPermissions={[permission.ShareForm]}>
                     <MenuItem onClick={handleShareClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
-                      <ShareOutlined fontSize="small" /> שיתוף טופס
+                      <ShareOutlined fontSize="small" /> שיתוף
                     </MenuItem>
                   </PermissionGate>
 
@@ -292,7 +297,7 @@ const FormCard = ({
                     <MenuItem
                       onClick={handleDuplicateClick}
                       sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
-                      <ContentCopyOutlinedIcon fontSize="small" /> שכפול טופס
+                      <ContentCopyOutlinedIcon fontSize="small" /> שכפול
                     </MenuItem>
                   )}
 
@@ -302,7 +307,7 @@ const FormCard = ({
                     <MenuItem
                       onClick={handleDeleteClick}
                       sx={{ fontSize: "14px", color: theme.palette.error.main, gap: 1 }}>
-                      <DeleteOutline fontSize="small" /> מחיקת טופס
+                      <DeleteOutline fontSize="small" /> מחיקה
                     </MenuItem>
                   </PermissionGate>
                 </Menu>

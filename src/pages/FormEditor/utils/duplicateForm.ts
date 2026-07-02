@@ -1,6 +1,5 @@
 import { cloneDeep } from "lodash";
 
-import type { FormRolesQuery } from "@api/rolesApi";
 import type { FormDto } from "@src/types/shared";
 import type { FormStructure } from "../context/FormStructureContext";
 import { getEmptyForm } from "../context/utils";
@@ -78,7 +77,6 @@ export const buildDuplicatedFormStructure = (
   const metadata: FormStructure["metadata"] = {
     title: selections.name ? duplicateName : "",
     description: selections.description ? duplicateDescription : undefined,
-    iconId: selections.colors && typeof sourceForm.icon === "string" ? sourceForm.icon : undefined,
     validationErrors: null,
   };
 
@@ -187,22 +185,3 @@ export const buildDuplicatedFormStructure = (
       : [],
   };
 };
-
-export const formRolesToQuery = (roles: {
-  userRoles: Array<{ user: { id?: number; name?: string; upn?: string }; role: number }>;
-  publicRole?: number | null;
-}, excludedUserUpn?: string): FormRolesQuery => ({
-  publicRole: (roles.publicRole ?? null) as FormRolesQuery["publicRole"],
-  userRoles: roles.userRoles
-    .filter(
-      ({ user }) =>
-        !excludedUserUpn ||
-        user.upn?.trim().toLowerCase() !== excludedUserUpn.trim().toLowerCase(),
-    )
-    .map(({ user, role }) => ({
-      userId: user.id,
-      upn: user.upn,
-      name: user.name,
-      role: role as FormRolesQuery["userRoles"][number]["role"],
-    })),
-});

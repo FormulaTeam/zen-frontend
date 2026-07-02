@@ -33,9 +33,22 @@ function FormEditor({ mode, editedForm }: Props) {
   const duplicateRouteState = mode === FORM_EDITOR_MODE.CREATE
     ? (location.state as Partial<DuplicateFormRouteState> | null)
     : null;
+  const duplicateInitialStructure = useMemo(() => {
+    if (!duplicateRouteState?.duplicateFormStructure) {
+      return undefined;
+    }
+
+    return {
+      ...duplicateRouteState.duplicateFormStructure,
+      duplicate: duplicateRouteState.duplicateFormStructure.duplicate ?? {
+        sourceFormId: duplicateRouteState.duplicateSourceFormId as number,
+        copyPermissions: !!duplicateRouteState.duplicateCopyPermissions,
+      },
+    };
+  }, [duplicateRouteState]);
   const { setFormStructure, ...formStructure } = useFormStructure(
     editedForm,
-    duplicateRouteState?.duplicateFormStructure,
+    duplicateInitialStructure,
   );
   const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<any>(null);
@@ -50,7 +63,10 @@ function FormEditor({ mode, editedForm }: Props) {
 
   const handleRestore = () => {
     if (pendingDraft) {
-      setFormStructure(pendingDraft);
+      setFormStructure({
+        ...pendingDraft,
+        duplicate: pendingDraft.duplicate ?? duplicateInitialStructure?.duplicate,
+      });
     }
     setShowRestoreBanner(false);
     setPendingDraft(null);
