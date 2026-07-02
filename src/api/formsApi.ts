@@ -111,6 +111,41 @@ export const getDeletedForms = async (filter?: Filter): Promise<FormDto[]> => {
 };
 
 /**
+ * Fetch all active forms with individually soft-deleted responses.
+ *
+ * @param filter - Optional filter parameters for querying forms.
+ * @returns A promise that resolves to an array of forms with nested deleted responses.
+ */
+export const getSoftDeletedResponsesGlobal = async (filter?: Filter): Promise<FormOverviewDto[]> => {
+  const sortBy = filter?.sortBy;
+  const query = filter?.query;
+
+  let searchParam: string | undefined;
+  if (typeof query === "string" && query.trim() !== "") {
+    searchParam = query;
+  }
+
+  const params = {
+    search: searchParam,
+    sortBy: sortBy,
+    orderBy: filter?.orderBy,
+    limit: filter?.pageSize,
+    offset: filter?.pageNumber !== undefined && filter?.pageSize !== undefined ? (filter.pageNumber - 1) * filter.pageSize : undefined,
+  };
+
+  try {
+    const response = await apiClient.get<FormOverviewDto[]>("/forms/responses/soft-deleted", {
+      params,
+      signal: filter?.signal,
+    });
+    return response?.data || [];
+  } catch (error) {
+    console.error("Failed to fetch active forms with deleted responses:", error);
+    throw error;
+  }
+};
+
+/**
  * Fetch a specific form by ID.
  *
  * @param formId - The ID of the form.

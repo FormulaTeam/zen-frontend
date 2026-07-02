@@ -14,39 +14,42 @@ import {
   MenuItem,
   Select,
   SelectChangeEvent,
+  Collapse,
+  Divider,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
   ArrowBack as ArrowBackIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
-  AutoDelete as AutoDeleteIcon,
   KeyboardArrowDown as KeyboardArrowDownIcon,
 } from "@mui/icons-material";
-import { getDeletedForms, restoreForm } from "../../api/formsApi";
-import { getSoftDeletedResponsesGlobal, restoreResponse } from "../../api/responsesApi";
-import { StyledCard } from "../../components/FormCard/styled";
+import { Eye, MessageSquare, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { getDeletedForms, getSoftDeletedResponsesGlobal, restoreForm } from "../../api/formsApi";
+import { restoreResponse } from "../../api/responsesApi";
+import { StyledCard, FormIconWrapper } from "../../components/FormCard/styled";
 import { CustomIcon } from "../../theme/icons";
+import { getFormIconByName } from "../../utils/utils";
+import { DeletedFormOverviewDto, FormOverviewDto } from "../../types/shared";
 
 const StyledFormControl = styled(Box)(({ theme }) => ({
-  width: 190,
+  width: 220,
   position: "relative",
 }));
 
 const StyledSelect = styled(Select<string>)(({ theme }) => ({
   width: "100%",
-  borderRadius: 8,
-  height: 40,
+  borderRadius: 12,
+  height: 44,
   backgroundColor: theme.palette.background.paper,
   color: theme.palette.text.primary,
+  boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.05)",
 
   "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#D1D1D1",
+    borderColor: "rgba(2, 6, 24, 0.1)",
     borderWidth: 1,
   },
 
   "&:hover .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#62748E",
+    borderColor: "rgba(2, 6, 24, 0.2)",
   },
 
   "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
@@ -59,14 +62,15 @@ const StyledSelect = styled(Select<string>)(({ theme }) => ({
     alignItems: "center",
     fontSize: "16px",
     fontWeight: 600,
-    paddingTop: 8,
-    paddingBottom: 8,
-    paddingRight: "32px !important",
-    paddingLeft: "8px !important",
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingRight: "36px !important",
+    paddingLeft: "12px !important",
+    fontFamily: "Heebo, sans-serif",
   },
 
   "& .MuiSelect-icon": {
-    right: "7px",
+    right: "10px",
     left: "auto",
     fontSize: "24px",
     color: "#020618",
@@ -76,12 +80,12 @@ const StyledSelect = styled(Select<string>)(({ theme }) => ({
 const MynaUiUndoIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="22"
-    height="22"
+    width="20"
+    height="20"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="1.5"
+    strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
     {...props}>
@@ -90,12 +94,15 @@ const MynaUiUndoIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+type DeletedFormWithResponses = (DeletedFormOverviewDto | FormOverviewDto) & {
+  responses?: any[];
+};
+
 /**
  * Main Trash Page displaying soft-deleted forms and responses in tabs.
- * Uses infinite scroll pagination and displays items as list rows (lines).
- * Responses are categorized by parent form.
  *
- * @param props - Component properties containing user information.
+ * Tab 1: Deleted Forms - Hierarchical view of forms and responses deleted with them.
+ * Tab 2: Deleted Responses - Hierarchical view of active forms and their individually deleted responses.
  */
 function DeletedForms({ user }: { user: any }) {
   const navigate = useNavigate();
@@ -108,19 +115,77 @@ function DeletedForms({ user }: { user: any }) {
   const [restoringFormId, setRestoringFormId] = useState<number | null>(null);
   const [restoringResponseId, setRestoringResponseId] = useState<string | null>(null);
 
-  // Soft-deleted forms state
-  const [forms, setForms] = useState<any[]>([]);
-  const [isFormsLoading, setIsFormsLoading] = useState<boolean>(false);
-  const [formsPage, setFormsPage] = useState<number>(1);
-  const [formsHasNext, setFormsHasNext] = useState<boolean>(false);
+  // Tab 1 state
+  const [deletedForms, setDeletedForms] = useState<DeletedFormWithResponses[]>([]);
+  const [isDeletedFormsLoading, setIsDeletedFormsLoading] = useState<boolean>(false);
+  const [deletedFormsPage, setDeletedFormsPage] = useState<number>(1);
+  const [deletedFormsHasNext, setDeletedFormsHasNext] = useState<boolean>(false);
 
-  // Soft-deleted responses state
-  const [responses, setResponses] = useState<any[]>([]);
-  const [isResponsesLoading, setIsResponsesLoading] = useState<boolean>(false);
-  const [responsesPage, setResponsesPage] = useState<number>(1);
-  const [responsesHasNext, setResponsesHasNext] = useState<boolean>(false);
+  // Tab 2 state
+  const [activeFormsWithDeleted, setActiveFormsWithDeleted] = useState<DeletedFormWithResponses[]>([]);
+  const [isActiveFormsLoading, setIsActiveFormsLoading] = useState<boolean>(false);
+  const [activeFormsPage, setActiveFormsPage] = useState<number>(1);
+  const [activeFormsHasNext, setActiveFormsHasNext] = useState<boolean>(false);
 
   const [expandedForms, setExpandedForms] = useState<Record<number, boolean>>({});
+
+  const pageSize = 20;
+
+  // Fetch Deleted Forms (Tab 1)
+  useEffect(() => {
+    async function loadDeletedForms() {
+      if (activeTab !== 0) return;
+      setIsDeletedFormsLoading(true);
+
+      try {
+        const result = await getDeletedForms({
+          pageSize: pageSize + 1,
+          pageNumber: deletedFormsPage,
+        });
+
+        const items = result || [];
+        const hasNext = items.length > pageSize;
+        const pageItems = hasNext ? items.slice(0, pageSize) : items;
+
+        setDeletedForms((prev) => (deletedFormsPage === 1 ? (pageItems as DeletedFormWithResponses[]) : [...prev, ...(pageItems as DeletedFormWithResponses[])]));
+        setDeletedFormsHasNext(hasNext);
+      } catch (error) {
+        toast.error("טעינת הטפסים שנמחקו נכשלה");
+      } finally {
+        setIsDeletedFormsLoading(false);
+      }
+    }
+
+    loadDeletedForms();
+  }, [deletedFormsPage, activeTab]);
+
+  // Fetch Active Forms with Deleted Responses (Tab 2)
+  useEffect(() => {
+    async function loadActiveForms() {
+      if (activeTab !== 1) return;
+      setIsActiveFormsLoading(true);
+
+      try {
+        const result = await getSoftDeletedResponsesGlobal({
+          pageSize: pageSize + 1,
+          pageNumber: activeFormsPage,
+        });
+
+        const items = result || [];
+        const hasNext = items.length > pageSize;
+        const pageItems = hasNext ? items.slice(0, pageSize) : items;
+
+        setActiveFormsWithDeleted((prev) => (activeFormsPage === 1 ? (pageItems as DeletedFormWithResponses[]) : [...prev, ...(pageItems as DeletedFormWithResponses[])]));
+        setActiveFormsHasNext(hasNext);
+      } catch (error) {
+        toast.error("טעינת הטפסים עם תגובות שנמחקו נכשלה");
+      } finally {
+        setIsActiveFormsLoading(false);
+      }
+    }
+
+    loadActiveForms();
+  }, [activeFormsPage, activeTab]);
 
   const toggleFormExpanded = (formId: number) => {
     setExpandedForms((prev) => ({
@@ -129,86 +194,21 @@ function DeletedForms({ user }: { user: any }) {
     }));
   };
 
-  const pageSize = 20;
-
-  // Infinite scroll forms fetch
-  useEffect(() => {
-    async function loadDeletedForms() {
-      if (activeTab !== 0) {
-        return;
-      }
-
-      setIsFormsLoading(true);
-
-      try {
-        const deletedFormsResult = await getDeletedForms({
-          pageSize: pageSize + 1,
-          pageNumber: formsPage,
-        });
-
-        const items = deletedFormsResult || [];
-        const hasNext = items.length > pageSize;
-        const pageItems = hasNext ? items.slice(0, pageSize) : items;
-
-        setForms((prevForms) => (formsPage === 1 ? pageItems : [...prevForms, ...pageItems]));
-        setFormsHasNext(hasNext);
-      } catch (error) {
-        toast.error("טעינת הטפסים שנמחקו נכשלה");
-      } finally {
-        setIsFormsLoading(false);
-      }
-    }
-
-    loadDeletedForms();
-  }, [formsPage, activeTab]);
-
-  // Infinite scroll responses fetch
-  useEffect(() => {
-    async function loadDeletedResponses() {
-      if (activeTab !== 1) {
-        return;
-      }
-
-      setIsResponsesLoading(true);
-
-      try {
-        const deletedResponsesResult = await getSoftDeletedResponsesGlobal({
-          pageSize: pageSize + 1,
-          pageNumber: responsesPage,
-        });
-
-        const items = deletedResponsesResult || [];
-        const hasNext = items.length > pageSize;
-        const pageItems = hasNext ? items.slice(0, pageSize) : items;
-
-        setResponses((prevResponses) =>
-          responsesPage === 1 ? pageItems : [...prevResponses, ...pageItems],
-        );
-        setResponsesHasNext(hasNext);
-      } catch (error) {
-        toast.error("טעינת התגובות שנמחקו נכשלה");
-      } finally {
-        setIsResponsesLoading(false);
-      }
-    }
-
-    loadDeletedResponses();
-  }, [responsesPage, activeTab]);
-
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
 
     if (scrollHeight - scrollTop <= clientHeight + 50) {
-      if (activeTab === 0 && formsHasNext && !isFormsLoading) {
-        setFormsPage((prevPage) => prevPage + 1);
-      } else if (activeTab === 1 && responsesHasNext && !isResponsesLoading) {
-        setResponsesPage((prevPage) => prevPage + 1);
+      if (activeTab === 0 && deletedFormsHasNext && !isDeletedFormsLoading) {
+        setDeletedFormsPage((prev) => prev + 1);
+      } else if (activeTab === 1 && activeFormsHasNext && !isActiveFormsLoading) {
+        setActiveFormsPage((prev) => prev + 1);
       }
     }
   };
 
   const handleDropdownChange = (event: SelectChangeEvent<string>) => {
     setSearchParams({ scope: event.target.value }, { replace: true });
+    setExpandedForms({}); // Reset expansion state when switching tabs
   };
 
   const handleRestoreFormClick = async (formId: number) => {
@@ -216,8 +216,7 @@ function DeletedForms({ user }: { user: any }) {
     try {
       await restoreForm(formId);
       toast.success("הטופס שוחזר בהצלחה");
-
-      setForms((prevForms) => prevForms.filter((form) => form.id !== formId));
+      setDeletedForms((prev) => prev.filter((form) => form.id !== formId));
     } catch (error) {
       toast.error("שחזור הטופס נכשל");
     } finally {
@@ -231,7 +230,13 @@ function DeletedForms({ user }: { user: any }) {
       await restoreResponse(formId, responseId);
       toast.success("התגובה שוחזרה בהצלחה");
 
-      setResponses((prevResponses) => prevResponses.filter((item) => item.id !== responseId));
+      const setList = activeTab === 0 ? setDeletedForms : setActiveFormsWithDeleted;
+      setList((prev) => prev.map(f => {
+        if (f.id === formId && f.responses) {
+          return { ...f, responses: f.responses.filter((r: any) => r.id !== responseId) };
+        }
+        return f;
+      }));
     } catch (error) {
       toast.error("שחזור התגובה נכשל");
     } finally {
@@ -239,25 +244,32 @@ function DeletedForms({ user }: { user: any }) {
     }
   };
 
-  // Group responses by parent form name/id
-  const groupedResponses = responses.reduce(
-    (acc: Record<string, { formName: string; formId: number; items: any[] }>, response: any) => {
-      const formId = response.formId;
-      const formName = response.form?.name || "טופס ללא שם";
+  const getIcon = (iconName: string | null, size: number = 24) => {
+    const iconSrc = getFormIconByName(iconName ?? undefined);
 
-      if (!acc[formId]) {
-        acc[formId] = {
-          formName,
-          formId,
-          items: [],
-        };
-      }
+    if (typeof iconSrc === "string") {
+      return (
+        <FormIconWrapper sx={{ width: size + 16, height: size + 16 }}>
+          <img src={iconSrc} alt={iconName ?? "form icon"} style={{ width: size, height: size }} />
+        </FormIconWrapper>
+      );
+    }
 
-      acc[formId].items.push(response);
-      return acc;
-    },
-    {},
-  );
+    if (iconSrc) {
+      const IconComponent = iconSrc;
+      return (
+        <FormIconWrapper sx={{ width: size + 16, height: size + 16 }}>
+          <IconComponent sx={{ color: "#020618", fontSize: size }} />
+        </FormIconWrapper>
+      );
+    }
+
+    return (
+      <FormIconWrapper sx={{ width: size + 16, height: size + 16 }}>
+        <KeyboardArrowDownIcon sx={{ color: "#020618", fontSize: size }} />
+      </FormIconWrapper>
+    );
+  };
 
   return (
     <Box className="main-page-container">
@@ -270,7 +282,7 @@ function DeletedForms({ user }: { user: any }) {
           mt: 3,
           borderBottom: "1px solid rgba(2, 6, 24, 0.05)",
           backgroundColor: "#ffffff",
-          borderRadius: "16px 16px 0 0",
+          borderRadius: "20px 20px 0 0",
         }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Stack direction="row" spacing={3} alignItems="center">
@@ -284,21 +296,16 @@ function DeletedForms({ user }: { user: any }) {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "8px",
-                  backgroundColor: "rgba(30, 136, 229, 0.08)",
-                  color: "#1e88e5",
+                  color: "#000000",
                   flexShrink: 0,
                 }}>
-                <AutoDeleteIcon sx={{ fontSize: "24px" }} />
+                <Trash2 size={28} strokeWidth={2.4} />
               </Box>
               <Typography
                 variant="h4"
                 sx={{
-                  fontWeight: 650,
-                  fontSize: "1.6rem",
+                  fontWeight: 700,
+                  fontSize: "1.7rem",
                   fontFamily: "Heebo, sans-serif",
                   color: "#020618",
                 }}>
@@ -334,385 +341,182 @@ function DeletedForms({ user }: { user: any }) {
         </Stack>
       </Box>
 
-      <Box className="main-page-content-wrapper" sx={{ px: 4, pt: 3 }}>
+      <Box className="main-page-content-wrapper" sx={{ px: 4, pt: 3, overflowY: "auto" }} onScroll={handleScroll}>
         {activeTab === 0 ? (
-          forms.length > 0 ? (
-            <>
-              <Grid
-                container
-                className="forms-grid"
-                onScroll={handleScroll}
-                spacing={2}
-                columns={12}>
-                {forms.map((form: any) => {
-                  const deletedDateObj = form.deletedAt ? new Date(form.deletedAt) : null;
-                  const formattedDate = deletedDateObj
-                    ? deletedDateObj.toLocaleDateString("he-IL")
-                    : "תאריך לא ידוע";
-                  const formattedTime = deletedDateObj
-                    ? deletedDateObj.toLocaleTimeString("he-IL", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : "";
+          deletedForms.length > 0 ? (
+            <Grid container spacing={2} columns={12}>
+              {deletedForms.map((form: any) => {
+                const deletedDateObj = form.deletedAt ? new Date(form.deletedAt) : null;
+                const formattedDate = deletedDateObj ? deletedDateObj.toLocaleDateString("he-IL") : "N/A";
+                const formattedTime = deletedDateObj ? deletedDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" }) : "";
+                
+                const isExpanded = !!expandedForms[form.id];
+                const responsesCount = form.responsesCount ?? 0;
 
-                  return (
-                    <Grid key={form.id} size={{ xs: 12 }}>
-                      <StyledCard
-                        sx={{
-                          minHeight: "auto",
-                          py: 2,
-                          px: 3,
-                          display: "flex",
-                          flexDirection: "row",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          width: "100%",
-                        }}>
-                        <Stack
-                          direction="row"
-                          spacing={1.5}
-                          alignItems="center"
-                          sx={{ flexGrow: 1, flexWrap: "nowrap", overflow: "hidden" }}>
-                          <Tooltip title="מזהה הטופס" arrow placement="top">
-                            <span
-                              style={{
-                                fontSize: "0.85rem",
-                                fontWeight: 600,
-                                color: "#475569",
-                                backgroundColor: "#f1f5f9",
-                                padding: "3px 10px",
-                                borderRadius: "6px",
-                                border: "1px solid #cbd5e1",
-                                whiteSpace: "nowrap",
-                              }}>
-                              #{form.id}
-                            </span>
-                          </Tooltip>
-                          <Typography
-                            variant="h6"
-                            sx={{
-                              fontWeight: 600,
-                              fontFamily: "Heebo, sans-serif",
-                              color: "#020618",
-                              whiteSpace: "nowrap",
-                            }}>
-                            {form.name}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              color: "#62748E",
-                              fontFamily: "Heebo, sans-serif",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              whiteSpace: "nowrap",
-                            }}>
-                            נמחק ב-
-                            <span style={{ color: "#020618", fontWeight: 500 }}>
-                              {formattedDate}
-                            </span>
-                            {formattedTime && (
-                              <>
-                                <span>בשעה</span>
-                                <span style={{ color: "#020618", fontWeight: 500 }}>
-                                  {formattedTime}
-                                </span>
-                              </>
-                            )}
-                            {form.deletedBy && (
-                              <>
-                                <span>על ידי</span>
-                                <Tooltip title={form.deletedBy.upn || ""} arrow placement="top">
-                                  <span
-                                    style={{
-                                      color: "#020618",
-                                      fontWeight: 500,
-                                      cursor: "pointer",
-                                    }}>
-                                    {form.deletedBy.name || form.deletedBy.upn || "משתמש בזן"}
-                                  </span>
-                                </Tooltip>
-                              </>
-                            )}
-                          </Typography>
+                return (
+                  <Grid key={form.id} size={{ xs: 12 }}>
+                    <StyledCard sx={{ minHeight: "auto", p: 0, overflow: "hidden" }}>
+                      <Box sx={{ py: 2.5, px: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <Stack direction="row" spacing={2.5} alignItems="center">
+                          {getIcon(form.icon, 28)}
+                          <Box>
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: "#020618", mb: 0.2 }}>
+                              {form.name}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: "#62748E", fontWeight: 500 }}>
+                              נוצר על ידי {form.createdBy?.name || "משתמש בזן"}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: "#62748E" }}>
+                              נמחק ב-{formattedDate} בשעה {formattedTime} על ידי {form.deletedBy?.name || "משתמש בזן"}
+                            </Typography>
+                          </Box>
                         </Stack>
-                        <Button
-                          disabled={restoringFormId === form.id}
-                          onClick={() => handleRestoreFormClick(form.id)}
-                          variant="contained"
-                          sx={{
-                            backgroundColor: theme.palette.primary.main,
-                            color: "white",
-                            borderRadius: "10px",
-                            px: 3,
-                            py: 0.75,
-                            fontFamily: "Heebo, sans-serif",
-                            fontWeight: 500,
-                            minWidth: "150px",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            "&:hover": {
-                              backgroundColor: theme.palette.primary.dark,
-                            },
-                          }}>
-                          {restoringFormId === form.id ? (
-                            <CircularProgress size={20} color="inherit" />
-                          ) : (
-                            <MynaUiUndoIcon />
+                        
+                        <Stack direction="row" spacing={2}>
+                          {responsesCount > 0 && (
+                            <Button
+                              variant="outlined"
+                              onClick={() => toggleFormExpanded(form.id)}
+                              startIcon={<Eye size={18} />}
+                              sx={{
+                                borderRadius: "10px",
+                                fontWeight: 600,
+                                px: 2.5,
+                                color: "#020618",
+                                borderColor: "rgba(2, 6, 24, 0.1)",
+                                "&:hover": { backgroundColor: "rgba(2, 6, 24, 0.04)", borderColor: "rgba(2, 6, 24, 0.2)" }
+                              }}>
+                              צפייה בתגובות ({responsesCount})
+                            </Button>
                           )}
-                          {restoringFormId === form.id ? "משחזר..." : "שחזור טופס"}
-                        </Button>
-                      </StyledCard>
-                    </Grid>
-                  );
-                })}
-              </Grid>
+                          <Button
+                            disabled={restoringFormId === form.id}
+                            onClick={() => handleRestoreFormClick(form.id)}
+                            variant="contained"
+                            sx={{
+                              backgroundColor: theme.palette.primary.main,
+                              borderRadius: "10px",
+                              fontWeight: 600,
+                              px: 3,
+                              gap: 1
+                            }}>
+                            {restoringFormId === form.id ? <CircularProgress size={20} color="inherit" /> : <MynaUiUndoIcon />}
+                            שחזור טופס
+                          </Button>
+                        </Stack>
+                      </Box>
 
-              {isFormsLoading && <Box className="main-page-loading" sx={{ py: 4 }} />}
-            </>
-          ) : isFormsLoading ? (
+                      <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                        <Divider sx={{ mx: 3 }} />
+                        <Box sx={{ p: 3, backgroundColor: "rgba(241, 245, 249, 0.4)" }}>
+                          {form.responses?.length ? (
+                            <Stack spacing={1.5}>
+                              {form.responses.map((response: any) => (
+                                <Box key={response.id} sx={{ p: 2, backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid rgba(2, 6, 24, 0.05)", boxShadow: "0px 1px 3px rgba(0,0,0,0.02)" }}>
+                                  <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
+                                    <MessageSquare size={18} color={theme.palette.primary.main} />
+                                    <Typography variant="body1" sx={{ fontWeight: 700, color: "#020618" }}>
+                                      תגובה מספר {response.index}
+                                    </Typography>
+                                  </Stack>
+                                  <Typography variant="body2" sx={{ color: "#62748E", mr: 4.5 }}>
+                                    נוצר על ידי {response.createdBy?.name || "משתמש בזן"}, בתאריך {new Date(response.createdAt).toLocaleDateString("he-IL")}
+                                  </Typography>
+                                </Box>
+                              ))}
+                            </Stack>
+                          ) : <Typography variant="body2" sx={{ textAlign: "center", py: 1, color: "text.secondary" }}>אין תגובות שנמחקו עם הטופס</Typography>}
+                        </Box>
+                      </Collapse>
+                    </StyledCard>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          ) : isDeletedFormsLoading ? (
             <Box className="main-page-loading" sx={{ py: 8 }} />
           ) : (
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                py: 8,
-              }}>
-              <Typography
-                variant="h6"
-                sx={{ color: "text.secondary", fontFamily: "Heebo, sans-serif", mb: 1 }}>
-                סל המיחזור ריק
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: "text.secondary", fontFamily: "Heebo, sans-serif" }}>
-                לא נמצאו טפסים שנמחקו
-              </Typography>
-            </Box>
+            <Typography variant="h6" sx={{ textAlign: "center", mt: 10, color: "text.secondary" }}>לא נמצאו טפסים שנמחקו</Typography>
           )
-        ) : responses.length > 0 ? (
-          <Box className="forms-grid" onScroll={handleScroll} sx={{ margin: 0, padding: 0 }}>
-            {Object.values(groupedResponses).map((group: any) => {
-              const isExpanded = !!expandedForms[group.formId];
-
-              return (
-                <Box key={group.formId} sx={{ mb: 2 }}>
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={1.5}
-                    onClick={() => toggleFormExpanded(group.formId)}
-                    sx={{
-                      cursor: "pointer",
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 2,
-                      backgroundColor: "#ffffff",
-                      border: "1px solid",
-                      borderColor: isExpanded ? "#1e88e5" : "rgba(2, 6, 24, 0.08)",
-                      borderRadius: "15px",
-                      px: 3,
-                      py: 1.75,
-                      mb: 1.5,
-                      userSelect: "none",
-                      color: isExpanded ? theme.palette.primary.main : "#62748E",
-                      transition: "all 0.2s ease-in-out",
-                      boxShadow: isExpanded ? "0px 2px 8px rgba(30, 136, 229, 0.05)" : "none",
-                      "&:hover": {
-                        borderColor: "#1e88e5",
-                        color: theme.palette.primary.main,
-                      },
-                    }}>
-                    {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 600,
-                        fontFamily: "Heebo, sans-serif",
-                        color: "#020618",
-                        mb: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}>
-                      <Tooltip title="מזהה הטופס" arrow placement="top">
-                        <span
-                          style={{
-                            fontSize: "0.85rem",
-                            fontWeight: 600,
-                            color: "#475569",
-                            backgroundColor: "#f1f5f9",
-                            padding: "3px 10px",
-                            borderRadius: "6px",
-                            border: "1px solid #cbd5e1",
-                          }}>
-                          #{group.formId}
-                        </span>
-                      </Tooltip>
-                      {group.formName}
-                      <span
-                        style={{
-                          fontSize: "0.8rem",
-                          fontWeight: 500,
-                          color: theme.palette.primary.main,
-                          backgroundColor: "#e0f2fe",
-                          padding: "2px 10px",
-                          borderRadius: "999px",
-                        }}>
-                        {group.items.length} {group.items.length === 1 ? "תגובה" : "תגובות"}
-                      </span>
-                    </Typography>
-                  </Stack>
-
-                  {isExpanded && (
-                    <Grid container spacing={1.5} columns={12} sx={{ mb: 2 }}>
-                      {group.items.map((item: any) => {
-                        const deletedDateObj = item.deletedResponse?.deletedAt
-                          ? new Date(item.deletedResponse.deletedAt)
-                          : null;
-                        const formattedDate = deletedDateObj
-                          ? deletedDateObj.toLocaleDateString("he-IL")
-                          : "N/A";
-                        const formattedTime = deletedDateObj
-                          ? deletedDateObj.toLocaleTimeString("he-IL", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "";
-
-                        return (
-                          <Grid key={item.id} size={{ xs: 12 }}>
-                            <StyledCard
-                              sx={{
-                                minHeight: "auto",
-                                py: 1.5,
-                                px: 3,
-                                display: "flex",
-                                flexDirection: "row",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                width: "100%",
-                              }}>
-                              <Stack
-                                direction="row"
-                                spacing={4}
-                                alignItems="center"
-                                sx={{ flexGrow: 1 }}>
-                                <Typography
-                                  variant="h6"
-                                  sx={{
-                                    fontWeight: 600,
-                                    fontFamily: "Heebo, sans-serif",
-                                    color: "#020618",
-                                    minWidth: "50px",
-                                  }}>
-                                  תגובה {item.index}
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  sx={{
-                                    color: "#62748E",
-                                    fontFamily: "Heebo, sans-serif",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "6px",
-                                  }}>
-                                  נמחק ב-
-                                  <span style={{ color: "#020618", fontWeight: 500 }}>
-                                    {formattedDate}
-                                  </span>
-                                  {formattedTime && (
-                                    <>
-                                      <span>בשעה</span>
-                                      <span style={{ color: "#020618", fontWeight: 500 }}>
-                                        {formattedTime}
-                                      </span>
-                                    </>
-                                  )}
-                                  {item.deletedResponse?.deletedBy && (
-                                    <>
-                                      <span>על ידי</span>
-                                      <Tooltip
-                                        title={item.deletedResponse.deletedBy.upn || ""}
-                                        arrow
-                                        placement="top">
-                                        <span
-                                          style={{
-                                            color: "#020618",
-                                            fontWeight: 500,
-                                            cursor: "pointer",
-                                          }}>
-                                          {item.deletedResponse.deletedBy.name ||
-                                            item.deletedResponse.deletedBy.upn ||
-                                            "משתמש בזן"}
-                                        </span>
-                                      </Tooltip>
-                                    </>
-                                  )}
-                                </Typography>
-                              </Stack>
-                              <Button
-                                disabled={restoringResponseId === item.id}
-                                onClick={() => handleRestoreResponseClick(item.formId, item.id)}
-                                variant="contained"
-                                sx={{
-                                  backgroundColor: theme.palette.primary.main,
-                                  color: "white",
-                                  borderRadius: "10px",
-                                  px: 3,
-                                  py: 0.75,
-                                  fontFamily: "Heebo, sans-serif",
-                                  fontWeight: 500,
-                                  minWidth: "150px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "8px",
-                                  "&:hover": {
-                                    backgroundColor: theme.palette.primary.dark,
-                                  },
-                                }}>
-                                {restoringResponseId === item.id ? (
-                                  <CircularProgress size={20} color="inherit" />
-                                ) : (
-                                  <MynaUiUndoIcon />
-                                )}
-                                {restoringResponseId === item.id ? "משחזר..." : "שחזור תגובה"}
-                              </Button>
-                            </StyledCard>
-                          </Grid>
-                        );
-                      })}
-                    </Grid>
-                  )}
-                </Box>
-              );
-            })}
-
-            {isResponsesLoading && <Box className="main-page-loading" sx={{ py: 4 }} />}
-          </Box>
-        ) : isResponsesLoading ? (
-          <Box className="main-page-loading" sx={{ py: 8 }} />
         ) : (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              py: 8,
-            }}>
-            <Typography
-              variant="h6"
-              sx={{ color: "text.secondary", fontFamily: "Heebo, sans-serif" }}>
-              לא נמצאו תגובות שנמחקו
-            </Typography>
-          </Box>
+          /* Tab 2: Deleted Responses */
+          activeFormsWithDeleted.length > 0 ? (
+            <Grid container spacing={2} columns={12}>
+              {activeFormsWithDeleted.map((form: any) => {
+                const isExpanded = !!expandedForms[form.id];
+                const responsesCount = form.responsesCount ?? 0;
+
+                return (
+                  <Grid key={form.id} size={{ xs: 12 }}>
+                    <StyledCard sx={{ minHeight: "auto", p: 0, overflow: "hidden" }}>
+                      <Box sx={{ py: 2, px: 3, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => toggleFormExpanded(form.id)}>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                          {getIcon(form.icon, 24)}
+                          <Box>
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: "#020618", display: "flex", alignItems: "center", gap: 1 }}>
+                              {form.name}
+                              <Typography component="span" sx={{ fontSize: "0.85rem", color: "#62748E", fontWeight: 500, bgcolor: "#f1f5f9", px: 1, py: 0.2, borderRadius: "6px" }}>
+                                #{form.id}
+                              </Typography>
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
+                              {responsesCount} תגובות שנמחקו
+                            </Typography>
+                          </Box>
+                        </Stack>
+                        <IconButton size="small" sx={{ color: "#020618" }}>
+                          {isExpanded ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+                        </IconButton>
+                      </Box>
+
+                      <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                        <Divider sx={{ mx: 3 }} />
+                        <Box sx={{ p: 3, backgroundColor: "rgba(241, 245, 249, 0.4)" }}>
+                          {form.responses?.length ? (
+                            <Stack spacing={1.5}>
+                              {form.responses.map((response: any) => {
+                                const rDeletedDateObj = response.deletedResponse?.deletedAt ? new Date(response.deletedResponse.deletedAt) : null;
+                                const rFormattedDate = rDeletedDateObj ? rDeletedDateObj.toLocaleDateString("he-IL") : "N/A";
+                                const rFormattedTime = rDeletedDateObj ? rDeletedDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" }) : "";
+
+                                return (
+                                  <Box key={response.id} sx={{ p: 2.5, backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid rgba(2, 6, 24, 0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <Box>
+                                      <Typography variant="body1" sx={{ fontWeight: 700, color: "#020618", mb: 0.5 }}>
+                                        תגובה מספר {response.index}
+                                      </Typography>
+                                      <Typography variant="body2" sx={{ color: "#62748E", fontWeight: 500 }}>
+                                        נוצר על ידי {response.createdBy?.name || "משתמש בזן"}
+                                      </Typography>
+                                      <Typography variant="body2" sx={{ color: "#62748E" }}>
+                                        נמחק ב-{rFormattedDate} בשעה {rFormattedTime} על ידי {response.deletedResponse?.deletedBy?.name || "משתמש בזן"}
+                                      </Typography>
+                                    </Box>
+                                    <Button
+                                      disabled={restoringResponseId === response.id}
+                                      onClick={() => handleRestoreResponseClick(form.id, response.id)}
+                                      variant="outlined"
+                                      sx={{ borderRadius: "10px", fontWeight: 700, px: 2.5, gap: 1 }}>
+                                      {restoringResponseId === response.id ? <CircularProgress size={16} color="inherit" /> : <MynaUiUndoIcon style={{ width: 16, height: 16 }} />}
+                                      שחזור תגובה לטופס
+                                    </Button>
+                                  </Box>
+                                );
+                              })}
+                            </Stack>
+                          ) : <Typography variant="body2" sx={{ textAlign: "center", py: 1, color: "text.secondary" }}>אין תגובות שנמחקו</Typography>}
+                        </Box>
+                      </Collapse>
+                    </StyledCard>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          ) : isActiveFormsLoading ? (
+            <Box className="main-page-loading" sx={{ py: 8 }} />
+          ) : (
+            <Typography variant="h6" sx={{ textAlign: "center", mt: 10, color: "text.secondary" }}>לא נמצאו תגובות שנמחקו</Typography>
+          )
         )}
       </Box>
     </Box>
