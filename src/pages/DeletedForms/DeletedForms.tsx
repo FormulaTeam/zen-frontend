@@ -640,22 +640,25 @@ function DeletedForms({ user }: { user: any }) {
                                 const fCreatedTime = createdDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
                                 return (
-                                  <Box key={response.id} sx={{ p: 2, backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid rgba(2, 6, 24, 0.05)", display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
-                                    <Stack direction="row" spacing={2} alignItems="center">
-                                      <MessageSquare size={18} color={theme.palette.primary.main} />
-                                      <Box sx={{ textAlign: "left" }}>
-                                        <Typography sx={{ fontWeight: 700, fontSize: "14px", color: "#020618", mb: 0.5 }}>
-                                          תגובה מספר {response.index}
-                                        </Typography>
-                                        <Typography sx={{ fontSize: "13px", color: "#62748E" }}>
-                                          נוצרה בתאריך {fCreatedDate} בשעה {fCreatedTime} על ידי{" "}
+                                  <Box key={response.id} sx={{ p: 2, backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid rgba(2, 6, 24, 0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <Box sx={{ textAlign: "left", pl: 1 }}>
+                                      <Typography sx={{ fontSize: "13px", color: "#62748E" }}>
+                                        נוצרה בתאריך {fCreatedDate} בשעה {fCreatedTime} על ידי{" "}
                                         <Tooltip title={response.createdBy?.upn || "לא ידוע"} arrow placement="top">
                                           <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
                                             {response.createdBy?.name || "משתמש בזן"}
                                           </Box>
                                         </Tooltip>
+                                      </Typography>
+                                    </Box>
+
+                                    <Stack direction="row" spacing={2} alignItems="center">
+                                      <Box sx={{ textAlign: "right" }}>
+                                        <Typography sx={{ fontWeight: 700, fontSize: "14px", color: "#020618" }}>
+                                          תגובה מספר {response.index}
                                         </Typography>
                                       </Box>
+                                      <MessageSquare size={18} color={theme.palette.primary.main} />
                                     </Stack>
                                   </Box>
                                 );
@@ -686,32 +689,66 @@ function DeletedForms({ user }: { user: any }) {
 
                 return (
                   <Grid key={form.id} size={{ xs: 12 }}>
-                    <Card sx={{ p: 0, overflow: "hidden", border: "1px solid #E2E8F0", borderRadius: "12px", boxShadow: "0px 1px 3px rgba(0,0,0,0.05)" }}>
-                      <Box sx={{ py: 2, px: 3, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => toggleFormExpanded(form.id)}>
-                        <Stack direction="row" spacing={2} alignItems="center">
-                          {getIcon(form.icon, 24)}
-                          <Box>
-                            <Typography variant="h6" sx={{ fontWeight: 700, color: "#0F172B", display: "flex", alignItems: "center", gap: 1 }}>
-                              {form.name}
-                              <Typography component="span" sx={{ fontSize: "0.85rem", color: "#62748E", fontWeight: 500, bgcolor: "#f1f5f9", px: 1, py: 0.2, borderRadius: "6px" }}>
-                                #{form.id}
-                              </Typography>
-                            </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 600, color: "primary.main" }}>
-                              {responsesCount} תגובות שנמחקו
-                            </Typography>
+                    <Card sx={{ p: 0, overflow: "hidden", border: "1px solid #E2E8F0", borderRadius: "4px", boxShadow: "none", bgcolor: "#ffffff" }}>
+                      {/* Active Form Header */}
+                      <Box 
+                        sx={{ py: 2, px: 3, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} 
+                        onClick={() => toggleFormExpanded(form.id)}
+                      >
+                        {/* Right Side: Form Info (First in DOM = Right in RTL) */}
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <Box
+                            sx={{ 
+                              width: "40px",
+                              height: "40px",
+                              bgcolor: "rgba(25, 118, 210, 0.08)", 
+                              color: "primary.main",
+                              borderRadius: "4px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              "& img": { width: "20px", height: "20px" },
+                              "& .MuiSvgIcon-root": { fontSize: "20px" }
+                            }}>
+                            {getIconContent(form.icon)}
                           </Box>
-                        </Stack>
-                        <IconButton size="small" sx={{ color: "#0F172B" }}>
-                          {isExpanded ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+
+                          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "20px", color: "#020618", textAlign: "right", display: "flex", alignItems: "center", gap: 1 }}>
+                            {form.name}
+                            <Tooltip title="מזהה הטופס" arrow placement="top">
+                              <Typography component="span" sx={{ fontSize: "16px", color: "#020618", fontWeight: 400, cursor: "help" }}>
+                                {form.id}
+                              </Typography>
+                            </Tooltip>
+                            <Typography component="span" sx={{ fontSize: "18px", color: "#020618", fontWeight: 400, ml: 1 }}>
+                              ←
+                            </Typography>
+                            <Typography component="span" sx={{ fontSize: "18px", color: "#62748E", fontWeight: 400 }}>
+                              {responsesCount} תגובות
+                            </Typography>
+                          </Typography>
+                        </Box>
+
+                        {/* Left Side: Expand Trigger (Last in DOM = Left in RTL) */}
+                        <IconButton
+                          sx={{ 
+                            width: "32px",
+                            height: "32px",
+                            bgcolor: "#ffffff",
+                            border: "1px solid #E2E8F0",
+                            borderRadius: "4px",
+                            color: "#0F172B",
+                            boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
+                            "&:hover": { bgcolor: "#f8fafc" }
+                          }}>
+                          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                         </IconButton>
                       </Box>
 
                       <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                        <Divider sx={{ mx: 3 }} />
-                        <Box sx={{ p: 3, backgroundColor: "rgba(241, 245, 249, 0.4)" }}>
+                        <Box sx={{ bgcolor: "#ffffff", borderTop: "1px solid #E2E8F0" }}>
                           {form.responses?.length ? (
-                            <Stack spacing={1.5}>
+                            <Stack spacing={0}>
                               {form.responses.map((response: any) => {
                                 const rDeletedDateObj = response.deletedResponse?.deletedAt ? new Date(response.deletedResponse.deletedAt) : null;
                                 const rFormattedDate = rDeletedDateObj ? rDeletedDateObj.toLocaleDateString("he-IL") : "N/A";
@@ -722,49 +759,77 @@ function DeletedForms({ user }: { user: any }) {
                                 const fCreatedTime = createdDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
                                 return (
-                                  <Box key={response.id} sx={{ p: 2.5, backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid rgba(2, 6, 24, 0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                  <Box key={response.id} sx={{ p: 2, borderBottom: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    {/* Right Side: Response Details & Checkbox (First in DOM = Right in RTL) */}
+                                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+                                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 3 }}>
+                                        <Checkbox
+                                          checked={selectedResponseIds.has(response.id)}
+                                          onChange={() => handleToggleSelectResponse(response.id)}
+                                          sx={{
+                                            p: 0,
+                                            width: "16px",
+                                            height: "16px",
+                                            border: "1px solid #62748E",
+                                            borderRadius: "4px",
+                                            color: "transparent",
+                                            "&.Mui-checked": { color: theme.palette.primary.main, border: "none" },
+                                            "& .MuiSvgIcon-root": { fontSize: 20 }
+                                          }}
+                                        />
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                          <MessageSquare size={24} color={theme.palette.primary.main} />
+                                          <Typography variant="body1" sx={{ fontWeight: 600, color: "#0F172B", fontSize: "16px", textAlign: "right" }}>
+                                            תגובה מספר {response.index}
+                                          </Typography>
+                                        </Box>
+                                      </Box>
+                                      <Box sx={{ textAlign: "left", pl: 5.5 }}>
+                                        <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px", mb: 1 }}>
+                                          נוצר על ידי:{" "}
+                                          <Tooltip title={response.createdBy?.upn || "לא ידוע"} arrow placement="top">
+                                            <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
+                                              {response.createdBy?.name || "משתמש בזן"}
+                                            </Box>
+                                          </Tooltip>
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px" }}>
+                                          נמחק בתאריך {rFormattedDate} בשעה {rFormattedTime} על ידי{" "}
+                                          <Tooltip title={response.deletedResponse?.deletedBy?.upn || "לא ידוע"} arrow placement="top">
+                                            <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
+                                              {response.deletedResponse?.deletedBy?.name || "משתמש בזן"}
+                                            </Box>
+                                          </Tooltip>
+                                        </Typography>
+                                      </Box>
+                                    </Box>
+
+                                    {/* Left Side: Restore Button (Last in DOM = Left in RTL) */}
                                     <Button
                                       disabled={restoringResponseId === response.id}
                                       onClick={() => handleRestoreResponseClick(form.id, response.id)}
-                                      variant="outlined"
-                                      startIcon={restoringResponseId === response.id ? <CircularProgress size={16} color="inherit" /> : <MynaUiUndoIcon style={{ width: 16, height: 16 }} />}
-                                      sx={{ borderRadius: "8px", fontWeight: 700, px: 2.5, gap: 1 }}>
+                                      variant="contained"
+                                      startIcon={restoringResponseId === response.id ? <CircularProgress size={16} color="inherit" /> : <RotateCcw size={16} />}
+                                      sx={{ 
+                                        bgcolor: "primary.main", 
+                                        borderRadius: "4px", 
+                                        fontWeight: 500, 
+                                        height: "32px",
+                                        px: 1.5, 
+                                        gap: 1,
+                                        fontSize: "14px",
+                                        textTransform: "none",
+                                        boxShadow: "none",
+                                        flexShrink: 0,
+                                        "&:hover": { bgcolor: "primary.dark", boxShadow: "none" }
+                                      }}>
                                       שחזור תגובה לטופס
                                     </Button>
-
-                                    <Stack direction="row" spacing={2.5} alignItems="center">
-                                      <Box sx={{ textAlign: "right" }}>
-                                        <Typography variant="body1" sx={{ fontWeight: 700, color: "#0F172B", mb: 0.5 }}>
-                                          תגובה מספר {response.index}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ color: "#62748E", mb: 0.5 }}>
-                                          נוצרה בתאריך {fCreatedDate} בשעה {fCreatedTime} על ידי{" "}
-                                        <Tooltip title={response.createdBy?.upn || "לא ידוע"} arrow placement="top">
-                                          <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
-                                            {response.createdBy?.name || "משתמש בזן"}
-                                          </Box>
-                                        </Tooltip>
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ color: "#62748E" }}>
-                                          <b>נמחק בתאריך</b> {rFormattedDate} בשעה {rFormattedTime} <b>על ידי</b> {response.deletedResponse?.deletedBy?.name || "משתמש בזן"}
-                                        </Typography>
-                                      </Box>
-                                      <Checkbox
-                                        checked={selectedResponseIds.has(response.id)}
-                                        onChange={() => handleToggleSelectResponse(response.id)}
-                                        sx={{
-                                          p: 0,
-                                          "& .MuiSvgIcon-root": { fontSize: 24, borderRadius: "4px" },
-                                          color: "#94A3B8",
-                                          "&.Mui-checked": { color: theme.palette.primary.main }
-                                        }}
-                                      />
-                                    </Stack>
                                   </Box>
                                 );
                               })}
                             </Stack>
-                          ) : <Typography variant="body2" sx={{ textAlign: "center", py: 1, color: "text.secondary" }}>אין תגובות שנמחקו</Typography>}
+                          ) : <Typography variant="body2" sx={{ textAlign: "center", py: 2, color: "text.secondary" }}>אין תגובות שנמחקו</Typography>}
                         </Box>
                       </Collapse>
                     </Card>
