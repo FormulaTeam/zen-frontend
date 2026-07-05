@@ -9,6 +9,9 @@ import { NavAppBar, NavToolbar, LogoContainer, ButtonsContainer } from "./styled
 import { useAuth } from "../../contexts/AuthContext";
 import SupportPopup from "./SupportPopup";
 
+const SUPPORT_CONTACT_URL = process.env.SUPPORT_CONTACT_URL;
+const SUPPORT_TICKET_URL = process.env.SUPPORT_TICKET_URL;
+
 const Navbar = () => {
   const [isEasterEggActive, setIsEasterEggActive] = useState(false);
   const [isSupportPopupOpen, setIsSupportPopupOpen] = useState(false);
@@ -42,6 +45,15 @@ const Navbar = () => {
       (window as any).hasUnsavedChanges = false;
       navigate(IPath.HOME, { replace: true });
     }
+  };
+
+  const openExternalUrl = (url?: string) => {
+    if (!url) {
+      console.warn("Support URL is missing from .env");
+      return;
+    }
+
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   const handleQuestionsClick = () => {
@@ -125,14 +137,10 @@ const Navbar = () => {
       <SupportPopup
         isOpen={isSupportPopupOpen}
         onClose={() => setIsSupportPopupOpen(false)}
-        onContactUs={() => {
-          // TODO: open contact flow
-        }}
-        onOpenTicket={() => {
-          // TODO: open ticket flow
-        }}
+        onContactUs={() => openExternalUrl(SUPPORT_CONTACT_URL)}
+        onOpenTicket={() => openExternalUrl(SUPPORT_TICKET_URL)}
         onOpenGuide={() => {
-          // TODO: open guide page
+          // TODO: connect guide URL later if needed
         }}
       />
     </>

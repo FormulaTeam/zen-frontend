@@ -657,7 +657,6 @@ const SupportPopup: React.FC<SupportPopupProps> = ({
 
       <FooterRow>
         <NeedMoreHelp>
-          <CircleQuestionMark />
           <span>צריכים עזרה נוספת?</span>
         </NeedMoreHelp>
 
