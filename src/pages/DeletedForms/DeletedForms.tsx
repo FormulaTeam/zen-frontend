@@ -887,7 +887,7 @@ function DeletedForms({ user }: { user: any }) {
             bgcolor: "#F1F5F9",
             border: "1px solid #E2E8F0",
             borderRadius: "4px",
-            p: 2,
+            p: 1.5,
             display: "flex",
             flexDirection: "row",
             alignItems: "center",
@@ -897,7 +897,7 @@ function DeletedForms({ user }: { user: any }) {
           }}
         >
           {/* Count on Left */}
-          <Typography sx={{ color: "#020618", fontWeight: 500, fontSize: "14px" }}>
+          <Typography sx={{ color: "#020618", fontWeight: 500, fontSize: "14px", mr: 4 }}>
             {activeTab === 0 ? selectedFormIds.size : selectedResponseIds.size} פריטים נבחרו
           </Typography>
 
