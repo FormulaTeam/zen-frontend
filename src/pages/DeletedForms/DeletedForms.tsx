@@ -645,50 +645,49 @@ function DeletedForms({ user }: { user: any }) {
                                 return (
                                   <Box key={response.id} sx={{ p: 2, borderBottom: "1px solid #E2E8F0", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                                     {/* Identity & Metadata on Left */}
-                                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "flex-start", justifyContent: "flex-start", flex: 1 }}>
-                                      <Checkbox
-                                        checked={selectedResponseIds.has(response.id)}
-                                        onChange={() => handleToggleSelectResponse(response.id)}
-                                        sx={{
-                                          p: 0,
-                                          mt: 0.6,
-                                          width: "16px",
-                                          height: "16px",
-                                          border: "1px solid #62748E",
-                                          borderRadius: "4px",
-                                          color: "transparent",
-                                          mr: 2,
-                                          "&.Mui-checked": { color: theme.palette.primary.main, border: "none" },
-                                          "& .MuiSvgIcon-root": { fontSize: 20 }
-                                        }}
-                                      />
-                                      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, flex: 1 }}>
-                                        {/* Line 1: [Icon] [Title] */}
+                                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, flex: 1 }}>
+                                      {/* Row 1: Checkbox + [Icon] [Title] */}
+                                      <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
+                                        <Checkbox
+                                          checked={selectedResponseIds.has(response.id)}
+                                          onChange={() => handleToggleSelectResponse(response.id)}
+                                          sx={{
+                                            p: 0,
+                                            width: "16px",
+                                            height: "16px",
+                                            border: "1px solid #62748E",
+                                            borderRadius: "4px",
+                                            color: "transparent",
+                                            "&.Mui-checked": { color: theme.palette.primary.main, border: "none" },
+                                            "& .MuiSvgIcon-root": { fontSize: 20 }
+                                          }}
+                                        />
                                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 1.5 }}>
                                           <MessageSquare size={24} color={theme.palette.primary.main} />
                                           <Typography variant="body1" sx={{ fontWeight: 600, color: "#0F172B", fontSize: "16px", textAlign: "left" }}>
                                             תגובה מספר {response.index}
                                           </Typography>
                                         </Box>
-                                        {/* Line 2: Metadata (Left Aligned) */}
-                                        <Box sx={{ textAlign: "left" }}>
-                                          <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px", mb: 0.5 }}>
-                                            נוצר על ידי:{" "}
-                                            <Tooltip title={response.createdBy?.upn || "לא ידוע"} arrow placement="top">
-                                              <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
-                                                {response.createdBy?.name || "משתמש בזן"}
-                                              </Box>
-                                            </Tooltip>
-                                          </Typography>
-                                          <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px" }}>
-                                            נמחק בתאריך {rFormattedDate} בשעה {rFormattedTime} על ידי{" "}
-                                            <Tooltip title={response.deletedResponse?.deletedBy?.upn || "לא ידוע"} arrow placement="top">
-                                              <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
-                                                {response.deletedResponse?.deletedBy?.name || "משתמש בזן"}
-                                              </Box>
-                                            </Tooltip>
-                                          </Typography>
-                                        </Box>
+                                      </Box>
+                                      
+                                      {/* Row 2: Metadata (Aligned with text after checkbox) */}
+                                      <Box sx={{ textAlign: "left", pl: 4 }}>
+                                        <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px", mb: 0.5 }}>
+                                          נוצר על ידי:{" "}
+                                          <Tooltip title={response.createdBy?.upn || "לא ידוע"} arrow placement="top">
+                                            <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
+                                              {response.createdBy?.name || "משתמש בזן"}
+                                            </Box>
+                                          </Tooltip>
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px" }}>
+                                          נמחק בתאריך {rFormattedDate} בשעה {rFormattedTime} על ידי{" "}
+                                          <Tooltip title={response.deletedResponse?.deletedBy?.upn || "לא ידוע"} arrow placement="top">
+                                            <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
+                                              {response.deletedResponse?.deletedBy?.name || "משתמש בזן"}
+                                            </Box>
+                                          </Tooltip>
+                                        </Typography>
                                       </Box>
                                     </Box>
 
