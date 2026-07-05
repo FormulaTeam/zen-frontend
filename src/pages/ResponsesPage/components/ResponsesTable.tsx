@@ -13,7 +13,7 @@ import {
 } from "@mui/x-data-grid-pro";
 import { useFormStore, useInitiateFormStore } from "../stores/form.store";
 import clsx from "clsx";
-import { ArrowDown, ArrowDownUp, ArrowUp, Cloud, CloudDownload, CloudOff, RefreshCw } from "lucide-react";
+import { ArrowDown, ArrowDownUp, ArrowUp, Cloud, CloudOff, RefreshCw } from "lucide-react";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { heIL } from "@mui/x-data-grid/locales";
@@ -131,9 +131,9 @@ const isSortable = (typeId?: number): boolean => {
 const EmptyColumnHeaderFilterIconButton = () => null;
 const EmptyColumnFilteredIcon = () => null;
 
-const SortUnsortedIcon = () => <ArrowDownUp size={16} strokeWidth={2.2} />;
-const SortAscendingIcon = () => <ArrowUp size={16} strokeWidth={2.2} />;
-const SortDescendingIcon = () => <ArrowDown size={16} strokeWidth={2.2} />;
+const SortUnsortedIcon = () => <ArrowDownUp size={16} strokeWidth={2.4} />;
+const SortAscendingIcon = () => <ArrowUp size={16} strokeWidth={2.4} />;
+const SortDescendingIcon = () => <ArrowDown size={16} strokeWidth={2.4} />;
 
 const FIELD_COLUMN_WIDTH = 190;
 const FIELD_COLUMN_MAX_WIDTH = 450;
@@ -227,11 +227,11 @@ const SyncStatusIcon: React.FC<{
 
   const icon =
     statusId === 5 ? (
-      <Cloud size={18} strokeWidth={2.3} />
+      <Cloud size={18} strokeWidth={2.4} />
     ) : statusId === 4 ? (
-      <CloudOff size={18} strokeWidth={2.3} color={"#E7000B"} />
+      <CloudOff size={18} strokeWidth={2.4} color={"#E7000B"} />
     ) : (
-      <RefreshCw size={18} strokeWidth={2.3} />
+      <RefreshCw size={18} strokeWidth={2.4} />
     );
 
   return (
@@ -951,9 +951,11 @@ export const ResponsesTable = React.memo(
         align: "left",
         headerAlign: "left",
         renderHeader: () => (
-          <HeaderFlex sx={{ justifyContent: "flex-start", width: "100%" }}>
-            <CloudDownload size={20} strokeWidth={2.2} />
-          </HeaderFlex>
+          <Tooltip title="סטטוס סנכרון">
+            <SyncStatusIconBox>
+              <Cloud size={20} strokeWidth={2.4} />
+            </SyncStatusIconBox>
+          </Tooltip>
         ),
         minWidth: 90,
         width: columnWidths.current["sync"] || 90,

@@ -1,15 +1,7 @@
-import {
-  CloudOutlined,
-  DeleteOutline,
-  DeleteSweepOutlined,
-  MoreVert,
-  SyncOutlined,
-  TableView,
-  UploadOutlined,
-} from "@mui/icons-material";
 import { ListItemIcon, ListItemText, Menu, MenuItem, SxProps, Tooltip, Theme } from "@mui/material";
 import { FC, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { FileSpreadsheet, ListX, MoreVertical, RotateCw, Trash2, Upload } from "lucide-react";
 
 import { permission, responsesScopeOption } from "formula-gear";
 
@@ -135,7 +127,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
         }
         onClick={pushToMetro}>
         <ListItemIcon>
-          <SyncOutlined sx={{ fontSize: 22 }} />
+          <RotateCw size={22} strokeWidth={2.4} />
         </ListItemIcon>
         <ListItemText>סנכרון לאואזיס</ListItemText>
       </MenuItem>
@@ -149,7 +141,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
         <IconOnlyButton
           sx={buttonSx}
           onClick={(event) => setAnchorElMoreActions(event.currentTarget)}>
-          <MoreVert />
+          <MoreVertical strokeWidth={2.4} />
         </IconOnlyButton>
       </Tooltip>
 
@@ -182,7 +174,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           userPermissions={permissions}>
           <MenuItem disabled={!hasFormFields} onClick={handleImportFromExcel}>
             <ListItemIcon>
-              <UploadOutlined sx={{ fontSize: 22 }} />
+              <Upload size={22} strokeWidth={2.4} />
             </ListItemIcon>
             <ListItemText>ייבוא נתונים</ListItemText>
           </MenuItem>
@@ -191,7 +183,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
         <PermissionGate requiredPermissions={[permission.ExportForm]} userPermissions={permissions}>
           <MenuItem disabled={!hasFormFields} onClick={handleExportToExcel}>
             <ListItemIcon>
-              <TableView sx={{ fontSize: 22 }} />
+              <FileSpreadsheet size={22} strokeWidth={2.4} />
             </ListItemIcon>
             <ListItemText>ייצוא לאקסל</ListItemText>
           </MenuItem>
@@ -200,7 +192,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
         <PermissionGate requiredPermissions={[permission.DeleteForm]} userPermissions={permissions}>
           <MenuItem onClick={handleDeleteForm}>
             <ListItemIcon>
-              <DeleteOutline sx={{ color: "red", fontSize: 22 }} />
+              <Trash2 size={22} strokeWidth={2.4} color="red" />
             </ListItemIcon>
             <ListItemText sx={{ color: "red" }}>מחיקת הטופס</ListItemText>
           </MenuItem>
@@ -211,7 +203,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
           userPermissions={permissions}>
           <MenuItem onClick={handleDeleteResponses} disabled={rows.length === 0}>
             <ListItemIcon>
-              <DeleteSweepOutlined sx={{ color: "red", fontSize: 22 }} />
+              <ListX size={22} strokeWidth={2.4} color="red" />
             </ListItemIcon>
             <ListItemText sx={{ color: "red" }}>מחיקת כל התגובות</ListItemText>
           </MenuItem>

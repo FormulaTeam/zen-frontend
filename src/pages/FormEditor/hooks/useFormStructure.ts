@@ -527,9 +527,10 @@ function useFormStructure(editedForm?: ExtendedFormDto, initialCreateFormStructu
 
   const appendSection = useCallback(() => {
     setFormStructure((prev) => {
+      const count = prev.orderedSectionIds.length;
       const newSectionId = generateSectionId();
       const newSection: Section = {
-        title: texts.heb.undefinedSection,
+        title: count === 0 ? texts.heb.mainSection : `מקטע ${count + 1}`,
         expanded: true,
         fieldIds: [],
       };

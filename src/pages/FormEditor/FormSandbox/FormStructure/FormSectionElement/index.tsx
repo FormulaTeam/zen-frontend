@@ -4,7 +4,7 @@ import { AccordionDetails, Button, FormControl, FormHelperText, Tooltip } from "
 import { FormField, useFormStructureContext } from "../../../context/FormStructureContext";
 import styles from "./style.module.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import AlertMsg from "@components/AlertMsg/AlertMsg";
+import ConfirmDeleteDialog from "@components/BasePopup/ConfirmDeleteDialog";
 
 import { texts } from "@utils/texts";
 import { useContext } from "react";
@@ -74,7 +74,7 @@ function FormSectionElement({ id }: Props) {
     disabled: !self.expanded || self.fieldIds.length === 0 || activeElementType === "section",
   });
 
-  const { originalFieldIds } = useContext(FormEditorContext) || {};
+  const { originalFieldIds, originalSectionIds } = useContext(FormEditorContext) || {};
   const { requestConfirm, ConfirmDialog } = useConfirmDeleteExistingField();
 
   const isLastSection = Object.keys(formStructure.sections).length <= 1;
@@ -284,8 +284,16 @@ function FormSectionElement({ id }: Props) {
           color="error"
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
-            setShowAlertMsg(true);
             e.stopPropagation();
+
+            const isNewSection = !originalSectionIds || !originalSectionIds.has(id);
+            const isEmpty = self.fieldIds.length === 0;
+
+            if (isNewSection && isEmpty) {
+              deleteSection(id);
+            } else {
+              setShowAlertMsg(true);
+            }
           }}>
           <DeleteIcon ownerState={{ isLastSection }} />
         </Button>
@@ -293,15 +301,17 @@ function FormSectionElement({ id }: Props) {
     </Tooltip>
   );
 
-  const alertMsgDialog = showAlertMsg && (
-    <AlertMsg
-      msg={[texts.heb.removeSectionAlert]}
-      closePopup={() => setShowAlertMsg(false)}
-      onOk={() => {
+  const alertMsgDialog = (
+    <ConfirmDeleteDialog
+      open={showAlertMsg}
+      title="מחיקת מקטע"
+      message={texts.heb.removeSectionAlert}
+      onConfirm={() => {
         deleteSection(id);
         setShowAlertMsg(false);
       }}
-      sectionId={id}
+      onClose={() => setShowAlertMsg(false)}
+      confirmText={texts.heb.deleteSection}
     />
   );
 

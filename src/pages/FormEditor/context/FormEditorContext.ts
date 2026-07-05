@@ -12,6 +12,7 @@ interface FormEditorContext {
   originalFieldIds?: Set<string>;
   duplicateSourceFormId?: number;
   duplicateCopyPermissions?: boolean;
+  originalSectionIds?: Set<string>;
 }
 
 const FormEditorContext = createContext<FormEditorContext>({ mode: FORM_EDITOR_MODE.CREATE });

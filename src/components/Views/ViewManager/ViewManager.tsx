@@ -1,3 +1,4 @@
+import { Box } from "@mui/material";
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { ViewUserBase } from "../../../types/interfaces/view.types";
 import { ViewManagerContainer } from "./styled";
@@ -58,32 +59,40 @@ export function ViewManager({
 
   return (
     <ViewManagerContainer>
-      {showHeader && <ViewModeHeader mode={mode} onBack={switchToList} />}
-
-      {isListMode && (
-        <SavedViewsList
-          savedViews={savedViews}
-          user={user}
-          permissionTypes={permissionTypes}
-          onLoadView={onLoadView}
-          onEditView={switchToEdit}
-          onDeleteView={onDeleteView}
-          onCreateNew={switchToCreate}
-        />
+      {showHeader && (
+        <Box sx={{ p: 2, pb: 0 }}>
+          <ViewModeHeader mode={mode} onBack={switchToList} />
+        </Box>
       )}
 
-      {isFormMode && (
-        <ResponsesViewPage
-          form={form}
-          user={user}
-          currentView={editingView || undefined}
-          savedViews={savedViews ?? []}
-          permissionTypes={permissionTypes}
-          isSaving={isSaving}
-          onSaveView={handleSave}
-          onApplyView={onApplyView}
-        />
-      )}
+      <Box sx={{ flex: 1, overflow: "hidden" }}>
+        {isListMode && (
+          <Box sx={{ height: "100%", overflowY: "auto", p: 2, pt: showHeader ? 0 : 2 }}>
+            <SavedViewsList
+              savedViews={savedViews}
+              user={user}
+              permissionTypes={permissionTypes}
+              onLoadView={onLoadView}
+              onEditView={switchToEdit}
+              onDeleteView={onDeleteView}
+              onCreateNew={switchToCreate}
+            />
+          </Box>
+        )}
+
+        {isFormMode && (
+          <ResponsesViewPage
+            form={form}
+            user={user}
+            currentView={editingView || undefined}
+            savedViews={savedViews ?? []}
+            permissionTypes={permissionTypes}
+            isSaving={isSaving}
+            onSaveView={handleSave}
+            onApplyView={onApplyView}
+          />
+        )}
+      </Box>
     </ViewManagerContainer>
   );
 }
