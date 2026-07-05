@@ -155,7 +155,7 @@ function DeletedForms({ user }: { user: any }) {
     isFetchingNextPage: isFetchingNextActiveForms,
   } = useGetSoftDeletedResponsesGlobal({
     query: searchTerm || undefined,
-    sortBy,
+    sortBy: sortBy === "deleted_at" ? "created_at" : sortBy,
     orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
   });
 
