@@ -80,9 +80,17 @@ function FormEditor({ mode, editedForm }: Props) {
     return new Set<string>(ids);
   }, [editedForm]);
 
+  const originalSectionIds = useMemo<Set<string>>(() => {
+    if (!editedForm?.sections) {
+      return new Set<string>();
+    }
+
+    return new Set<string>(editedForm.sections.map((s) => s.id?.toString() ?? ""));
+  }, [editedForm]);
+
   return (
     <div className={styles.editorContainer}>
-      <FormEditorContext.Provider value={{ mode, originalFieldIds }}>
+      <FormEditorContext.Provider value={{ mode, originalFieldIds, originalSectionIds }}>
         <FormStructureContext.Provider value={{
           setFormStructure,
           ...formStructure,

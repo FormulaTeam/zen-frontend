@@ -1,9 +1,7 @@
 import { Box, CircularProgress, Tooltip, Typography } from "@mui/material";
 import React from "react";
 import { permission } from "formula-gear";
-import { Edit } from "@mui/icons-material";
-import { Save } from "lucide-react";
-import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
+import { LogOut, Pencil, Save } from "lucide-react";
 import { Header, HeaderSection, HeaderButton } from "../../pages/Response/styled";
 
 interface ResponseHeaderProps {
@@ -61,8 +59,8 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
         {viewMode ? (
           canEdit && (
             <Tooltip title="עריכת תגובה">
-              <HeaderButton onClick={onEdit} size="small" sx={{ minWidth: "50px", p: 0 }}>
-                <Edit sx={{ fontSize: "22px" }} />
+              <HeaderButton onClick={onEdit} size="small" sx={{ minWidth: "50px", p: "0 !important" }}>
+                <Pencil size={22} strokeWidth={2.4} />
               </HeaderButton>
             </Tooltip>
           )
@@ -83,8 +81,8 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
           </HeaderButton>
         )}
 
-        <HeaderButton onClick={onBack} size="small" sx={{ minWidth: "50px", p: 0 }}>
-          <LogoutRoundedIcon sx={{ fontSize: "28px" }} />
+        <HeaderButton onClick={onBack} size="small" sx={{ minWidth: "50px", p: "0 !important" }}>
+          <LogOut size={24} strokeWidth={2.4} />
         </HeaderButton>
       </HeaderSection>
     </Header>

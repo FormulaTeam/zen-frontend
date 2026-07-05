@@ -1,5 +1,5 @@
 import Box, { BoxProps } from "@mui/material/Box";
-import { styled } from "@mui/material/styles";
+import { styled, alpha } from "@mui/material/styles";
 import { DataGridPro } from "@mui/x-data-grid-pro";
 import {
   TableContainer as MuiTableContainer,
@@ -109,17 +109,22 @@ export const UnifiedButton = styled(Button)<{ $isPrimary?: boolean }>(({ theme, 
   },
 }));
 
-export const IconOnlyButton = styled(IconButton)(({ theme }) => ({
+export const IconOnlyButton = styled(IconButton)<{ $hoverColor?: string }>(({ theme, $hoverColor }) => ({
   color: "#020618",
   backgroundColor: "transparent",
   padding: "8px",
   borderRadius: "10px",
-  transition: "all 0.2s ease",
+  transition: "all 0.14s ease",
   "&:hover": {
-    backgroundColor: "rgba(2, 6, 24, 0.04)",
+    backgroundColor: $hoverColor ? alpha($hoverColor, 0.08) : "rgba(2, 6, 24, 0.04)",
+    color: $hoverColor || "inherit",
+    "& svg": {
+      color: $hoverColor || "inherit",
+    },
   },
   "& svg": {
     fontSize: "24px",
+    transition: "color 0.14s ease",
   },
 }));
 
@@ -471,11 +476,38 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
       pointerEvents: "none",
     },
   },
-  "& .MuiDataGrid-scrollbar.MuiDataGrid-scrollbar--vertical": {
-    display: "none !important",
-  },
-  "& .MuiDataGrid-scrollbar.MuiDataGrid-scrollbar--horizontal": {
-    display: "none !important",
+  "& .MuiDataGrid-scrollbar": {
+    display: "block !important",
+    backgroundColor: "#ffffff !important",
+    borderRadius: "999px",
+    scrollbarColor: "#cbd5e1 transparent !important",
+    scrollbarWidth: "auto !important",
+    msOverflowStyle: "auto !important",
+    "&.MuiDataGrid-scrollbar--vertical": {
+      width: "14px !important",
+    },
+    "&.MuiDataGrid-scrollbar--horizontal": {
+      height: "14px !important",
+    },
+    "&::-webkit-scrollbar": {
+      display: "block !important",
+      width: "14px !important",
+      height: "14px !important",
+    },
+    "&::-webkit-scrollbar-track": {
+      display: "block !important",
+      backgroundColor: "transparent !important",
+      borderRadius: "999px !important",
+    },
+    "&::-webkit-scrollbar-thumb": {
+      display: "block !important",
+      backgroundColor: "#cbd5e1 !important",
+      border: "3px solid #ffffff !important",
+      borderRadius: "999px !important",
+    },
+    "&::-webkit-scrollbar-thumb:hover": {
+      backgroundColor: "#94a3b8 !important",
+    },
   },
   "& .MuiDataGrid-row.Mui-selected": {
     backgroundColor: "rgba(25, 118, 210, 0.04)",

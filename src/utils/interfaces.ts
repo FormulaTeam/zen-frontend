@@ -328,6 +328,7 @@ export interface Filter {
   deleted?: boolean;
   softDeleted?: boolean;
   isDeletedForm?: boolean;
+  deletedWithForm?: boolean;
   before?: string;
   after?: string;
 }

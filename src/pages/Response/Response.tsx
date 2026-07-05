@@ -371,9 +371,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     const childFormIndex = childForms.findIndex((childForm) => childForm.formId === linkedFormId);
     const childFormData = childForms[childFormIndex];
 
-    if (!childFormData || childFormIndex === -1) {
-      return null;
-    }
+    if (!childFormData || childFormIndex === -1) return null;
+
+    if (childFormData.children.length === 0 && !childFormData.canCreate) return null;
 
     const childFormTitle = getChildFormTitle(childFormData.formId);
     const addResponseTitle = `תגובה חדשה ב${childFormTitle || ""}`;
@@ -389,8 +389,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       <ConnectedFormSegment
         key={`child-form-${linkedFormId}`}
         title={childFormTitle}
-        count={childFormData.children.length}
-      >
+        count={childFormData.children.length}>
         {childFormData.children.map(
           (child, index) =>
             childFormData.shown && (
@@ -468,7 +467,9 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   );
 
   return (
-    <div className="response-page" style={{ overflowY: "auto", height: "100%", backgroundColor: "#f1f5f9" }}>
+    <div
+      className="response-page"
+      style={{ overflowY: "auto", height: "100%", backgroundColor: "#f1f5f9" }}>
       <ResponseHeader
         formTitle={formTitle}
         viewMode={viewMode}

@@ -1,4 +1,4 @@
-import { useQuery, UseQueryOptions, UseQueryResult, useMutation } from "@tanstack/react-query";
+import { useQuery, UseQueryOptions, UseQueryResult, useMutation, useInfiniteQuery } from "@tanstack/react-query";
 import { CreateFormSchema, formsScopeOption } from "formula-gear";
 import { z } from "zod";
 import { ComparatorsByFieldTypeDto, FormDto, FormOverviewDto } from "../types/shared";
@@ -105,6 +105,41 @@ export const getDeletedForms = async (filter?: Filter): Promise<FormDto[]> => {
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch deleted forms:", error);
+    throw error;
+  }
+};
+
+/**
+ * Fetch all active forms with individually soft-deleted responses.
+ *
+ * @param filter - Optional filter parameters for querying forms.
+ * @returns A promise that resolves to an array of forms with nested deleted responses.
+ */
+export const getSoftDeletedResponsesGlobal = async (filter?: Filter): Promise<FormOverviewDto[]> => {
+  const sortBy = filter?.sortBy;
+  const query = filter?.query;
+
+  let searchParam: string | undefined;
+  if (typeof query === "string" && query.trim() !== "") {
+    searchParam = query;
+  }
+
+  const params = {
+    search: searchParam,
+    sortBy: sortBy,
+    orderBy: filter?.orderBy,
+    limit: filter?.pageSize,
+    offset: filter?.pageNumber !== undefined && filter?.pageSize !== undefined ? (filter.pageNumber - 1) * filter.pageSize : undefined,
+  };
+
+  try {
+    const response = await apiClient.get<FormOverviewDto[]>("/forms/responses/soft-deleted", {
+      params,
+      signal: filter?.signal,
+    });
+    return response?.data || [];
+  } catch (error) {
+    console.error("Failed to fetch active forms with deleted responses:", error);
     throw error;
   }
 };
@@ -437,5 +472,29 @@ export const useGetComparatorsByFieldType = () => {
     queryKey: ["forms", "comparators"],
     queryFn: getComparatorsByFieldType,
     staleTime: Infinity,
+  });
+};
+
+export const useGetDeletedForms = (filter?: Filter) => {
+  const PAGE_SIZE = 20;
+  return useInfiniteQuery({
+    queryKey: ["forms", "soft-deleted", filter],
+    queryFn: ({ pageParam = 1 }) => getDeletedForms({ ...filter, pageSize: PAGE_SIZE, pageNumber: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.length === PAGE_SIZE ? allPages.length + 1 : undefined;
+    },
+  });
+};
+
+export const useGetSoftDeletedResponsesGlobal = (filter?: Filter) => {
+  const PAGE_SIZE = 20;
+  return useInfiniteQuery({
+    queryKey: ["forms", "responses", "soft-deleted", filter],
+    queryFn: ({ pageParam = 1 }) => getSoftDeletedResponsesGlobal({ ...filter, pageSize: PAGE_SIZE, pageNumber: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.length === PAGE_SIZE ? allPages.length + 1 : undefined;
+    },
   });
 };

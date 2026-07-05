@@ -79,52 +79,43 @@ export function ResponsesViewPage({
   );
 
   return (
-    <Stack direction="column" height="100%" justifyContent="space-between">
-      <Box overflow="auto" flex={1}>
-        <Box width="97%">
-          <ResponsesViewSettings
-            formId={Number(form?.id ?? 0)}
-            formName={form?.name ?? HEBREW_FORM}
-            columns={columns}
-            formFields={form?.fields}
-            canManagePublicViews={canManagePublicViews}
-            canEditCurrentView={canEditCurrentView}
-            viewName={formLogic.viewName}
-            setViewName={formLogic.setViewName}
-            viewNameError={formLogic.viewNameError}
-            isPublic={formLogic.isPublic}
-            isDefault={formLogic.isDefault}
-            setIsDefault={formLogic.setIsDefault}
-            handleSwitchPublic={formLogic.handleSwitchPublic}
-            getSortedColumns={getSortedColumns}
-            setSortColumn={setSortColumn}
-            clearSort={clearSort}
-          />
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <Box sx={{ flex: 1, overflowY: "auto", px: 2, py: 1 }}>
+        <ResponsesViewSettings
+          formId={Number(form?.id ?? 0)}
+          formName={form?.name ?? HEBREW_FORM}
+          columns={columns}
+          formFields={form?.fields}
+          canManagePublicViews={canManagePublicViews}
+          canEditCurrentView={canEditCurrentView}
+          viewName={formLogic.viewName}
+          setViewName={formLogic.setViewName}
+          viewNameError={formLogic.viewNameError}
+          isPublic={formLogic.isPublic}
+          isDefault={formLogic.isDefault}
+          setIsDefault={formLogic.setIsDefault}
+          handleSwitchPublic={formLogic.handleSwitchPublic}
+          getSortedColumns={getSortedColumns}
+          setSortColumn={setSortColumn}
+          clearSort={clearSort}
+        />
 
-          <Divider sx={{ my: 2 }} />
+        <Divider sx={{ my: 3 }} />
 
-          <ResponsesViewColumns
-            columns={columns}
-            visibleCount={visibleColumnsCount}
-            onToggleVisibility={toggleColumnVisibility}
-            onDragEnd={handleDragEnd}
-          />
-        </Box>
+        <ResponsesViewColumns
+          columns={columns}
+          visibleCount={visibleColumnsCount}
+          onToggleVisibility={toggleColumnVisibility}
+          onDragEnd={handleDragEnd}
+        />
       </Box>
 
       <Box
-        position="sticky"
-        bottom={-16}
-        zIndex={10}
-        bgcolor="#ffffff"
-        pt={1}
-        pb={2}
-        px={2}
         sx={{
-          borderTop: "1px solid #e0e0e0",
-          boxShadow: "0 -4px 12px rgba(0, 0, 0, 0.08)",
-          mx: -2,
-          width: "calc(100% + 32px)",
+          p: 2,
+          bgcolor: "#ffffff",
+          borderTop: "1px solid #e2e8f0",
+          boxShadow: "0 -4px 6px -1px rgba(0, 0, 0, 0.05)",
         }}>
         <ResponsesViewFormActions
           isSaving={isSaving}
@@ -134,6 +125,6 @@ export function ResponsesViewPage({
           onSave={formLogic.handleSaveView}
         />
       </Box>
-    </Stack>
+    </Box>
   );
 }

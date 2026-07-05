@@ -1,8 +1,5 @@
-import { Typography, IconButton, Stack, Tooltip, Chip } from "@mui/material";
-import { Edit } from "@mui/icons-material";
-import PublicIcon from "@mui/icons-material/Public";
-import DeleteIcon from "@mui/icons-material/Delete";
-import PushPinIcon from "@mui/icons-material/PushPin";
+import { Typography, Stack, Tooltip, Chip, Box } from "@mui/material";
+import { Globe, Pencil, Trash2 } from "lucide-react";
 import {
   ViewCard,
   ViewCardContent,
@@ -15,6 +12,7 @@ import {
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
 import { useState } from "react";
 import ConfirmDeleteDialog from "../../BasePopup/ConfirmDeleteDialog";
+import { IconOnlyButton } from "../../../pages/ResponsesPage/styled";
 
 enum HebrewTitles {
   EDIT_VIEW = "עריכת תצוגה",
@@ -85,18 +83,32 @@ export function SavedViewCard({
                 </ViewNameTypography>
                 {view.isPublic && (
                   <Tooltip title={HebrewTitles.PUBLIC_VIEW}>
-                    <PublicIcon fontSize="small" />
+                    <Globe size={14} strokeWidth={2.4} color="#64748b" />
                   </Tooltip>
                 )}
-                {view.isDefault && <Chip label={HebrewTitles.DEFAULT} size="small"></Chip>}
+                {view.isDefault && (
+                  <Chip
+                    label={HebrewTitles.DEFAULT}
+                    size="small"
+                    sx={{
+                      height: 20,
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      backgroundColor: "#e0f2fe",
+                      color: "#0369a1",
+                      borderRadius: "6px",
+                      "& .MuiChip-label": { px: 1 },
+                    }}
+                  />
+                )}
               </Stack>
 
-              <ViewChipsContainer></ViewChipsContainer>
-
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: "#94a3b8", fontWeight: 500 }}>
                 {HebrewTitles.CREATED_BY}{" "}
-                {view.createdByName ||
-                  (typeof view.createdBy === "object" ? view.createdBy.name : view.createdBy)}
+                <Box component="span" sx={{ color: "#64748b" }}>
+                  {view.createdByName ||
+                    (typeof view.createdBy === "object" ? view.createdBy.name : view.createdBy)}
+                </Box>
               </Typography>
             </ViewCardInfo>
 
@@ -104,22 +116,22 @@ export function SavedViewCard({
               <ViewCardButtons>
                 {onEditView && (
                   <Tooltip title={HebrewTitles.EDIT_VIEW}>
-                    <IconButton
+                    <IconOnlyButton
                       size="small"
                       onClick={(e) => {
                         stop(e);
                         onEditView(view);
                       }}>
-                      <Edit />
-                    </IconButton>
+                      <Pencil size={18} strokeWidth={2.4} />
+                    </IconOnlyButton>
                   </Tooltip>
                 )}
 
                 {onDeleteView && (
                   <Tooltip title={HebrewTitles.DELETE_VIEW}>
-                    <IconButton size="small" color="error" onClick={openDeletePopup}>
-                      <DeleteIcon />
-                    </IconButton>
+                    <IconOnlyButton size="small" onClick={openDeletePopup} $hoverColor="#ef4444">
+                      <Trash2 size={18} strokeWidth={2.4} />
+                    </IconOnlyButton>
                   </Tooltip>
                 )}
               </ViewCardButtons>
