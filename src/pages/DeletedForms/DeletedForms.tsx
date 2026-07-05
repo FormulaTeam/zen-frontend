@@ -392,26 +392,24 @@ function DeletedForms({ user }: { user: any }) {
                       {/* Form Header - Left to Right Visual Flow */}
                       <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
                         {/* Content & Identity on Left */}
-                        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: 2, flex: 1 }}>
-                          <Checkbox
-                            checked={selectedFormIds.has(form.id)}
-                            onChange={() => handleToggleSelectForm(form.id)}
-                            sx={{
-                              p: 0,
-                              mt: 1.2,
-                              width: "16px",
-                              height: "16px",
-                              border: "1px solid #62748E",
-                              borderRadius: "4px",
-                              color: "transparent",
-                              alignSelf: "center",
-                              "&.Mui-checked": { color: theme.palette.primary.main, border: "none" },
-                              "& .MuiSvgIcon-root": { fontSize: 20 }
-                            }}
-                          />
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, flex: 1 }}>
+                          {/* Row 1: Checkbox + [Icon] [Name] [ID] */}
+                          <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
+                            <Checkbox
+                              checked={selectedFormIds.has(form.id)}
+                              onChange={() => handleToggleSelectForm(form.id)}
+                              sx={{
+                                p: 0,
+                                width: "16px",
+                                height: "16px",
+                                border: "1px solid #62748E",
+                                borderRadius: "4px",
+                                color: "transparent",
+                                "&.Mui-checked": { color: theme.palette.primary.main, border: "none" },
+                                "& .MuiSvgIcon-root": { fontSize: 20 }
+                              }}
+                            />
 
-                          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, flex: 1 }}>
-                            {/* Line 1: [Icon] [Name] [ID] */}
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                               <Box
                                 sx={{ 
@@ -438,26 +436,26 @@ function DeletedForms({ user }: { user: any }) {
                                 </Typography>
                               </Tooltip>
                             </Box>
-                            
-                            {/* Lines 2-3: Metadata (Left Aligned) */}
-                            <Box sx={{ textAlign: "left" }}>
-                              <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px", mb: 0.2 }}>
-                                נוצר על ידי:{" "}
-                                <Tooltip title={form.createdBy?.upn || "לא ידוע"} arrow placement="top">
-                                  <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
-                                    {form.createdBy?.name || "משתמש בזן"}
-                                  </Box>
-                                </Tooltip>
-                              </Typography>
-                              <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px" }}>
-                                נמחק בתאריך {formattedDate} בשעה {formattedTime} על ידי{" "}
-                                <Tooltip title={form.deletedBy?.upn || "לא ידוע"} arrow placement="top">
-                                  <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
-                                    {form.deletedBy?.name || "משתמש בזן"}
-                                  </Box>
-                                </Tooltip>
-                              </Typography>
-                            </Box>
+                          </Box>
+                          
+                          {/* Row 2: Metadata (Aligned with text after checkbox) */}
+                          <Box sx={{ textAlign: "left", pl: 4 }}>
+                            <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px", mb: 0.2 }}>
+                              נוצר על ידי:{" "}
+                              <Tooltip title={form.createdBy?.upn || "לא ידוע"} arrow placement="top">
+                                <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
+                                  {form.createdBy?.name || "משתמש בזן"}
+                                </Box>
+                              </Tooltip>
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px" }}>
+                              נמחק בתאריך {formattedDate} בשעה {formattedTime} על ידי{" "}
+                              <Tooltip title={form.deletedBy?.upn || "לא ידוע"} arrow placement="top">
+                                <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
+                                  {form.deletedBy?.name || "משתמש בזן"}
+                                </Box>
+                              </Tooltip>
+                            </Typography>
                           </Box>
                         </Box>
 
