@@ -52,7 +52,7 @@ import { useDetailPanel } from "../hooks/useDetailPanel";
 import { useNavigate } from "react-router-dom";
 import moment from "moment";
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
-import { FormFieldDto } from "../../../types/shared";
+import { FormFieldDto, ResponsesTableColorRuleDto } from "../../../types/shared";
 import { MetaColumnIds } from "../../../utils/interfaces";
 import {
   DEFAULT_DATE_TIME_FORMAT,
@@ -66,6 +66,11 @@ import {
   useResponsesTableFilters,
 } from "./ResponsesFilters";
 import { useConnectedFormOptions } from "@src/hooks/useConnectedFormOptions";
+import {
+  buildColorRuleMatches,
+  COLOR_RULE_PALETTE,
+  ROW_COLOR_RULE_FIELD,
+} from "../utils/colorRules";
 import "./responsesTableFilters.css";
 
 const responseHeaderFilterLocaleText = {
@@ -197,6 +202,8 @@ interface ResponsesTableProps {
   activeFiltersCount: number;
   onToggleFilters: () => void;
   onClearFilters: () => void;
+  colorFilter?: string;
+  colorRules?: ResponsesTableColorRuleDto[];
 }
 
 const SYNC_STATUS_HEBREW_LABELS: Record<number, string> = {
@@ -273,13 +280,15 @@ export const ResponsesTable = React.memo(
     activeFiltersCount,
     onToggleFilters,
     onClearFilters,
+    colorFilter,
+    colorRules = [],
   }: ResponsesTableProps) => {
     const { form, rows, pageInfo, filter, setFilter, setResponseFilters, isRowsLoading } =
       useFormStore();
 
     const navigate = useNavigate();
 
-    const displayRows = useMemo(() => {
+    const baseDisplayRows = useMemo(() => {
       let baseRows = isInEditMode && localRows.length > 0 ? localRows : rows;
 
       if (isInEditMode && deletedRowIds.length > 0) {
@@ -291,6 +300,19 @@ export const ResponsesTable = React.memo(
     }, [isInEditMode, localRows, rows, deletedRowIds]);
 
     const currentViewConfig = useMemo(() => currentView?.columns || [], [currentView]);
+    const colorRuleMatches = useMemo(
+      () => buildColorRuleMatches(baseDisplayRows, colorRules),
+      [baseDisplayRows, colorRules],
+    );
+    const displayRows = useMemo(() => {
+      if (!colorFilter) return baseDisplayRows;
+
+      return baseDisplayRows.filter((row) =>
+        Object.values(colorRuleMatches[String(row.id)] ?? {}).some(
+          (match) => match.color === colorFilter,
+        ),
+      );
+    }, [baseDisplayRows, colorFilter, colorRuleMatches]);
 
     if (!form) return null;
 
@@ -752,18 +774,26 @@ export const ResponsesTable = React.memo(
 
     const getCellClassName = useCallback(
       (params: GridCellParams): string => {
+        const rowMatches = colorRuleMatches[String(params.id)] ?? {};
+        const colorMatch =
+          rowMatches[params.field] ?? rowMatches[ROW_COLOR_RULE_FIELD];
+        const colorClass = colorMatch
+          ? `response-color-rule-cell response-color-rule-cell--${colorMatch.color}`
+          : "";
+
         if (!isInEditMode || params.field === "__check__") {
-          return "";
+          return colorClass;
         }
 
         const hasError = !!validationErrors?.[params.id]?.[params.field];
         const editableClass = params.isEditable
           ? "MuiDataGrid-cell--editable"
           : "MuiDataGrid-cell--non-editable-in-edit-mode";
+        const classes = `${editableClass}${colorClass ? ` ${colorClass}` : ""}`;
 
-        return hasError ? `${editableClass} cell--has-error` : editableClass;
+        return hasError ? `${classes} cell--has-error` : classes;
       },
-      [isInEditMode, validationErrors],
+      [colorRuleMatches, isInEditMode, validationErrors],
     );
 
     const handleCellDoubleClick = useCallback(
@@ -864,6 +894,18 @@ export const ResponsesTable = React.memo(
                 : null;
 
             const display = content ?? <Box component="span" className="cell-box" />;
+            const rowMatches = colorRuleMatches[String(rowId)] ?? {};
+            const colorMatch =
+              rowMatches[gridField] ?? rowMatches[ROW_COLOR_RULE_FIELD];
+            const displayWithTooltip = colorMatch ? (
+              <Tooltip title={colorMatch.title} arrow placement="top">
+                <Box component="span" className="cell-box" sx={{ width: "100%" }}>
+                  {display}
+                </Box>
+              </Tooltip>
+            ) : (
+              display
+            );
 
             if (isInEditMode && cellError) {
               return (
@@ -878,12 +920,12 @@ export const ResponsesTable = React.memo(
                     )}
                   </CellErrorHeader>
 
-                  <CellValueFlex>{display}</CellValueFlex>
+                  <CellValueFlex>{displayWithTooltip}</CellValueFlex>
                 </CellErrorWrapper>
               );
             }
 
-            return display;
+            return displayWithTooltip;
           },
         };
 
@@ -1084,6 +1126,7 @@ export const ResponsesTable = React.memo(
       hasFormInFormFields,
       isInEditMode,
       validationErrors,
+      colorRuleMatches,
       renderEditCell,
       formatCellValue,
       currentViewConfig,
@@ -1534,6 +1577,12 @@ export const ResponsesTable = React.memo(
                 row: {},
               }}
               sx={{
+                ...Object.fromEntries(
+                  Object.entries(COLOR_RULE_PALETTE).map(([color, meta]) => [
+                    `& .response-color-rule-cell--${color}`,
+                    { backgroundColor: `${meta.background} !important` },
+                  ]),
+                ),
                 "& .MuiDataGrid-columnHeader .MuiDataGrid-iconButtonContainer .MuiIconButton-root":
                   {
                     backgroundColor: "transparent !important",

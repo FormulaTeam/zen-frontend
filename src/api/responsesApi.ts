@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useInfiniteQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 import { responsesScopeOption, SortDirection } from "formula-gear";
@@ -22,11 +22,121 @@ import {
   CreateResponseFileAttachmentDto,
   FormDto,
   ResponseDto,
+  ResponsesTableColorRuleDto,
 } from "../types/shared";
 
 const FIELD_COLUMN_PREFIX = "field:";
 
 export const getFieldColumnKey = (fieldId: string): string => `${FIELD_COLUMN_PREFIX}${fieldId}`;
+
+export type SaveResponsesTableColorRulePayload = Omit<
+  ResponsesTableColorRuleDto,
+  "id" | "formId" | "fieldType"
+>;
+
+const colorRulesQueryKey = (formId: number) => [
+  "responses",
+  String(formId),
+  "table-color-rules",
+];
+
+export const getResponsesTableColorRules = async (
+  formId: number,
+): Promise<ResponsesTableColorRuleDto[]> => {
+  const response = await apiClient.get<ResponsesTableColorRuleDto[]>(
+    `/forms/${formId}/responses-table-color-rules`,
+  );
+
+  return response.data ?? [];
+};
+
+export const createResponsesTableColorRule = async (
+  formId: number,
+  payload: SaveResponsesTableColorRulePayload,
+): Promise<ResponsesTableColorRuleDto> => {
+  const response = await apiClient.post<ResponsesTableColorRuleDto>(
+    `/forms/${formId}/responses-table-color-rules`,
+    payload,
+  );
+
+  return response.data;
+};
+
+export const updateResponsesTableColorRule = async (
+  formId: number,
+  ruleId: string,
+  payload: Partial<SaveResponsesTableColorRulePayload>,
+): Promise<ResponsesTableColorRuleDto> => {
+  const response = await apiClient.put<ResponsesTableColorRuleDto>(
+    `/forms/${formId}/responses-table-color-rules/${ruleId}`,
+    payload,
+  );
+
+  return response.data;
+};
+
+export const deleteResponsesTableColorRule = async (
+  formId: number,
+  ruleId: string,
+): Promise<void> => {
+  await apiClient.delete(`/forms/${formId}/responses-table-color-rules/${ruleId}`);
+};
+
+export const useGetResponsesTableColorRules = (formId?: number) => {
+  return useQuery({
+    queryKey: formId ? colorRulesQueryKey(formId) : ["responses", "table-color-rules", "missing-form"],
+    queryFn: () => getResponsesTableColorRules(Number(formId)),
+    enabled: !!formId,
+  });
+};
+
+export const useSaveResponsesTableColorRules = () => {
+  return useMutation({
+    mutationFn: async ({
+      formId,
+      previousRules,
+      nextRules,
+    }: {
+      formId: number;
+      previousRules: ResponsesTableColorRuleDto[];
+      nextRules: ResponsesTableColorRuleDto[];
+    }) => {
+      const previousIds = new Set(previousRules.map((rule) => rule.id));
+      const nextIds = new Set(nextRules.map((rule) => rule.id));
+
+      await Promise.all(
+        previousRules
+          .filter((rule) => !nextIds.has(rule.id))
+          .map((rule) => deleteResponsesTableColorRule(formId, rule.id)),
+      );
+
+      const savedRules = await Promise.all(
+        nextRules.map((rule) => {
+          const payload: SaveResponsesTableColorRulePayload = {
+            fieldId: rule.fieldId,
+            comparatorId: rule.comparatorId,
+            targetValue: rule.targetValue,
+            color: rule.color,
+            targetType: rule.targetType,
+            order: rule.order,
+            isActive: rule.isActive,
+          };
+
+          return previousIds.has(rule.id)
+            ? updateResponsesTableColorRule(formId, rule.id, payload)
+            : createResponsesTableColorRule(formId, payload);
+        }),
+      );
+
+      return savedRules.sort((a, b) => a.order - b.order);
+    },
+    mutationKey: ["save-responses-table-color-rules"],
+    onSuccess: (data: ResponsesTableColorRuleDto[], variables) => {
+      queryClient.setQueryData(colorRulesQueryKey(variables.formId), data);
+      queryClient.invalidateQueries({ queryKey: ["responses", String(variables.formId)] });
+    },
+  });
+};
 
 const stringifyQuery = (query: any): string => {
   if (query && typeof query === "object") return JSON.stringify(query);

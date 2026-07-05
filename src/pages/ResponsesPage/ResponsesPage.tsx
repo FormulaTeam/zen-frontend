@@ -1,8 +1,10 @@
 import { GridRowId, GridRowSelectionModel } from "@mui/x-data-grid-pro";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Box, Tooltip } from "@mui/material";
+import { Box, MenuItem, Select, Tooltip } from "@mui/material";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+import { permission } from "formula-gear";
+import brushIcon from "../../icons/brush.svg";
 
 import SidePanel from "../../components/SidePanel/SidePanel";
 import SearchInfo from "../../components/Responses/SearchInfo";
@@ -14,10 +16,13 @@ import Header from "./components/Header";
 import Loader from "../../components/Responses/Loader";
 import { ResponsesTable } from "./components/ResponsesTable";
 import { ViewsButton } from "./components/ViewsButton";
+import { ColorRulesModal } from "./components/ColorRulesModal";
+import { COLOR_RULE_PALETTE } from "./utils/colorRules";
 import { useFormLoader } from "./hooks/useFormLoader";
 import { useResponsesEdit } from "./hooks/useResponsesEdit";
 import { useResponsesViews } from "./hooks/useResponsesViews";
 import { useFormStore } from "./stores/form.store";
+import { useGetResponsesTableColorRules } from "../../api/responsesApi";
 import {
   CenteredBox,
   MainContentWrapper,
@@ -100,6 +105,7 @@ const ResponsesPageContent = (): JSX.Element => {
     setResponseFilters,
   } = useFormStore();
   const { user } = useAuth();
+  const { data: responsesTableColorRules = [] } = useGetResponsesTableColorRules(form?.id);
 
   const [searchInput, setSearchInput] = useState(filter?.query || "");
   const debouncedSearchInput = useDebounce(searchInput, 500);
@@ -149,6 +155,8 @@ const ResponsesPageContent = (): JSX.Element => {
   } = useResponsesEdit();
 
   const [showFilters, setShowFilters] = useState(false);
+  const [isColorRulesModalOpen, setIsColorRulesModalOpen] = useState(false);
+  const [colorFilter, setColorFilter] = useState("");
   const activeFiltersCount = filter?.responseFilters?.items?.length ?? 0;
 
   useEffect(() => {
@@ -436,6 +444,14 @@ const ResponsesPageContent = (): JSX.Element => {
   }, []);
 
   const showStandardActions = !isInEditMode && selectedRows.length === 0;
+  const formFields = useMemo(
+    () => form?.sections?.flatMap((section) => section.fields ?? []) ?? form?.fields ?? [],
+    [form],
+  );
+  const canManageColorRules = useMemo(
+    () => !!permissions?.includes(permission.UpdateAnyResponse),
+    [permissions],
+  );
 
   const ToolbarDivider = () => (
     <Box
@@ -578,6 +594,96 @@ const ResponsesPageContent = (): JSX.Element => {
 
               <ToolbarDivider />
 
+              {canManageColorRules && (
+                <>
+                  <Tooltip title={responsesTableColorRules.length > 0 ? "צביעת תגובות" : ""} arrow>
+                    <UnifiedButton
+                      aria-label="צביעת תגובות"
+                      onClick={() => setIsColorRulesModalOpen(true)}
+                      disabled={isInEditMode}
+                      sx={{
+                        minWidth: "40px",
+                        width: responsesTableColorRules.length > 0 ? "40px" : "auto",
+                        height: "40px",
+                        p: responsesTableColorRules.length > 0 ? 0 : undefined,
+                        px: responsesTableColorRules.length > 0 ? 0 : 1.5,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: `${ACTION_BUTTON_BACKGROUND} !important`,
+                        border: "none !important",
+                        boxShadow: "none !important",
+                        "& .MuiButton-startIcon, & .MuiButton-endIcon": {
+                          m: 0,
+                        },
+                        "& svg": {
+                          width: 21,
+                          height: 21,
+                        },
+                        "&:hover": {
+                          backgroundColor: `${ACTION_BUTTON_HOVER_BACKGROUND} !important`,
+                          border: "none !important",
+                          boxShadow: "none !important",
+                        },
+                      }}>
+                      <Box
+                        component="img"
+                        src={brushIcon}
+                        alt=""
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          display: "block",
+                        }}
+                      />
+                      {responsesTableColorRules.length === 0 && (
+                        <Box component="span" sx={{ mr: 1, fontWeight: 800 }}>
+                          צביעת תגובות
+                        </Box>
+                      )}
+                    </UnifiedButton>
+                  </Tooltip>
+
+                  <ToolbarDivider />
+                </>
+              )}
+
+              {responsesTableColorRules.length > 0 && (
+                <>
+                  <Select
+                    size="small"
+                    value={colorFilter}
+                    onChange={(event) => setColorFilter(event.target.value)}
+                    disabled={isInEditMode}
+                    displayEmpty
+                    sx={{
+                      minWidth: 150,
+                      height: 40,
+                      backgroundColor: ACTION_BUTTON_BACKGROUND,
+                      "& .MuiSelect-select": { py: 0.9, fontWeight: 800 },
+                    }}>
+                    <MenuItem value="">כל הצבעים</MenuItem>
+                    {Object.entries(COLOR_RULE_PALETTE).map(([color, meta]) => (
+                      <MenuItem key={color} value={color}>
+                        <Box
+                          component="span"
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: "50%",
+                            backgroundColor: meta.swatch,
+                            ml: 1,
+                          }}
+                        />
+                        {meta.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+
+                  <ToolbarDivider />
+                </>
+              )}
+
               <Box
                 sx={{
                   "& .MuiButton-root": {
@@ -633,7 +739,20 @@ const ResponsesPageContent = (): JSX.Element => {
           activeFiltersCount={activeFiltersCount}
           onToggleFilters={handleToggleFilters}
           onClearFilters={handleClearFilters}
+          colorFilter={colorFilter}
+          colorRules={responsesTableColorRules}
         />
+
+        {form && (
+          <ColorRulesModal
+            open={isColorRulesModalOpen}
+            formId={form.id}
+            fields={formFields}
+            rules={responsesTableColorRules}
+            canManage={canManageColorRules}
+            onClose={() => setIsColorRulesModalOpen(false)}
+          />
+        )}
 
         <UnsavedChangesDialog
           open={showCancelDialog}
