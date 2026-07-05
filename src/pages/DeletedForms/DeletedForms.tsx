@@ -392,12 +392,13 @@ function DeletedForms({ user }: { user: any }) {
                       {/* Form Header - Left to Right Visual Flow */}
                       <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
                         {/* Content & Identity on Left */}
-                        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2, flex: 1 }}>
+                        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: 2, flex: 1 }}>
                           <Checkbox
                             checked={selectedFormIds.has(form.id)}
                             onChange={() => handleToggleSelectForm(form.id)}
                             sx={{
                               p: 0,
+                              mt: 1.2,
                               width: "16px",
                               height: "16px",
                               border: "1px solid #62748E",
@@ -646,12 +647,13 @@ function DeletedForms({ user }: { user: any }) {
                                 return (
                                   <Box key={response.id} sx={{ p: 2, borderBottom: "1px solid #E2E8F0", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                                     {/* Identity & Metadata on Left */}
-                                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", flex: 1 }}>
+                                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "flex-start", justifyContent: "flex-start", flex: 1 }}>
                                       <Checkbox
                                         checked={selectedResponseIds.has(response.id)}
                                         onChange={() => handleToggleSelectResponse(response.id)}
                                         sx={{
                                           p: 0,
+                                          mt: 0.6,
                                           width: "16px",
                                           height: "16px",
                                           border: "1px solid #62748E",
