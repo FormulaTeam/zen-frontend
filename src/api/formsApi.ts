@@ -1,4 +1,4 @@
-import { useQuery, UseQueryOptions, UseQueryResult, useMutation } from "@tanstack/react-query";
+import { useQuery, UseQueryOptions, UseQueryResult, useMutation, useInfiniteQuery } from "@tanstack/react-query";
 import { CreateFormSchema, formsScopeOption } from "formula-gear";
 import { z } from "zod";
 import { ComparatorsByFieldTypeDto, FormDto, FormOverviewDto } from "../types/shared";
@@ -467,5 +467,29 @@ export const useGetComparatorsByFieldType = () => {
     queryKey: ["forms", "comparators"],
     queryFn: getComparatorsByFieldType,
     staleTime: Infinity,
+  });
+};
+
+export const useGetDeletedForms = (filter?: Filter) => {
+  const PAGE_SIZE = 20;
+  return useInfiniteQuery({
+    queryKey: ["forms", "soft-deleted", filter],
+    queryFn: ({ pageParam = 1 }) => getDeletedForms({ ...filter, pageSize: PAGE_SIZE, pageNumber: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.length === PAGE_SIZE ? allPages.length + 1 : undefined;
+    },
+  });
+};
+
+export const useGetSoftDeletedResponsesGlobal = (filter?: Filter) => {
+  const PAGE_SIZE = 20;
+  return useInfiniteQuery({
+    queryKey: ["forms", "responses", "soft-deleted", filter],
+    queryFn: ({ pageParam = 1 }) => getSoftDeletedResponsesGlobal({ ...filter, pageSize: PAGE_SIZE, pageNumber: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.length === PAGE_SIZE ? allPages.length + 1 : undefined;
+    },
   });
 };

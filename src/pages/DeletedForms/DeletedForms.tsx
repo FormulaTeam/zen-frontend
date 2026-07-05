@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import Grid from "@mui/material/Grid";
@@ -40,66 +40,20 @@ import {
   LogOut,
   XCircle,
 } from "lucide-react";
-import { getDeletedForms, getSoftDeletedResponsesGlobal, restoreForm } from "../../api/formsApi";
+import { useGetDeletedForms, useGetSoftDeletedResponsesGlobal, restoreForm } from "../../api/formsApi";
 import { restoreResponse, restoreResponses } from "../../api/responsesApi";
 import { StyledCard, FormIconWrapper } from "../../components/FormCard/styled";
 import { CustomIcon } from "../../theme/icons";
 import { getFormIconByName } from "../../utils/utils";
 import { DeletedFormOverviewDto, FormOverviewDto } from "../../types/shared";
+import queryClient from "../../api/queryClient";
+import { IOrderBy } from "../../types/enums/filtersAndSorts.enum";
+import { Filter } from "../../utils/interfaces";
 
 const StyledFormControl = styled(Box)(({ theme }) => ({
   width: "100%",
   maxWidth: 220,
   position: "relative",
-}));
-
-const FilterInput = styled(Box)(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  gap: theme.spacing(1),
-  backgroundColor: "#ffffff",
-  border: "1px solid #e2e8f0",
-  borderRadius: "4px",
-  padding: "8px 12px",
-  height: "36px",
-  width: "192px",
-  cursor: "pointer",
-  "&:hover": {
-    borderColor: "#cbd5e1",
-  },
-}));
-
-const FilterText = styled(Typography)(({ theme }) => ({
-  color: "#62748E",
-  fontSize: "14px",
-  fontWeight: 400,
-  flex: 1,
-  textAlign: "right",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-}));
-
-const ToolButton = styled(Button)(({ theme }) => ({
-  backgroundColor: "#ffffff",
-  border: "1px solid #e2e8f0",
-  borderRadius: "4px",
-  padding: "8px 16px",
-  height: "36px",
-  textTransform: "none",
-  boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
-  color: "#0F172B",
-  fontWeight: 500,
-  fontSize: "14px",
-  gap: theme.spacing(0.75),
-  "&:hover": {
-    backgroundColor: "#f8fafc",
-    borderColor: "#cbd5e1",
-  },
-  "&.active": {
-    backgroundColor: "#f1f5f9",
-    borderColor: "#94a3b8",
-  },
 }));
 
 const SearchInput = styled("input")(({ theme }) => ({
@@ -119,23 +73,6 @@ const SearchInput = styled("input")(({ theme }) => ({
     color: "#94A3B8",
   },
 }));
-
-const MynaUiUndoIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}>
-    <path d="M7 10L3 14L7 18" />
-    <path d="M3 14H15C18.3137 14 21 11.3137 21 8C21 4.68629 18.3137 2 15 2" />
-  </svg>
-);
 
 type DeletedFormWithResponses = (DeletedFormOverviewDto | FormOverviewDto) & {
   responses?: any[];
@@ -158,18 +95,6 @@ function DeletedForms({ user }: { user: any }) {
   const [restoringFormId, setRestoringFormId] = useState<number | null>(null);
   const [restoringResponseId, setRestoringResponseId] = useState<string | null>(null);
   const [isBulkRestoring, setIsBulkRestoring] = useState(false);
-
-  // Tab 1 state
-  const [deletedForms, setDeletedForms] = useState<DeletedFormWithResponses[]>([]);
-  const [isDeletedFormsLoading, setIsDeletedFormsLoading] = useState<boolean>(false);
-  const [deletedFormsPage, setDeletedFormsPage] = useState<number>(1);
-  const [deletedFormsHasNext, setDeletedFormsHasNext] = useState<boolean>(false);
-
-  // Tab 2 state
-  const [activeFormsWithDeleted, setActiveFormsWithDeleted] = useState<DeletedFormWithResponses[]>([]);
-  const [isActiveFormsLoading, setIsActiveFormsLoading] = useState<boolean>(false);
-  const [activeFormsPage, setActiveFormsPage] = useState<number>(1);
-  const [activeFormsHasNext, setActiveFormsHasNext] = useState<boolean>(false);
 
   const [expandedForms, setExpandedForms] = useState<Record<number, boolean>>({});
 
@@ -201,70 +126,40 @@ function DeletedForms({ user }: { user: any }) {
     });
   };
 
-  // New filtering states
+  // Filtering states
   const [searchTerm, setSearchTerm] = useState("");
-  const [createdByFilter, setCreatedByFilter] = useState("");
-  const [deletedByFilter, setDeletedByFilter] = useState("");
   const [sortBy, setSortBy] = useState("deleted_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  const pageSize = 20;
+  // Fetch Deleted Forms (Tab 1) via React Query
+  const {
+    data: deletedFormsData,
+    isLoading: isDeletedFormsLoading,
+    fetchNextPage: fetchNextDeletedForms,
+    hasNextPage: hasNextDeletedForms,
+    isFetchingNextPage: isFetchingNextDeletedForms,
+  } = useGetDeletedForms({
+    query: searchTerm || undefined,
+    sortBy,
+    orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
+  });
 
-  // Fetch Deleted Forms (Tab 1)
-  useEffect(() => {
-    async function loadDeletedForms() {
-      if (activeTab !== 0) return;
-      setIsDeletedFormsLoading(true);
+  const deletedForms = useMemo(() => deletedFormsData?.pages.flat() || [], [deletedFormsData]);
 
-      try {
-        const result = await getDeletedForms({
-          pageSize: pageSize + 1,
-          pageNumber: deletedFormsPage,
-        });
+  // Fetch Active Forms with Deleted Responses (Tab 2) via React Query
+  const {
+    data: activeFormsData,
+    isLoading: isActiveFormsLoading,
+    fetchNextPage: fetchNextActiveForms,
+    hasNextPage: hasNextActiveForms,
+    isFetchingNextPage: isFetchingNextActiveForms,
+  } = useGetSoftDeletedResponsesGlobal({
+    query: searchTerm || undefined,
+    sortBy,
+    orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
+  });
 
-        const items = result || [];
-        const hasNext = items.length > pageSize;
-        const pageItems = hasNext ? items.slice(0, pageSize) : items;
-
-        setDeletedForms((prev) => (deletedFormsPage === 1 ? (pageItems as DeletedFormWithResponses[]) : [...prev, ...(pageItems as DeletedFormWithResponses[])]));
-        setDeletedFormsHasNext(hasNext);
-      } catch (error) {
-        toast.error("טעינת הטפסים שנמחקו נכשלה");
-      } finally {
-        setIsDeletedFormsLoading(false);
-      }
-    }
-
-    loadDeletedForms();
-  }, [deletedFormsPage, activeTab]);
-
-  // Fetch Active Forms with Deleted Responses (Tab 2)
-  useEffect(() => {
-    async function loadActiveForms() {
-      if (activeTab !== 1) return;
-      setIsActiveFormsLoading(true);
-
-      try {
-        const result = await getSoftDeletedResponsesGlobal({
-          pageSize: pageSize + 1,
-          pageNumber: activeFormsPage,
-        });
-
-        const items = result || [];
-        const hasNext = items.length > pageSize;
-        const pageItems = hasNext ? items.slice(0, pageSize) : items;
-
-        setActiveFormsWithDeleted((prev) => (activeFormsPage === 1 ? (pageItems as DeletedFormWithResponses[]) : [...prev, ...(pageItems as DeletedFormWithResponses[])]));
-        setActiveFormsHasNext(hasNext);
-      } catch (error) {
-        toast.error("טעינת הטפסים עם תגובות שנמחקו נכשלה");
-      } finally {
-        setIsActiveFormsLoading(false);
-      }
-    }
-
-    loadActiveForms();
-  }, [activeFormsPage, activeTab]);
+  const activeFormsWithDeleted = useMemo(() => activeFormsData?.pages.flat() || [], [activeFormsData]);
 
   const toggleFormExpanded = (formId: number) => {
     setExpandedForms((prev) => ({
@@ -277,10 +172,10 @@ function DeletedForms({ user }: { user: any }) {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
 
     if (scrollHeight - scrollTop <= clientHeight + 50) {
-      if (activeTab === 0 && deletedFormsHasNext && !isDeletedFormsLoading) {
-        setDeletedFormsPage((prev) => prev + 1);
-      } else if (activeTab === 1 && activeFormsHasNext && !isActiveFormsLoading) {
-        setActiveFormsPage((prev) => prev + 1);
+      if (activeTab === 0 && hasNextDeletedForms && !isFetchingNextDeletedForms) {
+        fetchNextDeletedForms();
+      } else if (activeTab === 1 && hasNextActiveForms && !isFetchingNextActiveForms) {
+        fetchNextActiveForms();
       }
     }
   };
@@ -297,7 +192,7 @@ function DeletedForms({ user }: { user: any }) {
     try {
       await restoreForm(formId);
       toast.success("הטופס שוחזר בהצלחה");
-      setDeletedForms((prev) => prev.filter((form) => form.id !== formId));
+      queryClient.invalidateQueries({ queryKey: ["forms"] });
     } catch (error) {
       toast.error("שחזור הטופס נכשל");
     } finally {
@@ -310,14 +205,8 @@ function DeletedForms({ user }: { user: any }) {
     try {
       await restoreResponse(formId, responseId);
       toast.success("התגובה שוחזרה בהצלחה");
-
-      const setList = activeTab === 0 ? setDeletedForms : setActiveFormsWithDeleted;
-      setList((prev) => prev.map(f => {
-        if (f.id === formId && f.responses) {
-          return { ...f, responses: f.responses.filter((r: any) => r.id !== responseId) };
-        }
-        return f;
-      }));
+      queryClient.invalidateQueries({ queryKey: ["forms", "responses", "soft-deleted"] });
+      queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] });
     } catch (error) {
       toast.error("שחזור התגובה נכשל");
     } finally {
@@ -344,16 +233,14 @@ function DeletedForms({ user }: { user: any }) {
         
         if (successCount > 0) {
           toast.success(`${successCount} טפסים שוחזרו בהצלחה`);
-          setDeletedForms((prev) => prev.filter((f) => !selectedFormIds.has(f.id)));
           setSelectedFormIds(new Set());
+          queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] });
         }
       } else {
         // Bulk restore responses
         // Group by formId
         const formResponseMap: Record<number, string[]> = {};
         
-        // We need to find the formId for each selected responseId
-        // This is inefficient but safe given current state
         activeFormsWithDeleted.forEach(form => {
           form.responses?.forEach(resp => {
             if (selectedResponseIds.has(resp.id)) {
@@ -376,13 +263,9 @@ function DeletedForms({ user }: { user: any }) {
 
         if (successCount > 0) {
           toast.success(`${successCount} תגובות שוחזרו בהצלחה`);
-          setActiveFormsWithDeleted((prev) => prev.map(f => {
-            if (formResponseMap[f.id]) {
-              return { ...f, responses: f.responses?.filter(r => !selectedResponseIds.has(r.id)) };
-            }
-            return f;
-          }).filter(f => f.responses && f.responses.length > 0));
           setSelectedResponseIds(new Set());
+          queryClient.invalidateQueries({ queryKey: ["forms", "responses", "soft-deleted"] });
+          queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] });
         }
       }
     } catch (error) {
@@ -405,33 +288,6 @@ function DeletedForms({ user }: { user: any }) {
     }
 
     return <KeyboardArrowDownIcon />;
-  };
-
-  const getIcon = (iconName: string | null, size: number = 24) => {
-    const iconSrc = getFormIconByName(iconName ?? undefined);
-
-    if (typeof iconSrc === "string") {
-      return (
-        <FormIconWrapper sx={{ width: size + 16, height: size + 16 }}>
-          <img src={iconSrc} alt={iconName ?? "form icon"} style={{ width: size, height: size }} />
-        </FormIconWrapper>
-      );
-    }
-
-    if (iconSrc) {
-      const IconComponent = iconSrc;
-      return (
-        <FormIconWrapper sx={{ width: size + 16, height: size + 16 }}>
-          <IconComponent sx={{ color: "#020618", fontSize: size }} />
-        </FormIconWrapper>
-      );
-    }
-
-    return (
-      <FormIconWrapper sx={{ width: size + 16, height: size + 16 }}>
-        <KeyboardArrowDownIcon sx={{ color: "#020618", fontSize: size }} />
-      </FormIconWrapper>
-    );
   };
 
   return (
@@ -695,6 +551,11 @@ function DeletedForms({ user }: { user: any }) {
                   </Grid>
                 );
               })}
+              {isFetchingNextDeletedForms && (
+                <Grid size={{ xs: 12 }} sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                  <CircularProgress size={24} />
+                </Grid>
+              )}
             </Grid>
           ) : isDeletedFormsLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -810,7 +671,7 @@ function DeletedForms({ user }: { user: any }) {
                                           </Typography>
                                         </Box>
                                         {/* Line 2: Metadata (Left Aligned) */}
-                                        <Box sx={{ textAlign: "left" }}>
+                                        <Box sx={{ textAlign: "left", pl: 4.5 }}>
                                           <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px", mb: 0.5 }}>
                                             נוצר על ידי:{" "}
                                             <Tooltip title={response.createdBy?.upn || "לא ידוע"} arrow placement="top">
@@ -863,6 +724,11 @@ function DeletedForms({ user }: { user: any }) {
                   </Grid>
                 );
               })}
+              {isFetchingNextActiveForms && (
+                <Grid size={{ xs: 12 }} sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                  <CircularProgress size={24} />
+                </Grid>
+              )}
             </Grid>
           ) : isActiveFormsLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
