@@ -38,9 +38,10 @@ import {
   CheckSquare,
   EyeOff,
   LogOut,
+  XCircle,
 } from "lucide-react";
 import { getDeletedForms, getSoftDeletedResponsesGlobal, restoreForm } from "../../api/formsApi";
-import { restoreResponse } from "../../api/responsesApi";
+import { restoreResponse, restoreResponses } from "../../api/responsesApi";
 import { StyledCard, FormIconWrapper } from "../../components/FormCard/styled";
 import { CustomIcon } from "../../theme/icons";
 import { getFormIconByName } from "../../utils/utils";
@@ -156,6 +157,7 @@ function DeletedForms({ user }: { user: any }) {
 
   const [restoringFormId, setRestoringFormId] = useState<number | null>(null);
   const [restoringResponseId, setRestoringResponseId] = useState<string | null>(null);
+  const [isBulkRestoring, setIsBulkRestoring] = useState(false);
 
   // Tab 1 state
   const [deletedForms, setDeletedForms] = useState<DeletedFormWithResponses[]>([]);
@@ -286,6 +288,8 @@ function DeletedForms({ user }: { user: any }) {
   const handleDropdownChange = (event: SelectChangeEvent<string>) => {
     setSearchParams({ scope: event.target.value }, { replace: true });
     setExpandedForms({}); // Reset expansion state when switching tabs
+    setSelectedFormIds(new Set()); // Clear selections when switching tabs
+    setSelectedResponseIds(new Set());
   };
 
   const handleRestoreFormClick = async (formId: number) => {
@@ -318,6 +322,73 @@ function DeletedForms({ user }: { user: any }) {
       toast.error("שחזור התגובה נכשל");
     } finally {
       setRestoringResponseId(null);
+    }
+  };
+
+  const handleBulkRestore = async () => {
+    setIsBulkRestoring(true);
+    let successCount = 0;
+
+    try {
+      if (activeTab === 0) {
+        // Bulk restore forms
+        const ids = Array.from(selectedFormIds);
+        for (const id of ids) {
+          try {
+            await restoreForm(id);
+            successCount++;
+          } catch (e) {
+            console.error(`Failed to restore form ${id}`, e);
+          }
+        }
+        
+        if (successCount > 0) {
+          toast.success(`${successCount} טפסים שוחזרו בהצלחה`);
+          setDeletedForms((prev) => prev.filter((f) => !selectedFormIds.has(f.id)));
+          setSelectedFormIds(new Set());
+        }
+      } else {
+        // Bulk restore responses
+        // Group by formId
+        const formResponseMap: Record<number, string[]> = {};
+        
+        // We need to find the formId for each selected responseId
+        // This is inefficient but safe given current state
+        activeFormsWithDeleted.forEach(form => {
+          form.responses?.forEach(resp => {
+            if (selectedResponseIds.has(resp.id)) {
+              if (!formResponseMap[form.id]) formResponseMap[form.id] = [];
+              formResponseMap[form.id].push(resp.id);
+            }
+          });
+        });
+
+        const formIds = Object.keys(formResponseMap).map(Number);
+        for (const fId of formIds) {
+          try {
+            const respIds = formResponseMap[fId];
+            await restoreResponses(fId, respIds);
+            successCount += respIds.length;
+          } catch (e) {
+            console.error(`Failed to restore responses for form ${fId}`, e);
+          }
+        }
+
+        if (successCount > 0) {
+          toast.success(`${successCount} תגובות שוחזרו בהצלחה`);
+          setActiveFormsWithDeleted((prev) => prev.map(f => {
+            if (formResponseMap[f.id]) {
+              return { ...f, responses: f.responses?.filter(r => !selectedResponseIds.has(r.id)) };
+            }
+            return f;
+          }).filter(f => f.responses && f.responses.length > 0));
+          setSelectedResponseIds(new Set());
+        }
+      }
+    } catch (error) {
+      toast.error("שחזור המוני נכשל");
+    } finally {
+      setIsBulkRestoring(false);
     }
   };
 
@@ -710,6 +781,78 @@ function DeletedForms({ user }: { user: any }) {
           )
         )}
       </Box>
+
+      {/* Floating Selection Bar */}
+      {(selectedFormIds.size > 0 || selectedResponseIds.size > 0) && (
+        <Box
+          sx={{
+            position: "fixed",
+            bottom: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "auto",
+            minWidth: 500,
+            bgcolor: "#F1F5F9",
+            border: "1px solid #E2E8F0",
+            borderRadius: "4px",
+            p: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            boxShadow: "0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -1px rgba(0, 0, 0, 0.06)",
+            zIndex: 1000,
+          }}
+        >
+          <Typography sx={{ color: "#020618", fontWeight: 500, fontSize: "14px" }}>
+            {activeTab === 0 ? selectedFormIds.size : selectedResponseIds.size} פריטים נבחרו
+          </Typography>
+
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Button
+              variant="text"
+              onClick={() => {
+                setSelectedFormIds(new Set());
+                setSelectedResponseIds(new Set());
+              }}
+              startIcon={<XCircle size={18} />}
+              sx={{
+                bgcolor: "#ffffff",
+                color: "#0F172B",
+                border: "1px solid #E2E8F0",
+                borderRadius: "4px",
+                height: "32px",
+                fontWeight: 500,
+                fontSize: "14px",
+                textTransform: "none",
+                gap: 1,
+                boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
+                "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" }
+              }}
+            >
+              בטל בחירה
+            </Button>
+
+            <Button
+              variant="contained"
+              disabled={isBulkRestoring}
+              onClick={handleBulkRestore}
+              startIcon={isBulkRestoring ? <CircularProgress size={18} color="inherit" /> : <RotateCcw size={18} />}
+              sx={{
+                bgcolor: "primary.main",
+                borderRadius: "4px",
+                height: "32px",
+                fontWeight: 500,
+                fontSize: "14px",
+                textTransform: "none",
+                gap: 1,
+                "&:hover": { bgcolor: "primary.dark" }
+              }}
+            >
+              שחזור {activeTab === 0 ? "טפסים" : "תגובות"}
+            </Button>
+          </Stack>
+        </Box>
+      )}
     </Box>
   );
 }
