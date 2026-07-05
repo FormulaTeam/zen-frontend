@@ -465,38 +465,54 @@ function DeletedForms({ user }: { user: any }) {
 
       {/* Scope Selector / Tabs - Aligned Left for LTR Flow */}
       <Box sx={{ px: 4, pt: 3, pb: 1, display: "flex", justifyContent: "flex-start" }}>
-        <Box sx={{ width: "100%", maxWidth: 220, position: "relative" }}>
+        <Box sx={{ width: "auto", minWidth: 200 }}>
           <Select
             id="trash-tab-select"
             value={scopeParam === "responses" ? "responses" : "forms"}
             onChange={handleDropdownChange}
-            IconComponent={KeyboardArrowDownIcon}
+            IconComponent={() => null} // Hide default icon
+            renderValue={(selected) => (
+              <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between" sx={{ width: "100%" }}>
+                <ChevronDown size={18} color="#0F172B" />
+                <Typography sx={{ fontWeight: 500, fontSize: "14px", color: "#0F172B", mx: 0.5 }}>
+                  {selected === "forms" ? "טפסים שנמחקו" : "תגובות שנמחקו"}
+                </Typography>
+                {selected === "forms" ? <FileText size={18} color="#0F172B" /> : <MessageSquare size={18} color="#0F172B" />}
+              </Stack>
+            )}
             sx={{
               width: "100%",
               height: "40px",
-              borderRadius: "8px",
+              borderRadius: "4px",
               bgcolor: "#ffffff",
+              border: "1px solid #E2E8F0",
+              boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
               "& .MuiSelect-select": {
                 py: 1,
-                fontSize: "15px",
-                fontWeight: 600,
+                px: 2,
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
-                justifyContent: "flex-start"
+                gap: 1.5
+              },
+              "& .MuiOutlinedInput-notchedOutline": {
+                border: "none",
+              },
+              "&:hover": {
+                bgcolor: "#f8fafc",
+                borderColor: "#cbd5e1"
               }
             }}
           >
             <MenuItem value="forms">
-              <Stack direction="row" spacing={1} alignItems="center">
-                <CheckSquare size={18} />
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%", justifyContent: "flex-end" }}>
                 <Typography sx={{ fontWeight: 600 }}>טפסים שנמחקו</Typography>
+                <CheckSquare size={18} />
               </Stack>
             </MenuItem>
             <MenuItem value="responses">
-              <Stack direction="row" spacing={1} alignItems="center">
-                <MessageSquare size={18} />
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%", justifyContent: "flex-end" }}>
                 <Typography sx={{ fontWeight: 600 }}>תגובות שנמחקו</Typography>
+                <MessageSquare size={18} />
               </Stack>
             </MenuItem>
           </Select>
@@ -531,13 +547,14 @@ function DeletedForms({ user }: { user: any }) {
                               border: "1px solid #62748E",
                               borderRadius: "4px",
                               color: "transparent",
+                              alignSelf: "center",
                               "&.Mui-checked": { color: theme.palette.primary.main, border: "none" },
                               "& .MuiSvgIcon-root": { fontSize: 20 }
                             }}
                           />
 
                           <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, flex: 1 }}>
-                            {/* Line 1: Icon -> Title -> ID */}
+                            {/* Line 1: [Icon] [Name] [ID] */}
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                               <Box
                                 sx={{ 
@@ -646,12 +663,14 @@ function DeletedForms({ user }: { user: any }) {
                                 return (
                                   <Box key={response.id} sx={{ p: 2, backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid rgba(2, 6, 24, 0.05)", display: "flex", flexDirection: "row", justifyContent: "flex-start", alignItems: "center" }}>
                                     <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, flex: 1 }}>
-                                      {/* Response Header: Icon -> Title */}
+                                      {/* Response Header: [Icon] [Title] */}
                                       <Stack direction="row" spacing={2} alignItems="center">
                                         <MessageSquare size={18} color={theme.palette.primary.main} />
-                                        <Typography sx={{ fontWeight: 700, fontSize: "14px", color: "#020618" }}>
-                                          תגובה מספר {response.index}
-                                        </Typography>
+                                        <Box sx={{ textAlign: "left" }}>
+                                          <Typography sx={{ fontWeight: 700, fontSize: "14px", color: "#020618" }}>
+                                            תגובה מספר {response.index}
+                                          </Typography>
+                                        </Box>
                                       </Stack>
                                       {/* Response Metadata: Below Title, Left Aligned */}
                                       <Box sx={{ textAlign: "left", pl: 4.5 }}>
@@ -700,7 +719,7 @@ function DeletedForms({ user }: { user: any }) {
                         sx={{ py: 2, px: 3, display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} 
                         onClick={() => toggleFormExpanded(form.id)}
                       >
-                        {/* Identity on Left: [Icon] [Name] [ID] [Count] */}
+                        {/* Identity on Left: [Icon] [Name] [ID] [Arrow] [Count] */}
                         <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
                           <Box
                             sx={{ 
@@ -791,7 +810,7 @@ function DeletedForms({ user }: { user: any }) {
                                           </Typography>
                                         </Box>
                                         {/* Line 2: Metadata (Left Aligned) */}
-                                        <Box sx={{ textAlign: "left", pl: 4.5 }}>
+                                        <Box sx={{ textAlign: "left" }}>
                                           <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px", mb: 0.5 }}>
                                             נוצר על ידי:{" "}
                                             <Tooltip title={response.createdBy?.upn || "לא ידוע"} arrow placement="top">
@@ -905,7 +924,7 @@ function DeletedForms({ user }: { user: any }) {
                 "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" }
               }}
             >
-              בטל בחירה
+              ביטול בחירה
             </Button>
 
             <Button
