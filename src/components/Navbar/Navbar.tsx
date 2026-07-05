@@ -7,7 +7,7 @@ import { IPath } from "../../types/enums/global.enums";
 import { useNavigate } from "react-router-dom";
 import { NavAppBar, NavToolbar, LogoContainer, ButtonsContainer } from "./styled";
 import { useAuth } from "../../contexts/AuthContext";
-import SupportPopup from "./SupportPopup";
+import SupportPopup from "./supportPopup/SupportPopup";
 
 const SUPPORT_CONTACT_URL = process.env.REACT_APP_SUPPORT_CONTACT_URL;
 const SUPPORT_TICKET_URL = process.env.REACT_APP_SUPPORT_TICKET_URL;
