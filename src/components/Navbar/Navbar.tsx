@@ -9,8 +9,8 @@ import { NavAppBar, NavToolbar, LogoContainer, ButtonsContainer } from "./styled
 import { useAuth } from "../../contexts/AuthContext";
 import SupportPopup from "./SupportPopup";
 
-const SUPPORT_CONTACT_URL = process.env.SUPPORT_CONTACT_URL;
-const SUPPORT_TICKET_URL = process.env.SUPPORT_TICKET_URL;
+const SUPPORT_CONTACT_URL = process.env.REACT_APP_SUPPORT_CONTACT_URL;
+const SUPPORT_TICKET_URL = process.env.REACT_APP_SUPPORT_TICKET_URL;
 
 const Navbar = () => {
   const [isEasterEggActive, setIsEasterEggActive] = useState(false);
