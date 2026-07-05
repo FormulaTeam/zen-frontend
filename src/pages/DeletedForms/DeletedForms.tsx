@@ -480,21 +480,34 @@ function DeletedForms({ user }: { user: any }) {
                                 {getIconContent(form.icon)}
                               </Box>
 
-                              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "20px", color: "#020618", textAlign: "right", display: "flex", alignItems: "center", gap: 1 }}>
+                              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "20px", color: "#020618", textAlign: "right", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
                                 {form.name}
-                                <Typography component="span" sx={{ fontSize: "14px", color: "#62748E", fontWeight: 500, bgcolor: "#F1F5F9", px: 1, py: 0.2, borderRadius: "4px" }}>
-                                  #{form.id}
-                                </Typography>
+                                <Tooltip title="מזהה הטופס" arrow placement="top">
+                                  <Typography component="span" sx={{ fontSize: "14px", color: "#62748E", fontWeight: 500, cursor: "help" }}>
+                                    {form.id}
+                                  </Typography>
+                                </Tooltip>
                               </Typography>
+
                             </Box>
                           </Box>
 
                           <Box sx={{ textAlign: "left", pl: 5.5 }}>
                             <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px", mb: 1 }}>
-                              נוצר על ידי: {form.createdBy?.name || "משתמש בזן"}
+                              נוצר על ידי:{" "}
+                              <Tooltip title={form.createdBy?.upn || "לא ידוע"} arrow placement="top">
+                                <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
+                                  {form.createdBy?.name || "משתמש בזן"}
+                                </Box>
+                              </Tooltip>
                             </Typography>
                             <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px" }}>
-                              נמחק בתאריך {formattedDate} בשעה {formattedTime} על ידי {form.deletedBy?.name || "משתמש בזן"}
+                              נמחק בתאריך {formattedDate} בשעה {formattedTime} על ידי{" "}
+                              <Tooltip title={form.deletedBy?.upn || "לא ידוע"} arrow placement="top">
+                                <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
+                                  {form.deletedBy?.name || "משתמש בזן"}
+                                </Box>
+                              </Tooltip>
                             </Typography>
                           </Box>
                         </Box>
@@ -504,7 +517,7 @@ function DeletedForms({ user }: { user: any }) {
                           {responsesCount > 0 && (
                             <Button
                               onClick={() => toggleFormExpanded(form.id)}
-                              endIcon={isExpanded ? <EyeOff size={16} /> : <Eye size={16} />}
+                              startIcon={isExpanded ? <EyeOff size={16} /> : <Eye size={16} />}
                               sx={{ 
                                 bgcolor: "#ffffff", 
                                 color: "#0F172B",
@@ -516,6 +529,7 @@ function DeletedForms({ user }: { user: any }) {
                                 px: 1.5,
                                 boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
                                 textTransform: "none",
+                                gap: 1,
                                 "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" }
                               }}>
                               {isExpanded ? "הסתרת תגובות" : `הצג תגובות (${responsesCount})`}
@@ -526,17 +540,18 @@ function DeletedForms({ user }: { user: any }) {
                             disabled={restoringFormId === form.id}
                             onClick={() => handleRestoreFormClick(form.id)}
                             variant="contained"
-                            endIcon={restoringFormId === form.id ? <CircularProgress size={14} color="inherit" /> : <RotateCcw size={16} />}
+                            startIcon={restoringFormId === form.id ? <CircularProgress size={14} color="inherit" /> : <RotateCcw size={16} />}
                             sx={{
                               backgroundColor: theme.palette.primary.main,
                               borderRadius: "4px",
-                              fontWeight: 500,
+                              fontWeight: 700,
                               fontSize: "14px",
                               height: "32px",
                               px: 1.5,
                               boxShadow: "none",
                               textTransform: "none",
                               flexShrink: 0,
+                              gap: 1,
                               "&:hover": { backgroundColor: theme.palette.primary.dark, boxShadow: "none" }
                             }}>
                             שחזור טופס
@@ -545,8 +560,7 @@ function DeletedForms({ user }: { user: any }) {
                       </Box>
 
                       <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                        <Divider sx={{ mt: 2, mb: 2 }} />
-                        <Box sx={{ bgcolor: "rgba(241, 245, 249, 0.4)", p: 2, borderRadius: "4px" }}>
+                        <Box sx={{ bgcolor: "rgba(241, 245, 249, 0.4)", p: 2, borderRadius: "4px", mt: 1 }}>
                           {form.responses?.length ? (
                             <Stack spacing={1}>
                               {form.responses.map((response: any) => {
@@ -555,22 +569,23 @@ function DeletedForms({ user }: { user: any }) {
                                 const fCreatedTime = createdDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
                                 return (
-                                  <Box key={response.id} sx={{ p: 1.5, backgroundColor: "#ffffff", borderRadius: "4px", border: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <Button
-                                      disabled={restoringResponseId === response.id}
-                                      onClick={() => handleRestoreResponseClick(form.id, response.id)}
-                                      variant="outlined"
-                                      sx={{ borderRadius: "4px", fontWeight: 500, fontSize: "13px", height: "28px", px: 1.5 }}>
-                                      שחזור
-                                    </Button>
-                                    <Box sx={{ textAlign: "right" }}>
-                                      <Typography sx={{ fontWeight: 600, fontSize: "14px", color: "#020618", mb: 0.5 }}>
-                                        תגובה מספר {response.index}
-                                      </Typography>
-                                      <Typography sx={{ fontSize: "13px", color: "#62748E" }}>
-                                        נוצר בתאריך {fCreatedDate} בשעה {fCreatedTime} על ידי {response.createdBy?.name || "משתמש בזן"}
-                                      </Typography>
-                                    </Box>
+                                  <Box key={response.id} sx={{ p: 2, backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid rgba(2, 6, 24, 0.05)", display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
+                                    <Stack direction="row" spacing={2} alignItems="center">
+                                      <MessageSquare size={18} color={theme.palette.primary.main} />
+                                      <Box sx={{ textAlign: "left" }}>
+                                        <Typography sx={{ fontWeight: 700, fontSize: "14px", color: "#020618", mb: 0.5 }}>
+                                          תגובה מספר {response.index}
+                                        </Typography>
+                                        <Typography sx={{ fontSize: "13px", color: "#62748E" }}>
+                                          נוצרה בתאריך {fCreatedDate} בשעה {fCreatedTime} על ידי{" "}
+                                        <Tooltip title={response.createdBy?.upn || "לא ידוע"} arrow placement="top">
+                                          <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
+                                            {response.createdBy?.name || "משתמש בזן"}
+                                          </Box>
+                                        </Tooltip>
+                                        </Typography>
+                                      </Box>
+                                    </Stack>
                                   </Box>
                                 );
                               })}
@@ -637,7 +652,32 @@ function DeletedForms({ user }: { user: any }) {
 
                                 return (
                                   <Box key={response.id} sx={{ p: 2.5, backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid rgba(2, 6, 24, 0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <Button
+                                      disabled={restoringResponseId === response.id}
+                                      onClick={() => handleRestoreResponseClick(form.id, response.id)}
+                                      variant="outlined"
+                                      startIcon={restoringResponseId === response.id ? <CircularProgress size={16} color="inherit" /> : <MynaUiUndoIcon style={{ width: 16, height: 16 }} />}
+                                      sx={{ borderRadius: "8px", fontWeight: 700, px: 2.5, gap: 1 }}>
+                                      שחזור תגובה לטופס
+                                    </Button>
+
                                     <Stack direction="row" spacing={2.5} alignItems="center">
+                                      <Box sx={{ textAlign: "right" }}>
+                                        <Typography variant="body1" sx={{ fontWeight: 700, color: "#0F172B", mb: 0.5 }}>
+                                          תגובה מספר {response.index}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ color: "#62748E", mb: 0.5 }}>
+                                          נוצרה בתאריך {fCreatedDate} בשעה {fCreatedTime} על ידי{" "}
+                                        <Tooltip title={response.createdBy?.upn || "לא ידוע"} arrow placement="top">
+                                          <Box component="span" sx={{ cursor: "help", textDecoration: "underline", textDecorationStyle: "dotted", textDecorationColor: "#cbd5e1" }}>
+                                            {response.createdBy?.name || "משתמש בזן"}
+                                          </Box>
+                                        </Tooltip>
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ color: "#62748E" }}>
+                                          <b>נמחק בתאריך</b> {rFormattedDate} בשעה {rFormattedTime} <b>על ידי</b> {response.deletedResponse?.deletedBy?.name || "משתמש בזן"}
+                                        </Typography>
+                                      </Box>
                                       <Checkbox
                                         checked={selectedResponseIds.has(response.id)}
                                         onChange={() => handleToggleSelectResponse(response.id)}
@@ -648,26 +688,7 @@ function DeletedForms({ user }: { user: any }) {
                                           "&.Mui-checked": { color: theme.palette.primary.main }
                                         }}
                                       />
-                                      <Box>
-                                        <Typography variant="body1" sx={{ fontWeight: 700, color: "#0F172B", mb: 0.5 }}>
-                                          תגובה מספר {response.index}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ color: "#62748E", mb: 0.5 }}>
-                                          <b>נוצר בתאריך</b> {fCreatedDate} בשעה {fCreatedTime} <b>על ידי</b> {response.createdBy?.name || "משתמש בזן"}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ color: "#62748E" }}>
-                                          <b>נמחק בתאריך</b> {rFormattedDate} בשעה {rFormattedTime} <b>על ידי</b> {response.deletedResponse?.deletedBy?.name || "משתמש בזן"}
-                                        </Typography>
-                                      </Box>
                                     </Stack>
-                                    <Button
-                                      disabled={restoringResponseId === response.id}
-                                      onClick={() => handleRestoreResponseClick(form.id, response.id)}
-                                      variant="outlined"
-                                      sx={{ borderRadius: "8px", fontWeight: 700, px: 2.5, gap: 1 }}>
-                                      {restoringResponseId === response.id ? <CircularProgress size={16} color="inherit" /> : <MynaUiUndoIcon style={{ width: 16, height: 16 }} />}
-                                      שחזור תגובה לטופס
-                                    </Button>
                                   </Box>
                                 );
                               })}
