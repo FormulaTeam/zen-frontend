@@ -671,7 +671,7 @@ function DeletedForms({ user }: { user: any }) {
                                           </Typography>
                                         </Box>
                                         {/* Line 2: Metadata (Left Aligned) */}
-                                        <Box sx={{ textAlign: "left", pl: 4.5 }}>
+                                        <Box sx={{ textAlign: "left" }}>
                                           <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px", mb: 0.5 }}>
                                             נוצר על ידי:{" "}
                                             <Tooltip title={response.createdBy?.upn || "לא ידוע"} arrow placement="top">
