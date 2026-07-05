@@ -144,7 +144,7 @@ function DeletedForms({ user }: { user: any }) {
     orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
   });
 
-  const deletedForms = useMemo(() => deletedFormsData?.pages.flat() || [], [deletedFormsData]);
+  const deletedForms = useMemo(() => (deletedFormsData?.pages.flat() as DeletedFormWithResponses[]) || [], [deletedFormsData]);
 
   // Fetch Active Forms with Deleted Responses (Tab 2) via React Query
   const {
@@ -159,7 +159,7 @@ function DeletedForms({ user }: { user: any }) {
     orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
   });
 
-  const activeFormsWithDeleted = useMemo(() => activeFormsData?.pages.flat() || [], [activeFormsData]);
+  const activeFormsWithDeleted = useMemo(() => (activeFormsData?.pages.flat() as DeletedFormWithResponses[]) || [], [activeFormsData]);
 
   const toggleFormExpanded = (formId: number) => {
     setExpandedForms((prev) => ({
