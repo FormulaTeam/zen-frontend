@@ -95,6 +95,8 @@ export const getDeletedForms = async (filter?: Filter): Promise<FormDto[]> => {
       filter?.pageNumber !== undefined && filter?.pageSize !== undefined
         ? (filter.pageNumber - 1) * filter.pageSize
         : undefined,
+    createdBy: filter?.createdBy,
+    deletedBy: filter?.deletedBy,
   };
 
   try {
@@ -130,6 +132,8 @@ export const getSoftDeletedResponsesGlobal = async (filter?: Filter): Promise<Fo
     orderBy: filter?.orderBy,
     limit: filter?.pageSize,
     offset: filter?.pageNumber !== undefined && filter?.pageSize !== undefined ? (filter.pageNumber - 1) * filter.pageSize : undefined,
+    createdBy: filter?.createdBy,
+    deletedBy: filter?.deletedBy,
   };
 
   try {

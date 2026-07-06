@@ -18,6 +18,7 @@ import {
   Divider,
   Card,
   Checkbox,
+  Menu,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
@@ -39,6 +40,7 @@ import {
   EyeOff,
   LogOut,
   XCircle,
+  SearchX,
 } from "lucide-react";
 import { useGetDeletedForms, useGetSoftDeletedResponsesGlobal, restoreForm } from "../../api/formsApi";
 import { restoreResponse, restoreResponses } from "../../api/responsesApi";
@@ -47,24 +49,32 @@ import { CustomIcon } from "../../theme/icons";
 import { getFormIconByName } from "../../utils/utils";
 import { DeletedFormOverviewDto, FormOverviewDto } from "../../types/shared";
 import queryClient from "../../api/queryClient";
-import { IOrderBy } from "../../types/enums/filtersAndSorts.enum";
+import { IOrderBy, formsSortOption } from "../../types/enums/filtersAndSorts.enum";
 import { Filter } from "../../utils/interfaces";
+import { useDebounce } from "../../hooks/utilsHooks/useDebounce";
 
 const StyledFormControl = styled(Box)(({ theme }) => ({
   width: "100%",
   maxWidth: 220,
   position: "relative",
 }));
+// ... rest of the styled components ...
+const SearchInputWrapper = styled(Box)(({ theme }) => ({
+  position: "relative",
+  width: "220px",
+  height: "40px",
+}));
 
 const SearchInput = styled("input")(({ theme }) => ({
   width: "100%",
-  height: "36px",
+  height: "100%",
   borderRadius: "4px",
   border: "1px solid #E2E8F0",
   paddingRight: "40px",
   paddingLeft: "12px",
   fontSize: "14px",
   fontFamily: "Heebo, sans-serif",
+  backgroundColor: "#ffffff",
   "&:focus": {
     outline: "none",
     borderColor: theme.palette.primary.main,
@@ -74,9 +84,42 @@ const SearchInput = styled("input")(({ theme }) => ({
   },
 }));
 
+const InputIconWrapper = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  right: "12px",
+  top: "50%",
+  transform: "translateY(-50%)",
+  color: "#94A3B8",
+  display: "flex",
+  alignItems: "center",
+  pointerEvents: "none",
+}));
+
+const EmptyStateContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: theme.spacing(8, 2),
+  textAlign: "center",
+  backgroundColor: "#ffffff",
+  borderRadius: "8px",
+  border: "1px dashed #E2E8F0",
+  marginTop: theme.spacing(4),
+}));
+
 type DeletedFormWithResponses = (DeletedFormOverviewDto | FormOverviewDto) & {
   responses?: any[];
 };
+
+const sortOptions = [
+  { label: "תאריך מחיקה (חדש קודם)", sortBy: formsSortOption.DeletedAt, direction: "desc" },
+  { label: "תאריך מחיקה (ישן קודם)", sortBy: formsSortOption.DeletedAt, direction: "asc" },
+  { label: "שם טופס (א-ת)", sortBy: formsSortOption.Name, direction: "asc" },
+  { label: "שם טופס (ת-א)", sortBy: formsSortOption.Name, direction: "desc" },
+  { label: "כמות תגובות (גבוה קודם)", sortBy: formsSortOption.ResponseCount, direction: "desc" },
+  { label: "כמות תגובות (נמוך קודם)", sortBy: formsSortOption.ResponseCount, direction: "asc" },
+];
 
 /**
  * Main Trash Page displaying soft-deleted forms and responses in tabs.
@@ -128,8 +171,37 @@ function DeletedForms({ user }: { user: any }) {
 
   // Filtering states
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("deleted_at");
+  const [createdBySearch, setCreatedBySearch] = useState("");
+  const [deletedBySearch, setDeletedBySearch] = useState("");
+  const [sortBy, setSortBy] = useState<string>(formsSortOption.DeletedAt);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+  const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
+  const isSortMenuOpen = Boolean(sortAnchorEl);
+
+  const handleSortClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setSortAnchorEl(event.currentTarget);
+  };
+
+  const handleSortClose = () => {
+    setSortAnchorEl(null);
+  };
+
+  const handleSortSelect = (newSortBy: string, newDirection: "asc" | "desc") => {
+    setSortBy(newSortBy);
+    setSortDirection(newDirection);
+    handleSortClose();
+  };
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setCreatedBySearch("");
+    setDeletedBySearch("");
+  };
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const debouncedCreatedBy = useDebounce(createdBySearch, 300);
+  const debouncedDeletedBy = useDebounce(deletedBySearch, 300);
 
   // Fetch Deleted Forms (Tab 1) via React Query
   const {
@@ -139,7 +211,9 @@ function DeletedForms({ user }: { user: any }) {
     hasNextPage: hasNextDeletedForms,
     isFetchingNextPage: isFetchingNextDeletedForms,
   } = useGetDeletedForms({
-    query: searchTerm || undefined,
+    query: debouncedSearchTerm || undefined,
+    createdBy: debouncedCreatedBy || undefined,
+    deletedBy: debouncedDeletedBy || undefined,
     sortBy,
     orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
   });
@@ -154,8 +228,10 @@ function DeletedForms({ user }: { user: any }) {
     hasNextPage: hasNextActiveForms,
     isFetchingNextPage: isFetchingNextActiveForms,
   } = useGetSoftDeletedResponsesGlobal({
-    query: searchTerm || undefined,
-    sortBy: sortBy === "deleted_at" ? "created_at" : sortBy,
+    query: debouncedSearchTerm || undefined,
+    createdBy: debouncedCreatedBy || undefined,
+    deletedBy: debouncedDeletedBy || undefined,
+    sortBy: sortBy === formsSortOption.DeletedAt ? formsSortOption.CreatedAt : sortBy,
     orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
   });
 
@@ -290,6 +366,34 @@ function DeletedForms({ user }: { user: any }) {
     return <KeyboardArrowDownIcon />;
   };
 
+  const EmptyState = () => (
+    <EmptyStateContainer>
+      <Box sx={{ color: "#94A3B8", mb: 2 }}>
+        <SearchX size={48} strokeWidth={1.5} />
+      </Box>
+      <Typography variant="h6" sx={{ fontWeight: 700, color: "#0F172B", mb: 1, fontFamily: "Heebo" }}>
+        לא נמצאו פריטים תואמים
+      </Typography>
+      <Typography variant="body2" sx={{ color: "#62748E", mb: 3, maxWidth: "320px", fontFamily: "Heebo" }}>
+        נסו לשנות את מילות החיפוש או לנקות את המסננים כדי לראות עוד תוצאות.
+      </Typography>
+      <Button
+        variant="outlined"
+        onClick={clearFilters}
+        sx={{
+          borderColor: "#E2E8F0",
+          color: "#0F172B",
+          borderRadius: "4px",
+          px: 3,
+          fontWeight: 600,
+          "&:hover": { borderColor: "#cbd5e1", bgcolor: "#f8fafc" }
+        }}
+      >
+        ניקוי מסננים
+      </Button>
+    </EmptyStateContainer>
+  );
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", bgcolor: "#F8FAFC", minHeight: "100%" }}>
       {/* Top Header - Restored to Previous State (Title Right, Exit Left) */}
@@ -319,67 +423,166 @@ function DeletedForms({ user }: { user: any }) {
         </IconButton>
       </Box>
 
-      {/* Scope Selector / Tabs - Aligned Left for LTR Flow */}
-      <Box sx={{ px: 4, pt: 3, pb: 1, display: "flex", justifyContent: "flex-start" }}>
-        <Box sx={{ width: "auto", minWidth: 200 }}>
-          <Select
-            id="trash-tab-select"
-            value={scopeParam === "responses" ? "responses" : "forms"}
-            onChange={handleDropdownChange}
-            IconComponent={() => null} // Hide default icon
-            renderValue={(selected) => (
-              <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between" sx={{ width: "100%" }}>
-                <ChevronDown size={18} color="#0F172B" />
-                <Typography sx={{ fontWeight: 500, fontSize: "14px", color: "#0F172B", mx: 0.5 }}>
-                  {selected === "forms" ? "טפסים שנמחקו" : "תגובות שנמחקו"}
-                </Typography>
-                {selected === "forms" ? <FileText size={18} color="#0F172B" /> : <MessageSquare size={18} color="#0F172B" />}
-              </Stack>
-            )}
+      {/* Scope Selector and Filters Tool Bar */}
+      <Box sx={{ px: 4, pt: 3, pb: 2, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Box sx={{ width: "auto", minWidth: 200 }}>
+            <Select
+              id="trash-tab-select"
+              value={scopeParam === "responses" ? "responses" : "forms"}
+              onChange={handleDropdownChange}
+              IconComponent={() => null} // Hide default icon
+              renderValue={(selected) => (
+                <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between" sx={{ width: "100%" }}>
+                  <ChevronDown size={18} color="#0F172B" />
+                  <Typography sx={{ fontWeight: 500, fontSize: "14px", color: "#0F172B", mx: 0.5 }}>
+                    {selected === "forms" ? "טפסים שנמחקו" : "תגובות שנמחקו"}
+                  </Typography>
+                  {selected === "forms" ? <FileText size={18} color="#0F172B" /> : <MessageSquare size={18} color="#0F172B" />}
+                </Stack>
+              )}
+              sx={{
+                width: "100%",
+                height: "40px",
+                borderRadius: "4px",
+                bgcolor: "#ffffff",
+                border: "1px solid #E2E8F0",
+                boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
+                "& .MuiSelect-select": {
+                  py: 1,
+                  px: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5
+                },
+                "& .MuiOutlinedInput-notchedOutline": {
+                  border: "none",
+                },
+                "&:hover": {
+                  bgcolor: "#f8fafc",
+                  borderColor: "#cbd5e1"
+                }
+              }}
+            >
+              <MenuItem value="forms">
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%", justifyContent: "flex-end" }}>
+                  <Typography sx={{ fontWeight: 600 }}>טפסים שנמחקו</Typography>
+                  <CheckSquare size={18} />
+                </Stack>
+              </MenuItem>
+              <MenuItem value="responses">
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%", justifyContent: "flex-end" }}>
+                  <Typography sx={{ fontWeight: 600 }}>תגובות שנמחקו</Typography>
+                  <MessageSquare size={18} />
+                </Stack>
+              </MenuItem>
+            </Select>
+          </Box>
+
+          <SearchInputWrapper>
+            <InputIconWrapper>
+              <Search size={18} />
+            </InputIconWrapper>
+            <SearchInput
+              placeholder="חיפוש טופס"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </SearchInputWrapper>
+
+          <SearchInputWrapper>
+            <InputIconWrapper>
+              <UserCircle size={18} />
+            </InputIconWrapper>
+            <SearchInput
+              placeholder="נוצר ע״י"
+              value={createdBySearch}
+              onChange={(e) => setCreatedBySearch(e.target.value)}
+            />
+          </SearchInputWrapper>
+
+          <SearchInputWrapper>
+            <InputIconWrapper>
+              <UserCircle size={18} />
+            </InputIconWrapper>
+            <SearchInput
+              placeholder="נמחק ע״י"
+              value={deletedBySearch}
+              onChange={(e) => setDeletedBySearch(e.target.value)}
+            />
+          </SearchInputWrapper>
+        </Stack>
+
+        <Box>
+          <Button
+            onClick={handleSortClick}
             sx={{
-              width: "100%",
               height: "40px",
-              borderRadius: "4px",
               bgcolor: "#ffffff",
+              color: "#0F172B",
               border: "1px solid #E2E8F0",
+              borderRadius: "4px",
+              px: 2,
+              gap: 1.5,
+              fontWeight: 500,
+              fontSize: "14px",
+              textTransform: "none",
               boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
-              "& .MuiSelect-select": {
-                py: 1,
-                px: 2,
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5
-              },
-              "& .MuiOutlinedInput-notchedOutline": {
-                border: "none",
-              },
-              "&:hover": {
-                bgcolor: "#f8fafc",
-                borderColor: "#cbd5e1"
+              "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" }
+            }}
+            startIcon={<ChevronDown size={18} />}
+          >
+            {sortOptions.find(opt => opt.sortBy === sortBy && opt.direction === sortDirection)?.label || "מיין לפי"}
+          </Button>
+          <Menu
+            anchorEl={sortAnchorEl}
+            open={isSortMenuOpen}
+            onClose={handleSortClose}
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
+            }}
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "right",
+            }}
+            sx={{
+              "& .MuiPaper-root": {
+                mt: 1,
+                minWidth: 180,
+                boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.08)",
+                border: "1px solid #E2E8F0"
               }
             }}
           >
-            <MenuItem value="forms">
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%", justifyContent: "flex-end" }}>
-                <Typography sx={{ fontWeight: 600 }}>טפסים שנמחקו</Typography>
-                <CheckSquare size={18} />
-              </Stack>
-            </MenuItem>
-            <MenuItem value="responses">
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%", justifyContent: "flex-end" }}>
-                <Typography sx={{ fontWeight: 600 }}>תגובות שנמחקו</Typography>
-                <MessageSquare size={18} />
-              </Stack>
-            </MenuItem>
-          </Select>
+            {sortOptions.map((option) => (
+              <MenuItem
+                key={`${option.sortBy}-${option.direction}`}
+                onClick={() => handleSortSelect(option.sortBy, option.direction as "asc" | "desc")}
+                selected={sortBy === option.sortBy && sortDirection === option.direction}
+                sx={{
+                  fontSize: "14px",
+                  fontFamily: "Heebo",
+                  justifyContent: "flex-end",
+                  "&.Mui-selected": {
+                    bgcolor: "rgba(25, 118, 210, 0.08)",
+                    fontWeight: 600
+                  }
+                }}
+              >
+                {option.label}
+              </MenuItem>
+            ))}
+          </Menu>
         </Box>
       </Box>
 
-      <Box className="main-page-content-wrapper" sx={{ px: 4, pt: 2, flex: 1, overflowY: "auto" }} onScroll={handleScroll}>
+      <Box className="main-page-content-wrapper" sx={{ px: 4, pt: 0, flex: 1, overflowY: "auto" }} onScroll={handleScroll}>
         {activeTab === 0 ? (
           deletedForms.length > 0 ? (
             <Grid container spacing={2} columns={12}>
               {deletedForms.map((form: any) => {
+// ... rest of the code ...
                 const deletedDateObj = form.deletedAt ? new Date(form.deletedAt) : null;
                 const formattedDate = deletedDateObj ? deletedDateObj.toLocaleDateString("he-IL") : "N/A";
                 const formattedTime = deletedDateObj ? deletedDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
@@ -561,7 +764,7 @@ function DeletedForms({ user }: { user: any }) {
               <CircularProgress />
             </Box>
           ) : (
-            <Typography variant="h6" sx={{ textAlign: "center", mt: 10, color: "text.secondary" }}>לא נמצאו טפסים שנמחקו</Typography>
+            <EmptyState />
           )
         ) : (
           /* Tab 2: Deleted Responses - Left to Right Visual Flow */
@@ -734,7 +937,7 @@ function DeletedForms({ user }: { user: any }) {
               <CircularProgress />
             </Box>
           ) : (
-            <Typography variant="h6" sx={{ textAlign: "center", mt: 10, color: "text.secondary" }}>לא נמצאו תגובות שנמחקו</Typography>
+            <EmptyState />
           )
         )}
       </Box>
