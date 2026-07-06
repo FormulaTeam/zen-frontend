@@ -94,7 +94,9 @@ function MainPage({
       activeSortBy = sessionStorage.getItem("formula-forms-sort-by") as FormsSortOption | null;
     }
     if (!activeSortDirection) {
-      activeSortDirection = sessionStorage.getItem("formula-forms-sort-direction") as SortDirection | null;
+      activeSortDirection = sessionStorage.getItem(
+        "formula-forms-sort-direction",
+      ) as SortDirection | null;
     }
 
     if (activeSortBy && Object.values(formsSortOption).includes(activeSortBy)) {
@@ -116,7 +118,12 @@ function MainPage({
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop <= clientHeight + 10 && hasNextPage && !isFetchingNextPage && !isLoading) {
+    if (
+      scrollHeight - scrollTop <= clientHeight + 10 &&
+      hasNextPage &&
+      !isFetchingNextPage &&
+      !isLoading
+    ) {
       fetchNextPage();
     }
   };
@@ -135,7 +142,7 @@ function MainPage({
         updated.set("sortDirection", newSortDirection);
         return updated;
       },
-      { replace: true }
+      { replace: true },
     );
   };
 
@@ -209,11 +216,7 @@ function MainPage({
                 mx: 0.5,
               }}
             />
-            <FormGroupSelect
-              value={scope}
-              onChange={setScope}
-              isSuperAdmin={!!isSuperAdmin}
-            />
+            <FormGroupSelect value={scope} onChange={setScope} isSuperAdmin={!!isSuperAdmin} />
             <MainSortSelect
               sortBy={sortBy}
               sortDirection={sortDirection}
@@ -250,8 +253,13 @@ function MainPage({
               </Grid>
             ))}
             {isFetchingNextPage && (
-              <Box className="bottom-lbl" sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                <ReactLoading type="spin" color={theme.palette.primary.main} height={30} width={30} />
+              <Box className="bottom-lbl" sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+                <ReactLoading
+                  type="spin"
+                  color={theme.palette.primary.main}
+                  height={30}
+                  width={30}
+                />
               </Box>
             )}
           </Grid>
@@ -279,7 +287,7 @@ function MainPage({
 
       <BasePopup
         open={false}
-        onClose={() => { }}
+        onClose={() => {}}
         title="סנכרון נתונים למטרו"
         content={
           <Box className="gifs-div">

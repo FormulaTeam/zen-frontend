@@ -49,17 +49,23 @@ export function useFormsScope({ isSuperAdmin }: UseFormsScopeParams) {
     }
   }, [scopeParam, isSuperAdmin]);
 
-  const setScope = useCallback((newScope: FormsScopeOption) => {
-    setScopeState(newScope);
-    sessionStorage.setItem(STORAGE_KEY, newScope);
+  const setScope = useCallback(
+    (newScope: FormsScopeOption) => {
+      setScopeState(newScope);
+      sessionStorage.setItem(STORAGE_KEY, newScope);
 
-    // Sync to URL
-    setSearchParams((prev) => {
-      const updated = new URLSearchParams(prev);
-      updated.set("scope", newScope);
-      return updated;
-    }, { replace: true });
-  }, [setSearchParams]);
+      // Sync to URL
+      setSearchParams(
+        (prev) => {
+          const updated = new URLSearchParams(prev);
+          updated.set("scope", newScope);
+          return updated;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
 
   return { scope, setScope };
 }

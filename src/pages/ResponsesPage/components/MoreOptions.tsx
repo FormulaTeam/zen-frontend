@@ -119,12 +119,6 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
   const syncingDataMenuItem = useMemo(
     () => (
       <MenuItem
-        disabled={
-          !rows.length ||
-          sourceOperationStatus === SourceOperationStatus.CREATING ||
-          sourceOperationStatus === SourceOperationStatus.EDITING ||
-          !hasMetroSource
-        }
         onClick={pushToMetro}>
         <ListItemIcon>
           <RotateCw size={22} strokeWidth={2.4} />

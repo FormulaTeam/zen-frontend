@@ -753,6 +753,7 @@ export const ResponsesTable = React.memo(
       displayRows.length,
       form?.fields?.length,
       form?.sections?.length,
+      isInEditMode,
       showTableSkeleton,
     ]);
 
