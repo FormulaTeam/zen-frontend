@@ -343,9 +343,18 @@ function DeletedForms({ user }: { user: any }) {
 
   return (
     <Box sx={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", bgcolor: "#F8FAFC", overflow: "hidden" }}>
-      <Box sx={{ display: "flex", flexDirection: "column", width: "70%", minWidth: "900px", height: "100%" }}>
-        {/* Top Header */}
+      <Box sx={{ display: "flex", flexDirection: "column", width: "85%", minWidth: "900px", height: "100%" }}>
+        {/* Top Header - Flipped positions and improved alignment */}
         <Box sx={{ py: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box sx={{ color: "#0F172B", display: "flex", alignItems: "center" }}>
+              <Trash2 size={24} strokeWidth={2.5} />
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "#0F172B", fontFamily: "Heebo, sans-serif", lineHeight: 1 }}>
+              סל מחזור
+            </Typography>
+          </Stack>
+
           <IconButton
             onClick={() => navigate("/forms")}
             sx={{
@@ -360,20 +369,11 @@ function DeletedForms({ user }: { user: any }) {
           >
             <LogOut size={24} strokeWidth={2.4} />
           </IconButton>
-
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Typography variant="h5" sx={{ fontWeight: 700, color: "#0F172B", fontFamily: "Heebo, sans-serif" }}>
-              סל מחזור
-            </Typography>
-            <Box sx={{ color: "#0F172B" }}>
-              <Trash2 size={24} strokeWidth={2.5} />
-            </Box>
-          </Stack>
         </Box>
 
         {/* Scope Selector and Filters Tool Bar */}
         <Box sx={{ pt: 3, pb: 2, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
-          {/* Left Group: Search Inputs */}
+          {/* Left Group: Search Inputs - Aligned left with icons next to text */}
           <Stack direction="row" spacing={2} alignItems="center">
             {/* Form Search Input */}
             <Box sx={{ position: "relative", width: "192px", height: "36px" }}>
@@ -389,7 +389,7 @@ function DeletedForms({ user }: { user: any }) {
                   height: "100%",
                   borderRadius: "4px",
                   border: "1px solid #E2E8F0",
-                  paddingLeft: "40px",
+                  paddingLeft: "36px",
                   paddingRight: "12px",
                   fontSize: "14px",
                   fontFamily: "Heebo, sans-serif",
@@ -414,7 +414,7 @@ function DeletedForms({ user }: { user: any }) {
                   height: "100%",
                   borderRadius: "4px",
                   border: "1px solid #E2E8F0",
-                  paddingLeft: "40px",
+                  paddingLeft: "36px",
                   paddingRight: "12px",
                   fontSize: "14px",
                   fontFamily: "Heebo, sans-serif",
@@ -439,7 +439,7 @@ function DeletedForms({ user }: { user: any }) {
                   height: "100%",
                   borderRadius: "4px",
                   border: "1px solid #E2E8F0",
-                  paddingLeft: "40px",
+                  paddingLeft: "36px",
                   paddingRight: "12px",
                   fontSize: "14px",
                   fontFamily: "Heebo, sans-serif",
@@ -583,7 +583,7 @@ function DeletedForms({ user }: { user: any }) {
                   const responsesCount = form.responsesCount ?? 0;
 
                   return (
-                    <Grid key={form.id} size={{ xs: 12 }}>
+                    <Grid key={form.id} item xs={12}>
                       <Card sx={{ p: 2, border: "1px solid #E2E8F0", borderRadius: "4px", boxShadow: "none", bgcolor: "#ffffff" }}>
                         <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
                           <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, flex: 1 }}>
@@ -740,7 +740,7 @@ function DeletedForms({ user }: { user: any }) {
                   );
                 })}
                 {isFetchingNextDeletedForms && (
-                  <Grid size={{ xs: 12 }} sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                  <Grid item xs={12} sx={{ display: "flex", justifyContent: "center", py: 2 }}>
                     <CircularProgress size={24} />
                   </Grid>
                 )}
@@ -761,7 +761,7 @@ function DeletedForms({ user }: { user: any }) {
                   const responsesCount = form.responsesCount ?? 0;
 
                   return (
-                    <Grid key={form.id} size={{ xs: 12 }}>
+                    <Grid key={form.id} item xs={12}>
                       <Card sx={{ p: 0, overflow: "hidden", border: "1px solid #E2E8F0", borderRadius: "4px", boxShadow: "none", bgcolor: "#ffffff" }}>
                         <Box 
                           sx={{ py: 2, px: 3, display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} 
@@ -902,7 +902,7 @@ function DeletedForms({ user }: { user: any }) {
                   );
                 })}
                 {isFetchingNextActiveForms && (
-                  <Grid size={{ xs: 12 }} sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                  <Grid item xs={12} sx={{ display: "flex", justifyContent: "center", py: 2 }}>
                     <CircularProgress size={24} />
                   </Grid>
                 )}
