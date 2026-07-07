@@ -61,8 +61,6 @@ const sortOptions = [
   { label: "תאריך מחיקה (ישן קודם)", sortBy: formsSortOption.DeletedAt, direction: "asc" },
   { label: "שם טופס (א-ת)", sortBy: formsSortOption.Name, direction: "asc" },
   { label: "שם טופס (ת-א)", sortBy: formsSortOption.Name, direction: "desc" },
-  { label: "כמות תגובות (גבוה קודם)", sortBy: formsSortOption.ResponseCount, direction: "desc" },
-  { label: "כמות תגובות (נמוך קודם)", sortBy: formsSortOption.ResponseCount, direction: "asc" },
 ];
 
 /**
