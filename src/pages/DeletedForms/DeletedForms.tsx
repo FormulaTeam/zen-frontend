@@ -589,7 +589,7 @@ function DeletedForms({ user }: { user: any }) {
                   const responsesCount = form.responsesCount ?? 0;
 
                   return (
-                    <Grid key={form.id} item xs={12}>
+                    <Grid key={form.id} size={{ xs: 12 }}>
                       <Card sx={{ p: 2, border: "1px solid #E2E8F0", borderRadius: "4px", boxShadow: "none", bgcolor: "#ffffff" }}>
                         <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
                           <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, flex: 1 }}>
@@ -746,7 +746,7 @@ function DeletedForms({ user }: { user: any }) {
                   );
                 })}
                 {isFetchingNextDeletedForms && (
-                  <Grid item xs={12} sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                  <Grid size={{ xs: 12 }} sx={{ display: "flex", justifyContent: "center", py: 2 }}>
                     <CircularProgress size={24} />
                   </Grid>
                 )}
@@ -767,7 +767,7 @@ function DeletedForms({ user }: { user: any }) {
                   const responsesCount = form.responsesCount ?? 0;
 
                   return (
-                    <Grid key={form.id} item xs={12}>
+                    <Grid key={form.id} size={{ xs: 12 }}>
                       <Card sx={{ p: 0, overflow: "hidden", border: "1px solid #E2E8F0", borderRadius: "4px", boxShadow: "none", bgcolor: "#ffffff" }}>
                         <Box 
                           sx={{ py: 2, px: 3, display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} 
@@ -908,7 +908,7 @@ function DeletedForms({ user }: { user: any }) {
                   );
                 })}
                 {isFetchingNextActiveForms && (
-                  <Grid item xs={12} sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                  <Grid size={{ xs: 12 }} sx={{ display: "flex", justifyContent: "center", py: 2 }}>
                     <CircularProgress size={24} />
                   </Grid>
                 )}
