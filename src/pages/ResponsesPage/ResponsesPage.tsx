@@ -4,7 +4,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Box, MenuItem, Select, Tooltip } from "@mui/material";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import { permission } from "formula-gear";
-import brushIcon from "../../icons/brush.svg";
+import paletteIcon from "../../icons/palette.svg";
 
 import SidePanel from "../../components/SidePanel/SidePanel";
 import SearchInfo from "../../components/Responses/SearchInfo";
@@ -628,16 +628,16 @@ const ResponsesPageContent = (): JSX.Element => {
                       }}>
                       <Box
                         component="img"
-                        src={brushIcon}
+                        src={paletteIcon}
                         alt=""
                         sx={{
-                          width: 24,
-                          height: 24,
+                          width: 22,
+                          height: 22,
                           display: "block",
                         }}
                       />
                       {responsesTableColorRules.length === 0 && (
-                        <Box component="span" sx={{ mr: 1, fontWeight: 800 }}>
+                        <Box component="span" sx={{ mr: 1, fontWeight: 600 }}>
                           צביעת תגובות
                         </Box>
                       )}
