@@ -98,6 +98,7 @@ export const getDeletedForms = async (filter?: Filter): Promise<FormDto[]> => {
         : undefined,
     createdBy: filter?.createdBy,
     deletedBy: filter?.deletedBy,
+    hasResponses: filter?.hasResponses,
   };
 
   try {

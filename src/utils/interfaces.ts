@@ -333,6 +333,7 @@ export interface Filter {
   after?: string;
   createdBy?: string;
   deletedBy?: string;
+  hasResponses?: boolean;
 }
 
 export interface PageInfo {
