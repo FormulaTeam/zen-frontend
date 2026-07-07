@@ -36,6 +36,7 @@ import {
   RotateCcw,
   FileText,
   CheckSquare,
+  Square,
   EyeOff,
   LogOut,
   XCircle,
@@ -117,6 +118,18 @@ function DeletedForms({ user }: { user: any }) {
   const [createdBySearch, setCreatedBySearch] = useState("");
   const [deletedBySearch, setDeletedBySearch] = useState("");
 
+  const hasResponsesFilter = searchParams.get("hasResponses") === "true";
+
+  const handleToggleHasResponses = () => {
+    const newParams = new URLSearchParams(searchParams);
+    if (hasResponsesFilter) {
+      newParams.delete("hasResponses");
+    } else {
+      newParams.set("hasResponses", "true");
+    }
+    setSearchParams(newParams, { replace: true });
+  };
+
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const isSortMenuOpen = Boolean(sortAnchorEl);
 
@@ -159,6 +172,7 @@ function DeletedForms({ user }: { user: any }) {
     deletedBy: debouncedDeletedBy || undefined,
     sortBy,
     orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
+    hasResponses: hasResponsesFilter,
   });
 
   const deletedForms = useMemo(() => (deletedFormsData?.pages.flat() as DeletedFormWithResponses[]) || [], [deletedFormsData]);
@@ -511,6 +525,28 @@ function DeletedForms({ user }: { user: any }) {
               </MenuItem>
             </Select>
           </Box>
+
+          {activeTab === 0 && (
+            <Button
+              onClick={handleToggleHasResponses}
+              variant="outlined"
+              startIcon={hasResponsesFilter ? <CheckSquare size={18} color={theme.palette.primary.main} /> : <Square size={18} />}
+              sx={{
+                height: "40px",
+                bgcolor: "#ffffff",
+                color: "#0F172B",
+                border: "1px solid #E2E8F0",
+                borderRadius: "4px",
+                fontWeight: 500,
+                fontSize: "14px",
+                textTransform: "none",
+                boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
+                "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" }
+              }}
+            >
+              טפסים עם תגובות
+            </Button>
+          )}
 
           <Box>
             <Button
