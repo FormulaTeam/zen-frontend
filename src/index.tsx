@@ -89,7 +89,6 @@ root.render(
 
           ".deleted-forms-scroll-container": {
             overflowY: "auto !important",
-            direction: "rtl !important",
             scrollbarWidth: "auto !important",
             msOverflowStyle: "auto !important",
             "&::-webkit-scrollbar": {
@@ -106,9 +105,6 @@ root.render(
               borderRadius: "10px !important",
               display: "block !important",
               border: "2px solid #f1f1f1 !important",
-            },
-            "& > *": {
-              direction: "rtl !important",
             },
           },
         })}
