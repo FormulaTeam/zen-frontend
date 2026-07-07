@@ -58,7 +58,7 @@ const StyledFormControl = styled(Box)(({ theme }) => ({
   maxWidth: 220,
   position: "relative",
 }));
-// ... rest of the styled components ...
+
 const SearchInputWrapper = styled(Box)(({ theme }) => ({
   position: "relative",
   width: "220px",
@@ -106,6 +106,20 @@ const EmptyStateContainer = styled(Box)(({ theme }) => ({
   borderRadius: "8px",
   border: "1px dashed #E2E8F0",
   marginTop: theme.spacing(4),
+}));
+
+const EmptyStateTitle = styled(Typography)(({ theme }) => ({
+  fontWeight: 700,
+  color: "#0F172B",
+  marginBottom: theme.spacing(1),
+  fontFamily: "Heebo",
+}));
+
+const EmptyStateSubtitle = styled(Typography)(({ theme }) => ({
+  color: "#62748E",
+  marginBottom: theme.spacing(3),
+  maxWidth: "320px",
+  fontFamily: "Heebo",
 }));
 
 type DeletedFormWithResponses = (DeletedFormOverviewDto | FormOverviewDto) & {
@@ -371,12 +385,12 @@ function DeletedForms({ user }: { user: any }) {
       <Box sx={{ color: "#94A3B8", mb: 2 }}>
         <SearchX size={48} strokeWidth={1.5} />
       </Box>
-      <Typography variant="h6" sx={{ fontWeight: 700, color: "#0F172B", mb: 1, fontFamily: "Heebo" }}>
+      <EmptyStateTitle>
         לא נמצאו פריטים תואמים
-      </Typography>
-      <Typography variant="body2" sx={{ color: "#62748E", mb: 3, maxWidth: "320px", fontFamily: "Heebo" }}>
+      </EmptyStateTitle>
+      <EmptyStateSubtitle>
         נסו לשנות את מילות החיפוש או לנקות את המסננים כדי לראות עוד תוצאות.
-      </Typography>
+      </EmptyStateSubtitle>
       <Button
         variant="outlined"
         onClick={clearFilters}
@@ -396,7 +410,7 @@ function DeletedForms({ user }: { user: any }) {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", bgcolor: "#F8FAFC", minHeight: "100%" }}>
-      {/* Top Header - Restored to Previous State (Title Right, Exit Left) */}
+      {/* Top Header */}
       <Box sx={{ px: 4, py: 2, display: "flex", justifyContent: "space-between", alignItems: "center", bgcolor: "#F8FAFC" }}>
         <Stack direction="row" spacing={1.5} alignItems="center">
           <Box sx={{ color: "#0F172B" }}>
@@ -431,7 +445,7 @@ function DeletedForms({ user }: { user: any }) {
               id="trash-tab-select"
               value={scopeParam === "responses" ? "responses" : "forms"}
               onChange={handleDropdownChange}
-              IconComponent={() => null} // Hide default icon
+              IconComponent={() => null} 
               renderValue={(selected) => (
                 <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between" sx={{ width: "100%" }}>
                   <ChevronDown size={18} color="#0F172B" />
@@ -582,7 +596,6 @@ function DeletedForms({ user }: { user: any }) {
           deletedForms.length > 0 ? (
             <Grid container spacing={2} columns={12}>
               {deletedForms.map((form: any) => {
-// ... rest of the code ...
                 const deletedDateObj = form.deletedAt ? new Date(form.deletedAt) : null;
                 const formattedDate = deletedDateObj ? deletedDateObj.toLocaleDateString("he-IL") : "N/A";
                 const formattedTime = deletedDateObj ? deletedDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
@@ -592,11 +605,8 @@ function DeletedForms({ user }: { user: any }) {
                 return (
                   <Grid key={form.id} size={{ xs: 12 }}>
                     <Card sx={{ p: 2, border: "1px solid #E2E8F0", borderRadius: "4px", boxShadow: "none", bgcolor: "#ffffff" }}>
-                      {/* Form Header - Left to Right Visual Flow */}
                       <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
-                        {/* Content & Identity on Left */}
                         <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, flex: 1 }}>
-                          {/* Row 1: Checkbox + [Icon] [Name] [ID] */}
                           <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
                             <Checkbox
                               checked={selectedFormIds.has(form.id)}
@@ -641,7 +651,6 @@ function DeletedForms({ user }: { user: any }) {
                             </Box>
                           </Box>
                           
-                          {/* Row 2: Metadata (Aligned with text after checkbox) */}
                           <Box sx={{ textAlign: "left", pl: 4 }}>
                             <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px", mb: 0.2 }}>
                               נוצר על ידי:{" "}
@@ -662,7 +671,6 @@ function DeletedForms({ user }: { user: any }) {
                           </Box>
                         </Box>
 
-                        {/* Actions on Right */}
                         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexShrink: 0 }}>
                           {responsesCount > 0 && (
                             <Button
@@ -721,7 +729,6 @@ function DeletedForms({ user }: { user: any }) {
                                 return (
                                   <Box key={response.id} sx={{ p: 2, backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid rgba(2, 6, 24, 0.05)", display: "flex", flexDirection: "row", justifyContent: "flex-start", alignItems: "center" }}>
                                     <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, flex: 1 }}>
-                                      {/* Response Header: [Icon] [Title] */}
                                       <Stack direction="row" spacing={2} alignItems="center">
                                         <MessageSquare size={18} color={theme.palette.primary.main} />
                                         <Box sx={{ textAlign: "left" }}>
@@ -730,7 +737,6 @@ function DeletedForms({ user }: { user: any }) {
                                           </Typography>
                                         </Box>
                                       </Stack>
-                                      {/* Response Metadata: Below Title, Left Aligned */}
                                       <Box sx={{ textAlign: "left", pl: 4.5 }}>
                                         <Typography sx={{ fontSize: "13px", color: "#62748E" }}>
                                           נוצרה בתאריך {fCreatedDate} בשעה {fCreatedTime} על ידי{" "}
@@ -767,7 +773,7 @@ function DeletedForms({ user }: { user: any }) {
             <EmptyState />
           )
         ) : (
-          /* Tab 2: Deleted Responses - Left to Right Visual Flow */
+          /* Tab 2: Deleted Responses */
           activeFormsWithDeleted.length > 0 ? (
             <Grid container spacing={2} columns={12}>
               {activeFormsWithDeleted.map((form: any) => {
@@ -777,12 +783,10 @@ function DeletedForms({ user }: { user: any }) {
                 return (
                   <Grid key={form.id} size={{ xs: 12 }}>
                     <Card sx={{ p: 0, overflow: "hidden", border: "1px solid #E2E8F0", borderRadius: "4px", boxShadow: "none", bgcolor: "#ffffff" }}>
-                      {/* Active Form Header - Left to Right Visual Flow */}
                       <Box 
                         sx={{ py: 2, px: 3, display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} 
                         onClick={() => toggleFormExpanded(form.id)}
                       >
-                        {/* Identity on Left: [Icon] [Name] [ID] [Arrow] [Count] */}
                         <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
                           <Box
                             sx={{ 
@@ -816,7 +820,6 @@ function DeletedForms({ user }: { user: any }) {
                           </Typography>
                         </Box>
 
-                        {/* Expand Trigger on Right */}
                         <IconButton
                           sx={{ 
                             width: "32px",
@@ -841,15 +844,9 @@ function DeletedForms({ user }: { user: any }) {
                                 const rFormattedDate = rDeletedDateObj ? rDeletedDateObj.toLocaleDateString("he-IL") : "N/A";
                                 const rFormattedTime = rDeletedDateObj ? rDeletedDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
                                 
-                                const createdDateObj = new Date(response.createdAt);
-                                const fCreatedDate = createdDateObj.toLocaleDateString("he-IL");
-                                const fCreatedTime = createdDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-
                                 return (
                                   <Box key={response.id} sx={{ p: 2, borderBottom: "1px solid #E2E8F0", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                                    {/* Identity & Metadata on Left */}
                                     <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, flex: 1 }}>
-                                      {/* Row 1: Checkbox + [Icon] [Title] */}
                                       <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
                                         <Checkbox
                                           checked={selectedResponseIds.has(response.id)}
@@ -873,7 +870,6 @@ function DeletedForms({ user }: { user: any }) {
                                         </Box>
                                       </Box>
                                       
-                                      {/* Row 2: Metadata (Aligned with text after checkbox) */}
                                       <Box sx={{ textAlign: "left", pl: 4 }}>
                                         <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px", mb: 0.5 }}>
                                           נוצר על ידי:{" "}
@@ -894,7 +890,6 @@ function DeletedForms({ user }: { user: any }) {
                                       </Box>
                                     </Box>
 
-                                    {/* Action on Right */}
                                     <Button
                                       disabled={restoringResponseId === response.id}
                                       onClick={() => handleRestoreResponseClick(form.id, response.id)}
@@ -942,7 +937,7 @@ function DeletedForms({ user }: { user: any }) {
         )}
       </Box>
 
-      {/* Floating Selection Bar - Left to Right Visual Flow */}
+      {/* Floating Selection Bar */}
       {(selectedFormIds.size > 0 || selectedResponseIds.size > 0) && (
         <Box
           sx={{
@@ -964,12 +959,10 @@ function DeletedForms({ user }: { user: any }) {
             zIndex: 1000,
           }}
         >
-          {/* Count on Left */}
           <Typography sx={{ color: "#020618", fontWeight: 500, fontSize: "14px", mr: 4 }}>
             {activeTab === 0 ? selectedFormIds.size : selectedResponseIds.size} פריטים נבחרו
           </Typography>
 
-          {/* Buttons on Right */}
           <Stack direction="row" spacing={2} alignItems="center">
             <Button
               variant="text"
