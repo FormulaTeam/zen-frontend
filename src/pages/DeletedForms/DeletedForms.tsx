@@ -459,80 +459,84 @@ function DeletedForms({ user }: { user: any }) {
 
           {/* Right Group: Sort & Scope */}
           <Stack direction="row" spacing={2} alignItems="center">
-            <Box sx={{ width: "auto", minWidth: 200 }}>
-              <Select
-                id="trash-tab-select"
-                value={scopeParam === "responses" ? "responses" : "forms"}
-                onChange={handleDropdownChange}
-                IconComponent={() => null} 
-                renderValue={(selected) => (
-                  <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between" sx={{ width: "100%" }}>
-                    {selected === "forms" ? <FileText size={18} color="#0F172B" /> : <MessageSquare size={18} color="#0F172B" />}
-                    <Typography sx={{ fontWeight: 500, fontSize: "14px", color: "#0F172B", mx: 0.5 }}>
-                      {selected === "forms" ? "טפסים שנמחקו" : "תגובות שנמחקו"}
-                    </Typography>
-                    <ChevronDown size={18} color="#0F172B" />
-                  </Stack>
-                )}
-                sx={{
-                  width: "100%",
-                  height: "40px",
-                  borderRadius: "4px",
-                  bgcolor: "#ffffff",
-                  border: "1px solid #E2E8F0",
-                  boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
-                  "& .MuiSelect-select": {
-                    py: 1,
-                    px: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5
-                  },
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    border: "none",
-                  },
-                  "&:hover": {
-                    bgcolor: "#f8fafc",
-                    borderColor: "#cbd5e1"
-                  }
-                }}
-              >
-                <MenuItem value="forms">
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%", justifyContent: "flex-end" }}>
-                    <Typography sx={{ fontWeight: 600 }}>טפסים שנמחקו</Typography>
-                    <CheckSquare size={18} />
-                  </Stack>
-                </MenuItem>
-                <MenuItem value="responses">
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%", justifyContent: "flex-end" }}>
-                    <Typography sx={{ fontWeight: 600 }}>תגובות שנמחקו</Typography>
-                    <MessageSquare size={18} />
-                  </Stack>
-                </MenuItem>
-              </Select>
-            </Box>
-
-            <Box>
-              <Button
-                onClick={handleSortClick}
-                sx={{
-                  height: "40px",
-                  bgcolor: "#ffffff",
-                  color: "#0F172B",
-                  border: "1px solid #E2E8F0",
-                  borderRadius: "4px",
+          <Box sx={{ width: "220px" }}>
+            <Select
+              id="trash-tab-select"
+              value={scopeParam === "responses" ? "responses" : "forms"}
+              onChange={handleDropdownChange}
+              IconComponent={() => null} 
+              renderValue={(selected) => (
+                <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between" sx={{ width: "100%" }}>
+                  {selected === "forms" ? <FileText size={18} color="#0F172B" /> : <MessageSquare size={18} color="#0F172B" />}
+                  <Typography sx={{ fontWeight: 500, fontSize: "14px", color: "#0F172B", mx: 0.5 }}>
+                    {selected === "forms" ? "טפסים שנמחקו" : "תגובות שנמחקו"}
+                  </Typography>
+                  <ChevronDown size={18} color="#0F172B" />
+                </Stack>
+              )}
+              sx={{
+                width: "100%",
+                height: "40px",
+                borderRadius: "4px",
+                bgcolor: "#ffffff",
+                border: "1px solid #E2E8F0",
+                boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
+                "& .MuiSelect-select": {
+                  py: 1,
                   px: 2,
-                  gap: 1.5,
-                  fontWeight: 500,
-                  fontSize: "14px",
-                  textTransform: "none",
-                  boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
-                  "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" }
-                }}
-                endIcon={<ChevronDown size={18} />}
-              >
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5
+                },
+                "& .MuiOutlinedInput-notchedOutline": {
+                  border: "none",
+                },
+                "&:hover": {
+                  bgcolor: "#f8fafc",
+                  borderColor: "#cbd5e1"
+                }
+              }}
+            >
+              <MenuItem value="forms">
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%", justifyContent: "flex-end" }}>
+                  <Typography sx={{ fontWeight: 600 }}>טפסים שנמחקו</Typography>
+                  <CheckSquare size={18} />
+                </Stack>
+              </MenuItem>
+              <MenuItem value="responses">
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%", justifyContent: "flex-end" }}>
+                  <Typography sx={{ fontWeight: 600 }}>תגובות שנמחקו</Typography>
+                  <MessageSquare size={18} />
+                </Stack>
+              </MenuItem>
+            </Select>
+          </Box>
+
+          <Box>
+            <Button
+              onClick={handleSortClick}
+              sx={{
+                height: "40px",
+                width: "200px",
+                justifyContent: "space-between",
+                bgcolor: "#ffffff",
+                color: "#0F172B",
+                border: "1px solid #E2E8F0",
+                borderRadius: "4px",
+                px: 2,
+                gap: 1.5,
+                fontWeight: 500,
+                fontSize: "14px",
+                textTransform: "none",
+                boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
+                "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" }
+              }}
+              endIcon={<ChevronDown size={18} />}
+            >
+              <Box component="span" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {sortOptions.find(opt => opt.sortBy === sortBy && opt.direction === sortDirection)?.label || "מיין לפי"}
-              </Button>
+              </Box>
+            </Button>
               <Menu
                 anchorEl={sortAnchorEl}
                 open={isSortMenuOpen}
