@@ -1,6 +1,7 @@
 import { useQuery, UseQueryOptions, UseQueryResult, useMutation, useInfiniteQuery } from "@tanstack/react-query";
 import { CreateFormSchema, formsScopeOption } from "formula-gear";
 import { z } from "zod";
+import { IOrderBy } from "../types/enums/filtersAndSorts.enum";
 import { ComparatorsByFieldTypeDto, FormDto, FormOverviewDto } from "../types/shared";
 import { Filter, MetroReturnedData, User } from "../utils/interfaces";
 import { useCreate } from "../utils/useCreate";
@@ -89,7 +90,7 @@ export const getDeletedForms = async (filter?: Filter): Promise<FormDto[]> => {
     filters: filtersParam,
     search: searchParam,
     sortBy: sortBy,
-    orderBy: filter?.orderBy,
+    sortDirection: filter?.orderBy === IOrderBy.DESC ? "desc" : "asc",
     limit: filter?.pageSize,
     offset:
       filter?.pageNumber !== undefined && filter?.pageSize !== undefined
@@ -129,7 +130,7 @@ export const getSoftDeletedResponsesGlobal = async (filter?: Filter): Promise<Fo
   const params = {
     search: searchParam,
     sortBy: sortBy,
-    orderBy: filter?.orderBy,
+    sortDirection: filter?.orderBy === IOrderBy.DESC ? "desc" : "asc",
     limit: filter?.pageSize,
     offset: filter?.pageNumber !== undefined && filter?.pageSize !== undefined ? (filter.pageNumber - 1) * filter.pageSize : undefined,
     createdBy: filter?.createdBy,
