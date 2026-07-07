@@ -74,6 +74,10 @@ function DeletedForms({ user }: { user: any }) {
   const scopeParam = searchParams.get("scope") || "forms";
   const activeTab = scopeParam === "responses" ? 1 : 0;
 
+  // Sorting from query params
+  const sortBy = searchParams.get("sortBy") || formsSortOption.DeletedAt;
+  const sortDirection = (searchParams.get("sortDirection") as "asc" | "desc") || "desc";
+
   const [restoringFormId, setRestoringFormId] = useState<number | null>(null);
   const [restoringResponseId, setRestoringResponseId] = useState<string | null>(null);
   const [isBulkRestoring, setIsBulkRestoring] = useState(false);
@@ -108,12 +112,10 @@ function DeletedForms({ user }: { user: any }) {
     });
   };
 
-  // Filtering states
+  // Filtering states (local only, per request)
   const [searchTerm, setSearchTerm] = useState("");
   const [createdBySearch, setCreatedBySearch] = useState("");
   const [deletedBySearch, setDeletedBySearch] = useState("");
-  const [sortBy, setSortBy] = useState<string>(formsSortOption.DeletedAt);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const isSortMenuOpen = Boolean(sortAnchorEl);
@@ -127,8 +129,10 @@ function DeletedForms({ user }: { user: any }) {
   };
 
   const handleSortSelect = (newSortBy: string, newDirection: "asc" | "desc") => {
-    setSortBy(newSortBy);
-    setSortDirection(newDirection);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("sortBy", newSortBy);
+    newParams.set("sortDirection", newDirection);
+    setSearchParams(newParams, { replace: true });
     handleSortClose();
   };
 
@@ -196,7 +200,9 @@ function DeletedForms({ user }: { user: any }) {
   };
 
   const handleDropdownChange = (event: SelectChangeEvent<string>) => {
-    setSearchParams({ scope: event.target.value }, { replace: true });
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("scope", event.target.value);
+    setSearchParams(newParams, { replace: true });
     setExpandedForms({});
     setSelectedFormIds(new Set());
     setSelectedResponseIds(new Set());
@@ -571,7 +577,7 @@ function DeletedForms({ user }: { user: any }) {
           </Stack>
         </Box>
 
-        <Box className="main-page-content-wrapper" sx={{ pt: 0, flex: 1, overflowY: "auto" }} onScroll={handleScroll}>
+        <Box className="main-page-content-wrapper deleted-forms-scroll-container" sx={{ pt: 0, flex: 1, overflowY: "auto" }} onScroll={handleScroll}>
           {activeTab === 0 ? (
             deletedForms.length > 0 ? (
               <Grid container spacing={2} columns={12}>
