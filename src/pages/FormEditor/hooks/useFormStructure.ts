@@ -503,7 +503,12 @@ function applyComponentDeletionToConditions(
   return modifiedConditions;
 }
 
-function useFormStructure(editedForm?: ExtendedFormDto, initialCreateFormStructure?: FormStructure) {
+function useFormStructure(
+  editedForm?: ExtendedFormDto,
+  initialCreateFormStructure?: FormStructure,
+  draftKey?: number | string,
+  draftEnabled = true,
+) {
   const [initialFormStructure, setInitialFormStructure] = useState<FormStructure>(() =>
     editedForm ? yieldFormStructure(editedForm) : cloneDeep(initialCreateFormStructure ?? getEmptyForm()),
   );
@@ -900,10 +905,10 @@ function useFormStructure(editedForm?: ExtendedFormDto, initialCreateFormStructu
   }, [formStructure, initialFormStructure]);
 
   useEffect(() => {
-    if (checkHasChanges()) {
-      saveFormDraft(formStructure.metadata.id, formStructure);
+    if (draftEnabled && checkHasChanges()) {
+      saveFormDraft(draftKey ?? formStructure.metadata.id, formStructure);
     }
-  }, [formStructure, checkHasChanges]);
+  }, [formStructure, checkHasChanges, draftKey, draftEnabled]);
 
   return {
     formStructure,

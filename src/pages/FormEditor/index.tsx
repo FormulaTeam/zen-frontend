@@ -33,6 +33,9 @@ function FormEditor({ mode, editedForm }: Props) {
   const duplicateRouteState = mode === FORM_EDITOR_MODE.CREATE
     ? (location.state as Partial<DuplicateFormRouteState> | null)
     : null;
+  const isDuplicateCreate = !!duplicateRouteState?.duplicateSourceFormId;
+  const draftEnabled = !isDuplicateCreate;
+  const formDraftKey = editedForm?.id;
   const duplicateInitialStructure = useMemo(() => {
     if (!duplicateRouteState?.duplicateFormStructure) {
       return undefined;
@@ -42,7 +45,6 @@ function FormEditor({ mode, editedForm }: Props) {
       ...duplicateRouteState.duplicateFormStructure,
       duplicate: duplicateRouteState.duplicateFormStructure.duplicate ?? {
         sourceFormId: duplicateRouteState.duplicateSourceFormId as number,
-        copyPermissions: !!duplicateRouteState.duplicateCopyPermissions,
         selections: duplicateRouteState.duplicateSelections,
       },
     };
@@ -50,17 +52,23 @@ function FormEditor({ mode, editedForm }: Props) {
   const { setFormStructure, ...formStructure } = useFormStructure(
     editedForm,
     duplicateInitialStructure,
+    formDraftKey,
+    draftEnabled,
   );
   const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [pendingDraft, setPendingDraft] = useState<any>(null);
 
   useEffect(() => {
-    const draft = getFormDraft(editedForm?.id);
+    if (!draftEnabled) {
+      return;
+    }
+
+    const draft = getFormDraft(formDraftKey);
     if (draft) {
       setPendingDraft(draft.data);
       setShowRestoreBanner(true);
     }
-  }, [editedForm?.id]);
+  }, [draftEnabled, formDraftKey]);
 
   const handleRestore = () => {
     if (pendingDraft) {
@@ -74,7 +82,11 @@ function FormEditor({ mode, editedForm }: Props) {
   };
 
   const handleDiscardDraft = () => {
-    clearFormDraft(editedForm?.id);
+    if (!draftEnabled) {
+      return;
+    }
+
+    clearFormDraft(formDraftKey);
     setShowRestoreBanner(false);
     setPendingDraft(null);
   };
@@ -120,8 +132,9 @@ function FormEditor({ mode, editedForm }: Props) {
         value={{
           mode,
           originalFieldIds,
+          formDraftKey,
+          draftEnabled,
           duplicateSourceFormId: duplicateRouteState?.duplicateSourceFormId,
-          duplicateCopyPermissions: !!duplicateRouteState?.duplicateCopyPermissions,
         }}>
         <FormStructureContext.Provider value={{
           setFormStructure,
@@ -135,7 +148,7 @@ function FormEditor({ mode, editedForm }: Props) {
       </FormEditorContext.Provider>
 
       <DraftRecoveryBanner
-        open={showRestoreBanner}
+        open={draftEnabled && showRestoreBanner}
         onRestore={handleRestore}
         onDiscard={handleDiscardDraft}
       />

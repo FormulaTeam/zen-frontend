@@ -24,7 +24,7 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
   const navigate = useNavigate();
   const { mutateAsync: mutateCreateFormAsync } = useCreateForm();
   const { mutateAsync: mutateUpdateFormAsync } = useUpdateForm();
-  const { mode, duplicateSourceFormId, duplicateCopyPermissions } = useFormEditorContext();
+  const { mode, duplicateSourceFormId, formDraftKey, draftEnabled = true } = useFormEditorContext();
   const [isLoading, setIsLoading] = useState(false);
 
   const formStructureRef = useRef(formStructure);
@@ -54,16 +54,11 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
 
         const sourceDuplicateFormId =
           duplicateSourceFormId ?? structureToSave.duplicate?.sourceFormId;
-        const shouldCopyDuplicatePermissions =
-          duplicateCopyPermissions || !!structureToSave.duplicate?.copyPermissions;
         const duplicateSelections = structureToSave.duplicate?.selections;
 
         const payload = {
           ...convertFormStructureToCreateDto(structureToSave),
           ...(sourceDuplicateFormId ? { duplicateSourceFormId: sourceDuplicateFormId } : {}),
-          ...(sourceDuplicateFormId
-            ? { duplicateCopyPermissions: shouldCopyDuplicatePermissions }
-            : {}),
           ...(sourceDuplicateFormId && duplicateSelections
             ? { duplicateSelections }
             : {}),
@@ -72,7 +67,9 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
         if (mode === FORM_EDITOR_MODE.EDIT && structureToSave.metadata.id) {
           await mutateUpdateFormAsync({ id: structureToSave.metadata.id, payload });
           showSuccessNotification("הטופס עודכן בהצלחה!");
-          clearFormDraft(structureToSave.metadata.id);
+          if (draftEnabled) {
+            clearFormDraft(formDraftKey ?? structureToSave.metadata.id);
+          }
           queryClient.invalidateQueries({
             queryKey: [structureToSave.metadata.id.toString()],
           });
@@ -84,7 +81,9 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
           const createdForm = await mutateCreateFormAsync(payload);
 
           showSuccessNotification("הטופס נשמר בהצלחה!");
-          clearFormDraft(undefined);
+          if (draftEnabled) {
+            clearFormDraft(formDraftKey);
+          }
 
           navigate(`/forms/${createdForm.id}/responses`, { replace: true });
         }
@@ -103,7 +102,8 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
       mode,
       navigate,
       duplicateSourceFormId,
-      duplicateCopyPermissions,
+      formDraftKey,
+      draftEnabled,
     ],
   );
 
@@ -121,7 +121,9 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
   const handleDiscardAndExit = useCallback(() => {
     const formId = formStructureRef.current.metadata.id;
 
-    clearFormDraft(formId);
+    if (draftEnabled) {
+      clearFormDraft(formDraftKey ?? formId);
+    }
 
     if (mode === FORM_EDITOR_MODE.EDIT && formId) {
       navigate(`/forms/${formId}/responses`);
@@ -129,7 +131,7 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
     }
 
     navigate(IPath.HOME);
-  }, [navigate, mode]);
+  }, [navigate, mode, formDraftKey, draftEnabled]);
 
   return {
     handleSaveForm,
