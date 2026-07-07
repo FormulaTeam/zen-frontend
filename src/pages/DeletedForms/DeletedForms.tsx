@@ -20,7 +20,6 @@ import {
   Checkbox,
   Menu,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
 import {
   ArrowBack as ArrowBackIcon,
   KeyboardArrowDown as KeyboardArrowDownIcon,
@@ -53,75 +52,6 @@ import { IOrderBy, formsSortOption } from "../../types/enums/filtersAndSorts.enu
 import { Filter } from "../../utils/interfaces";
 import { useDebounce } from "../../hooks/utilsHooks/useDebounce";
 
-const StyledFormControl = styled(Box)(({ theme }) => ({
-  width: "100%",
-  maxWidth: 220,
-  position: "relative",
-}));
-
-const SearchInputWrapper = styled(Box)(({ theme }) => ({
-  position: "relative",
-  width: "220px",
-  height: "40px",
-}));
-
-const SearchInput = styled("input")(({ theme }) => ({
-  width: "100%",
-  height: "100%",
-  borderRadius: "4px",
-  border: "1px solid #E2E8F0",
-  paddingRight: "40px",
-  paddingLeft: "12px",
-  fontSize: "14px",
-  fontFamily: "Heebo, sans-serif",
-  backgroundColor: "#ffffff",
-  "&:focus": {
-    outline: "none",
-    borderColor: theme.palette.primary.main,
-  },
-  "&::placeholder": {
-    color: "#94A3B8",
-  },
-}));
-
-const InputIconWrapper = styled(Box)(({ theme }) => ({
-  position: "absolute",
-  right: "12px",
-  top: "50%",
-  transform: "translateY(-50%)",
-  color: "#94A3B8",
-  display: "flex",
-  alignItems: "center",
-  pointerEvents: "none",
-}));
-
-const EmptyStateContainer = styled(Box)(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: theme.spacing(8, 2),
-  textAlign: "center",
-  backgroundColor: "#ffffff",
-  borderRadius: "8px",
-  border: "1px dashed #E2E8F0",
-  marginTop: theme.spacing(4),
-}));
-
-const EmptyStateTitle = styled(Typography)(({ theme }) => ({
-  fontWeight: 700,
-  color: "#0F172B",
-  marginBottom: theme.spacing(1),
-  fontFamily: "Heebo",
-}));
-
-const EmptyStateSubtitle = styled(Typography)(({ theme }) => ({
-  color: "#62748E",
-  marginBottom: theme.spacing(3),
-  maxWidth: "320px",
-  fontFamily: "Heebo",
-}));
-
 type DeletedFormWithResponses = (DeletedFormOverviewDto | FormOverviewDto) & {
   responses?: any[];
 };
@@ -137,9 +67,6 @@ const sortOptions = [
 
 /**
  * Main Trash Page displaying soft-deleted forms and responses in tabs.
- *
- * Tab 1: Deleted Forms - Hierarchical view of forms and responses deleted with them.
- * Tab 2: Deleted Responses - Hierarchical view of active forms and their individually deleted responses.
  */
 function DeletedForms({ user }: { user: any }) {
   const navigate = useNavigate();
@@ -272,8 +199,8 @@ function DeletedForms({ user }: { user: any }) {
 
   const handleDropdownChange = (event: SelectChangeEvent<string>) => {
     setSearchParams({ scope: event.target.value }, { replace: true });
-    setExpandedForms({}); // Reset expansion state when switching tabs
-    setSelectedFormIds(new Set()); // Clear selections when switching tabs
+    setExpandedForms({});
+    setSelectedFormIds(new Set());
     setSelectedResponseIds(new Set());
   };
 
@@ -310,7 +237,6 @@ function DeletedForms({ user }: { user: any }) {
 
     try {
       if (activeTab === 0) {
-        // Bulk restore forms
         const ids = Array.from(selectedFormIds);
         for (const id of ids) {
           try {
@@ -327,8 +253,6 @@ function DeletedForms({ user }: { user: any }) {
           queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] });
         }
       } else {
-        // Bulk restore responses
-        // Group by formId
         const formResponseMap: Record<number, string[]> = {};
         
         activeFormsWithDeleted.forEach(form => {
@@ -381,16 +305,27 @@ function DeletedForms({ user }: { user: any }) {
   };
 
   const EmptyState = () => (
-    <EmptyStateContainer>
+    <Box sx={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 8,
+      textAlign: "center",
+      backgroundColor: "#ffffff",
+      borderRadius: "8px",
+      border: "1px dashed #E2E8F0",
+      marginTop: 4,
+    }}>
       <Box sx={{ color: "#94A3B8", mb: 2 }}>
         <SearchX size={48} strokeWidth={1.5} />
       </Box>
-      <EmptyStateTitle>
+      <Typography sx={{ fontWeight: 700, color: "#0F172B", mb: 1, fontFamily: "Heebo" }}>
         לא נמצאו פריטים תואמים
-      </EmptyStateTitle>
-      <EmptyStateSubtitle>
+      </Typography>
+      <Typography sx={{ color: "#62748E", mb: 3, maxWidth: "320px", fontFamily: "Heebo" }}>
         נסו לשנות את מילות החיפוש או לנקות את המסננים כדי לראות עוד תוצאות.
-      </EmptyStateSubtitle>
+      </Typography>
       <Button
         variant="outlined"
         onClick={clearFilters}
@@ -405,7 +340,7 @@ function DeletedForms({ user }: { user: any }) {
       >
         ניקוי מסננים
       </Button>
-    </EmptyStateContainer>
+    </Box>
   );
 
   return (
@@ -493,38 +428,77 @@ function DeletedForms({ user }: { user: any }) {
             </Select>
           </Box>
 
-          <SearchInputWrapper>
-            <InputIconWrapper>
+          {/* Form Search Input */}
+          <Box sx={{ position: "relative", width: "220px", height: "40px" }}>
+            <Box sx={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", display: "flex", alignItems: "center", pointerEvents: "none" }}>
               <Search size={18} />
-            </InputIconWrapper>
-            <SearchInput
+            </Box>
+            <input
               placeholder="חיפוש טופס"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: "4px",
+                border: "1px solid #E2E8F0",
+                paddingRight: "40px",
+                paddingLeft: "12px",
+                fontSize: "14px",
+                fontFamily: "Heebo, sans-serif",
+                backgroundColor: "#ffffff",
+                outline: "none",
+              }}
             />
-          </SearchInputWrapper>
+          </Box>
 
-          <SearchInputWrapper>
-            <InputIconWrapper>
+          {/* Created By Search Input */}
+          <Box sx={{ position: "relative", width: "220px", height: "40px" }}>
+            <Box sx={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", display: "flex", alignItems: "center", pointerEvents: "none" }}>
               <UserCircle size={18} />
-            </InputIconWrapper>
-            <SearchInput
+            </Box>
+            <input
               placeholder="נוצר ע״י"
               value={createdBySearch}
               onChange={(e) => setCreatedBySearch(e.target.value)}
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: "4px",
+                border: "1px solid #E2E8F0",
+                paddingRight: "40px",
+                paddingLeft: "12px",
+                fontSize: "14px",
+                fontFamily: "Heebo, sans-serif",
+                backgroundColor: "#ffffff",
+                outline: "none",
+              }}
             />
-          </SearchInputWrapper>
+          </Box>
 
-          <SearchInputWrapper>
-            <InputIconWrapper>
+          {/* Deleted By Search Input */}
+          <Box sx={{ position: "relative", width: "220px", height: "40px" }}>
+            <Box sx={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", display: "flex", alignItems: "center", pointerEvents: "none" }}>
               <UserCircle size={18} />
-            </InputIconWrapper>
-            <SearchInput
+            </Box>
+            <input
               placeholder="נמחק ע״י"
               value={deletedBySearch}
               onChange={(e) => setDeletedBySearch(e.target.value)}
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: "4px",
+                border: "1px solid #E2E8F0",
+                paddingRight: "40px",
+                paddingLeft: "12px",
+                fontSize: "14px",
+                fontFamily: "Heebo, sans-serif",
+                backgroundColor: "#ffffff",
+                outline: "none",
+              }}
             />
-          </SearchInputWrapper>
+          </Box>
         </Stack>
 
         <Box>
