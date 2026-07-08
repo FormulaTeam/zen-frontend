@@ -35,6 +35,11 @@ import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialo
 import ConfirmDeleteDialog from "../../components/BasePopup/ConfirmDeleteDialog";
 import { useDebounce } from "@src/hooks/utilsHooks/useDebounce";
 import { LogOut } from "lucide-react";
+import {
+  ColorFilterButton,
+  RESPONSE_COLOR_FILTER_VALUES,
+  ResponsesTableColorRuleColor,
+} from "./components/ColorFilterButton";
 
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
 const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
@@ -150,6 +155,10 @@ const ResponsesPageContent = (): JSX.Element => {
 
   const [showFilters, setShowFilters] = useState(false);
   const activeFiltersCount = filter?.responseFilters?.items?.length ?? 0;
+
+  const [selectedColorFilters, setSelectedColorFilters] = useState<ResponsesTableColorRuleColor[]>(
+    RESPONSE_COLOR_FILTER_VALUES,
+  );
 
   useEffect(() => {
     if (activeFiltersCount > 0) {
@@ -466,7 +475,14 @@ const ResponsesPageContent = (): JSX.Element => {
               <Header />
             </Box>
 
-            <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end", gap: "8px", alignItems: "center" }}>
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "8px",
+                alignItems: "center",
+              }}>
               <FormActionsToolbar />
               <Tooltip title="יציאה">
                 <IconOnlyButton
@@ -575,6 +591,14 @@ const ResponsesPageContent = (): JSX.Element => {
                   </Box>
                 )}
               </Box>
+
+              <ToolbarDivider />
+
+              <ColorFilterButton
+                selectedColors={selectedColorFilters}
+                onChange={setSelectedColorFilters}
+                disabled={isInEditMode}
+              />
 
               <ToolbarDivider />
 
