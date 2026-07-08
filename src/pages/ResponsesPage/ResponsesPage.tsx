@@ -35,11 +35,7 @@ import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialo
 import ConfirmDeleteDialog from "../../components/BasePopup/ConfirmDeleteDialog";
 import { useDebounce } from "@src/hooks/utilsHooks/useDebounce";
 import { LogOut } from "lucide-react";
-import {
-  ColorFilterButton,
-  RESPONSE_COLOR_FILTER_VALUES,
-  ResponsesTableColorRuleColor,
-} from "./components/ColorFilterButton";
+import { ColorFilterButton, type ColorRuleFilterOption } from "./components/ColorFilterButton";
 
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
 const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
@@ -156,8 +152,24 @@ const ResponsesPageContent = (): JSX.Element => {
   const [showFilters, setShowFilters] = useState(false);
   const activeFiltersCount = filter?.responseFilters?.items?.length ?? 0;
 
-  const [selectedColorFilters, setSelectedColorFilters] = useState<ResponsesTableColorRuleColor[]>(
-    RESPONSE_COLOR_FILTER_VALUES,
+  const colorRuleFilterOptions = useMemo<ColorRuleFilterOption[]>(
+    () => [
+      {
+        id: "f5c0d8a2-6f58-4f2d-9d0a-4d5f7b1c8a11",
+        label: "אפשרויות שווה ערך ראשון",
+        color: "red",
+      },
+      {
+        id: "8a5db1f9-0d6a-4f43-8c77-4e9a6c1b2f22",
+        label: "אפשרויות שווה ערך שני",
+        color: "blue",
+      },
+    ],
+    [],
+  );
+
+  const [selectedColorRuleIds, setSelectedColorRuleIds] = useState<string[]>(() =>
+    colorRuleFilterOptions.map((rule) => rule.id),
   );
 
   useEffect(() => {
@@ -595,8 +607,9 @@ const ResponsesPageContent = (): JSX.Element => {
               <ToolbarDivider />
 
               <ColorFilterButton
-                selectedColors={selectedColorFilters}
-                onChange={setSelectedColorFilters}
+                rules={colorRuleFilterOptions}
+                selectedRuleIds={selectedColorRuleIds}
+                onChange={setSelectedColorRuleIds}
                 disabled={isInEditMode}
               />
 

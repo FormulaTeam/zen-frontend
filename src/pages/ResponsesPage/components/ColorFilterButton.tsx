@@ -8,6 +8,9 @@ import { UnifiedButton } from "../styled";
 
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
 const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
+const COLOR_FILTER_BUTTON_WIDTH = 320;
+const COLOR_FILTER_POPOVER_WIDTH = 320;
+const COLOR_FILTER_RULE_FONT_SIZE = 9;
 
 export type ResponsesTableColorRuleColor =
   | "red"
@@ -19,68 +22,72 @@ export type ResponsesTableColorRuleColor =
   | "green"
   | "lightGreen";
 
-type ColorFilterOption = {
-  value: ResponsesTableColorRuleColor;
+export type ColorRuleFilterOption = {
+  id: string;
   label: string;
-  color: string;
+  color: ResponsesTableColorRuleColor;
 };
 
-export const RESPONSE_COLOR_FILTER_OPTIONS: ColorFilterOption[] = [
-  { value: "red", label: "אדום", color: "#F7CACA" },
-  { value: "lightRed", label: "אדום בהיר", color: "#FFE3E3" },
-  { value: "orange", label: "כתום", color: "#FFD9A8" },
-  { value: "lightOrange", label: "כתום בהיר", color: "#FFEBCB" },
-  { value: "blue", label: "כחול", color: "#A8D6F8" },
-  { value: "lightBlue", label: "כחול בהיר", color: "#D9EEFF" },
-  { value: "green", label: "ירוק", color: "#B8F3CB" },
-  { value: "lightGreen", label: "ירוק בהיר", color: "#DCFCE7" },
-];
-
-export const RESPONSE_COLOR_FILTER_VALUES: ResponsesTableColorRuleColor[] =
-  RESPONSE_COLOR_FILTER_OPTIONS.map((option) => option.value);
+const COLOR_HEX_BY_RULE_COLOR: Record<ResponsesTableColorRuleColor, string> = {
+  red: "#F7CACA",
+  lightRed: "#FFE3E3",
+  orange: "#FFD9A8",
+  lightOrange: "#FFEBCB",
+  blue: "#A8D6F8",
+  lightBlue: "#D9EEFF",
+  green: "#B8F3CB",
+  lightGreen: "#DCFCE7",
+};
 
 interface ColorFilterButtonProps {
-  selectedColors: ResponsesTableColorRuleColor[];
-  onChange: (colors: ResponsesTableColorRuleColor[]) => void;
+  rules: ColorRuleFilterOption[];
+  selectedRuleIds: string[];
+  onChange: (ruleIds: string[]) => void;
   disabled?: boolean;
 }
 
 export function ColorFilterButton({
-  selectedColors,
+  rules,
+  selectedRuleIds,
   onChange,
   disabled = false,
 }: ColorFilterButtonProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
   const open = Boolean(anchorEl);
+  const allRuleIds = useMemo(() => rules.map((rule) => rule.id), [rules]);
 
-  const selectedColorSet = useMemo(() => new Set(selectedColors), [selectedColors]);
+  const selectedRuleIdSet = useMemo(() => new Set(selectedRuleIds), [selectedRuleIds]);
 
-  const isAllSelected = selectedColors.length === RESPONSE_COLOR_FILTER_VALUES.length;
+  const hasRules = rules.length > 0;
+  const isAllSelected = hasRules && selectedRuleIds.length === rules.length;
 
-  const isPartiallySelected =
-    selectedColors.length > 0 && selectedColors.length < RESPONSE_COLOR_FILTER_VALUES.length;
+  const isPartiallySelected = selectedRuleIds.length > 0 && selectedRuleIds.length < rules.length;
+
+  const isDisabled = disabled || !hasRules;
 
   const buttonLabel = useMemo(() => {
+    if (!hasRules) {
+      return "אין חוקי צבע";
+    }
+
     if (isAllSelected) {
-      return "כל הצבעים";
+      return "כל חוקי הצבעים";
     }
 
-    if (selectedColors.length === 0) {
-      return "לא נבחר צבע";
+    if (selectedRuleIds.length === 0) {
+      return "לא נבחרו חוקים";
     }
 
-    if (selectedColors.length === 1) {
-      return (
-        RESPONSE_COLOR_FILTER_OPTIONS.find((option) => option.value === selectedColors[0])?.label ??
-        "צבע אחד"
-      );
+    if (selectedRuleIds.length === 1) {
+      return rules.find((rule) => rule.id === selectedRuleIds[0])?.label ?? "חוק אחד";
     }
 
-    return `${selectedColors.length} צבעים`;
-  }, [isAllSelected, selectedColors]);
+    return `${selectedRuleIds.length} חוקים`;
+  }, [hasRules, isAllSelected, selectedRuleIds, rules]);
 
   const handleOpen = (event: MouseEvent<HTMLElement>) => {
+    if (isDisabled) return;
     setAnchorEl(event.currentTarget);
   };
 
@@ -89,35 +96,35 @@ export function ColorFilterButton({
   };
 
   const handleToggleAll = () => {
-    onChange(isAllSelected ? [] : RESPONSE_COLOR_FILTER_VALUES);
+    onChange(isAllSelected ? [] : allRuleIds);
   };
 
-  const handleToggleColor = (color: ResponsesTableColorRuleColor) => {
-    const nextSelectedColorSet = new Set(selectedColors);
+  const handleToggleRule = (ruleId: string) => {
+    const nextSelectedRuleIdSet = new Set(selectedRuleIds);
 
-    if (nextSelectedColorSet.has(color)) {
-      nextSelectedColorSet.delete(color);
+    if (nextSelectedRuleIdSet.has(ruleId)) {
+      nextSelectedRuleIdSet.delete(ruleId);
     } else {
-      nextSelectedColorSet.add(color);
+      nextSelectedRuleIdSet.add(ruleId);
     }
 
-    onChange(RESPONSE_COLOR_FILTER_VALUES.filter((value) => nextSelectedColorSet.has(value)));
+    onChange(allRuleIds.filter((id) => nextSelectedRuleIdSet.has(id)));
   };
 
   return (
     <Box sx={{ position: "relative", flexShrink: 0, overflow: "visible" }}>
-      <Tooltip title="סינון לפי צבע" arrow>
+      <Tooltip title={hasRules ? "סינון לפי חוקי צבע" : "אין חוקי צבע פעילים"} arrow>
         <span>
           <UnifiedButton
-            aria-label="סינון לפי צבע"
+            aria-label="סינון לפי חוקי צבע"
             aria-haspopup="menu"
             aria-expanded={open}
             onClick={handleOpen}
-            disabled={disabled}
+            disabled={isDisabled}
             sx={{
-              width: "220px",
-              minWidth: "220px",
-              maxWidth: "220px",
+              width: `${COLOR_FILTER_BUTTON_WIDTH}px`,
+              minWidth: `${COLOR_FILTER_BUTTON_WIDTH}px`,
+              maxWidth: `${COLOR_FILTER_BUTTON_WIDTH}px`,
               height: "40px",
               px: 1.25,
               gap: 0.6,
@@ -206,7 +213,7 @@ export function ColorFilterButton({
         <Box
           dir="rtl"
           sx={{
-            width: 220,
+            width: COLOR_FILTER_POPOVER_WIDTH,
             backgroundColor: "#fff",
             py: 0.5,
           }}>
@@ -229,7 +236,7 @@ export function ColorFilterButton({
             <Typography
               sx={{
                 flex: 1,
-                fontSize: 10,
+                fontSize: COLOR_FILTER_RULE_FONT_SIZE,
                 fontWeight: 500,
                 color: "#111827",
                 lineHeight: 1.2,
@@ -237,18 +244,18 @@ export function ColorFilterButton({
                 overflow: "hidden",
                 textOverflow: "ellipsis",
               }}>
-              תצוגת צבעים הכל
+              כל חוקי הצבע
             </Typography>
           </Box>
 
           <Box sx={{ py: 0.5 }}>
-            {RESPONSE_COLOR_FILTER_OPTIONS.map((option) => (
-              <ColorFilterRow
-                key={option.value}
-                label={option.label}
-                checked={selectedColorSet.has(option.value)}
-                color={option.color}
-                onClick={() => handleToggleColor(option.value)}
+            {rules.map((rule) => (
+              <ColorRuleFilterRow
+                key={rule.id}
+                label={rule.label}
+                checked={selectedRuleIdSet.has(rule.id)}
+                color={COLOR_HEX_BY_RULE_COLOR[rule.color]}
+                onClick={() => handleToggleRule(rule.id)}
               />
             ))}
           </Box>
@@ -258,14 +265,14 @@ export function ColorFilterButton({
   );
 }
 
-interface ColorFilterRowProps {
+interface ColorRuleFilterRowProps {
   label: string;
   checked: boolean;
   color: string;
   onClick: () => void;
 }
 
-function ColorFilterRow({ label, checked, color, onClick }: ColorFilterRowProps) {
+function ColorRuleFilterRow({ label, checked, color, onClick }: ColorRuleFilterRowProps) {
   return (
     <Box
       component="button"
@@ -292,9 +299,10 @@ function ColorFilterRow({ label, checked, color, onClick }: ColorFilterRowProps)
       <ColorCircle checked={checked} color={color} />
 
       <Typography
+        title={label}
         sx={{
           flex: 1,
-          fontSize: 10,
+          fontSize: COLOR_FILTER_RULE_FONT_SIZE,
           fontWeight: 500,
           color: "#111827",
           lineHeight: 1.2,
