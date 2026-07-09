@@ -1,13 +1,5 @@
 import React from "react";
-import {
-  Box,
-  Card,
-  Typography,
-  Tooltip,
-  IconButton,
-  Collapse,
-  Stack,
-} from "@mui/material";
+import { Box, Card, Typography, Tooltip, IconButton, Collapse, Stack } from "@mui/material";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { DeletedFormWithResponses } from "../types";
 import DeletedResponseRow from "./DeletedResponseRow";
@@ -44,8 +36,7 @@ const ActiveFormWithDeletedResponsesCard: React.FC<ActiveFormWithDeletedResponse
         borderRadius: "4px",
         boxShadow: "none",
         bgcolor: "#ffffff",
-      }}
-    >
+      }}>
       <Box
         sx={{
           py: 2,
@@ -56,8 +47,7 @@ const ActiveFormWithDeletedResponsesCard: React.FC<ActiveFormWithDeletedResponse
           alignItems: "center",
           cursor: "pointer",
         }}
-        onClick={() => onToggleExpand(form.id)}
-      >
+        onClick={() => onToggleExpand(form.id)}>
         <IconButton
           sx={{
             width: "32px",
@@ -68,12 +58,18 @@ const ActiveFormWithDeletedResponsesCard: React.FC<ActiveFormWithDeletedResponse
             color: "#0F172B",
             boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
             "&:hover": { bgcolor: "#f8fafc" },
-          }}
-        >
+          }}>
           {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </IconButton>
 
-        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: 2,
+          }}>
           {/* Layout Mandate: textAlign right for name and response count */}
           <Typography
             variant="h6"
@@ -86,19 +82,29 @@ const ActiveFormWithDeletedResponsesCard: React.FC<ActiveFormWithDeletedResponse
               alignItems: "center",
               justifyContent: "flex-end",
               gap: 1.5,
-            }}
-          >
-            <Typography component="span" sx={{ fontSize: "18px", color: "#62748E", fontWeight: 400 }}>
-              {responsesCount} תגובות
+            }}>
+            <Typography
+              component="span"
+              sx={{
+                fontSize: "18px",
+                color: "#62748E",
+                fontWeight: 400,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.5,
+              }}>
+              <span>תגובות</span>
+              <span dir="ltr">{responsesCount}</span>
             </Typography>
-            <Typography component="span" sx={{ fontSize: "18px", color: "#020618", fontWeight: 400 }}>
-              →
+            <Typography
+              component="span"
+              sx={{ fontSize: "18px", color: "#020618", fontWeight: 400 }}>
+              ←
             </Typography>
             <Tooltip title="מזהה הטופס" arrow placement="top">
               <Typography
                 component="span"
-                sx={{ fontSize: "16px", color: "#020618", fontWeight: 400, cursor: "help" }}
-              >
+                sx={{ fontSize: "16px", color: "#020618", fontWeight: 400, cursor: "help" }}>
                 {form.id}
               </Typography>
             </Tooltip>
@@ -117,8 +123,7 @@ const ActiveFormWithDeletedResponsesCard: React.FC<ActiveFormWithDeletedResponse
               justifyContent: "center",
               "& img": { width: "20px", height: "20px" },
               "& .MuiSvgIcon-root": { fontSize: "20px" },
-            }}
-          >
+            }}>
             {getIconContent(form.icon)}
           </Box>
         </Box>
@@ -138,7 +143,9 @@ const ActiveFormWithDeletedResponsesCard: React.FC<ActiveFormWithDeletedResponse
               ))}
             </Stack>
           ) : (
-            <Typography variant="body2" sx={{ textAlign: "center", py: 2, color: "text.secondary" }}>
+            <Typography
+              variant="body2"
+              sx={{ textAlign: "center", py: 2, color: "text.secondary" }}>
               אין תגובות שנמחקו
             </Typography>
           )}

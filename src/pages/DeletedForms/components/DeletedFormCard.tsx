@@ -41,7 +41,11 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({
   const deletedDateObj = form.deletedAt ? new Date(form.deletedAt) : null;
   const formattedDate = deletedDateObj ? deletedDateObj.toLocaleDateString("he-IL") : "N/A";
   const formattedTime = deletedDateObj
-    ? deletedDateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    ? deletedDateObj.toLocaleTimeString("he-IL", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
     : "";
   const responsesCount = (form as any).responsesCount ?? 0;
 
@@ -53,8 +57,7 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({
         borderRadius: "4px",
         boxShadow: "none",
         bgcolor: "#ffffff",
-      }}
-    >
+      }}>
       <Box
         sx={{
           display: "flex",
@@ -62,42 +65,14 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({
           justifyContent: "space-between",
           alignItems: "center",
           gap: 2,
-        }}
-      >
-        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexShrink: 0 }}>
-          {responsesCount > 0 && (
-            <Button
-              onClick={() => onToggleExpand(form.id)}
-              startIcon={isExpanded ? <EyeOff size={16} /> : <Eye size={16} />}
-              sx={{
-                bgcolor: "#ffffff",
-                color: "#0F172B",
-                border: "1px solid #E2E8F0",
-                borderRadius: "4px",
-                fontWeight: 500,
-                fontSize: "14px",
-                height: "32px",
-                px: 1.5,
-                boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
-                textTransform: "none",
-                gap: 1,
-                "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" },
-              }}
-            >
-              {isExpanded ? `הסתרת תגובות (${responsesCount})` : `הצגת תגובות (${responsesCount})`}
-            </Button>
-          )}
-
+        }}>
+        <Stack direction="row" gap={2} alignItems="center">
           <Button
             disabled={isRestoring}
             onClick={() => onRestore(form.id)}
             variant="contained"
-            startIcon={
-              isRestoring ? (
-                <CircularProgress size={14} color="inherit" />
-              ) : (
-                <RotateCcw size={16} />
-              )
+            endIcon={
+              isRestoring ? <CircularProgress size={14} color="inherit" /> : <RotateCcw size={16} />
             }
             sx={{
               backgroundColor: theme.palette.primary.main,
@@ -111,27 +86,54 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({
               flexShrink: 0,
               gap: 1,
               "&:hover": { backgroundColor: theme.palette.primary.dark, boxShadow: "none" },
-            }}
-          >
+            }}>
             שחזור טופס
           </Button>
+
+          {responsesCount > 0 && (
+            <Button
+              onClick={() => onToggleExpand(form.id)}
+              endIcon={isExpanded ? <EyeOff size={16} /> : <Eye size={16} />}
+              sx={{
+                bgcolor: "#ffffff",
+                color: "#0F172B",
+                border: "1px solid #E2E8F0",
+                borderRadius: "4px",
+                fontWeight: 500,
+                fontSize: "14px",
+                height: "32px",
+                px: 1.5,
+                boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
+                textTransform: "none",
+                gap: 1,
+                "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" },
+              }}>
+              {isExpanded ? `הסתרת תגובות (${responsesCount})` : `הצגת תגובות (${responsesCount})`}
+            </Button>
+          )}
         </Stack>
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, flex: 1 }}>
-          <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, justifyContent: "flex-end" }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 2,
+            }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, justifyContent: "flex-end" }}>
               <Tooltip title="מזהה הטופס" arrow placement="top">
                 <Typography
                   component="span"
-                  sx={{ fontSize: "14px", color: "#62748E", fontWeight: 500, cursor: "help" }}
-                >
+                  sx={{ fontSize: "14px", color: "#62748E", fontWeight: 500, cursor: "help" }}>
                   {form.id}
                 </Typography>
               </Tooltip>
               <Typography
                 variant="h6"
-                sx={{ fontWeight: 600, fontSize: "20px", color: "#020618", textAlign: "right" }}
-              >
+                sx={{ fontWeight: 600, fontSize: "20px", color: "#020618", textAlign: "right" }}>
                 {form.name}
               </Typography>
               <Box
@@ -147,8 +149,7 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({
                   flexShrink: 0,
                   "& img": { width: "18px", height: "18px" },
                   "& .MuiSvgIcon-root": { fontSize: "18px" },
-                }}
-              >
+                }}>
                 {getIconContent(form.icon)}
               </Box>
             </Box>
@@ -169,8 +170,9 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({
             />
           </Box>
 
-          <Box sx={{ textAlign: "right", pr: 4.5 }}>
+          <Box sx={{ textAlign: "left", pl: 4 }}>
             <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px", mb: 0.2 }}>
+              נוצר על ידי:{" "}
               <Tooltip title={form.createdBy?.upn || "לא ידוע"} arrow placement="top">
                 <Box
                   component="span"
@@ -179,14 +181,13 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({
                     textDecoration: "underline",
                     textDecorationStyle: "dotted",
                     textDecorationColor: "#cbd5e1",
-                  }}
-                >
+                  }}>
                   {form.createdBy?.name || "משתמש בזן"}
                 </Box>
               </Tooltip>
-              :נוצר על ידי
             </Typography>
             <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px" }}>
+              נמחק בתאריך {formattedDate} בשעה {formattedTime} על ידי{" "}
               <Tooltip title={(form as any).deletedBy?.upn || "לא ידוע"} arrow placement="top">
                 <Box
                   component="span"
@@ -195,12 +196,10 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({
                     textDecoration: "underline",
                     textDecorationStyle: "dotted",
                     textDecorationColor: "#cbd5e1",
-                  }}
-                >
+                  }}>
                   {(form as any).deletedBy?.name || "משתמש בזן"}
                 </Box>
               </Tooltip>
-              {" "}על ידי {formattedTime} בשעה {formattedDate} נמחק בתאריך
             </Typography>
           </Box>
         </Box>
