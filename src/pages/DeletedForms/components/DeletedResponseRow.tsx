@@ -94,7 +94,7 @@ const DeletedResponseRow: React.FC<DeletedResponseRowProps> = ({
                 color: "#62748E",
                 textAlign: "right",
               }}>
-              יצירה בתאריך {fCreatedDate} בשעה {fCreatedTime} על ידי{" "}
+              נוצר בתאריך {fCreatedDate} בשעה {fCreatedTime} על ידי{" "}
               <Tooltip title={response.createdBy?.upn || "לא ידוע"} arrow placement="top">
                 <Box
                   component="span"
