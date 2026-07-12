@@ -231,18 +231,14 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
           </Button>
         )}
 
-        <Box sx={{ width: "240px" }}>
+        <Box sx={{ width: "200px" }}>
           <Select
             id="trash-tab-select"
             value={scopeParam === "responses" ? "responses" : "forms"}
             onChange={handleDropdownChange}
             IconComponent={() => null}
             renderValue={(selected) => (
-              <Stack
-                direction="row"
-                spacing={1}
-                alignItems="center"
-                sx={{ width: "100%", direction: "ltr" }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
                 {selected === "forms" ? (
                   <FileText size={18} color="#0F172B" />
                 ) : (
@@ -333,7 +329,7 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
             onClick={handleSortClick}
             sx={{
               height: "36px",
-              width: "210px",
+              width: "265px",
               justifyContent: "flex-start",
               bgcolor: "#ffffff",
               color: "#0F172B",
