@@ -191,11 +191,12 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
               )
             }
             sx={{
-              width: 200,
+              width: 210,
               height: 36,
               bgcolor: "#fff",
               borderColor: "#E2E8F0",
               textTransform: "none",
+              gap: 1.5,
               ...controlTextSx,
             }}>
             טפסים עם תגובות
