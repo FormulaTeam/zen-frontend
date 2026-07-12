@@ -38,6 +38,66 @@ interface DeletedFormsToolbarProps {
   onToggleHasResponses: () => void;
 }
 
+const controlTextSx = {
+  fontSize: 14,
+  fontWeight: 500,
+  fontFamily: "Heebo, sans-serif",
+  color: "#0F172B",
+};
+
+const ToolbarInput = ({
+  icon,
+  placeholder,
+  value,
+  onChange,
+}: {
+  icon: React.ReactNode;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+}) => (
+  <Box
+    sx={{
+      position: "relative",
+      width: 210,
+      height: 36,
+    }}>
+    <Box
+      sx={{
+        position: "absolute",
+        left: 10,
+        top: "50%",
+        transform: "translateY(-50%)",
+        color: "#94A3B8",
+        display: "flex",
+        pointerEvents: "none",
+      }}>
+      {icon}
+    </Box>
+
+    <input
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      style={{
+        width: "100%",
+        height: "100%",
+        boxSizing: "border-box",
+        borderRadius: 4,
+        border: "1px solid #E2E8F0",
+        paddingRight: 38,
+        paddingLeft: 12,
+        fontSize: 17,
+        fontWeight: 500,
+        fontFamily: "Heebo, sans-serif",
+        backgroundColor: "#fff",
+        outline: "none",
+        direction: "rtl",
+      }}
+    />
+  </Box>
+);
+
 const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
   activeTab,
   scopeParam,
@@ -55,25 +115,34 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
   onToggleHasResponses,
 }) => {
   const theme = useTheme();
-  const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
-  const isSortMenuOpen = Boolean(sortAnchorEl);
 
-  const handleSortClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setSortAnchorEl(event.currentTarget);
+  const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
+
+  const handleScopeChange = (event: SelectChangeEvent<string>) => {
+    onScopeChange(event.target.value);
   };
 
-  const handleSortClose = () => {
+  const handleSortSelect = (newSortBy: string, direction: "asc" | "desc") => {
+    onSortChange(newSortBy, direction);
     setSortAnchorEl(null);
   };
 
-  const handleSortSelect = (newSortBy: string, newDirection: "asc" | "desc") => {
-    onSortChange(newSortBy, newDirection);
-    handleSortClose();
-  };
+  const renderScopeOption = (value: "forms" | "responses", showChevron = false) => (
+    <Stack direction="row" alignItems="center" sx={{ width: "100%" }}>
+      {value === "forms" ? <FileText size={18} /> : <MessageSquare size={18} />}
 
-  const handleDropdownChange = (event: SelectChangeEvent<string>) => {
-    onScopeChange(event.target.value);
-  };
+      <Typography
+        sx={{
+          ...controlTextSx,
+          ml: 1,
+          flex: 1,
+        }}>
+        {value === "forms" ? "טפסים שנמחקו" : "תגובות שנמחקו"}
+      </Typography>
+
+      {showChevron && <ChevronDown size={18} />}
+    </Stack>
+  );
 
   return (
     <Box
@@ -86,115 +155,29 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
         flexWrap: "wrap",
         gap: 2,
       }}>
-      {/* Left Group: Search Inputs */}
-      <Stack direction="row" spacing={1} alignItems="center">
-        <Box sx={{ position: "relative", width: "210px", height: "36px" }}>
-          <Box
-            sx={{
-              position: "absolute",
-              left: "10px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#94A3B8",
-              display: "flex",
-              alignItems: "center",
-              pointerEvents: "none",
-            }}>
-            <Search size={18} />
-          </Box>
-          <input
-            placeholder="חיפוש טופס"
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            style={{
-              width: "100%",
-              height: "100%",
-              borderRadius: "4px",
-              border: "1px solid #E2E8F0",
-              paddingLeft: "34px",
-              paddingRight: "10px",
-              fontSize: "10px",
-              fontWeight: 500,
-              fontFamily: "Heebo, sans-serif",
-              backgroundColor: "#ffffff",
-              outline: "none",
-              textAlign: "left",
-            }}
-          />
-        </Box>
+      <Stack direction="row" spacing={1}>
+        <ToolbarInput
+          icon={<Search size={18} />}
+          placeholder="חיפוש טופס"
+          value={searchTerm}
+          onChange={onSearchChange}
+        />
 
-        <Box sx={{ position: "relative", width: "210px", height: "36px" }}>
-          <Box
-            sx={{
-              position: "absolute",
-              left: "10px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#94A3B8",
-              display: "flex",
-              alignItems: "center",
-              pointerEvents: "none",
-            }}>
-            <UserCircle size={18} />
-          </Box>
-          <input
-            placeholder="נוצר ע״י"
-            value={createdBySearch}
-            onChange={(e) => onCreatedByChange(e.target.value)}
-            style={{
-              width: "100%",
-              height: "100%",
-              borderRadius: "4px",
-              border: "1px solid #E2E8F0",
-              paddingLeft: "34px",
-              paddingRight: "10px",
-              fontSize: "10px",
-              fontWeight: 500,
-              fontFamily: "Heebo, sans-serif",
-              backgroundColor: "#ffffff",
-              outline: "none",
-              textAlign: "left",
-            }}
-          />
-        </Box>
+        <ToolbarInput
+          icon={<UserCircle size={18} />}
+          placeholder="נוצר ע״י"
+          value={createdBySearch}
+          onChange={onCreatedByChange}
+        />
 
-        <Box sx={{ position: "relative", width: "210px", height: "36px" }}>
-          <Box
-            sx={{
-              position: "absolute",
-              left: "10px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#94A3B8",
-              display: "flex",
-              alignItems: "center",
-              pointerEvents: "none",
-            }}>
-            <UserCircle size={18} />
-          </Box>
-          <input
-            placeholder="נמחק ע״י"
-            value={deletedBySearch}
-            onChange={(e) => onDeletedByChange(e.target.value)}
-            style={{
-              width: "100%",
-              height: "100%",
-              borderRadius: "4px",
-              border: "1px solid #E2E8F0",
-              paddingLeft: "34px",
-              paddingRight: "10px",
-              fontSize: "10px",
-              fontWeight: 500,
-              fontFamily: "Heebo, sans-serif",
-              backgroundColor: "#ffffff",
-              outline: "none",
-              textAlign: "left",
-            }}
-          />
-        </Box>
+        <ToolbarInput
+          icon={<UserCircle size={18} />}
+          placeholder="נמחק ע״י"
+          value={deletedBySearch}
+          onChange={onDeletedByChange}
+        />
       </Stack>
 
-      {/* Right Group: Sort & Scope */}
       <Stack direction="row" spacing={1} alignItems="center">
         {activeTab === 0 && (
           <Button
@@ -208,191 +191,67 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
               )
             }
             sx={{
-              height: "36px",
-              bgcolor: "#ffffff",
-              color: "#0F172B",
-              border: "1px solid #E2E8F0",
-              borderRadius: "4px",
+              width: 200,
+              height: 36,
+              bgcolor: "#fff",
+              borderColor: "#E2E8F0",
               textTransform: "none",
-              boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
-              gap: 1,
-              direction: "ltr",
-              "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" },
+              ...controlTextSx,
             }}>
-            <Typography
-              sx={{
-                fontWeight: 500,
-                fontSize: "10px",
-                fontFamily: "Heebo, sans-serif",
-                color: "#0F172B",
-              }}>
-              טפסים עם תגובות
-            </Typography>
+            טפסים עם תגובות
           </Button>
         )}
 
-        <Box sx={{ width: "200px" }}>
+        <Box sx={{ width: 235 }}>
           <Select
-            id="trash-tab-select"
             value={scopeParam === "responses" ? "responses" : "forms"}
-            onChange={handleDropdownChange}
+            onChange={handleScopeChange}
             IconComponent={() => null}
-            renderValue={(selected) => (
-              <Stack direction="row" alignItems="center" justifyContent="space-between">
-                {selected === "forms" ? (
-                  <FileText size={18} color="#0F172B" />
-                ) : (
-                  <MessageSquare size={18} color="#0F172B" />
-                )}
-                <Typography
-                  sx={{
-                    fontWeight: 500,
-                    fontSize: "10px",
-                    fontFamily: "Heebo, sans-serif",
-                    color: "#0F172B",
-                    flex: 1,
-                    textAlign: "left",
-                    ml: 0.5,
-                  }}>
-                  {selected === "forms" ? "טפסים שנמחקו" : "תגובות שנמחקו"}
-                </Typography>
-                <ChevronDown size={18} color="#0F172B" />
-              </Stack>
-            )}
+            renderValue={(value) => renderScopeOption(value as "forms" | "responses", true)}
             sx={{
               width: "100%",
-              height: "36px",
-              borderRadius: "4px",
-              bgcolor: "#ffffff",
+              height: 36,
+              bgcolor: "#fff",
               border: "1px solid #E2E8F0",
-              boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
-              "& .MuiSelect-select": {
-                py: 0.5,
-                px: 1.5,
-                display: "flex",
-                alignItems: "center",
-              },
+              borderRadius: 1,
               "& .MuiOutlinedInput-notchedOutline": {
                 border: "none",
               },
-              "&:hover": {
-                bgcolor: "#f8fafc",
-                borderColor: "#cbd5e1",
-              },
             }}>
-            {/* Figma-inspired Inverted Order: Responses on top */}
-            <MenuItem value="responses" sx={{ minHeight: "32px", py: 0.5 }}>
-              <Stack
-                direction="row"
-                spacing={1}
-                alignItems="center"
-                sx={{ width: "100%", direction: "ltr" }}>
-                <MessageSquare size={18} color="#0F172B" />
-                <Typography
-                  sx={{
-                    fontWeight: 500,
-                    fontSize: "10px",
-                    fontFamily: "Heebo, sans-serif",
-                    flex: 1,
-                    textAlign: "left",
-                    ml: 1,
-                  }}>
-                  תגובות שנמחקו
-                </Typography>
-              </Stack>
-            </MenuItem>
-            <MenuItem value="forms" sx={{ minHeight: "32px", py: 0.5 }}>
-              <Stack
-                direction="row"
-                spacing={1}
-                alignItems="center"
-                sx={{ width: "100%", direction: "ltr" }}>
-                <FileText size={18} color="#0F172B" />
-                <Typography
-                  sx={{
-                    fontWeight: 500,
-                    fontSize: "10px",
-                    fontFamily: "Heebo, sans-serif",
-                    flex: 1,
-                    textAlign: "left",
-                    ml: 1,
-                  }}>
-                  טפסים שנמחקו
-                </Typography>
-              </Stack>
-            </MenuItem>
+            <MenuItem value="responses">{renderScopeOption("responses")}</MenuItem>
+
+            <MenuItem value="forms">{renderScopeOption("forms")}</MenuItem>
           </Select>
         </Box>
 
         <Box>
           <Button
-            onClick={handleSortClick}
+            onClick={(event) => setSortAnchorEl(event.currentTarget)}
+            endIcon={<ChevronDown size={18} />}
             sx={{
-              height: "36px",
-              width: "265px",
-              justifyContent: "flex-start",
-              bgcolor: "#ffffff",
-              color: "#0F172B",
+              width: 220,
+              height: 36,
+              justifyContent: "space-between",
+              bgcolor: "#fff",
               border: "1px solid #E2E8F0",
-              borderRadius: "4px",
-              px: 1.5,
-              gap: 1,
+              borderRadius: 1,
               textTransform: "none",
-              boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
-              direction: "ltr",
-              "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" },
-            }}
-            endIcon={<ChevronDown size={18} />}>
-            <Typography
-              sx={{
-                fontWeight: 500,
-                fontSize: "10px",
-                fontFamily: "Heebo, sans-serif",
-                color: "#0F172B",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                flex: 1,
-                textAlign: "left",
-              }}>
-              {sortOptions.find((opt) => opt.sortBy === sortBy && opt.direction === sortDirection)
-                ?.label || "מיין לפי"}
-            </Typography>
+              ...controlTextSx,
+            }}>
+            {sortOptions.find(
+              (option) => option.sortBy === sortBy && option.direction === sortDirection,
+            )?.label ?? "מיין לפי"}
           </Button>
+
           <Menu
             anchorEl={sortAnchorEl}
-            open={isSortMenuOpen}
-            onClose={handleSortClose}
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "left",
-            }}
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "left",
-            }}
-            sx={{
-              "& .MuiPaper-root": {
-                mt: 1,
-                minWidth: 180,
-                boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.08)",
-                border: "1px solid #E2E8F0",
-              },
-            }}>
+            open={Boolean(sortAnchorEl)}
+            onClose={() => setSortAnchorEl(null)}>
             {sortOptions.map((option) => (
               <MenuItem
                 key={`${option.sortBy}-${option.direction}`}
                 onClick={() => handleSortSelect(option.sortBy, option.direction as "asc" | "desc")}
-                selected={sortBy === option.sortBy && sortDirection === option.direction}
-                sx={{
-                  fontSize: "14px",
-                  fontFamily: "Heebo",
-                  justifyContent: "flex-start",
-                  "&.Mui-selected": {
-                    bgcolor: "rgba(25, 118, 210, 0.08)",
-                    fontWeight: 600,
-                  },
-                }}>
+                sx={controlTextSx}>
                 {option.label}
               </MenuItem>
             ))}
