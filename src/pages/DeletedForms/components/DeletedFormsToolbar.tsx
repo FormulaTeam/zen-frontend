@@ -309,7 +309,7 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
             onClick={handleSortClick}
             sx={{
               height: "40px",
-              width: "240px",
+              width: "280פס",
               justifyContent: "flex-start",
               bgcolor: "#ffffff",
               color: "#0F172B",

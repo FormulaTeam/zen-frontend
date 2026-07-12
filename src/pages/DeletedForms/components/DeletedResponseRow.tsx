@@ -49,7 +49,7 @@ const DeletedResponseRow: React.FC<DeletedResponseRowProps> = ({
         borderRadius: "12px",
         border: "1px solid rgba(2, 6, 24, 0.05)",
       }}>
-      <Stack direction="row-reverse" spacing={4} sx={{ gap: 2 }}>
+      <Stack direction="row" spacing={4} sx={{ gap: 2 }}>
         {showCheckbox && (
           <Checkbox
             checked={isSelected}
@@ -74,7 +74,8 @@ const DeletedResponseRow: React.FC<DeletedResponseRowProps> = ({
         )}
 
         <Stack flex={1} spacing={1}>
-          <Stack direction="row" justifyContent="flex-end" alignItems="center" sx={{ gap: 1 }}>
+          <Stack direction="row" justifyContent="flex-start" alignItems="center" sx={{ gap: 1 }}>
+            <MessageSquare size={18} color={theme.palette.primary.main} />
             <Typography
               sx={{
                 fontWeight: 700,
@@ -83,11 +84,9 @@ const DeletedResponseRow: React.FC<DeletedResponseRowProps> = ({
               }}>
               תגובה מספר {response.index}
             </Typography>
-
-            <MessageSquare size={18} color={theme.palette.primary.main} />
           </Stack>
 
-          <Stack spacing={0.5} alignItems="flex-end">
+          <Stack spacing={0.5} alignItems="flex-start">
             <Typography
               sx={{
                 fontSize: 13,
