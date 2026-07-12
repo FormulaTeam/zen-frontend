@@ -76,11 +76,30 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
   };
 
   return (
-    <Box sx={{ pt: 3, pb: 2, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
+    <Box
+      sx={{
+        pt: 3,
+        pb: 2,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: 2,
+      }}>
       {/* Left Group: Search Inputs */}
       <Stack direction="row" spacing={2} alignItems="center">
         <Box sx={{ position: "relative", width: "192px", height: "36px" }}>
-          <Box sx={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", display: "flex", alignItems: "center", pointerEvents: "none" }}>
+          <Box
+            sx={{
+              position: "absolute",
+              left: "12px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#94A3B8",
+              display: "flex",
+              alignItems: "center",
+              pointerEvents: "none",
+            }}>
             <Search size={20} />
           </Box>
           <input
@@ -104,7 +123,17 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
         </Box>
 
         <Box sx={{ position: "relative", width: "192px", height: "36px" }}>
-          <Box sx={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", display: "flex", alignItems: "center", pointerEvents: "none" }}>
+          <Box
+            sx={{
+              position: "absolute",
+              left: "12px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#94A3B8",
+              display: "flex",
+              alignItems: "center",
+              pointerEvents: "none",
+            }}>
             <UserCircle size={20} />
           </Box>
           <input
@@ -128,7 +157,17 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
         </Box>
 
         <Box sx={{ position: "relative", width: "192px", height: "36px" }}>
-          <Box sx={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", display: "flex", alignItems: "center", pointerEvents: "none" }}>
+          <Box
+            sx={{
+              position: "absolute",
+              left: "12px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#94A3B8",
+              display: "flex",
+              alignItems: "center",
+              pointerEvents: "none",
+            }}>
             <UserCircle size={20} />
           </Box>
           <input
@@ -154,19 +193,35 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
 
       {/* Right Group: Sort & Scope */}
       <Stack direction="row" spacing={2} alignItems="center">
-        <Box sx={{ width: "220px" }}>
+        <Box sx={{ width: "250px" }}>
           <Select
             id="trash-tab-select"
             value={scopeParam === "responses" ? "responses" : "forms"}
             onChange={handleDropdownChange}
             IconComponent={() => null}
             renderValue={(selected) => (
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%", direction: "ltr" }}>
-                {selected === "forms" ? <FileText size={20} color="#0F172B" /> : <MessageSquare size={20} color="#0F172B" />}
-                <Typography sx={{ fontWeight: 500, fontSize: "14px", color: "#0F172B", flex: 1, textAlign: "left", ml: 1 }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                sx={{ width: "100%", direction: "ltr" }}>
+                {selected === "forms" ? (
+                  <FileText size={22} color="#0F172B" />
+                ) : (
+                  <MessageSquare size={22} color="#0F172B" />
+                )}
+                <Typography
+                  sx={{
+                    fontWeight: 500,
+                    fontSize: "14px",
+                    color: "#0F172B",
+                    flex: 1,
+                    textAlign: "left",
+                    ml: 1,
+                  }}>
                   {selected === "forms" ? "טפסים שנמחקו" : "תגובות שנמחקו"}
                 </Typography>
-                <ChevronDown size={20} color="#0F172B" />
+                <ChevronDown size={22} color="#0F172B" />
               </Stack>
             )}
             sx={{
@@ -189,19 +244,32 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
                 bgcolor: "#f8fafc",
                 borderColor: "#cbd5e1",
               },
-            }}
-          >
+            }}>
             {/* Figma-inspired Inverted Order: Responses on top */}
             <MenuItem value="responses">
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%", direction: "ltr" }}>
-                <MessageSquare size={20} />
-                <Typography sx={{ fontWeight: 500, fontSize: "14px", flex: 1, textAlign: "left", ml: 1 }}>תגובות שנמחקו</Typography>
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                sx={{ width: "100%", direction: "ltr" }}>
+                <MessageSquare size={22} color="#0F172B" />
+                <Typography
+                  sx={{ fontWeight: 500, fontSize: "14px", flex: 1, textAlign: "left", ml: 1 }}>
+                  תגובות שנמחקו
+                </Typography>
               </Stack>
             </MenuItem>
             <MenuItem value="forms">
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ width: "100%", direction: "ltr" }}>
-                <FileText size={20} />
-                <Typography sx={{ fontWeight: 500, fontSize: "14px", flex: 1, textAlign: "left", ml: 1 }}>טפסים שנמחקו</Typography>
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                sx={{ width: "100%", direction: "ltr" }}>
+                <FileText size={22} color="#0F172B" />
+                <Typography
+                  sx={{ fontWeight: 500, fontSize: "14px", flex: 1, textAlign: "left", ml: 1 }}>
+                  טפסים שנמחקו
+                </Typography>
               </Stack>
             </MenuItem>
           </Select>
@@ -211,7 +279,13 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
           <Button
             onClick={onToggleHasResponses}
             variant="outlined"
-            startIcon={hasResponsesFilter ? <CheckSquare size={20} color={theme.palette.primary.main} /> : <Square size={20} />}
+            startIcon={
+              hasResponsesFilter ? (
+                <CheckSquare size={20} color={theme.palette.primary.main} />
+              ) : (
+                <Square size={20} />
+              )
+            }
             sx={{
               height: "40px",
               bgcolor: "#ffffff",
@@ -224,9 +298,8 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
               boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
               gap: 1.5,
               direction: "ltr",
-              "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" }
-            }}
-          >
+              "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" },
+            }}>
             טפסים עם תגובות
           </Button>
         )}
@@ -249,12 +322,20 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
               textTransform: "none",
               boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
               direction: "ltr",
-              "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" }
+              "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" },
             }}
-            startIcon={<ChevronDown size={20} />}
-          >
-            <Box component="span" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, textAlign: "left" }}>
-              {sortOptions.find(opt => opt.sortBy === sortBy && opt.direction === sortDirection)?.label || "מיין לפי"}
+            startIcon={<ChevronDown size={20} />}>
+            <Box
+              component="span"
+              sx={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                flex: 1,
+                textAlign: "left",
+              }}>
+              {sortOptions.find((opt) => opt.sortBy === sortBy && opt.direction === sortDirection)
+                ?.label || "מיין לפי"}
             </Box>
           </Button>
           <Menu
@@ -274,10 +355,9 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
                 mt: 1,
                 minWidth: 180,
                 boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.08)",
-                border: "1px solid #E2E8F0"
-              }
-            }}
-          >
+                border: "1px solid #E2E8F0",
+              },
+            }}>
             {sortOptions.map((option) => (
               <MenuItem
                 key={`${option.sortBy}-${option.direction}`}
@@ -289,10 +369,9 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
                   justifyContent: "flex-start",
                   "&.Mui-selected": {
                     bgcolor: "rgba(25, 118, 210, 0.08)",
-                    fontWeight: 600
-                  }
-                }}
-              >
+                    fontWeight: 600,
+                  },
+                }}>
                 {option.label}
               </MenuItem>
             ))}
