@@ -1,6 +1,15 @@
 import React from "react";
-import { Box, Stack, Typography, Tooltip, Checkbox, useTheme } from "@mui/material";
-import { MessageSquare } from "lucide-react";
+import {
+  Box,
+  Stack,
+  Typography,
+  Tooltip,
+  Checkbox,
+  useTheme,
+  Button,
+  CircularProgress,
+} from "@mui/material";
+import { MessageSquare, RotateCcw } from "lucide-react";
 import { ResponseDto } from "../../../types/shared";
 import { useRecycleBin } from "../context/RecycleBinContext";
 
@@ -15,9 +24,11 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({ response,
     selectedResponseIds,
     onToggleSelectResponse,
     restoringResponseId,
+    onRestoreResponse,
   } = useRecycleBin();
 
   const isSelected = selectedResponseIds.has(response.id);
+  const isRestoring = restoringResponseId === response.id;
   const hideDeletionMetadata = !response.deletedResponse;
 
   const createdDateObj = new Date(response.createdAt);
@@ -46,7 +57,7 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({ response,
         borderRadius: "12px",
         border: "1px solid rgba(2, 6, 24, 0.05)",
       }}>
-      <Stack direction="row-reverse" spacing={4} sx={{ gap: 2 }}>
+      <Stack direction="row-reverse" spacing={4} sx={{ gap: 2 }} alignItems="center">
         {!hideCheckbox && (
           <Checkbox
             checked={isSelected}
@@ -64,6 +75,33 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({ response,
             }}
           />
         )}
+
+        <Button
+          disabled={isRestoring}
+          onClick={() => onRestoreResponse(response.formId, response.id)}
+          variant="contained"
+          endIcon={
+            isRestoring ? (
+              <CircularProgress size={14} color="inherit" />
+            ) : (
+              <RotateCcw size={16} />
+            )
+          }
+          sx={{
+            backgroundColor: theme.palette.primary.main,
+            borderRadius: "4px",
+            fontWeight: 700,
+            fontSize: "14px",
+            height: "32px",
+            px: 1.5,
+            boxShadow: "none",
+            textTransform: "none",
+            flexShrink: 0,
+            gap: 1,
+            "&:hover": { backgroundColor: theme.palette.primary.dark, boxShadow: "none" },
+          }}>
+          שחזור תגובה לטופס
+        </Button>
 
         <Stack flex={1} spacing={1}>
           <Stack direction="row" justifyContent="flex-end" alignItems="center" sx={{ gap: 1 }}>
