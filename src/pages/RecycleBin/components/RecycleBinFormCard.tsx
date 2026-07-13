@@ -85,9 +85,10 @@ const RecycleBinFormCard: React.FC<RecycleBinFormCardProps> = ({ form }) => {
               textTransform: "none",
               flexShrink: 0,
               gap: 1,
+              transition: "none",
               "&.Mui-disabled": {
-                backgroundColor: "rgba(0, 0, 0, 0.12)",
-                color: "rgba(0, 0, 0, 0.26)",
+                backgroundColor: "#e2e8f0",
+                color: "#94a3b8",
               },
               "&:hover": { backgroundColor: theme.palette.primary.dark, boxShadow: "none" },
             }}>
@@ -169,7 +170,11 @@ const RecycleBinFormCard: React.FC<RecycleBinFormCardProps> = ({ form }) => {
                 border: "1px solid #62748E",
                 borderRadius: "4px",
                 color: "transparent",
-                "&.Mui-disabled": { opacity: 0.5 },
+                transition: "none",
+                "&.Mui-disabled": {
+                  opacity: 0.5,
+                  borderColor: "#cbd5e1",
+                },
                 "&.Mui-checked": { color: theme.palette.primary.main, border: "none" },
                 "& .MuiSvgIcon-root": { fontSize: 20 },
               }}

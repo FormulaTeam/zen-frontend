@@ -62,7 +62,13 @@ const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({ activeT
             textTransform: "none",
             gap: 1,
             boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
-            "&.Mui-disabled": { opacity: 0.5 },
+            transition: "none",
+            "&.Mui-disabled": {
+              backgroundColor: "#f1f5f9",
+              color: "#94a3b8",
+              borderColor: "#e2e8f0",
+              opacity: 1,
+            },
             "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" },
           }}>
           ביטול בחירה
@@ -87,9 +93,10 @@ const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({ activeT
             fontSize: "14px",
             textTransform: "none",
             gap: 1,
+            transition: "none",
             "&.Mui-disabled": {
-              backgroundColor: "rgba(0, 0, 0, 0.12)",
-              color: "rgba(0, 0, 0, 0.26)",
+              backgroundColor: "#e2e8f0",
+              color: "#94a3b8",
             },
             "&:hover": { bgcolor: "primary.dark" },
           }}>

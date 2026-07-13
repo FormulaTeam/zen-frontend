@@ -65,6 +65,7 @@ function RecycleBin({ user }: { user: User | null }) {
   const {
     data: deletedFormsData,
     isLoading: isDeletedFormsLoading,
+    isFetching: isFetchingDeletedForms,
     fetchNextPage: fetchNextDeletedForms,
     hasNextPage: hasNextDeletedForms,
     isFetchingNextPage: isFetchingNextDeletedForms,
@@ -73,6 +74,7 @@ function RecycleBin({ user }: { user: User | null }) {
   const {
     data: activeFormsData,
     isLoading: isActiveFormsLoading,
+    isFetching: isFetchingActiveForms,
     fetchNextPage: fetchNextActiveForms,
     hasNextPage: hasNextActiveForms,
     isFetchingNextPage: isFetchingNextActiveForms,
@@ -254,7 +256,12 @@ function RecycleBin({ user }: { user: User | null }) {
     return <KeyboardArrowDownIcon />;
   }, []);
 
-  const isAnyRestoring = !!restoringFormId || !!restoringResponseId || isBulkRestoring;
+  const isAnyRestoring =
+    !!restoringFormId ||
+    !!restoringResponseId ||
+    isBulkRestoring ||
+    isFetchingDeletedForms ||
+    isFetchingActiveForms;
 
   const contextValue = useMemo(() => ({
     restoringFormId,
