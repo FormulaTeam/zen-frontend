@@ -37,7 +37,7 @@ const DeletedFormsEmptyState: React.FC<DeletedFormsEmptyStateProps> = ({
     </Typography>
     <Typography sx={{ color: "#62748E", mb: 3, maxWidth: "320px", fontFamily: "Heebo" }}>
       {hasFilters
-        ? "כדאי לשנות את מילות החיפוש או לנקות את המסננים כדי להניב תוצאות"
+        ? "כדאי לשנות את מילות החיפוש או לנקות מסננים כדי להניב תוצאות"
         : "כל הפריטים שתמחקו יופיעו כאן ויהיו זמינים לשחזור"}
     </Typography>
     {hasFilters && (
