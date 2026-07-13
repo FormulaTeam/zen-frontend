@@ -37,7 +37,7 @@ interface DeletedFormsToolbarProps {
 }
 
 const controlTextSx = {
-  fontSize: 9,
+  fontSize: 14,
   fontWeight: 500,
   fontFamily: "Heebo, sans-serif",
   color: "#0F172B",
@@ -85,10 +85,11 @@ const ToolbarInput = ({
         paddingRight: 38,
         paddingLeft: 12,
         fontSize: 14,
+        fontWeight: 500,
         fontFamily: "Heebo, sans-serif",
         backgroundColor: "#fff",
         outline: "none",
-        textAlign: "right",
+        direction: "rtl",
       }}
     />
   </Box>

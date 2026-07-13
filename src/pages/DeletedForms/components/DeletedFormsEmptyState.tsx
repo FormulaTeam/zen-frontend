@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Typography, Button } from "@mui/material";
-import { SearchX, Trash2 } from "lucide-react";
+import trashRobot from "../../../images/trash_robot.png";
+import notFoundRobot from "../../../images/not_found_trash_robot.png";
 
 interface DeletedFormsEmptyStateProps {
   hasFilters: boolean;
@@ -24,16 +25,20 @@ const DeletedFormsEmptyState: React.FC<DeletedFormsEmptyStateProps> = ({
       border: "1px dashed #E2E8F0",
       marginTop: 4,
     }}>
-    <Box sx={{ color: "#94A3B8", mb: 2 }}>
-      {hasFilters ? <SearchX size={48} strokeWidth={1.5} /> : <Trash2 size={48} strokeWidth={1.5} />}
+    <Box sx={{ mb: 2 }}>
+      <img
+        src={hasFilters ? notFoundRobot : trashRobot}
+        alt={hasFilters ? "לא נמצאו תוצאות" : "סל מחזור ריק"}
+        style={{ width: hasFilters ? "220px" : "250px", height: "auto" }}
+      />
     </Box>
     <Typography sx={{ fontWeight: 700, color: "#0F172B", mb: 1, fontFamily: "Heebo" }}>
       {hasFilters ? "לא נמצאו פריטים תואמים" : "סל המחזור ריק"}
     </Typography>
-    <Typography sx={{ color: "#62748E", mb: hasFilters ? 3 : 0, maxWidth: "320px", fontFamily: "Heebo" }}>
+    <Typography sx={{ color: "#62748E", mb: 3, maxWidth: "320px", fontFamily: "Heebo" }}>
       {hasFilters
-        ? "כדאי לשנות את מילות החיפוש או לנקות מסננים כדי להניב תוצאות"
-        : "כל הפריטים שימחקו יופיעו כאן ויהיו זמינים לשחזור"}
+        ? "כדאי לשנות את מילות החיפוש או לנקות את המסננים כדי להניב תוצאות"
+        : "כל הפריטים שתמחקו יופיעו כאן ויהיו זמינים לשחזור"}
     </Typography>
     {hasFilters && (
       <Button
