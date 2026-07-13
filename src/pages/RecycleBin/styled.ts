@@ -78,25 +78,41 @@ export const CustomTab = muiStyled(Tab)(() => ({
 export const StyledToolbarInput = styled.input`
   width: 100%;
   height: 100%;
-  box-sizing: border-box;
-  border-radius: 4px;
-  border: 1px solid #e2e8f0;
-  padding-right: 38px;
-  padding-left: 12px;
-  font-size: 13px;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 16px;
   font-weight: 500;
   font-family: "Heebo", sans-serif;
-  background-color: #ffffff;
   color: #020618;
-  outline: none;
+  padding: 0;
   direction: rtl;
-  &:focus {
-    border-color: #1e88e5;
-  }
   &::placeholder {
     color: #94a3b8;
   }
 `;
+
+export const ToolbarSearchContainer = muiStyled(Box)(({ theme }) => ({
+  height: "36px",
+  width: "192px",
+  backgroundColor: theme.palette.background.paper,
+  border: "1px solid #e2e8f0",
+  borderRadius: "4px",
+  display: "flex",
+  alignItems: "center",
+  padding: "0 12px",
+  gap: "10px",
+  boxSizing: "border-box",
+  transition: "all 0.2s ease-in-out",
+  "&:hover": {
+    borderColor: "#cbd5e1",
+    backgroundColor: theme.palette.action.hover,
+  },
+  "&:focus-within": {
+    borderColor: theme.palette.primary.main,
+    boxShadow: `0 0 0 1px ${theme.palette.primary.main}`,
+  },
+}));
 
 export const FilterButton = muiStyled(Button)(({ theme }) => ({
   height: "36px",
@@ -105,12 +121,14 @@ export const FilterButton = muiStyled(Button)(({ theme }) => ({
   color: theme.palette.text.primary,
   textTransform: "none",
   borderRadius: "4px",
-  fontSize: "13px",
+  fontSize: "9px",
   fontWeight: 500,
   fontFamily: "Heebo, sans-serif",
+  boxShadow: "none",
   "&:hover": {
     backgroundColor: theme.palette.action.hover,
     borderColor: "#cbd5e1",
+    boxShadow: "none",
   },
 }));
 

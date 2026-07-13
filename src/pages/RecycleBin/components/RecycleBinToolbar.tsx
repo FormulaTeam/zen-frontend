@@ -17,7 +17,7 @@ import {
   Square,
 } from "lucide-react";
 import { sortOptions } from "../types";
-import { StyledToolbarInput, FilterButton } from "../styled";
+import { StyledToolbarInput, FilterButton, ToolbarSearchContainer } from "../styled";
 
 interface RecycleBinToolbarProps {
   activeTab: number;
@@ -42,6 +42,24 @@ const controlTextSx = {
   fontFamily: "Heebo, sans-serif",
 };
 
+const ToolbarInput: React.FC<{
+  icon: React.ReactNode;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+}> = ({ icon, placeholder, value, onChange }) => (
+  <ToolbarSearchContainer>
+    <Box sx={{ color: value ? "black" : "text.disabled", display: "flex", alignItems: "center" }}>{icon}</Box>
+    <StyledToolbarInput
+      value={value}
+      placeholder={placeholder}
+      aria-label={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      style={{ color: value ? "black" : "#94a3b8" }}
+    />
+  </ToolbarSearchContainer>
+);
+
 const ScopeOption: React.FC<{ value: string; isSelected?: boolean }> = ({ value }) => {
   const isForms = value === "forms";
   return (
@@ -53,34 +71,6 @@ const ScopeOption: React.FC<{ value: string; isSelected?: boolean }> = ({ value 
     </Stack>
   );
 };
-
-const ToolbarInput: React.FC<{
-  icon: React.ReactNode;
-  placeholder: string;
-  value: string;
-  onChange: (value: string) => void;
-}> = ({ icon, placeholder, value, onChange }) => (
-  <Box sx={{ position: "relative", width: 192, height: 36 }}>
-    <Box
-      sx={{
-        position: "absolute",
-        left: 10,
-        top: "50%",
-        transform: "translateY(-50%)",
-        color: "text.disabled",
-        display: "flex",
-        pointerEvents: "none",
-      }}>
-      {icon}
-    </Box>
-    <StyledToolbarInput
-      value={value}
-      placeholder={placeholder}
-      aria-label={placeholder}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  </Box>
-);
 
 const RecycleBinToolbar: React.FC<RecycleBinToolbarProps> = ({
   activeTab,
