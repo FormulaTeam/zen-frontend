@@ -37,7 +37,8 @@ const RecycleBinFormCard: React.FC<RecycleBinFormCardProps> = ({ form }) => {
   const isRestoring = restoringFormId === form.id;
   const responsesCount = form.responsesCount ?? 0;
 
-  const deletedDateObj = (form as any).deletedAt ? new Date((form as any).deletedAt) : null;
+  const deletedForm = "deletedAt" in form ? form : null;
+  const deletedDateObj = deletedForm?.deletedAt ? new Date(deletedForm.deletedAt) : null;
   const formattedDate = deletedDateObj ? deletedDateObj.toLocaleDateString("he-IL") : "N/A";
   const formattedTime = deletedDateObj
     ? deletedDateObj.toLocaleTimeString("he-IL", {
@@ -186,7 +187,7 @@ const RecycleBinFormCard: React.FC<RecycleBinFormCardProps> = ({ form }) => {
             </Typography>
             <Typography variant="body2" sx={{ color: "#62748E", fontSize: "14px" }}>
               נמחק בתאריך {formattedDate} בשעה {formattedTime} על ידי{" "}
-              <Tooltip title={(form as any).deletedBy?.upn || "לא ידוע"} arrow placement="top">
+              <Tooltip title={deletedForm?.deletedBy?.upn || "לא ידוע"} arrow placement="top">
                 <Box
                   component="span"
                   sx={{
@@ -195,7 +196,7 @@ const RecycleBinFormCard: React.FC<RecycleBinFormCardProps> = ({ form }) => {
                     textDecorationStyle: "dotted",
                     textDecorationColor: "#cbd5e1",
                   }}>
-                  {(form as any).deletedBy?.name || "משתמש בזן"}
+                  {deletedForm?.deletedBy?.name || "משתמש בזן"}
                 </Box>
               </Tooltip>
             </Typography>

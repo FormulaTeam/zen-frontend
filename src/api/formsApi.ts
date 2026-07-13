@@ -213,6 +213,15 @@ export const restoreForm = async (id: number): Promise<FormDto> => {
   }
 };
 
+export const restoreForms = async (formIds: number[]): Promise<void> => {
+  try {
+    await apiClient.post("/forms/recycle-bin/restore", { formIds });
+  } catch (error) {
+    console.error("Failed to restore forms:", error);
+    throw error;
+  }
+};
+
 /**
  * Soft deletes a form.
  *

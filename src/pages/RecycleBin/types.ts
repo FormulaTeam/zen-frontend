@@ -1,8 +1,8 @@
-import { DeletedFormOverviewDto, FormOverviewDto } from "../../types/shared";
+import { DeletedFormOverviewDto, FormOverviewDto, ResponseDto } from "../../types/shared";
 import { formsSortOption } from "../../types/enums/filtersAndSorts.enum";
 
 export type RecycleBinItemWithResponses = (DeletedFormOverviewDto | FormOverviewDto) & {
-  responses?: any[];
+  responses?: ResponseDto[];
 };
 
 export interface RecycleBinFilters {

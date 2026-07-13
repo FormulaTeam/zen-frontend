@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Box } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { useGetRecycleBinForms, useGetRecycleBinResponses, restoreForm } from "../../api/formsApi";
+import { useGetRecycleBinForms, useGetRecycleBinResponses, restoreForm, restoreForms } from "../../api/formsApi";
 import { restoreResponse, restoreResponses } from "../../api/responsesApi";
 import { getFormIconByName } from "../../utils/utils";
 import queryClient from "../../api/queryClient";
@@ -184,43 +184,40 @@ function RecycleBin({ user }: { user: User | null }) {
 
   const handleBulkRestore = useCallback(async () => {
     setIsBulkRestoring(true);
-    let successCount = 0;
     try {
       if (activeTab === 0) {
         const ids = Array.from(selectedFormIds);
-        for (const id of ids) {
-          try {
-            await restoreForm(id);
-            successCount++;
-          } catch (e) {
-            console.error(`Failed to restore form ${id}`, e);
-          }
-        }
-        if (successCount > 0) {
-          toast.success(`${successCount} טפסים שוחזרו בהצלחה`);
-          handleClearSelection();
-          queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] });
-        }
+        await restoreForms(ids);
+        toast.success(`${ids.length} טפסים שוחזרו בהצלחה`);
+        handleClearSelection();
+        queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] });
+        queryClient.invalidateQueries({ queryKey: ["forms"] });
       } else {
         const formResponseMap: Record<number, string[]> = {};
-        activeFormsWithDeleted.forEach(form => {
-          form.responses?.forEach(resp => {
+        activeFormsWithDeleted.forEach((form) => {
+          form.responses?.forEach((resp) => {
             if (selectedResponseIds.has(resp.id)) {
               if (!formResponseMap[form.id]) formResponseMap[form.id] = [];
               formResponseMap[form.id].push(resp.id);
             }
           });
         });
+
         const formIds = Object.keys(formResponseMap).map(Number);
-        for (const fId of formIds) {
-          try {
+        let successCount = 0;
+
+        await Promise.all(
+          formIds.map(async (fId) => {
             const respIds = formResponseMap[fId];
-            await restoreResponses(fId, respIds);
-            successCount += respIds.length;
-          } catch (e) {
-            console.error(`Failed to restore responses for form ${fId}`, e);
-          }
-        }
+            try {
+              await restoreResponses(fId, respIds);
+              successCount += respIds.length;
+            } catch (e) {
+              console.error(`Failed to restore responses for form ${fId}`, e);
+            }
+          }),
+        );
+
         if (successCount > 0) {
           toast.success(`${successCount} תגובות שוחזרו בהצלחה`);
           handleClearSelection();
@@ -229,11 +226,17 @@ function RecycleBin({ user }: { user: User | null }) {
         }
       }
     } catch (error) {
-      toast.error("שחזור המוני נכשל");
+      toast.error("שחזור פריטים נכשל");
     } finally {
       setIsBulkRestoring(false);
     }
-  }, [activeTab, selectedFormIds, selectedResponseIds, activeFormsWithDeleted, handleClearSelection]);
+  }, [
+    activeTab,
+    selectedFormIds,
+    selectedResponseIds,
+    activeFormsWithDeleted,
+    handleClearSelection,
+  ]);
 
   const getIconContent = useCallback((iconName: string | null) => {
     const iconSrc = getFormIconByName(iconName ?? undefined);

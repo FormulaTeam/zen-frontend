@@ -14,7 +14,7 @@ const ActiveFormWithRecycleBinResponsesCard: React.FC<
 > = ({ form }) => {
   const { expandedForms, onToggleExpand, getIconContent } = useRecycleBin();
   const isExpanded = !!expandedForms[form.id];
-  const responsesCount = (form as any).responsesCount ?? 0;
+  const responsesCount = form.responsesCount ?? 0;
 
   return (
     <Card

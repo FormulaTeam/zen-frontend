@@ -1,10 +1,11 @@
 import React from "react";
 import { Box, Stack, Typography, Tooltip, Checkbox, useTheme } from "@mui/material";
 import { MessageSquare } from "lucide-react";
+import { ResponseDto } from "../../../types/shared";
 import { useRecycleBin } from "../context/RecycleBinContext";
 
 interface RecycleBinResponseRowProps {
-  response: any;
+  response: ResponseDto;
   hideCheckbox?: boolean;
 }
 
