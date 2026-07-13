@@ -8,6 +8,7 @@ import { useCreate } from "../utils/useCreate";
 import { useFetch } from "../utils/useFetch";
 import apiClient from "./config";
 import queryClient from "./queryClient";
+import { mapFilterToApiParams } from "./apiUtils";
 
 /**
  * Fetch all forms with optional query parameters.
@@ -89,7 +90,7 @@ export const getRecycleBinForms = async (filter?: Filter): Promise<FormDto[]> =>
   const params = mapFilterToApiParams(filter);
 
   try {
-    const response = await apiClient.get<FormDto[]>("/forms/soft-deleted", {
+    const response = await apiClient.get<FormDto[]>("/forms/recycle-bin", {
       params,
       signal: filter?.signal,
     });
@@ -110,7 +111,7 @@ export const getRecycleBinResponses = async (filter?: Filter): Promise<FormOverv
   const params = mapFilterToApiParams(filter);
 
   try {
-    const response = await apiClient.get<FormOverviewDto[]>("/forms/responses/soft-deleted", {
+    const response = await apiClient.get<FormOverviewDto[]>("/forms/recycle-bin/responses", {
       params,
       signal: filter?.signal,
     });

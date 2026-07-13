@@ -1,22 +1,23 @@
 import React from "react";
 import { Box, Typography, Stack, Button, CircularProgress } from "@mui/material";
 import { XCircle, RotateCcw } from "lucide-react";
+import { useRecycleBin } from "../context/RecycleBinContext";
 
 interface RecycleBinSelectionBarProps {
-  selectedCount: number;
   activeTab: number;
-  isBulkRestoring: boolean;
-  onClearSelection: () => void;
-  onBulkRestore: () => void;
 }
 
-const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({
-  selectedCount,
-  activeTab,
-  isBulkRestoring,
-  onClearSelection,
-  onBulkRestore,
-}) => {
+const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({ activeTab }) => {
+  const {
+    selectedFormIds,
+    selectedResponseIds,
+    isBulkRestoring,
+    onClearSelection,
+    onBulkRestore,
+  } = useRecycleBin();
+
+  const selectedCount = activeTab === 0 ? selectedFormIds.size : selectedResponseIds.size;
+
   if (selectedCount === 0) return null;
 
   return (
@@ -38,8 +39,7 @@ const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({
         justifyContent: "space-between",
         boxShadow: "0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -1px rgba(0, 0, 0, 0.06)",
         zIndex: 1000,
-      }}
-    >
+      }}>
       <Typography sx={{ color: "#020618", fontWeight: 500, fontSize: "14px", mr: 4 }}>
         {selectedCount} פריטים נבחרו
       </Typography>
@@ -61,8 +61,7 @@ const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({
             gap: 1,
             boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
             "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" },
-          }}
-        >
+          }}>
           ביטול בחירה
         </Button>
 
@@ -70,7 +69,13 @@ const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({
           variant="contained"
           disabled={isBulkRestoring}
           onClick={onBulkRestore}
-          startIcon={isBulkRestoring ? <CircularProgress size={18} color="inherit" /> : <RotateCcw size={18} />}
+          startIcon={
+            isBulkRestoring ? (
+              <CircularProgress size={18} color="inherit" />
+            ) : (
+              <RotateCcw size={18} />
+            )
+          }
           sx={{
             bgcolor: "primary.main",
             borderRadius: "4px",
@@ -80,8 +85,7 @@ const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({
             textTransform: "none",
             gap: 1,
             "&:hover": { bgcolor: "primary.dark" },
-          }}
-        >
+          }}>
           שחזור {activeTab === 0 ? "טפסים" : "תגובות"}
         </Button>
       </Stack>

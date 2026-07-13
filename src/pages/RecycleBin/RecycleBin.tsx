@@ -229,6 +229,11 @@ function RecycleBin({ user }: { user: User | null }) {
     return <KeyboardArrowDownIcon />;
   }, []);
 
+  const handleClearSelection = useCallback(() => {
+    setSelectedFormIds(new Set());
+    setSelectedResponseIds(new Set());
+  }, []);
+
   const contextValue = useMemo(() => ({
     restoringFormId,
     restoringResponseId,
@@ -243,8 +248,10 @@ function RecycleBin({ user }: { user: User | null }) {
     onRestoreForm: handleRestoreForm,
     onRestoreResponse: handleRestoreResponse,
     onClearFilters: clearFilters,
+    onBulkRestore: handleBulkRestore,
+    onClearSelection: handleClearSelection,
     getIconContent,
-  }), [restoringFormId, restoringResponseId, isBulkRestoring, expandedForms, selectedFormIds, selectedResponseIds, hasActiveFilters, handleToggleSelectForm, handleToggleSelectResponse, handleToggleExpand, handleRestoreForm, handleRestoreResponse, clearFilters, getIconContent]);
+  }), [restoringFormId, restoringResponseId, isBulkRestoring, expandedForms, selectedFormIds, selectedResponseIds, hasActiveFilters, handleToggleSelectForm, handleToggleSelectResponse, handleToggleExpand, handleRestoreForm, handleRestoreResponse, clearFilters, handleBulkRestore, handleClearSelection, getIconContent]);
 
   return (
     <RecycleBinProvider value={contextValue}>
@@ -269,7 +276,7 @@ function RecycleBin({ user }: { user: User | null }) {
           />
 
           <Box
-            className="main-page-content-wrapper deleted-forms-scroll-container"
+            className="main-page-content-wrapper recycle-bin-scroll-container"
             sx={{ pt: 0, flex: 1, overflowY: "auto", direction: "ltr" }}
             onScroll={handleScroll}
           >
@@ -290,16 +297,7 @@ function RecycleBin({ user }: { user: User | null }) {
             </Box>
           </Box>
 
-          <RecycleBinSelectionBar
-            selectedCount={activeTab === 0 ? selectedFormIds.size : selectedResponseIds.size}
-            activeTab={activeTab}
-            isBulkRestoring={isBulkRestoring}
-            onClearSelection={() => {
-              setSelectedFormIds(new Set());
-              setSelectedResponseIds(new Set());
-            }}
-            onBulkRestore={handleBulkRestore}
-          />
+          <RecycleBinSelectionBar activeTab={activeTab} />
         </Box>
       </Box>
     </RecycleBinProvider>

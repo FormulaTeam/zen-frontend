@@ -87,8 +87,9 @@ root.render(
             },
           },
 
-          ".deleted-forms-scroll-container": {
+          ".recycle-bin-scroll-container": {
             overflowY: "auto !important",
+            direction: "ltr !important",
             scrollbarWidth: "auto !important",
             msOverflowStyle: "auto !important",
             "&::-webkit-scrollbar": {

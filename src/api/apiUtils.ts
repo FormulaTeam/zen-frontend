@@ -5,7 +5,7 @@ export const mapFilterToApiParams = (filter?: Filter) => {
   if (!filter) return {};
 
   return {
-    search: filter.search,
+    search: filter.query,
     sortBy: filter.sortBy,
     sortDirection: filter.orderBy === IOrderBy.DESC ? "desc" : "asc",
     limit: filter.pageSize,

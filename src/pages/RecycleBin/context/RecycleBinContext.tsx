@@ -15,6 +15,8 @@ interface RecycleBinContextType {
   onRestoreForm: (id: number) => Promise<void>;
   onRestoreResponse: (formId: number, responseId: string) => Promise<void>;
   onClearFilters: () => void;
+  onBulkRestore: () => void;
+  onClearSelection: () => void;
   getIconContent: (icon: string | null) => React.ReactNode;
 }
 

@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { Eye, EyeOff, RotateCcw } from "lucide-react";
 import { RecycleBinItemWithResponses } from "../types";
-import { useRecycleBin } from "../context/TrashContext";
+import { useRecycleBin } from "../context/RecycleBinContext";
 import RecycleBinResponseRow from "./RecycleBinResponseRow";
 
 interface RecycleBinFormCardProps {
