@@ -49,7 +49,13 @@ function DeletedForms({ user }: { user: any }) {
   const debouncedCreatedBy = useDebounce(createdBySearch, 300);
   const debouncedDeletedBy = useDebounce(deletedBySearch, 300);
 
-  // Queries
+  const hasActiveFilters = !!(
+    searchTerm ||
+    createdBySearch ||
+    deletedBySearch ||
+    hasResponsesFilter
+  );
+
   const {
     data: deletedFormsData,
     isLoading: isDeletedFormsLoading,
@@ -128,6 +134,9 @@ function DeletedForms({ user }: { user: any }) {
     setSearchTerm("");
     setCreatedBySearch("");
     setDeletedBySearch("");
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("hasResponses");
+    setSearchParams(newParams, { replace: true });
   };
 
   const toggleFormExpanded = (formId: number) => {
@@ -269,6 +278,7 @@ function DeletedForms({ user }: { user: any }) {
                 selectedFormIds={selectedFormIds}
                 expandedForms={expandedForms}
                 restoringFormId={restoringFormId}
+                hasFilters={hasActiveFilters}
                 onToggleSelect={handleToggleSelectForm}
                 onToggleExpand={toggleFormExpanded}
                 onRestore={handleRestoreFormClick}
@@ -283,6 +293,7 @@ function DeletedForms({ user }: { user: any }) {
                 selectedResponseIds={selectedResponseIds}
                 expandedForms={expandedForms}
                 restoringResponseId={restoringResponseId}
+                hasFilters={hasActiveFilters}
                 onToggleSelectResponse={handleToggleSelectResponse}
                 onToggleExpand={toggleFormExpanded}
                 onRestoreResponse={handleRestoreResponseClick}

@@ -11,6 +11,7 @@ interface DeletedResponsesListProps {
   selectedResponseIds: Set<string>;
   expandedForms: Record<number, boolean>;
   restoringResponseId: string | null;
+  hasFilters: boolean;
   onToggleSelectResponse: (id: string) => void;
   onToggleExpand: (id: number) => void;
   onRestoreResponse: (formId: number, responseId: string) => void;
@@ -25,6 +26,7 @@ const DeletedResponsesList: React.FC<DeletedResponsesListProps> = ({
   selectedResponseIds,
   expandedForms,
   restoringResponseId,
+  hasFilters,
   onToggleSelectResponse,
   onToggleExpand,
   onRestoreResponse,
@@ -40,7 +42,7 @@ const DeletedResponsesList: React.FC<DeletedResponsesListProps> = ({
   }
 
   if (activeFormsWithDeleted.length === 0) {
-    return <DeletedFormsEmptyState onClearFilters={onClearFilters} />;
+    return <DeletedFormsEmptyState hasFilters={hasFilters} onClearFilters={onClearFilters} />;
   }
 
   return (
