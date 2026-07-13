@@ -1,12 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Box,
   Stack,
   MenuItem,
   Typography,
-  Button,
   Menu,
-  useTheme,
 } from "@mui/material";
 import {
   Search,
@@ -18,6 +16,7 @@ import {
   Square,
 } from "lucide-react";
 import { sortOptions } from "../types";
+import { StyledToolbarInput, FilterButton } from "../styled";
 
 interface DeletedFormsToolbarProps {
   activeTab: number;
@@ -40,59 +39,43 @@ const controlTextSx = {
   fontSize: 14,
   fontWeight: 500,
   fontFamily: "Heebo, sans-serif",
-  color: "#0F172B",
 };
 
-const ToolbarInput = ({
-  icon,
-  placeholder,
-  value,
-  onChange,
-}: {
+const ScopeOption: React.FC<{ value: string; isSelected?: boolean }> = ({ value, isSelected }) => {
+  const isForms = value === "forms";
+  return (
+    <Stack direction="row" alignItems="center" spacing={1} sx={{ width: "100%" }}>
+      {isForms ? <FileText size={18} /> : <MessageSquare size={18} />}
+      <Typography sx={controlTextSx}>{isForms ? "טפסים שנמחקו" : "תגובות שנמחקו"}</Typography>
+    </Stack>
+  );
+};
+
+const ToolbarInput: React.FC<{
   icon: React.ReactNode;
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
-}) => (
-  <Box
-    sx={{
-      position: "relative",
-      width: 192,
-      height: 36,
-    }}>
+}> = ({ icon, placeholder, value, onChange }) => (
+  <Box sx={{ position: "relative", width: 192, height: 36 }}>
     <Box
       sx={{
         position: "absolute",
         left: 10,
         top: "50%",
         transform: "translateY(-50%)",
-        color: "#94A3B8",
+        color: "text.disabled",
         display: "flex",
         pointerEvents: "none",
       }}>
       {icon}
     </Box>
-<input
-  value={value}
-  placeholder={placeholder}
-  aria-label={placeholder}
-  onChange={(e) => onChange(e.target.value)}
-  style={{
-    width: "100%",
-    height: "100%",
-    boxSizing: "border-box",
-    borderRadius: 4,
-    border: "1px solid #E2E8F0",
-    paddingRight: 38,
-    paddingLeft: 12,
-    fontSize: 14,
-    fontWeight: 500,
-    fontFamily: "Heebo, sans-serif",
-    backgroundColor: "#fff",
-    outline: "none",
-    direction: "rtl",
-  }}
-/>
+    <StyledToolbarInput
+      value={value}
+      placeholder={placeholder}
+      aria-label={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+    />
   </Box>
 );
 
@@ -112,30 +95,18 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
   onSortChange,
   onToggleHasResponses,
 }) => {
-  const theme = useTheme();
-
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const [scopeAnchorEl, setScopeAnchorEl] = useState<null | HTMLElement>(null);
 
-  const handleScopeChangeClick = (scope: string) => {
+  const handleScopeClick = useCallback((scope: string) => {
     onScopeChange(scope);
     setScopeAnchorEl(null);
-  };
+  }, [onScopeChange]);
 
-  const handleSortSelect = (newSortBy: string, direction: "asc" | "desc") => {
+  const handleSortClick = useCallback((newSortBy: string, direction: "asc" | "desc") => {
     onSortChange(newSortBy, direction);
     setSortAnchorEl(null);
-  };
-
-  const renderScopeLabel = (value: string) => {
-    const isForms = value === "forms";
-    return (
-      <Stack direction="row" alignItems="center" spacing={1}>
-        {isForms ? <FileText size={18} /> : <MessageSquare size={18} />}
-        <Typography sx={controlTextSx}>{isForms ? "טפסים שנמחקו" : "תגובות שנמחקו"}</Typography>
-      </Stack>
-    );
-  };
+  }, [onSortChange]);
 
   return (
     <Box
@@ -155,14 +126,12 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
           value={searchTerm}
           onChange={onSearchChange}
         />
-
         <ToolbarInput
           icon={<UserCircle size={18} />}
           placeholder="נוצר ע״י"
           value={createdBySearch}
           onChange={onCreatedByChange}
         />
-
         <ToolbarInput
           icon={<UserCircle size={18} />}
           placeholder="נמחק ע״י"
@@ -173,77 +142,56 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
 
       <Stack direction="row" spacing={1} alignItems="center">
         {activeTab === 0 && (
-          <Button
+          <FilterButton
             onClick={onToggleHasResponses}
             variant="outlined"
             startIcon={
-              hasResponsesFilter ? (
-                <CheckSquare size={18} color={theme.palette.primary.main} />
-              ) : (
-                <Square size={18} />
-              )
+              hasResponsesFilter ? <CheckSquare size={18} color="primary" /> : <Square size={18} />
             }
-            sx={{
-              width: 210,
-              height: 36,
-              bgcolor: "#fff",
-              borderColor: "#E2E8F0",
-              textTransform: "none",
-              gap: 1.5,
-              ...controlTextSx,
-            }}>
-            טפסים עם תגובות
-          </Button>
+            sx={{ width: 210, gap: 1.5 }}>
+            <Typography sx={controlTextSx}>טפסים עם תגובות</Typography>
+          </FilterButton>
         )}
 
         <Box>
-          <Button
+          <FilterButton
             onClick={(e) => setScopeAnchorEl(e.currentTarget)}
+            variant="outlined"
             endIcon={<ChevronDown size={18} />}
-            sx={{
-              width: 205,
-              height: 36,
-              justifyContent: "space-between",
-              bgcolor: "#fff",
-              border: "1px solid #E2E8F0",
-              borderRadius: 1,
-              textTransform: "none",
-              ...controlTextSx,
-            }}>
-            {renderScopeLabel(scopeParam === "responses" ? "responses" : "forms")}
-          </Button>
+            sx={{ width: 205, justifyContent: "space-between" }}>
+            <ScopeOption value={scopeParam === "responses" ? "responses" : "forms"} />
+          </FilterButton>
           <Menu
             anchorEl={scopeAnchorEl}
             open={Boolean(scopeAnchorEl)}
             onClose={() => setScopeAnchorEl(null)}>
-            <MenuItem onClick={() => handleScopeChangeClick("responses")} sx={controlTextSx}>
-              {renderScopeLabel("responses")}
+            <MenuItem onClick={() => handleScopeClick("responses")}>
+              <ScopeOption value="responses" />
             </MenuItem>
-            <MenuItem onClick={() => handleScopeChangeClick("forms")} sx={controlTextSx}>
-              {renderScopeLabel("forms")}
+            <MenuItem onClick={() => handleScopeClick("forms")}>
+              <ScopeOption value="forms" />
             </MenuItem>
           </Menu>
         </Box>
 
         <Box>
-          <Button
-            onClick={(event) => setSortAnchorEl(event.currentTarget)}
+          <FilterButton
+            onClick={(e) => setSortAnchorEl(e.currentTarget)}
+            variant="outlined"
             endIcon={<ChevronDown size={18} />}
-            sx={{
-              width: 220,
-              height: 36,
-              justifyContent: "space-between",
-              bgcolor: "#fff",
-              border: "1px solid #E2E8F0",
-              borderRadius: 1,
-              textTransform: "none",
-              ...controlTextSx,
-            }}>
-            {sortOptions.find(
-              (option) => option.sortBy === sortBy && option.direction === sortDirection,
-            )?.label ?? "מיין לפי"}
-          </Button>
-
+            sx={{ width: 220, justifyContent: "space-between" }}>
+            <Typography
+              sx={{
+                ...controlTextSx,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                textAlign: "left",
+              }}>
+              {sortOptions.find((opt) => opt.sortBy === sortBy && opt.direction === sortDirection)
+                ?.label ?? "מיין לפי"}
+            </Typography>
+          </FilterButton>
           <Menu
             anchorEl={sortAnchorEl}
             open={Boolean(sortAnchorEl)}
@@ -251,9 +199,8 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
             {sortOptions.map((option) => (
               <MenuItem
                 key={`${option.sortBy}-${option.direction}`}
-                onClick={() => handleSortSelect(option.sortBy, option.direction as "asc" | "desc")}
-                sx={controlTextSx}>
-                {option.label}
+                onClick={() => handleSortClick(option.sortBy, option.direction as "asc" | "desc")}>
+                <Typography sx={controlTextSx}>{option.label}</Typography>
               </MenuItem>
             ))}
           </Menu>

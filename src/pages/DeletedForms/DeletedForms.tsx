@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Box, useTheme } from "@mui/material";
@@ -9,10 +9,9 @@ import { getFormIconByName } from "../../utils/utils";
 import queryClient from "../../api/queryClient";
 import { IOrderBy, formsSortOption } from "../../types/enums/filtersAndSorts.enum";
 import { useDebounce } from "../../hooks/utilsHooks/useDebounce";
-
 import { User } from "../../utils/interfaces";
 
-// Modular Components
+import { TrashProvider } from "./context/TrashContext";
 import { DeletedFormWithResponses } from "./types";
 import DeletedFormsHeader from "./components/DeletedFormsHeader";
 import DeletedFormsToolbar from "./components/DeletedFormsToolbar";
@@ -20,21 +19,15 @@ import DeletedFormsList from "./components/DeletedFormsList";
 import DeletedResponsesList from "./components/DeletedResponsesList";
 import DeletedFormsSelectionBar from "./components/DeletedFormsSelectionBar";
 
-/**
- * Main Trash Page displaying soft-deleted forms and responses in tabs.
- */
 function DeletedForms({ user }: { user: User | null }) {
-  const theme = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Route-based state
   const scopeParam = searchParams.get("scope") || "forms";
   const activeTab = scopeParam === "responses" ? 1 : 0;
   const sortBy = searchParams.get("sortBy") || formsSortOption.DeletedAt;
   const sortDirection = (searchParams.get("sortDirection") as "asc" | "desc") || "desc";
   const hasResponsesFilter = searchParams.get("hasResponses") === "true" ? true : undefined;
 
-  // Local state
   const [restoringFormId, setRestoringFormId] = useState<number | null>(null);
   const [restoringResponseId, setRestoringResponseId] = useState<string | null>(null);
   const [isBulkRestoring, setIsBulkRestoring] = useState(false);
@@ -42,7 +35,6 @@ function DeletedForms({ user }: { user: User | null }) {
   const [selectedFormIds, setSelectedFormIds] = useState<Set<number>>(new Set());
   const [selectedResponseIds, setSelectedResponseIds] = useState<Set<string>>(new Set());
 
-  // Filter input states
   const [searchTerm, setSearchTerm] = useState("");
   const [createdBySearch, setCreatedBySearch] = useState("");
   const [deletedBySearch, setDeletedBySearch] = useState("");
@@ -51,12 +43,7 @@ function DeletedForms({ user }: { user: User | null }) {
   const debouncedCreatedBy = useDebounce(createdBySearch, 300);
   const debouncedDeletedBy = useDebounce(deletedBySearch, 300);
 
-  const hasActiveFilters = !!(
-    searchTerm ||
-    createdBySearch ||
-    deletedBySearch ||
-    hasResponsesFilter
-  );
+  const hasActiveFilters = !!(searchTerm || createdBySearch || deletedBySearch || hasResponsesFilter);
 
   const {
     data: deletedFormsData,
@@ -90,70 +77,29 @@ function DeletedForms({ user }: { user: User | null }) {
   const deletedForms = useMemo(() => (deletedFormsData?.pages.flat() as DeletedFormWithResponses[]) || [], [deletedFormsData]);
   const activeFormsWithDeleted = useMemo(() => (activeFormsData?.pages.flat() as DeletedFormWithResponses[]) || [], [activeFormsData]);
 
-  // Callbacks
-  const handleToggleSelectForm = (formId: number) => {
+  const handleToggleSelectForm = useCallback((id: number) => {
     setSelectedFormIds((prev) => {
       const next = new Set(prev);
-      if (next.has(formId)) next.delete(formId);
-      else next.add(formId);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
-  };
+  }, []);
 
-  const handleToggleSelectResponse = (responseId: string) => {
+  const handleToggleSelectResponse = useCallback((id: string) => {
     setSelectedResponseIds((prev) => {
       const next = new Set(prev);
-      if (next.has(responseId)) next.delete(responseId);
-      else next.add(responseId);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
-  };
+  }, []);
 
-  const handleToggleHasResponses = () => {
-    const newParams = new URLSearchParams(searchParams);
-    if (hasResponsesFilter) newParams.delete("hasResponses");
-    else newParams.set("hasResponses", "true");
-    setSearchParams(newParams, { replace: true });
-  };
+  const handleToggleExpand = useCallback((id: number) => {
+    setExpandedForms((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
 
-  const handleSortChange = (newSortBy: string, newDirection: "asc" | "desc") => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set("sortBy", newSortBy);
-    newParams.set("sortDirection", newDirection);
-    setSearchParams(newParams, { replace: true });
-  };
-
-  const handleScopeChange = (newScope: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set("scope", newScope);
-    setSearchParams(newParams, { replace: true });
-    setExpandedForms({});
-    setSelectedFormIds(new Set());
-    setSelectedResponseIds(new Set());
-  };
-
-  const clearFilters = () => {
-    setSearchTerm("");
-    setCreatedBySearch("");
-    setDeletedBySearch("");
-    const newParams = new URLSearchParams(searchParams);
-    newParams.delete("hasResponses");
-    setSearchParams(newParams, { replace: true });
-  };
-
-  const toggleFormExpanded = (formId: number) => {
-    setExpandedForms((prev) => ({ ...prev, [formId]: !prev[formId] }));
-  };
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop <= clientHeight + 50) {
-      if (activeTab === 0 && hasNextDeletedForms && !isFetchingNextDeletedForms) fetchNextDeletedForms();
-      else if (activeTab === 1 && hasNextActiveForms && !isFetchingNextActiveForms) fetchNextActiveForms();
-    }
-  };
-
-  const handleRestoreFormClick = async (formId: number) => {
+  const handleRestoreForm = useCallback(async (formId: number) => {
     setRestoringFormId(formId);
     try {
       await restoreForm(formId);
@@ -164,9 +110,9 @@ function DeletedForms({ user }: { user: User | null }) {
     } finally {
       setRestoringFormId(null);
     }
-  };
+  }, []);
 
-  const handleRestoreResponseClick = async (formId: number, responseId: string) => {
+  const handleRestoreResponse = useCallback(async (formId: number, responseId: string) => {
     setRestoringResponseId(responseId);
     try {
       await restoreResponse(formId, responseId);
@@ -178,7 +124,47 @@ function DeletedForms({ user }: { user: User | null }) {
     } finally {
       setRestoringResponseId(null);
     }
-  };
+  }, []);
+
+  const handleToggleHasResponses = useCallback(() => {
+    const newParams = new URLSearchParams(searchParams);
+    if (hasResponsesFilter) newParams.delete("hasResponses");
+    else newParams.set("hasResponses", "true");
+    setSearchParams(newParams, { replace: true });
+  }, [hasResponsesFilter, searchParams, setSearchParams]);
+
+  const handleSortChange = useCallback((newSortBy: string, newDirection: "asc" | "desc") => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("sortBy", newSortBy);
+    newParams.set("sortDirection", newDirection);
+    setSearchParams(newParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const handleScopeChange = useCallback((newScope: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("scope", newScope);
+    setSearchParams(newParams, { replace: true });
+    setExpandedForms({});
+    setSelectedFormIds(new Set());
+    setSelectedResponseIds(new Set());
+  }, [searchParams, setSearchParams]);
+
+  const clearFilters = useCallback(() => {
+    setSearchTerm("");
+    setCreatedBySearch("");
+    setDeletedBySearch("");
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("hasResponses");
+    setSearchParams(newParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight + 50) {
+      if (activeTab === 0 && hasNextDeletedForms && !isFetchingNextDeletedForms) fetchNextDeletedForms();
+      else if (activeTab === 1 && hasNextActiveForms && !isFetchingNextActiveForms) fetchNextActiveForms();
+    }
+  }, [activeTab, hasNextDeletedForms, isFetchingNextDeletedForms, fetchNextDeletedForms, hasNextActiveForms, isFetchingNextActiveForms, fetchNextActiveForms]);
 
   const handleBulkRestore = async () => {
     setIsBulkRestoring(true);
@@ -233,7 +219,7 @@ function DeletedForms({ user }: { user: User | null }) {
     }
   };
 
-  const getIconContent = (iconName: string | null) => {
+  const getIconContent = useCallback((iconName: string | null) => {
     const iconSrc = getFormIconByName(iconName ?? undefined);
     if (typeof iconSrc === "string") return <img src={iconSrc} alt={iconName ?? "form icon"} />;
     if (iconSrc) {
@@ -241,83 +227,82 @@ function DeletedForms({ user }: { user: User | null }) {
       return <IconComponent />;
     }
     return <KeyboardArrowDownIcon />;
-  };
+  }, []);
+
+  const contextValue = useMemo(() => ({
+    restoringFormId,
+    restoringResponseId,
+    isBulkRestoring,
+    expandedForms,
+    selectedFormIds,
+    selectedResponseIds,
+    hasFilters: hasActiveFilters,
+    onToggleSelectForm: handleToggleSelectForm,
+    onToggleSelectResponse: handleToggleSelectResponse,
+    onToggleExpand: handleToggleExpand,
+    onRestoreForm: handleRestoreForm,
+    onRestoreResponse: handleRestoreResponse,
+    onClearFilters: clearFilters,
+    getIconContent,
+  }), [restoringFormId, restoringResponseId, isBulkRestoring, expandedForms, selectedFormIds, selectedResponseIds, hasActiveFilters, handleToggleSelectForm, handleToggleSelectResponse, handleToggleExpand, handleRestoreForm, handleRestoreResponse, clearFilters, getIconContent]);
 
   return (
-    <Box sx={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", bgcolor: "#F8FAFC", overflow: "hidden" }}>
-      <Box sx={{ display: "flex", flexDirection: "column", width: "85%", minWidth: "900px", height: "100%" }}>
-        <DeletedFormsHeader />
+    <TrashProvider value={contextValue}>
+      <Box sx={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", bgcolor: "#F8FAFC", overflow: "hidden" }}>
+        <Box sx={{ display: "flex", flexDirection: "column", width: "85%", minWidth: "900px", height: "100%" }}>
+          <DeletedFormsHeader />
+          <DeletedFormsToolbar
+            activeTab={activeTab}
+            scopeParam={scopeParam}
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            hasResponsesFilter={hasResponsesFilter}
+            searchTerm={searchTerm}
+            createdBySearch={createdBySearch}
+            deletedBySearch={deletedBySearch}
+            onSearchChange={setSearchTerm}
+            onCreatedByChange={setCreatedBySearch}
+            onDeletedByChange={setDeletedBySearch}
+            onScopeChange={handleScopeChange}
+            onSortChange={handleSortChange}
+            onToggleHasResponses={handleToggleHasResponses}
+          />
 
-        <DeletedFormsToolbar
-          activeTab={activeTab}
-          scopeParam={scopeParam}
-          sortBy={sortBy}
-          sortDirection={sortDirection}
-          hasResponsesFilter={hasResponsesFilter}
-          searchTerm={searchTerm}
-          createdBySearch={createdBySearch}
-          deletedBySearch={deletedBySearch}
-          onSearchChange={setSearchTerm}
-          onCreatedByChange={setCreatedBySearch}
-          onDeletedByChange={setDeletedBySearch}
-          onScopeChange={handleScopeChange}
-          onSortChange={handleSortChange}
-          onToggleHasResponses={handleToggleHasResponses}
-        />
-
-        {/* Scrollable Container with Right-side scrollbar trick */}
-        <Box
-          className="main-page-content-wrapper deleted-forms-scroll-container"
-          sx={{ pt: 0, flex: 1, overflowY: "auto", direction: "ltr" }}
-          onScroll={handleScroll}
-        >
-          <Box sx={{ direction: "rtl", width: "100%" }}>
-            {activeTab === 0 ? (
-              <DeletedFormsList
-                deletedForms={deletedForms}
-                isLoading={isDeletedFormsLoading}
-                isFetchingNextPage={isFetchingNextDeletedForms}
-                selectedFormIds={selectedFormIds}
-                expandedForms={expandedForms}
-                restoringFormId={restoringFormId}
-                hasFilters={hasActiveFilters}
-                onToggleSelect={handleToggleSelectForm}
-                onToggleExpand={toggleFormExpanded}
-                onRestore={handleRestoreFormClick}
-                onClearFilters={clearFilters}
-                getIconContent={getIconContent}
-              />
-            ) : (
-              <DeletedResponsesList
-                activeFormsWithDeleted={activeFormsWithDeleted}
-                isLoading={isActiveFormsLoading}
-                isFetchingNextPage={isFetchingNextActiveForms}
-                selectedResponseIds={selectedResponseIds}
-                expandedForms={expandedForms}
-                restoringResponseId={restoringResponseId}
-                hasFilters={hasActiveFilters}
-                onToggleSelectResponse={handleToggleSelectResponse}
-                onToggleExpand={toggleFormExpanded}
-                onRestoreResponse={handleRestoreResponseClick}
-                onClearFilters={clearFilters}
-                getIconContent={getIconContent}
-              />
-            )}
+          <Box
+            className="main-page-content-wrapper deleted-forms-scroll-container"
+            sx={{ pt: 0, flex: 1, overflowY: "auto", direction: "ltr" }}
+            onScroll={handleScroll}
+          >
+            <Box sx={{ direction: "rtl", width: "100%" }}>
+              {activeTab === 0 ? (
+                <DeletedFormsList
+                  deletedForms={deletedForms}
+                  isLoading={isDeletedFormsLoading}
+                  isFetchingNextPage={isFetchingNextDeletedForms}
+                />
+              ) : (
+                <DeletedResponsesList
+                  activeFormsWithDeleted={activeFormsWithDeleted}
+                  isLoading={isActiveFormsLoading}
+                  isFetchingNextPage={isFetchingNextActiveForms}
+                />
+              )}
+            </Box>
           </Box>
-        </Box>
 
-        <DeletedFormsSelectionBar
-          selectedCount={activeTab === 0 ? selectedFormIds.size : selectedResponseIds.size}
-          activeTab={activeTab}
-          isBulkRestoring={isBulkRestoring}
-          onClearSelection={() => {
-            setSelectedFormIds(new Set());
-            setSelectedResponseIds(new Set());
-          }}
-          onBulkRestore={handleBulkRestore}
-        />
+          <DeletedFormsSelectionBar
+            selectedCount={activeTab === 0 ? selectedFormIds.size : selectedResponseIds.size}
+            activeTab={activeTab}
+            isBulkRestoring={isBulkRestoring}
+            onClearSelection={() => {
+              setSelectedFormIds(new Set());
+              setSelectedResponseIds(new Set());
+            }}
+            onBulkRestore={handleBulkRestore}
+          />
+        </Box>
       </Box>
-    </Box>
+    </TrashProvider>
   );
 }
 

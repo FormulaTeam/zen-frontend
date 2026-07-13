@@ -86,20 +86,7 @@ export const getDeletedForms = async (filter?: Filter): Promise<FormDto[]> => {
     }
   }
 
-  const params = {
-    filters: filtersParam,
-    search: searchParam,
-    sortBy: sortBy,
-    sortDirection: filter?.orderBy === IOrderBy.DESC ? "desc" : "asc",
-    limit: filter?.pageSize,
-    offset:
-      filter?.pageNumber !== undefined && filter?.pageSize !== undefined
-        ? (filter.pageNumber - 1) * filter.pageSize
-        : undefined,
-    createdBy: filter?.createdBy,
-    deletedBy: filter?.deletedBy,
-    hasResponses: filter?.hasResponses,
-  };
+  const params = mapFilterToApiParams(filter);
 
   try {
     const response = await apiClient.get<FormDto[]>("/forms/soft-deleted", {
@@ -120,23 +107,7 @@ export const getDeletedForms = async (filter?: Filter): Promise<FormDto[]> => {
  * @returns A promise that resolves to an array of forms with nested deleted responses.
  */
 export const getSoftDeletedResponsesGlobal = async (filter?: Filter): Promise<FormOverviewDto[]> => {
-  const sortBy = filter?.sortBy;
-  const query = filter?.query;
-
-  let searchParam: string | undefined;
-  if (typeof query === "string" && query.trim() !== "") {
-    searchParam = query;
-  }
-
-  const params = {
-    search: searchParam,
-    sortBy: sortBy,
-    sortDirection: filter?.orderBy === IOrderBy.DESC ? "desc" : "asc",
-    limit: filter?.pageSize,
-    offset: filter?.pageNumber !== undefined && filter?.pageSize !== undefined ? (filter.pageNumber - 1) * filter.pageSize : undefined,
-    createdBy: filter?.createdBy,
-    deletedBy: filter?.deletedBy,
-  };
+  const params = mapFilterToApiParams(filter);
 
   try {
     const response = await apiClient.get<FormOverviewDto[]>("/forms/responses/soft-deleted", {

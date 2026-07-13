@@ -2,29 +2,18 @@ import React from "react";
 import { Box, Card, Typography, Tooltip, IconButton, Collapse, Stack } from "@mui/material";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { DeletedFormWithResponses } from "../types";
+import { useTrash } from "../context/TrashContext";
 import DeletedResponseRow from "./DeletedResponseRow";
 
 interface ActiveFormWithDeletedResponsesCardProps {
   form: DeletedFormWithResponses;
-  isExpanded: boolean;
-  selectedResponseIds: Set<string>;
-  restoringResponseId: string | null;
-  onToggleExpand: (id: number) => void;
-  onToggleSelectResponse: (id: string) => void;
-  onRestoreResponse: (formId: number, responseId: string) => void;
-  getIconContent: (icon: string | null) => React.ReactNode;
 }
 
 const ActiveFormWithDeletedResponsesCard: React.FC<ActiveFormWithDeletedResponsesCardProps> = ({
   form,
-  isExpanded,
-  selectedResponseIds,
-  restoringResponseId,
-  onToggleExpand,
-  onToggleSelectResponse,
-  onRestoreResponse,
-  getIconContent,
 }) => {
+  const { expandedForms, onToggleExpand, getIconContent } = useTrash();
+  const isExpanded = !!expandedForms[form.id];
   const responsesCount = (form as any).responsesCount ?? 0;
 
   return (
@@ -48,69 +37,7 @@ const ActiveFormWithDeletedResponsesCard: React.FC<ActiveFormWithDeletedResponse
           cursor: "pointer",
         }}
         onClick={() => onToggleExpand(form.id)}>
-        <IconButton
-          sx={{
-            width: "32px",
-            height: "32px",
-            bgcolor: "#ffffff",
-            border: "1px solid #E2E8F0",
-            borderRadius: "4px",
-            color: "#0F172B",
-            boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
-            "&:hover": { bgcolor: "#f8fafc" },
-          }}>
-          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-        </IconButton>
-
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            gap: 2,
-          }}>
-          {/* Layout Mandate: textAlign right for name and response count */}
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 600,
-              fontSize: "20px",
-              color: "#020618",
-              textAlign: "right",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              gap: 1.5,
-            }}>
-            <Typography
-              component="span"
-              sx={{
-                fontSize: "18px",
-                color: "#62748E",
-                fontWeight: 400,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 0.5,
-              }}>
-              <span>תגובות</span>
-              <span dir="ltr">{responsesCount}</span>
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ fontSize: "18px", color: "#020618", fontWeight: 400 }}>
-              ←
-            </Typography>
-            <Tooltip title="מזהה הטופס" arrow placement="top">
-              <Typography
-                component="span"
-                sx={{ fontSize: "16px", color: "#020618", fontWeight: 400, cursor: "help" }}>
-                {form.id}
-              </Typography>
-            </Tooltip>
-            {form.name}
-          </Typography>
-
+        <Stack direction="row" alignItems="center" gap={2}>
           <Box
             sx={{
               width: "40px",
@@ -126,26 +53,47 @@ const ActiveFormWithDeletedResponsesCard: React.FC<ActiveFormWithDeletedResponse
             }}>
             {getIconContent(form.icon)}
           </Box>
-        </Box>
+
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 600,
+              fontSize: "20px",
+              color: "#020618",
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+            }}>
+            {form.name}
+            <Tooltip title="מזהה הטופס" arrow placement="top">
+              <Typography component="span" sx={{ fontSize: "16px", color: "#020618", fontWeight: 400, cursor: "help" }}>
+                {form.id}
+              </Typography>
+            </Tooltip>
+            <Typography component="span" sx={{ fontSize: "18px", color: "#020618", fontWeight: 400 }}>
+              ←
+            </Typography>
+            <Typography component="span" sx={{ fontSize: "18px", color: "#62748E", fontWeight: 400 }}>
+              {responsesCount} תגובות
+            </Typography>
+          </Typography>
+        </Stack>
+
+        <IconButton size="small" sx={{ color: "#62748E" }}>
+          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </IconButton>
       </Box>
 
       <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-        <Box sx={{ bgcolor: "#ffffff", borderTop: "1px solid #E2E8F0" }}>
+        <Box sx={{ bgcolor: "rgba(241, 245, 249, 0.4)", px: 3, py: 2, borderTop: "1px solid #E2E8F0" }}>
           {form.responses?.length ? (
-            <Stack spacing={0}>
-              {form.responses.map((response: any) => (
-                <DeletedResponseRow
-                  key={response.id}
-                  response={response}
-                  isSelected={selectedResponseIds.has(response.id)}
-                  onToggleSelect={onToggleSelectResponse}
-                />
+            <Stack spacing={1}>
+              {form.responses.map((resp) => (
+                <DeletedResponseRow key={resp.id} response={resp} />
               ))}
             </Stack>
           ) : (
-            <Typography
-              variant="body2"
-              sx={{ textAlign: "center", py: 2, color: "text.secondary" }}>
+            <Typography variant="body2" sx={{ textAlign: "center", py: 2, color: "text.secondary" }}>
               אין תגובות שנמחקו
             </Typography>
           )}

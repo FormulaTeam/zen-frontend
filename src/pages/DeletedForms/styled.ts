@@ -75,3 +75,39 @@ export const CustomTab = muiStyled(Tab)(() => ({
   fontSize: "20px",
 }));
 
+export const StyledToolbarInput = muiStyled("input")(({ theme }) => ({
+  width: "100%",
+  height: "100%",
+  boxSizing: "border-box",
+  borderRadius: "4px",
+  border: `1px solid ${theme.palette.divider}`,
+  paddingRight: "38px",
+  paddingLeft: "12px",
+  fontSize: "14px",
+  fontWeight: 500,
+  fontFamily: "Heebo, sans-serif",
+  backgroundColor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
+  outline: "none",
+  direction: "rtl",
+  "&:focus": {
+    borderColor: theme.palette.primary.main,
+  },
+  "&::placeholder": {
+    color: theme.palette.text.disabled,
+  },
+}));
+
+export const FilterButton = muiStyled(Button)(({ theme }) => ({
+  height: "36px",
+  bgcolor: theme.palette.background.paper,
+  borderColor: theme.palette.divider,
+  color: theme.palette.text.primary,
+  textTransform: "none",
+  borderRadius: "4px",
+  "&:hover": {
+    backgroundColor: theme.palette.action.hover,
+    borderColor: theme.palette.action.active,
+  },
+}));
+

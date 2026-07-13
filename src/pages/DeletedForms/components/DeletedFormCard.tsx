@@ -13,32 +13,31 @@ import {
 } from "@mui/material";
 import { Eye, EyeOff, RotateCcw } from "lucide-react";
 import { DeletedFormWithResponses } from "../types";
+import { useTrash } from "../context/TrashContext";
 import DeletedResponseRow from "./DeletedResponseRow";
 
 interface DeletedFormCardProps {
   form: DeletedFormWithResponses;
-  isSelected: boolean;
-  isExpanded: boolean;
-  isRestoring: boolean;
-  onToggleSelect: (id: number) => void;
-  onToggleExpand: (id: number) => void;
-  onRestore: (id: number) => void;
-  getIconContent: (icon: string | null) => React.ReactNode;
 }
 
-const DeletedFormCard: React.FC<DeletedFormCardProps> = ({
-  form,
-  isSelected,
-  isExpanded,
-  isRestoring,
-  onToggleSelect,
-  onToggleExpand,
-  onRestore,
-  getIconContent,
-}) => {
+const DeletedFormCard: React.FC<DeletedFormCardProps> = ({ form }) => {
   const theme = useTheme();
+  const {
+    selectedFormIds,
+    onToggleSelectForm,
+    expandedForms,
+    onToggleExpand,
+    restoringFormId,
+    onRestoreForm,
+    getIconContent,
+  } = useTrash();
 
-  const deletedDateObj = form.deletedAt ? new Date(form.deletedAt) : null;
+  const isSelected = selectedFormIds.has(form.id);
+  const isExpanded = !!expandedForms[form.id];
+  const isRestoring = restoringFormId === form.id;
+  const responsesCount = form.responsesCount ?? 0;
+
+  const deletedDateObj = (form as any).deletedAt ? new Date((form as any).deletedAt) : null;
   const formattedDate = deletedDateObj ? deletedDateObj.toLocaleDateString("he-IL") : "N/A";
   const formattedTime = deletedDateObj
     ? deletedDateObj.toLocaleTimeString("he-IL", {
@@ -47,7 +46,6 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({
         second: "2-digit",
       })
     : "";
-  const responsesCount = (form as any).responsesCount ?? 0;
 
   return (
     <Card
@@ -69,7 +67,7 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({
         <Stack direction="row" gap={2} alignItems="center">
           <Button
             disabled={isRestoring}
-            onClick={() => onRestore(form.id)}
+            onClick={() => onRestoreForm(form.id)}
             variant="contained"
             endIcon={
               isRestoring ? <CircularProgress size={14} color="inherit" /> : <RotateCcw size={16} />
@@ -156,7 +154,7 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({
 
             <Checkbox
               checked={isSelected}
-              onChange={() => onToggleSelect(form.id)}
+              onChange={() => onToggleSelectForm(form.id)}
               sx={{
                 p: 0,
                 width: "16px",
@@ -209,15 +207,8 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({
         <Box sx={{ bgcolor: "rgba(241, 245, 249, 0.4)", p: 2, borderRadius: "4px", mt: 1 }}>
           {form.responses?.length ? (
             <Stack spacing={1}>
-              {form.responses.map((response: any) => (
-                <DeletedResponseRow
-                  key={response.id}
-                  response={response}
-                  isSelected={false}
-                  onToggleSelect={() => {}}
-                  showCheckbox={false}
-                  hideDeletionMetadata={true}
-                />
+              {form.responses.map((resp) => (
+                <DeletedResponseRow key={resp.id} response={resp} hideCheckbox />
               ))}
             </Stack>
           ) : (

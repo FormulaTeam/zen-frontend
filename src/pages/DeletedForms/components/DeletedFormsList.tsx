@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Grid, CircularProgress } from "@mui/material";
 import { DeletedFormWithResponses } from "../types";
+import { useTrash } from "../context/TrashContext";
 import DeletedFormCard from "./DeletedFormCard";
 import DeletedFormsEmptyState from "./DeletedFormsEmptyState";
 
@@ -8,31 +9,15 @@ interface DeletedFormsListProps {
   deletedForms: DeletedFormWithResponses[];
   isLoading: boolean;
   isFetchingNextPage: boolean;
-  selectedFormIds: Set<number>;
-  expandedForms: Record<number, boolean>;
-  restoringFormId: number | null;
-  hasFilters: boolean;
-  onToggleSelect: (id: number) => void;
-  onToggleExpand: (id: number) => void;
-  onRestore: (id: number) => void;
-  onClearFilters: () => void;
-  getIconContent: (icon: string | null) => React.ReactNode;
 }
 
 const DeletedFormsList: React.FC<DeletedFormsListProps> = ({
   deletedForms,
   isLoading,
   isFetchingNextPage,
-  selectedFormIds,
-  expandedForms,
-  restoringFormId,
-  hasFilters,
-  onToggleSelect,
-  onToggleExpand,
-  onRestore,
-  onClearFilters,
-  getIconContent,
 }) => {
+  const { hasFilters, onClearFilters } = useTrash();
+
   if (isLoading && deletedForms.length === 0) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -50,16 +35,7 @@ const DeletedFormsList: React.FC<DeletedFormsListProps> = ({
       <Grid container spacing={2} columns={12}>
         {deletedForms.map((form) => (
           <Grid key={form.id} size={{ xs: 12 }}>
-            <DeletedFormCard
-              form={form}
-              isSelected={selectedFormIds.has(form.id)}
-              isExpanded={!!expandedForms[form.id]}
-              isRestoring={restoringFormId === form.id}
-              onToggleSelect={onToggleSelect}
-              onToggleExpand={onToggleExpand}
-              onRestore={onRestore}
-              getIconContent={getIconContent}
-            />
+            <DeletedFormCard form={form} />
           </Grid>
         ))}
         {isFetchingNextPage && (

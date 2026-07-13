@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Grid, CircularProgress } from "@mui/material";
 import { DeletedFormWithResponses } from "../types";
+import { useTrash } from "../context/TrashContext";
 import ActiveFormWithDeletedResponsesCard from "./ActiveFormWithDeletedResponsesCard";
 import DeletedFormsEmptyState from "./DeletedFormsEmptyState";
 
@@ -8,31 +9,15 @@ interface DeletedResponsesListProps {
   activeFormsWithDeleted: DeletedFormWithResponses[];
   isLoading: boolean;
   isFetchingNextPage: boolean;
-  selectedResponseIds: Set<string>;
-  expandedForms: Record<number, boolean>;
-  restoringResponseId: string | null;
-  hasFilters: boolean;
-  onToggleSelectResponse: (id: string) => void;
-  onToggleExpand: (id: number) => void;
-  onRestoreResponse: (formId: number, responseId: string) => void;
-  onClearFilters: () => void;
-  getIconContent: (icon: string | null) => React.ReactNode;
 }
 
 const DeletedResponsesList: React.FC<DeletedResponsesListProps> = ({
   activeFormsWithDeleted,
   isLoading,
   isFetchingNextPage,
-  selectedResponseIds,
-  expandedForms,
-  restoringResponseId,
-  hasFilters,
-  onToggleSelectResponse,
-  onToggleExpand,
-  onRestoreResponse,
-  onClearFilters,
-  getIconContent,
 }) => {
+  const { hasFilters, onClearFilters } = useTrash();
+
   if (isLoading && activeFormsWithDeleted.length === 0) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -50,16 +35,7 @@ const DeletedResponsesList: React.FC<DeletedResponsesListProps> = ({
       <Grid container spacing={2} columns={12}>
         {activeFormsWithDeleted.map((form) => (
           <Grid key={form.id} size={{ xs: 12 }}>
-            <ActiveFormWithDeletedResponsesCard
-              form={form}
-              isExpanded={!!expandedForms[form.id]}
-              selectedResponseIds={selectedResponseIds}
-              restoringResponseId={restoringResponseId}
-              onToggleExpand={onToggleExpand}
-              onToggleSelectResponse={onToggleSelectResponse}
-              onRestoreResponse={onRestoreResponse}
-              getIconContent={getIconContent}
-            />
+            <ActiveFormWithDeletedResponsesCard form={form} />
           </Grid>
         ))}
         {isFetchingNextPage && (
