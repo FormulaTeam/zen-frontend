@@ -72,26 +72,27 @@ const ToolbarInput = ({
       }}>
       {icon}
     </Box>
-
-    <input
-      value={value}
-      placeholder={placeholder}
-      onChange={(e) => onChange(e.target.value)}
-      style={{
-        width: "100%",
-        height: "100%",
-        borderRadius: 4,
-        border: "1px solid #E2E8F0",
-        paddingRight: 38,
-        paddingLeft: 12,
-        fontSize: 14,
-        fontWeight: 500,
-        fontFamily: "Heebo, sans-serif",
-        backgroundColor: "#fff",
-        outline: "none",
-        direction: "rtl",
-      }}
-    />
+<input
+  value={value}
+  placeholder={placeholder}
+  aria-label={placeholder}
+  onChange={(e) => onChange(e.target.value)}
+  style={{
+    width: "100%",
+    height: "100%",
+    boxSizing: "border-box",
+    borderRadius: 4,
+    border: "1px solid #E2E8F0",
+    paddingRight: 38,
+    paddingLeft: 12,
+    fontSize: 14,
+    fontWeight: 500,
+    fontFamily: "Heebo, sans-serif",
+    backgroundColor: "#fff",
+    outline: "none",
+    direction: "rtl",
+  }}
+/>
   </Box>
 );
 

@@ -10,6 +10,8 @@ import queryClient from "../../api/queryClient";
 import { IOrderBy, formsSortOption } from "../../types/enums/filtersAndSorts.enum";
 import { useDebounce } from "../../hooks/utilsHooks/useDebounce";
 
+import { User } from "../../utils/interfaces";
+
 // Modular Components
 import { DeletedFormWithResponses } from "./types";
 import DeletedFormsHeader from "./components/DeletedFormsHeader";
@@ -21,7 +23,7 @@ import DeletedFormsSelectionBar from "./components/DeletedFormsSelectionBar";
 /**
  * Main Trash Page displaying soft-deleted forms and responses in tabs.
  */
-function DeletedForms({ user }: { user: any }) {
+function DeletedForms({ user }: { user: User | null }) {
   const theme = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
 
