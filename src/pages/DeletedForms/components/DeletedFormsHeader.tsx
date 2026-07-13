@@ -10,7 +10,7 @@ const DeletedFormsHeader: React.FC = () => {
     <Box sx={{ py: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
       <Stack direction="row" spacing={1.5} alignItems="center">
         <Box sx={{ color: "#0F172B", display: "flex", alignItems: "center" }}>
-          <Trash2 size={24} strokeWidth={2.5} />
+          <Trash2 size={28} strokeWidth={2.2} />
         </Box>
         <Typography
           variant="h5"
