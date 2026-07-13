@@ -12,6 +12,7 @@ const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({ activeT
     selectedFormIds,
     selectedResponseIds,
     isBulkRestoring,
+    isAnyRestoring,
     onClearSelection,
     onBulkRestore,
   } = useRecycleBin();
@@ -47,6 +48,7 @@ const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({ activeT
       <Stack direction="row" spacing={2} alignItems="center">
         <Button
           variant="text"
+          disabled={isAnyRestoring}
           onClick={onClearSelection}
           startIcon={<XCircle size={18} />}
           sx={{
@@ -60,6 +62,7 @@ const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({ activeT
             textTransform: "none",
             gap: 1,
             boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.05)",
+            "&.Mui-disabled": { opacity: 0.5 },
             "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" },
           }}>
           ביטול בחירה
@@ -67,7 +70,7 @@ const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({ activeT
 
         <Button
           variant="contained"
-          disabled={isBulkRestoring}
+          disabled={isAnyRestoring}
           onClick={onBulkRestore}
           startIcon={
             isBulkRestoring ? (

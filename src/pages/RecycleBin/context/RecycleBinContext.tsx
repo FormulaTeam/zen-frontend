@@ -5,6 +5,7 @@ interface RecycleBinContextType {
   restoringFormId: number | null;
   restoringResponseId: string | null;
   isBulkRestoring: boolean;
+  isAnyRestoring: boolean;
   expandedForms: Record<number, boolean>;
   selectedFormIds: Set<number>;
   selectedResponseIds: Set<string>;

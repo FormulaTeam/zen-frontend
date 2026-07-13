@@ -248,10 +248,13 @@ function RecycleBin({ user }: { user: User | null }) {
     return <KeyboardArrowDownIcon />;
   }, []);
 
+  const isAnyRestoring = !!restoringFormId || !!restoringResponseId || isBulkRestoring;
+
   const contextValue = useMemo(() => ({
     restoringFormId,
     restoringResponseId,
     isBulkRestoring,
+    isAnyRestoring,
     expandedForms,
     selectedFormIds,
     selectedResponseIds,
@@ -265,7 +268,25 @@ function RecycleBin({ user }: { user: User | null }) {
     onBulkRestore: handleBulkRestore,
     onClearSelection: handleClearSelection,
     getIconContent,
-  }), [restoringFormId, restoringResponseId, isBulkRestoring, expandedForms, selectedFormIds, selectedResponseIds, hasActiveFilters, handleToggleSelectForm, handleToggleSelectResponse, handleToggleExpand, handleRestoreForm, handleRestoreResponse, clearFilters, handleBulkRestore, handleClearSelection, getIconContent]);
+  }), [
+    restoringFormId,
+    restoringResponseId,
+    isBulkRestoring,
+    isAnyRestoring,
+    expandedForms,
+    selectedFormIds,
+    selectedResponseIds,
+    hasActiveFilters,
+    handleToggleSelectForm,
+    handleToggleSelectResponse,
+    handleToggleExpand,
+    handleRestoreForm,
+    handleRestoreResponse,
+    clearFilters,
+    handleBulkRestore,
+    handleClearSelection,
+    getIconContent,
+  ]);
 
   return (
     <RecycleBinProvider value={contextValue}>

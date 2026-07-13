@@ -28,6 +28,7 @@ const RecycleBinFormCard: React.FC<RecycleBinFormCardProps> = ({ form }) => {
     expandedForms,
     onToggleExpand,
     restoringFormId,
+    isAnyRestoring,
     onRestoreForm,
     getIconContent,
   } = useRecycleBin();
@@ -67,7 +68,7 @@ const RecycleBinFormCard: React.FC<RecycleBinFormCardProps> = ({ form }) => {
         }}>
         <Stack direction="row" gap={2} alignItems="center">
           <Button
-            disabled={isRestoring}
+            disabled={isAnyRestoring}
             onClick={() => onRestoreForm(form.id)}
             variant="contained"
             endIcon={
@@ -155,6 +156,7 @@ const RecycleBinFormCard: React.FC<RecycleBinFormCardProps> = ({ form }) => {
 
             <Checkbox
               checked={isSelected}
+              disabled={isAnyRestoring}
               onChange={() => onToggleSelectForm(form.id)}
               sx={{
                 p: 0,
@@ -163,6 +165,7 @@ const RecycleBinFormCard: React.FC<RecycleBinFormCardProps> = ({ form }) => {
                 border: "1px solid #62748E",
                 borderRadius: "4px",
                 color: "transparent",
+                "&.Mui-disabled": { opacity: 0.5 },
                 "&.Mui-checked": { color: theme.palette.primary.main, border: "none" },
                 "& .MuiSvgIcon-root": { fontSize: 20 },
               }}

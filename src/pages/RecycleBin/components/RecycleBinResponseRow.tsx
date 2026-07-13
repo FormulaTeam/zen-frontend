@@ -31,6 +31,7 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({
     selectedResponseIds,
     onToggleSelectResponse,
     restoringResponseId,
+    isAnyRestoring,
     onRestoreResponse,
   } = useRecycleBin();
 
@@ -68,6 +69,7 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({
         {!hideCheckbox && (
           <Checkbox
             checked={isSelected}
+            disabled={isAnyRestoring}
             onChange={() => onToggleSelectResponse(response.id)}
             sx={{
               p: 0,
@@ -77,6 +79,7 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({
               borderRadius: "4px",
               color: "transparent",
               alignSelf: "center",
+              "&.Mui-disabled": { opacity: 0.5 },
               "&.Mui-checked": { color: theme.palette.primary.main, border: "none" },
               "& .MuiSvgIcon-root": { fontSize: 20 },
             }}
@@ -132,7 +135,7 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({
         </Stack>
         {!hideRestoreButton && (
           <Button
-            disabled={isRestoring}
+            disabled={isAnyRestoring}
             onClick={() => onRestoreResponse(response.formId, response.id)}
             variant="contained"
             endIcon={
