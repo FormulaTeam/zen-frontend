@@ -53,8 +53,8 @@ export const TopBar = muiStyled(Box)(({ theme }) => ({
   justifyContent: "space-between",
   alignItems: "center",
   width: "100%",
-  backgroundColor: theme.palette.primary.light + "20",
-  border: `1px solid ${theme.palette.primary.light}`,
+  backgroundColor: theme.palette.secondary.main,
+  border: `1px solid ${theme.palette.divider}`,
 }));
 
 export const TopBarWrapper = styled(Box)`
@@ -75,39 +75,42 @@ export const CustomTab = muiStyled(Tab)(() => ({
   fontSize: "20px",
 }));
 
-export const StyledToolbarInput = muiStyled("input")(({ theme }) => ({
-  width: "100%",
-  height: "100%",
-  boxSizing: "border-box",
-  borderRadius: "4px",
-  border: `1px solid ${theme.palette.divider}`,
-  paddingRight: "38px",
-  paddingLeft: "12px",
-  fontSize: "14px",
-  fontWeight: 500,
-  fontFamily: "Heebo, sans-serif",
-  backgroundColor: theme.palette.background.paper,
-  color: theme.palette.text.primary,
-  outline: "none",
-  direction: "rtl",
-  "&:focus": {
-    borderColor: theme.palette.primary.main,
-  },
-  "&::placeholder": {
-    color: theme.palette.text.disabled,
-  },
-}));
+export const StyledToolbarInput = styled.input`
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  padding-right: 38px;
+  padding-left: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Heebo", sans-serif;
+  background-color: #ffffff;
+  color: #020618;
+  outline: none;
+  direction: rtl;
+  &:focus {
+    border-color: #1e88e5;
+  }
+  &::placeholder {
+    color: #94a3b8;
+  }
+`;
 
 export const FilterButton = muiStyled(Button)(({ theme }) => ({
   height: "36px",
-  bgcolor: theme.palette.background.paper,
-  borderColor: theme.palette.divider,
+  backgroundColor: theme.palette.background.paper,
+  border: "1px solid #e2e8f0",
   color: theme.palette.text.primary,
   textTransform: "none",
   borderRadius: "4px",
+  fontSize: "13px",
+  fontWeight: 500,
+  fontFamily: "Heebo, sans-serif",
   "&:hover": {
     backgroundColor: theme.palette.action.hover,
-    borderColor: theme.palette.action.active,
+    borderColor: "#cbd5e1",
   },
 }));
 

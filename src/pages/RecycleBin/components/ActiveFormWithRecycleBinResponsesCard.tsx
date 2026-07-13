@@ -9,9 +9,9 @@ interface ActiveFormWithRecycleBinResponsesCardProps {
   form: RecycleBinItemWithResponses;
 }
 
-const ActiveFormWithRecycleBinResponsesCard: React.FC<ActiveFormWithRecycleBinResponsesCardProps> = ({
-  form,
-}) => {
+const ActiveFormWithRecycleBinResponsesCard: React.FC<
+  ActiveFormWithRecycleBinResponsesCardProps
+> = ({ form }) => {
   const { expandedForms, onToggleExpand, getIconContent } = useRecycleBin();
   const isExpanded = !!expandedForms[form.id];
   const responsesCount = (form as any).responsesCount ?? 0;
@@ -31,13 +31,13 @@ const ActiveFormWithRecycleBinResponsesCard: React.FC<ActiveFormWithRecycleBinRe
           py: 2,
           px: 3,
           display: "flex",
-          flexDirection: "row",
+          flexDirection: "row-reverse",
           justifyContent: "space-between",
           alignItems: "center",
           cursor: "pointer",
         }}
         onClick={() => onToggleExpand(form.id)}>
-        <Stack direction="row" alignItems="center" gap={2}>
+        <Stack direction="row-reverse" alignItems="center" gap={2}>
           <Box
             sx={{
               width: "40px",
@@ -62,19 +62,34 @@ const ActiveFormWithRecycleBinResponsesCard: React.FC<ActiveFormWithRecycleBinRe
               color: "#020618",
               display: "flex",
               alignItems: "center",
+              flexDirection: "row-reverse",
               gap: 1.5,
             }}>
             {form.name}
             <Tooltip title="מזהה הטופס" arrow placement="top">
-              <Typography component="span" sx={{ fontSize: "16px", color: "#020618", fontWeight: 400, cursor: "help" }}>
+              <Typography
+                component="span"
+                sx={{ fontSize: "16px", color: "#020618", fontWeight: 400, cursor: "help" }}>
                 {form.id}
               </Typography>
             </Tooltip>
-            <Typography component="span" sx={{ fontSize: "18px", color: "#020618", fontWeight: 400 }}>
+            <Typography
+              component="span"
+              sx={{ fontSize: "18px", color: "#020618", fontWeight: 400 }}>
               ←
             </Typography>
-            <Typography component="span" sx={{ fontSize: "18px", color: "#62748E", fontWeight: 400 }}>
-              {responsesCount} תגובות
+            <Typography
+              component="span"
+              sx={{
+                fontSize: "18px",
+                color: "#62748E",
+                fontWeight: 400,
+                direction: "ltr",
+              }}>
+              <Box component="span" sx={{ direction: "ltr", display: "inline-block" }}>
+                {responsesCount}
+              </Box>{" "}
+              תגובות
             </Typography>
           </Typography>
         </Stack>
@@ -85,7 +100,13 @@ const ActiveFormWithRecycleBinResponsesCard: React.FC<ActiveFormWithRecycleBinRe
       </Box>
 
       <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-        <Box sx={{ bgcolor: "rgba(241, 245, 249, 0.4)", px: 3, py: 2, borderTop: "1px solid #E2E8F0" }}>
+        <Box
+          sx={{
+            bgcolor: "rgba(241, 245, 249, 0.4)",
+            px: 3,
+            py: 2,
+            borderTop: "1px solid #E2E8F0",
+          }}>
           {form.responses?.length ? (
             <Stack spacing={1}>
               {form.responses.map((resp) => (
@@ -93,7 +114,9 @@ const ActiveFormWithRecycleBinResponsesCard: React.FC<ActiveFormWithRecycleBinRe
               ))}
             </Stack>
           ) : (
-            <Typography variant="body2" sx={{ textAlign: "center", py: 2, color: "text.secondary" }}>
+            <Typography
+              variant="body2"
+              sx={{ textAlign: "center", py: 2, color: "text.secondary" }}>
               אין תגובות שנמחקו
             </Typography>
           )}

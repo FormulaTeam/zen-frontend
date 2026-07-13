@@ -5,6 +5,7 @@ import {
   MenuItem,
   Typography,
   Menu,
+  useTheme,
 } from "@mui/material";
 import {
   Search,
@@ -36,7 +37,7 @@ interface RecycleBinToolbarProps {
 }
 
 const controlTextSx = {
-  fontSize: 14,
+  fontSize: 13,
   fontWeight: 500,
   fontFamily: "Heebo, sans-serif",
 };
@@ -46,7 +47,9 @@ const ScopeOption: React.FC<{ value: string; isSelected?: boolean }> = ({ value 
   return (
     <Stack direction="row" alignItems="center" spacing={1} sx={{ width: "100%" }}>
       {isForms ? <FileText size={18} /> : <MessageSquare size={18} />}
-      <Typography sx={controlTextSx}>{isForms ? "טפסים שנמחקו" : "תגובות שנמחקו"}</Typography>
+      <Typography sx={{ ...controlTextSx, color: "inherit" }}>
+        {isForms ? "טפסים שנמחקו" : "תגובות שנמחקו"}
+      </Typography>
     </Stack>
   );
 };
@@ -95,6 +98,7 @@ const RecycleBinToolbar: React.FC<RecycleBinToolbarProps> = ({
   onSortChange,
   onToggleHasResponses,
 }) => {
+  const theme = useTheme();
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const [scopeAnchorEl, setScopeAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -146,7 +150,11 @@ const RecycleBinToolbar: React.FC<RecycleBinToolbarProps> = ({
             onClick={onToggleHasResponses}
             variant="outlined"
             startIcon={
-              hasResponsesFilter ? <CheckSquare size={18} color="primary" /> : <Square size={18} />
+              hasResponsesFilter ? (
+                <CheckSquare size={18} color={theme.palette.primary.main} />
+              ) : (
+                <Square size={18} />
+              )
             }
             sx={{ width: 210, gap: 1.5 }}>
             <Typography sx={controlTextSx}>טפסים עם תגובות</Typography>

@@ -45,20 +45,30 @@ function RecycleBin({ user }: { user: User | null }) {
 
   const hasActiveFilters = !!(searchTerm || createdBySearch || deletedBySearch || hasResponsesFilter);
 
-  const {
-    data: deletedFormsData,
-    isLoading: isDeletedFormsLoading,
-    fetchNextPage: fetchNextDeletedForms,
-    hasNextPage: hasNextDeletedForms,
-    isFetchingNextPage: isFetchingNextDeletedForms,
-  } = useGetRecycleBinForms({
+  const formsFilter = useMemo(() => ({
     query: debouncedSearchTerm || undefined,
     createdBy: debouncedCreatedBy || undefined,
     deletedBy: debouncedDeletedBy || undefined,
     sortBy,
     orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
     hasResponses: hasResponsesFilter,
-  });
+  }), [debouncedSearchTerm, debouncedCreatedBy, debouncedDeletedBy, sortBy, sortDirection, hasResponsesFilter]);
+
+  const responsesFilter = useMemo(() => ({
+    query: debouncedSearchTerm || undefined,
+    createdBy: debouncedCreatedBy || undefined,
+    deletedBy: debouncedDeletedBy || undefined,
+    sortBy: sortBy === formsSortOption.DeletedAt ? formsSortOption.CreatedAt : sortBy,
+    orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
+  }), [debouncedSearchTerm, debouncedCreatedBy, debouncedDeletedBy, sortBy, sortDirection]);
+
+  const {
+    data: deletedFormsData,
+    isLoading: isDeletedFormsLoading,
+    fetchNextPage: fetchNextDeletedForms,
+    hasNextPage: hasNextDeletedForms,
+    isFetchingNextPage: isFetchingNextDeletedForms,
+  } = useGetRecycleBinForms(formsFilter);
 
   const {
     data: activeFormsData,
@@ -66,16 +76,17 @@ function RecycleBin({ user }: { user: User | null }) {
     fetchNextPage: fetchNextActiveForms,
     hasNextPage: hasNextActiveForms,
     isFetchingNextPage: isFetchingNextActiveForms,
-  } = useGetRecycleBinResponses({
-    query: debouncedSearchTerm || undefined,
-    createdBy: debouncedCreatedBy || undefined,
-    deletedBy: debouncedDeletedBy || undefined,
-    sortBy: sortBy === formsSortOption.DeletedAt ? formsSortOption.CreatedAt : sortBy,
-    orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
-  });
+  } = useGetRecycleBinResponses(responsesFilter);
 
-  const deletedForms = useMemo(() => (deletedFormsData?.pages.flat() as RecycleBinItemWithResponses[]) || [], [deletedFormsData]);
-  const activeFormsWithDeleted = useMemo(() => (activeFormsData?.pages.flat() as RecycleBinItemWithResponses[]) || [], [activeFormsData]);
+  const deletedForms = useMemo(() => {
+    if (!deletedFormsData?.pages) return [];
+    return deletedFormsData.pages.flat() as RecycleBinItemWithResponses[];
+  }, [deletedFormsData]);
+
+  const activeFormsWithDeleted = useMemo(() => {
+    if (!activeFormsData?.pages) return [];
+    return activeFormsData.pages.flat() as RecycleBinItemWithResponses[];
+  }, [activeFormsData]);
 
   const handleToggleSelectForm = useCallback((id: number) => {
     setSelectedFormIds((prev) => {
@@ -166,7 +177,12 @@ function RecycleBin({ user }: { user: User | null }) {
     }
   }, [activeTab, hasNextDeletedForms, isFetchingNextDeletedForms, fetchNextDeletedForms, hasNextActiveForms, isFetchingNextActiveForms, fetchNextActiveForms]);
 
-  const handleBulkRestore = async () => {
+  const handleClearSelection = useCallback(() => {
+    setSelectedFormIds(new Set());
+    setSelectedResponseIds(new Set());
+  }, []);
+
+  const handleBulkRestore = useCallback(async () => {
     setIsBulkRestoring(true);
     let successCount = 0;
     try {
@@ -182,7 +198,7 @@ function RecycleBin({ user }: { user: User | null }) {
         }
         if (successCount > 0) {
           toast.success(`${successCount} טפסים שוחזרו בהצלחה`);
-          setSelectedFormIds(new Set());
+          handleClearSelection();
           queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] });
         }
       } else {
@@ -207,7 +223,7 @@ function RecycleBin({ user }: { user: User | null }) {
         }
         if (successCount > 0) {
           toast.success(`${successCount} תגובות שוחזרו בהצלחה`);
-          setSelectedResponseIds(new Set());
+          handleClearSelection();
           queryClient.invalidateQueries({ queryKey: ["forms", "responses", "soft-deleted"] });
           queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] });
         }
@@ -217,7 +233,7 @@ function RecycleBin({ user }: { user: User | null }) {
     } finally {
       setIsBulkRestoring(false);
     }
-  };
+  }, [activeTab, selectedFormIds, selectedResponseIds, activeFormsWithDeleted, handleClearSelection]);
 
   const getIconContent = useCallback((iconName: string | null) => {
     const iconSrc = getFormIconByName(iconName ?? undefined);
@@ -227,11 +243,6 @@ function RecycleBin({ user }: { user: User | null }) {
       return <IconComponent />;
     }
     return <KeyboardArrowDownIcon />;
-  }, []);
-
-  const handleClearSelection = useCallback(() => {
-    setSelectedFormIds(new Set());
-    setSelectedResponseIds(new Set());
   }, []);
 
   const contextValue = useMemo(() => ({
@@ -255,7 +266,7 @@ function RecycleBin({ user }: { user: User | null }) {
 
   return (
     <RecycleBinProvider value={contextValue}>
-      <Box sx={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", bgcolor: "#F8FAFC", overflow: "hidden" }}>
+      <Box className="main-page-container" sx={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", bgcolor: "#F8FAFC", overflow: "hidden" }}>
         <Box sx={{ display: "flex", flexDirection: "column", width: "85%", minWidth: "900px", height: "100%" }}>
           <RecycleBinHeader />
           <RecycleBinToolbar
