@@ -2,12 +2,10 @@ import React, { useState } from "react";
 import {
   Box,
   Stack,
-  Select,
   MenuItem,
   Typography,
   Button,
   Menu,
-  SelectChangeEvent,
   useTheme,
 } from "@mui/material";
 import {
@@ -39,7 +37,7 @@ interface DeletedFormsToolbarProps {
 }
 
 const controlTextSx = {
-  fontSize: 14,
+  fontSize: 9,
   fontWeight: 500,
   fontFamily: "Heebo, sans-serif",
   color: "#0F172B",
@@ -59,7 +57,7 @@ const ToolbarInput = ({
   <Box
     sx={{
       position: "relative",
-      width: 210,
+      width: 192,
       height: 36,
     }}>
     <Box
@@ -82,17 +80,15 @@ const ToolbarInput = ({
       style={{
         width: "100%",
         height: "100%",
-        boxSizing: "border-box",
         borderRadius: 4,
         border: "1px solid #E2E8F0",
         paddingRight: 38,
         paddingLeft: 12,
-        fontSize: 17,
-        fontWeight: 500,
+        fontSize: 14,
         fontFamily: "Heebo, sans-serif",
         backgroundColor: "#fff",
         outline: "none",
-        direction: "rtl",
+        textAlign: "right",
       }}
     />
   </Box>
@@ -117,32 +113,27 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
   const theme = useTheme();
 
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
+  const [scopeAnchorEl, setScopeAnchorEl] = useState<null | HTMLElement>(null);
 
-  const handleScopeChange = (event: SelectChangeEvent<string>) => {
-    onScopeChange(event.target.value);
+  const handleScopeChangeClick = (scope: string) => {
+    onScopeChange(scope);
+    setScopeAnchorEl(null);
   };
 
   const handleSortSelect = (newSortBy: string, direction: "asc" | "desc") => {
     onSortChange(newSortBy, direction);
     setSortAnchorEl(null);
   };
-const renderScopeOption = (value: "forms" | "responses", showChevron = false) => (
-  <Stack
-    direction="row"
-    alignItems="center"
-    justifyContent="space-between"
-    sx={{ width: "100%", gap: 1 }}>
-    <Stack direction="row" alignItems="center" spacing={1}>
-      {value === "forms" ? <FileText size={18} /> : <MessageSquare size={18} />}
 
-      <Typography sx={controlTextSx}>
-        {value === "forms" ? "טפסים שנמחקו" : "תגובות שנמחקו"}
-      </Typography>
-    </Stack>
-
-    {showChevron && <ChevronDown size={18} />}
-  </Stack>
-);
+  const renderScopeLabel = (value: string) => {
+    const isForms = value === "forms";
+    return (
+      <Stack direction="row" alignItems="center" spacing={1}>
+        {isForms ? <FileText size={18} /> : <MessageSquare size={18} />}
+        <Typography sx={controlTextSx}>{isForms ? "טפסים שנמחקו" : "תגובות שנמחקו"}</Typography>
+      </Stack>
+    );
+  };
 
   return (
     <Box
@@ -203,26 +194,33 @@ const renderScopeOption = (value: "forms" | "responses", showChevron = false) =>
           </Button>
         )}
 
-        <Box sx={{ width: 235 }}>
-          <Select
-            value={scopeParam === "responses" ? "responses" : "forms"}
-            onChange={handleScopeChange}
-            IconComponent={() => null}
-            renderValue={(value) => renderScopeOption(value as "forms" | "responses", true)}
+        <Box>
+          <Button
+            onClick={(e) => setScopeAnchorEl(e.currentTarget)}
+            endIcon={<ChevronDown size={18} />}
             sx={{
-              width: "100%",
+              width: 205,
               height: 36,
+              justifyContent: "space-between",
               bgcolor: "#fff",
               border: "1px solid #E2E8F0",
               borderRadius: 1,
-              "& .MuiOutlinedInput-notchedOutline": {
-                border: "none",
-              },
+              textTransform: "none",
+              ...controlTextSx,
             }}>
-            <MenuItem value="responses">{renderScopeOption("responses")}</MenuItem>
-
-            <MenuItem value="forms">{renderScopeOption("forms")}</MenuItem>
-          </Select>
+            {renderScopeLabel(scopeParam === "responses" ? "responses" : "forms")}
+          </Button>
+          <Menu
+            anchorEl={scopeAnchorEl}
+            open={Boolean(scopeAnchorEl)}
+            onClose={() => setScopeAnchorEl(null)}>
+            <MenuItem onClick={() => handleScopeChangeClick("responses")} sx={controlTextSx}>
+              {renderScopeLabel("responses")}
+            </MenuItem>
+            <MenuItem onClick={() => handleScopeChangeClick("forms")} sx={controlTextSx}>
+              {renderScopeLabel("forms")}
+            </MenuItem>
+          </Menu>
         </Box>
 
         <Box>
