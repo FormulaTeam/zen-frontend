@@ -1,18 +1,18 @@
 import React from "react";
 import { Box, Card, Typography, Tooltip, IconButton, Collapse, Stack } from "@mui/material";
 import { ChevronUp, ChevronDown } from "lucide-react";
-import { DeletedFormWithResponses } from "../types";
-import { useTrash } from "../context/TrashContext";
-import DeletedResponseRow from "./DeletedResponseRow";
+import { RecycleBinItemWithResponses } from "../types";
+import { useRecycleBin } from "../context/RecycleBinContext";
+import RecycleBinResponseRow from "./RecycleBinResponseRow";
 
-interface ActiveFormWithDeletedResponsesCardProps {
-  form: DeletedFormWithResponses;
+interface ActiveFormWithRecycleBinResponsesCardProps {
+  form: RecycleBinItemWithResponses;
 }
 
-const ActiveFormWithDeletedResponsesCard: React.FC<ActiveFormWithDeletedResponsesCardProps> = ({
+const ActiveFormWithRecycleBinResponsesCard: React.FC<ActiveFormWithRecycleBinResponsesCardProps> = ({
   form,
 }) => {
-  const { expandedForms, onToggleExpand, getIconContent } = useTrash();
+  const { expandedForms, onToggleExpand, getIconContent } = useRecycleBin();
   const isExpanded = !!expandedForms[form.id];
   const responsesCount = (form as any).responsesCount ?? 0;
 
@@ -89,7 +89,7 @@ const ActiveFormWithDeletedResponsesCard: React.FC<ActiveFormWithDeletedResponse
           {form.responses?.length ? (
             <Stack spacing={1}>
               {form.responses.map((resp) => (
-                <DeletedResponseRow key={resp.id} response={resp} />
+                <RecycleBinResponseRow key={resp.id} response={resp} />
               ))}
             </Stack>
           ) : (
@@ -103,4 +103,4 @@ const ActiveFormWithDeletedResponsesCard: React.FC<ActiveFormWithDeletedResponse
   );
 };
 
-export default ActiveFormWithDeletedResponsesCard;
+export default ActiveFormWithRecycleBinResponsesCard;

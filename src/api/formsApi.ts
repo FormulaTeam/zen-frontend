@@ -58,12 +58,12 @@ export const getForms = async (filter?: Filter): Promise<FormDto[]> => {
 };
 
 /**
- * Fetch all soft-deleted forms.
+ * Fetch all soft-deleted forms for the recycle bin.
  *
- * @param filter - Optional filter parameters for querying deleted forms.
+ * @param filter - Optional filter parameters for querying items.
  * @returns A promise that resolves to an array of forms.
  */
-export const getDeletedForms = async (filter?: Filter): Promise<FormDto[]> => {
+export const getRecycleBinForms = async (filter?: Filter): Promise<FormDto[]> => {
   const sortBy = filter?.sortBy;
 
   const responseFilters = filter?.responseFilters;
@@ -95,18 +95,18 @@ export const getDeletedForms = async (filter?: Filter): Promise<FormDto[]> => {
     });
     return response?.data || [];
   } catch (error) {
-    console.error("Failed to fetch deleted forms:", error);
+    console.error("Failed to fetch recycle bin forms:", error);
     throw error;
   }
 };
 
 /**
- * Fetch all active forms with individually soft-deleted responses.
+ * Fetch all active forms with individually soft-deleted responses (Recycle Bin view).
  *
- * @param filter - Optional filter parameters for querying forms.
+ * @param filter - Optional filter parameters for querying items.
  * @returns A promise that resolves to an array of forms with nested deleted responses.
  */
-export const getSoftDeletedResponsesGlobal = async (filter?: Filter): Promise<FormOverviewDto[]> => {
+export const getRecycleBinResponses = async (filter?: Filter): Promise<FormOverviewDto[]> => {
   const params = mapFilterToApiParams(filter);
 
   try {
@@ -116,7 +116,7 @@ export const getSoftDeletedResponsesGlobal = async (filter?: Filter): Promise<Fo
     });
     return response?.data || [];
   } catch (error) {
-    console.error("Failed to fetch active forms with deleted responses:", error);
+    console.error("Failed to fetch recycle bin responses:", error);
     throw error;
   }
 };
@@ -452,11 +452,11 @@ export const useGetComparatorsByFieldType = () => {
   });
 };
 
-export const useGetDeletedForms = (filter?: Filter) => {
+export const useGetRecycleBinForms = (filter?: Filter) => {
   const PAGE_SIZE = 20;
   return useInfiniteQuery({
     queryKey: ["forms", "soft-deleted", filter],
-    queryFn: ({ pageParam = 1 }) => getDeletedForms({ ...filter, pageSize: PAGE_SIZE, pageNumber: pageParam as number }),
+    queryFn: ({ pageParam = 1 }) => getRecycleBinForms({ ...filter, pageSize: PAGE_SIZE, pageNumber: pageParam as number }),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.length === PAGE_SIZE ? allPages.length + 1 : undefined;
@@ -464,11 +464,11 @@ export const useGetDeletedForms = (filter?: Filter) => {
   });
 };
 
-export const useGetSoftDeletedResponsesGlobal = (filter?: Filter) => {
+export const useGetRecycleBinResponses = (filter?: Filter) => {
   const PAGE_SIZE = 20;
   return useInfiniteQuery({
     queryKey: ["forms", "responses", "soft-deleted", filter],
-    queryFn: ({ pageParam = 1 }) => getSoftDeletedResponsesGlobal({ ...filter, pageSize: PAGE_SIZE, pageNumber: pageParam as number }),
+    queryFn: ({ pageParam = 1 }) => getRecycleBinResponses({ ...filter, pageSize: PAGE_SIZE, pageNumber: pageParam as number }),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.length === PAGE_SIZE ? allPages.length + 1 : undefined;

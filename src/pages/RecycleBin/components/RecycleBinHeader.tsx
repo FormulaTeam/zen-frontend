@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Box, Stack, Typography, IconButton } from "@mui/material";
 import { Trash2, LogOut } from "lucide-react";
 
-const DeletedFormsHeader: React.FC = () => {
+const RecycleBinHeader: React.FC = () => {
   const navigate = useNavigate();
 
   return (
@@ -38,4 +38,4 @@ const DeletedFormsHeader: React.FC = () => {
   );
 };
 
-export default DeletedFormsHeader;
+export default RecycleBinHeader;

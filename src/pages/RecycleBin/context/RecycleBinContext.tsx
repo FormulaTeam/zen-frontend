@@ -1,7 +1,7 @@
 import React, { createContext, useContext, ReactNode } from "react";
-import { DeletedFormWithResponses } from "../types";
+import { RecycleBinItemWithResponses } from "../types";
 
-interface TrashContextType {
+interface RecycleBinContextType {
   restoringFormId: number | null;
   restoringResponseId: string | null;
   isBulkRestoring: boolean;
@@ -18,17 +18,17 @@ interface TrashContextType {
   getIconContent: (icon: string | null) => React.ReactNode;
 }
 
-const TrashContext = createContext<TrashContextType | undefined>(undefined);
+const RecycleBinContext = createContext<RecycleBinContextType | undefined>(undefined);
 
-export const TrashProvider: React.FC<{ value: TrashContextType; children: ReactNode }> = ({
+export const RecycleBinProvider: React.FC<{ value: RecycleBinContextType; children: ReactNode }> = ({
   value,
   children,
-}) => <TrashContext.Provider value={value}>{children}</TrashContext.Provider>;
+}) => <RecycleBinContext.Provider value={value}>{children}</RecycleBinContext.Provider>;
 
-export const useTrash = () => {
-  const context = useContext(TrashContext);
+export const useRecycleBin = () => {
+  const context = useContext(RecycleBinContext);
   if (!context) {
-    throw new Error("useTrash must be used within a TrashProvider");
+    throw new Error("useRecycleBin must be used within a RecycleBinProvider");
   }
   return context;
 };

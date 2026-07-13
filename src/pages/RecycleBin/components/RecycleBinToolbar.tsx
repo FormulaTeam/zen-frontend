@@ -18,7 +18,7 @@ import {
 import { sortOptions } from "../types";
 import { StyledToolbarInput, FilterButton } from "../styled";
 
-interface DeletedFormsToolbarProps {
+interface RecycleBinToolbarProps {
   activeTab: number;
   scopeParam: string;
   sortBy: string;
@@ -41,7 +41,7 @@ const controlTextSx = {
   fontFamily: "Heebo, sans-serif",
 };
 
-const ScopeOption: React.FC<{ value: string; isSelected?: boolean }> = ({ value, isSelected }) => {
+const ScopeOption: React.FC<{ value: string; isSelected?: boolean }> = ({ value }) => {
   const isForms = value === "forms";
   return (
     <Stack direction="row" alignItems="center" spacing={1} sx={{ width: "100%" }}>
@@ -79,7 +79,7 @@ const ToolbarInput: React.FC<{
   </Box>
 );
 
-const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
+const RecycleBinToolbar: React.FC<RecycleBinToolbarProps> = ({
   activeTab,
   scopeParam,
   sortBy,
@@ -210,4 +210,4 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
   );
 };
 
-export default DeletedFormsToolbar;
+export default RecycleBinToolbar;

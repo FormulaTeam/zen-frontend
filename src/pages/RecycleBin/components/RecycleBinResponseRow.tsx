@@ -1,25 +1,22 @@
 import React from "react";
 import { Box, Stack, Typography, Tooltip, Checkbox, useTheme } from "@mui/material";
 import { MessageSquare } from "lucide-react";
-import { useTrash } from "../context/TrashContext";
+import { useRecycleBin } from "../context/RecycleBinContext";
 
-interface DeletedResponseRowProps {
+interface RecycleBinResponseRowProps {
   response: any;
   hideCheckbox?: boolean;
 }
 
-const DeletedResponseRow: React.FC<DeletedResponseRowProps> = ({ response, hideCheckbox }) => {
+const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({ response, hideCheckbox }) => {
   const theme = useTheme();
   const {
     selectedResponseIds,
     onToggleSelectResponse,
     restoringResponseId,
-    onRestoreResponse,
-    hasFilters,
-  } = useTrash();
+  } = useRecycleBin();
 
   const isSelected = selectedResponseIds.has(response.id);
-  const isRestoring = restoringResponseId === response.id;
   const hideDeletionMetadata = !response.deletedResponse;
 
   const createdDateObj = new Date(response.createdAt);
@@ -119,4 +116,4 @@ const DeletedResponseRow: React.FC<DeletedResponseRowProps> = ({ response, hideC
   );
 };
 
-export default DeletedResponseRow;
+export default RecycleBinResponseRow;

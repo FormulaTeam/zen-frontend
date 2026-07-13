@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Box, useTheme } from "@mui/material";
+import { Box } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { useGetDeletedForms, useGetSoftDeletedResponsesGlobal, restoreForm } from "../../api/formsApi";
+import { useGetRecycleBinForms, useGetRecycleBinResponses, restoreForm } from "../../api/formsApi";
 import { restoreResponse, restoreResponses } from "../../api/responsesApi";
 import { getFormIconByName } from "../../utils/utils";
 import queryClient from "../../api/queryClient";
@@ -11,15 +11,15 @@ import { IOrderBy, formsSortOption } from "../../types/enums/filtersAndSorts.enu
 import { useDebounce } from "../../hooks/utilsHooks/useDebounce";
 import { User } from "../../utils/interfaces";
 
-import { TrashProvider } from "./context/TrashContext";
-import { DeletedFormWithResponses } from "./types";
-import DeletedFormsHeader from "./components/DeletedFormsHeader";
-import DeletedFormsToolbar from "./components/DeletedFormsToolbar";
-import DeletedFormsList from "./components/DeletedFormsList";
-import DeletedResponsesList from "./components/DeletedResponsesList";
-import DeletedFormsSelectionBar from "./components/DeletedFormsSelectionBar";
+import { RecycleBinProvider } from "./context/RecycleBinContext";
+import { RecycleBinItemWithResponses } from "./types";
+import RecycleBinHeader from "./components/RecycleBinHeader";
+import RecycleBinToolbar from "./components/RecycleBinToolbar";
+import RecycleBinList from "./components/RecycleBinList";
+import RecycleBinResponsesList from "./components/RecycleBinResponsesList";
+import RecycleBinSelectionBar from "./components/RecycleBinSelectionBar";
 
-function DeletedForms({ user }: { user: User | null }) {
+function RecycleBin({ user }: { user: User | null }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const scopeParam = searchParams.get("scope") || "forms";
@@ -51,7 +51,7 @@ function DeletedForms({ user }: { user: User | null }) {
     fetchNextPage: fetchNextDeletedForms,
     hasNextPage: hasNextDeletedForms,
     isFetchingNextPage: isFetchingNextDeletedForms,
-  } = useGetDeletedForms({
+  } = useGetRecycleBinForms({
     query: debouncedSearchTerm || undefined,
     createdBy: debouncedCreatedBy || undefined,
     deletedBy: debouncedDeletedBy || undefined,
@@ -66,7 +66,7 @@ function DeletedForms({ user }: { user: User | null }) {
     fetchNextPage: fetchNextActiveForms,
     hasNextPage: hasNextActiveForms,
     isFetchingNextPage: isFetchingNextActiveForms,
-  } = useGetSoftDeletedResponsesGlobal({
+  } = useGetRecycleBinResponses({
     query: debouncedSearchTerm || undefined,
     createdBy: debouncedCreatedBy || undefined,
     deletedBy: debouncedDeletedBy || undefined,
@@ -74,8 +74,8 @@ function DeletedForms({ user }: { user: User | null }) {
     orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
   });
 
-  const deletedForms = useMemo(() => (deletedFormsData?.pages.flat() as DeletedFormWithResponses[]) || [], [deletedFormsData]);
-  const activeFormsWithDeleted = useMemo(() => (activeFormsData?.pages.flat() as DeletedFormWithResponses[]) || [], [activeFormsData]);
+  const deletedForms = useMemo(() => (deletedFormsData?.pages.flat() as RecycleBinItemWithResponses[]) || [], [deletedFormsData]);
+  const activeFormsWithDeleted = useMemo(() => (activeFormsData?.pages.flat() as RecycleBinItemWithResponses[]) || [], [activeFormsData]);
 
   const handleToggleSelectForm = useCallback((id: number) => {
     setSelectedFormIds((prev) => {
@@ -247,11 +247,11 @@ function DeletedForms({ user }: { user: User | null }) {
   }), [restoringFormId, restoringResponseId, isBulkRestoring, expandedForms, selectedFormIds, selectedResponseIds, hasActiveFilters, handleToggleSelectForm, handleToggleSelectResponse, handleToggleExpand, handleRestoreForm, handleRestoreResponse, clearFilters, getIconContent]);
 
   return (
-    <TrashProvider value={contextValue}>
+    <RecycleBinProvider value={contextValue}>
       <Box sx={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", bgcolor: "#F8FAFC", overflow: "hidden" }}>
         <Box sx={{ display: "flex", flexDirection: "column", width: "85%", minWidth: "900px", height: "100%" }}>
-          <DeletedFormsHeader />
-          <DeletedFormsToolbar
+          <RecycleBinHeader />
+          <RecycleBinToolbar
             activeTab={activeTab}
             scopeParam={scopeParam}
             sortBy={sortBy}
@@ -275,13 +275,13 @@ function DeletedForms({ user }: { user: User | null }) {
           >
             <Box sx={{ direction: "rtl", width: "100%" }}>
               {activeTab === 0 ? (
-                <DeletedFormsList
+                <RecycleBinList
                   deletedForms={deletedForms}
                   isLoading={isDeletedFormsLoading}
                   isFetchingNextPage={isFetchingNextDeletedForms}
                 />
               ) : (
-                <DeletedResponsesList
+                <RecycleBinResponsesList
                   activeFormsWithDeleted={activeFormsWithDeleted}
                   isLoading={isActiveFormsLoading}
                   isFetchingNextPage={isFetchingNextActiveForms}
@@ -290,7 +290,7 @@ function DeletedForms({ user }: { user: User | null }) {
             </Box>
           </Box>
 
-          <DeletedFormsSelectionBar
+          <RecycleBinSelectionBar
             selectedCount={activeTab === 0 ? selectedFormIds.size : selectedResponseIds.size}
             activeTab={activeTab}
             isBulkRestoring={isBulkRestoring}
@@ -302,8 +302,8 @@ function DeletedForms({ user }: { user: User | null }) {
           />
         </Box>
       </Box>
-    </TrashProvider>
+    </RecycleBinProvider>
   );
 }
 
-export default DeletedForms;
+export default RecycleBin;

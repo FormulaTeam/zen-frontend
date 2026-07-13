@@ -12,15 +12,15 @@ import {
   useTheme,
 } from "@mui/material";
 import { Eye, EyeOff, RotateCcw } from "lucide-react";
-import { DeletedFormWithResponses } from "../types";
-import { useTrash } from "../context/TrashContext";
-import DeletedResponseRow from "./DeletedResponseRow";
+import { RecycleBinItemWithResponses } from "../types";
+import { useRecycleBin } from "../context/TrashContext";
+import RecycleBinResponseRow from "./RecycleBinResponseRow";
 
-interface DeletedFormCardProps {
-  form: DeletedFormWithResponses;
+interface RecycleBinFormCardProps {
+  form: RecycleBinItemWithResponses;
 }
 
-const DeletedFormCard: React.FC<DeletedFormCardProps> = ({ form }) => {
+const RecycleBinFormCard: React.FC<RecycleBinFormCardProps> = ({ form }) => {
   const theme = useTheme();
   const {
     selectedFormIds,
@@ -30,7 +30,7 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({ form }) => {
     restoringFormId,
     onRestoreForm,
     getIconContent,
-  } = useTrash();
+  } = useRecycleBin();
 
   const isSelected = selectedFormIds.has(form.id);
   const isExpanded = !!expandedForms[form.id];
@@ -208,7 +208,7 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({ form }) => {
           {form.responses?.length ? (
             <Stack spacing={1}>
               {form.responses.map((resp) => (
-                <DeletedResponseRow key={resp.id} response={resp} hideCheckbox />
+                <RecycleBinResponseRow key={resp.id} response={resp} hideCheckbox />
               ))}
             </Stack>
           ) : (
@@ -222,4 +222,4 @@ const DeletedFormCard: React.FC<DeletedFormCardProps> = ({ form }) => {
   );
 };
 
-export default DeletedFormCard;
+export default RecycleBinFormCard;

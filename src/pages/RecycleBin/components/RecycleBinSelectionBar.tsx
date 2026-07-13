@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography, Stack, Button, CircularProgress } from "@mui/material";
 import { XCircle, RotateCcw } from "lucide-react";
 
-interface DeletedFormsSelectionBarProps {
+interface RecycleBinSelectionBarProps {
   selectedCount: number;
   activeTab: number;
   isBulkRestoring: boolean;
@@ -10,7 +10,7 @@ interface DeletedFormsSelectionBarProps {
   onBulkRestore: () => void;
 }
 
-const DeletedFormsSelectionBar: React.FC<DeletedFormsSelectionBarProps> = ({
+const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({
   selectedCount,
   activeTab,
   isBulkRestoring,
@@ -89,4 +89,4 @@ const DeletedFormsSelectionBar: React.FC<DeletedFormsSelectionBarProps> = ({
   );
 };
 
-export default DeletedFormsSelectionBar;
+export default RecycleBinSelectionBar;

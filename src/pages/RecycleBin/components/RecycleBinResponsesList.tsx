@@ -1,22 +1,22 @@
 import React from "react";
 import { Box, Grid, CircularProgress } from "@mui/material";
-import { DeletedFormWithResponses } from "../types";
-import { useTrash } from "../context/TrashContext";
-import ActiveFormWithDeletedResponsesCard from "./ActiveFormWithDeletedResponsesCard";
-import DeletedFormsEmptyState from "./DeletedFormsEmptyState";
+import { RecycleBinItemWithResponses } from "../types";
+import { useRecycleBin } from "../context/RecycleBinContext";
+import ActiveFormWithRecycleBinResponsesCard from "./ActiveFormWithRecycleBinResponsesCard";
+import RecycleBinEmptyState from "./RecycleBinEmptyState";
 
-interface DeletedResponsesListProps {
-  activeFormsWithDeleted: DeletedFormWithResponses[];
+interface RecycleBinResponsesListProps {
+  activeFormsWithDeleted: RecycleBinItemWithResponses[];
   isLoading: boolean;
   isFetchingNextPage: boolean;
 }
 
-const DeletedResponsesList: React.FC<DeletedResponsesListProps> = ({
+const RecycleBinResponsesList: React.FC<RecycleBinResponsesListProps> = ({
   activeFormsWithDeleted,
   isLoading,
   isFetchingNextPage,
 }) => {
-  const { hasFilters, onClearFilters } = useTrash();
+  const { hasFilters, onClearFilters } = useRecycleBin();
 
   if (isLoading && activeFormsWithDeleted.length === 0) {
     return (
@@ -27,7 +27,7 @@ const DeletedResponsesList: React.FC<DeletedResponsesListProps> = ({
   }
 
   if (activeFormsWithDeleted.length === 0) {
-    return <DeletedFormsEmptyState hasFilters={hasFilters} onClearFilters={onClearFilters} />;
+    return <RecycleBinEmptyState hasFilters={hasFilters} onClearFilters={onClearFilters} />;
   }
 
   return (
@@ -35,7 +35,7 @@ const DeletedResponsesList: React.FC<DeletedResponsesListProps> = ({
       <Grid container spacing={2} columns={12}>
         {activeFormsWithDeleted.map((form) => (
           <Grid key={form.id} size={{ xs: 12 }}>
-            <ActiveFormWithDeletedResponsesCard form={form} />
+            <ActiveFormWithRecycleBinResponsesCard form={form} />
           </Grid>
         ))}
         {isFetchingNextPage && (
@@ -48,4 +48,4 @@ const DeletedResponsesList: React.FC<DeletedResponsesListProps> = ({
   );
 };
 
-export default DeletedResponsesList;
+export default RecycleBinResponsesList;

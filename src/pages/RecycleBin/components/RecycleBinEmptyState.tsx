@@ -3,12 +3,12 @@ import { Box, Typography, Button } from "@mui/material";
 import trashRobot from "../../../images/trash_robot.png";
 import notFoundRobot from "../../../images/not_found_trash_robot.png";
 
-interface DeletedFormsEmptyStateProps {
+interface RecycleBinEmptyStateProps {
   hasFilters: boolean;
   onClearFilters: () => void;
 }
 
-const DeletedFormsEmptyState: React.FC<DeletedFormsEmptyStateProps> = ({
+const RecycleBinEmptyState: React.FC<RecycleBinEmptyStateProps> = ({
   hasFilters,
   onClearFilters,
 }) => (
@@ -59,4 +59,4 @@ const DeletedFormsEmptyState: React.FC<DeletedFormsEmptyStateProps> = ({
   </Box>
 );
 
-export default DeletedFormsEmptyState;
+export default RecycleBinEmptyState;

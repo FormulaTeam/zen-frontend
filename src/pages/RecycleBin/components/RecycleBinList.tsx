@@ -1,22 +1,22 @@
 import React from "react";
 import { Box, Grid, CircularProgress } from "@mui/material";
-import { DeletedFormWithResponses } from "../types";
-import { useTrash } from "../context/TrashContext";
-import DeletedFormCard from "./DeletedFormCard";
-import DeletedFormsEmptyState from "./DeletedFormsEmptyState";
+import { RecycleBinItemWithResponses } from "../types";
+import { useRecycleBin } from "../context/RecycleBinContext";
+import RecycleBinFormCard from "./RecycleBinFormCard";
+import RecycleBinEmptyState from "./RecycleBinEmptyState";
 
-interface DeletedFormsListProps {
-  deletedForms: DeletedFormWithResponses[];
+interface RecycleBinListProps {
+  deletedForms: RecycleBinItemWithResponses[];
   isLoading: boolean;
   isFetchingNextPage: boolean;
 }
 
-const DeletedFormsList: React.FC<DeletedFormsListProps> = ({
+const RecycleBinList: React.FC<RecycleBinListProps> = ({
   deletedForms,
   isLoading,
   isFetchingNextPage,
 }) => {
-  const { hasFilters, onClearFilters } = useTrash();
+  const { hasFilters, onClearFilters } = useRecycleBin();
 
   if (isLoading && deletedForms.length === 0) {
     return (
@@ -27,7 +27,7 @@ const DeletedFormsList: React.FC<DeletedFormsListProps> = ({
   }
 
   if (deletedForms.length === 0) {
-    return <DeletedFormsEmptyState hasFilters={hasFilters} onClearFilters={onClearFilters} />;
+    return <RecycleBinEmptyState hasFilters={hasFilters} onClearFilters={onClearFilters} />;
   }
 
   return (
@@ -35,7 +35,7 @@ const DeletedFormsList: React.FC<DeletedFormsListProps> = ({
       <Grid container spacing={2} columns={12}>
         {deletedForms.map((form) => (
           <Grid key={form.id} size={{ xs: 12 }}>
-            <DeletedFormCard form={form} />
+            <RecycleBinFormCard form={form} />
           </Grid>
         ))}
         {isFetchingNextPage && (
@@ -48,4 +48,4 @@ const DeletedFormsList: React.FC<DeletedFormsListProps> = ({
   );
 };
 
-export default DeletedFormsList;
+export default RecycleBinList;

@@ -1,18 +1,18 @@
 import { DeletedFormOverviewDto, FormOverviewDto } from "../../types/shared";
 import { formsSortOption } from "../../types/enums/filtersAndSorts.enum";
 
-export type DeletedFormWithResponses = (DeletedFormOverviewDto | FormOverviewDto) & {
+export type RecycleBinItemWithResponses = (DeletedFormOverviewDto | FormOverviewDto) & {
   responses?: any[];
 };
 
-export interface DeletedFormsFilters {
+export interface RecycleBinFilters {
   searchTerm: string;
   createdBySearch: string;
   deletedBySearch: string;
   hasResponsesFilter: boolean | undefined;
 }
 
-export interface DeletedFormsSort {
+export interface RecycleBinSort {
   sortBy: string;
   sortDirection: "asc" | "desc";
 }
