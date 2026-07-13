@@ -156,7 +156,7 @@ const RecycleBinToolbar: React.FC<RecycleBinToolbarProps> = ({
                 <Square size={18} />
               )
             }
-            sx={{ width: 210, gap: 1.5 }}>
+            sx={{ width: 235, gap: 1.5 }}>
             <Typography sx={controlTextSx}>טפסים עם תגובות</Typography>
           </FilterButton>
         )}
@@ -166,7 +166,7 @@ const RecycleBinToolbar: React.FC<RecycleBinToolbarProps> = ({
             onClick={(e) => setScopeAnchorEl(e.currentTarget)}
             variant="outlined"
             endIcon={<ChevronDown size={18} />}
-            sx={{ width: 205, justifyContent: "space-between" }}>
+            sx={{ width: 220, justifyContent: "space-between" }}>
             <ScopeOption value={scopeParam === "responses" ? "responses" : "forms"} />
           </FilterButton>
           <Menu
@@ -187,7 +187,7 @@ const RecycleBinToolbar: React.FC<RecycleBinToolbarProps> = ({
             onClick={(e) => setSortAnchorEl(e.currentTarget)}
             variant="outlined"
             endIcon={<ChevronDown size={18} />}
-            sx={{ width: 220, justifyContent: "space-between" }}>
+            sx={{ width: 265, justifyContent: "space-between" }}>
             <Typography
               sx={{
                 ...controlTextSx,
