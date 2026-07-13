@@ -2,7 +2,7 @@ import { useQuery, UseQueryOptions, UseQueryResult, useMutation, useInfiniteQuer
 import { CreateFormSchema, formsScopeOption } from "formula-gear";
 import { z } from "zod";
 import { IOrderBy } from "../types/enums/filtersAndSorts.enum";
-import { ComparatorsByFieldTypeDto, FormDto, FormOverviewDto } from "../types/shared";
+import { ComparatorsByFieldTypeDto, FormDto, FormOverviewDto, RecycleBinFormOverviewDto } from "../types/shared";
 import { Filter, MetroReturnedData, User } from "../utils/interfaces";
 import { useCreate } from "../utils/useCreate";
 import { useFetch } from "../utils/useFetch";
@@ -90,7 +90,7 @@ export const getRecycleBinForms = async (filter?: Filter): Promise<FormDto[]> =>
   const params = mapFilterToApiParams(filter);
 
   try {
-    const response = await apiClient.get<FormDto[]>("/forms/recycle-bin", {
+    const response = await apiClient.get<RecycleBinFormOverviewDto[]>("/recycle-bin/forms", {
       params,
       signal: filter?.signal,
     });
@@ -111,7 +111,7 @@ export const getRecycleBinResponses = async (filter?: Filter): Promise<FormOverv
   const params = mapFilterToApiParams(filter);
 
   try {
-    const response = await apiClient.get<FormOverviewDto[]>("/forms/recycle-bin/responses", {
+    const response = await apiClient.get<FormOverviewDto[]>("/recycle-bin/responses", {
       params,
       signal: filter?.signal,
     });
@@ -215,7 +215,7 @@ export const restoreForm = async (id: number): Promise<FormDto> => {
 
 export const restoreForms = async (formIds: number[]): Promise<void> => {
   try {
-    await apiClient.post("/forms/recycle-bin/restore", { formIds });
+    await apiClient.post("/recycle-bin/restore", { formIds });
   } catch (error) {
     console.error("Failed to restore forms:", error);
     throw error;
