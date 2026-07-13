@@ -209,7 +209,12 @@ const RecycleBinFormCard: React.FC<RecycleBinFormCardProps> = ({ form }) => {
           {form.responses?.length ? (
             <Stack spacing={1}>
               {form.responses.map((resp) => (
-                <RecycleBinResponseRow key={resp.id} response={resp} hideCheckbox />
+                <RecycleBinResponseRow
+                  key={resp.id}
+                  response={resp}
+                  hideCheckbox
+                  hideRestoreButton
+                />
               ))}
             </Stack>
           ) : (

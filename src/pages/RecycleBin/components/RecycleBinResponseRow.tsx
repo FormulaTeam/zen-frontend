@@ -16,9 +16,14 @@ import { useRecycleBin } from "../context/RecycleBinContext";
 interface RecycleBinResponseRowProps {
   response: ResponseDto;
   hideCheckbox?: boolean;
+  hideRestoreButton?: boolean;
 }
 
-const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({ response, hideCheckbox }) => {
+const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({
+  response,
+  hideCheckbox,
+  hideRestoreButton,
+}) => {
   const theme = useTheme();
   const {
     selectedResponseIds,
@@ -76,32 +81,34 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({ response,
           />
         )}
 
-        <Button
-          disabled={isRestoring}
-          onClick={() => onRestoreResponse(response.formId, response.id)}
-          variant="contained"
-          endIcon={
-            isRestoring ? (
-              <CircularProgress size={14} color="inherit" />
-            ) : (
-              <RotateCcw size={16} />
-            )
-          }
-          sx={{
-            backgroundColor: theme.palette.primary.main,
-            borderRadius: "4px",
-            fontWeight: 700,
-            fontSize: "14px",
-            height: "32px",
-            px: 1.5,
-            boxShadow: "none",
-            textTransform: "none",
-            flexShrink: 0,
-            gap: 1,
-            "&:hover": { backgroundColor: theme.palette.primary.dark, boxShadow: "none" },
-          }}>
-          שחזור תגובה לטופס
-        </Button>
+        {!hideRestoreButton && (
+          <Button
+            disabled={isRestoring}
+            onClick={() => onRestoreResponse(response.formId, response.id)}
+            variant="contained"
+            endIcon={
+              isRestoring ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : (
+                <RotateCcw size={16} />
+              )
+            }
+            sx={{
+              backgroundColor: theme.palette.primary.main,
+              borderRadius: "4px",
+              fontWeight: 700,
+              fontSize: "14px",
+              height: "32px",
+              px: 1.5,
+              boxShadow: "none",
+              textTransform: "none",
+              flexShrink: 0,
+              gap: 1,
+              "&:hover": { backgroundColor: theme.palette.primary.dark, boxShadow: "none" },
+            }}>
+            שחזור תגובה לטופס
+          </Button>
+        )}
 
         <Stack flex={1} spacing={1}>
           <Stack direction="row" justifyContent="flex-end" alignItems="center" sx={{ gap: 1 }}>
