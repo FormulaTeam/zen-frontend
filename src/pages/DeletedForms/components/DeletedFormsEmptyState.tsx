@@ -32,7 +32,7 @@ const DeletedFormsEmptyState: React.FC<DeletedFormsEmptyStateProps> = ({
     </Typography>
     <Typography sx={{ color: "#62748E", mb: hasFilters ? 3 : 0, maxWidth: "320px", fontFamily: "Heebo" }}>
       {hasFilters
-        ? "נסו לשנות את מילות החיפוש או לנקות את המסננים כדי לראות עוד תוצאות"
+        ? "כדאי לשנות את מילות החיפוש או לנקות מסננים כדי להניב תוצאות"
         : "כל הפריטים שימחקו יופיעו כאן ויהיו זמינים לשחזור"}
     </Typography>
     {hasFilters && (
@@ -48,7 +48,7 @@ const DeletedFormsEmptyState: React.FC<DeletedFormsEmptyStateProps> = ({
           fontSize: "13px",
           "&:hover": { borderColor: "#cbd5e1", bgcolor: "#f8fafc" },
         }}>
-        ניקוי מסננים
+        ניקוי כל המסננים
       </Button>
     )}
   </Box>
