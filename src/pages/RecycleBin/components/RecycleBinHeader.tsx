@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Stack, Typography, IconButton } from "@mui/material";
-import { Trash2, LogOut } from "lucide-react";
+import { Trash2, ChevronLeft } from "lucide-react";
 
 const RecycleBinHeader: React.FC = () => {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ const RecycleBinHeader: React.FC = () => {
           "&:hover": { bgcolor: "#ffffff", boxShadow: "0 6px 12px rgba(15, 23, 42, 0.08)" },
         }}
       >
-        <LogOut size={24} strokeWidth={2.4} />
+        <ChevronLeft size={24} strokeWidth={2.4} />
       </IconButton>
     </Box>
   );
