@@ -17,12 +17,14 @@ interface RecycleBinResponseRowProps {
   response: ResponseDto;
   hideCheckbox?: boolean;
   hideRestoreButton?: boolean;
+  hideDeletionMetadata?: boolean;
 }
 
 const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({
   response,
   hideCheckbox,
   hideRestoreButton,
+  hideDeletionMetadata,
 }) => {
   const theme = useTheme();
   const {
@@ -34,7 +36,7 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({
 
   const isSelected = selectedResponseIds.has(response.id);
   const isRestoring = restoringResponseId === response.id;
-  const hideDeletionMetadata = !response.deletedResponse;
+  const hasDeletionData = !!response.deletedResponse;
 
   const createdDateObj = new Date(response.createdAt);
   const fCreatedDate = createdDateObj.toLocaleDateString("he-IL");
@@ -81,35 +83,6 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({
           />
         )}
 
-        {!hideRestoreButton && (
-          <Button
-            disabled={isRestoring}
-            onClick={() => onRestoreResponse(response.formId, response.id)}
-            variant="contained"
-            endIcon={
-              isRestoring ? (
-                <CircularProgress size={14} color="inherit" />
-              ) : (
-                <RotateCcw size={16} />
-              )
-            }
-            sx={{
-              backgroundColor: theme.palette.primary.main,
-              borderRadius: "4px",
-              fontWeight: 700,
-              fontSize: "14px",
-              height: "32px",
-              px: 1.5,
-              boxShadow: "none",
-              textTransform: "none",
-              flexShrink: 0,
-              gap: 1,
-              "&:hover": { backgroundColor: theme.palette.primary.dark, boxShadow: "none" },
-            }}>
-            שחזור תגובה לטופס
-          </Button>
-        )}
-
         <Stack flex={1} spacing={1}>
           <Stack direction="row" justifyContent="flex-end" alignItems="center" sx={{ gap: 1 }}>
             <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#020618" }}>
@@ -135,7 +108,7 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({
               </Tooltip>
             </Typography>
 
-            {!hideDeletionMetadata && response.deletedResponse && (
+            {!hideDeletionMetadata && hasDeletionData && response.deletedResponse && (
               <Typography sx={{ fontSize: 13, color: "#62748E", textAlign: "right" }}>
                 נמחק בתאריך {fDeletedDate} בשעה {fDeletedTime} על ידי{" "}
                 <Tooltip
@@ -158,6 +131,30 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({
           </Stack>
         </Stack>
       </Stack>
+      {!hideRestoreButton && (
+        <Button
+          disabled={isRestoring}
+          onClick={() => onRestoreResponse(response.formId, response.id)}
+          variant="contained"
+          endIcon={
+            isRestoring ? <CircularProgress size={14} color="inherit" /> : <RotateCcw size={16} />
+          }
+          sx={{
+            backgroundColor: theme.palette.primary.main,
+            borderRadius: "4px",
+            fontWeight: 700,
+            fontSize: "14px",
+            height: "32px",
+            px: 1.5,
+            boxShadow: "none",
+            textTransform: "none",
+            flexShrink: 0,
+            gap: 1,
+            "&:hover": { backgroundColor: theme.palette.primary.dark, boxShadow: "none" },
+          }}>
+          שחזור תגובה לטופס
+        </Button>
+      )}
     </Box>
   );
 };

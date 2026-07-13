@@ -214,6 +214,7 @@ const RecycleBinFormCard: React.FC<RecycleBinFormCardProps> = ({ form }) => {
                   response={resp}
                   hideCheckbox
                   hideRestoreButton
+                  hideDeletionMetadata
                 />
               ))}
             </Stack>
