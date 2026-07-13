@@ -87,6 +87,10 @@ const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({ activeT
             fontSize: "14px",
             textTransform: "none",
             gap: 1,
+            "&.Mui-disabled": {
+              backgroundColor: "rgba(0, 0, 0, 0.12)",
+              color: "rgba(0, 0, 0, 0.26)",
+            },
             "&:hover": { bgcolor: "primary.dark" },
           }}>
           שחזור {activeTab === 0 ? "טפסים" : "תגובות"}

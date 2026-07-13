@@ -115,7 +115,7 @@ function RecycleBin({ user }: { user: User | null }) {
     try {
       await restoreForm(formId);
       toast.success("הטופס שוחזר בהצלחה");
-      queryClient.invalidateQueries({ queryKey: ["forms"] });
+      await queryClient.invalidateQueries({ queryKey: ["forms"] });
     } catch (error) {
       toast.error("שחזור הטופס נכשל");
     } finally {
@@ -128,8 +128,10 @@ function RecycleBin({ user }: { user: User | null }) {
     try {
       await restoreResponse(formId, responseId);
       toast.success("התגובה שוחזרה בהצלחה");
-      queryClient.invalidateQueries({ queryKey: ["forms", "responses", "soft-deleted"] });
-      queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["forms", "responses", "soft-deleted"] }),
+        queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] }),
+      ]);
     } catch (error) {
       toast.error("שחזור התגובה נכשל");
     } finally {
@@ -190,8 +192,10 @@ function RecycleBin({ user }: { user: User | null }) {
         await restoreForms(ids);
         toast.success(`${ids.length} טפסים שוחזרו בהצלחה`);
         handleClearSelection();
-        queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] });
-        queryClient.invalidateQueries({ queryKey: ["forms"] });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] }),
+          queryClient.invalidateQueries({ queryKey: ["forms"] }),
+        ]);
       } else {
         const formResponseMap: Record<number, string[]> = {};
         activeFormsWithDeleted.forEach((form) => {
@@ -221,8 +225,10 @@ function RecycleBin({ user }: { user: User | null }) {
         if (successCount > 0) {
           toast.success(`${successCount} תגובות שוחזרו בהצלחה`);
           handleClearSelection();
-          queryClient.invalidateQueries({ queryKey: ["forms", "responses", "soft-deleted"] });
-          queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] });
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ["forms", "responses", "soft-deleted"] }),
+            queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] }),
+          ]);
         }
       }
     } catch (error) {

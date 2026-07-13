@@ -152,6 +152,10 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({
               textTransform: "none",
               flexShrink: 0,
               gap: 1,
+              "&.Mui-disabled": {
+                backgroundColor: "rgba(0, 0, 0, 0.12)",
+                color: "rgba(0, 0, 0, 0.26)",
+              },
               "&:hover": { backgroundColor: theme.palette.primary.dark, boxShadow: "none" },
             }}>
             שחזור תגובה לטופס
