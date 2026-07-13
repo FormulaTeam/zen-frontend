@@ -126,23 +126,23 @@ const DeletedFormsToolbar: React.FC<DeletedFormsToolbarProps> = ({
     onSortChange(newSortBy, direction);
     setSortAnchorEl(null);
   };
-
-  const renderScopeOption = (value: "forms" | "responses", showChevron = false) => (
-    <Stack direction="row" alignItems="center" sx={{ width: "100%" }}>
+const renderScopeOption = (value: "forms" | "responses", showChevron = false) => (
+  <Stack
+    direction="row"
+    alignItems="center"
+    justifyContent="space-between"
+    sx={{ width: "100%", gap: 1 }}>
+    <Stack direction="row" alignItems="center" spacing={1}>
       {value === "forms" ? <FileText size={18} /> : <MessageSquare size={18} />}
 
-      <Typography
-        sx={{
-          ...controlTextSx,
-          ml: 1,
-          flex: 1,
-        }}>
+      <Typography sx={controlTextSx}>
         {value === "forms" ? "טפסים שנמחקו" : "תגובות שנמחקו"}
       </Typography>
-
-      {showChevron && <ChevronDown size={18} />}
     </Stack>
-  );
+
+    {showChevron && <ChevronDown size={18} />}
+  </Stack>
+);
 
   return (
     <Box
