@@ -1,5 +1,5 @@
-import { Chip, FormControl } from "@mui/material";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Chip, FormControl, useTheme } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { texts } from "../../../utils/texts";
 import FieldErrorText from "../FieldErrorText/FieldErrorText";
 import {
@@ -15,7 +15,66 @@ import {
   getAutocompleteChipSx,
 } from "./styled";
 import { selectionMode } from "formula-gear";
-import { PaginatedAutocompleteListbox } from "@src/components/PaginatedAutocompleteListbox";
+import { useLoadMoreOnVisible } from "@src/pages/ResponsesPage/hooks/useLoadMoreOnVisible";
+
+const PaginatedAutocompleteListbox = React.forwardRef<
+  HTMLUListElement,
+  React.HTMLAttributes<HTMLUListElement> & {
+    onLoadMore?: () => void;
+    hasNextPage?: boolean;
+    isFetchingNextPage?: boolean;
+    ownerState?: any;
+  }
+>(function Listbox(props, ref) {
+  const {
+    children,
+    onLoadMore,
+    hasNextPage = true,
+    isFetchingNextPage,
+    ownerState,
+    ...otherProps
+  } = props;
+  const [rootNode, setRootNode] = useState<HTMLElement | null>(null);
+  const [sentinelNode, setSentinelNode] = useState<HTMLElement | null>(null);
+  const theme = useTheme();
+
+  const rootRef = useCallback(
+    (node: HTMLUListElement | null) => {
+      setRootNode(node);
+      if (typeof ref === "function") {
+        ref(node);
+      } else if (ref) {
+        ref.current = node;
+      }
+    },
+    [ref],
+  );
+
+  const sentinelRef = useCallback((node: HTMLLIElement | null) => {
+    setSentinelNode(node);
+  }, []);
+
+  useLoadMoreOnVisible(rootNode, sentinelNode, onLoadMore, !isFetchingNextPage && hasNextPage);
+
+  return (
+    <ul
+      ref={rootRef}
+      {...otherProps}
+      style={{
+        ...otherProps.style,
+        fontFamily: theme.typography.fontFamily,
+      }}>
+      {children}
+      {!isFetchingNextPage && hasNextPage && (
+        <li
+          aria-hidden
+          ref={sentinelRef}
+          style={{ height: 10, width: "100%", padding: 0, margin: 0, listStyle: "none" }}
+        />
+      )}
+    </ul>
+  );
+});
 
 interface CustomDropDownAutocompleteProps {
   value: string | string[];
@@ -34,6 +93,8 @@ interface CustomDropDownAutocompleteProps {
   onInputChange?: (event: React.SyntheticEvent, value: string, reason: string) => void;
   onScrollToBottom?: () => void;
   loading?: boolean;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
   inputValue?: string;
   filterOptions?: (options: unknown[], state: any) => unknown[];
   noOptionsText?: string;
@@ -67,6 +128,8 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   onInputChange,
   onScrollToBottom,
   loading,
+  hasNextPage,
+  isFetchingNextPage,
   inputValue,
   filterOptions,
   noOptionsText = "אין אפשרויות",
@@ -153,9 +216,14 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
 
       <StyledAutocomplete
         ListboxComponent={PaginatedAutocompleteListbox}
+        slots={{
+          listbox: PaginatedAutocompleteListbox,
+        }}
         ListboxProps={
           {
             onLoadMore: onScrollToBottom,
+            hasNextPage,
+            isFetchingNextPage,
             ...autocompleteListboxProps,
           } as any
         }
@@ -169,6 +237,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         options={options}
         noOptionsText={noOptionsText}
         loading={loading}
+        loadingText="בטעינה..."
         onInputChange={onInputChange}
         value={autocompleteValue}
         {...(inputValue !== undefined ? { inputValue } : {})}

@@ -1,36 +1,35 @@
-import { useEffect, type RefObject } from "react";
-
-type MaybeRef<T extends HTMLElement> = RefObject<T> | T | null;
-
-const resolveNode = <T extends HTMLElement>(value: MaybeRef<T>): T | null => {
-    if (!value) return null;
-    if ("current" in value) return value.current;
-    return value;
-};
+import { useEffect, useRef } from "react";
 
 export const useLoadMoreOnVisible = (
-    root: MaybeRef<HTMLElement>,
-    sentinel: MaybeRef<HTMLElement>,
-    onLoadMore?: () => void,
-    enabled = true,
+  rootNode: HTMLElement | null,
+  sentinelNode: HTMLElement | null,
+  onLoadMore?: () => void,
+  enabled = true,
 ): void => {
-    useEffect(() => {
-        const rootNode = resolveNode(root);
-        const sentinelNode = resolveNode(sentinel);
+  const onLoadMoreRef = useRef(onLoadMore);
 
-        if (!enabled || !rootNode || !sentinelNode || !onLoadMore) return;
+  useEffect(() => {
+    onLoadMoreRef.current = onLoadMore;
+  }, [onLoadMore]);
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0]?.isIntersecting) {
-                    onLoadMore();
-                }
-            },
-            { root: rootNode, threshold: 0 },
-        );
+  useEffect(() => {
+    if (!enabled || !sentinelNode || !onLoadMore) return;
 
-        observer.observe(sentinelNode);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          onLoadMoreRef.current?.();
+        }
+      },
+      {
+        root: null,
+        threshold: 0,
+        rootMargin: "0px 0px 200px 0px",
+      },
+    );
 
-        return () => observer.disconnect();
-    }, [root, sentinel, onLoadMore, enabled]);
+    observer.observe(sentinelNode);
+
+    return () => observer.disconnect();
+  }, [rootNode, sentinelNode, enabled, !!onLoadMore]);
 };
