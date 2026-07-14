@@ -20,6 +20,8 @@ import RecycleBinResponsesList from "./components/RecycleBinResponsesList";
 import RecycleBinSelectionBar from "./components/RecycleBinSelectionBar";
 import RestoreFormDialog from "./components/RestoreFormDialog";
 
+const SCROLL_THRESHOLD_PX = 50;
+
 function RecycleBin({ user }: { user: User | null }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -204,7 +206,7 @@ function RecycleBin({ user }: { user: User | null }) {
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop <= clientHeight + 50) {
+    if (scrollHeight - scrollTop <= clientHeight + SCROLL_THRESHOLD_PX) {
       if (activeTab === 0 && hasNextDeletedForms && !isFetchingNextDeletedForms) fetchNextDeletedForms();
       else if (activeTab === 1 && hasNextActiveForms && !isFetchingNextActiveForms) fetchNextActiveForms();
     }
@@ -268,17 +270,15 @@ function RecycleBin({ user }: { user: User | null }) {
         const formIds = Object.keys(formResponseMap).map(Number);
         let successCount = 0;
 
-        await Promise.all(
-          formIds.map(async (fId) => {
-            const respIds = formResponseMap[fId];
-            try {
-              await restoreResponses(fId, respIds);
-              successCount += respIds.length;
-            } catch (e) {
-              console.error(`Failed to restore responses for form ${fId}`, e);
-            }
-          }),
-        );
+        for (const fId of formIds) {
+          const respIds = formResponseMap[fId];
+          try {
+            await restoreResponses(fId, respIds);
+            successCount += respIds.length;
+          } catch (e) {
+            console.error(`Failed to restore responses for form ${fId}`, e);
+          }
+        }
 
         if (successCount > 0) {
           toast.success(`${successCount} תגובות שוחזרו בהצלחה`);
