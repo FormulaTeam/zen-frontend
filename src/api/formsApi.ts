@@ -205,7 +205,7 @@ export const getFormIdByFieldId = async (fieldId: string): Promise<number | null
  */
 export const restoreForm = async (id: number, restoreResponses: boolean = true): Promise<FormDto> => {
   try {
-    const response = await apiClient.post<FormDto>(`/forms/${id}/restore`, null, {
+    const response = await apiClient.post<FormDto>(`/forms/${id}/restore`, {}, {
       params: { restoreResponses },
     });
     return response?.data;
