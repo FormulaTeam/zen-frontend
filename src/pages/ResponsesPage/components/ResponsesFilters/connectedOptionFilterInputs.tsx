@@ -12,11 +12,14 @@ type ConnectedOptionFilterInputProps = FilterInputProps & {
 };
 
 const useConnectedFilterOptions = (linkedOptionsFieldId: string) => {
-  const { options, isLoading, loadMore } = useLinkedFieldValueOptions(linkedOptionsFieldId);
+  const { options, isLoading, isFetchingNextPage, loadMore, hasNextPage } =
+    useLinkedFieldValueOptions(linkedOptionsFieldId);
 
   return {
     options,
     loading: isLoading,
+    isFetchingNextPage,
+    hasNextPage,
     onLoadMore: loadMore,
   };
 };
@@ -25,13 +28,16 @@ export const ConnectedSingleOptionFilterInput: React.FC<ConnectedOptionFilterInp
   linkedOptionsFieldId,
   ...props
 }) => {
-  const { options, loading, onLoadMore } = useConnectedFilterOptions(linkedOptionsFieldId);
+  const { options, loading, isFetchingNextPage, hasNextPage, onLoadMore } =
+    useConnectedFilterOptions(linkedOptionsFieldId);
 
   return (
     <SingleOptionFilterInput
       {...props}
       options={options}
       loading={loading}
+      isFetchingNextPage={isFetchingNextPage}
+      hasNextPage={hasNextPage}
       onLoadMore={onLoadMore}
     />
   );
@@ -41,13 +47,16 @@ export const ConnectedMultiOptionFilterInput: React.FC<ConnectedOptionFilterInpu
   linkedOptionsFieldId,
   ...props
 }) => {
-  const { options, loading, onLoadMore } = useConnectedFilterOptions(linkedOptionsFieldId);
+  const { options, loading, isFetchingNextPage, hasNextPage, onLoadMore } =
+    useConnectedFilterOptions(linkedOptionsFieldId);
 
   return (
     <MultiOptionFilterInput
       {...props}
       options={options}
       loading={loading}
+      isFetchingNextPage={isFetchingNextPage}
+      hasNextPage={hasNextPage}
       onLoadMore={onLoadMore}
     />
   );
