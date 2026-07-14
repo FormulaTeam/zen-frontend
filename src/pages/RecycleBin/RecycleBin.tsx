@@ -18,6 +18,7 @@ import RecycleBinToolbar from "./components/RecycleBinToolbar";
 import RecycleBinList from "./components/RecycleBinList";
 import RecycleBinResponsesList from "./components/RecycleBinResponsesList";
 import RecycleBinSelectionBar from "./components/RecycleBinSelectionBar";
+import RestoreFormDialog from "./components/RestoreFormDialog";
 
 function RecycleBin({ user }: { user: User | null }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -34,6 +35,18 @@ function RecycleBin({ user }: { user: User | null }) {
   const [expandedForms, setExpandedForms] = useState<Record<number, boolean>>({});
   const [selectedFormIds, setSelectedFormIds] = useState<Set<number>>(new Set());
   const [selectedResponseIds, setSelectedResponseIds] = useState<Set<string>>(new Set());
+
+  const [restoreDialogConfig, setRestoreDialogConfig] = useState<{
+    open: boolean;
+    formIds: number[];
+    responseCount: number;
+    isBulk: boolean;
+  }>({
+    open: false,
+    formIds: [],
+    responseCount: 0,
+    isBulk: false,
+  });
 
   const [searchTerm, setSearchTerm] = useState("");
   const [createdBySearch, setCreatedBySearch] = useState("");
@@ -112,10 +125,10 @@ function RecycleBin({ user }: { user: User | null }) {
     setExpandedForms((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
-  const handleRestoreForm = useCallback(async (formId: number) => {
+  const performRestoreForm = useCallback(async (formId: number, restoreResponses: boolean) => {
     setRestoringFormId(formId);
     try {
-      await restoreForm(formId);
+      await restoreForm(formId, restoreResponses);
       toast.success("הטופס שוחזר בהצלחה");
       await queryClient.invalidateQueries({ queryKey: ["forms"] });
     } catch (error) {
@@ -124,6 +137,22 @@ function RecycleBin({ user }: { user: User | null }) {
       setRestoringFormId(null);
     }
   }, []);
+
+  const handleRestoreForm = useCallback((formId: number) => {
+    const form = deletedForms.find((f) => f.id === formId);
+    const count = form?.responsesCount ?? 0;
+
+    if (count > 0) {
+      setRestoreDialogConfig({
+        open: true,
+        formIds: [formId],
+        responseCount: count,
+        isBulk: false,
+      });
+    } else {
+      performRestoreForm(formId, true);
+    }
+  }, [deletedForms, performRestoreForm]);
 
   const handleRestoreResponse = useCallback(async (formId: number, responseId: string) => {
     setRestoringResponseId(responseId);
@@ -186,19 +215,46 @@ function RecycleBin({ user }: { user: User | null }) {
     setSelectedResponseIds(new Set());
   }, []);
 
-  const handleBulkRestore = useCallback(async () => {
+  const performBulkRestore = useCallback(async (ids: number[], restoreResponses: boolean) => {
     setIsBulkRestoring(true);
     try {
-      if (activeTab === 0) {
-        const ids = Array.from(selectedFormIds);
-        await restoreForms(ids);
-        toast.success(`${ids.length} טפסים שוחזרו בהצלחה`);
-        handleClearSelection();
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] }),
-          queryClient.invalidateQueries({ queryKey: ["forms"] }),
-        ]);
+      await restoreForms(ids, restoreResponses);
+      toast.success(`${ids.length} טפסים שוחזרו בהצלחה`);
+      handleClearSelection();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] }),
+        queryClient.invalidateQueries({ queryKey: ["forms"] }),
+      ]);
+    } catch (error) {
+      toast.error("שחזור פריטים נכשל");
+    } finally {
+      setIsBulkRestoring(false);
+    }
+  }, [handleClearSelection]);
+
+  const handleBulkRestore = useCallback(async () => {
+    if (activeTab === 0) {
+      const ids = Array.from(selectedFormIds);
+      let totalResponses = 0;
+
+      ids.forEach((id) => {
+        const form = deletedForms.find((f) => f.id === id);
+        totalResponses += form?.responsesCount ?? 0;
+      });
+
+      if (totalResponses > 0) {
+        setRestoreDialogConfig({
+          open: true,
+          formIds: ids,
+          responseCount: totalResponses,
+          isBulk: true,
+        });
       } else {
+        performBulkRestore(ids, true);
+      }
+    } else {
+      setIsBulkRestoring(true);
+      try {
         const formResponseMap: Record<number, string[]> = {};
         activeFormsWithDeleted.forEach((form) => {
           form.responses?.forEach((resp) => {
@@ -232,18 +288,20 @@ function RecycleBin({ user }: { user: User | null }) {
             queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] }),
           ]);
         }
+      } catch (error) {
+        toast.error("שחזור פריטים נכשל");
+      } finally {
+        setIsBulkRestoring(false);
       }
-    } catch (error) {
-      toast.error("שחזור פריטים נכשל");
-    } finally {
-      setIsBulkRestoring(false);
     }
   }, [
     activeTab,
     selectedFormIds,
     selectedResponseIds,
     activeFormsWithDeleted,
+    deletedForms,
     handleClearSelection,
+    performBulkRestore,
   ]);
 
   const getIconContent = useCallback((iconName: string | null) => {
@@ -262,6 +320,17 @@ function RecycleBin({ user }: { user: User | null }) {
     isBulkRestoring ||
     isFetchingDeletedForms ||
     isFetchingActiveForms;
+
+  const handleDialogConfirm = useCallback((restoreResponses: boolean) => {
+    const { formIds, isBulk } = restoreDialogConfig;
+    setRestoreDialogConfig((prev) => ({ ...prev, open: false }));
+
+    if (isBulk) {
+      performBulkRestore(formIds, restoreResponses);
+    } else {
+      performRestoreForm(formIds[0], restoreResponses);
+    }
+  }, [restoreDialogConfig, performBulkRestore, performRestoreForm]);
 
   const contextValue = useMemo(() => ({
     restoringFormId,
@@ -348,6 +417,15 @@ function RecycleBin({ user }: { user: User | null }) {
           <RecycleBinSelectionBar activeTab={activeTab} />
         </Box>
       </Box>
+
+      <RestoreFormDialog
+        open={restoreDialogConfig.open}
+        onClose={() => setRestoreDialogConfig((prev) => ({ ...prev, open: false }))}
+        onConfirm={handleDialogConfirm}
+        responseCount={restoreDialogConfig.responseCount}
+        isBulk={restoreDialogConfig.isBulk}
+        selectedCount={restoreDialogConfig.formIds.length}
+      />
     </RecycleBinProvider>
   );
 }
