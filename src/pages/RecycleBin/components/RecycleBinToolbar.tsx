@@ -6,6 +6,8 @@ import {
   Typography,
   Menu,
   useTheme,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import {
   Search,
@@ -13,8 +15,6 @@ import {
   ChevronDown,
   FileText,
   MessageSquare,
-  CheckSquare,
-  Square,
 } from "lucide-react";
 import { sortOptions } from "../types";
 import { StyledToolbarInput, FilterButton, ToolbarSearchContainer } from "../styled";
@@ -136,19 +136,34 @@ const RecycleBinToolbar: React.FC<RecycleBinToolbarProps> = ({
 
       <Stack direction="row" spacing={1} alignItems="center">
         {activeTab === 0 && (
-          <FilterButton
+          <FormControlLabel
             onClick={onToggleHasResponses}
-            variant="outlined"
-            startIcon={
-              hasResponsesFilter ? (
-                <CheckSquare size={18} color={theme.palette.primary.main} />
-              ) : (
-                <Square size={18} />
-              )
+            control={
+              <Checkbox
+                checked={!!hasResponsesFilter}
+                size="small"
+                sx={{ p: 0, color: "#94a3b8" }}
+                disableRipple
+              />
             }
-            sx={{ width: 235, gap: 1.5 }}>
-            <Typography sx={controlTextSx}>טפסים עם תגובות</Typography>
-          </FilterButton>
+            label={<Typography sx={controlTextSx}>טפסים עם תגובות</Typography>}
+            sx={{
+              height: "36px",
+              backgroundColor: "background.paper",
+              border: "1px solid #e2e8f0",
+              borderRadius: "4px",
+              px: 1.5,
+              m: 0,
+              width: 235,
+              cursor: "pointer",
+              transition: "all 0.2s",
+              gap: 1.5,
+              "&:hover": {
+                backgroundColor: "action.hover",
+                borderColor: "#cbd5e1",
+              },
+            }}
+          />
         )}
 
         <Box>
