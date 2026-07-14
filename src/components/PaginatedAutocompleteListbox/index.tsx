@@ -1,3 +1,4 @@
+import { useTheme } from "@mui/material";
 import React, { useState, useCallback } from "react";
 import { useLoadMoreOnVisible } from "@src/pages/ResponsesPage/hooks/useLoadMoreOnVisible";
 
@@ -7,12 +8,20 @@ export const PaginatedAutocompleteListbox = React.forwardRef<
     onLoadMore?: () => void;
     hasNextPage?: boolean;
     isFetchingNextPage?: boolean;
+    ownerState?: any;
   }
 >(function Listbox(props, ref) {
-  console.log("PaginatedAutocompleteListbox rendered", props);
-  const { children, onLoadMore, hasNextPage = true, isFetchingNextPage, ...otherProps } = props;
+  const {
+    children,
+    onLoadMore,
+    hasNextPage = true,
+    isFetchingNextPage,
+    ownerState,
+    ...otherProps
+  } = props;
   const [rootNode, setRootNode] = useState<HTMLElement | null>(null);
   const [sentinelNode, setSentinelNode] = useState<HTMLElement | null>(null);
+  const theme = useTheme();
 
   const rootRef = useCallback(
     (node: HTMLUListElement | null) => {
@@ -33,7 +42,13 @@ export const PaginatedAutocompleteListbox = React.forwardRef<
   useLoadMoreOnVisible(rootNode, sentinelNode, onLoadMore, !isFetchingNextPage && hasNextPage);
 
   return (
-    <ul ref={rootRef} {...otherProps}>
+    <ul
+      ref={rootRef}
+      {...otherProps}
+      style={{
+        ...otherProps.style,
+        fontFamily: theme.typography.fontFamily,
+      }}>
       {children}
       {!isFetchingNextPage && hasNextPage && (
         <li
