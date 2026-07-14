@@ -476,11 +476,38 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
       pointerEvents: "none",
     },
   },
-  "& .MuiDataGrid-scrollbar.MuiDataGrid-scrollbar--vertical": {
-    display: "none !important",
-  },
-  "& .MuiDataGrid-scrollbar.MuiDataGrid-scrollbar--horizontal": {
-    display: "none !important",
+  "& .MuiDataGrid-scrollbar": {
+    display: "block !important",
+    backgroundColor: "#ffffff !important",
+    borderRadius: "999px",
+    scrollbarColor: "#cbd5e1 transparent !important",
+    scrollbarWidth: "auto !important",
+    msOverflowStyle: "auto !important",
+    "&.MuiDataGrid-scrollbar--vertical": {
+      width: "14px !important",
+    },
+    "&.MuiDataGrid-scrollbar--horizontal": {
+      height: "14px !important",
+    },
+    "&::-webkit-scrollbar": {
+      display: "block !important",
+      width: "14px !important",
+      height: "14px !important",
+    },
+    "&::-webkit-scrollbar-track": {
+      display: "block !important",
+      backgroundColor: "transparent !important",
+      borderRadius: "999px !important",
+    },
+    "&::-webkit-scrollbar-thumb": {
+      display: "block !important",
+      backgroundColor: "#cbd5e1 !important",
+      border: "3px solid #ffffff !important",
+      borderRadius: "999px !important",
+    },
+    "&::-webkit-scrollbar-thumb:hover": {
+      backgroundColor: "#94a3b8 !important",
+    },
   },
   "& .MuiDataGrid-row.Mui-selected": {
     backgroundColor: "rgba(25, 118, 210, 0.04)",

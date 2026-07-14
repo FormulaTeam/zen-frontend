@@ -95,6 +95,7 @@ function ConnectedFormSection({
     loadingConnections,
     responsSections,
     isError,
+    hiddenFieldIds,
   } = useResponseState(
     linkedFormId?.toString() ?? "",
     id,
@@ -114,6 +115,7 @@ function ConnectedFormSection({
     response,
     parentResponse,
     copyMode,
+    hiddenFieldIds,
   );
 
   const [saved, setSaved] = useState(false);

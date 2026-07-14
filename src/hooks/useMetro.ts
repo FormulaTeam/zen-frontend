@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react";
 import {
   editSourceToMetro,
-  sendToMetroFormResponses,
+  syncFormToOasis as syncFormToOasisRequest,
   updateMetroLbsInForm,
   upsertSourceToMetro,
 } from "../api";
-import { showErrorNotification, showLoadingNotification, showSuccessNotification } from "../utils/utils";
+import {
+  showErrorNotification,
+  showLoadingNotification,
+  showSuccessNotification,
+} from "../utils/utils";
 import { FieldTypeIds } from "../utils/interfaces";
-import { SourceOperationStatus, SourceOperationStatusType } from "@pages/ResponsesPage/components/FormActionsToolbar";
+import {
+  SourceOperationStatus,
+  SourceOperationStatusType,
+} from "@pages/ResponsesPage/components/FormActionsToolbar";
 import { toast } from "sonner";
 
 export const useMetro = ({
@@ -39,20 +46,20 @@ export const useMetro = ({
   }, [form]);
 
   const pushToMetro = async () => {
-    setShowMetroPopup(true);
+    setSourceOperationStatus?.(SourceOperationStatus.EDITING);
+
+    const toastId = showLoadingNotification("מתחיל סנכרון לאואזיס - נא לא לרענן", loadingIcon);
+
     try {
-      const ans = await sendToMetroFormResponses(theForm?.id);
-      if (Array.isArray(ans?.failedResponsesIds) && ans.failedResponsesIds.length > 0) {
-        showErrorNotification(`${ans.failedResponsesIds.length} מהתגובות לא סונכרנו כשורה`);
-      }
-      if (ans?.responseIds?.length > 0) {
-        showSuccessNotification(`${ans.responseIds.length} סונכרנו בהצלחה`);
-      }
-      getResponsesForCurrentPage && getResponsesForCurrentPage(theForm, null, "pushToMetro");
+      await syncFormToOasisRequest(theForm?.id);
+
+      toast.dismiss(toastId);
+      showSuccessNotification("סנכרון לאואזיס התחיל");
     } catch (error) {
-      showErrorNotification("הסנכרון למטרו נכשל");
+      toast.dismiss(toastId);
+      showErrorNotification("הסנכרון לאואזיס נכשל");
     } finally {
-      setShowMetroPopup(false);
+      setSourceOperationStatus?.(SourceOperationStatus.NOT_IN_PROGRESS);
     }
   };
 
@@ -119,10 +126,11 @@ export const useMetro = ({
         .map(
           (field) => `{
           "name": "${field.name}",
-        "type": ${field.typeId === FieldTypeIds.number // if field is a number field
-              ? '["null", "double", "int"]'
-              : '["null", "string"]'
-            },
+        "type": ${
+          field.typeId === FieldTypeIds.number // if field is a number field
+            ? '["null", "double", "int"]'
+            : '["null", "string"]'
+        },
           "path": "${field.name}"
         }`,
         )
