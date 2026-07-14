@@ -16,7 +16,7 @@ import {
   FileText,
   MessageSquare,
 } from "lucide-react";
-import { sortOptions } from "../types";
+import { sortOptions, RecycleBinTab } from "../types";
 import { StyledToolbarInput, FilterButton, ToolbarSearchContainer } from "../styled";
 
 interface RecycleBinToolbarProps {
@@ -135,7 +135,7 @@ const RecycleBinToolbar: React.FC<RecycleBinToolbarProps> = React.memo(({
       </Stack>
 
       <Stack direction="row" spacing={1} alignItems="center">
-        {activeTab === 0 && (
+        {activeTab === RecycleBinTab.FORMS && (
           <FormControlLabel
             onClick={onToggleHasResponses}
             control={

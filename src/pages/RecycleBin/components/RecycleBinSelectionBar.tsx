@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Typography, Stack, Button, CircularProgress } from "@mui/material";
 import { XCircle, RotateCcw } from "lucide-react";
 import { useRecycleBin } from "../context/RecycleBinContext";
+import { RecycleBinTab } from "../types";
 
 interface RecycleBinSelectionBarProps {
   activeTab: number;
@@ -17,7 +18,7 @@ const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({ activeT
     onBulkRestore,
   } = useRecycleBin();
 
-  const selectedCount = activeTab === 0 ? selectedFormIds.size : selectedResponseIds.size;
+  const selectedCount = activeTab === RecycleBinTab.FORMS ? selectedFormIds.size : selectedResponseIds.size;
 
   if (selectedCount === 0) return null;
 
@@ -100,7 +101,7 @@ const RecycleBinSelectionBar: React.FC<RecycleBinSelectionBarProps> = ({ activeT
             },
             "&:hover": { bgcolor: "primary.dark" },
           }}>
-          שחזור {activeTab === 0 ? "טפסים" : "תגובות"}
+          שחזור {activeTab === RecycleBinTab.FORMS ? "טפסים" : "תגובות"}
         </Button>
       </Stack>
     </Box>

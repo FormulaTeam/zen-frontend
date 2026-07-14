@@ -23,3 +23,8 @@ export const sortOptions = [
   { label: "שם הטופס (א-ת)", sortBy: formsSortOption.Name, direction: "asc" },
   { label: "שם הטופס (ת-א)", sortBy: formsSortOption.Name, direction: "desc" },
 ];
+
+export const RecycleBinTab = {
+  FORMS: 0,
+  RESPONSES: 1,
+} as const;
