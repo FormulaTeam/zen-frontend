@@ -594,6 +594,38 @@ const ResponsesPageContent = (): JSX.Element => {
 
               <ToolbarDivider />
 
+              {responsesTableColorRules.length > 0 && (
+                <Select
+                  size="small"
+                  value={colorFilter}
+                  onChange={(event) => setColorFilter(event.target.value)}
+                  disabled={isInEditMode}
+                  displayEmpty
+                  sx={{
+                    minWidth: 150,
+                    height: 40,
+                    backgroundColor: ACTION_BUTTON_BACKGROUND,
+                    "& .MuiSelect-select": { py: 0.9, fontWeight: 600 },
+                  }}>
+                  <MenuItem value="">כל הצבעים</MenuItem>
+                  {Object.entries(COLOR_RULE_PALETTE).map(([color, meta]) => (
+                    <MenuItem key={color} value={color}>
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: "50%",
+                          backgroundColor: meta.swatch,
+                          ml: 1,
+                        }}
+                      />
+                      {meta.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              )}
+
               {canManageColorRules && (
                 <>
                   <Tooltip title={responsesTableColorRules.length > 0 ? "צביעת תגובות" : ""} arrow>
@@ -643,42 +675,6 @@ const ResponsesPageContent = (): JSX.Element => {
                       )}
                     </UnifiedButton>
                   </Tooltip>
-
-                  <ToolbarDivider />
-                </>
-              )}
-
-              {responsesTableColorRules.length > 0 && (
-                <>
-                  <Select
-                    size="small"
-                    value={colorFilter}
-                    onChange={(event) => setColorFilter(event.target.value)}
-                    disabled={isInEditMode}
-                    displayEmpty
-                    sx={{
-                      minWidth: 150,
-                      height: 40,
-                      backgroundColor: ACTION_BUTTON_BACKGROUND,
-                      "& .MuiSelect-select": { py: 0.9, fontWeight: 800 },
-                    }}>
-                    <MenuItem value="">כל הצבעים</MenuItem>
-                    {Object.entries(COLOR_RULE_PALETTE).map(([color, meta]) => (
-                      <MenuItem key={color} value={color}>
-                        <Box
-                          component="span"
-                          sx={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: "50%",
-                            backgroundColor: meta.swatch,
-                            ml: 1,
-                          }}
-                        />
-                        {meta.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
 
                   <ToolbarDivider />
                 </>

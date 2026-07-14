@@ -11,6 +11,8 @@ import styled from "styled-components";
 
 export const ModalTitle = styled(DialogTitle)`
   position: relative;
+  display: flex;
+  justify-content: center;
   font-weight: 600 !important;
   padding-bottom: 0 !important;
 `;
@@ -20,7 +22,7 @@ export const TitleContent = styled(Box)`
   align-items: center;
   text-align: center;
   gap: 8px;
-  font-size: '30px';
+  font-size: 30px;
 `;
 
 export const CloseButton = styled(IconButton)`
@@ -40,14 +42,14 @@ export const DeleteRuleButton = styled(IconButton)`
   width: 40px;
   height: 40px;
   padding: 8px !important;
-  color: #0f172a !important;
+  color: #ef000b !important;
 
   svg {
     font-size: 24px;
   }
 
   &:hover {
-    background-color: rgba(15, 23, 42, 0.06) !important;
+    background-color: rgba(239, 0, 11, 0.08) !important;
   }
 `;
 
@@ -96,9 +98,9 @@ export const RulesTableContainer = styled(Box)`
 
 export const RulesGrid = styled(Box)`
   display: grid;
-  grid-template-columns: 24px 190px 150px 190px 96px 120px 72px 40px;
+  grid-template-columns: 24px minmax(180px, 1.15fr) minmax(160px, 0.9fr) minmax(220px, 1.15fr) 150px 120px 72px 42px;
   gap: 8px;
-  min-width: 930px;
+  min-width: 1120px;
 `;
 
 export const RulesHeader = styled(RulesGrid)`
@@ -125,6 +127,11 @@ export const DragHandle = styled(Box)`
   svg {
     font-size: 18px;
   }
+`;
+
+export const AddRuleRow = styled(Box)`
+  min-width: 1120px;
+  padding-top: 8px;
 `;
 
 export const ColorSelectValue = styled(Box)`
@@ -168,15 +175,65 @@ export const ModalActions = styled(DialogActions)`
 
 export const AddRuleButton = styled(Button)`
   min-width: auto !important;
-  padding: 0 !important;
-  color: #1e8fe5 !important;
   font-weight: 700 !important;
-  background: transparent !important;
+  gap: 10px
+`;
+
+export const DeleteConfirmContent = styled(Box)`
+  position: relative;
+  width: 280px;
+  padding: 16px 16px 14px;
+  border-radius: 4px;
+  background-color: #ffffff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset-block-start: -8px;
+    inset-inline-start: 50%;
+    width: 16px;
+    height: 16px;
+    background-color: #ffffff;
+    transform: translateX(-50%) rotate(45deg);
+    box-shadow: -2px -2px 3px rgba(15, 23, 42, 0.04);
+  }
+`;
+
+export const DeleteConfirmText = styled(Typography)`
+  color: #0f172a;
+  font-size: 18px !important;
+  line-height: 1.6 !important;
+  font-weight: 500 !important;
+`;
+
+export const DeleteConfirmActions = styled(Box)`
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+`;
+
+export const DeleteConfirmButton = styled(Button)`
+  min-width: 86px !important;
+  height: 44px;
+  border-radius: 6px !important;
+  background-color: #ef000b !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
 
   &:hover {
-    background: transparent !important;
-    color: #187fd0 !important;
+    background-color: #d9000a !important;
   }
+`;
+
+export const DeleteCancelButton = styled(Button)`
+  min-width: 86px !important;
+  height: 44px;
+  border-radius: 6px !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #dbe3ec !important;
+  font-weight: 700 !important;
 `;
 
 export const ActionButtons = styled(Box)`

@@ -3,10 +3,10 @@ import {
   Dialog,
   FormControl,
   MenuItem,
+  Popover,
   Select,
   Switch,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -14,13 +14,12 @@ import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { useEffect, useMemo, useState } from "react";
+import { DragEvent, MouseEvent, useEffect, useMemo, useState } from "react";
 import { comparator, fieldType } from "formula-gear";
 import brushIcon from "../../../icons/brush.svg";
 
 import { useSaveResponsesTableColorRules } from "../../../api/responsesApi";
 import { FormFieldDto, ResponsesTableColorRuleDto } from "../../../types/shared";
-import UnsavedChangesDialog from "../../../components/BasePopup/UnsavedChangesDialog";
 import {
   COLOR_RULE_PALETTE,
   createEmptyColorRule,
@@ -30,11 +29,17 @@ import { showErrorNotification, showSuccessNotification } from "../../../utils/u
 import {
   ActionButtons,
   AddRuleButton,
+  AddRuleRow,
   CancelButton,
   CloseButton,
   ColorMenuSwatch,
   ColorSelectValue,
   ColorSwatch,
+  DeleteCancelButton,
+  DeleteConfirmActions,
+  DeleteConfirmButton,
+  DeleteConfirmContent,
+  DeleteConfirmText,
   DeleteRuleButton,
   DragHandle,
   EmptyStateContainer,
@@ -100,15 +105,19 @@ export const ColorRulesModal = ({
     [fields],
   );
   const [draftRules, setDraftRules] = useState<ResponsesTableColorRuleDto[]>(rules);
-  const [showDiscardWarning, setShowDiscardWarning] = useState(false);
   const [touchedTargetValueRuleIds, setTouchedTargetValueRuleIds] = useState<Set<string>>(new Set());
+  const [draggedRuleId, setDraggedRuleId] = useState<string | null>(null);
+  const [deleteAnchorEl, setDeleteAnchorEl] = useState<HTMLElement | null>(null);
+  const [pendingDeleteRuleId, setPendingDeleteRuleId] = useState<string | null>(null);
   const { mutateAsync, isPending } = useSaveResponsesTableColorRules();
 
   useEffect(() => {
     if (open) {
       setDraftRules(rules);
-      setShowDiscardWarning(false);
       setTouchedTargetValueRuleIds(new Set());
+      setDraggedRuleId(null);
+      setDeleteAnchorEl(null);
+      setPendingDeleteRuleId(null);
     }
   }, [open, rules]);
 
@@ -186,13 +195,58 @@ export const ColorRulesModal = ({
     setDraftRules((prev) => prev.filter((rule) => rule.id !== ruleId));
   };
 
-  const requestClose = () => {
-    if (canManage && hasChanges) {
-      setShowDiscardWarning(true);
-      return;
-    }
+  const handleRuleDragStart = (ruleId: string) => {
+    setDraggedRuleId(ruleId);
+  };
 
+  const moveRuleBefore = (activeRuleId: string, overRuleId: string) => {
+    setDraftRules((prev) => {
+      const activeIndex = prev.findIndex((rule) => rule.id === activeRuleId);
+      const overIndex = prev.findIndex((rule) => rule.id === overRuleId);
+
+      if (activeIndex < 0 || overIndex < 0 || activeIndex === overIndex) return prev;
+
+      const next = [...prev];
+      const [movedRule] = next.splice(activeIndex, 1);
+      next.splice(overIndex, 0, movedRule);
+
+      return next.map((rule, index) => ({ ...rule, order: index }));
+    });
+  };
+
+  const handleRuleDragOver = (
+    event: DragEvent<HTMLDivElement>,
+    overRuleId: string,
+  ) => {
+    event.preventDefault();
+    if (!draggedRuleId || draggedRuleId === overRuleId) return;
+
+    moveRuleBefore(draggedRuleId, overRuleId);
+  };
+
+  const handleRuleDragEnd = () => {
+    setDraggedRuleId(null);
+  };
+
+  const requestClose = () => {
     onClose();
+  };
+
+  const openDeletePopover = (event: MouseEvent<HTMLElement>, ruleId: string) => {
+    setDeleteAnchorEl(event.currentTarget);
+    setPendingDeleteRuleId(ruleId);
+  };
+
+  const closeDeletePopover = () => {
+    setDeleteAnchorEl(null);
+    setPendingDeleteRuleId(null);
+  };
+
+  const confirmDeleteRule = () => {
+    if (pendingDeleteRuleId) {
+      handleDeleteRule(pendingDeleteRuleId);
+    }
+    closeDeletePopover();
   };
 
   const handleSave = async () => {
@@ -319,8 +373,14 @@ export const ColorRulesModal = ({
     const ruleErrors = validationErrors[rule.id] ?? {};
 
     return (
-      <RuleRow key={rule.id}>
-        <DragHandle>
+      <RuleRow
+        key={rule.id}
+        onDragOver={(event) => handleRuleDragOver(event, rule.id)}
+        onDragEnd={handleRuleDragEnd}>
+        <DragHandle
+          draggable={canManage}
+          onDragStart={() => handleRuleDragStart(rule.id)}
+          onDragEnd={handleRuleDragEnd}>
           <DragIndicatorIcon />
         </DragHandle>
 
@@ -395,21 +455,29 @@ export const ColorRulesModal = ({
           disabled={!canManage}
         />
 
-        <Tooltip title="מחיקה">
-          <span>
-            <DeleteRuleButton disabled={!canManage} onClick={() => handleDeleteRule(rule.id)}>
-              <DeleteOutlineIcon />
-            </DeleteRuleButton>
-          </span>
-        </Tooltip>
+        <span>
+          <DeleteRuleButton
+            disabled={!canManage}
+            onClick={(event) => openDeletePopover(event, rule.id)}>
+            <DeleteOutlineIcon />
+          </DeleteRuleButton>
+        </span>
       </RuleRow>
     );
   };
+
 
   const rulesTable: JSX.Element = (
     <RulesTableContainer>
       {rulesHeader}
       {draftRules.map(renderRuleRow)}
+      {canManage && (
+        <AddRuleRow>
+          <AddRuleButton variant="contained" startIcon={<AddIcon />} onClick={handleAddRule}>
+            חוק חדש
+          </AddRuleButton>
+        </AddRuleRow>
+      )}
     </RulesTableContainer>
   );
 
@@ -424,13 +492,7 @@ export const ColorRulesModal = ({
 
   const modalActions: JSX.Element = (
     <ModalActions>
-      <div>
-        {canManage && draftRules.length > 0 && (
-          <AddRuleButton startIcon={<AddIcon />} onClick={handleAddRule}>
-            חוק חדש
-          </AddRuleButton>
-        )}
-      </div>
+      <div />
 
       <ActionButtons>
         <CancelButton onClick={requestClose}>ביטול</CancelButton>
@@ -443,6 +505,24 @@ export const ColorRulesModal = ({
     </ModalActions>
   );
 
+  const deleteConfirmationPopover: JSX.Element = (
+    <Popover
+      open={!!deleteAnchorEl}
+      anchorEl={deleteAnchorEl}
+      onClose={closeDeletePopover}
+      anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      transformOrigin={{ vertical: "top", horizontal: "center" }}>
+      <DeleteConfirmContent>
+        <DeleteConfirmText>האם ברצונך למחוק את החוק?</DeleteConfirmText>
+        <DeleteConfirmText>החוק המחוק לא יהיה ניתן לשחזור.</DeleteConfirmText>
+        <DeleteConfirmActions>
+          <DeleteCancelButton onClick={closeDeletePopover}>ביטול</DeleteCancelButton>
+          <DeleteConfirmButton onClick={confirmDeleteRule}>מחיקה</DeleteConfirmButton>
+        </DeleteConfirmActions>
+      </DeleteConfirmContent>
+    </Popover>
+  );
+
   const modalDialog: JSX.Element = (
     <Dialog open={open} onClose={requestClose} maxWidth="lg" fullWidth dir="rtl">
       {modalTitle}
@@ -452,26 +532,13 @@ export const ColorRulesModal = ({
         {overlapNotice}
       </ModalContent>
       {modalActions}
+      {deleteConfirmationPopover}
     </Dialog>
-  );
-
-  const unsavedChangesDialog: JSX.Element = (
-    <UnsavedChangesDialog
-      open={showDiscardWarning}
-      onClose={() => setShowDiscardWarning(false)}
-      onSave={handleSave}
-      onDiscard={onClose}
-      title="שינויים שלא נשמרו"
-      message="ישנם שינויים שלא נשמרו. האם ברצונך לשמור לפני סגירת החלון?"
-      saveText="שמירה"
-      discardText="סגירה ללא שמירה"
-    />
   );
 
   return (
     <>
       {modalDialog}
-      {unsavedChangesDialog}
     </>
   );
 };
