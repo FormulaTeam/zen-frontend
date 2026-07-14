@@ -68,7 +68,7 @@ const RecycleBinFormCard: React.FC<RecycleBinFormCardProps> = ({ form }) => {
         }}>
         <Stack direction="row" gap={2} alignItems="center">
           <Button
-            disabled={isAnyRestoring}
+            disabled={isAnyRestoring || selectedFormIds.size > 0}
             onClick={() => onRestoreForm(form.id)}
             variant="contained"
             endIcon={

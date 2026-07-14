@@ -139,7 +139,7 @@ const RecycleBinResponseRow: React.FC<RecycleBinResponseRowProps> = ({
         </Stack>
         {!hideRestoreButton && (
           <Button
-            disabled={isAnyRestoring}
+            disabled={isAnyRestoring || selectedResponseIds.size > 0}
             onClick={() => onRestoreResponse(response.formId, response.id)}
             variant="contained"
             endIcon={
