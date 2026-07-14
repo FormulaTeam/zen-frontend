@@ -72,7 +72,7 @@ const ScopeOption: React.FC<{ value: string; isSelected?: boolean }> = ({ value 
   );
 };
 
-const RecycleBinToolbar: React.FC<RecycleBinToolbarProps> = ({
+const RecycleBinToolbar: React.FC<RecycleBinToolbarProps> = React.memo(({
   activeTab,
   scopeParam,
   sortBy,
@@ -221,6 +221,6 @@ const RecycleBinToolbar: React.FC<RecycleBinToolbarProps> = ({
       </Stack>
     </Box>
   );
-};
+});
 
 export default RecycleBinToolbar;

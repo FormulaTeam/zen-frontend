@@ -11,7 +11,7 @@ interface RecycleBinResponsesListProps {
   isFetchingNextPage: boolean;
 }
 
-const RecycleBinResponsesList: React.FC<RecycleBinResponsesListProps> = ({
+const RecycleBinResponsesList: React.FC<RecycleBinResponsesListProps> = React.memo(({
   activeFormsWithDeleted,
   isLoading,
   isFetchingNextPage,
@@ -46,6 +46,6 @@ const RecycleBinResponsesList: React.FC<RecycleBinResponsesListProps> = ({
       </Grid>
     </>
   );
-};
+});
 
 export default RecycleBinResponsesList;
