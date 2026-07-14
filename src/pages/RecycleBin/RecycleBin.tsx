@@ -58,7 +58,12 @@ function RecycleBin({ user }: { user: User | null }) {
   const debouncedCreatedBy = useDebounce(createdBySearch, 300);
   const debouncedDeletedBy = useDebounce(deletedBySearch, 300);
 
-  const hasActiveFilters = !!(searchTerm || createdBySearch || deletedBySearch || hasResponsesFilter);
+  const hasActiveFilters = !!(
+    debouncedSearchTerm ||
+    debouncedCreatedBy ||
+    debouncedDeletedBy ||
+    hasResponsesFilter
+  );
 
   const formsFilter = useMemo(() => ({
     query: debouncedSearchTerm || undefined,
@@ -269,6 +274,7 @@ function RecycleBin({ user }: { user: User | null }) {
 
         const formIds = Object.keys(formResponseMap).map(Number);
         let successCount = 0;
+        let failCount = 0;
 
         for (const fId of formIds) {
           const respIds = formResponseMap[fId];
@@ -276,17 +282,24 @@ function RecycleBin({ user }: { user: User | null }) {
             await restoreResponses(fId, respIds);
             successCount += respIds.length;
           } catch (e) {
+            failCount += respIds.length;
             console.error(`Failed to restore responses for form ${fId}`, e);
           }
         }
 
         if (successCount > 0) {
-          toast.success(`${successCount} תגובות שוחזרו בהצלחה`);
+          if (failCount > 0) {
+            toast.warning(`שוחזרו ${successCount} תגובות, אך ${failCount} נכשלו`);
+          } else {
+            toast.success(`${successCount} תגובות שוחזרו בהצלחה`);
+          }
           handleClearSelection();
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ["forms", "responses", "soft-deleted"] }),
             queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] }),
           ]);
+        } else if (failCount > 0) {
+          toast.error("שחזור התגובות נכשל");
         }
       } catch (error) {
         toast.error("שחזור פריטים נכשל");
