@@ -253,6 +253,7 @@ export const autocompletePaperSlotProps = {
     border: "1px solid",
     borderColor: "rgba(148, 163, 184, 0.35)",
     overflow: "hidden",
+    maxHeight: "300px",
   },
 };
 
