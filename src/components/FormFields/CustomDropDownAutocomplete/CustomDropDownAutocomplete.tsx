@@ -34,6 +34,8 @@ interface CustomDropDownAutocompleteProps {
   onInputChange?: (event: React.SyntheticEvent, value: string, reason: string) => void;
   onScrollToBottom?: () => void;
   loading?: boolean;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
   inputValue?: string;
   filterOptions?: (options: unknown[], state: any) => unknown[];
   noOptionsText?: string;
@@ -67,6 +69,8 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   onInputChange,
   onScrollToBottom,
   loading,
+  hasNextPage,
+  isFetchingNextPage,
   inputValue,
   filterOptions,
   noOptionsText = "אין אפשרויות",
@@ -153,9 +157,14 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
 
       <StyledAutocomplete
         ListboxComponent={PaginatedAutocompleteListbox}
+        slots={{
+          listbox: PaginatedAutocompleteListbox,
+        }}
         ListboxProps={
           {
             onLoadMore: onScrollToBottom,
+            hasNextPage,
+            isFetchingNextPage,
             ...autocompleteListboxProps,
           } as any
         }
@@ -169,6 +178,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
         options={options}
         noOptionsText={noOptionsText}
         loading={loading}
+        loadingText="בטעינה..."
         onInputChange={onInputChange}
         value={autocompleteValue}
         {...(inputValue !== undefined ? { inputValue } : {})}

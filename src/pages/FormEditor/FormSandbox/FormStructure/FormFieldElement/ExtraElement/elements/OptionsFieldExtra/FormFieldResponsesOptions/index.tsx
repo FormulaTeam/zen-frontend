@@ -76,12 +76,16 @@ function FormFieldResponsesOptions(props: Props) {
 
   const {
     options: defaultValueOptions,
-    isLoading: isLoadingDefaultValues,
+    isLoading: isFirstPageLoading,
+    isFetchingNextPage: isFetchingMore,
     loadMore: loadMoreDefaultValues,
+    hasNextPage,
   } = usePaginatedFieldValueOptions({
     formId: selectedFormId,
     fieldId: selectedFieldId,
   });
+
+  const isLoadingDefaultValues = isFirstPageLoading || isFetchingMore;
 
   const selectedDefaultValueOptions = useMemo(() => {
     const loadedOptionsById = new Map(
@@ -372,8 +376,18 @@ function FormFieldResponsesOptions(props: Props) {
                     : [],
               });
             }}
+            openOnFocus
             ListboxComponent={PaginatedAutocompleteListbox}
-            ListboxProps={{ onLoadMore: loadMoreDefaultValues } as any}
+            slots={{
+              listbox: PaginatedAutocompleteListbox,
+            }}
+            ListboxProps={
+              {
+                onLoadMore: loadMoreDefaultValues,
+                hasNextPage,
+                isFetchingNextPage: isFetchingMore,
+              } as any
+            }
             renderInput={(params) => (
               <TextField {...params} label="ברירת מחדל" variant="standard" />
             )}

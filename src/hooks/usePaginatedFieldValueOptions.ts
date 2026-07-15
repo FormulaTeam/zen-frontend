@@ -27,24 +27,19 @@ export const usePaginatedFieldValueOptions = ({
     } = useGetInfiniteFieldValues(formId, fieldId, search);
 
     const options = useMemo<PaginatedFieldValueOption[]>(() => {
-        const values =
-            data?.pages.flatMap((page) =>
-                page.data
-                    .map((item: any) => item.value)
-                    .filter(
-                        (value: any) =>
-                            value !== undefined &&
-                            value !== null &&
-                            String(value).trim() !== "",
-                    ),
-            ) ?? [];
+        if (!data) return [];
 
-        const uniqueValues = Array.from(new Set(values.map(String)));
+        return data.pages.flatMap((page) =>
+            page.data.map((item: any) => {
+                const value = item.value;
+                const stringValue = typeof value === "object" && value !== null ? JSON.stringify(value) : String(value);
 
-        return uniqueValues.map((value) => ({
-            id: value,
-            text: formatOptionLabel(value),
-        }));
+                return {
+                    id: stringValue,
+                    text: formatOptionLabel(typeof value === "string" ? value : stringValue),
+                };
+            }),
+        );
     }, [data]);
 
     const loadMore = () => {
@@ -55,7 +50,8 @@ export const usePaginatedFieldValueOptions = ({
 
     return {
         options,
-        isLoading: isLoading || isFetchingNextPage,
+        isLoading,
+        isFetchingNextPage,
         loadMore,
         hasNextPage,
     };
