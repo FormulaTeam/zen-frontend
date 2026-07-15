@@ -526,7 +526,6 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                 placeholder={hasSelectedValue ? "" : "בחר אפשרויות"}
                 inputProps={{
                   ...params.inputProps,
-                  readOnly: true,
                   style: {
                     textAlign: "right",
                     direction: "rtl",
@@ -589,7 +588,6 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                 placeholder="בחר אפשרות"
                 inputProps={{
                   ...params.inputProps,
-                  readOnly: true,
                   style: {
                     textAlign: "right",
                     direction: "rtl",

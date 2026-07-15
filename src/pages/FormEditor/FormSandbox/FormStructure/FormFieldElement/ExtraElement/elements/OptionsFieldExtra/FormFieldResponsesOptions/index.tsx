@@ -377,6 +377,7 @@ function FormFieldResponsesOptions(props: Props) {
               });
             }}
             openOnFocus
+            disablePortal
             ListboxComponent={PaginatedAutocompleteListbox}
             slots={{
               listbox: PaginatedAutocompleteListbox,
