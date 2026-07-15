@@ -254,7 +254,13 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
     isFetchingNextPage: isFetchingMoreConnected,
     loadMore: loadMoreConnectedOptions,
     hasNextPage: hasNextPageConnected,
-  } = useLinkedFieldValueOptions(linkedOptionsFieldId, connectedToForm, searchTerm);
+  } = useLinkedFieldValueOptions(
+    linkedOptionsFieldId,
+    connectedToForm,
+    searchTerm,
+    dependentFilterValue ? dependentSourceFieldId : undefined,
+    dependentFilterValue,
+  );
 
   field.name = formField.name;
 

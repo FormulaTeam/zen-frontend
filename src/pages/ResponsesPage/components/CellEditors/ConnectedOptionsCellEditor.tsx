@@ -26,7 +26,13 @@ export const ConnectedOptionsCellEditor: React.FC<ConnectedOptionsCellEditorProp
         isFetchingNextPage,
         loadMore,
         hasNextPage,
-    } = useLinkedFieldValueOptions(linkedOptionsFieldId);
+    } = useLinkedFieldValueOptions(
+        linkedOptionsFieldId,
+        true,
+        "",
+        dependentValue ? dependentFieldId : undefined,
+        dependentValue,
+    );
 
     const options = optionObjects.map((option) => option.id);
 
