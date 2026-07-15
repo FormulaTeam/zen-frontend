@@ -251,6 +251,17 @@ function FormFieldResponsesOptions(props: Props) {
           });
         }}
         isOptionEqualToValue={(option, value) => option?.id === value?.id}
+        disablePortal
+        slotProps={{
+          popper: {
+            sx: {
+              "& .MuiAutocomplete-listbox": {
+                maxHeight: "300px",
+                overflowY: "auto",
+              },
+            },
+          },
+        }}
         renderOption={(props, option) => (
           <li {...props}>
             <Box
@@ -334,6 +345,17 @@ function FormFieldResponsesOptions(props: Props) {
                   : "אין שדות זמינים"
             }
             disabled={!selectedFormId}
+            disablePortal
+            slotProps={{
+              popper: {
+                sx: {
+                  "& .MuiAutocomplete-listbox": {
+                    maxHeight: "300px",
+                    overflowY: "auto",
+                  },
+                },
+              },
+            }}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -378,6 +400,16 @@ function FormFieldResponsesOptions(props: Props) {
             }}
             openOnFocus
             disablePortal
+            slotProps={{
+              popper: {
+                sx: {
+                  "& .MuiAutocomplete-listbox": {
+                    maxHeight: "300px",
+                    overflowY: "auto",
+                  },
+                },
+              },
+            }}
             ListboxComponent={PaginatedAutocompleteListbox}
             slots={{
               listbox: PaginatedAutocompleteListbox,
