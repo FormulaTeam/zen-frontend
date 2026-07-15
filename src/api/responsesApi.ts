@@ -609,7 +609,7 @@ export const getResponsesRows = async ({
   }
 };
 
-export const OPTIONS_PAGINATION_LIMIT = 10;
+export const OPTIONS_PAGINATION_LIMIT = 50;
 
 export const getFieldValues = async (
   formId: number,

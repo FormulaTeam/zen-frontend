@@ -23,14 +23,10 @@ export const ConnectedOptionsCellEditor: React.FC<ConnectedOptionsCellEditorProp
     const {
         options: optionObjects,
         isLoading,
+        isFetchingNextPage,
         loadMore,
-    } = useLinkedFieldValueOptions(
-        linkedOptionsFieldId,
-        true,
-        "",
-        dependentFieldId,
-        dependentValue,
-    );
+        hasNextPage,
+    } = useLinkedFieldValueOptions(linkedOptionsFieldId);
 
     const options = optionObjects.map((option) => option.id);
 
@@ -44,6 +40,8 @@ export const ConnectedOptionsCellEditor: React.FC<ConnectedOptionsCellEditorProp
             options={options}
             optionLabels={optionLabels}
             loading={isLoading}
+            isFetchingNextPage={isFetchingNextPage}
+            hasNextPage={hasNextPage}
             onScrollToBottom={loadMore}
         />
     );
