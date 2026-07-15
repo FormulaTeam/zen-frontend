@@ -241,6 +241,10 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   const dependentValue = Array.isArray(dependentTargetValue)
     ? dependentTargetValue.find((value) => !!value)
     : dependentTargetValue;
+  const dependentFilterValue =
+    dependentValue === undefined || dependentValue === null
+      ? undefined
+      : String(dependentValue).trim() || undefined;
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -252,8 +256,8 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
     linkedOptionsFieldId,
     connectedToForm,
     searchTerm,
-    dependentSourceFieldId,
-    dependentValue ? String(dependentValue) : undefined,
+    dependentFilterValue ? dependentSourceFieldId : undefined,
+    dependentFilterValue,
   );
 
   field.name = formField.name;
@@ -574,13 +578,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       availableOptions = Array.from(new Set(availableOptions.filter((option) => !!option)));
 
       if (isDependentConnectedOptionsField) {
-        const hasDependentValue = !!dependentValue;
+        const hasDependentValue = !!dependentFilterValue;
 
-        if (!hasDependentValue) {
-          availableOptions = [];
-        }
-
-        if (!isLoadingConnected) {
+        if (hasDependentValue && !isLoadingConnected) {
           if (isMultiple) {
             const currentValues = Array.isArray(formFieldValue) ? formFieldValue : [];
             const validValues = currentValues.filter((value: string) =>
