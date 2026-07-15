@@ -40,6 +40,7 @@ type FormFieldExtra = {
   value?: any;
   validationRegex?: string;
   linkedOptionsFieldId?: string | null;
+  dependentOptionsFieldId?: string | null;
 
   linkedFormId?: number;
   connectedFieldId?: string;
@@ -227,6 +228,19 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   const linkedOptionsFieldId = connectedToForm
     ? (formFieldExtra.linkedOptionsFieldId ?? undefined)
     : undefined;
+  const dependentTargetField = formFieldExtra.dependentOptionsFieldId
+    ? formFields.find((candidateField) => candidateField.id === formFieldExtra.dependentOptionsFieldId)
+    : undefined;
+  const dependentSourceFieldId =
+    connectedToForm && dependentTargetField
+      ? (getFieldExtra(dependentTargetField).linkedOptionsFieldId ?? undefined)
+      : undefined;
+  const dependentTargetValue = dependentTargetField
+    ? formFieldsValuesMap.get(dependentTargetField.id)
+    : undefined;
+  const dependentValue = Array.isArray(dependentTargetValue)
+    ? dependentTargetValue.find((value) => !!value)
+    : dependentTargetValue;
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -234,7 +248,13 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
     options: connectedOptions,
     isLoading: isLoadingConnected,
     loadMore: loadMoreConnectedOptions,
-  } = useLinkedFieldValueOptions(linkedOptionsFieldId, connectedToForm, searchTerm);
+  } = useLinkedFieldValueOptions(
+    linkedOptionsFieldId,
+    connectedToForm,
+    searchTerm,
+    dependentSourceFieldId,
+    dependentValue ? String(dependentValue) : undefined,
+  );
 
   field.name = formField.name;
 
@@ -323,6 +343,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       let availableOptions: string[] = connectedToForm
         ? connectedOptions.map((option) => option.id)
         : getFieldOptions(formField);
+
+      const isDependentConnectedOptionsField =
+        connectedToForm && !!formFieldExtra.dependentOptionsFieldId;
 
       const parentDependencies = getParentDependencies(formField);
 
@@ -549,6 +572,41 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       }
 
       availableOptions = Array.from(new Set(availableOptions.filter((option) => !!option)));
+
+      if (isDependentConnectedOptionsField) {
+        const hasDependentValue = !!dependentValue;
+
+        if (!hasDependentValue) {
+          availableOptions = [];
+        }
+
+        if (!isLoadingConnected) {
+          if (isMultiple) {
+            const currentValues = Array.isArray(formFieldValue) ? formFieldValue : [];
+            const validValues = currentValues.filter((value: string) =>
+              availableOptions.includes(value),
+            );
+
+            if (validValues.length !== currentValues.length) {
+              formFieldValue = validValues;
+
+              setTimeout(() => {
+                onChangeHandler(validValues, fieldId);
+              }, 0);
+            }
+          } else {
+            const currentValue = typeof formFieldValue === "string" ? formFieldValue : "";
+
+            if (currentValue && !availableOptions.includes(currentValue)) {
+              formFieldValue = "";
+
+              setTimeout(() => {
+                onChangeHandler("", fieldId);
+              }, 0);
+            }
+          }
+        }
+      }
 
       const inactiveOptionIds = formFieldExtra.inactiveOptionIds ?? [];
       availableOptions = availableOptions.filter(
@@ -860,6 +918,7 @@ const shouldSkipRerenderHOF = (
   );
 
   const parentId =
+    prevExtra.dependentOptionsFieldId ??
     prevExtra.parentFieldId ??
     (linkedFieldExists ? prevExtra.linkedOptionsFieldId : null) ??
     inferredParentFieldForRerender?.id ??

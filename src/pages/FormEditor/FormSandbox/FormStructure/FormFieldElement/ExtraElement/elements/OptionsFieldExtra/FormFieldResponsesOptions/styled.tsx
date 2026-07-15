@@ -15,3 +15,7 @@ export const Container = styled(FormControl)({
 export const FieldControl = styled(FormControl)({
     marginTop: 8,
 });
+
+export const LeadingFieldControl = styled(FieldControl)({
+    marginBottom: '25px',
+});

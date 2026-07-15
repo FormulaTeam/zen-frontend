@@ -34,6 +34,7 @@ function OptionsFieldExtra({
   const {
     selectionMode: mode = selectionMode.Single,
     linkedOptionsFieldId,
+    dependentOptionsFieldId,
     defaultValue = [],
   } = extra as any;
 
@@ -49,16 +50,16 @@ function OptionsFieldExtra({
 
     const isFormFieldResponses = nextSource === optionsSource.FormFieldResponses;
 
-    onChange({
-      linkedOptionsFieldId: isFormFieldResponses ? (linkedOptionsFieldId ?? null) : null,
-      defaultValue: [],
-    });
-
-    if (isFormFieldResponses) {
-      onDataChange?.({
-        options: [],
-      });
-    }
+    onDataChange?.({
+      replaceExtra: true,
+      extra: {
+        selectionMode: mode,
+        linkedOptionsFieldId: isFormFieldResponses ? (linkedOptionsFieldId ?? null) : null,
+        dependentOptionsFieldId: null,
+        defaultValue: [],
+      },
+      ...(isFormFieldResponses ? { options: [] } : {}),
+    } as any);
   };
 
   return (
@@ -92,7 +93,9 @@ function OptionsFieldExtra({
 
       {isLinkedToForm ? (
         <FormFieldResponsesOptions
+          fieldId={fieldId}
           linkedOptionsFieldId={linkedOptionsFieldId}
+          dependentOptionsFieldId={dependentOptionsFieldId}
           defaultValue={defaultValue}
           selectionMode={mode}
           validationErrors={validationErrors as any}
