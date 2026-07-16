@@ -235,11 +235,50 @@ export const getHelperTextSx = (
   textAlign: "right",
 });
 
+export const basePopperSx = {
+  "& .MuiAutocomplete-paper": {
+    mt: "4px",
+    borderRadius: "10px",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 8px 20px rgba(15, 23, 42, 0.1)",
+    overflow: "hidden",
+  },
+  "& .MuiAutocomplete-listbox": {
+    p: "4px",
+    direction: "rtl" as const,
+    textAlign: "right" as const,
+    maxHeight: "300px",
+    overflowY: "auto",
+  },
+  "& .MuiAutocomplete-option": {
+    minHeight: "34px",
+    borderRadius: "7px",
+    marginInline: 0,
+    marginBlock: "1px",
+    paddingInline: "9px",
+    paddingBlock: "6px",
+    fontSize: "0.95rem",
+    lineHeight: 1.35,
+    justifyContent: "flex-start",
+    direction: "rtl" as const,
+    textAlign: "right" as const,
+
+    '&[aria-selected="true"]': {
+      fontWeight: 600,
+      backgroundColor: "#eef4ff",
+    },
+
+    "&.Mui-focused, &:hover": {
+      backgroundColor: "#f8fafc",
+    },
+  },
+};
+
 export const autocompleteListboxProps = {
   style: {
-    maxHeight: 320,
+    maxHeight: 300,
     overflowY: "auto" as const,
-    padding: 4,
+    padding: "4px",
     direction: "rtl" as const,
     textAlign: "right" as const,
   },
