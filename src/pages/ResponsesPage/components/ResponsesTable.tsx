@@ -66,6 +66,7 @@ import {
   useResponsesTableFilters,
 } from "./ResponsesFilters";
 import { useConnectedFormOptions } from "@src/hooks/useConnectedFormOptions";
+import { buildSearchRegex } from "../utils/highlighting";
 import "./responsesTableFilters.css";
 
 const responseHeaderFilterLocaleText = {
@@ -884,11 +885,16 @@ export const ResponsesTable = React.memo(
       [form?.id],
     );
 
+    const debouncedSearchQuery = filter?.query || "";
+    const searchRegex = useMemo(() => buildSearchRegex(debouncedSearchQuery), [debouncedSearchQuery]);
+
     const { formatCellValue } = useCellDisplay({
       formId: form?.id,
-      onFileClick: handleFileClick,
+      onFileClick: handleFileClick,        
       searchQuery: filter?.query,
+      searchRegex,
       isInEditMode,
+
       onCellExpandToggle: handleCellExpandToggle,
     });
 

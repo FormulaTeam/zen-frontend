@@ -20,6 +20,7 @@ interface UseCellDisplayParams {
   formId?: number;
   onFileClick?: (file: any, responseId?: string | number) => void;
   searchQuery?: string;
+  searchRegex?: RegExp | null;
   isInEditMode?: boolean;
   onCellExpandToggle?: (rowId: string | number, fieldId: string, isExpanded: boolean) => void;
 }
@@ -266,13 +267,14 @@ export const useCellDisplay = ({
   formId,
   onFileClick,
   searchQuery,
+  searchRegex,
   onCellExpandToggle,
 }: UseCellDisplayParams): UseCellDisplayReturn => {
   const highlightText = useCallback(
     (text: string | number | null | undefined): React.ReactNode => {
-      return highlightTextUtil(text, searchQuery);
+      return highlightTextUtil(text, searchQuery, searchRegex);
     },
-    [searchQuery],
+    [searchQuery, searchRegex],
   );
 
   const formatLongTextCell = useCallback(

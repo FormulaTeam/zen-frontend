@@ -20,7 +20,6 @@ export const buildSearchRegex = (query: string): RegExp | null => {
   }
 
   const trimmed = query.trim();
-
   const trimmedLower = trimmed.toLowerCase();
 
   // 1. Check for boolean "כן" and its synonyms
@@ -46,13 +45,8 @@ export const buildSearchRegex = (query: string): RegExp | null => {
       const mPattern = `0?${m}`;
       const separator = "[\\.\\/\\-]";
 
-      let yPattern = "";
       if (y) {
-        if (y.length === 2) {
-          yPattern = `(?:20)?${y}`; // Assumes 20xx for 2-digit years
-        } else {
-          yPattern = y;
-        }
+        const yPattern = y.length === 2 ? `(?:20)?${y}` : y;
         return new RegExp(`(${dPattern}${separator}${mPattern}${separator}${yPattern})`, "gi");
       } else {
         return new RegExp(`(${dPattern}${separator}${mPattern})`, "gi");
@@ -70,11 +64,16 @@ export const buildSearchRegex = (query: string): RegExp | null => {
 export const highlightTextUtil = (
   text: string | number | null | undefined,
   searchQuery: string | undefined,
+  preComputedRegex?: RegExp | null,
 ): React.ReactNode => {
-  if (text === null || text === undefined) return text;
+  if (text === null || text === undefined || text === "") return text;
 
   const stringText = String(text);
-  const regex = searchQuery ? buildSearchRegex(searchQuery) : null;
+  if (!searchQuery || !searchQuery.trim()) {
+    return stringText;
+  }
+
+  const regex = preComputedRegex !== undefined ? preComputedRegex : buildSearchRegex(searchQuery);
 
   if (!regex) {
     return stringText;
@@ -92,7 +91,7 @@ export const highlightTextUtil = (
   const parts = stringText.split(regex);
 
   // If there's no match, split returns an array with one element
-  if (parts.length === 1) {
+  if (parts.length <= 1) {
     return stringText;
   }
 
