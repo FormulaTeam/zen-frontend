@@ -338,9 +338,13 @@ export function showErrorNotification(error: string, autoCloseTime?: number) {
   });
 }
 
-export function showSuccessNotification(msg: string) {
+export function showSuccessNotification(
+  msg: string,
+  options?: Parameters<typeof toast.success>[1],
+) {
   toast.success(msg + "", {
     duration: 2500,
+    ...options,
   });
 }
 

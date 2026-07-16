@@ -1,6 +1,5 @@
 import {
   Button,
-  Dialog,
   FormControl,
   MenuItem,
   Popover,
@@ -11,12 +10,12 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { DragEvent, MouseEvent, useEffect, useMemo, useState } from "react";
 import { comparator, fieldType } from "formula-gear";
 import brushIcon from "../../../icons/brush.svg";
+import trashIcon from "../../../icons/trash.svg";
 
 import { useSaveResponsesTableColorRules } from "../../../api/responsesApi";
 import { FormFieldDto, ResponsesTableColorRuleDto } from "../../../types/shared";
@@ -33,6 +32,7 @@ import {
   CancelButton,
   CloseButton,
   ColorMenuSwatch,
+  ColorRulesDialog,
   ColorSelectValue,
   ColorSwatch,
   DeleteCancelButton,
@@ -41,6 +41,7 @@ import {
   DeleteConfirmContent,
   DeleteConfirmText,
   DeleteRuleButton,
+  DeleteRuleIcon,
   DragHandle,
   EmptyStateContainer,
   EmptyStateContent,
@@ -121,6 +122,21 @@ export const ColorRulesModal = ({
     }
   }, [open, rules]);
 
+  useEffect(() => {
+    if (!draggedRuleId) return;
+
+    const previousBodyCursor = document.body.style.cursor;
+    const previousRootCursor = document.documentElement.style.cursor;
+
+    document.body.style.cursor = "grabbing";
+    document.documentElement.style.cursor = "grabbing";
+
+    return () => {
+      document.body.style.cursor = previousBodyCursor;
+      document.documentElement.style.cursor = previousRootCursor;
+    };
+  }, [draggedRuleId]);
+
   const hasChanges = stableRulesValue(draftRules) !== stableRulesValue(rules);
 
   const validationErrors = useMemo<ValidationErrors>(() => {
@@ -195,7 +211,8 @@ export const ColorRulesModal = ({
     setDraftRules((prev) => prev.filter((rule) => rule.id !== ruleId));
   };
 
-  const handleRuleDragStart = (ruleId: string) => {
+  const handleRuleDragStart = (event: DragEvent<HTMLDivElement>, ruleId: string) => {
+    event.dataTransfer.effectAllowed = "move";
     setDraggedRuleId(ruleId);
   };
 
@@ -232,6 +249,11 @@ export const ColorRulesModal = ({
     onClose();
   };
 
+  const handleDialogClose = (_event: object, reason: "backdropClick" | "escapeKeyDown") => {
+    if (reason === "backdropClick") return;
+    requestClose();
+  };
+
   const openDeletePopover = (event: MouseEvent<HTMLElement>, ruleId: string) => {
     setDeleteAnchorEl(event.currentTarget);
     setPendingDeleteRuleId(ruleId);
@@ -259,7 +281,13 @@ export const ColorRulesModal = ({
         previousRules: rules,
         nextRules: normalizedRules.map((rule, index) => ({ ...rule, order: index })),
       });
-      showSuccessNotification("התגובה עודכנה: הטבלה נצבעה לפי החוקים שנקבעו");
+      showSuccessNotification("התגובה עודכנה: הטבלה נצבעה לפי החוקים שנקבעו", {
+        duration: 5000,
+        style: {
+          minWidth: "380px",
+          whiteSpace: "nowrap",
+        },
+      });
       onClose();
     } catch (error) {
       console.error("Failed to save color rules", error);
@@ -371,15 +399,21 @@ export const ColorRulesModal = ({
 
   const renderRuleRow = (rule: ResponsesTableColorRuleDto): JSX.Element => {
     const ruleErrors = validationErrors[rule.id] ?? {};
+    const isDragging = draggedRuleId === rule.id;
+    const isDragLocked = !!draggedRuleId && !isDragging;
 
     return (
       <RuleRow
         key={rule.id}
+        $isDragging={isDragging}
+        $isDragLocked={isDragLocked}
         onDragOver={(event) => handleRuleDragOver(event, rule.id)}
         onDragEnd={handleRuleDragEnd}>
         <DragHandle
           draggable={canManage}
-          onDragStart={() => handleRuleDragStart(rule.id)}
+          $isDragging={isDragging}
+          $canDrag={canManage}
+          onDragStart={(event) => handleRuleDragStart(event, rule.id)}
           onDragEnd={handleRuleDragEnd}>
           <DragIndicatorIcon />
         </DragHandle>
@@ -459,7 +493,7 @@ export const ColorRulesModal = ({
           <DeleteRuleButton
             disabled={!canManage}
             onClick={(event) => openDeletePopover(event, rule.id)}>
-            <DeleteOutlineIcon />
+            <DeleteRuleIcon src={trashIcon} alt="" />
           </DeleteRuleButton>
         </span>
       </RuleRow>
@@ -473,6 +507,7 @@ export const ColorRulesModal = ({
       {draftRules.map(renderRuleRow)}
       {canManage && (
         <AddRuleRow>
+          <span />
           <AddRuleButton variant="contained" startIcon={<AddIcon />} onClick={handleAddRule}>
             חוק חדש
           </AddRuleButton>
@@ -511,7 +546,14 @@ export const ColorRulesModal = ({
       anchorEl={deleteAnchorEl}
       onClose={closeDeletePopover}
       anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      transformOrigin={{ vertical: "top", horizontal: "center" }}>
+      transformOrigin={{ vertical: "top", horizontal: "center" }}
+      PaperProps={{
+        sx: {
+          overflow: "visible",
+          backgroundColor: "transparent",
+          boxShadow: "none",
+        },
+      }}>
       <DeleteConfirmContent>
         <DeleteConfirmText>האם ברצונך למחוק את החוק?</DeleteConfirmText>
         <DeleteConfirmText>החוק המחוק לא יהיה ניתן לשחזור.</DeleteConfirmText>
@@ -524,7 +566,13 @@ export const ColorRulesModal = ({
   );
 
   const modalDialog: JSX.Element = (
-    <Dialog open={open} onClose={requestClose} maxWidth="lg" fullWidth dir="rtl">
+    <ColorRulesDialog
+      open={open}
+      onClose={handleDialogClose}
+      maxWidth="lg"
+      fullWidth
+      dir="rtl"
+      disableEscapeKeyDown>
       {modalTitle}
       <ModalContent>
         {modalDescription}
@@ -533,7 +581,7 @@ export const ColorRulesModal = ({
       </ModalContent>
       {modalActions}
       {deleteConfirmationPopover}
-    </Dialog>
+    </ColorRulesDialog>
   );
 
   return (

@@ -133,7 +133,6 @@ export const useSaveResponsesTableColorRules = () => {
     mutationKey: ["save-responses-table-color-rules"],
     onSuccess: (data: ResponsesTableColorRuleDto[], variables) => {
       queryClient.setQueryData(colorRulesQueryKey(variables.formId), data);
-      queryClient.invalidateQueries({ queryKey: ["responses", String(variables.formId)] });
     },
   });
 };

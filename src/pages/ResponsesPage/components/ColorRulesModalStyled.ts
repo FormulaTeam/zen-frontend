@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -8,6 +9,21 @@ import {
   Typography,
 } from "@mui/material";
 import styled from "styled-components";
+
+export const ColorRulesDialog = styled(Dialog)`
+  .MuiDialog-paper {
+    outline: none;
+  }
+
+  .MuiDialog-paper:focus,
+  .MuiDialog-paper:focus-visible,
+  .MuiDialog-paper:active,
+  .MuiDialogContent-root:focus,
+  .MuiDialogContent-root:focus-visible,
+  .MuiDialogContent-root:active {
+    outline: none;
+  }
+`;
 
 export const ModalTitle = styled(DialogTitle)`
   position: relative;
@@ -39,41 +55,51 @@ export const CloseButton = styled(IconButton)`
 `;
 
 export const DeleteRuleButton = styled(IconButton)`
-  width: 40px;
+  width: 32px;
   height: 40px;
-  padding: 8px !important;
+  padding: 4px !important;
   color: #ef000b !important;
-
-  svg {
-    font-size: 24px;
-  }
 
   &:hover {
     background-color: rgba(239, 0, 11, 0.08) !important;
   }
 `;
 
+export const DeleteRuleIcon = styled.img`
+  width: 20px;
+  height: 20px;
+`;
+
 export const ModalContent = styled(DialogContent)`
-  min-height: 430px;
+  display: flex;
+  flex-direction: column;
+  height: 560px;
+  min-height: 560px;
+
+  &:focus,
+  &:focus-visible,
+  &:active {
+    outline: none;
+  }
 `;
 
 export const ModalDescription = styled(Typography)`
   color: #64748b;
   margin-bottom: 24px !important;
-  font-size: 16 !important;
 `;
 
 export const EmptyStateContainer = styled(Box)`
-  min-height: 280px;
+  flex: 1;
+  min-height: 360px;
   display: grid;
   place-items: center;
-  gap: 16px;
+  padding-block: 32px 48px;
 `;
 
 export const EmptyStateContent = styled(Box)`
   display: grid;
   place-items: center;
-  gap: 12px;
+  gap: 18px;
 `;
 
 export const EmptyStateIcon = styled.img`
@@ -83,24 +109,56 @@ export const EmptyStateIcon = styled.img`
 
 export const EmptyStateTitle = styled(Typography)`
   font-weight: 600 !important;
-  padding-top: 5px !important;
+  padding-top: 8px !important;
 `;
 
 export const EmptyStateDescription = styled(Typography)`
   color: #475569;
-  padding-bottom: 5px !important;
+  padding-bottom: 8px !important;
 `;
 
 export const RulesTableContainer = styled(Box)`
-  overflow-x: auto;
+  overflow-x: hidden;
+  overflow-y: scroll !important;
+  height: 360px;
   padding-top: 8px;
+  padding-inline: 4px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #e8eef5;
+
+  &::-webkit-scrollbar {
+    display: block;
+    width: 10px;
+    -webkit-appearance: none;
+  }
+
+  &::-webkit-scrollbar-track {
+    border-radius: 10px;
+    background-color: #e8eef5;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border: 2px solid #e8eef5;
+    border-radius: 10px;
+    background-color: #94a3b8;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b;
+  }
 `;
 
 export const RulesGrid = styled(Box)`
   display: grid;
-  grid-template-columns: 24px minmax(180px, 1.15fr) minmax(160px, 0.9fr) minmax(220px, 1.15fr) 150px 120px 72px 42px;
-  gap: 8px;
-  min-width: 1120px;
+  grid-template-columns: 24px minmax(145px, 1.1fr) minmax(120px, 0.85fr) minmax(165px, 1fr) 112px 78px 58px 32px;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+
+  > * {
+    min-width: 0;
+  }
 `;
 
 export const RulesHeader = styled(RulesGrid)`
@@ -110,19 +168,56 @@ export const RulesHeader = styled(RulesGrid)`
   font-weight: 700;
 `;
 
-export const RuleRow = styled(RulesGrid)`
+export const RuleRow = styled(RulesGrid)<{
+  $isDragging?: boolean;
+  $isDragLocked?: boolean;
+}>`
   align-items: start;
   margin-bottom: 12px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  box-sizing: border-box;
+  padding: 2px;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    opacity 120ms ease;
+
+  ${({ $isDragging }) =>
+    $isDragging
+      ? `
+        position: relative;
+        z-index: 2;
+        background-color: #ffffff;
+        border-color: transparent;
+        outline: 1px solid #1e8fe5;
+        outline-offset: -1px;
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+      `
+      : ""}
+
+  ${({ $isDragLocked }) =>
+    $isDragLocked
+      ? `
+        opacity: 0.72;
+      `
+      : ""}
 `;
 
-export const DragHandle = styled(Box)`
+export const DragHandle = styled(Box)<{ $isDragging?: boolean; $canDrag?: boolean }>`
+  position: relative;
   width: 24px;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #0f172a;
-  cursor: grab;
+  cursor: ${({ $canDrag, $isDragging }) => {
+    if (!$canDrag) return "default";
+    return $isDragging ? "grabbing" : "grab";
+  }};
+  user-select: none;
 
   svg {
     font-size: 18px;
@@ -130,24 +225,36 @@ export const DragHandle = styled(Box)`
 `;
 
 export const AddRuleRow = styled(Box)`
-  min-width: 1120px;
+  display: grid;
+  grid-template-columns: 24px minmax(145px, 1.1fr) minmax(120px, 0.85fr) minmax(165px, 1fr) 112px 78px 58px 32px;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
   padding-top: 8px;
+
+  > * {
+    min-width: 0;
+  }
 `;
 
 export const ColorSelectValue = styled(Box)`
   display: flex;
   align-items: center;
+  justify-content: center;
+  height: 24px;
   gap: 8px;
 `;
 
-export const ColorSwatch = styled(Box) <{ $backgroundColor: string }>`
+export const ColorSwatch = styled(Box)<{ $backgroundColor: string }>`
   width: 12px;
   height: 12px;
   border-radius: 50%;
+  transform: translateY(2px);
   background-color: ${({ $backgroundColor }) => $backgroundColor};
 `;
 
-export const ColorMenuSwatch = styled(Box) <{ $backgroundColor: string }>`
+export const ColorMenuSwatch = styled(Box)<{ $backgroundColor: string }>`
   width: 14px;
   height: 14px;
   border-radius: 50%;
@@ -161,7 +268,7 @@ export const OverlapNotice = styled(Box)`
   justify-content: flex-start;
   gap: 6px;
   color: #64748b;
-  margin-top: 32px;
+  margin-top: auto;
 
   svg {
     font-size: 16px;
@@ -174,14 +281,16 @@ export const ModalActions = styled(DialogActions)`
 `;
 
 export const AddRuleButton = styled(Button)`
+  justify-self: start;
   min-width: auto !important;
+  width: fit-content;
   font-weight: 700 !important;
-  gap: 10px
+  gap: 10px;
 `;
 
 export const DeleteConfirmContent = styled(Box)`
   position: relative;
-  width: 280px;
+  width: 320px;
   padding: 16px 16px 14px;
   border-radius: 4px;
   background-color: #ffffff;
@@ -191,7 +300,7 @@ export const DeleteConfirmContent = styled(Box)`
     content: "";
     position: absolute;
     inset-block-start: -8px;
-    inset-inline-start: 50%;
+    inset-inline-start: calc(50% - 10px);
     width: 16px;
     height: 16px;
     background-color: #ffffff;
@@ -209,6 +318,7 @@ export const DeleteConfirmText = styled(Typography)`
 
 export const DeleteConfirmActions = styled(Box)`
   display: flex;
+  justify-content: flex-end;
   gap: 10px;
   margin-top: 18px;
 `;
