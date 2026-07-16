@@ -17,11 +17,19 @@ export interface FormsQueryParams {
   enabled?: boolean;
   includePermissions?: boolean;
   softDeleted?: boolean;
+  hasResponses?: boolean;
 }
 
-export function useGetFormsQuery({ enabled = true, searchQuery, softDeleted, ...rest }: FormsQueryParams) {
+export function useGetFormsQuery({
+  enabled = true,
+  searchQuery,
+  softDeleted,
+  hasResponses,
+  ...rest
+}: FormsQueryParams) {
   const queryParams = {
     ...rest,
+    hasResponses,
     ...(searchQuery ? { search: searchQuery } : {}),
   };
 

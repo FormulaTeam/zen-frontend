@@ -36,6 +36,7 @@ import { clearFormDraft } from "../utils/draftPersistence";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { Save, LogOut } from "lucide-react";
 import { FormMetadataSchema } from "../schemas/metadata";
+import { useFormEditorContext } from "../context/FormEditorContext";
 
 type FormValidationResult = {
   isValid: boolean;
@@ -145,6 +146,7 @@ const collectValidationMessages = (validationNode: unknown): string[] => {
 function FormEditorHeader() {
   const { formStructure, validateForm, setFormMetadata, checkHasChanges } =
     useFormStructureContext();
+  const { formDraftKey, draftEnabled = true } = useFormEditorContext();
   const { handleSaveForm, handleExit, handleDiscardAndExit, isLoading } =
     useFormEditor(formStructure);
 
@@ -352,7 +354,9 @@ function FormEditorHeader() {
     setShowAlertMsg(false);
 
     if (logoNavigateCallback) {
-      clearFormDraft(formStructure.metadata.id);
+      if (draftEnabled) {
+        clearFormDraft(formDraftKey ?? formStructure.metadata.id);
+      }
       logoNavigateCallback();
       setLogoNavigateCallback(null);
       return;

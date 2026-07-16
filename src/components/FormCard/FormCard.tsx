@@ -126,10 +126,15 @@ const FormCard = ({
       duplicateName,
       duplicateDescription,
     );
+    const duplicateSelections = {
+      permissions: selections.permissions,
+      fields: selections.fields,
+      conditions: selections.conditions,
+      colors: selections.colors,
+    };
     duplicateFormStructure.duplicate = {
       sourceFormId,
-      copyPermissions: selections.permissions,
-      selections,
+      selections: duplicateSelections,
     };
 
     setShowDuplicatePopup(false);
@@ -137,8 +142,7 @@ const FormCard = ({
       state: {
         duplicateFormStructure,
         duplicateSourceFormId: sourceFormId,
-        duplicateCopyPermissions: selections.permissions,
-        duplicateSelections: selections,
+        duplicateSelections,
       },
     });
   };

@@ -15,11 +15,15 @@ export type DuplicateFormSelections = {
   colors: boolean;
 };
 
+export type DuplicateFormComponentSelections = Pick<
+  DuplicateFormSelections,
+  "permissions" | "fields" | "conditions" | "colors"
+>;
+
 export type DuplicateFormRouteState = {
   duplicateFormStructure: FormStructure;
   duplicateSourceFormId: number;
-  duplicateCopyPermissions: boolean;
-  duplicateSelections: DuplicateFormSelections;
+  duplicateSelections: DuplicateFormComponentSelections;
 };
 
 const remapConditionIds = (

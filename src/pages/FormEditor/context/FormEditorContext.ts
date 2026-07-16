@@ -10,12 +10,16 @@ export type FormEditorMode = typeof FORM_EDITOR_MODE[keyof typeof FORM_EDITOR_MO
 interface FormEditorContext {
   mode: FormEditorMode;
   originalFieldIds?: Set<string>;
+  formDraftKey?: number | string;
+  draftEnabled?: boolean;
   duplicateSourceFormId?: number;
-  duplicateCopyPermissions?: boolean;
   originalSectionIds?: Set<string>;
 }
 
-const FormEditorContext = createContext<FormEditorContext>({ mode: FORM_EDITOR_MODE.CREATE });
+const FormEditorContext = createContext<FormEditorContext>({
+  mode: FORM_EDITOR_MODE.CREATE,
+  draftEnabled: true,
+});
 
 function useFormEditorContext() {
   return useContext(FormEditorContext);

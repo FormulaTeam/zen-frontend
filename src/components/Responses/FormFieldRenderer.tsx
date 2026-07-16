@@ -233,7 +233,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   const {
     options: connectedOptions,
     isLoading: isLoadingConnected,
+    isFetchingNextPage: isFetchingMoreConnected,
     loadMore: loadMoreConnectedOptions,
+    hasNextPage: hasNextPageConnected,
   } = useLinkedFieldValueOptions(linkedOptionsFieldId, connectedToForm, searchTerm);
 
   field.name = formField.name;
@@ -588,7 +590,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           validationMessage={validationMessage}
           validationDetail={validationDetail}
           isTabularEdit={isTabularEdit}
-          loading={connectedToForm ? isLoadingConnected : false}
+          loading={connectedToForm ? isLoadingConnected || isFetchingMoreConnected : false}
+          hasNextPage={connectedToForm ? hasNextPageConnected : false}
+          isFetchingNextPage={connectedToForm ? isFetchingMoreConnected : false}
           filterOptions={connectedToForm ? (options: unknown[]) => options : undefined}
           onInputChange={
             connectedToForm

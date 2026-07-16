@@ -331,6 +331,9 @@ export interface Filter {
   deletedWithForm?: boolean;
   before?: string;
   after?: string;
+  createdBy?: string;
+  deletedBy?: string;
+  hasResponses?: boolean;
 }
 
 export interface PageInfo {
