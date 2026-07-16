@@ -43,7 +43,8 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
 
   "& textarea": {
     resize: "none",
-    overflow: "auto !important",
+    overflowY: "auto !important",
+    height: "120px !important",
 
     "&::-webkit-scrollbar": {
       width: "5px",
@@ -105,7 +106,7 @@ export const TextCellEditor: React.FC<TextCellEditorProps> = ({
       fullWidth
       multiline={multiline}
       minRows={1}
-      maxRows={multiline ? 5 : 1}
+      rows={multiline ? 5 : undefined}
       value={localValue}
       onChange={handleChange}
       error={!!errorMessage}
