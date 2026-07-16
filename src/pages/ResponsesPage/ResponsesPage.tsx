@@ -80,7 +80,7 @@ export default function ResponsesPage({
     return null;
   }
 
-  return <ResponsesPageContent />;
+  return <ResponsesPageContent key={formId} />;
 }
 
 const ResponsesPageContent = (): JSX.Element => {

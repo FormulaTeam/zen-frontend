@@ -31,6 +31,7 @@ interface FormsState {
   setResponses: (responses: ResponseForm[] | null) => void;
   filter: Filter | null;
   setFilter: (update: Filter | null | ((prev: Filter | null) => Filter | null)) => void;
+  resetFilter: () => void;
   setResponseFilters: (responseFilters: ResponseFiltersDto | null) => void;
   rows: Row[];
   setRows: (rows: Row[]) => void;
@@ -56,6 +57,8 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
     set((state) => ({
       filter: typeof update === "function" ? update(state.filter) : update
     })),
+
+  resetFilter: () => set({ filter: defaultFilter }),
 
   setResponseFilters: (responseFilters: ResponseFiltersDto | null) =>
     set((state) => ({
@@ -91,6 +94,7 @@ export function useFormStore() {
     setResponses: store.setResponses,
     filter: store.filter,
     setFilter: store.setFilter,
+    resetFilter: store.resetFilter,
     setResponseFilters: store.setResponseFilters,
     rows: store.rows,
     setRows: store.setRows,

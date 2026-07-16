@@ -4,7 +4,8 @@ import { useInitiateFormStore } from "../stores/form.store";
 import { Row } from "../../../utils/interfaces";
 
 export function useFormLoader(formId: string) {
-  const { form, setForm, setPermissions, setRows, filter, setResponses } = useInitiateFormStore();
+  const { form, setForm, setPermissions, setRows, filter, setResponses, resetFilter } =
+    useInitiateFormStore();
 
   const {
     data: formData,
@@ -153,6 +154,7 @@ export function useFormLoader(formId: string) {
 
       if (isNewForm) {
         lastFormIdRef.current = formData.id;
+        resetFilter();
 
         const sortedSections = [...(formData.sections ?? [])]
           .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
