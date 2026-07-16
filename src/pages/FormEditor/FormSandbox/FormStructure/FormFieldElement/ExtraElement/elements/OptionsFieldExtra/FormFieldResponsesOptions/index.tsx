@@ -20,6 +20,7 @@ import { OptionsFieldTypeId } from "../index";
 import { FormFieldExtra } from "@pages/FormEditor/schemas/fields";
 import { usePaginatedFieldValueOptions } from "@src/hooks/usePaginatedFieldValueOptions";
 import { PaginatedAutocompleteListbox } from "@src/components/PaginatedAutocompleteListbox";
+import { basePopperSx } from "@src/components/FormFields/CustomDropDownAutocomplete/styled";
 
 interface Props {
   linkedOptionsFieldId: string | null | undefined;
@@ -253,44 +254,45 @@ function FormFieldResponsesOptions(props: Props) {
         isOptionEqualToValue={(option, value) => option?.id === value?.id}
         disablePortal
         slotProps={{
-          popper: {
-            sx: {
-              "& .MuiAutocomplete-listbox": {
-                maxHeight: "300px",
-                overflowY: "auto",
-              },
-            },
-          },
+          popper: { sx: basePopperSx },
         }}
-        renderOption={(props, option) => (
-          <li {...props}>
-            <Box
-              component="span"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                width: "100%",
-              }}
-            >
-              <Typography component="span">
-                {option.name}
-              </Typography>
-
-              <Typography
+        renderOption={(props, option) => {
+          const { key, ...optionProps } = props;
+          return (
+            <li {...optionProps} key={key}>
+              <Box
                 component="span"
                 sx={{
-                  marginInlineStart: "auto",
-                  paddingInlineStart: 2,
-                  color: "text.secondary",
-                  fontSize: "0.75rem",
-                  flexShrink: 0,
-                }}
-              >
-                {option.id}
-              </Typography>
-            </Box>
-          </li>
-        )}
+                  display: "flex",
+                  alignItems: "center",
+                  width: "100%",
+                  direction: "rtl",
+                }}>
+                <Typography
+                  component="span"
+                  sx={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}>
+                  {option.name}
+                </Typography>
+
+                <Typography
+                  component="span"
+                  sx={{
+                    marginInlineStart: "auto",
+                    paddingInlineStart: 2,
+                    color: "text.secondary",
+                    fontSize: "0.75rem",
+                    flexShrink: 0,
+                  }}>
+                  {option.id}
+                </Typography>
+              </Box>
+            </li>
+          );
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -347,14 +349,7 @@ function FormFieldResponsesOptions(props: Props) {
             disabled={!selectedFormId}
             disablePortal
             slotProps={{
-              popper: {
-                sx: {
-                  "& .MuiAutocomplete-listbox": {
-                    maxHeight: "300px",
-                    overflowY: "auto",
-                  },
-                },
-              },
+              popper: { sx: basePopperSx },
             }}
             renderInput={(params) => (
               <TextField
@@ -401,14 +396,7 @@ function FormFieldResponsesOptions(props: Props) {
             openOnFocus
             disablePortal
             slotProps={{
-              popper: {
-                sx: {
-                  "& .MuiAutocomplete-listbox": {
-                    maxHeight: "300px",
-                    overflowY: "auto",
-                  },
-                },
-              },
+              popper: { sx: basePopperSx },
             }}
             ListboxComponent={PaginatedAutocompleteListbox}
             slots={{

@@ -88,7 +88,7 @@ const basePopperSlotProps = {
           fontWeight: 600,
         },
 
-        "&.Mui-focused": {
+        "&.Mui-focused, &:hover": {
           backgroundColor: "#f8fafc",
         },
       },
