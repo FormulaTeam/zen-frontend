@@ -1,6 +1,7 @@
 import {
   Button,
   FormControl,
+  FormHelperText,
   MenuItem,
   Popover,
   Select,
@@ -12,7 +13,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { DragEvent, MouseEvent, useEffect, useMemo, useState } from "react";
+import { MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { comparator, fieldType } from "formula-gear";
 import brushIcon from "../../../icons/brush.svg";
 import trashIcon from "../../../icons/trash.svg";
@@ -55,7 +56,10 @@ import {
   OverlapNotice,
   RuleRow,
   RulesHeader,
+  RulesScrollbarRail,
+  RulesScrollbarThumb,
   RulesTableContainer,
+  RulesTableScrollArea,
   SaveButton,
   TitleContent,
 } from "./ColorRulesModalStyled";
@@ -93,6 +97,10 @@ const normalizeRuleBeforeSave = (rule: ResponsesTableColorRuleDto): ResponsesTab
   targetValue: requiresTargetValue(rule) ? rule.targetValue : null,
 });
 
+const MIN_SCROLL_THUMB_HEIGHT = 36;
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
 export const ColorRulesModal = ({
   open,
   formId,
@@ -110,6 +118,9 @@ export const ColorRulesModal = ({
   const [draggedRuleId, setDraggedRuleId] = useState<string | null>(null);
   const [deleteAnchorEl, setDeleteAnchorEl] = useState<HTMLElement | null>(null);
   const [pendingDeleteRuleId, setPendingDeleteRuleId] = useState<string | null>(null);
+  const [scrollThumb, setScrollThumb] = useState({ top: 0, height: MIN_SCROLL_THUMB_HEIGHT });
+  const rulesTableRef = useRef<HTMLDivElement | null>(null);
+  const rulesScrollbarRailRef = useRef<HTMLDivElement | null>(null);
   const { mutateAsync, isPending } = useSaveResponsesTableColorRules();
 
   useEffect(() => {
@@ -126,16 +137,115 @@ export const ColorRulesModal = ({
     if (!draggedRuleId) return;
 
     const previousBodyCursor = document.body.style.cursor;
+    const previousBodyUserSelect = document.body.style.userSelect;
     const previousRootCursor = document.documentElement.style.cursor;
+    const cursorStyle = document.createElement("style");
 
+    cursorStyle.textContent = `
+      body.color-rule-row-dragging,
+      body.color-rule-row-dragging * {
+        cursor: grabbing !important;
+      }
+    `;
+    document.head.appendChild(cursorStyle);
+    document.body.classList.add("color-rule-row-dragging");
     document.body.style.cursor = "grabbing";
+    document.body.style.userSelect = "none";
     document.documentElement.style.cursor = "grabbing";
 
     return () => {
+      document.body.classList.remove("color-rule-row-dragging");
+      cursorStyle.remove();
       document.body.style.cursor = previousBodyCursor;
+      document.body.style.userSelect = previousBodyUserSelect;
       document.documentElement.style.cursor = previousRootCursor;
     };
   }, [draggedRuleId]);
+
+  const updateScrollThumb = () => {
+    const table = rulesTableRef.current;
+    if (!table) return;
+
+    const { clientHeight, scrollHeight, scrollTop } = table;
+
+    if (scrollHeight <= clientHeight) {
+      setScrollThumb({ top: 0, height: clientHeight });
+      return;
+    }
+
+    const thumbHeight = Math.max(MIN_SCROLL_THUMB_HEIGHT, (clientHeight / scrollHeight) * clientHeight);
+    const maxThumbTop = clientHeight - thumbHeight;
+    const maxScrollTop = scrollHeight - clientHeight;
+    const thumbTop = (scrollTop / maxScrollTop) * maxThumbTop;
+
+    setScrollThumb({ top: thumbTop, height: thumbHeight });
+  };
+
+  useEffect(() => {
+    updateScrollThumb();
+
+    const table = rulesTableRef.current;
+    if (!table) return;
+
+    table.addEventListener("scroll", updateScrollThumb);
+
+    return () => {
+      table.removeEventListener("scroll", updateScrollThumb);
+    };
+  }, [draftRules.length, open]);
+
+  const scrollRulesTableToThumbTop = (thumbTop: number) => {
+    const table = rulesTableRef.current;
+    const rail = rulesScrollbarRailRef.current;
+    if (!table || !rail) return;
+
+    const maxThumbTop = rail.clientHeight - scrollThumb.height;
+    const maxScrollTop = table.scrollHeight - table.clientHeight;
+
+    if (maxThumbTop <= 0 || maxScrollTop <= 0) return;
+
+    table.scrollTop = (clamp(thumbTop, 0, maxThumbTop) / maxThumbTop) * maxScrollTop;
+  };
+
+  const handleRulesScrollbarRailMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) return;
+
+    const rail = rulesScrollbarRailRef.current;
+    if (!rail) return;
+
+    const railRect = rail.getBoundingClientRect();
+    const nextThumbTop = event.clientY - railRect.top - scrollThumb.height / 2;
+
+    scrollRulesTableToThumbTop(nextThumbTop);
+  };
+
+  const handleRulesScrollbarThumbMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+
+    const table = rulesTableRef.current;
+    const rail = rulesScrollbarRailRef.current;
+    if (!table || !rail) return;
+
+    const startY = event.clientY;
+    const startScrollTop = table.scrollTop;
+    const maxThumbTop = rail.clientHeight - scrollThumb.height;
+    const maxScrollTop = table.scrollHeight - table.clientHeight;
+
+    if (maxThumbTop <= 0 || maxScrollTop <= 0) return;
+
+    const handleMouseMove = (moveEvent: globalThis.MouseEvent) => {
+      const scrollDelta = ((moveEvent.clientY - startY) / maxThumbTop) * maxScrollTop;
+      table.scrollTop = startScrollTop + scrollDelta;
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
 
   const hasChanges = stableRulesValue(draftRules) !== stableRulesValue(rules);
 
@@ -147,9 +257,9 @@ export const ColorRulesModal = ({
 
       if (!rule.fieldId) ruleErrors.fieldId = "יש לבחור שדה";
       if (!rule.color) ruleErrors.color = "יש לבחור צבע";
-      if (!rule.comparatorId) ruleErrors.comparatorId = "יש לבחור תנאי";
+      if (rule.comparatorId === undefined || rule.comparatorId === null) ruleErrors.comparatorId = "יש לבחור תנאי";
       if (!rule.targetType) ruleErrors.targetType = "יש לבחור סוג צביעה";
-      if (requiresTargetValue(rule) && (rule.targetValue === undefined || rule.targetValue === "")) {
+      if (requiresTargetValue(rule) && (rule.targetValue === undefined || rule.targetValue === null || rule.targetValue === "")) {
         ruleErrors.targetValue = "יש להזין ערך";
       }
 
@@ -170,9 +280,7 @@ export const ColorRulesModal = ({
     );
   };
 
-  const markTargetValueTouched = (ruleId: string, value: unknown) => {
-    if (value === undefined || value === null || value === "") return;
-
+  const markTargetValueTouched = (ruleId: string) => {
     setTouchedTargetValueRuleIds((prev) => {
       if (prev.has(ruleId)) return prev;
       const next = new Set(prev);
@@ -181,8 +289,17 @@ export const ColorRulesModal = ({
     });
   };
 
+  const resetTargetValueTouched = (ruleId: string) => {
+    setTouchedTargetValueRuleIds((prev) => {
+      if (!prev.has(ruleId)) return prev;
+      const next = new Set(prev);
+      next.delete(ruleId);
+      return next;
+    });
+  };
+
   const updateRuleTargetValue = (ruleId: string, targetValue: ResponsesTableColorRuleDto["targetValue"]) => {
-    markTargetValueTouched(ruleId, targetValue);
+    markTargetValueTouched(ruleId);
     updateRule(ruleId, { targetValue });
   };
 
@@ -198,6 +315,7 @@ export const ColorRulesModal = ({
       comparatorId: nextComparator,
       targetValue: "",
     });
+    resetTargetValueTouched(rule.id);
   };
 
   const handleAddRule = () => {
@@ -209,11 +327,6 @@ export const ColorRulesModal = ({
 
   const handleDeleteRule = (ruleId: string) => {
     setDraftRules((prev) => prev.filter((rule) => rule.id !== ruleId));
-  };
-
-  const handleRuleDragStart = (event: DragEvent<HTMLDivElement>, ruleId: string) => {
-    event.dataTransfer.effectAllowed = "move";
-    setDraggedRuleId(ruleId);
   };
 
   const moveRuleBefore = (activeRuleId: string, overRuleId: string) => {
@@ -231,18 +344,31 @@ export const ColorRulesModal = ({
     });
   };
 
-  const handleRuleDragOver = (
-    event: DragEvent<HTMLDivElement>,
-    overRuleId: string,
-  ) => {
+  const handleRuleDragMouseDown = (event: MouseEvent<HTMLDivElement>, ruleId: string) => {
+    if (!canManage) return;
+
     event.preventDefault();
-    if (!draggedRuleId || draggedRuleId === overRuleId) return;
+    setDraggedRuleId(ruleId);
 
-    moveRuleBefore(draggedRuleId, overRuleId);
-  };
+    const handleMouseMove = (moveEvent: globalThis.MouseEvent) => {
+      const rowElement = document
+        .elementFromPoint(moveEvent.clientX, moveEvent.clientY)
+        ?.closest<HTMLElement>("[data-color-rule-id]");
+      const overRuleId = rowElement?.dataset.colorRuleId;
 
-  const handleRuleDragEnd = () => {
-    setDraggedRuleId(null);
+      if (!overRuleId || overRuleId === ruleId) return;
+
+      moveRuleBefore(ruleId, overRuleId);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      setDraggedRuleId(null);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
   };
 
   const requestClose = () => {
@@ -296,8 +422,9 @@ export const ColorRulesModal = ({
   };
 
   const renderValueInput = (rule: ResponsesTableColorRuleDto): JSX.Element => {
-    const targetValueError = validationErrors[rule.id]?.targetValue;
-    const error = touchedTargetValueRuleIds.has(rule.id) ? targetValueError : undefined;
+    const error = touchedTargetValueRuleIds.has(rule.id)
+      ? validationErrors[rule.id]?.targetValue
+      : undefined;
     const selectedField = manageableFields.find((field) => field.id === rule.fieldId);
 
     if (!requiresTargetValue(rule)) {
@@ -309,10 +436,12 @@ export const ColorRulesModal = ({
         <FormControl size="small" fullWidth error={!!error}>
           <Select
             value={rule.targetValue === true || rule.targetValue === "true" ? "true" : rule.targetValue === false || rule.targetValue === "false" ? "false" : ""}
+            onBlur={() => markTargetValueTouched(rule.id)}
             onChange={(event) => updateRuleTargetValue(rule.id, event.target.value === "true")}>
             <MenuItem value="true">כן</MenuItem>
             <MenuItem value="false">לא</MenuItem>
           </Select>
+          {error && <FormHelperText>{error}</FormHelperText>}
         </FormControl>
       );
     }
@@ -326,6 +455,7 @@ export const ColorRulesModal = ({
         <FormControl size="small" fullWidth error={!!error}>
           <Select
             value={String(rule.targetValue ?? "")}
+            onBlur={() => markTargetValueTouched(rule.id)}
             onChange={(event) => updateRuleTargetValue(rule.id, event.target.value)}>
             {selectedFieldOptions.map((option) => (
               <MenuItem key={option.id ?? option.text} value={option.id ?? option.text}>
@@ -333,6 +463,7 @@ export const ColorRulesModal = ({
               </MenuItem>
             ))}
           </Select>
+          {error && <FormHelperText>{error}</FormHelperText>}
         </FormControl>
       );
     }
@@ -342,6 +473,7 @@ export const ColorRulesModal = ({
         size="small"
         type={rule.fieldType === fieldType.Number ? "number" : rule.fieldType === fieldType.Date ? "date" : "text"}
         value={String(rule.targetValue ?? "")}
+        onBlur={() => markTargetValueTouched(rule.id)}
         onChange={(event) => updateRuleTargetValue(rule.id, event.target.value)}
         error={!!error}
         helperText={error}
@@ -405,16 +537,13 @@ export const ColorRulesModal = ({
     return (
       <RuleRow
         key={rule.id}
+        data-color-rule-id={rule.id}
         $isDragging={isDragging}
-        $isDragLocked={isDragLocked}
-        onDragOver={(event) => handleRuleDragOver(event, rule.id)}
-        onDragEnd={handleRuleDragEnd}>
+        $isDragLocked={isDragLocked}>
         <DragHandle
-          draggable={canManage}
           $isDragging={isDragging}
           $canDrag={canManage}
-          onDragStart={(event) => handleRuleDragStart(event, rule.id)}
-          onDragEnd={handleRuleDragEnd}>
+          onMouseDown={(event) => handleRuleDragMouseDown(event, rule.id)}>
           <DragIndicatorIcon />
         </DragHandle>
 
@@ -434,9 +563,18 @@ export const ColorRulesModal = ({
         <FormControl size="small" error={!!ruleErrors.comparatorId}>
           <Select
             value={rule.comparatorId}
-            onChange={(event) =>
-              updateRule(rule.id, { comparatorId: Number(event.target.value), targetValue: "" })
-            }
+            onChange={(event) => {
+              const comparatorId = Number(event.target.value);
+              const comparatorRequiresValue = !!getComparatorOptions(rule.fieldType).find(
+                (option) => option.value === comparatorId,
+              )?.requiresValue;
+
+              updateRule(rule.id, {
+                comparatorId,
+                targetValue: comparatorRequiresValue ? "" : null,
+              });
+              resetTargetValueTouched(rule.id);
+            }}
             disabled={!canManage}>
             {getComparatorOptions(rule.fieldType).map((option) => (
               <MenuItem key={option.value} value={option.value}>
@@ -502,18 +640,31 @@ export const ColorRulesModal = ({
 
 
   const rulesTable: JSX.Element = (
-    <RulesTableContainer>
-      {rulesHeader}
-      {draftRules.map(renderRuleRow)}
-      {canManage && (
-        <AddRuleRow>
-          <span />
-          <AddRuleButton variant="contained" startIcon={<AddIcon />} onClick={handleAddRule}>
-            חוק חדש
-          </AddRuleButton>
-        </AddRuleRow>
-      )}
-    </RulesTableContainer>
+    <RulesTableScrollArea>
+      <RulesTableContainer ref={rulesTableRef}>
+        {rulesHeader}
+        {draftRules.map(renderRuleRow)}
+        {canManage && (
+          <AddRuleRow>
+            <span />
+            <AddRuleButton variant="contained" startIcon={<AddIcon />} onClick={handleAddRule}>
+              חוק חדש
+            </AddRuleButton>
+          </AddRuleRow>
+        )}
+      </RulesTableContainer>
+      <RulesScrollbarRail
+        ref={rulesScrollbarRailRef}
+        onMouseDown={handleRulesScrollbarRailMouseDown}>
+        <RulesScrollbarThumb
+          onMouseDown={handleRulesScrollbarThumbMouseDown}
+          style={{
+            height: scrollThumb.height,
+            transform: `translateY(${scrollThumb.top}px)`,
+          }}
+        />
+      </RulesScrollbarRail>
+    </RulesTableScrollArea>
   );
 
   const modalMainContent: JSX.Element = draftRules.length === 0 ? emptyState : rulesTable;

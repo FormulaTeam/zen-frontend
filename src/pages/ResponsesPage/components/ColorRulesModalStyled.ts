@@ -118,34 +118,47 @@ export const EmptyStateDescription = styled(Typography)`
 `;
 
 export const RulesTableContainer = styled(Box)`
+  flex: 1;
   overflow-x: hidden;
   overflow-y: scroll !important;
-  height: 360px;
+  height: 100%;
   padding-top: 8px;
-  padding-inline: 4px;
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: #94a3b8 #e8eef5;
+  padding-inline: 10px 8px;
+  scrollbar-width: none !important;
+  -ms-overflow-style: auto !important;
 
   &::-webkit-scrollbar {
-    display: block;
-    width: 10px;
-    -webkit-appearance: none;
+    width: 0 !important;
+    height: 0 !important;
   }
+`;
 
-  &::-webkit-scrollbar-track {
-    border-radius: 10px;
-    background-color: #e8eef5;
-  }
+export const RulesTableScrollArea = styled(Box)`
+  display: flex;
+  gap: 10px;
+  height: 360px;
+  min-height: 0;
+`;
 
-  &::-webkit-scrollbar-thumb {
-    border: 2px solid #e8eef5;
-    border-radius: 10px;
-    background-color: #94a3b8;
-  }
+export const RulesScrollbarRail = styled(Box)`
+  position: relative;
+  flex: 0 0 8px;
+  height: 100%;
+  border-radius: 9999px;
+  background-color: #f1f1f1;
+  cursor: default;
+`;
 
-  &::-webkit-scrollbar-thumb:hover {
-    background-color: #64748b;
+export const RulesScrollbarThumb = styled(Box)`
+  position: absolute;
+  inset-inline: 0;
+  border-radius: 9999px;
+  background-color: #c3c0c0;
+  cursor: default;
+
+  &:active {
+    cursor: default;
+    background-color: #aaa7a7;
   }
 `;
 
@@ -221,6 +234,8 @@ export const DragHandle = styled(Box)<{ $isDragging?: boolean; $canDrag?: boolea
 
   svg {
     font-size: 18px;
+    pointer-events: none;
+    user-select: none;
   }
 `;
 
