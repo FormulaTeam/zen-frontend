@@ -376,7 +376,7 @@ The application uses React Router with protected routes based on user permission
 
 ### Environment Configuration
 
-The application uses standard environment variables through `.env` files. Ensure you have a `.env` file in the root directory with the necessary `REACT_APP_` variables for the build process.
+The application uses runtime environment configuration through `runtime-env.js` for deployment flexibility.
 
 ### Nginx Configuration
 

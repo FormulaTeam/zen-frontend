@@ -1,4 +1,7 @@
-const getKeycloakUrl = (): string => process.env.REACT_APP_KEYCLOAK_URL ?? "";
+const getKeycloakUrl = (): string =>
+  (window as any).RUNTIME_ENV?.REACT_APP_KEYCLOAK_URL ??
+  process.env.REACT_APP_KEYCLOAK_URL ??
+  "";
 
 export const buildKeycloakRedirectUrl = (): string => {
   const baseUrl = getKeycloakUrl();
@@ -20,14 +23,14 @@ export const triggerSSORedirect = () => {
       sessionStorage.setItem("formula-last-visited-path", currentPath);
     }
   }
-  
+
   const keycloakUrl = getKeycloakUrl();
   if (!keycloakUrl) {
     console.error("REACT_APP_KEYCLOAK_URL is not set");
     window.location.href = "/error";
     return;
   }
-  
+
   window.location.href = buildKeycloakRedirectUrl();
 };
 

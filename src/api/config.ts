@@ -3,7 +3,9 @@ import { StatusCodes } from "http-status-codes";
 import { logoutAction } from "../utils/auth";
 
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL ?? "http://localhost:3000/api",
+  baseURL: (window as any).RUNTIME_ENV
+    ? (window as any).RUNTIME_ENV.REACT_APP_API_URL
+    : "http://localhost:3000/api",
   headers: {
     "Content-Type": "application/json",
   },
