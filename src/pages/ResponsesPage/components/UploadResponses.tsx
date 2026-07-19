@@ -13,9 +13,7 @@ import {
 import { useFormStore } from "../stores/form.store";
 import confetti from "canvas-confetti";
 
-const MAX_PAYLOAD_SIZE_MB =
-  (window as any).RUNTIME_ENV?.REACT_MAX_PAYLOAD_SIZE_MB ??
-  (Number(process.env.REACT_APP_MAX_PAYLOAD_SIZE_MB) || 10);
+const MAX_PAYLOAD_SIZE_MB = Number(process.env.REACT_APP_MAX_PAYLOAD_SIZE_MB) || 10;
 
 const LUCKY_IMPORT_FILE_NAME = "שיהיהלנומהזהאחלהיום.xlsx";
 

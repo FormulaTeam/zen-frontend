@@ -48,18 +48,14 @@ RUN npm run build
 # ============================================================
 FROM nginx:1.27-alpine AS runner
 
-# Install Node.js (needed for runtime-env.js at container startup)
-# gettext provides envsubst for runtime port injection
-RUN apk add --no-cache nodejs gettext
+# Install gettext for envsubst (runtime port injection)
+RUN apk add --no-cache gettext
 
 # Remove the default Nginx config
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy custom Nginx config as a template (PORT injected at runtime)
 COPY nginx.conf /etc/nginx/conf.d/default.conf.tmpl
-
-# Copy the runtime environment script
-COPY runtime-env.js /usr/share/nginx/html/
 
 # Copy the production build output
 COPY --from=build /app/build /usr/share/nginx/html
@@ -75,11 +71,10 @@ RUN chgrp -R 0 /usr/share/nginx/html \
         /var/cache/nginx \
         /var/run \
         /var/log/nginx \
-        /etc/nginx/conf.d && \
-    chmod a+rw /usr/share/nginx/html/runtime-env.js
+        /etc/nginx/conf.d
 
 # Expose the port Nginx listens on (matches nginx.conf)
 EXPOSE 3001
 
-# At startup: inject runtime env vars into the JS bundle, then start Nginx
-CMD ["/bin/sh", "-c", "export PORT=${PORT:-3001} && envsubst '${PORT}' < /etc/nginx/conf.d/default.conf.tmpl > /etc/nginx/conf.d/default.conf && node /usr/share/nginx/html/runtime-env.js && nginx -g 'daemon off;'"]
+# At startup: inject port into nginx config, then start Nginx
+CMD ["/bin/sh", "-c", "export PORT=${PORT:-3001} && envsubst '${PORT}' < /etc/nginx/conf.d/default.conf.tmpl > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
