@@ -92,9 +92,14 @@ const requiresTargetValue = (rule: ResponsesTableColorRuleDto): boolean =>
   !!getComparatorOptions(rule.fieldType).find((option) => option.value === rule.comparatorId)
     ?.requiresValue;
 
+const normalizeTargetValue = (
+  targetValue: ResponsesTableColorRuleDto["targetValue"],
+): ResponsesTableColorRuleDto["targetValue"] =>
+  typeof targetValue === "string" ? targetValue.trim() : targetValue;
+
 const normalizeRuleBeforeSave = (rule: ResponsesTableColorRuleDto): ResponsesTableColorRuleDto => ({
   ...rule,
-  targetValue: requiresTargetValue(rule) ? rule.targetValue : null,
+  targetValue: requiresTargetValue(rule) ? normalizeTargetValue(rule.targetValue) : null,
 });
 
 const MIN_SCROLL_THUMB_HEIGHT = 36;
@@ -259,7 +264,12 @@ export const ColorRulesModal = ({
       if (!rule.color) ruleErrors.color = "יש לבחור צבע";
       if (rule.comparatorId === undefined || rule.comparatorId === null) ruleErrors.comparatorId = "יש לבחור תנאי";
       if (!rule.targetType) ruleErrors.targetType = "יש לבחור סוג צביעה";
-      if (requiresTargetValue(rule) && (rule.targetValue === undefined || rule.targetValue === null || rule.targetValue === "")) {
+      if (
+        requiresTargetValue(rule) &&
+        (rule.targetValue === undefined ||
+          rule.targetValue === null ||
+          normalizeTargetValue(rule.targetValue) === "")
+      ) {
         ruleErrors.targetValue = "יש להזין ערך";
       }
 
@@ -301,6 +311,11 @@ export const ColorRulesModal = ({
   const updateRuleTargetValue = (ruleId: string, targetValue: ResponsesTableColorRuleDto["targetValue"]) => {
     markTargetValueTouched(ruleId);
     updateRule(ruleId, { targetValue });
+  };
+
+  const trimRuleTargetValue = (rule: ResponsesTableColorRuleDto) => {
+    markTargetValueTouched(rule.id);
+    updateRule(rule.id, { targetValue: normalizeTargetValue(rule.targetValue) });
   };
 
   const handleFieldChange = (rule: ResponsesTableColorRuleDto, fieldId: string) => {
@@ -473,7 +488,7 @@ export const ColorRulesModal = ({
         size="small"
         type={rule.fieldType === fieldType.Number ? "number" : rule.fieldType === fieldType.Date ? "date" : "text"}
         value={String(rule.targetValue ?? "")}
-        onBlur={() => markTargetValueTouched(rule.id)}
+        onBlur={() => trimRuleTargetValue(rule)}
         onChange={(event) => updateRuleTargetValue(rule.id, event.target.value)}
         error={!!error}
         helperText={error}
