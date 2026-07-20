@@ -30,12 +30,3 @@ export const saveSelectedViewIdToSession = (formId: string | number, viewId: str
     console.error("Failed to save view ID to session storage:", error);
   }
 };
-
-export const clearSelectedViewIdFromSession = (formId: string | number): void => {
-  try {
-    const key = getSelectedViewIdKey(formId);
-    sessionStorage.removeItem(key);
-  } catch (error) {
-    console.error("Failed to clear view ID from session storage:", error);
-  }
-};
