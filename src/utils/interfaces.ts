@@ -328,8 +328,12 @@ export interface Filter {
   deleted?: boolean;
   softDeleted?: boolean;
   isDeletedForm?: boolean;
+  deletedWithForm?: boolean;
   before?: string;
   after?: string;
+  createdBy?: string;
+  deletedBy?: string;
+  hasResponses?: boolean;
 }
 
 export interface PageInfo {

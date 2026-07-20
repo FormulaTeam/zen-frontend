@@ -66,8 +66,30 @@ root.render(
             },
           },
 
-          ".response-page, .sandboxContainer, .main-page-container, .response-page .MuiContainer-root": {
+          ".response-page, .sandboxContainer, .main-page-container, .response-page .MuiContainer-root, .main-page-content-wrapper": {
             overflowY: "auto !important",
+            scrollbarWidth: "auto !important",
+            msOverflowStyle: "auto !important",
+            "&::-webkit-scrollbar": {
+              width: "8px !important",
+              height: "8px !important",
+              display: "block !important",
+            },
+            "&::-webkit-scrollbar-track": {
+              backgroundColor: "#f1f1f1 !important",
+              display: "block !important",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: `${theme.scrollBar.color} !important`,
+              borderRadius: "10px !important",
+              display: "block !important",
+              border: "2px solid #f1f1f1 !important",
+            },
+          },
+
+          ".recycle-bin-scroll-container": {
+            overflowY: "auto !important",
+            direction: "ltr !important",
             scrollbarWidth: "auto !important",
             msOverflowStyle: "auto !important",
             "&::-webkit-scrollbar": {

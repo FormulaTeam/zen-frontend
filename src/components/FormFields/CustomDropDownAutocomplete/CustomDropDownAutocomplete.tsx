@@ -1,5 +1,5 @@
 import { Chip, FormControl } from "@mui/material";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { texts } from "../../../utils/texts";
 import FieldErrorText from "../FieldErrorText/FieldErrorText";
 import {
@@ -11,8 +11,8 @@ import {
   getFormControlSx,
   getHelperTextSx,
   autocompleteListboxProps,
-  autocompletePaperSlotProps,
-  getAutocompleteChipSx
+  basePopperSx,
+  getAutocompleteChipSx,
 } from "./styled";
 import { selectionMode } from "formula-gear";
 import { PaginatedAutocompleteListbox } from "@src/components/PaginatedAutocompleteListbox";
@@ -34,6 +34,8 @@ interface CustomDropDownAutocompleteProps {
   onInputChange?: (event: React.SyntheticEvent, value: string, reason: string) => void;
   onScrollToBottom?: () => void;
   loading?: boolean;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
   inputValue?: string;
   filterOptions?: (options: unknown[], state: any) => unknown[];
   noOptionsText?: string;
@@ -44,6 +46,12 @@ const normalizeToArray = (value: string | string[] | null | undefined): string[]
   if (typeof value === "string") return value ? [value] : [];
   return [];
 };
+
+const normalizeSearchText = (value: unknown): string =>
+  String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFKC");
 
 const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   value,
@@ -61,6 +69,8 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   onInputChange,
   onScrollToBottom,
   loading,
+  hasNextPage,
+  isFetchingNextPage,
   inputValue,
   filterOptions,
   noOptionsText = "אין אפשרויות",
@@ -109,6 +119,22 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
     return optionLabels[option] ?? option;
   };
 
+  const defaultFilterOptions = useMemo(
+    () => (availableOptions: unknown[], state: any) => {
+      const searchValue = normalizeSearchText(state.inputValue);
+
+      if (!searchValue) {
+        return availableOptions;
+      }
+
+      return availableOptions.filter((option) => {
+        const visibleLabel = getLabel(String(option));
+        return normalizeSearchText(visibleLabel).includes(searchValue);
+      });
+    },
+    [optionLabels],
+  );
+
   const triggerBlurValidation = () => {
     if (!hasTriggeredBlurRef.current) {
       hasTriggeredBlurRef.current = true;
@@ -117,11 +143,7 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   };
 
   return (
-    <FormControl
-      fullWidth
-      variant="standard"
-      sx={getFormControlSx(isTabularEdit)}
-    >
+    <FormControl fullWidth variant="standard" sx={getFormControlSx(isTabularEdit)}>
       {!isTabularEdit && (
         <StyledInputLabel
           shrink
@@ -135,25 +157,34 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
 
       <StyledAutocomplete
         ListboxComponent={PaginatedAutocompleteListbox}
-        ListboxProps={{
-          onLoadMore: onScrollToBottom,
-          ...autocompleteListboxProps,
-        } as any}
+        slots={{
+          listbox: PaginatedAutocompleteListbox,
+        }}
+        ListboxProps={
+          {
+            onLoadMore: onScrollToBottom,
+            hasNextPage,
+            isFetchingNextPage,
+            ...autocompleteListboxProps,
+          } as any
+        }
         slotProps={{
-          paper: autocompletePaperSlotProps,
+          popper: { sx: basePopperSx },
           clearIndicator: { title: "" },
           popupIndicator: { title: "" },
         }}
+        autoHighlight
         disabled={isDisabled}
         multiple={isMultiple}
         options={options}
         noOptionsText={noOptionsText}
         loading={loading}
+        loadingText="בטעינה..."
         onInputChange={onInputChange}
         value={autocompleteValue}
         {...(inputValue !== undefined ? { inputValue } : {})}
-        {...(filterOptions ? { filterOptions } : {})}
-        onChange={(event: any, nextValue: any, _reason: string) => {
+        filterOptions={(filterOptions ?? defaultFilterOptions) as any}
+        onChange={(event: any, nextValue: any) => {
           hasTriggeredBlurRef.current = false;
           onSelectHandler(event, nextValue);
         }}
@@ -164,7 +195,26 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
           triggerBlurValidation();
         }}
         getOptionLabel={(option: any) => getLabel(String(option))}
-        isOptionEqualToValue={(option, currentValue) => option === currentValue}
+        renderOption={(props: any, option: any) => {
+          const { key, ...optionProps } = props;
+          return (
+            <li {...optionProps} key={key}>
+              <span
+                style={{
+                  display: "block",
+                  width: "100%",
+                  direction: "rtl",
+                  textAlign: "right",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}>
+                {getLabel(String(option))}
+              </span>
+            </li>
+          );
+        }}
+        isOptionEqualToValue={(option, currentValue) => String(option) === String(currentValue)}
         size={isTabularEdit ? "small" : "medium"}
         sx={getAutocompleteSx(isTabularEdit, isMultiple, Boolean(validationMessage))}
         renderTags={(tagValue: any, getTagProps) =>
@@ -196,13 +246,6 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
             }}
             inputProps={{
               ...params.inputProps,
-              readOnly: true,
-              value:
-                inputValue !== undefined
-                  ? String(params.inputProps.value)
-                  : isMultiple || params.inputProps.value !== texts.heb.emptyValue
-                    ? String(params.inputProps.value)
-                    : "",
             }}
           />
         )}

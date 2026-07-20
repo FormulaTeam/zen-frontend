@@ -299,11 +299,12 @@ export const ResponsesTable = React.memo(
     const transitionInProgress = useRef(false);
     const lastIntendedPageNumber = useRef(filter?.pageNumber ?? 1);
     const lastFetchStartedRef = useRef(false);
-    const customScrollbarTrackRef = useRef<HTMLDivElement | null>(null);
-    const customScrollbarThumbRef = useRef<HTMLDivElement | null>(null);
-    const scrollbarAnimationFrame = useRef<number | null>(null);
-    const customHorizontalScrollbarTrackRef = useRef<HTMLDivElement | null>(null);
-    const customHorizontalScrollbarThumbRef = useRef<HTMLDivElement | null>(null);
+    const horizontalScrollbarTrackRef = useRef<HTMLDivElement | null>(null);
+    const horizontalScrollbarThumbRef = useRef<HTMLDivElement | null>(null);
+    const horizontalScrollbarFrame = useRef<number | null>(null);
+    const verticalScrollbarTrackRef = useRef<HTMLDivElement | null>(null);
+    const verticalScrollbarThumbRef = useRef<HTMLDivElement | null>(null);
+    const verticalScrollbarFrame = useRef<number | null>(null);
 
     useEffect(() => {
       lastIntendedPageNumber.current = filter?.pageNumber ?? 1;
@@ -406,143 +407,285 @@ export const ResponsesTable = React.memo(
     useEffect(() => {
       let scroller: HTMLElement | null = null;
       let root: HTMLElement | null = null;
-      let retryCount = 0;
-      let cancelled = false;
       let initFrame: number | null = null;
+      let cancelled = false;
+      let isDragging = false;
+      let dragStartClientX = 0;
+      let dragStartThumbLeft = 0;
+      let isVerticalDragging = false;
+      let verticalDragStartClientY = 0;
+      let verticalDragStartThumbTop = 0;
 
-      const updateThumbPosition = () => {
+      const getScrollRange = (element: HTMLElement) =>
+        Math.max(element.scrollWidth - element.clientWidth, 0);
+
+      const getNormalizedScrollLeft = (element: HTMLElement) => {
+        const maxScrollLeft = getScrollRange(element);
+
+        if (maxScrollLeft <= 0) return 0;
+
+        const direction = window.getComputedStyle(element).direction;
+
+        if (direction === "rtl") {
+          return element.scrollLeft <= 0
+            ? maxScrollLeft - Math.min(Math.abs(element.scrollLeft), maxScrollLeft)
+            : Math.min(element.scrollLeft, maxScrollLeft);
+        }
+
+        return Math.min(Math.max(element.scrollLeft, 0), maxScrollLeft);
+      };
+
+      const setNormalizedScrollLeft = (element: HTMLElement, normalizedLeft: number) => {
+        const maxScrollLeft = getScrollRange(element);
+        const nextLeft = Math.min(Math.max(normalizedLeft, 0), maxScrollLeft);
+        const direction = window.getComputedStyle(element).direction;
+
+        if (direction === "rtl") {
+          element.scrollLeft = element.scrollLeft <= 0 ? nextLeft - maxScrollLeft : nextLeft;
+          return;
+        }
+
+        element.scrollLeft = nextLeft;
+      };
+
+      const updateHorizontalScrollbar = () => {
         const currentScroller = scroller;
 
-        if (!currentScroller || scrollbarAnimationFrame.current !== null) return;
+        if (!currentScroller || horizontalScrollbarFrame.current !== null) return;
 
-        scrollbarAnimationFrame.current = window.requestAnimationFrame(() => {
-          scrollbarAnimationFrame.current = null;
+        horizontalScrollbarFrame.current = window.requestAnimationFrame(() => {
+          horizontalScrollbarFrame.current = null;
 
-          const verticalTrack = customScrollbarTrackRef.current;
-          const verticalThumb = customScrollbarThumbRef.current;
+          const track = horizontalScrollbarTrackRef.current;
+          const thumb = horizontalScrollbarThumbRef.current;
 
-          if (verticalTrack && verticalThumb) {
-            const maxScrollTop = currentScroller.scrollHeight - currentScroller.clientHeight;
+          if (!currentScroller || !track || !thumb) return;
 
-            if (maxScrollTop > 1) {
-              const trackHeight = verticalTrack.clientHeight;
-              const thumbHeight = verticalThumb.offsetHeight;
-              const maxThumbTop = trackHeight - thumbHeight;
-              const thumbTop = (currentScroller.scrollTop / maxScrollTop) * maxThumbTop;
+          const maxScrollLeft = getScrollRange(currentScroller);
 
-              verticalThumb.style.transform = `translate3d(0, ${thumbTop}px, 0)`;
-            }
+          if (maxScrollLeft <= 1) {
+            track.style.display = "none";
+            return;
           }
 
-          const horizontalTrack = customHorizontalScrollbarTrackRef.current;
-          const horizontalThumb = customHorizontalScrollbarThumbRef.current;
+          const containerRect = track.parentElement?.getBoundingClientRect();
+          const scrollerRect = currentScroller.getBoundingClientRect();
 
-          if (horizontalTrack && horizontalThumb) {
-            const maxScrollLeft = currentScroller.scrollWidth - currentScroller.clientWidth;
-
-            if (maxScrollLeft > 1) {
-              const trackWidth = horizontalTrack.clientWidth;
-              const thumbWidth = horizontalThumb.offsetWidth;
-              const maxThumbLeft = trackWidth - thumbWidth;
-
-              const normalizedScrollLeft = Math.min(
-                Math.abs(currentScroller.scrollLeft),
-                maxScrollLeft,
-              );
-
-              const thumbLeft =
-                maxThumbLeft - (normalizedScrollLeft / maxScrollLeft) * maxThumbLeft;
-
-              horizontalThumb.style.transform = `translate3d(${thumbLeft}px, 0, 0)`;
-            }
+          if (!containerRect || scrollerRect.width <= 0 || scrollerRect.height <= 0) {
+            track.style.display = "none";
+            return;
           }
+
+          const trackHeight = 14;
+          const trackWidth = scrollerRect.width;
+          const thumbWidth = Math.max(
+            (currentScroller.clientWidth / currentScroller.scrollWidth) * trackWidth,
+            64,
+          );
+          const maxThumbLeft = Math.max(trackWidth - thumbWidth, 0);
+          const normalizedLeft = getNormalizedScrollLeft(currentScroller);
+          const thumbLeft =
+            maxScrollLeft > 0 ? (normalizedLeft / maxScrollLeft) * maxThumbLeft : 0;
+
+          track.style.display = "block";
+          track.style.left = `${scrollerRect.left - containerRect.left}px`;
+          track.style.right = "auto";
+          track.style.top = `${scrollerRect.bottom - containerRect.top - trackHeight}px`;
+          track.style.width = `${trackWidth}px`;
+          track.style.height = `${trackHeight}px`;
+
+          thumb.style.left = "0px";
+          thumb.style.right = "auto";
+          thumb.style.width = `${thumbWidth}px`;
+          thumb.style.transform = `translate3d(${thumbLeft}px, 0, 0)`;
         });
       };
 
-      const updateLayout = () => {
-        const track = customScrollbarTrackRef.current;
-        const thumb = customScrollbarThumbRef.current;
+      const updateVerticalScrollbar = () => {
+        const currentScroller = scroller;
 
-        if (!root || !scroller || !track || !thumb) return;
+        if (!currentScroller || verticalScrollbarFrame.current !== null) return;
 
-        const maxScrollTop = scroller.scrollHeight - scroller.clientHeight;
+        verticalScrollbarFrame.current = window.requestAnimationFrame(() => {
+          verticalScrollbarFrame.current = null;
 
-        if (maxScrollTop <= 1) {
-          track.style.display = "none";
-          return;
-        }
+          const track = verticalScrollbarTrackRef.current;
+          const thumb = verticalScrollbarThumbRef.current;
 
-        const containerRect = track.parentElement?.getBoundingClientRect();
-        const scrollerRect = scroller.getBoundingClientRect();
-        const headers = root.querySelector(".MuiDataGrid-columnHeaders") as HTMLElement | null;
-        const headersRect = headers?.getBoundingClientRect();
+          if (!currentScroller || !track || !thumb) return;
 
-        const rootRect = root.getBoundingClientRect();
+          const maxScrollTop = currentScroller.scrollHeight - currentScroller.clientHeight;
 
-        if (!containerRect) return;
-
-        const bodyTop = headersRect ? headersRect.bottom : scrollerRect.top;
-        const bodyHeight = scrollerRect.bottom - bodyTop;
-
-        if (bodyHeight <= 0) {
-          track.style.display = "none";
-          return;
-        }
-
-        const horizontalTrackHeight = 21;
-        const horizontalTrackTop =
-          scrollerRect.bottom - containerRect.top - horizontalTrackHeight - 4;
-
-        const verticalTrackTop = bodyTop - containerRect.top + 4;
-        const verticalTrackBottom = horizontalTrackTop - 6;
-        const trackHeight = Math.max(verticalTrackBottom - verticalTrackTop, 48);
-
-        const thumbHeight = Math.max(
-          (scroller.clientHeight / scroller.scrollHeight) * trackHeight,
-          48,
-        );
-
-        track.style.display = "block";
-        track.style.top = `${verticalTrackTop}px`;
-        track.style.height = `${trackHeight}px`;
-        track.style.left = `${rootRect.left - containerRect.left}px`;
-        track.style.right = "auto";
-
-        thumb.style.height = `${thumbHeight}px`;
-
-        const horizontalTrack = customHorizontalScrollbarTrackRef.current;
-        const horizontalThumb = customHorizontalScrollbarThumbRef.current;
-
-        if (horizontalTrack && horizontalThumb) {
-          const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
-
-          if (maxScrollLeft <= 1) {
-            horizontalTrack.style.display = "none";
-          } else {
-            const horizontalLeft = rootRect.left - containerRect.left;
-            const horizontalWidth = rootRect.width;
-
-            const horizontalThumbWidth = Math.max(
-              (scroller.clientWidth / scroller.scrollWidth) * horizontalWidth,
-              60,
-            );
-
-            horizontalTrack.style.display = "block";
-            horizontalTrack.style.top = `${
-              scrollerRect.bottom - containerRect.top - horizontalTrackHeight - 4
-            }px`;
-            horizontalTrack.style.left = `${horizontalLeft}px`;
-            horizontalTrack.style.right = "auto";
-            horizontalTrack.style.width = `${horizontalWidth}px`;
-            horizontalTrack.style.height = `${horizontalTrackHeight}px`;
-
-            horizontalThumb.style.width = `${horizontalThumbWidth}px`;
-            horizontalThumb.style.left = "0px";
-            horizontalThumb.style.right = "auto";
+          if (maxScrollTop <= 1) {
+            track.style.display = "none";
+            return;
           }
-        }
 
-        updateThumbPosition();
+          const containerRect = track.parentElement?.getBoundingClientRect();
+          const scrollerRect = currentScroller.getBoundingClientRect();
+
+          if (!containerRect || scrollerRect.width <= 0 || scrollerRect.height <= 0) {
+            track.style.display = "none";
+            return;
+          }
+
+          const hasHorizontalOverflow = getScrollRange(currentScroller) > 1;
+          const horizontalScrollbarHeight = hasHorizontalOverflow ? 14 : 0;
+          const trackWidth = 14;
+          const trackHeight = Math.max(scrollerRect.height - horizontalScrollbarHeight, 48);
+          const thumbHeight = Math.max(
+            (currentScroller.clientHeight / currentScroller.scrollHeight) * trackHeight,
+            48,
+          );
+          const maxThumbTop = Math.max(trackHeight - thumbHeight, 0);
+          const thumbTop = (currentScroller.scrollTop / maxScrollTop) * maxThumbTop;
+
+          track.style.display = "block";
+          track.style.left = `${scrollerRect.left - containerRect.left}px`;
+          track.style.right = "auto";
+          track.style.top = `${scrollerRect.top - containerRect.top}px`;
+          track.style.width = `${trackWidth}px`;
+          track.style.height = `${trackHeight}px`;
+
+          thumb.style.left = "2px";
+          thumb.style.right = "auto";
+          thumb.style.height = `${thumbHeight}px`;
+          thumb.style.transform = `translate3d(0, ${thumbTop}px, 0)`;
+        });
+      };
+
+      const getThumbLeft = () => {
+        const thumb = horizontalScrollbarThumbRef.current;
+        if (!thumb) return 0;
+
+        const transform = window.getComputedStyle(thumb).transform;
+        if (!transform || transform === "none") return 0;
+
+        const matrix = new DOMMatrixReadOnly(transform);
+        return matrix.m41;
+      };
+
+      const getVerticalThumbTop = () => {
+        const thumb = verticalScrollbarThumbRef.current;
+        if (!thumb) return 0;
+
+        const transform = window.getComputedStyle(thumb).transform;
+        if (!transform || transform === "none") return 0;
+
+        const matrix = new DOMMatrixReadOnly(transform);
+        return matrix.m42;
+      };
+
+      const scrollToThumbPosition = (thumbLeft: number) => {
+        if (!scroller) return;
+
+        const track = horizontalScrollbarTrackRef.current;
+        const thumb = horizontalScrollbarThumbRef.current;
+        if (!track || !thumb) return;
+
+        const maxThumbLeft = Math.max(track.clientWidth - thumb.offsetWidth, 0);
+        const ratio =
+          maxThumbLeft > 0
+            ? Math.min(Math.max(thumbLeft, 0), maxThumbLeft) / maxThumbLeft
+            : 0;
+
+        setNormalizedScrollLeft(scroller, ratio * getScrollRange(scroller));
+      };
+
+      const scrollToVerticalThumbPosition = (thumbTop: number) => {
+        if (!scroller) return;
+
+        const track = verticalScrollbarTrackRef.current;
+        const thumb = verticalScrollbarThumbRef.current;
+        if (!track || !thumb) return;
+
+        const maxThumbTop = Math.max(track.clientHeight - thumb.offsetHeight, 0);
+        const ratio =
+          maxThumbTop > 0 ? Math.min(Math.max(thumbTop, 0), maxThumbTop) / maxThumbTop : 0;
+
+        scroller.scrollTop = ratio * Math.max(scroller.scrollHeight - scroller.clientHeight, 0);
+      };
+
+      const handleTrackPointerDown = (event: PointerEvent) => {
+        const track = horizontalScrollbarTrackRef.current;
+        const thumb = horizontalScrollbarThumbRef.current;
+        if (!track || !thumb || !scroller) return;
+
+        event.preventDefault();
+
+        const thumbRect = thumb.getBoundingClientRect();
+        const nextThumbLeft =
+          event.clientX - track.getBoundingClientRect().left - thumbRect.width / 2;
+
+        scrollToThumbPosition(nextThumbLeft);
+        updateHorizontalScrollbar();
+      };
+
+      const handleVerticalTrackPointerDown = (event: PointerEvent) => {
+        const track = verticalScrollbarTrackRef.current;
+        const thumb = verticalScrollbarThumbRef.current;
+        if (!track || !thumb || !scroller) return;
+
+        event.preventDefault();
+
+        const thumbRect = thumb.getBoundingClientRect();
+        const nextThumbTop =
+          event.clientY - track.getBoundingClientRect().top - thumbRect.height / 2;
+
+        scrollToVerticalThumbPosition(nextThumbTop);
+        updateVerticalScrollbar();
+      };
+
+      const handleThumbPointerDown = (event: PointerEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        isDragging = true;
+        dragStartClientX = event.clientX;
+        dragStartThumbLeft = getThumbLeft();
+        horizontalScrollbarThumbRef.current?.setPointerCapture(event.pointerId);
+      };
+
+      const handleVerticalThumbPointerDown = (event: PointerEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        isVerticalDragging = true;
+        verticalDragStartClientY = event.clientY;
+        verticalDragStartThumbTop = getVerticalThumbTop();
+        verticalScrollbarThumbRef.current?.setPointerCapture(event.pointerId);
+      };
+
+      const handlePointerMove = (event: PointerEvent) => {
+        if (!isDragging) return;
+
+        event.preventDefault();
+        scrollToThumbPosition(dragStartThumbLeft + event.clientX - dragStartClientX);
+        updateHorizontalScrollbar();
+      };
+
+      const handleVerticalPointerMove = (event: PointerEvent) => {
+        if (!isVerticalDragging) return;
+
+        event.preventDefault();
+        scrollToVerticalThumbPosition(
+          verticalDragStartThumbTop + event.clientY - verticalDragStartClientY,
+        );
+        updateVerticalScrollbar();
+      };
+
+      const handlePointerUp = (event: PointerEvent) => {
+        if (!isDragging) return;
+
+        isDragging = false;
+        horizontalScrollbarThumbRef.current?.releasePointerCapture(event.pointerId);
+      };
+
+      const handleVerticalPointerUp = (event: PointerEvent) => {
+        if (!isVerticalDragging) return;
+
+        isVerticalDragging = false;
+        verticalScrollbarThumbRef.current?.releasePointerCapture(event.pointerId);
       };
 
       const init = () => {
@@ -552,17 +695,24 @@ export const ResponsesTable = React.memo(
         scroller = root?.querySelector(".MuiDataGrid-virtualScroller") as HTMLElement | null;
 
         if (!root || !scroller) {
-          if (retryCount < 20) {
-            retryCount += 1;
-            initFrame = window.requestAnimationFrame(init);
-          }
+          initFrame = window.requestAnimationFrame(init);
           return;
         }
 
-        updateLayout();
-
-        scroller.addEventListener("scroll", updateThumbPosition, { passive: true });
-        window.addEventListener("resize", updateLayout);
+        updateHorizontalScrollbar();
+        updateVerticalScrollbar();
+        scroller.addEventListener("scroll", updateHorizontalScrollbar, { passive: true });
+        scroller.addEventListener("scroll", updateVerticalScrollbar, { passive: true });
+        window.addEventListener("resize", updateHorizontalScrollbar);
+        window.addEventListener("resize", updateVerticalScrollbar);
+        horizontalScrollbarTrackRef.current?.addEventListener("pointerdown", handleTrackPointerDown);
+        horizontalScrollbarThumbRef.current?.addEventListener("pointerdown", handleThumbPointerDown);
+        verticalScrollbarTrackRef.current?.addEventListener("pointerdown", handleVerticalTrackPointerDown);
+        verticalScrollbarThumbRef.current?.addEventListener("pointerdown", handleVerticalThumbPointerDown);
+        window.addEventListener("pointermove", handlePointerMove);
+        window.addEventListener("pointermove", handleVerticalPointerMove);
+        window.addEventListener("pointerup", handlePointerUp);
+        window.addEventListener("pointerup", handleVerticalPointerUp);
       };
 
       initFrame = window.requestAnimationFrame(init);
@@ -574,15 +724,38 @@ export const ResponsesTable = React.memo(
           window.cancelAnimationFrame(initFrame);
         }
 
-        if (scrollbarAnimationFrame.current !== null) {
-          window.cancelAnimationFrame(scrollbarAnimationFrame.current);
-          scrollbarAnimationFrame.current = null;
+        if (horizontalScrollbarFrame.current !== null) {
+          window.cancelAnimationFrame(horizontalScrollbarFrame.current);
+          horizontalScrollbarFrame.current = null;
         }
 
-        scroller?.removeEventListener("scroll", updateThumbPosition);
-        window.removeEventListener("resize", updateLayout);
+        if (verticalScrollbarFrame.current !== null) {
+          window.cancelAnimationFrame(verticalScrollbarFrame.current);
+          verticalScrollbarFrame.current = null;
+        }
+
+        scroller?.removeEventListener("scroll", updateHorizontalScrollbar);
+        scroller?.removeEventListener("scroll", updateVerticalScrollbar);
+        window.removeEventListener("resize", updateHorizontalScrollbar);
+        window.removeEventListener("resize", updateVerticalScrollbar);
+        horizontalScrollbarTrackRef.current?.removeEventListener("pointerdown", handleTrackPointerDown);
+        horizontalScrollbarThumbRef.current?.removeEventListener("pointerdown", handleThumbPointerDown);
+        verticalScrollbarTrackRef.current?.removeEventListener("pointerdown", handleVerticalTrackPointerDown);
+        verticalScrollbarThumbRef.current?.removeEventListener("pointerdown", handleVerticalThumbPointerDown);
+        window.removeEventListener("pointermove", handlePointerMove);
+        window.removeEventListener("pointermove", handleVerticalPointerMove);
+        window.removeEventListener("pointerup", handlePointerUp);
+        window.removeEventListener("pointerup", handleVerticalPointerUp);
       };
-    }, [apiRef, displayRows.length, showTableSkeleton]);
+    }, [
+      apiRef,
+      currentViewConfig.length,
+      displayRows.length,
+      form?.fields?.length,
+      form?.sections?.length,
+      isInEditMode,
+      showTableSkeleton,
+    ]);
 
     useEffect(() => {
       if (!shouldRequestTableSkeleton) {
@@ -1424,6 +1597,7 @@ export const ResponsesTable = React.memo(
               disableColumnSorting={isInEditMode}
               disableColumnFilter={isInEditMode}
               disableColumnPinning
+              disableVirtualization
               headerFilters={shouldUseHeaderFilters}
               autosizeOptions={{
                 includeHeaders: true,
@@ -1600,58 +1774,78 @@ export const ResponsesTable = React.memo(
               }}
             />
             <Box
-              ref={customScrollbarTrackRef}
+              ref={horizontalScrollbarTrackRef}
               sx={{
                 position: "absolute",
-                top: 0,
-                width: "21px",
-                height: 0,
                 display: "none",
-                pointerEvents: "none",
-                zIndex: 10,
-                backgroundColor: "#ffffff",
+                height: "14px",
                 borderRadius: "999px",
+                backgroundColor: "#ffffff",
+                border: "1px solid #e2e8f0",
+                direction: "ltr",
+                cursor: "pointer",
+                pointerEvents: "auto",
+                zIndex: 20,
               }}>
               <Box
-                ref={customScrollbarThumbRef}
+                ref={horizontalScrollbarThumbRef}
                 sx={{
                   position: "absolute",
-                  top: 0,
-                  left: "4px",
-                  width: "13px",
-                  height: 0,
+                  top: "2px",
+                  left: 0,
+                  height: "8px",
+                  minWidth: "64px",
                   borderRadius: "999px",
-                  backgroundColor: "#E2E8F0",
+                  backgroundColor: "#cbd5e1",
+                  cursor: "grab",
+                  touchAction: "none",
                   transform: "translate3d(0, 0, 0)",
                   willChange: "transform",
+                  "&:hover": {
+                    backgroundColor: "#94a3b8",
+                  },
+                  "&:active": {
+                    cursor: "grabbing",
+                    backgroundColor: "#64748b",
+                  },
                 }}
               />
             </Box>
             <Box
-              ref={customHorizontalScrollbarTrackRef}
+              ref={verticalScrollbarTrackRef}
               sx={{
                 position: "absolute",
-                top: 0,
-                left: 0,
-                width: 0,
-                height: "21px",
                 display: "none",
-                pointerEvents: "none",
-                zIndex: 10,
-                backgroundColor: "#ffffff",
+                width: "14px",
                 borderRadius: "999px",
+                backgroundColor: "#ffffff",
+                border: "1px solid #e2e8f0",
+                direction: "ltr",
+                cursor: "pointer",
+                pointerEvents: "auto",
+                zIndex: 21,
               }}>
               <Box
-                ref={customHorizontalScrollbarThumbRef}
+                ref={verticalScrollbarThumbRef}
                 sx={{
                   position: "absolute",
-                  top: "4px",
-                  width: 0,
-                  height: "13px",
+                  top: 0,
+                  left: "2px",
+                  width: "8px",
+                  minHeight: "48px",
                   borderRadius: "999px",
-                  backgroundColor: "#E2E8F0",
+                  backgroundColor: "#cbd5e1",
+                  cursor: "grab",
+                  touchAction: "none",
                   transform: "translate3d(0, 0, 0)",
                   willChange: "transform",
+                  "&:hover": {
+                    backgroundColor: "#94a3b8",
+                  },
+                  "&:active": {
+                    cursor: "grabbing",
+                    backgroundColor: "#64748b",
+                  },
                 }}
               />
             </Box>

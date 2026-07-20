@@ -76,6 +76,7 @@ const formatParams = (filter?: Filter) => {
     before: filter?.before,
     after: filter?.after,
     softDeleted: filter?.softDeleted,
+    deletedWithForm: filter?.deletedWithForm,
   };
 };
 
@@ -299,27 +300,6 @@ export const getAllDeletedResponses = async (
     return response?.data || [];
   } catch (error) {
     console.error("Failed to fetch deleted responses:", error);
-    throw error;
-  }
-};
-
-/**
- * Fetch all soft-deleted responses across all active forms.
- */
-export const getSoftDeletedResponsesGlobal = async (filter?: Filter): Promise<any> => {
-  try {
-    const params = {
-      limit: filter?.pageSize ?? 20,
-      offset:
-        filter?.pageNumber !== undefined && filter?.pageSize !== undefined
-          ? (filter.pageNumber - 1) * filter.pageSize
-          : undefined,
-    };
-
-    const response = await apiClient.get(`/forms/responses/soft-deleted`, { params });
-    return response?.data || [];
-  } catch (error) {
-    console.error("Failed to fetch global soft-deleted responses:", error);
     throw error;
   }
 };
@@ -629,7 +609,7 @@ export const getResponsesRows = async ({
   }
 };
 
-export const OPTIONS_PAGINATION_LIMIT = 10;
+export const OPTIONS_PAGINATION_LIMIT = 50;
 
 export const getFieldValues = async (
   formId: number,

@@ -1,0 +1,533 @@
+import React, { useState, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
+import { Box } from "@mui/material";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import {
+  useGetRecycleBinForms,
+  useGetRecycleBinResponses,
+  restoreForm,
+  restoreForms,
+} from "../../api/formsApi";
+import { restoreResponse, restoreResponses } from "../../api/responsesApi";
+import { getFormIconByName } from "../../utils/utils";
+import queryClient from "../../api/queryClient";
+import { IOrderBy, formsSortOption } from "../../types/enums/filtersAndSorts.enum";
+import { useDebounce } from "../../hooks/utilsHooks/useDebounce";
+import { User } from "../../utils/interfaces";
+
+import { RecycleBinProvider } from "./context/RecycleBinContext";
+import { RecycleBinItemWithResponses, RecycleBinTab } from "./types";
+import RecycleBinHeader from "./components/RecycleBinHeader";
+import RecycleBinToolbar from "./components/RecycleBinToolbar";
+import RecycleBinList from "./components/RecycleBinList";
+import RecycleBinResponsesList from "./components/RecycleBinResponsesList";
+import RecycleBinSelectionBar from "./components/RecycleBinSelectionBar";
+import RestoreFormDialog from "./components/RestoreFormDialog";
+
+const SCROLL_THRESHOLD_PX = 50;
+
+const groupResponsesByForm = (
+  forms: RecycleBinItemWithResponses[],
+  selectedIds: Set<string>,
+): Record<number, string[]> => {
+  const map: Record<number, string[]> = {};
+
+  forms.forEach(({ id: formId }) => {
+    formId.responses?.forEach(({ id: responseId }) => {
+      if (selectedIds.has(responseId)) {
+        if (!map[formId]) map[formId] = [];
+        map[formId].push(responseId);
+      }
+    });
+  });
+
+  return map;
+};
+
+const showRestoreToast = (successCount: number, failCount: number) => {
+  if (successCount > 0 && failCount > 0) {
+    toast.warning(`שוחזרו ${successCount} תגובות, אך ${failCount} נכשלו`);
+  } else if (successCount > 0) {
+    toast.success(`${successCount} תגובות שוחזרו בהצלחה`);
+  } else {
+    toast.error("שחזור התגובות נכשל");
+  }
+};
+
+function RecycleBin({ user }: { user: User | null }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const scopeParam = searchParams.get("scope") || "forms";
+  const activeTab = scopeParam === "responses" ? RecycleBinTab.RESPONSES : RecycleBinTab.FORMS;
+  const sortBy = searchParams.get("sortBy") || formsSortOption.DeletedAt;
+  const sortDirection = (searchParams.get("sortDirection") as "asc" | "desc") || "desc";
+  const hasResponsesFilter = searchParams.get("hasResponses") === "true" ? true : undefined;
+
+  const [restoringFormId, setRestoringFormId] = useState<number | null>(null);
+  const [restoringResponseId, setRestoringResponseId] = useState<string | null>(null);
+  const [isBulkRestoring, setIsBulkRestoring] = useState(false);
+  const [expandedForms, setExpandedForms] = useState<Record<number, boolean>>({});
+  const [selectedFormIds, setSelectedFormIds] = useState<Set<number>>(new Set());
+  const [selectedResponseIds, setSelectedResponseIds] = useState<Set<string>>(new Set());
+
+  const [restoreDialogConfig, setRestoreDialogConfig] = useState<{
+    open: boolean;
+    formIds: number[];
+    responseCount: number;
+    isBulk: boolean;
+  }>({
+    open: false,
+    formIds: [],
+    responseCount: 0,
+    isBulk: false,
+  });
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [createdBySearch, setCreatedBySearch] = useState("");
+  const [deletedBySearch, setDeletedBySearch] = useState("");
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const debouncedCreatedBy = useDebounce(createdBySearch, 300);
+  const debouncedDeletedBy = useDebounce(deletedBySearch, 300);
+
+  const hasActiveFilters = !!(
+    debouncedSearchTerm ||
+    debouncedCreatedBy ||
+    debouncedDeletedBy ||
+    hasResponsesFilter
+  );
+
+  const formsFilter = useMemo(
+    () => ({
+      query: debouncedSearchTerm || undefined,
+      createdBy: debouncedCreatedBy || undefined,
+      deletedBy: debouncedDeletedBy || undefined,
+      sortBy,
+      orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
+      hasResponses: hasResponsesFilter,
+    }),
+    [
+      debouncedSearchTerm,
+      debouncedCreatedBy,
+      debouncedDeletedBy,
+      sortBy,
+      sortDirection,
+      hasResponsesFilter,
+    ],
+  );
+
+  const responsesFilter = useMemo(
+    () => ({
+      query: debouncedSearchTerm || undefined,
+      createdBy: debouncedCreatedBy || undefined,
+      deletedBy: debouncedDeletedBy || undefined,
+      sortBy: sortBy === formsSortOption.DeletedAt ? formsSortOption.CreatedAt : sortBy,
+      orderBy: sortDirection === "desc" ? IOrderBy.DESC : IOrderBy.ASC,
+    }),
+    [debouncedSearchTerm, debouncedCreatedBy, debouncedDeletedBy, sortBy, sortDirection],
+  );
+
+  const {
+    data: deletedFormsData,
+    isLoading: isDeletedFormsLoading,
+    isFetching: isFetchingDeletedForms,
+    fetchNextPage: fetchNextDeletedForms,
+    hasNextPage: hasNextDeletedForms,
+    isFetchingNextPage: isFetchingNextDeletedForms,
+  } = useGetRecycleBinForms(formsFilter);
+
+  const {
+    data: activeFormsData,
+    isLoading: isActiveFormsLoading,
+    isFetching: isFetchingActiveForms,
+    fetchNextPage: fetchNextActiveForms,
+    hasNextPage: hasNextActiveForms,
+    isFetchingNextPage: isFetchingNextActiveForms,
+  } = useGetRecycleBinResponses(responsesFilter);
+
+  const deletedForms = useMemo(() => {
+    if (!deletedFormsData?.pages) return [];
+    return deletedFormsData.pages.flat() as RecycleBinItemWithResponses[];
+  }, [deletedFormsData]);
+
+  const activeFormsWithDeleted = useMemo(() => {
+    if (!activeFormsData?.pages) return [];
+    return activeFormsData.pages.flat() as RecycleBinItemWithResponses[];
+  }, [activeFormsData]);
+
+  const handleToggleSelectForm = useCallback((id: number) => {
+    setSelectedFormIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleToggleSelectResponse = useCallback((id: string) => {
+    setSelectedResponseIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleToggleExpand = useCallback((id: number) => {
+    setExpandedForms((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
+
+  const performRestoreForm = useCallback(async (formId: number, restoreResponses: boolean) => {
+    setRestoringFormId(formId);
+    try {
+      await restoreForm(formId, restoreResponses);
+      toast.success("הטופס שוחזר בהצלחה");
+      await queryClient.invalidateQueries({ queryKey: ["forms"] });
+    } catch (error) {
+      toast.error("שחזור הטופס נכשל");
+    } finally {
+      setRestoringFormId(null);
+    }
+  }, []);
+
+  const handleRestoreForm = useCallback(
+    (formId: number) => {
+      const form = deletedForms.find((f) => f.id === formId);
+      const count = form?.responsesCount ?? 0;
+
+      if (count > 0) {
+        setRestoreDialogConfig({
+          open: true,
+          formIds: [formId],
+          responseCount: count,
+          isBulk: false,
+        });
+      } else {
+        performRestoreForm(formId, true);
+      }
+    },
+    [deletedForms, performRestoreForm],
+  );
+
+  const handleRestoreResponse = useCallback(async (formId: number, responseId: string) => {
+    setRestoringResponseId(responseId);
+    try {
+      await restoreResponse(formId, responseId);
+      toast.success("התגובה שוחזרה בהצלחה");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["forms", "responses", "soft-deleted"] }),
+        queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] }),
+      ]);
+    } catch (error) {
+      toast.error("שחזור התגובה נכשל");
+    } finally {
+      setRestoringResponseId(null);
+    }
+  }, []);
+
+  const handleToggleHasResponses = useCallback(() => {
+    const newParams = new URLSearchParams(searchParams);
+    if (hasResponsesFilter) newParams.delete("hasResponses");
+    else newParams.set("hasResponses", "true");
+    setSearchParams(newParams, { replace: true });
+  }, [hasResponsesFilter, searchParams, setSearchParams]);
+
+  const handleSortChange = useCallback(
+    (newSortBy: string, newDirection: "asc" | "desc") => {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set("sortBy", newSortBy);
+      newParams.set("sortDirection", newDirection);
+      setSearchParams(newParams, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
+
+  const handleScopeChange = useCallback(
+    (newScope: string) => {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set("scope", newScope);
+      setSearchParams(newParams, { replace: true });
+      setExpandedForms({});
+      setSelectedFormIds(new Set());
+      setSelectedResponseIds(new Set());
+    },
+    [searchParams, setSearchParams],
+  );
+
+  const clearFilters = useCallback(() => {
+    setSearchTerm("");
+    setCreatedBySearch("");
+    setDeletedBySearch("");
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("hasResponses");
+    setSearchParams(newParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+      const isPageReachBottom = scrollHeight - scrollTop <= clientHeight + SCROLL_THRESHOLD_PX;
+
+      if (isPageReachBottom) {
+        if (
+          activeTab === RecycleBinTab.FORMS &&
+          hasNextDeletedForms &&
+          !isFetchingNextDeletedForms
+        ) {
+          fetchNextDeletedForms();
+        } else if (
+          activeTab === RecycleBinTab.RESPONSES &&
+          hasNextActiveForms &&
+          !isFetchingNextActiveForms
+        ) {
+          fetchNextActiveForms();
+        }
+      }
+    },
+    [
+      activeTab,
+      hasNextDeletedForms,
+      isFetchingNextDeletedForms,
+      fetchNextDeletedForms,
+      hasNextActiveForms,
+      isFetchingNextActiveForms,
+      fetchNextActiveForms,
+    ],
+  );
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedFormIds(new Set());
+    setSelectedResponseIds(new Set());
+  }, []);
+
+  const performBulkRestore = useCallback(
+    async (ids: number[], restoreResponses: boolean) => {
+      setIsBulkRestoring(true);
+      try {
+        await restoreForms(ids, restoreResponses);
+        toast.success(`${ids.length} טפסים שוחזרו בהצלחה`);
+        handleClearSelection();
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] }),
+          queryClient.invalidateQueries({ queryKey: ["forms"] }),
+        ]);
+      } catch (error) {
+        toast.error("שחזור פריטים נכשל");
+      } finally {
+        setIsBulkRestoring(false);
+      }
+    },
+    [handleClearSelection],
+  );
+
+  const restoreBulkResponses = useCallback(async () => {
+    const formResponseMap = groupResponsesByForm(activeFormsWithDeleted, selectedResponseIds);
+    const formIds = Object.keys(formResponseMap).map(Number);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const fId of formIds) {
+      const respIds = formResponseMap[fId];
+      try {
+        await restoreResponses(fId, respIds);
+        successCount += respIds.length;
+      } catch (e) {
+        failCount += respIds.length;
+        console.error(`Failed to restore responses for form ${fId}`, e);
+      }
+    }
+
+    showRestoreToast(successCount, failCount);
+
+    if (successCount > 0) {
+      handleClearSelection();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["forms", "responses", "soft-deleted"] }),
+        queryClient.invalidateQueries({ queryKey: ["forms", "soft-deleted"] }),
+      ]);
+    }
+  }, [activeFormsWithDeleted, selectedResponseIds, handleClearSelection]);
+
+  const handleBulkRestoreForms = useCallback(async () => {
+    const ids = Array.from(selectedFormIds);
+    const totalResponses = ids.reduce((sum, id) => {
+      const form = deletedForms.find((f) => f.id === id);
+      return sum + (form?.responsesCount ?? 0);
+    }, 0);
+
+    if (totalResponses > 0) {
+      setRestoreDialogConfig({
+        open: true,
+        formIds: ids,
+        responseCount: totalResponses,
+        isBulk: true,
+      });
+    } else {
+      performBulkRestore(ids, true);
+    }
+  }, [selectedFormIds, deletedForms, performBulkRestore]);
+
+  const handleBulkRestore = useCallback(async () => {
+    if (activeTab === RecycleBinTab.FORMS) {
+      await handleBulkRestoreForms();
+    } else {
+      setIsBulkRestoring(true);
+      try {
+        await restoreBulkResponses();
+      } catch (error) {
+        toast.error("שחזור פריטים נכשל");
+      } finally {
+        setIsBulkRestoring(false);
+      }
+    }
+  }, [activeTab, handleBulkRestoreForms, restoreBulkResponses]);
+
+  const getIconContent = useCallback((iconName: string | null) => {
+    const iconSrc = getFormIconByName(iconName ?? undefined);
+    if (typeof iconSrc === "string") return <img src={iconSrc} alt={iconName ?? "form icon"} />;
+    if (iconSrc) {
+      const IconComponent = iconSrc;
+      return <IconComponent />;
+    }
+    return <KeyboardArrowDownIcon />;
+  }, []);
+
+  const isAnyRestoring =
+    !!restoringFormId ||
+    !!restoringResponseId ||
+    isBulkRestoring ||
+    isFetchingDeletedForms ||
+    isFetchingActiveForms;
+
+  const handleDialogConfirm = useCallback(
+    (restoreResponses: boolean) => {
+      const { formIds, isBulk } = restoreDialogConfig;
+      setRestoreDialogConfig((prev) => ({ ...prev, open: false }));
+
+      if (isBulk) {
+        performBulkRestore(formIds, restoreResponses);
+      } else {
+        performRestoreForm(formIds[0], restoreResponses);
+      }
+    },
+    [restoreDialogConfig, performBulkRestore, performRestoreForm],
+  );
+
+  const contextValue = useMemo(
+    () => ({
+      restoringFormId,
+      restoringResponseId,
+      isBulkRestoring,
+      isAnyRestoring,
+      expandedForms,
+      selectedFormIds,
+      selectedResponseIds,
+      hasFilters: hasActiveFilters,
+      onToggleSelectForm: handleToggleSelectForm,
+      onToggleSelectResponse: handleToggleSelectResponse,
+      onToggleExpand: handleToggleExpand,
+      onRestoreForm: handleRestoreForm,
+      onRestoreResponse: handleRestoreResponse,
+      onClearFilters: clearFilters,
+      onBulkRestore: handleBulkRestore,
+      onClearSelection: handleClearSelection,
+      getIconContent,
+    }),
+    [
+      restoringFormId,
+      restoringResponseId,
+      isBulkRestoring,
+      isAnyRestoring,
+      expandedForms,
+      selectedFormIds,
+      selectedResponseIds,
+      hasActiveFilters,
+      handleToggleSelectForm,
+      handleToggleSelectResponse,
+      handleToggleExpand,
+      handleRestoreForm,
+      handleRestoreResponse,
+      clearFilters,
+      handleBulkRestore,
+      handleClearSelection,
+      getIconContent,
+    ],
+  );
+
+  return (
+    <RecycleBinProvider value={contextValue}>
+      <Box
+        className="main-page-container"
+        sx={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          justifyContent: "center",
+          bgcolor: "#F8FAFC",
+          overflow: "hidden",
+        }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            width: "85%",
+            minWidth: "900px",
+            height: "100%",
+          }}>
+          <RecycleBinHeader />
+          <RecycleBinToolbar
+            activeTab={activeTab}
+            scopeParam={scopeParam}
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            hasResponsesFilter={hasResponsesFilter}
+            searchTerm={searchTerm}
+            createdBySearch={createdBySearch}
+            deletedBySearch={deletedBySearch}
+            onSearchChange={setSearchTerm}
+            onCreatedByChange={setCreatedBySearch}
+            onDeletedByChange={setDeletedBySearch}
+            onScopeChange={handleScopeChange}
+            onSortChange={handleSortChange}
+            onToggleHasResponses={handleToggleHasResponses}
+          />
+
+          <Box
+            className="main-page-content-wrapper recycle-bin-scroll-container"
+            sx={{ pt: 0, flex: 1, overflowY: "auto", direction: "ltr" }}
+            onScroll={handleScroll}>
+            <Box sx={{ direction: "rtl", width: "100%" }}>
+              {activeTab === RecycleBinTab.FORMS ? (
+                <RecycleBinList
+                  deletedForms={deletedForms}
+                  isLoading={isDeletedFormsLoading}
+                  isFetchingNextPage={isFetchingNextDeletedForms}
+                />
+              ) : (
+                <RecycleBinResponsesList
+                  activeFormsWithDeleted={activeFormsWithDeleted}
+                  isLoading={isActiveFormsLoading}
+                  isFetchingNextPage={isFetchingNextActiveForms}
+                />
+              )}
+            </Box>
+          </Box>
+
+          <RecycleBinSelectionBar activeTab={activeTab} />
+        </Box>
+      </Box>
+
+      <RestoreFormDialog
+        open={restoreDialogConfig.open}
+        onClose={() => setRestoreDialogConfig((prev) => ({ ...prev, open: false }))}
+        onConfirm={handleDialogConfirm}
+        responseCount={restoreDialogConfig.responseCount}
+        isBulk={restoreDialogConfig.isBulk}
+        selectedCount={restoreDialogConfig.formIds.length}
+      />
+    </RecycleBinProvider>
+  );
+}
+
+export default RecycleBin;

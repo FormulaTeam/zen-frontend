@@ -1,10 +1,10 @@
-import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Autocomplete, Box, IconButton, TextField } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { selectionMode } from "formula-gear";
 
-import { useLoadMoreOnVisible } from "../../hooks/useLoadMoreOnVisible";
+import { PaginatedAutocompleteListbox } from "@src/components/PaginatedAutocompleteListbox";
 
 interface OptionsCellEditorProps {
   value: string | string[];
@@ -15,6 +15,8 @@ interface OptionsCellEditorProps {
   isRequired?: boolean;
   errorMessage?: string;
   loading?: boolean;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
   onScrollToBottom?: () => void;
 }
 
@@ -37,28 +39,6 @@ const normalizeValue = (value: string | string[], mode: string): string | string
 
   return value || "";
 };
-
-const Listbox = React.forwardRef<
-  HTMLUListElement,
-  React.HTMLAttributes<HTMLUListElement> & { onLoadMore?: () => void }
->(function Listbox({ children, onLoadMore, ...props }, ref) {
-  const listRef = useRef<HTMLUListElement>(null);
-  const sentinelRef = useRef<HTMLLIElement>(null);
-
-  useImperativeHandle(ref, () => listRef.current as HTMLUListElement);
-  useLoadMoreOnVisible(listRef, sentinelRef, onLoadMore);
-
-  return (
-    <ul ref={listRef} {...props}>
-      {children}
-      <li
-        aria-hidden
-        ref={sentinelRef}
-        style={{ height: 1, padding: 0, margin: 0, listStyle: "none" }}
-      />
-    </ul>
-  );
-});
 
 const basePopperSlotProps = {
   clearIndicator: {
@@ -84,6 +64,8 @@ const basePopperSlotProps = {
         p: "4px",
         direction: "rtl",
         textAlign: "right",
+        maxHeight: "300px",
+        overflowY: "auto",
       },
 
       "& .MuiAutocomplete-option": {
@@ -106,7 +88,7 @@ const basePopperSlotProps = {
           fontWeight: 600,
         },
 
-        "&.Mui-focused": {
+        "&.Mui-focused, &:hover": {
           backgroundColor: "#f8fafc",
         },
       },
@@ -282,6 +264,8 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
   isRequired = false,
   errorMessage,
   loading = false,
+  hasNextPage,
+  isFetchingNextPage,
   onScrollToBottom,
 }) => {
   const isMultiSelect = mode === selectionMode.Multiple;
@@ -467,10 +451,19 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             autoHighlight
             openOnFocus
             slotProps={basePopperSlotProps}
-            ListboxComponent={Listbox}
-            ListboxProps={{ onLoadMore: onScrollToBottom } as any}
+            ListboxComponent={PaginatedAutocompleteListbox}
+            slots={{
+              listbox: PaginatedAutocompleteListbox,
+            }}
+            ListboxProps={
+              {
+                onLoadMore: onScrollToBottom,
+                hasNextPage,
+                isFetchingNextPage,
+              } as any
+            }
             loading={loading}
-            loadingText="טוען אפשרויות..."
+            loadingText="בטעינה..."
             noOptionsText="אין אפשרויות"
             sx={{ width: "100%" }}
             renderTags={(tagValue, getTagProps) =>
@@ -533,7 +526,6 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                 placeholder={hasSelectedValue ? "" : "בחר אפשרויות"}
                 inputProps={{
                   ...params.inputProps,
-                  readOnly: true,
                   style: {
                     textAlign: "right",
                     direction: "rtl",
@@ -571,10 +563,19 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
             autoHighlight
             openOnFocus
             slotProps={basePopperSlotProps}
-            ListboxComponent={Listbox}
-            ListboxProps={{ onLoadMore: onScrollToBottom } as any}
+            ListboxComponent={PaginatedAutocompleteListbox}
+            slots={{
+              listbox: PaginatedAutocompleteListbox,
+            }}
+            ListboxProps={
+              {
+                onLoadMore: onScrollToBottom,
+                hasNextPage,
+                isFetchingNextPage,
+              } as any
+            }
             loading={loading}
-            loadingText="טוען אפשרויות..."
+            loadingText="בטעינה..."
             noOptionsText="אין אפשרויות"
             sx={{ width: "100%" }}
             renderInput={(params) => (
@@ -587,7 +588,6 @@ export const OptionsCellEditor: React.FC<OptionsCellEditorProps> = ({
                 placeholder="בחר אפשרות"
                 inputProps={{
                   ...params.inputProps,
-                  readOnly: true,
                   style: {
                     textAlign: "right",
                     direction: "rtl",

@@ -13,7 +13,7 @@ import EditForm from "./pages/EditForm/EditForm";
 import SessionStorageUpdater from "./components/SessionStorageUpdater";
 import Response from "./pages/Response/Response";
 import { DownloadPage } from "./pages/DownloadPage/DownloadPage";
-import DeletedForms from "./pages/DeletedForms/DeletedForms";
+import RecycleBin from "./pages/RecycleBin/RecycleBin";
 import { IPath } from "./types/enums/global.enums";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import HelpBtn from "./components/HelpBtn/HelpBtn";
@@ -102,7 +102,7 @@ const AppRouter = () => {
             <Route path={IPath.RESPONSE_EDIT} element={<Response user={user} />} />
             <Route path={IPath.RESPONSE_VIEW} element={<Response user={user} viewMode />} />
             <Route path={IPath.DOWNLOAD_FILE} element={<DownloadPage />} />
-            <Route path={IPath.DELETED_FORMS} element={<DeletedForms user={user} />} />
+            <Route path={IPath.RECYCLE_BIN} element={<RecycleBin user={user} />} />
           </Route>
           <Route path="*" element={<ErrorPage />} />
         </Routes>

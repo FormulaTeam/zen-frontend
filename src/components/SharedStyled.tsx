@@ -17,8 +17,8 @@ export const FormSelectInput = styled(TextField)(() => ({
   },
 }));
 
-export const HighlightedText = styled("mark")({
-  backgroundColor: "#fff59d",
+export const HighlightedText = styled("span")({
+  backgroundColor: "#d5e6f6 !important",
   color: "inherit",
   padding: 0,
   borderRadius: "2px",

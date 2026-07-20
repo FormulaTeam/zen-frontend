@@ -349,23 +349,25 @@ export const useCellDisplay = ({
   );
 
   const formatDateCell = useCallback(
-    (value: any, type?: "datetime" | "date"): React.ReactElement => {
+    (
+      value: any,
+      type?: "datetime" | "date",
+      precision?: "seconds" | "minutes",
+    ): React.ReactElement => {
       if (!value || !moment(value).isValid()) {
         return <Box component="span" className="cell-box-date"></Box>;
       }
 
       const isDateTime = type === dateType.Datetime;
       const datePart = moment(value).format(DEFAULT_DATE_FORMAT);
-      const timePart = isDateTime ? ` ${moment(value).format("HH:mm")}` : "";
+      const timeFormat = precision === timePrecision.Seconds ? "HH:mm:ss" : "HH:mm";
+      const timePart = isDateTime ? ` ${moment(value).format(timeFormat)}` : "";
       const fullText = `${datePart}${timePart}`;
 
       return (
         <Box component="span" className="cell-box-date">
           <OverflowTooltip title={fullText} arrow>
-            <label>
-              {highlightText(datePart)}
-              {timePart}
-            </label>
+            <label>{highlightText(fullText)}</label>
           </OverflowTooltip>
         </Box>
       );
@@ -515,7 +517,7 @@ export const useCellDisplay = ({
           return formatFileCell(value, rowId);
 
         case fieldType.Date:
-          return formatDateCell(value, extra.dateType);
+          return formatDateCell(value, extra.dateType, extra.timePrecision);
 
         case fieldType.Time:
           return formatTimeCell(value, extra.timePrecision);
