@@ -134,7 +134,7 @@ const Navbar = () => {
                   </IconButton>
                 </Tooltip>
 
-                <Tooltip title="שחזור מחיקות" arrow placement="bottom">
+                <Tooltip title="סל מחזור" arrow placement="bottom">
                   <IconButton onClick={handleRestoreClick} sx={navbarIconButtonSx}>
                     <Trash2 size={22} strokeWidth={2.2} />
                   </IconButton>
