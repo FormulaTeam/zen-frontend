@@ -8,6 +8,28 @@ const escapeRegExp = (string: string): string => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
+const buildTermPattern = (term: string): string => {
+  const escaped = escapeRegExp(term);
+  const lowerTerm = term.toLowerCase();
+
+  // Boolean aliases in Hebrew/English.
+  if (["כן", "true"].includes(lowerTerm)) {
+    return "(?:(?<![א-ת])כן(?![א-ת])|\\btrue\\b)";
+  }
+  if (["לא", "false"].includes(lowerTerm)) {
+    return "(?:(?<![א-ת])לא(?![א-ת])|\\bfalse\\b)";
+  }
+
+  // Flexible date-like token matching: allow slash/dot/dash and optional leading zeros.
+  if (/\d[./-]\d/.test(term)) {
+    return escaped
+      .replace(/\\\.|\\\/|\\-/g, "[./-]")
+      .replace(/(\d+)/g, "0*$1");
+  }
+
+  return escaped;
+};
+
 /**
  * Builds a regex that matches any of the words in the query independently.
  * Supports:
@@ -23,27 +45,7 @@ export const buildSearchRegex = (query: string): RegExp | null => {
   if (terms.length === 0) return null;
 
   const pattern = terms
-    .map((term) => {
-      const escaped = escapeRegExp(term);
-      const lowerTerm = term.toLowerCase();
-
-      // 1. Boolean logic (Non-capturing groups)
-      if (["כן", "true"].includes(lowerTerm)) {
-        return "(?:(?<![א-ת])כן(?![א-ת])|\\btrue\\b)";
-      }
-      if (["לא", "false"].includes(lowerTerm)) {
-        return "(?:(?<![א-ת])לא(?![א-ת])|\\bfalse\\b)";
-      }
-
-      // 2. Flexible Date/Time logic
-      if (/\d[./-]\d/.test(term)) {
-        return escaped
-          .replace(/\\\.|\\\/|\\-/g, "[./-]") // Interchangeable separators
-          .replace(/(\d+)/g, "0*$1"); // Allow optional leading zeros
-      }
-
-      return escaped;
-    })
+    .map((term) => buildTermPattern(term))
     .join("|");
 
   return new RegExp(`(${pattern})`, "gi");
@@ -70,10 +72,7 @@ export const highlightText = (
   // This matches the backend's new multi-term search behavior.
   const terms = searchQuery.trim().split(/\s+/).filter(Boolean);
   const allTermsPresent = terms.every((term) => {
-    const termRegex = new RegExp(
-      term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-      "gi",
-    );
+    const termRegex = new RegExp(buildTermPattern(term), "gi");
     return termRegex.test(stringText);
   });
 
