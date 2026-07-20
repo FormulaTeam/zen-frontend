@@ -614,7 +614,13 @@ export const OPTIONS_PAGINATION_LIMIT = 50;
 export const getFieldValues = async (
   formId: number,
   fieldId: string,
-  params?: { limit?: number; offset?: number; search?: string },
+  params?: {
+    limit?: number;
+    offset?: number;
+    search?: string;
+    dependentFieldId?: string;
+    dependentValue?: string;
+  },
 ): Promise<{
   total: number;
   limit: number;
@@ -627,6 +633,8 @@ export const getFieldValues = async (
         limit: params?.limit ?? 50,
         offset: params?.offset ?? 0,
         search: params?.search ?? "",
+        dependentFieldId: params?.dependentFieldId,
+        dependentValue: params?.dependentValue,
       },
     });
 
@@ -641,9 +649,11 @@ export const useGetInfiniteFieldValues = (
   formId?: number,
   fieldId?: string,
   search: string = "",
+  dependentFieldId?: string,
+  dependentValue?: string,
 ) => {
   return useInfiniteQuery({
-    queryKey: ["fieldValues", formId, fieldId, search],
+    queryKey: ["fieldValues", formId, fieldId, search, dependentFieldId, dependentValue],
     queryFn: async ({ pageParam = 0 }) => {
       if (!formId || !fieldId) {
         throw new Error("Missing formId or fieldId");
@@ -652,9 +662,11 @@ export const useGetInfiniteFieldValues = (
         limit: OPTIONS_PAGINATION_LIMIT,
         offset: pageParam,
         search,
+        dependentFieldId,
+        dependentValue,
       });
     },
-    enabled: !!formId && !!fieldId,
+    enabled: !!formId && !!fieldId && (!dependentFieldId || !!dependentValue),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
       if (lastPage.data.length < lastPage.limit) {
