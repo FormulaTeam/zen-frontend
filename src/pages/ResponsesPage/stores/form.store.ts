@@ -38,6 +38,7 @@ interface FormsState {
   setIsRowsLoading: (isLoading: boolean) => void;
   pageInfo: PageInfo | null;
   setPageInfo: (pageInfo: PageInfo | null) => void;
+  resetStore: () => void;
 }
 
 export const useInitiateFormStore = create<FormsState>((set) => ({
@@ -54,7 +55,7 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
 
   setFilter: (update: Filter | null | ((prev: Filter | null) => Filter | null)) =>
     set((state) => ({
-      filter: typeof update === "function" ? update(state.filter) : update
+      filter: typeof update === "function" ? update(state.filter) : update,
     })),
 
   setResponseFilters: (responseFilters: ResponseFiltersDto | null) =>
@@ -77,6 +78,17 @@ export const useInitiateFormStore = create<FormsState>((set) => ({
 
   pageInfo: null,
   setPageInfo: (pageInfo: PageInfo | null) => set({ pageInfo }),
+
+  resetStore: () =>
+    set({
+      form: null,
+      permissions: [],
+      responses: null,
+      filter: defaultFilter,
+      rows: [],
+      isRowsLoading: false,
+      pageInfo: null,
+    }),
 }));
 
 export function useFormStore() {
@@ -98,5 +110,6 @@ export function useFormStore() {
     setIsRowsLoading: store.setIsRowsLoading,
     pageInfo: store.pageInfo,
     setPageInfo: store.setPageInfo,
+    resetStore: store.resetStore,
   };
 }
