@@ -1,8 +1,19 @@
-import { useQuery, UseQueryOptions, UseQueryResult, useMutation, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  UseQueryOptions,
+  UseQueryResult,
+  useMutation,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { CreateFormSchema, formsScopeOption } from "formula-gear";
 import { z } from "zod";
 import { IOrderBy } from "../types/enums/filtersAndSorts.enum";
-import { ComparatorsByFieldTypeDto, FormDto, FormOverviewDto, RecycleBinFormOverviewDto } from "../types/shared";
+import {
+  ComparatorsByFieldTypeDto,
+  FormDto,
+  FormOverviewDto,
+  RecycleBinFormOverviewDto,
+} from "../types/shared";
 import { Filter, MetroReturnedData, User } from "../utils/interfaces";
 import { useCreate } from "../utils/useCreate";
 import { useFetch } from "../utils/useFetch";
@@ -203,11 +214,18 @@ export const getFormIdByFieldId = async (fieldId: string): Promise<number | null
  * @param id - The ID of the form to restore.
  * @returns A promise that resolves to the restored form.
  */
-export const restoreForm = async (id: number, restoreResponses: boolean = true): Promise<FormDto> => {
+export const restoreForm = async (
+  id: number,
+  restoreResponses: boolean = true,
+): Promise<FormDto> => {
   try {
-    const response = await apiClient.post<FormDto>(`/forms/${id}/restore`, {}, {
-      params: { restoreResponses },
-    });
+    const response = await apiClient.post<FormDto>(
+      `/forms/${id}/restore`,
+      {},
+      {
+        params: { restoreResponses },
+      },
+    );
     return response?.data;
   } catch (error) {
     console.error("Failed to restore form:", error);
@@ -215,7 +233,10 @@ export const restoreForm = async (id: number, restoreResponses: boolean = true):
   }
 };
 
-export const restoreForms = async (formIds: number[], restoreResponses: boolean = true): Promise<void> => {
+export const restoreForms = async (
+  formIds: number[],
+  restoreResponses: boolean = true,
+): Promise<void> => {
   try {
     await apiClient.post("/recycle-bin/restore", { formIds, restoreResponses });
   } catch (error) {
@@ -402,12 +423,22 @@ export const useGetForm = ({
   >;
 }): UseQueryResult<FormDto | null> => {
   const params = new URLSearchParams();
-  if (includePermissions) params.set("includePermissions", "true");
+
+  const isPublicLink = new URLSearchParams(window.location.search).get("publicLink") === "true";
+
+  if (includePermissions) {
+    params.set("includePermissions", "true");
+  }
+
+  if (isPublicLink) {
+    params.set("publicLink", "true");
+  }
+
   const queryString = params.size ? `?${params.toString()}` : "";
 
   return useFetch<undefined, FormDto | null>({
     endpoint: `/forms/${formId}${queryString}`,
-    queryKey: () => [formId, includePermissions ?? null],
+    queryKey: () => [formId, includePermissions ?? null, isPublicLink],
     queryOptions: {
       ...config,
       enabled: (config?.enabled ?? true) && !!formId && formId !== "undefined" && formId !== "null",
@@ -468,7 +499,8 @@ export const useGetRecycleBinForms = (filter?: Filter) => {
   const PAGE_SIZE = 20;
   return useInfiniteQuery({
     queryKey: ["forms", "soft-deleted", filter],
-    queryFn: ({ pageParam = 1 }) => getRecycleBinForms({ ...filter, pageSize: PAGE_SIZE, pageNumber: pageParam as number }),
+    queryFn: ({ pageParam = 1 }) =>
+      getRecycleBinForms({ ...filter, pageSize: PAGE_SIZE, pageNumber: pageParam as number }),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.length === PAGE_SIZE ? allPages.length + 1 : undefined;
@@ -480,7 +512,8 @@ export const useGetRecycleBinResponses = (filter?: Filter) => {
   const PAGE_SIZE = 20;
   return useInfiniteQuery({
     queryKey: ["forms", "responses", "soft-deleted", filter],
-    queryFn: ({ pageParam = 1 }) => getRecycleBinResponses({ ...filter, pageSize: PAGE_SIZE, pageNumber: pageParam as number }),
+    queryFn: ({ pageParam = 1 }) =>
+      getRecycleBinResponses({ ...filter, pageSize: PAGE_SIZE, pageNumber: pageParam as number }),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.length === PAGE_SIZE ? allPages.length + 1 : undefined;
