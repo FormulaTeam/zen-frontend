@@ -1,4 +1,5 @@
 import {
+  Autocomplete,
   Button,
   FormControl,
   FormHelperText,
@@ -14,12 +15,18 @@ import CloseIcon from "@mui/icons-material/Close";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { MouseEvent, useEffect, useMemo, useRef, useState } from "react";
-import { comparator, fieldType } from "formula-gear";
+import { comparator, dateType, fieldType, timePrecision } from "formula-gear";
 import brushIcon from "../../../icons/brush.svg";
 import trashIcon from "../../../icons/trash.svg";
 
 import { useSaveResponsesTableColorRules } from "../../../api/responsesApi";
+import CustomDateTime from "../../../components/FormFields/CustomDateTime/CustomDateTime";
+import CustomTimePicker from "../../../components/FormFields/CustomTimePicker/CustomTimePicker";
+import { PaginatedAutocompleteListbox } from "../../../components/PaginatedAutocompleteListbox";
+import { basePopperSx } from "../../../components/FormFields/CustomDropDownAutocomplete/styled";
+import { useLinkedFieldValueOptions } from "../../../hooks/useLinkedFieldValueOptions";
 import { FormFieldDto, ResponsesTableColorRuleDto } from "../../../types/shared";
+import { OptionResponseValue, formatOptionLabel } from "../../../utils/optionResponseValue";
 import {
   COLOR_RULE_PALETTE,
   createEmptyColorRule,
@@ -33,6 +40,7 @@ import {
   CancelButton,
   CloseButton,
   ColorMenuSwatch,
+  ColorRulePickerWrapper,
   ColorRulesDialog,
   ColorSelectValue,
   ColorSwatch,
@@ -82,9 +90,24 @@ const comparableFieldTypes = new Set<number>([
   fieldType.Date,
   fieldType.Time,
   fieldType.Boolean,
-  fieldType.List,
   fieldType.Number,
 ]);
+
+type ColorRuleFieldExtra = {
+  dateType?: "date" | "datetime";
+  timePrecision?: "minutes" | "seconds";
+  linkedOptionsFieldId?: string | null;
+  inactiveOptionIds?: string[];
+};
+
+type ColorRuleOptionsField = FormFieldDto & {
+  options?: OptionResponseValue[];
+};
+
+type RawOptionValue =
+  | string
+  | OptionResponseValue
+  | { id?: string | number; text?: string; value?: string; isActive?: boolean };
 
 const stableRulesValue = (rules: ResponsesTableColorRuleDto[]) => JSON.stringify(rules);
 
@@ -101,6 +124,236 @@ const normalizeRuleBeforeSave = (rule: ResponsesTableColorRuleDto): ResponsesTab
   ...rule,
   targetValue: requiresTargetValue(rule) ? normalizeTargetValue(rule.targetValue) : null,
 });
+
+const getFieldExtra = (field?: FormFieldDto): ColorRuleFieldExtra =>
+  (field?.extra as ColorRuleFieldExtra | undefined) ?? {};
+
+const getLinkedOptionsFieldId = (field?: FormFieldDto): string | undefined => {
+  const linkedOptionsFieldId = getFieldExtra(field).linkedOptionsFieldId;
+
+  return typeof linkedOptionsFieldId === "string" && linkedOptionsFieldId.trim() !== ""
+    ? linkedOptionsFieldId
+    : undefined;
+};
+
+const isConnectedOptionsField = (field?: FormFieldDto, fields: FormFieldDto[] = []): boolean => {
+  const linkedOptionsFieldId = getLinkedOptionsFieldId(field);
+  if (!linkedOptionsFieldId) return false;
+
+  return !fields.some((formField) => String(formField.id) === String(linkedOptionsFieldId));
+};
+
+const normalizeOptionItem = (option: RawOptionValue): OptionResponseValue | null => {
+  if (typeof option === "string") {
+    return {
+      id: option,
+      text: formatOptionLabel(option),
+    };
+  }
+
+  const optionId = option.id ?? ("value" in option ? option.value : undefined) ?? option.text;
+  if (optionId === undefined || optionId === null) return null;
+
+  return {
+    id: String(optionId),
+    text: formatOptionLabel(option.text ?? String(optionId)),
+    isActive: option.isActive,
+  };
+};
+
+const getRawFieldOptions = (field?: FormFieldDto): RawOptionValue[] => {
+  const extra = field?.extra as (ColorRuleFieldExtra & {
+    options?: { items?: RawOptionValue[] } | RawOptionValue[];
+    items?: RawOptionValue[];
+    values?: RawOptionValue[];
+  }) | undefined;
+  const optionsField = field as ColorRuleOptionsField | undefined;
+  const extraOptions = Array.isArray(extra?.options) ? extra.options : extra?.options?.items;
+
+  return extraOptions ?? extra?.items ?? extra?.values ?? optionsField?.options ?? [];
+};
+
+const getManualOptionItems = (field?: FormFieldDto, fields: FormFieldDto[] = []): OptionResponseValue[] => {
+  const linkedOptionsFieldId = getLinkedOptionsFieldId(field);
+  const sourceField = linkedOptionsFieldId
+    ? fields.find((formField) => String(formField.id) === String(linkedOptionsFieldId)) ?? field
+    : field;
+  const inactiveOptionIds = new Set((getFieldExtra(sourceField).inactiveOptionIds ?? []).map(String));
+  const options = getRawFieldOptions(sourceField);
+
+  return options
+    .map(normalizeOptionItem)
+    .filter((option): option is OptionResponseValue => !!option)
+    .filter((option) => !inactiveOptionIds.has(String(option.id)) && option.isActive !== false);
+};
+
+const createFallbackOption = (
+  value: ResponsesTableColorRuleDto["targetValue"],
+): OptionResponseValue | null => {
+  if (typeof value !== "string" || value.trim() === "") return null;
+
+  return {
+    id: value,
+    text: formatOptionLabel(value),
+  };
+};
+
+type ColorRuleTargetValueInputProps = {
+  rule: ResponsesTableColorRuleDto;
+  fields: FormFieldDto[];
+  selectedField?: FormFieldDto;
+  error?: string;
+  canManage: boolean;
+  onTouch: (ruleId: string) => void;
+  onChange: (ruleId: string, targetValue: ResponsesTableColorRuleDto["targetValue"]) => void;
+  onTrim: (rule: ResponsesTableColorRuleDto) => void;
+};
+
+const ColorRuleTargetValueInput = ({
+  rule,
+  fields,
+  selectedField,
+  error,
+  canManage,
+  onTouch,
+  onChange,
+  onTrim,
+}: ColorRuleTargetValueInputProps): JSX.Element => {
+  const fieldExtra = getFieldExtra(selectedField);
+  const linkedOptionsFieldId = getLinkedOptionsFieldId(selectedField);
+  const isLinkedOptionsField = rule.fieldType === fieldType.Options && isConnectedOptionsField(selectedField, fields);
+  const {
+    options: linkedOptions,
+    isLoading: isLinkedOptionsLoading,
+    isFetchingNextPage,
+    loadMore,
+    hasNextPage,
+  } = useLinkedFieldValueOptions(linkedOptionsFieldId, isLinkedOptionsField);
+
+  if (!requiresTargetValue(rule)) {
+    return <TextField size="small" value="" disabled placeholder="ללא ערך" fullWidth />;
+  }
+
+  if (rule.fieldType === fieldType.Boolean) {
+    return (
+      <FormControl size="small" fullWidth error={!!error}>
+        <Select
+          value={rule.targetValue === true || rule.targetValue === "true" ? "true" : rule.targetValue === false || rule.targetValue === "false" ? "false" : ""}
+          onBlur={() => onTouch(rule.id)}
+          onChange={(event) => onChange(rule.id, event.target.value === "true")}
+          disabled={!canManage}>
+          <MenuItem value="true">כן</MenuItem>
+          <MenuItem value="false">לא</MenuItem>
+        </Select>
+        {error && <FormHelperText>{error}</FormHelperText>}
+      </FormControl>
+    );
+  }
+
+  if (rule.fieldType === fieldType.Options) {
+    const manualOptions = getManualOptionItems(selectedField, fields);
+    const options = isLinkedOptionsField ? linkedOptions : manualOptions;
+    const fallbackOption = createFallbackOption(rule.targetValue);
+    const selectedOption =
+      options.find((option) => String(option.id) === String(rule.targetValue)) ??
+      fallbackOption;
+
+    return (
+      <Autocomplete<OptionResponseValue, false, false, false>
+        fullWidth
+        options={options}
+        value={selectedOption}
+        loading={isLinkedOptionsLoading}
+        loadingText="בטעינה..."
+        noOptionsText="אין אפשרויות"
+        getOptionLabel={(option) => option.text ?? ""}
+        isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
+        onBlur={() => onTouch(rule.id)}
+        onChange={(_, newValue) => onChange(rule.id, newValue?.id ?? "")}
+        openOnFocus
+        disablePortal
+        disabled={!canManage}
+        slotProps={{
+          popper: { sx: basePopperSx },
+        }}
+        ListboxComponent={PaginatedAutocompleteListbox}
+        slots={{
+          listbox: PaginatedAutocompleteListbox,
+        }}
+        ListboxProps={
+          {
+            onLoadMore: isLinkedOptionsField ? loadMore : undefined,
+            hasNextPage: isLinkedOptionsField ? hasNextPage : false,
+            isFetchingNextPage,
+          } as any
+        }
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            size="small"
+            error={!!error}
+            helperText={error}
+            fullWidth
+          />
+        )}
+      />
+    );
+  }
+
+  if (rule.fieldType === fieldType.Date) {
+    const currentDateType = fieldExtra.dateType ?? dateType.Date;
+
+    return (
+      <ColorRulePickerWrapper>
+        <CustomDateTime
+          value={typeof rule.targetValue === "string" ? rule.targetValue : null}
+          dateType={currentDateType}
+          isTabularEdit
+          label=""
+          isRequired={false}
+          isDisabled={!canManage}
+          onChangeHandler={(value) => onChange(rule.id, value)}
+          onBlurHandler={() => onTouch(rule.id)}
+          validationMessage={error ?? null}
+        />
+      </ColorRulePickerWrapper>
+    );
+  }
+
+  if (rule.fieldType === fieldType.Time) {
+    const currentTimePrecision = fieldExtra.timePrecision ?? timePrecision.Minutes;
+
+    return (
+      <ColorRulePickerWrapper>
+        <CustomTimePicker
+          value={typeof rule.targetValue === "string" ? rule.targetValue : ""}
+          timePrecision={currentTimePrecision}
+          isTabularEdit
+          label=""
+          isRequired={false}
+          isDisabled={!canManage}
+          onChangeHandler={(value) => onChange(rule.id, value)}
+          onBlurHandler={() => onTouch(rule.id)}
+          validationMessage={error ?? null}
+        />
+      </ColorRulePickerWrapper>
+    );
+  }
+
+  return (
+    <TextField
+      size="small"
+      type={rule.fieldType === fieldType.Number ? "number" : "text"}
+      value={String(rule.targetValue ?? "")}
+      onBlur={() => onTrim(rule)}
+      onChange={(event) => onChange(rule.id, event.target.value)}
+      error={!!error}
+      helperText={error}
+      disabled={!canManage}
+      fullWidth
+    />
+  );
+};
 
 const MIN_SCROLL_THUMB_HEIGHT = 36;
 
@@ -436,67 +689,6 @@ export const ColorRulesModal = ({
     }
   };
 
-  const renderValueInput = (rule: ResponsesTableColorRuleDto): JSX.Element => {
-    const error = touchedTargetValueRuleIds.has(rule.id)
-      ? validationErrors[rule.id]?.targetValue
-      : undefined;
-    const selectedField = manageableFields.find((field) => field.id === rule.fieldId);
-
-    if (!requiresTargetValue(rule)) {
-      return <TextField size="small" value="" disabled placeholder="ללא ערך" fullWidth />;
-    }
-
-    if (rule.fieldType === fieldType.Boolean) {
-      return (
-        <FormControl size="small" fullWidth error={!!error}>
-          <Select
-            value={rule.targetValue === true || rule.targetValue === "true" ? "true" : rule.targetValue === false || rule.targetValue === "false" ? "false" : ""}
-            onBlur={() => markTargetValueTouched(rule.id)}
-            onChange={(event) => updateRuleTargetValue(rule.id, event.target.value === "true")}>
-            <MenuItem value="true">כן</MenuItem>
-            <MenuItem value="false">לא</MenuItem>
-          </Select>
-          {error && <FormHelperText>{error}</FormHelperText>}
-        </FormControl>
-      );
-    }
-
-    const selectedFieldOptions = (selectedField as FormFieldDto & {
-      options?: { id?: string; text: string }[];
-    } | undefined)?.options;
-
-    if (rule.fieldType === fieldType.Options && selectedFieldOptions?.length) {
-      return (
-        <FormControl size="small" fullWidth error={!!error}>
-          <Select
-            value={String(rule.targetValue ?? "")}
-            onBlur={() => markTargetValueTouched(rule.id)}
-            onChange={(event) => updateRuleTargetValue(rule.id, event.target.value)}>
-            {selectedFieldOptions.map((option) => (
-              <MenuItem key={option.id ?? option.text} value={option.id ?? option.text}>
-                {option.text}
-              </MenuItem>
-            ))}
-          </Select>
-          {error && <FormHelperText>{error}</FormHelperText>}
-        </FormControl>
-      );
-    }
-
-    return (
-      <TextField
-        size="small"
-        type={rule.fieldType === fieldType.Number ? "number" : rule.fieldType === fieldType.Date ? "date" : "text"}
-        value={String(rule.targetValue ?? "")}
-        onBlur={() => trimRuleTargetValue(rule)}
-        onChange={(event) => updateRuleTargetValue(rule.id, event.target.value)}
-        error={!!error}
-        helperText={error}
-        fullWidth
-      />
-    );
-  };
-
   const modalTitle: JSX.Element = (
     <ModalTitle>
       <TitleContent>
@@ -546,6 +738,10 @@ export const ColorRulesModal = ({
 
   const renderRuleRow = (rule: ResponsesTableColorRuleDto): JSX.Element => {
     const ruleErrors = validationErrors[rule.id] ?? {};
+    const selectedField = manageableFields.find((field) => field.id === rule.fieldId);
+    const targetValueError = touchedTargetValueRuleIds.has(rule.id)
+      ? ruleErrors.targetValue
+      : undefined;
     const isDragging = draggedRuleId === rule.id;
     const isDragLocked = !!draggedRuleId && !isDragging;
 
@@ -599,7 +795,16 @@ export const ColorRulesModal = ({
           </Select>
         </FormControl>
 
-        {renderValueInput(rule)}
+        <ColorRuleTargetValueInput
+          rule={rule}
+          fields={fields}
+          selectedField={selectedField}
+          error={targetValueError}
+          canManage={canManage}
+          onTouch={markTargetValueTouched}
+          onChange={updateRuleTargetValue}
+          onTrim={trimRuleTargetValue}
+        />
 
         <FormControl size="small" error={!!ruleErrors.targetType}>
           <Select

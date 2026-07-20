@@ -261,6 +261,32 @@ export const ColorSelectValue = styled(Box)`
   gap: 8px;
 `;
 
+export const ColorRulePickerWrapper = styled(Box)`
+  width: 100%;
+  min-width: 0;
+
+  .MuiInputBase-root {
+    min-height: 40px;
+    background-color: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 4px !important;
+  }
+
+  .MuiInputBase-root::before {
+    border: 0 !important;
+    border-radius: 4px !important;
+  }
+
+  .MuiInputBase-root.Mui-error {
+    border-color: #ef000b !important;
+  }
+
+  .MuiInputBase-root::after {
+    border: 0 !important;
+    border-radius: 4px !important;
+  }
+`;
+
 export const ColorSwatch = styled(Box)<{ $backgroundColor: string }>`
   width: 12px;
   height: 12px;

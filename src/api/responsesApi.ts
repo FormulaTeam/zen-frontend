@@ -34,6 +34,66 @@ export type SaveResponsesTableColorRulePayload = Omit<
   "id" | "formId" | "fieldType"
 >;
 
+type ColorRuleActivityOperation = "created" | "updated" | "deleted";
+
+type ColorRuleActivityMetadata = {
+  operation: ColorRuleActivityOperation;
+  formId: number;
+  fieldId?: string;
+  ruleId?: string;
+  clientRuleId?: string;
+  previousRule?: Partial<ResponsesTableColorRuleDto>;
+  nextRule?: Partial<ResponsesTableColorRuleDto>;
+  changedFields?: Array<keyof SaveResponsesTableColorRulePayload>;
+  occurredAt: string;
+};
+
+const COLOR_RULE_ACTIVITY_HEADER = "x-color-rule-activity";
+
+const getColorRuleActivityConfig = (metadata?: ColorRuleActivityMetadata) =>
+  metadata
+    ? {
+        headers: {
+          [COLOR_RULE_ACTIVITY_HEADER]: JSON.stringify(metadata),
+        },
+      }
+    : undefined;
+
+const toColorRulePayload = (
+  rule: ResponsesTableColorRuleDto,
+): SaveResponsesTableColorRulePayload => ({
+  fieldId: rule.fieldId,
+  comparatorId: rule.comparatorId,
+  targetValue: rule.targetValue,
+  color: rule.color,
+  targetType: rule.targetType,
+  order: rule.order,
+  isActive: rule.isActive,
+});
+
+const toColorRuleActivityRule = (
+  rule: ResponsesTableColorRuleDto,
+): Partial<ResponsesTableColorRuleDto> => ({
+  id: rule.id,
+  formId: rule.formId,
+  fieldId: rule.fieldId,
+  fieldType: rule.fieldType,
+  comparatorId: rule.comparatorId,
+  targetValue: rule.targetValue,
+  color: rule.color,
+  targetType: rule.targetType,
+  order: rule.order,
+  isActive: rule.isActive,
+});
+
+const getChangedColorRuleFields = (
+  previousRule: SaveResponsesTableColorRulePayload,
+  nextRule: SaveResponsesTableColorRulePayload,
+): Array<keyof SaveResponsesTableColorRulePayload> =>
+  (Object.keys(nextRule) as Array<keyof SaveResponsesTableColorRulePayload>).filter(
+    (key) => JSON.stringify(previousRule[key]) !== JSON.stringify(nextRule[key]),
+  );
+
 const colorRulesQueryKey = (formId: number) => [
   "responses",
   String(formId),
@@ -53,10 +113,12 @@ export const getResponsesTableColorRules = async (
 export const createResponsesTableColorRule = async (
   formId: number,
   payload: SaveResponsesTableColorRulePayload,
+  activityMetadata?: ColorRuleActivityMetadata,
 ): Promise<ResponsesTableColorRuleDto> => {
   const response = await apiClient.post<ResponsesTableColorRuleDto>(
     `/forms/${formId}/responses-table-color-rules`,
     payload,
+    getColorRuleActivityConfig(activityMetadata),
   );
 
   return response.data;
@@ -66,10 +128,12 @@ export const updateResponsesTableColorRule = async (
   formId: number,
   ruleId: string,
   payload: Partial<SaveResponsesTableColorRulePayload>,
+  activityMetadata?: ColorRuleActivityMetadata,
 ): Promise<ResponsesTableColorRuleDto> => {
   const response = await apiClient.put<ResponsesTableColorRuleDto>(
     `/forms/${formId}/responses-table-color-rules/${ruleId}`,
     payload,
+    getColorRuleActivityConfig(activityMetadata),
   );
 
   return response.data;
@@ -78,8 +142,12 @@ export const updateResponsesTableColorRule = async (
 export const deleteResponsesTableColorRule = async (
   formId: number,
   ruleId: string,
+  activityMetadata?: ColorRuleActivityMetadata,
 ): Promise<void> => {
-  await apiClient.delete(`/forms/${formId}/responses-table-color-rules/${ruleId}`);
+  await apiClient.delete(
+    `/forms/${formId}/responses-table-color-rules/${ruleId}`,
+    getColorRuleActivityConfig(activityMetadata),
+  );
 };
 
 export const useGetResponsesTableColorRules = (formId?: number) => {
@@ -102,29 +170,57 @@ export const useSaveResponsesTableColorRules = () => {
       nextRules: ResponsesTableColorRuleDto[];
     }) => {
       const previousIds = new Set(previousRules.map((rule) => rule.id));
+      const previousRulesById = new Map(previousRules.map((rule) => [rule.id, rule]));
       const nextIds = new Set(nextRules.map((rule) => rule.id));
 
       await Promise.all(
         previousRules
           .filter((rule) => !nextIds.has(rule.id))
-          .map((rule) => deleteResponsesTableColorRule(formId, rule.id)),
+          .map((rule) =>
+            deleteResponsesTableColorRule(formId, rule.id, {
+              operation: "deleted",
+              formId,
+              fieldId: rule.fieldId,
+              ruleId: rule.id,
+              previousRule: toColorRuleActivityRule(rule),
+              occurredAt: new Date().toISOString(),
+            }),
+          ),
       );
 
       const savedRules = await Promise.all(
         nextRules.map((rule) => {
-          const payload: SaveResponsesTableColorRulePayload = {
-            fieldId: rule.fieldId,
-            comparatorId: rule.comparatorId,
-            targetValue: rule.targetValue,
-            color: rule.color,
-            targetType: rule.targetType,
-            order: rule.order,
-            isActive: rule.isActive,
-          };
+          const payload = toColorRulePayload(rule);
 
-          return previousIds.has(rule.id)
-            ? updateResponsesTableColorRule(formId, rule.id, payload)
-            : createResponsesTableColorRule(formId, payload);
+          if (previousIds.has(rule.id)) {
+            const previousRule = previousRulesById.get(rule.id);
+            const previousPayload = previousRule ? toColorRulePayload(previousRule) : undefined;
+            const changedFields = previousPayload
+              ? getChangedColorRuleFields(previousPayload, payload)
+              : [];
+
+            if (changedFields.length === 0) return Promise.resolve(rule);
+
+            return updateResponsesTableColorRule(formId, rule.id, payload, {
+              operation: "updated",
+              formId,
+              fieldId: rule.fieldId,
+              ruleId: rule.id,
+              previousRule: previousRule ? toColorRuleActivityRule(previousRule) : undefined,
+              nextRule: toColorRuleActivityRule(rule),
+              changedFields,
+              occurredAt: new Date().toISOString(),
+            });
+          }
+
+          return createResponsesTableColorRule(formId, payload, {
+            operation: "created",
+            formId,
+            fieldId: rule.fieldId,
+            clientRuleId: rule.id,
+            nextRule: toColorRuleActivityRule(rule),
+            occurredAt: new Date().toISOString(),
+          });
         }),
       );
 

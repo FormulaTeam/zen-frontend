@@ -1,6 +1,7 @@
 import { comparator, fieldType } from "formula-gear";
 import { FormFieldDto, ResponsesTableColorRuleDto } from "../../../types/shared";
 import { getFieldColumnKey } from "../../../api";
+import { getOptionResponseRawValue } from "../../../utils/optionResponseValue";
 
 export const COLOR_RULE_PALETTE = {
   red: { label: "אדום", background: "#ffc7c7", swatch: "#ff9b9b" },
@@ -48,7 +49,6 @@ export const getComparatorOptions = (typeId?: number) => {
         { value: comparator.IsNotEmpty, label: "לא ריק" },
       ];
     case fieldType.Options:
-    case fieldType.List:
       return [
         { value: comparator.Equals, label: "שווה ל", requiresValue: true },
         { value: comparator.NotEquals, label: "שונה מ", requiresValue: true },
@@ -89,19 +89,47 @@ const isEmptyValue = (value: unknown): boolean => {
   return false;
 };
 
+const parseTimeToSeconds = (value: unknown): number => {
+  if (typeof value !== "string") return Number.NaN;
+
+  const [hours, minutes, seconds = "0"] = value.split(":");
+  const parsedHours = Number(hours);
+  const parsedMinutes = Number(minutes);
+  const parsedSeconds = Number(seconds);
+
+  if (
+    Number.isNaN(parsedHours) ||
+    Number.isNaN(parsedMinutes) ||
+    Number.isNaN(parsedSeconds)
+  ) {
+    return Number.NaN;
+  }
+
+  return parsedHours * 3600 + parsedMinutes * 60 + parsedSeconds;
+};
+
 const normalizeComparable = (value: unknown, typeId: number): string | number | boolean => {
   if (typeId === fieldType.Number) return Number(value);
   if (typeId === fieldType.Boolean) return value === true || value === "true" || value === 1 || value === "1";
-  if (typeId === fieldType.Date || typeId === fieldType.Time) return new Date(String(value)).getTime();
+  if (typeId === fieldType.Date) return new Date(String(value)).getTime();
+  if (typeId === fieldType.Time) return parseTimeToSeconds(value);
+  if (typeId === fieldType.Options) {
+    const rawValue = getOptionResponseRawValue(value);
+    if (Array.isArray(rawValue)) return rawValue.map(String).join(",");
+    return String(rawValue ?? "").trim().toLowerCase();
+  }
   return String(value ?? "").trim().toLowerCase();
 };
 
 const valueContains = (actualValue: unknown, targetValue: unknown): boolean => {
-  if (Array.isArray(actualValue)) {
-    return actualValue.map(String).includes(String(targetValue));
+  const actualRawValue = getOptionResponseRawValue(actualValue);
+  const targetRawValue = getOptionResponseRawValue(targetValue);
+
+  if (Array.isArray(actualRawValue)) {
+    return actualRawValue.map(String).includes(String(targetRawValue));
   }
 
-  return String(actualValue ?? "").toLowerCase().includes(String(targetValue ?? "").toLowerCase());
+  return String(actualRawValue ?? "").toLowerCase().includes(String(targetRawValue ?? "").toLowerCase());
 };
 
 export const doesRuleMatchValue = (

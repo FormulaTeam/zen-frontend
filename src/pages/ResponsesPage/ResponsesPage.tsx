@@ -156,6 +156,10 @@ const ResponsesPageContent = (): JSX.Element => {
   const [showFilters, setShowFilters] = useState(false);
   const [isColorRulesModalOpen, setIsColorRulesModalOpen] = useState(false);
   const activeFiltersCount = filter?.responseFilters?.items?.length ?? 0;
+  const visibleResponsesTableColorRules = useMemo(
+    () => (isInEditMode ? [] : responsesTableColorRules),
+    [isInEditMode, responsesTableColorRules],
+  );
 
   useEffect(() => {
     if (activeFiltersCount > 0) {
@@ -594,7 +598,7 @@ const ResponsesPageContent = (): JSX.Element => {
 
               {canManageColorRules && (
                 <>
-                  <Tooltip title={responsesTableColorRules.length > 0 ? "צביעת תגובות" : ""} arrow>
+                  <Tooltip title={!isInEditMode && responsesTableColorRules.length > 0 ? "צביעת תגובות" : ""} arrow>
                     <UnifiedButton
                       aria-label="צביעת תגובות"
                       onClick={() => setIsColorRulesModalOpen(true)}
@@ -608,7 +612,9 @@ const ResponsesPageContent = (): JSX.Element => {
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        backgroundColor: `${ACTION_BUTTON_BACKGROUND} !important`,
+                        backgroundColor: isInEditMode
+                          ? "rgba(0, 0, 0, 0.04) !important"
+                          : `${ACTION_BUTTON_BACKGROUND} !important`,
                         border: "none !important",
                         boxShadow: "none !important",
                         "& .MuiButton-startIcon, & .MuiButton-endIcon": {
@@ -619,7 +625,15 @@ const ResponsesPageContent = (): JSX.Element => {
                           height: 21,
                         },
                         "&:hover": {
-                          backgroundColor: `${ACTION_BUTTON_HOVER_BACKGROUND} !important`,
+                          backgroundColor: isInEditMode
+                            ? "rgba(0, 0, 0, 0.04) !important"
+                            : `${ACTION_BUTTON_HOVER_BACKGROUND} !important`,
+                          border: "none !important",
+                          boxShadow: "none !important",
+                        },
+                        "&.Mui-disabled": {
+                          backgroundColor: "rgba(0, 0, 0, 0.04) !important",
+                          color: "rgba(0, 0, 0, 0.26)",
                           border: "none !important",
                           boxShadow: "none !important",
                         },
@@ -632,6 +646,8 @@ const ResponsesPageContent = (): JSX.Element => {
                           width: 22,
                           height: 22,
                           display: "block",
+                          opacity: isInEditMode ? 0.45 : 1,
+                          filter: isInEditMode ? "grayscale(1)" : "none",
                         }}
                       />
                       {responsesTableColorRules.length === 0 && (
@@ -701,7 +717,7 @@ const ResponsesPageContent = (): JSX.Element => {
           activeFiltersCount={activeFiltersCount}
           onToggleFilters={handleToggleFilters}
           onClearFilters={handleClearFilters}
-          colorRules={responsesTableColorRules}
+          colorRules={visibleResponsesTableColorRules}
         />
 
         {form && (
