@@ -319,6 +319,32 @@ const ResponsesPageContent = (): JSX.Element => {
     currentView,
   } = useResponsesViews();
 
+  // Store the view ID before entering quick edit mode so we can restore it on exit
+  const previousViewIdRef = useRef<string>("");
+
+  // Handle quick edit mode - clear view when entering, restore when exiting
+  // We capture selectedViewId via ref to avoid re-triggering the effect when the view clears
+  const selectedViewIdRef = useRef<string>(selectedViewId);
+  useEffect(() => {
+    selectedViewIdRef.current = selectedViewId;
+  }, [selectedViewId]);
+
+  useEffect(() => {
+    if (isInEditMode) {
+      // Entering quick edit mode: store current view and clear selection
+      previousViewIdRef.current = selectedViewIdRef.current;
+      if (selectedViewIdRef.current) {
+        handleViewDropdownChange("");
+      }
+    } else {
+      // Exiting quick edit mode: restore the previous view
+      if (previousViewIdRef.current) {
+        handleViewDropdownChange(previousViewIdRef.current);
+      }
+    }
+    // Only run when isInEditMode changes, not on every selectedViewId change
+  }, [isInEditMode]); // eslint-disable-line
+
   useEffect(() => {
     const pageParam = searchParams.get("page");
     const pageSizeParam = searchParams.get("pageSize");
