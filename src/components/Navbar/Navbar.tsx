@@ -61,7 +61,18 @@ const Navbar = () => {
   };
 
   const handleRestoreClick = () => {
-    navigate(IPath.RECYCLE_BIN);
+    const recycleBinClickEvent = new CustomEvent("logo-click", {
+      cancelable: true,
+      detail: {
+        navigate: () => navigate(IPath.RECYCLE_BIN),
+      },
+    });
+
+    window.dispatchEvent(recycleBinClickEvent);
+
+    if (!recycleBinClickEvent.defaultPrevented) {
+      navigate(IPath.RECYCLE_BIN);
+    }
   };
 
   const navbarIconButtonSx = {
