@@ -11,7 +11,7 @@ import {
   getFormControlSx,
   getHelperTextSx,
   autocompleteListboxProps,
-  autocompletePaperSlotProps,
+  basePopperSx,
   getAutocompleteChipSx,
 } from "./styled";
 import { selectionMode } from "formula-gear";
@@ -169,10 +169,11 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
           } as any
         }
         slotProps={{
-          paper: autocompletePaperSlotProps,
+          popper: { sx: basePopperSx },
           clearIndicator: { title: "" },
           popupIndicator: { title: "" },
         }}
+        autoHighlight
         disabled={isDisabled}
         multiple={isMultiple}
         options={options}
@@ -194,11 +195,25 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
           triggerBlurValidation();
         }}
         getOptionLabel={(option: any) => getLabel(String(option))}
-        renderOption={(props: any, option: any) => (
-          <li {...props} key={String(option)}>
-            {getLabel(String(option))}
-          </li>
-        )}
+        renderOption={(props: any, option: any) => {
+          const { key, ...optionProps } = props;
+          return (
+            <li {...optionProps} key={key}>
+              <span
+                style={{
+                  display: "block",
+                  width: "100%",
+                  direction: "rtl",
+                  textAlign: "right",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}>
+                {getLabel(String(option))}
+              </span>
+            </li>
+          );
+        }}
         isOptionEqualToValue={(option, currentValue) => String(option) === String(currentValue)}
         size={isTabularEdit ? "small" : "medium"}
         sx={getAutocompleteSx(isTabularEdit, isMultiple, Boolean(validationMessage))}

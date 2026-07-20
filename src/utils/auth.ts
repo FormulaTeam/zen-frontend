@@ -23,14 +23,14 @@ export const triggerSSORedirect = () => {
       sessionStorage.setItem("formula-last-visited-path", currentPath);
     }
   }
-  
+
   const keycloakUrl = getKeycloakUrl();
   if (!keycloakUrl) {
     console.error("REACT_APP_KEYCLOAK_URL is not set");
     window.location.href = "/error";
     return;
   }
-  
+
   window.location.href = buildKeycloakRedirectUrl();
 };
 
