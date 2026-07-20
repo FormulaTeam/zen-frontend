@@ -75,6 +75,12 @@ const Navbar = () => {
     }
   };
 
+  const resolvedFirstName =
+    user?.firstName?.trim() ||
+    user?.displayName?.trim()?.split(" ")[0] ||
+    user?.upn?.split("@")[0] ||
+    "משתמש";
+
   const navbarIconButtonSx = {
     width: 36,
     height: 36,
@@ -125,7 +131,11 @@ const Navbar = () => {
                     justifyContent: "center",
                     color: "#fff",
                   }}>
-                  <PersonIcon sx={{ fontSize: "24px", color: "#fff" }} />
+                  <Tooltip title={`היי, ${resolvedFirstName}`} arrow placement="bottom">
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <PersonIcon sx={{ fontSize: "24px", color: "#fff" }} />
+                    </Box>
+                  </Tooltip>
                 </Box>
 
                 <Tooltip title="תמיכה" arrow placement="bottom">
