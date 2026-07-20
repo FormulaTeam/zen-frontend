@@ -128,7 +128,7 @@ const Navbar = () => {
                   <PersonIcon sx={{ fontSize: "24px", color: "#fff" }} />
                 </Box>
 
-                <Tooltip title="שאלות ותשובות" arrow placement="bottom">
+                <Tooltip title="תמיכה" arrow placement="bottom">
                   <IconButton onClick={handleQuestionsClick} sx={navbarIconButtonSx}>
                     <CircleQuestionMark size={22} strokeWidth={2.2} />
                   </IconButton>
