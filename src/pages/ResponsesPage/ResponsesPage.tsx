@@ -343,8 +343,7 @@ const ResponsesPageContent = (): JSX.Element => {
       }
     }
     // Only run when isInEditMode changes, not on every selectedViewId change
-    // eslint-disable-next-line exhaustive-deps
-  }, [isInEditMode]);
+  }, [isInEditMode]); // eslint-disable-line
 
   useEffect(() => {
     const pageParam = searchParams.get("page");
