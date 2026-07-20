@@ -32,16 +32,16 @@ const Navbar = () => {
   const navigateToHome = (e: React.MouseEvent) => {
     e.preventDefault();
 
-    const logoClickEvent = new CustomEvent("logo-click", {
+    const event = new CustomEvent("logo-click", {
       cancelable: true,
       detail: {
         navigate: () => navigate(IPath.HOME, { replace: true }),
       },
     });
 
-    window.dispatchEvent(logoClickEvent);
+    window.dispatchEvent(event);
 
-    if (!logoClickEvent.defaultPrevented) {
+    if (!event.defaultPrevented) {
       (window as any).hasUnsavedChanges = false;
       navigate(IPath.HOME, { replace: true });
     }
@@ -61,16 +61,16 @@ const Navbar = () => {
   };
 
   const handleRestoreClick = () => {
-    const recycleBinClickEvent = new CustomEvent("logo-click", {
+    const event = new CustomEvent("logo-click", {
       cancelable: true,
       detail: {
         navigate: () => navigate(IPath.RECYCLE_BIN),
       },
     });
 
-    window.dispatchEvent(recycleBinClickEvent);
+    window.dispatchEvent(event);
 
-    if (!recycleBinClickEvent.defaultPrevented) {
+    if (!event.defaultPrevented) {
       navigate(IPath.RECYCLE_BIN);
     }
   };
