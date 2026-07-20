@@ -323,11 +323,17 @@ const ResponsesPageContent = (): JSX.Element => {
   const previousViewIdRef = useRef<string>("");
 
   // Handle quick edit mode - clear view when entering, restore when exiting
+  // We capture selectedViewId via ref to avoid re-triggering the effect when the view clears
+  const selectedViewIdRef = useRef<string>(selectedViewId);
+  useEffect(() => {
+    selectedViewIdRef.current = selectedViewId;
+  }, [selectedViewId]);
+
   useEffect(() => {
     if (isInEditMode) {
       // Entering quick edit mode: store current view and clear selection
-      previousViewIdRef.current = selectedViewId;
-      if (selectedViewId) {
+      previousViewIdRef.current = selectedViewIdRef.current;
+      if (selectedViewIdRef.current) {
         handleViewDropdownChange("");
       }
     } else {
@@ -336,7 +342,9 @@ const ResponsesPageContent = (): JSX.Element => {
         handleViewDropdownChange(previousViewIdRef.current);
       }
     }
-  }, [isInEditMode, selectedViewId, handleViewDropdownChange]);
+    // Only run when isInEditMode changes, not on every selectedViewId change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInEditMode]);
 
   useEffect(() => {
     const pageParam = searchParams.get("page");
