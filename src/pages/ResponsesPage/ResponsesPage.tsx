@@ -343,7 +343,7 @@ const ResponsesPageContent = (): JSX.Element => {
       }
     }
     // Only run when isInEditMode changes, not on every selectedViewId change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line exhaustive-deps
   }, [isInEditMode]);
 
   useEffect(() => {
