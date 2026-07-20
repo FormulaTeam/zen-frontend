@@ -189,7 +189,7 @@ const ResponsesPageContent = (): JSX.Element => {
   const logoNavigateCallbackRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    const handleLogoClick = (e: Event) => {
+    const handleBeforeNavigate = (e: Event) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
         setShowBackCancelDialog(true);
@@ -197,8 +197,8 @@ const ResponsesPageContent = (): JSX.Element => {
       }
     };
 
-    window.addEventListener("logo-click", handleLogoClick);
-    return () => window.removeEventListener("logo-click", handleLogoClick);
+    window.addEventListener("before-navigate", handleBeforeNavigate);
+    return () => window.removeEventListener("before-navigate", handleBeforeNavigate);
   }, [hasUnsavedChanges]);
 
   const handleBackClick = useCallback(() => {

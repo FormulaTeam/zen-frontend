@@ -338,7 +338,7 @@ function FormEditorHeader() {
   const [logoNavigateCallback, setLogoNavigateCallback] = useState<(() => void) | null>(null);
 
   useEffect(() => {
-    const handleLogoClick = (e: Event) => {
+    const handleBeforeNavigate = (e: Event) => {
       if (checkHasChanges()) {
         e.preventDefault();
         setShowAlertMsg(true);
@@ -346,8 +346,8 @@ function FormEditorHeader() {
       }
     };
 
-    window.addEventListener("logo-click", handleLogoClick);
-    return () => window.removeEventListener("logo-click", handleLogoClick);
+    window.addEventListener("before-navigate", handleBeforeNavigate);
+    return () => window.removeEventListener("before-navigate", handleBeforeNavigate);
   }, [checkHasChanges]);
 
   const handleDiscard = () => {

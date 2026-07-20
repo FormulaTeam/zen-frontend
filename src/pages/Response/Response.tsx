@@ -110,7 +110,7 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
   const logoNavigateCallbackRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    const handleLogoClick = (e: Event) => {
+    const handleBeforeNavigate = (e: Event) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
         setShowAlertMsg(true);
@@ -118,8 +118,8 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
       }
     };
 
-    window.addEventListener("logo-click", handleLogoClick);
-    return () => window.removeEventListener("logo-click", handleLogoClick);
+    window.addEventListener("before-navigate", handleBeforeNavigate);
+    return () => window.removeEventListener("before-navigate", handleBeforeNavigate);
   }, [hasUnsavedChanges]);
 
   const onBack = () => {

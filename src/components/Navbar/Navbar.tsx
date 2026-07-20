@@ -32,7 +32,7 @@ const Navbar = () => {
   const navigateToHome = (e: React.MouseEvent) => {
     e.preventDefault();
 
-    const event = new CustomEvent("logo-click", {
+    const event = new CustomEvent("before-navigate", {
       cancelable: true,
       detail: {
         navigate: () => navigate(IPath.HOME, { replace: true }),
@@ -61,7 +61,7 @@ const Navbar = () => {
   };
 
   const handleRestoreClick = () => {
-    const event = new CustomEvent("logo-click", {
+    const event = new CustomEvent("before-navigate", {
       cancelable: true,
       detail: {
         navigate: () => navigate(IPath.RECYCLE_BIN),
