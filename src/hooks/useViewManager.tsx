@@ -205,7 +205,9 @@ export const useViewManager = ({
         const normalizedSaved = normalizeViewForCurrentForm(saved);
 
         setCurrentView(normalizedSaved);
-        setSelectedViewId(normalizedSaved.id ? String(normalizedSaved.id) : "");
+        const viewId = normalizedSaved.id ? String(normalizedSaved.id) : "";
+        setSelectedViewId(viewId);
+        saveSelectedViewIdToSession(formId, viewId);
         setCurrentViewConfig(getViewConfigColumns(normalizedSaved));
       } catch (err) {
         console.error(err);
@@ -219,7 +221,7 @@ export const useViewManager = ({
         throw err;
       }
     },
-    [form, user, createView, updateView, normalizeViewForCurrentForm],
+    [form, user, createView, updateView, normalizeViewForCurrentForm, formId],
   );
 
   const handleLoadView = useCallback(
