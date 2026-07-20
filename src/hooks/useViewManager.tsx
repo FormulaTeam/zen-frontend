@@ -8,6 +8,10 @@ import {
 import { ResponsesView, ViewColumn } from "../types/interfaces/tableViews.types";
 import { showErrorNotification, showSuccessNotification, getUserName } from "../utils/utils";
 import { applyViewSorting } from "../utils/viewSortingUtils";
+import {
+  getSelectedViewIdFromSession,
+  saveSelectedViewIdToSession,
+} from "../utils/sessionStorageUtils";
 import { ViewUserBase } from "../types/interfaces/view.types";
 import { FormFieldDto, UserPersonalDto, MetaColumnIds } from "../types/shared";
 
@@ -224,13 +228,15 @@ export const useViewManager = ({
 
       setCurrentView(normalizedView);
       setCurrentViewConfig(getViewConfigColumns(normalizedView));
-      setSelectedViewId(normalizedView.id ? String(normalizedView.id) : "");
+      const viewId = normalizedView.id ? String(normalizedView.id) : "";
+      setSelectedViewId(viewId);
+      saveSelectedViewIdToSession(formId, viewId);
 
       if (setSorting && tableColumns?.length) {
         applyViewSorting(setSorting, normalizedView, tableColumns);
       }
     },
-    [normalizeViewForCurrentForm, setSorting, tableColumns],
+    [normalizeViewForCurrentForm, setSorting, tableColumns, formId],
   );
 
   useEffect(() => {
@@ -239,13 +245,23 @@ export const useViewManager = ({
     if (availableViews.length > 0) {
       hasAttemptedInitialLoad.current = true;
 
-      const defaultView = availableViews.find((view) => view.isDefault);
+      // Try to restore view from session storage first
+      const savedViewId = getSelectedViewIdFromSession(formId);
+      if (savedViewId) {
+        const savedView = availableViews.find((view) => view.id && String(view.id) === savedViewId);
+        if (savedView) {
+          handleLoadView(savedView);
+          return;
+        }
+      }
 
+      // Fall back to default view if no saved view found
+      const defaultView = availableViews.find((view) => view.isDefault);
       if (defaultView) {
         handleLoadView(defaultView);
       }
     }
-  }, [availableViews, handleLoadView]);
+  }, [availableViews, handleLoadView, formId]);
 
   useEffect(() => {
     if (!setSorting) return;
@@ -266,6 +282,7 @@ export const useViewManager = ({
   const handleViewDropdownChange = useCallback(
     (viewId: string) => {
       setSelectedViewId(viewId);
+      saveSelectedViewIdToSession(formId, viewId);
 
       if (!viewId) {
         setCurrentView(undefined);
@@ -282,7 +299,7 @@ export const useViewManager = ({
         handleLoadView(view);
       }
     },
-    [availableViews, handleLoadView, setSorting],
+    [availableViews, handleLoadView, setSorting, formId],
   );
 
   const handleApplyView = useCallback(
@@ -310,6 +327,7 @@ export const useViewManager = ({
           setCurrentView(undefined);
           setCurrentViewConfig(undefined);
           setSelectedViewId("");
+          saveSelectedViewIdToSession(formId, "");
         }
 
         showSuccessNotification(HebrewMessages.DeleteViewSuccess);
@@ -318,7 +336,7 @@ export const useViewManager = ({
         showErrorNotification(HebrewMessages.DeleteViewError);
       }
     },
-    [currentView, deleteView, form],
+    [currentView, deleteView, form, formId],
   );
 
   const defaultViewId = useMemo(() => {
