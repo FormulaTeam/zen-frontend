@@ -19,6 +19,7 @@ interface MoreOptionsProps {
   pushToMetro: () => Promise<void>;
   sourceOperationStatus: SourceOperationStatusType;
   buttonSx?: SxProps<Theme>;
+  disabled?: boolean;
 }
 
 export const MoreOptions: FC<MoreOptionsProps> = ({
@@ -26,6 +27,7 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
   pushToMetro,
   sourceOperationStatus,
   buttonSx,
+  disabled,
 }: MoreOptionsProps) => {
   const { formId } = useParams();
   const navigate = useNavigate();
@@ -132,11 +134,14 @@ export const MoreOptions: FC<MoreOptionsProps> = ({
   return (
     <>
       <Tooltip title="פעולות נוספות">
-        <IconOnlyButton
-          sx={buttonSx}
-          onClick={(event) => setAnchorElMoreActions(event.currentTarget)}>
-          <MoreVertical strokeWidth={2.4} />
-        </IconOnlyButton>
+        <span>
+          <IconOnlyButton
+            sx={buttonSx}
+            disabled={disabled}
+            onClick={(event) => setAnchorElMoreActions(event.currentTarget)}>
+            <MoreVertical strokeWidth={2.4} />
+          </IconOnlyButton>
+        </span>
       </Tooltip>
 
       <Menu
