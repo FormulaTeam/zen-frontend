@@ -215,14 +215,11 @@ const ChildResponseRowComponent: React.FC<ChildResponseRowProps> = ({
         const includeTime = extra.dateType === "datetime";
 
         const datePart = moment(value).format(DEFAULT_DATE_FORMAT);
-        const timePart = includeTime ? ` ${moment(value).format("HH:mm")}` : "";
+        const timeFormat = extra.timePrecision === "seconds" ? "HH:mm:ss" : "HH:mm";
+        const timePart = includeTime ? ` ${moment(value).format(timeFormat)}` : "";
+        const fullText = `${datePart}${timePart}`;
 
-        return (
-          <>
-            {highlightText(datePart)}
-            {timePart}
-          </>
-        );
+        return highlightText(fullText);
       }
 
       case fieldType.Boolean:

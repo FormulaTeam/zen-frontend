@@ -64,6 +64,14 @@ export default function ResponsesPage({
 
   const navigate = useNavigate();
   const { formId } = useParams<string>();
+  const { resetStore } = useFormStore();
+
+  const lastFormIdRef = useRef(formId);
+  if (lastFormIdRef.current !== formId) {
+    lastFormIdRef.current = formId;
+    resetStore();
+  }
+
   const { isLoading, isError } = useFormLoader(formId || "");
 
   useEffect(() => {
@@ -84,7 +92,7 @@ export default function ResponsesPage({
     return null;
   }
 
-  return <ResponsesPageContent />;
+  return <ResponsesPageContent key={formId} />;
 }
 
 const ResponsesPageContent = (): JSX.Element => {
@@ -108,6 +116,10 @@ const ResponsesPageContent = (): JSX.Element => {
 
   const [searchInput, setSearchInput] = useState(filter?.query || "");
   const debouncedSearchInput = useDebounce(searchInput, 500);
+
+  useEffect(() => {
+    setSearchInput("");
+  }, []);
 
   const handleSearch = (val: string) => {
     setSearchInput(val);

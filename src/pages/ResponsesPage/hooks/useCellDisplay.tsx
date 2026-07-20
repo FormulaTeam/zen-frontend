@@ -377,6 +377,7 @@ export const useCellDisplay = ({
     (
       value: any,
       type?: "datetime" | "date",
+      precision?: "seconds" | "minutes",
       options?: FormatCellValueOptions,
     ): React.ReactElement => {
       if (!value || !moment(value).isValid()) {
@@ -385,7 +386,8 @@ export const useCellDisplay = ({
 
       const isDateTime = type === dateType.Datetime;
       const datePart = moment(value).format(DEFAULT_DATE_FORMAT);
-      const timePart = isDateTime ? ` ${moment(value).format("HH:mm")}` : "";
+      const timeFormat = precision === timePrecision.Seconds ? "HH:mm:ss" : "HH:mm";
+      const timePart = isDateTime ? ` ${moment(value).format(timeFormat)}` : "";
       const fullText = `${datePart}${timePart}`;
 
       return (
@@ -610,7 +612,7 @@ export const useCellDisplay = ({
           return formatFileCell(value, rowId);
 
         case fieldType.Date:
-          return formatDateCell(value, extra.dateType, options);
+          return formatDateCell(value, extra.dateType, extra.timePrecision, options);
 
         case fieldType.Time:
           return formatTimeCell(value, extra.timePrecision, options);
