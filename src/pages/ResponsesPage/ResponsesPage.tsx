@@ -189,7 +189,7 @@ const ResponsesPageContent = (): JSX.Element => {
   const logoNavigateCallbackRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    const handleLogoClick = (e: Event) => {
+    const handleBeforeNavigate = (e: Event) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
         setShowBackCancelDialog(true);
@@ -197,8 +197,8 @@ const ResponsesPageContent = (): JSX.Element => {
       }
     };
 
-    window.addEventListener("logo-click", handleLogoClick);
-    return () => window.removeEventListener("logo-click", handleLogoClick);
+    window.addEventListener("before-navigate", handleBeforeNavigate);
+    return () => window.removeEventListener("before-navigate", handleBeforeNavigate);
   }, [hasUnsavedChanges]);
 
   const handleBackClick = useCallback(() => {
@@ -318,6 +318,32 @@ const ResponsesPageContent = (): JSX.Element => {
     isSaving,
     currentView,
   } = useResponsesViews();
+
+  // Store the view ID before entering quick edit mode so we can restore it on exit
+  const previousViewIdRef = useRef<string>("");
+
+  // Handle quick edit mode - clear view when entering, restore when exiting
+  // We capture selectedViewId via ref to avoid re-triggering the effect when the view clears
+  const selectedViewIdRef = useRef<string>(selectedViewId);
+  useEffect(() => {
+    selectedViewIdRef.current = selectedViewId;
+  }, [selectedViewId]);
+
+  useEffect(() => {
+    if (isInEditMode) {
+      // Entering quick edit mode: store current view and clear selection
+      previousViewIdRef.current = selectedViewIdRef.current;
+      if (selectedViewIdRef.current) {
+        handleViewDropdownChange("");
+      }
+    } else {
+      // Exiting quick edit mode: restore the previous view
+      if (previousViewIdRef.current) {
+        handleViewDropdownChange(previousViewIdRef.current);
+      }
+    }
+    // Only run when isInEditMode changes, not on every selectedViewId change
+  }, [isInEditMode]); // eslint-disable-line
 
   useEffect(() => {
     const pageParam = searchParams.get("page");
