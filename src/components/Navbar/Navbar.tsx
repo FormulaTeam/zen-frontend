@@ -32,16 +32,16 @@ const Navbar = () => {
   const navigateToHome = (e: React.MouseEvent) => {
     e.preventDefault();
 
-    const logoClickEvent = new CustomEvent("logo-click", {
+    const event = new CustomEvent("before-navigate", {
       cancelable: true,
       detail: {
         navigate: () => navigate(IPath.HOME, { replace: true }),
       },
     });
 
-    window.dispatchEvent(logoClickEvent);
+    window.dispatchEvent(event);
 
-    if (!logoClickEvent.defaultPrevented) {
+    if (!event.defaultPrevented) {
       (window as any).hasUnsavedChanges = false;
       navigate(IPath.HOME, { replace: true });
     }
@@ -61,7 +61,18 @@ const Navbar = () => {
   };
 
   const handleRestoreClick = () => {
-    navigate(IPath.RECYCLE_BIN);
+    const event = new CustomEvent("before-navigate", {
+      cancelable: true,
+      detail: {
+        navigate: () => navigate(IPath.RECYCLE_BIN),
+      },
+    });
+
+    window.dispatchEvent(event);
+
+    if (!event.defaultPrevented) {
+      navigate(IPath.RECYCLE_BIN);
+    }
   };
 
   const navbarIconButtonSx = {
@@ -123,7 +134,7 @@ const Navbar = () => {
                   </IconButton>
                 </Tooltip>
 
-                <Tooltip title="שחזור מחיקות" arrow placement="bottom">
+                <Tooltip title="סל מחזור" arrow placement="bottom">
                   <IconButton onClick={handleRestoreClick} sx={navbarIconButtonSx}>
                     <Trash2 size={22} strokeWidth={2.2} />
                   </IconButton>
