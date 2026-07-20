@@ -27,9 +27,17 @@ export const useLinkedFieldValueOptions = (
         };
     }, [enabled, linkedOptionsFieldId, findOwnerFormIdByFieldId]);
 
-    return usePaginatedFieldValueOptions({
+    const { options, isLoading, isFetchingNextPage, loadMore, hasNextPage } = usePaginatedFieldValueOptions({
         formId: ownerFormId,
         fieldId: linkedOptionsFieldId,
         search,
     });
+
+    return {
+        options,
+        isLoading,
+        isFetchingNextPage,
+        loadMore,
+        hasNextPage,
+    };
 };

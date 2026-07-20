@@ -4,8 +4,8 @@ import { DatePicker, LocalizationProvider, TimePicker } from "@mui/x-date-picker
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/he";
+import { PaginatedAutocompleteListbox } from "@src/components/PaginatedAutocompleteListbox";
 import { OptionResponseValue } from "@src/utils/optionResponseValue";
-import { useLoadMoreOnVisible } from "../../hooks/useLoadMoreOnVisible";
 
 export type FilterInputProps = {
   item: any;
@@ -16,6 +16,8 @@ export type FilterInputProps = {
   clearButton?: React.ReactNode;
   options?: OptionResponseValue[];
   loading?: boolean;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
   onLoadMore?: () => void;
 };
 
@@ -74,28 +76,6 @@ const DateTimeRangeContainer: React.FC<DateTimeRangeContainerProps> = ({ classNa
   );
 };
 
-const PaginatedAutocompleteListbox = React.forwardRef<
-  HTMLUListElement,
-  React.HTMLAttributes<HTMLUListElement> & { onLoadMore?: () => void }
->(function PaginatedAutocompleteListbox({ children, onLoadMore, ...props }, ref) {
-  const listRef = React.useRef<HTMLUListElement>(null);
-  const sentinelRef = React.useRef<HTMLLIElement>(null);
-
-  React.useImperativeHandle(ref, () => listRef.current as HTMLUListElement);
-  useLoadMoreOnVisible(listRef, sentinelRef, onLoadMore);
-
-  return (
-    <ul ref={listRef} {...props}>
-      {children}
-      <li
-        aria-hidden
-        ref={sentinelRef}
-        style={{ height: 1, padding: 0, margin: 0, listStyle: "none" }}
-      />
-    </ul>
-  );
-});
-
 const optionAutocompleteSlotProps = {
   clearIndicator: {
     title: "",
@@ -135,6 +115,7 @@ const optionAutocompleteSlotProps = {
         boxShadow: "0 10px 28px rgba(15, 23, 42, 0.1)",
         overflow: "hidden",
         direction: "rtl",
+        maxHeight: "300px",
       },
 
       "& .MuiAutocomplete-listbox": {
@@ -495,6 +476,8 @@ export const SingleOptionFilterInput: React.FC<FilterInputProps> = (props) => {
     headerFilterMenu,
     clearButton,
     loading,
+    hasNextPage,
+    isFetchingNextPage,
     onLoadMore,
   } = props;
 
@@ -508,7 +491,7 @@ export const SingleOptionFilterInput: React.FC<FilterInputProps> = (props) => {
           options={options}
           value={selectedOption}
           loading={loading}
-          loadingText="טוען..."
+          loadingText="בטעינה..."
           noOptionsText="אין אפשרויות"
           getOptionLabel={(option) => option.text ?? ""}
           isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
@@ -517,7 +500,16 @@ export const SingleOptionFilterInput: React.FC<FilterInputProps> = (props) => {
           }}
           slotProps={optionAutocompleteSlotProps}
           ListboxComponent={PaginatedAutocompleteListbox}
-          ListboxProps={{ onLoadMore } as any}
+          slots={{
+            listbox: PaginatedAutocompleteListbox,
+          }}
+          ListboxProps={
+            {
+              onLoadMore,
+              hasNextPage,
+              isFetchingNextPage,
+            } as any
+          }
           renderInput={(params) => (
             <TextField
               {...params}
@@ -555,6 +547,8 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
     headerFilterMenu,
     clearButton,
     loading,
+    hasNextPage,
+    isFetchingNextPage,
     onLoadMore,
   } = props;
 
@@ -572,7 +566,7 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
           options={options}
           value={selectedOptions}
           loading={loading}
-          loadingText="טוען..."
+          loadingText="בטעינה..."
           noOptionsText="אין אפשרויות"
           getOptionLabel={(option) => option.text ?? ""}
           isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
@@ -585,7 +579,16 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
           }}
           slotProps={optionAutocompleteSlotProps}
           ListboxComponent={PaginatedAutocompleteListbox}
-          ListboxProps={{ onLoadMore } as any}
+          slots={{
+            listbox: PaginatedAutocompleteListbox,
+          }}
+          ListboxProps={
+            {
+              onLoadMore,
+              hasNextPage,
+              isFetchingNextPage,
+            } as any
+          }
           renderOption={(props, option, { selected }) => {
             const { key, ...optionProps } = props;
 

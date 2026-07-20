@@ -4,7 +4,12 @@ import { useInitiateFormStore } from "../stores/form.store";
 import { Row } from "../../../utils/interfaces";
 
 export function useFormLoader(formId: string) {
-  const { form, setForm, setPermissions, setRows, filter, setResponses } = useInitiateFormStore();
+  const { form, setForm, setPermissions, setRows, filter, setResponses, resetStore } =
+    useInitiateFormStore();
+
+  useEffect(() => {
+    resetStore();
+  }, [formId, resetStore]);
 
   const {
     data: formData,

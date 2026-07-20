@@ -1,5 +1,5 @@
 import React from "react";
-import { Typography, Box, Grid, Tab } from "@mui/material";
+import { Typography, Box, Grid, Tab, Button } from "@mui/material";
 import styled from "styled-components";
 import { styled as muiStyled } from "@mui/material/styles";
 
@@ -53,8 +53,8 @@ export const TopBar = muiStyled(Box)(({ theme }) => ({
   justifyContent: "space-between",
   alignItems: "center",
   width: "100%",
-  backgroundColor: theme.palette.primary.light + "20",
-  border: `1px solid ${theme.palette.primary.light}`,
+  backgroundColor: theme.palette.secondary.main,
+  border: `1px solid ${theme.palette.divider}`,
 }));
 
 export const TopBarWrapper = styled(Box)`
@@ -73,5 +73,62 @@ export const FullWidthBox = styled.div`
 
 export const CustomTab = muiStyled(Tab)(() => ({
   fontSize: "20px",
+}));
+
+export const StyledToolbarInput = styled.input`
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: "Heebo", sans-serif;
+  color: #020618;
+  padding: 0;
+  direction: rtl;
+  &::placeholder {
+    color: #94a3b8;
+  }
+`;
+
+export const ToolbarSearchContainer = muiStyled(Box)(({ theme }) => ({
+  height: "36px",
+  width: "192px",
+  backgroundColor: theme.palette.background.paper,
+  border: "1px solid #e2e8f0",
+  borderRadius: "4px",
+  display: "flex",
+  alignItems: "center",
+  padding: "0 12px",
+  gap: "10px",
+  boxSizing: "border-box",
+  transition: "all 0.2s ease-in-out",
+  "&:hover": {
+    borderColor: "#cbd5e1",
+    backgroundColor: theme.palette.action.hover,
+  },
+  "&:focus-within": {
+    borderColor: theme.palette.primary.main,
+    boxShadow: `0 0 0 1px ${theme.palette.primary.main}`,
+  },
+}));
+
+export const FilterButton = muiStyled(Button)(({ theme }) => ({
+  height: "36px",
+  backgroundColor: theme.palette.background.paper,
+  border: "1px solid #e2e8f0",
+  color: theme.palette.text.primary,
+  textTransform: "none",
+  borderRadius: "4px",
+  fontSize: "9px",
+  fontWeight: 500,
+  fontFamily: "Heebo, sans-serif",
+  boxShadow: "none",
+  "&:hover": {
+    backgroundColor: theme.palette.action.hover,
+    borderColor: "#cbd5e1",
+    boxShadow: "none",
+  },
 }));
 

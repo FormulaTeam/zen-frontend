@@ -27,6 +27,15 @@ interface FormStructure {
   metadata: FormMetadata & {
     validationErrors?: typeToFlattenedError<FormMetadata>["fieldErrors"] | null;
   };
+  duplicate?: {
+    sourceFormId: number;
+    selections?: {
+      permissions: boolean;
+      fields: boolean;
+      conditions: boolean;
+      colors: boolean;
+    };
+  };
   sections: Record<string, Section>;
   orderedSectionIds: string[];
   fields: Record<string, FormField>;

@@ -11,7 +11,7 @@ import {
   getFormControlSx,
   getHelperTextSx,
   autocompleteListboxProps,
-  autocompletePaperSlotProps,
+  basePopperSx,
   getAutocompleteChipSx,
 } from "./styled";
 import { selectionMode } from "formula-gear";
@@ -34,6 +34,8 @@ interface CustomDropDownAutocompleteProps {
   onInputChange?: (event: React.SyntheticEvent, value: string, reason: string) => void;
   onScrollToBottom?: () => void;
   loading?: boolean;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
   inputValue?: string;
   filterOptions?: (options: unknown[], state: any) => unknown[];
   noOptionsText?: string;
@@ -67,6 +69,8 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
   onInputChange,
   onScrollToBottom,
   loading,
+  hasNextPage,
+  isFetchingNextPage,
   inputValue,
   filterOptions,
   noOptionsText = "אין אפשרויות",
@@ -153,22 +157,29 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
 
       <StyledAutocomplete
         ListboxComponent={PaginatedAutocompleteListbox}
+        slots={{
+          listbox: PaginatedAutocompleteListbox,
+        }}
         ListboxProps={
           {
             onLoadMore: onScrollToBottom,
+            hasNextPage,
+            isFetchingNextPage,
             ...autocompleteListboxProps,
           } as any
         }
         slotProps={{
-          paper: autocompletePaperSlotProps,
+          popper: { sx: basePopperSx },
           clearIndicator: { title: "" },
           popupIndicator: { title: "" },
         }}
+        autoHighlight
         disabled={isDisabled}
         multiple={isMultiple}
         options={options}
         noOptionsText={noOptionsText}
         loading={loading}
+        loadingText="בטעינה..."
         onInputChange={onInputChange}
         value={autocompleteValue}
         {...(inputValue !== undefined ? { inputValue } : {})}
@@ -184,11 +195,25 @@ const CustomDropDownAutocomplete: React.FC<CustomDropDownAutocompleteProps> = ({
           triggerBlurValidation();
         }}
         getOptionLabel={(option: any) => getLabel(String(option))}
-        renderOption={(props: any, option: any) => (
-          <li {...props} key={String(option)}>
-            {getLabel(String(option))}
-          </li>
-        )}
+        renderOption={(props: any, option: any) => {
+          const { key, ...optionProps } = props;
+          return (
+            <li {...optionProps} key={key}>
+              <span
+                style={{
+                  display: "block",
+                  width: "100%",
+                  direction: "rtl",
+                  textAlign: "right",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}>
+                {getLabel(String(option))}
+              </span>
+            </li>
+          );
+        }}
         isOptionEqualToValue={(option, currentValue) => String(option) === String(currentValue)}
         size={isTabularEdit ? "small" : "medium"}
         sx={getAutocompleteSx(isTabularEdit, isMultiple, Boolean(validationMessage))}
