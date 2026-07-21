@@ -4,18 +4,17 @@ import { ExtraElementProps } from "../../index";
 
 import { SpecificFormFieldData } from "@pages/FormEditor/schemas/fields";
 import { FormFieldResponsesOptions } from "./FormFieldResponsesOptions";
-import {
-  Checkbox,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
-  Radio,
-  RadioGroup,
-  Tooltip,
-} from "@mui/material";
+import { Checkbox, FormControlLabel, Radio, RadioGroup, Tooltip } from "@mui/material";
 import { ManualOptions } from "./ManualOptions";
-import { Info } from "@mui/icons-material";
 import { selectionMode, optionsSource, OptionsSource } from "formula-gear";
+import {
+  InfoIcon,
+  MultipleSelectionControlLabel,
+  SourceFormControl,
+  SourceFormLabel,
+  SourceOptionLabel,
+  TooltipAnchor,
+} from "./styled";
 
 type FieldTypeId = typeof FieldTypeIds.options;
 
@@ -64,8 +63,8 @@ function OptionsFieldExtra({
 
   return (
     <>
-      <FormControl disabled={disabled} style={{ gridColumn: "1 / -1" }}>
-        <FormLabel>מקור אפשרויות</FormLabel>
+      <SourceFormControl disabled={disabled}>
+        <SourceFormLabel>מקור אפשרויות</SourceFormLabel>
         <RadioGroup
           row
           value={selectedSource}
@@ -78,18 +77,18 @@ function OptionsFieldExtra({
             value={optionsSource.FormFieldResponses}
             control={<Radio />}
             label={
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <SourceOptionLabel>
                 <span>מטופס</span>
-                <Tooltip title={fieldConnectionTooltipTexts.FormConnection}>
-                  <span style={{ display: "inline-flex", alignItems: "center" }}>
-                    <Info color="disabled" sx={{ cursor: "pointer" }} />
-                  </span>
+                <Tooltip title={fieldConnectionTooltipTexts.FormConnection} arrow>
+                  <TooltipAnchor>
+                    <InfoIcon color="disabled" />
+                  </TooltipAnchor>
                 </Tooltip>
-              </span>
+              </SourceOptionLabel>
             }
           />
         </RadioGroup>
-      </FormControl>
+      </SourceFormControl>
 
       {isLinkedToForm ? (
         <FormFieldResponsesOptions
@@ -112,8 +111,7 @@ function OptionsFieldExtra({
         />
       )}
 
-      <FormControlLabel
-        style={{ gridColumn: "span 2" }}
+      <MultipleSelectionControlLabel
         disabled={disabled}
         control={
           <Checkbox
