@@ -528,9 +528,9 @@ function FormFieldResponsesOptions(props: Props) {
         title={
           !selectedFieldId
             ? "יש לבחור שדה"
-              : !availableDependentFields.length
-                ? "לא קיימים שדות אפשרויות מאותו טופס מקור"
-                : ""
+            : !availableDependentFields.length
+              ? "לא קיימים שדות אפשרויות מאותו טופס מקור"
+              : ""
         }
         placement="top"
         arrow>

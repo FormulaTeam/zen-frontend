@@ -369,8 +369,8 @@ function ManualOptions(props: Props) {
                     const controllingItems =
                       (newValue
                         ? (
-                            formStructure.fields[newValue]?.data?.options as ManualItems | undefined
-                          )?.filter((item) => item.isActive !== false)
+                          formStructure.fields[newValue]?.data?.options as ManualItems | undefined
+                        )?.filter((item) => item.isActive !== false)
                         : []) ?? [];
 
                     onDataChange?.({
