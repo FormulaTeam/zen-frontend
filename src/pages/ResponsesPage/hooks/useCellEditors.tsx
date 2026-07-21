@@ -1,6 +1,5 @@
 import { Box, TextField, Tooltip } from "@mui/material";
-import { GridRenderEditCellParams } from "@mui/x-data-grid-pro";
-import { GridApiPro } from "@mui/x-data-grid-pro/models/gridApiPro";
+import { GridApiPro, GridRenderEditCellParams } from "@mui/x-data-grid-pro";
 import { useCallback, useMemo } from "react";
 
 import { fieldType } from "formula-gear";
