@@ -2005,7 +2005,7 @@ export const ResponsesTable = React.memo(
                 backgroundColor: "#ffffff",
                 border: "1px solid #e2e8f0",
                 direction: "ltr",
-                cursor: "pointer",
+                cursor: "default",
                 pointerEvents: "auto",
                 zIndex: 20,
               }}>
@@ -2019,7 +2019,7 @@ export const ResponsesTable = React.memo(
                   minWidth: "64px",
                   borderRadius: "999px",
                   backgroundColor: "#cbd5e1",
-                  cursor: "grab",
+                  cursor: "default",
                   touchAction: "none",
                   transform: "translate3d(0, 0, 0)",
                   willChange: "transform",
@@ -2027,7 +2027,7 @@ export const ResponsesTable = React.memo(
                     backgroundColor: "#94a3b8",
                   },
                   "&:active": {
-                    cursor: "grabbing",
+                    cursor: "default",
                     backgroundColor: "#64748b",
                   },
                 }}
@@ -2043,7 +2043,7 @@ export const ResponsesTable = React.memo(
                 backgroundColor: "#ffffff",
                 border: "1px solid #e2e8f0",
                 direction: "ltr",
-                cursor: "pointer",
+                cursor: "default",
                 pointerEvents: "auto",
                 zIndex: 21,
               }}>
@@ -2057,7 +2057,7 @@ export const ResponsesTable = React.memo(
                   minHeight: "48px",
                   borderRadius: "999px",
                   backgroundColor: "#cbd5e1",
-                  cursor: "grab",
+                  cursor: "default",
                   touchAction: "none",
                   transform: "translate3d(0, 0, 0)",
                   willChange: "transform",
@@ -2065,7 +2065,7 @@ export const ResponsesTable = React.memo(
                     backgroundColor: "#94a3b8",
                   },
                   "&:active": {
-                    cursor: "grabbing",
+                    cursor: "default",
                     backgroundColor: "#64748b",
                   },
                 }}

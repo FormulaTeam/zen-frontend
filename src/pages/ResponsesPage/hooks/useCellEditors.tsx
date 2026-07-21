@@ -35,6 +35,7 @@ type EditorFieldExtra = {
   };
   selectionMode?: "multiple" | "single";
   linkedOptionsFieldId?: string | null;
+  dependentOptionsFieldId?: string | null;
   parentFieldId?: string | null;
   validationRegex?: string;
   locationFormat?: "utm" | "wkt";
@@ -253,9 +254,28 @@ export const useCellEditors = ({
             : false;
 
           if (isExternallyConnected && linkedOptionsFieldId) {
+            const dependentTargetField = fieldExtra.dependentOptionsFieldId
+              ? formFields?.find((field) => String(field.id) === String(fieldExtra.dependentOptionsFieldId))
+              : undefined;
+            const dependentFieldId = dependentTargetField
+              ? getFieldExtra(dependentTargetField).linkedOptionsFieldId ?? undefined
+              : undefined;
+            const dependentRawValue = dependentTargetField
+              ? getOptionResponseRawValue(params.row?.[`field:${dependentTargetField.id}`])
+              : undefined;
+            const dependentValue = Array.isArray(dependentRawValue)
+              ? dependentRawValue.find((value) => !!value)
+              : dependentRawValue;
+            const dependentFilterValue =
+              dependentValue === undefined || dependentValue === null
+                ? undefined
+                : String(dependentValue).trim() || undefined;
+
             editor = (
               <ConnectedOptionsCellEditor
                 linkedOptionsFieldId={linkedOptionsFieldId}
+                dependentFieldId={dependentFilterValue ? dependentFieldId : undefined}
+                dependentValue={dependentFilterValue}
                 value={getOptionResponseRawValue(params.value) as string | string[]}
                 onChange={handleChange}
                 selectionMode={selectionMode}

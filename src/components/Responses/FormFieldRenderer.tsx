@@ -40,6 +40,7 @@ type FormFieldExtra = {
   value?: any;
   validationRegex?: string;
   linkedOptionsFieldId?: string | null;
+  dependentOptionsFieldId?: string | null;
 
   linkedFormId?: number;
   connectedFieldId?: string;
@@ -227,6 +228,23 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   const linkedOptionsFieldId = connectedToForm
     ? (formFieldExtra.linkedOptionsFieldId ?? undefined)
     : undefined;
+  const dependentTargetField = formFieldExtra.dependentOptionsFieldId
+    ? formFields.find((candidateField) => candidateField.id === formFieldExtra.dependentOptionsFieldId)
+    : undefined;
+  const dependentSourceFieldId =
+    connectedToForm && dependentTargetField
+      ? (getFieldExtra(dependentTargetField).linkedOptionsFieldId ?? undefined)
+      : undefined;
+  const dependentTargetValue = dependentTargetField
+    ? formFieldsValuesMap.get(dependentTargetField.id)
+    : undefined;
+  const dependentValue = Array.isArray(dependentTargetValue)
+    ? dependentTargetValue.find((value) => !!value)
+    : dependentTargetValue;
+  const dependentFilterValue =
+    dependentValue === undefined || dependentValue === null
+      ? undefined
+      : String(dependentValue).trim() || undefined;
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -236,7 +254,13 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
     isFetchingNextPage: isFetchingMoreConnected,
     loadMore: loadMoreConnectedOptions,
     hasNextPage: hasNextPageConnected,
-  } = useLinkedFieldValueOptions(linkedOptionsFieldId, connectedToForm, searchTerm);
+  } = useLinkedFieldValueOptions(
+    linkedOptionsFieldId,
+    connectedToForm,
+    searchTerm,
+    dependentFilterValue ? dependentSourceFieldId : undefined,
+    dependentFilterValue,
+  );
 
   field.name = formField.name;
 
@@ -326,6 +350,9 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         ? connectedOptions.map((option) => option.id)
         : getFieldOptions(formField);
 
+      const isDependentConnectedOptionsField =
+        connectedToForm && !!formFieldExtra.dependentOptionsFieldId;
+
       const parentDependencies = getParentDependencies(formField);
 
       const childOptionItemsForCheck = getFieldOptionItems(formField, true);
@@ -335,29 +362,29 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 
       const inferredParentFieldByControllingItems = fieldIsDependentByControllingItems
         ? (formFields.find((candidateField) => {
-            if (candidateField.id === fieldId) return false;
+          if (candidateField.id === fieldId) return false;
 
-            const candidateOptionIds = getFieldOptions(candidateField);
+          const candidateOptionIds = getFieldOptions(candidateField);
 
-            return childOptionItemsForCheck.some((childOption) =>
-              (childOption.controllingItemsIds ?? []).some((controllingItemId) =>
-                candidateOptionIds.includes(controllingItemId),
-              ),
-            );
-          }) ?? null)
+          return childOptionItemsForCheck.some((childOption) =>
+            (childOption.controllingItemsIds ?? []).some((controllingItemId) =>
+              candidateOptionIds.includes(controllingItemId),
+            ),
+          );
+        }) ?? null)
         : null;
 
       // Detect legacy dependency by finding a controlling field that points to this field.
       const controllingFieldForThisField = !fieldIsDependentByControllingItems
         ? (formFields.find((f) => {
-            const extra = getFieldExtra(f);
-            return (
-              extra.linkedOptionsFieldId === fieldId &&
-              getFieldOptionItems(f, true).some(
-                (opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0,
-              )
-            );
-          }) ?? null)
+          const extra = getFieldExtra(f);
+          return (
+            extra.linkedOptionsFieldId === fieldId &&
+            getFieldOptionItems(f, true).some(
+              (opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0,
+            )
+          );
+        }) ?? null)
         : null;
 
       const linkedFieldExists = formFields.some(
@@ -552,6 +579,37 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
 
       availableOptions = Array.from(new Set(availableOptions.filter((option) => !!option)));
 
+      if (isDependentConnectedOptionsField) {
+        const hasDependentValue = !!dependentFilterValue;
+
+        if (hasDependentValue && !isLoadingConnected) {
+          if (isMultiple) {
+            const currentValues = Array.isArray(formFieldValue) ? formFieldValue : [];
+            const validValues = currentValues.filter((value: string) =>
+              availableOptions.includes(value),
+            );
+
+            if (validValues.length !== currentValues.length) {
+              formFieldValue = validValues;
+
+              setTimeout(() => {
+                onChangeHandler(validValues, fieldId);
+              }, 0);
+            }
+          } else {
+            const currentValue = typeof formFieldValue === "string" ? formFieldValue : "";
+
+            if (currentValue && !availableOptions.includes(currentValue)) {
+              formFieldValue = "";
+
+              setTimeout(() => {
+                onChangeHandler("", fieldId);
+              }, 0);
+            }
+          }
+        }
+      }
+
       const inactiveOptionIds = formFieldExtra.inactiveOptionIds ?? [];
       availableOptions = availableOptions.filter(
         (optionId) => !inactiveOptionIds.includes(optionId),
@@ -597,12 +655,12 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           onInputChange={
             connectedToForm
               ? (_, value, reason) => {
-                  if (reason === "input") {
-                    setSearchTerm(value);
-                  } else if (reason === "clear") {
-                    setSearchTerm("");
-                  }
+                if (reason === "input") {
+                  setSearchTerm(value);
+                } else if (reason === "clear") {
+                  setSearchTerm("");
                 }
+              }
               : undefined
           }
           onScrollToBottom={connectedToForm ? loadMoreConnectedOptions : undefined}
@@ -835,28 +893,28 @@ const shouldSkipRerenderHOF = (
 
   const inferredParentFieldForRerender = fieldHasControllingItems
     ? (prevProps.formFields.find((candidateField) => {
-        if (candidateField.id === fieldId) return false;
+      if (candidateField.id === fieldId) return false;
 
-        const candidateOptionIds = getFieldOptions(candidateField);
+      const candidateOptionIds = getFieldOptions(candidateField);
 
-        return childOptionItemsForCheck.some((childOption) =>
-          (childOption.controllingItemsIds ?? []).some((controllingItemId) =>
-            candidateOptionIds.includes(controllingItemId),
-          ),
-        );
-      }) ?? null)
+      return childOptionItemsForCheck.some((childOption) =>
+        (childOption.controllingItemsIds ?? []).some((controllingItemId) =>
+          candidateOptionIds.includes(controllingItemId),
+        ),
+      );
+    }) ?? null)
     : null;
 
   const controllingFieldForRerender = !fieldHasControllingItems
     ? prevProps.formFields.find((f) => {
-        const extra = getFieldExtra(f);
-        return (
-          extra.linkedOptionsFieldId === fieldId &&
-          getFieldOptionItems(f, true).some(
-            (opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0,
-          )
-        );
-      })
+      const extra = getFieldExtra(f);
+      return (
+        extra.linkedOptionsFieldId === fieldId &&
+        getFieldOptionItems(f, true).some(
+          (opt) => opt.controllingItemsIds && opt.controllingItemsIds.length > 0,
+        )
+      );
+    })
     : null;
 
   const linkedFieldExists = prevProps.formFields.some(
@@ -864,6 +922,7 @@ const shouldSkipRerenderHOF = (
   );
 
   const parentId =
+    prevExtra.dependentOptionsFieldId ??
     prevExtra.parentFieldId ??
     (linkedFieldExists ? prevExtra.linkedOptionsFieldId : null) ??
     inferredParentFieldForRerender?.id ??

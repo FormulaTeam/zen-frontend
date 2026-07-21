@@ -28,15 +28,15 @@ export const StyledDialog = styled(Dialog)(() => ({
 
 export const StyledDialogTitle = styled(DialogTitle)(() => ({
   position: "relative",
-  padding: "34px 36px 18px",
+  padding: "8px",
   textAlign: "center",
 }));
 
 export const CloseButton = styled(IconButton)(() => ({
   position: "absolute",
-  right: "24px",
+  right: 0,
   left: "auto",
-  top: "24px",
+  top: 0,
   width: "36px",
   height: "36px",
   padding: 0,
@@ -74,7 +74,7 @@ export const SubtitleText = styled(Typography)(() => ({
 }));
 
 export const Content = styled(DialogContent)(() => ({
-  padding: "14px 36px 0",
+  padding: "8px 8px 0",
   flex: 1,
   minHeight: 0,
   overflow: "hidden",
@@ -84,8 +84,8 @@ export const ScrollShell = styled(Box)(() => ({
   position: "relative",
   height: "420px",
   maxHeight: "calc(100vh - 300px)",
-  paddingLeft: "18px",
-  paddingRight: 0,
+  paddingLeft: 0,
+  paddingRight: "18px",
   boxSizing: "border-box",
 }));
 
@@ -109,8 +109,8 @@ export const ScrollShadow = styled(Box, {
   $isVisible: boolean;
 }>(({ $position, $isVisible }) => ({
   position: "absolute",
-  left: "18px",
-  right: 0,
+  left: 0,
+  right: "18px",
   zIndex: 2,
   height: "26px",
   pointerEvents: "none",
@@ -118,22 +118,23 @@ export const ScrollShadow = styled(Box, {
   transition: "opacity 140ms ease",
   top: $position === "top" ? 0 : "auto",
   bottom: $position === "bottom" ? 0 : "auto",
+  borderRadius: $position === "top" ? "8px 8px 0 0" : "0 0 8px 8px",
   background:
     $position === "top"
-      ? "linear-gradient(to bottom, rgba(15, 23, 42, 0.14), rgba(15, 23, 42, 0))"
-      : "linear-gradient(to top, rgba(15, 23, 42, 0.14), rgba(15, 23, 42, 0))",
+      ? "linear-gradient(to bottom, rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0))"
+      : "linear-gradient(to top, rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0))",
 }));
 
 export const VisibleScrollbar = styled(Box)(() => ({
   position: "absolute",
   top: 0,
-  left: 0,
-  right: "auto",
+  left: "auto",
+  right: 0,
   width: "10px",
   height: "100%",
   borderRadius: "999px",
   overflow: "hidden",
-  cursor: "pointer",
+  cursor: "default",
 }));
 
 export const VisibleScrollbarThumb = styled(Box)(() => ({
@@ -141,7 +142,7 @@ export const VisibleScrollbarThumb = styled(Box)(() => ({
   borderRadius: "999px",
   backgroundColor: "#E2E8F0",
   transition: "height 120ms ease, opacity 120ms ease, background-color 120ms ease",
-  cursor: "grab",
+  cursor: "default",
   userSelect: "none",
   touchAction: "none",
 
@@ -150,7 +151,7 @@ export const VisibleScrollbarThumb = styled(Box)(() => ({
   },
 
   "&:active": {
-    cursor: "grabbing",
+    cursor: "default",
     backgroundColor: "#B8C4D4",
   },
 }));
@@ -240,7 +241,7 @@ export const AnswerText = styled(Typography)(() => ({
 }));
 
 export const FooterRow = styled(DialogActions)(() => ({
-  padding: "18px 36px 34px",
+  padding: "8px",
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
@@ -253,9 +254,9 @@ export const NeedMoreHelp = styled(Box)(() => ({
   alignItems: "center",
   gap: "8px",
   color: "#020617",
-  fontSize: "18px",
+  fontSize: "20px",
   lineHeight: "26px",
-  fontWeight: 800,
+  fontWeight: 600,
   whiteSpace: "nowrap",
 
   "& svg": {
@@ -277,7 +278,7 @@ export const ActionButton = styled(Button)(() => ({
   padding: "0 16px",
   borderRadius: "8px",
   fontSize: "16px",
-  fontWeight: 700,
+  fontWeight: 500,
   textTransform: "none",
   color: "#020617",
   borderColor: "#d8e2ef",
@@ -303,7 +304,7 @@ export const PrimaryActionButton = styled(Button)(({ theme }) => ({
   padding: "0 18px",
   borderRadius: "8px",
   fontSize: "16px",
-  fontWeight: 700,
+  fontWeight: 500,
   textTransform: "none",
   backgroundColor: theme.palette.primary.main,
   color: "#ffffff",

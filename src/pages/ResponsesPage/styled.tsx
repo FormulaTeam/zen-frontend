@@ -478,6 +478,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   },
   "& .MuiDataGrid-scrollbar": {
     display: "block !important",
+    cursor: "default !important",
     backgroundColor: "#ffffff !important",
     borderRadius: "999px",
     scrollbarColor: "#cbd5e1 transparent !important",
@@ -496,11 +497,13 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     },
     "&::-webkit-scrollbar-track": {
       display: "block !important",
+      cursor: "default !important",
       backgroundColor: "transparent !important",
       borderRadius: "999px !important",
     },
     "&::-webkit-scrollbar-thumb": {
       display: "block !important",
+      cursor: "default !important",
       backgroundColor: "#cbd5e1 !important",
       border: "3px solid #ffffff !important",
       borderRadius: "999px !important",

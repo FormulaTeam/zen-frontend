@@ -691,12 +691,16 @@ function useFormStructure(
   }, []);
 
   const setFieldData = useCallback(
-    <T extends FormFieldTypeId>(fieldId: string, data: Partial<FormFieldData & { typeId: T }>) => {
+    <T extends FormFieldTypeId>(
+      fieldId: string,
+      data: Partial<FormFieldData & { typeId: T }> & { replaceExtra?: boolean },
+    ) => {
       setFormStructure((prev) => {
         if (!(fieldId in prev.fields)) {
           return prev;
         }
 
+        const { replaceExtra, ...fieldData } = data;
         const fields = { ...prev.fields };
         const field = fields[fieldId];
         const originalData = field.data;
@@ -704,11 +708,13 @@ function useFormStructure(
 
         const dataToValidate = {
           ...originalData,
-          ...data,
-          extra: {
-            ...originalData.extra,
-            ...data.extra,
-          },
+          ...fieldData,
+          extra: replaceExtra
+            ? fieldData.extra
+            : {
+                ...originalData.extra,
+                ...fieldData.extra,
+              },
         } as FormFieldData & { typeId: T };
 
         const validationErrors = pickSharedKeysDeep(
