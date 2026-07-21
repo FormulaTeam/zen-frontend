@@ -20,6 +20,7 @@ import { useFetch } from "../utils/useFetch";
 import apiClient from "./config";
 import queryClient from "./queryClient";
 import { mapFilterToApiParams } from "./apiUtils";
+import { useSearchParams } from "react-router-dom";
 
 /**
  * Fetch all forms with optional query parameters.
@@ -424,7 +425,8 @@ export const useGetForm = ({
 }): UseQueryResult<FormDto | null> => {
   const params = new URLSearchParams();
 
-  const isPublicLink = new URLSearchParams(window.location.search).get("publicLink") === "true";
+  const [searchParams] = useSearchParams();
+  const isPublicLink = searchParams.get("publicLink") === "true";
 
   if (includePermissions) {
     params.set("includePermissions", "true");
