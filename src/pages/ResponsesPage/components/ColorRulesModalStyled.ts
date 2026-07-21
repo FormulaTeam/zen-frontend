@@ -181,7 +181,7 @@ export const RulesHeader = styled(RulesGrid)`
   font-weight: 700;
 `;
 
-export const RuleRow = styled(RulesGrid)<{
+export const RuleRow = styled(RulesGrid) <{
   $isDragging?: boolean;
   $isDragLocked?: boolean;
 }>`
@@ -218,7 +218,7 @@ export const RuleRow = styled(RulesGrid)<{
       : ""}
 `;
 
-export const DragHandle = styled(Box)<{ $isDragging?: boolean; $canDrag?: boolean }>`
+export const DragHandle = styled(Box) <{ $isDragging?: boolean; $canDrag?: boolean }>`
   position: relative;
   width: 24px;
   height: 40px;
@@ -287,7 +287,7 @@ export const ColorRulePickerWrapper = styled(Box)`
   }
 `;
 
-export const ColorSwatch = styled(Box)<{ $backgroundColor: string }>`
+export const ColorSwatch = styled(Box) <{ $backgroundColor: string }>`
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -295,7 +295,7 @@ export const ColorSwatch = styled(Box)<{ $backgroundColor: string }>`
   background-color: ${({ $backgroundColor }) => $backgroundColor};
 `;
 
-export const ColorMenuSwatch = styled(Box)<{ $backgroundColor: string }>`
+export const ColorMenuSwatch = styled(Box) <{ $backgroundColor: string }>`
   width: 14px;
   height: 14px;
   border-radius: 50%;

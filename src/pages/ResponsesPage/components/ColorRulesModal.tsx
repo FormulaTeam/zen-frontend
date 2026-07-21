@@ -377,6 +377,7 @@ export const ColorRulesModal = ({
   const [deleteAnchorEl, setDeleteAnchorEl] = useState<HTMLElement | null>(null);
   const [pendingDeleteRuleId, setPendingDeleteRuleId] = useState<string | null>(null);
   const [scrollThumb, setScrollThumb] = useState({ top: 0, height: MIN_SCROLL_THUMB_HEIGHT });
+  const [isScrollable, setIsScrollable] = useState(false);
   const rulesTableRef = useRef<HTMLDivElement | null>(null);
   const rulesScrollbarRailRef = useRef<HTMLDivElement | null>(null);
   const { mutateAsync, isPending } = useSaveResponsesTableColorRules();
@@ -427,10 +428,12 @@ export const ColorRulesModal = ({
     const { clientHeight, scrollHeight, scrollTop } = table;
 
     if (scrollHeight <= clientHeight) {
+      setIsScrollable(false);
       setScrollThumb({ top: 0, height: clientHeight });
       return;
     }
 
+    setIsScrollable(true);
     const thumbHeight = Math.max(MIN_SCROLL_THUMB_HEIGHT, (clientHeight / scrollHeight) * clientHeight);
     const maxThumbTop = clientHeight - thumbHeight;
     const maxScrollTop = scrollHeight - clientHeight;
@@ -873,17 +876,19 @@ export const ColorRulesModal = ({
           </AddRuleRow>
         )}
       </RulesTableContainer>
-      <RulesScrollbarRail
-        ref={rulesScrollbarRailRef}
-        onMouseDown={handleRulesScrollbarRailMouseDown}>
-        <RulesScrollbarThumb
-          onMouseDown={handleRulesScrollbarThumbMouseDown}
-          style={{
-            height: scrollThumb.height,
-            transform: `translateY(${scrollThumb.top}px)`,
-          }}
-        />
-      </RulesScrollbarRail>
+      {isScrollable && (
+        <RulesScrollbarRail
+          ref={rulesScrollbarRailRef}
+          onMouseDown={handleRulesScrollbarRailMouseDown}>
+          <RulesScrollbarThumb
+            onMouseDown={handleRulesScrollbarThumbMouseDown}
+            style={{
+              height: scrollThumb.height,
+              transform: `translateY(${scrollThumb.top}px)`,
+            }}
+          />
+        </RulesScrollbarRail>
+      )}
     </RulesTableScrollArea>
   );
 
