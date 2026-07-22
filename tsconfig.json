@@ -14,46 +14,45 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": false,
     "noEmit": true,
     "jsx": "react-jsx",
     "noImplicitAny": false,
-    "baseUrl": ".",
     "paths": {
       "@src/*": [
-        "src/*"
+        "./src/*"
       ],
       "@utils/*": [
-        "src/utils/*"
+        "./src/utils/*"
       ],
       "@components/*": [
-        "src/components/*"
+        "./src/components/*"
       ],
       "@hooks/*": [
-        "src/hooks/*"
+        "./src/hooks/*"
       ],
       "@api/*": [
-        "src/api/*"
+        "./src/api/*"
       ],
       "@contexts/*": [
-        "src/contexts/*"
+        "./src/contexts/*"
       ],
       "@pages/*": [
-        "src/pages/*"
+        "./src/pages/*"
       ],
       "@interfaces/*": [
-        "src/interfaces/*"
+        "./src/interfaces/*"
       ],
       "@types/*": [
-        "src/types/*"
+        "./src/types/*"
       ],
       "@consts/*": [
-        "src/consts/*"
+        "./src/consts/*"
       ],
       "@theme/*": [
-        "src/theme/*"
+        "./src/theme/*"
       ]
     }
   },

@@ -21,7 +21,7 @@ import {
   ResponseFieldValueDto,
   UpdateOneResponseDto,
   UserPersonalDto,
-} from "src/types/shared";
+} from "@src/types/shared";
 import {
   fieldType,
   validateFormFieldValue,
