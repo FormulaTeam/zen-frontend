@@ -420,7 +420,7 @@ function FormFieldResponsesOptions(props: Props) {
 
   const fieldSelect: JSX.Element = (
     <FieldControl error={!!validationErrors?.properties?.linkedOptionsFieldId}>
-      <Tooltip title={!selectedFormId ? "יש לבחור טופס" : ""}>
+      <Tooltip title={!selectedFormId ? "יש לבחור טופס" : ""} placement="top" arrow>
         <span style={{ display: "block" }}>
           <Autocomplete
             options={availableFields}
@@ -472,7 +472,7 @@ function FormFieldResponsesOptions(props: Props) {
 
   const defaultValueSelect: JSX.Element = (
     <FieldControl>
-      <Tooltip title={!selectedFieldId ? "יש לבחור שדה" : ""}>
+      <Tooltip title={!selectedFieldId ? "יש לבחור שדה" : ""} placement="top" arrow>
         <span style={{ display: "block" }}>
           <Autocomplete
             multiple={selectionMode === "multiple"}
@@ -531,7 +531,9 @@ function FormFieldResponsesOptions(props: Props) {
             : !availableDependentFields.length
               ? "לא קיימים שדות אפשרויות מאותו טופס מקור"
               : ""
-        }>
+        }
+        placement="top"
+        arrow>
         <span style={{ display: "block" }}>
           <Autocomplete
             options={availableDependentFields}
