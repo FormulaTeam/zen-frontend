@@ -16,8 +16,6 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { comparator, dateType, fieldType, timePrecision } from "formula-gear";
-import brushIcon from "../../../icons/brush.svg";
-import trashIcon from "../../../icons/trash.svg";
 
 import { useSaveResponsesTableColorRules } from "../../../api/responsesApi";
 import CustomDateTime from "../../../components/FormFields/CustomDateTime/CustomDateTime";
@@ -56,6 +54,7 @@ import {
   EmptyStateContent,
   EmptyStateDescription,
   EmptyStateIcon,
+  EmptyStateIconWrapper,
   EmptyStateTitle,
   ModalActions,
   ModalContent,
@@ -273,6 +272,11 @@ const ColorRuleTargetValueInput = ({
         openOnFocus
         disablePortal
         disabled={!canManage}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            fontWeight: '400 !important',
+          },
+        }}
         slotProps={{
           popper: { sx: basePopperSx },
         }}
@@ -712,7 +716,9 @@ export const ColorRulesModal = ({
   const emptyState: JSX.Element = (
     <EmptyStateContainer>
       <EmptyStateContent>
-        <EmptyStateIcon src={brushIcon} alt="" />
+        <EmptyStateIconWrapper>
+          <EmptyStateIcon aria-hidden="true" />
+        </EmptyStateIconWrapper>
         <EmptyStateTitle>אין חוקים עדיין</EmptyStateTitle>
         <EmptyStateDescription>
           יש להוסיף חוק כדי לצבוע נתונים בטבלה
@@ -854,7 +860,7 @@ export const ColorRulesModal = ({
           <DeleteRuleButton
             disabled={!canManage}
             onClick={(event) => openDeletePopover(event, rule.id)}>
-            <DeleteRuleIcon src={trashIcon} alt="" />
+            <DeleteRuleIcon aria-hidden="true" />
           </DeleteRuleButton>
         </span>
       </RuleRow>

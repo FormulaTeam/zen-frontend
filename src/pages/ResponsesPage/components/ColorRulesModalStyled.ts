@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import styled from "styled-components";
+import { PaintRoller, Trash2 } from "lucide-react";
 
 export const ColorRulesDialog = styled(Dialog)`
   .MuiDialog-paper {
@@ -65,9 +66,10 @@ export const DeleteRuleButton = styled(IconButton)`
   }
 `;
 
-export const DeleteRuleIcon = styled.img`
+export const DeleteRuleIcon = styled(Trash2)`
   width: 20px;
   height: 20px;
+  color: #e7000b;
 `;
 
 export const ModalContent = styled(DialogContent)`
@@ -102,9 +104,20 @@ export const EmptyStateContent = styled(Box)`
   gap: 18px;
 `;
 
-export const EmptyStateIcon = styled.img`
+export const EmptyStateIconWrapper = styled(Box)`
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  background-color: #e3f2fd;
+  border: 1px solid #bbdefb;
+`;
+
+export const EmptyStateIcon = styled(PaintRoller)`
   width: 46px;
   height: 46px;
+  color: #1e88e5;
 `;
 
 export const EmptyStateTitle = styled(Typography)`

@@ -4,7 +4,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Box, Tooltip } from "@mui/material";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import { permission } from "formula-gear";
-import paletteIcon from "../../icons/palette.svg";
+import { SwatchBook } from "lucide-react";
 
 import SidePanel from "../../components/SidePanel/SidePanel";
 import SearchInfo from "../../components/Responses/SearchInfo";
@@ -676,11 +676,9 @@ const ResponsesPageContent = (): JSX.Element => {
                           boxShadow: "none !important",
                         },
                       }}>
-                      <Box
-                        component="img"
-                        src={paletteIcon}
-                        alt=""
-                        sx={{
+                      <SwatchBook
+                        aria-hidden="true"
+                        style={{
                           width: 22,
                           height: 22,
                           display: "block",
