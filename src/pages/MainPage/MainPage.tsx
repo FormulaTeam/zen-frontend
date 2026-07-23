@@ -111,24 +111,15 @@ function MainPage({
     }
   }, [sortByParam, sortDirectionParam]);
 
-  const { formsData: rawFormsData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetFormsData({
+  const { formsData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetFormsData({
     scope: scope,
     searchQuery: debouncedSearchValue || undefined,
     sortBy,
     sortDirection,
     enabled: !!user,
     includePermissions: !isSuperAdmin && scope !== formsScopeOption.MyForms,
+    excludePinned: true,
   });
-
-  const pinnedFormIds = useMemo(
-    () => new Set(pinnedForms.map((form) => form.id)),
-    [pinnedForms],
-  );
-
-  const formsData = useMemo(
-    () => rawFormsData.filter((form: FormOverviewDto) => !pinnedFormIds.has(form.id)),
-    [rawFormsData, pinnedFormIds],
-  );
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;

@@ -53,7 +53,7 @@ const PinnedFormsRow: React.FC<PinnedFormsRowProps> = ({
 
   return (
     <Box sx={{ width: "100%", mb: 3 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 1.5 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <PushPinOutlinedIcon sx={{ fontSize: "20px", color: "#020618" }} />
           <Typography sx={{ fontSize: "16px", fontWeight: 600, color: "#020618" }}>

@@ -495,15 +495,16 @@ export const useDeleteForm = ({ id }: { id: string }) => {
 
 /**
  * Sets `isPinned` for the given form id across every cached "forms" infinite
- * query (all scopes), returning the previous cache snapshots so callers can
- * roll back on failure.
+ * query (all scopes) as well as the flat pinned-forms list cache, returning
+ * the previous cache snapshots so callers can roll back on failure.
  */
 const setIsPinnedInFormsCache = (formId: number, isPinned: boolean) => {
-  const queries = queryClient.getQueriesData<{ pages: FormOverviewDto[][] }>({
+  const infiniteQueries = queryClient.getQueriesData<{ pages: FormOverviewDto[][] }>({
     queryKey: ["forms"],
+    predicate: (query) => Array.isArray((query.state.data as any)?.pages),
   });
 
-  for (const [queryKey, data] of queries) {
+  for (const [queryKey, data] of infiniteQueries) {
     if (!data) continue;
 
     queryClient.setQueryData(queryKey, {
@@ -514,7 +515,21 @@ const setIsPinnedInFormsCache = (formId: number, isPinned: boolean) => {
     });
   }
 
-  return queries;
+  const pinnedListQueries = queryClient.getQueriesData<FormOverviewDto[]>({
+    queryKey: ["forms", "pinned"],
+    predicate: (query) => Array.isArray(query.state.data),
+  });
+
+  for (const [queryKey, data] of pinnedListQueries) {
+    if (!data) continue;
+
+    queryClient.setQueryData(
+      queryKey,
+      data.map((form) => (form.id === formId ? { ...form, isPinned } : form)),
+    );
+  }
+
+  return [...infiniteQueries, ...pinnedListQueries];
 };
 
 const restoreFormsCache = (queries: ReturnType<typeof queryClient.getQueriesData>) => {

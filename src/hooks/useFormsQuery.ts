@@ -18,6 +18,7 @@ export interface FormsQueryParams {
   includePermissions?: boolean;
   softDeleted?: boolean;
   hasResponses?: boolean;
+  excludePinned?: boolean;
 }
 
 export function useGetFormsQuery({
