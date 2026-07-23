@@ -206,21 +206,14 @@ interface ResponsesTableProps {
   colorRules?: ResponsesTableColorRuleDto[];
 }
 
-const SYNC_STATUS_HEBREW_LABELS: Record<number, string> = {
-  0: "ממתין לסנכרון",
-  1: "בתור לסנכרון",
-  2: "נשלח ל-Metro",
-  3: "נשלח ל-Dataverse",
-  4: "הסנכרון נכשל",
-  5: "הסנכרון הושלם",
-};
-
 const getSyncStatusLabel = (
   statusId?: number | null,
   statusDescription?: string | null,
 ): string => {
   if (typeof statusId === "number") {
-    return SYNC_STATUS_HEBREW_LABELS[statusId] ?? statusDescription ?? "סטטוס סנכרון לא ידוע";
+    return Gear.SYNC_STATUS_HEBREW_LABELS[statusId as Gear.SyncStatusId] ??
+      statusDescription ??
+      "סטטוס סנכרון לא ידוע";
   }
 
   return statusDescription ?? "סטטוס סנכרון לא ידוע";
@@ -234,9 +227,9 @@ const SyncStatusIcon: React.FC<{
   const label = getSyncStatusLabel(statusId, statusDescription);
 
   const icon =
-    statusId === 5 ? (
+    statusId === Gear.syncStatus.Completed ? (
       <Cloud size={18} strokeWidth={2.4} />
-    ) : statusId === 4 ? (
+    ) : statusId === Gear.syncStatus.Failed ? (
       <CloudOff size={18} strokeWidth={2.4} color={"#E7000B"} />
     ) : (
       <RefreshCw size={18} strokeWidth={2.4} />
