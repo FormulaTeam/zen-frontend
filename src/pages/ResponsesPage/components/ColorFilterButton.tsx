@@ -4,6 +4,9 @@ import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import { useMemo, useState, type MouseEvent } from "react";
 
+import type { ResponsesTableColorRuleColor } from "../../../types/shared";
+import { COLOR_RULE_PALETTE } from "../utils/colorRules";
+
 import { UnifiedButton } from "../styled";
 
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
@@ -12,31 +15,10 @@ const COLOR_FILTER_BUTTON_WIDTH = 320;
 const COLOR_FILTER_POPOVER_WIDTH = 320;
 const COLOR_FILTER_RULE_FONT_SIZE = 9;
 
-export type ResponsesTableColorRuleColor =
-  | "red"
-  | "lightRed"
-  | "orange"
-  | "lightOrange"
-  | "blue"
-  | "lightBlue"
-  | "green"
-  | "lightGreen";
-
 export type ColorRuleFilterOption = {
   id: string;
   label: string;
   color: ResponsesTableColorRuleColor;
-};
-
-const COLOR_HEX_BY_RULE_COLOR: Record<ResponsesTableColorRuleColor, string> = {
-  red: "#F7CACA",
-  lightRed: "#FFE3E3",
-  orange: "#FFD9A8",
-  lightOrange: "#FFEBCB",
-  blue: "#A8D6F8",
-  lightBlue: "#D9EEFF",
-  green: "#B8F3CB",
-  lightGreen: "#DCFCE7",
 };
 
 interface ColorFilterButtonProps {
@@ -254,7 +236,7 @@ export function ColorFilterButton({
                 key={rule.id}
                 label={rule.label}
                 checked={selectedRuleIdSet.has(rule.id)}
-                color={COLOR_HEX_BY_RULE_COLOR[rule.color]}
+                color={COLOR_RULE_PALETTE[rule.color].swatch}
                 onClick={() => handleToggleRule(rule.id)}
               />
             ))}

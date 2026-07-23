@@ -28,6 +28,7 @@ import { OptionResponseValue, formatOptionLabel } from "../../../utils/optionRes
 import {
   COLOR_RULE_PALETTE,
   createEmptyColorRule,
+  getColorRuleOptionItems,
   getComparatorOptions,
 } from "../utils/colorRules";
 import { showErrorNotification, showSuccessNotification } from "../../../utils/utils";
@@ -99,15 +100,6 @@ type ColorRuleFieldExtra = {
   inactiveOptionIds?: string[];
 };
 
-type ColorRuleOptionsField = FormFieldDto & {
-  options?: OptionResponseValue[];
-};
-
-type RawOptionValue =
-  | string
-  | OptionResponseValue
-  | { id?: string | number; text?: string; value?: string; isActive?: boolean };
-
 const stableRulesValue = (rules: ResponsesTableColorRuleDto[]) => JSON.stringify(rules);
 
 const requiresTargetValue = (rule: ResponsesTableColorRuleDto): boolean =>
@@ -140,50 +132,6 @@ const isConnectedOptionsField = (field?: FormFieldDto, fields: FormFieldDto[] = 
   if (!linkedOptionsFieldId) return false;
 
   return !fields.some((formField) => String(formField.id) === String(linkedOptionsFieldId));
-};
-
-const normalizeOptionItem = (option: RawOptionValue): OptionResponseValue | null => {
-  if (typeof option === "string") {
-    return {
-      id: option,
-      text: formatOptionLabel(option),
-    };
-  }
-
-  const optionId = option.id ?? ("value" in option ? option.value : undefined) ?? option.text;
-  if (optionId === undefined || optionId === null) return null;
-
-  return {
-    id: String(optionId),
-    text: formatOptionLabel(option.text ?? String(optionId)),
-    isActive: option.isActive,
-  };
-};
-
-const getRawFieldOptions = (field?: FormFieldDto): RawOptionValue[] => {
-  const extra = field?.extra as (ColorRuleFieldExtra & {
-    options?: { items?: RawOptionValue[] } | RawOptionValue[];
-    items?: RawOptionValue[];
-    values?: RawOptionValue[];
-  }) | undefined;
-  const optionsField = field as ColorRuleOptionsField | undefined;
-  const extraOptions = Array.isArray(extra?.options) ? extra.options : extra?.options?.items;
-
-  return extraOptions ?? extra?.items ?? extra?.values ?? optionsField?.options ?? [];
-};
-
-const getManualOptionItems = (field?: FormFieldDto, fields: FormFieldDto[] = []): OptionResponseValue[] => {
-  const linkedOptionsFieldId = getLinkedOptionsFieldId(field);
-  const sourceField = linkedOptionsFieldId
-    ? fields.find((formField) => String(formField.id) === String(linkedOptionsFieldId)) ?? field
-    : field;
-  const inactiveOptionIds = new Set((getFieldExtra(sourceField).inactiveOptionIds ?? []).map(String));
-  const options = getRawFieldOptions(sourceField);
-
-  return options
-    .map(normalizeOptionItem)
-    .filter((option): option is OptionResponseValue => !!option)
-    .filter((option) => !inactiveOptionIds.has(String(option.id)) && option.isActive !== false);
 };
 
 const createFallbackOption = (
@@ -250,7 +198,7 @@ const ColorRuleTargetValueInput = ({
   }
 
   if (rule.fieldType === fieldType.Options) {
-    const manualOptions = getManualOptionItems(selectedField, fields);
+    const manualOptions = getColorRuleOptionItems(selectedField, fields);
     const options = isLinkedOptionsField ? linkedOptions : manualOptions;
     const fallbackOption = createFallbackOption(rule.targetValue);
     const selectedOption =

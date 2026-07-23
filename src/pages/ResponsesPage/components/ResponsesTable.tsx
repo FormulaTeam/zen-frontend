@@ -69,7 +69,7 @@ import { useConnectedFormOptions } from "@src/hooks/useConnectedFormOptions";
 import {
   buildColorRuleMatches,
   COLOR_RULE_PALETTE,
-  getComparatorOptions,
+  formatColorRuleLabel,
   ROW_COLOR_RULE_FIELD,
 } from "../utils/colorRules";
 import "./responsesTableFilters.css";
@@ -984,24 +984,16 @@ export const ResponsesTable = React.memo(
         if (!rule) return "";
 
         const ruleField = formFieldsById.get(String(rule.fieldId));
-        const fieldLabel = ruleField?.displayName ?? "";
-        const comparatorLabel =
-          getComparatorOptions(rule.fieldType).find(
-            (option) => option.value === rule.comparatorId,
-          )?.label ?? "";
         const targetValueLabel =
           ruleField && rule.targetValue !== null && rule.targetValue !== undefined && rule.targetValue !== ""
             ? formatCellTooltipValue(rule.targetValue, ruleField)
             : "";
-        const comparatorAndValue = targetValueLabel
-          ? `${comparatorLabel}${/(?: ל| מ)$/.test(comparatorLabel) ? "" : " "}${targetValueLabel}`
-          : comparatorLabel;
         const colorLabel = COLOR_RULE_PALETTE[rule.color]?.label ?? "";
-        const conditionText = [fieldLabel, comparatorAndValue].filter(Boolean).join(" ");
+        const conditionText = formatColorRuleLabel(rule, ruleField, formFields, targetValueLabel);
 
         return [conditionText, colorLabel].filter(Boolean).join(" ← ");
       },
-      [colorRulesById, formFieldsById, formatCellTooltipValue],
+      [colorRulesById, formFields, formFieldsById, formatCellTooltipValue],
     );
 
     const handleCellClick = useCallback(

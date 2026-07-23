@@ -1,7 +1,7 @@
 import { comparator, fieldType } from "formula-gear";
-import { FormFieldDto, ResponsesTableColorRuleDto } from "../../../types/shared";
+import type { FormFieldDto, ResponsesTableColorRuleDto } from "../../../types/shared";
 import { getFieldColumnKey } from "../../../api";
-import { getOptionResponseRawValue } from "../../../utils/optionResponseValue";
+import { getOptionResponseRawValue, type OptionResponseValue } from "../../../utils/optionResponseValue";
 
 export const COLOR_RULE_PALETTE = {
   red: { label: "אדום", background: "#ffc7c7", swatch: "#ff9b9b" },
@@ -16,12 +16,59 @@ export const COLOR_RULE_PALETTE = {
 
 export type ColorRuleMatch = {
   ruleId: string;
-  title: string;
   color: keyof typeof COLOR_RULE_PALETTE;
 };
 
 export type ColorRuleMatchMap = Record<string, Record<string, ColorRuleMatch>>;
 export const ROW_COLOR_RULE_FIELD = "__row_color_rule__";
+
+type ColorRuleFieldExtra = {
+  linkedOptionsFieldId?: string | null;
+  inactiveOptionIds?: string[];
+};
+
+type ColorRuleOptionsField = FormFieldDto & {
+  options?: OptionResponseValue[];
+};
+
+export const getColorRuleOptionItems = (
+  field?: FormFieldDto,
+  fields: FormFieldDto[] = [],
+): OptionResponseValue[] => {
+  const extra = field?.extra as ColorRuleFieldExtra | undefined;
+  const linkedOptionsFieldId = extra?.linkedOptionsFieldId;
+  const sourceField = linkedOptionsFieldId
+    ? fields.find((candidate) => String(candidate.id) === String(linkedOptionsFieldId)) ?? field
+    : field;
+  const sourceExtra = sourceField?.extra as ColorRuleFieldExtra | undefined;
+  const inactiveOptionIds = new Set((sourceExtra?.inactiveOptionIds ?? []).map(String));
+
+  return ((sourceField as ColorRuleOptionsField | undefined)?.options ?? [])
+    .filter((option) => !inactiveOptionIds.has(String(option.id)) && option.isActive !== false);
+};
+
+const formatColorRuleTargetValue = (
+  rule: ResponsesTableColorRuleDto,
+  field?: FormFieldDto,
+  fields: FormFieldDto[] = [],
+): string => {
+  const value = rule.targetValue;
+  if (value === null || value === undefined || value === "") return "";
+
+  if (rule.fieldType === fieldType.Options) {
+    return (
+      getColorRuleOptionItems(field, fields).find(
+        (option) => String(option.id) === String(value),
+      )?.text ?? String(value)
+    );
+  }
+
+  if (rule.fieldType === fieldType.Boolean) {
+    return value === true || value === "true" ? "כן" : "לא";
+  }
+
+  return String(value);
+};
 
 export const getComparatorOptions = (typeId?: number) => {
   switch (typeId) {
@@ -71,16 +118,21 @@ export const getComparatorOptions = (typeId?: number) => {
   }
 };
 
-const formatRuleTitle = (rule: ResponsesTableColorRuleDto): string => {
+export const formatColorRuleLabel = (
+  rule: ResponsesTableColorRuleDto,
+  field?: FormFieldDto,
+  fields: FormFieldDto[] = [],
+  targetValueLabel = formatColorRuleTargetValue(rule, field, fields),
+): string => {
+  const fieldLabel = field?.displayName ?? field?.name ?? "שדה";
+
   const comparatorLabel =
     getComparatorOptions(rule.fieldType).find((option) => option.value === rule.comparatorId)
       ?.label ?? "";
-  const valueLabel =
-    rule.targetValue === null || rule.targetValue === undefined || rule.targetValue === ""
-      ? ""
-      : ` - ${String(rule.targetValue)}`;
 
-  return `${comparatorLabel}${valueLabel}`.trim() || "חוק צבע";
+  return (
+    [fieldLabel, comparatorLabel, targetValueLabel].filter(Boolean).join(" ").trim() || "חוק צבע"
+  );
 };
 
 const isEmptyValue = (value: unknown): boolean => {
@@ -97,11 +149,7 @@ const parseTimeToSeconds = (value: unknown): number => {
   const parsedMinutes = Number(minutes);
   const parsedSeconds = Number(seconds);
 
-  if (
-    Number.isNaN(parsedHours) ||
-    Number.isNaN(parsedMinutes) ||
-    Number.isNaN(parsedSeconds)
-  ) {
+  if (Number.isNaN(parsedHours) || Number.isNaN(parsedMinutes) || Number.isNaN(parsedSeconds)) {
     return Number.NaN;
   }
 
@@ -110,15 +158,20 @@ const parseTimeToSeconds = (value: unknown): number => {
 
 const normalizeComparable = (value: unknown, typeId: number): string | number | boolean => {
   if (typeId === fieldType.Number) return Number(value);
-  if (typeId === fieldType.Boolean) return value === true || value === "true" || value === 1 || value === "1";
+  if (typeId === fieldType.Boolean)
+    return value === true || value === "true" || value === 1 || value === "1";
   if (typeId === fieldType.Date) return new Date(String(value)).getTime();
   if (typeId === fieldType.Time) return parseTimeToSeconds(value);
   if (typeId === fieldType.Options) {
     const rawValue = getOptionResponseRawValue(value);
     if (Array.isArray(rawValue)) return rawValue.map(String).join(",");
-    return String(rawValue ?? "").trim().toLowerCase();
+    return String(rawValue ?? "")
+      .trim()
+      .toLowerCase();
   }
-  return String(value ?? "").trim().toLowerCase();
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
 };
 
 const valueContains = (actualValue: unknown, targetValue: unknown): boolean => {
@@ -129,7 +182,9 @@ const valueContains = (actualValue: unknown, targetValue: unknown): boolean => {
     return actualRawValue.map(String).includes(String(targetRawValue));
   }
 
-  return String(actualRawValue ?? "").toLowerCase().includes(String(targetRawValue ?? "").toLowerCase());
+  return String(actualRawValue ?? "")
+    .toLowerCase()
+    .includes(String(targetRawValue ?? "").toLowerCase());
 };
 
 export const doesRuleMatchValue = (
@@ -199,7 +254,6 @@ export const buildColorRuleMatches = (
             ...(matches[rowId] ?? {}),
             [targetKey]: {
               ruleId: rule.id,
-              title: formatRuleTitle(rule),
               color: rule.color,
             },
           };
