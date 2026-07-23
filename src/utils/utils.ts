@@ -4,7 +4,7 @@ import * as XLSX from "sheetjs-style";
 import * as FileSaver from "file-saver";
 import moment from "moment";
 import { getResponses } from "../api";
-import { FieldType, formIcon, permission, Permission } from "formula-gear";
+import { FieldType, formIcon, permission, Permission, syncStatus } from "formula-gear";
 import { fieldType } from "formula-gear";
 import {
   CustomFormField,
@@ -338,9 +338,13 @@ export function showErrorNotification(error: string, autoCloseTime?: number) {
   });
 }
 
-export function showSuccessNotification(msg: string) {
+export function showSuccessNotification(
+  msg: string,
+  options?: Parameters<typeof toast.success>[1],
+) {
   toast.success(msg + "", {
     duration: 2500,
+    ...options,
   });
 }
 
@@ -887,7 +891,7 @@ export function exportToExcel(responsesArr: ResponseDto[], form: FormDto) {
 
   sortedResponses.forEach((element, i) => {
     const syncStatusId = element.syncStatusId ?? element.syncStatus?.id;
-    const isSynced = syncStatusId === 5;
+    const isSynced = syncStatusId === syncStatus.Completed;
 
     data[i] = {
       [RESPONSE_INDEX_COLUMN]: element.index ? `\u202B${String(element.index)}\u202C` : "",

@@ -32,6 +32,28 @@ export type ResponseFieldValueDto = z.infer<typeof ResponseFieldValueSchema>;
 export type ResponseFieldFilterDto = z.infer<typeof ResponseFieldFilterSchema>;
 export type ResponseFiltersDto = z.infer<typeof ResponseFiltersSchema>;
 export type ResponseMetaField = z.infer<typeof ResponseMetaFieldSchema>;
+export type ResponsesTableColorRuleColor =
+  | "red"
+  | "lightRed"
+  | "orange"
+  | "lightOrange"
+  | "blue"
+  | "lightBlue"
+  | "green"
+  | "lightGreen";
+
+export type ResponsesTableColorRuleDto = {
+  id: string;
+  formId?: number;
+  fieldId: string;
+  fieldType: number;
+  comparatorId: number;
+  targetValue?: unknown;
+  color: ResponsesTableColorRuleColor;
+  targetType: "cell" | "row";
+  order: number;
+  isActive: boolean;
+};
 
 export type UpdateOneResponseDto = {
   responseId: string;

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState, useImperativeHandle } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, useImperativeHandle } from "react";
 import {
   FormControl,
   CircularProgress,
@@ -14,7 +14,7 @@ import { formsScopeOption } from "@src/types/enums/filtersAndSorts.enum";
 import { FormSectionDto, FormFieldDto, FormDto } from "@src/types/shared";
 import { useFormStructureContext } from "@pages/FormEditor/context/FormStructureContext";
 import { FormOption } from "@utils/interfaces";
-import { LoaderContainer, Container, FieldControl } from "./styled";
+import { LoaderContainer, Container, FieldControl, LeadingFieldControl } from "./styled";
 import { fieldType } from "formula-gear";
 import { OptionsFieldTypeId } from "../index";
 import { FormFieldExtra } from "@pages/FormEditor/schemas/fields";
@@ -23,7 +23,9 @@ import { PaginatedAutocompleteListbox } from "@src/components/PaginatedAutocompl
 import { basePopperSx } from "@src/components/FormFields/CustomDropDownAutocomplete/styled";
 
 interface Props {
+  fieldId: string;
   linkedOptionsFieldId: string | null | undefined;
+  dependentOptionsFieldId: string | null | undefined;
   onChange: (extra: Partial<FormFieldExtra<OptionsFieldTypeId>>) => void;
   validationErrors: any;
   defaultValue?: string[];
@@ -43,7 +45,9 @@ const getFieldsFromForm = (form: FormDto): FormFieldDto[] => {
 
 function FormFieldResponsesOptions(props: Props) {
   const {
+    fieldId,
     linkedOptionsFieldId,
+    dependentOptionsFieldId,
     validationErrors,
     onChange,
     defaultValue = [],
@@ -217,6 +221,104 @@ function FormFieldResponsesOptions(props: Props) {
     return availableFields.find((field) => field.id === selectedFieldId) ?? null;
   }, [availableFields, selectedFieldId]);
 
+  const availableSourceFieldIds = useMemo(
+    () => new Set(availableFields.map((field) => field.id)),
+    [availableFields],
+  );
+
+  const wouldCreateCycle = useCallback(
+    (controllingFieldId: string) => {
+      const visited = new Set<string>();
+      let nextFieldId: string | undefined = controllingFieldId;
+
+      while (nextFieldId) {
+        if (nextFieldId === fieldId) return true;
+        if (visited.has(nextFieldId)) return false;
+
+        visited.add(nextFieldId);
+
+        const nextField = formStructure.fields[nextFieldId];
+        const nextExtra = nextField?.data?.extra as
+          | (FormFieldExtra<OptionsFieldTypeId> & { dependentOptionsFieldId?: string | null })
+          | undefined;
+
+        nextFieldId =
+          typeof nextExtra?.dependentOptionsFieldId === "string"
+            ? nextExtra.dependentOptionsFieldId
+            : undefined;
+      }
+
+      return false;
+    },
+    [fieldId, formStructure.fields],
+  );
+
+  const availableDependentFields = useMemo<ValidField[]>(() => {
+    if (!selectedFormId || !selectedFieldId) return [];
+
+    return Object.values(formStructure.fields)
+      .filter((field) => {
+        const fieldData = field.data;
+        const fieldExtra = fieldData.extra as FormFieldExtra<OptionsFieldTypeId> | undefined;
+        const candidateSourceFieldId = fieldExtra?.linkedOptionsFieldId;
+
+        return (
+          field.id !== fieldId &&
+          fieldData.typeId === fieldType.Options &&
+          typeof candidateSourceFieldId === "string" &&
+          candidateSourceFieldId !== selectedFieldId &&
+          availableSourceFieldIds.has(candidateSourceFieldId) &&
+          !wouldCreateCycle(field.id)
+        );
+      })
+      .map((field) => ({
+        id: field.id,
+        displayName: field.data.displayName,
+      }));
+  }, [
+    availableSourceFieldIds,
+    fieldId,
+    formStructure.fields,
+    selectedFieldId,
+    selectedFormId,
+    wouldCreateCycle,
+  ]);
+
+  const selectedDependentFieldOption = useMemo<ValidField | null>(() => {
+    if (!dependentOptionsFieldId) return null;
+
+    const savedField = formStructure.fields[dependentOptionsFieldId];
+
+    if (savedField) {
+      return {
+        id: savedField.id,
+        displayName: savedField.data.displayName,
+      };
+    }
+
+    return (
+      availableDependentFields.find((field) => field.id === dependentOptionsFieldId) ?? null
+    );
+  }, [availableDependentFields, dependentOptionsFieldId, formStructure.fields]);
+
+  useEffect(() => {
+    if (!dependentOptionsFieldId) return;
+    if (!selectedFormId || !selectedFieldId || isInitializing) return;
+    if (selectedDependentFieldOption) return;
+
+    onChange({
+      dependentOptionsFieldId: null,
+      defaultValue: [],
+    } as Partial<FormFieldExtra<OptionsFieldTypeId>>);
+  }, [
+    dependentOptionsFieldId,
+    isInitializing,
+    onChange,
+    selectedDependentFieldOption,
+    selectedFieldId,
+    selectedFormId,
+  ]);
+
   if (isResolvingInitialSelection && !selectedFormId) {
     return (
       <LoaderContainer>
@@ -248,8 +350,9 @@ function FormFieldResponsesOptions(props: Props) {
 
           onChange({
             linkedOptionsFieldId: null,
+            dependentOptionsFieldId: null,
             defaultValue: [],
-          });
+          } as Partial<FormFieldExtra<OptionsFieldTypeId>>);
         }}
         isOptionEqualToValue={(option, value) => option?.id === value?.id}
         disablePortal
@@ -317,7 +420,7 @@ function FormFieldResponsesOptions(props: Props) {
 
   const fieldSelect: JSX.Element = (
     <FieldControl error={!!validationErrors?.properties?.linkedOptionsFieldId}>
-      <Tooltip title={!selectedFormId ? "יש לבחור טופס" : ""}>
+      <Tooltip title={!selectedFormId ? "יש לבחור טופס" : ""} placement="top" arrow>
         <span style={{ display: "block" }}>
           <Autocomplete
             options={availableFields}
@@ -334,8 +437,9 @@ function FormFieldResponsesOptions(props: Props) {
 
               onChange({
                 linkedOptionsFieldId: nextFieldId,
+                dependentOptionsFieldId: null,
                 defaultValue: [],
-              });
+              } as Partial<FormFieldExtra<OptionsFieldTypeId>>);
             }}
             noOptionsText={
               !selectedFormId
@@ -368,7 +472,7 @@ function FormFieldResponsesOptions(props: Props) {
 
   const defaultValueSelect: JSX.Element = (
     <FieldControl>
-      <Tooltip title={!selectedFieldId ? "יש לבחור שדה" : ""}>
+      <Tooltip title={!selectedFieldId ? "יש לבחור שדה" : ""} placement="top" arrow>
         <span style={{ display: "block" }}>
           <Autocomplete
             multiple={selectionMode === "multiple"}
@@ -418,8 +522,44 @@ function FormFieldResponsesOptions(props: Props) {
     </FieldControl>
   );
 
+  const dependentFieldSelect: JSX.Element = (
+    <LeadingFieldControl>
+      <Tooltip
+        title={
+          !selectedFieldId
+            ? "יש לבחור שדה"
+            : !availableDependentFields.length
+              ? "לא קיימים שדות אפשרויות מאותו טופס מקור"
+              : ""
+        }
+        placement="top"
+        arrow>
+        <span style={{ display: "block" }}>
+          <Autocomplete
+            options={availableDependentFields}
+            getOptionLabel={(option) => option.displayName || ""}
+            value={selectedDependentFieldOption}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            disabled={!selectedFieldId || !availableDependentFields.length}
+            noOptionsText="לא נמצאו שדות מתאימים"
+            onChange={(_, newValue) => {
+              onChange({
+                dependentOptionsFieldId: newValue?.id ?? null,
+                defaultValue: [],
+              } as Partial<FormFieldExtra<OptionsFieldTypeId>>);
+            }}
+            renderInput={(params) => (
+              <TextField {...params} label="שדה אפשרויות מוביל" variant="standard" />
+            )}
+          />
+        </span>
+      </Tooltip>
+    </LeadingFieldControl>
+  );
+
   return (
     <Container>
+      {dependentFieldSelect}
       {formSelector}
       {fieldSelect}
       {defaultValueSelect}
