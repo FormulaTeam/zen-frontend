@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import styled from "styled-components";
+import { PaintRoller, Trash2 } from "lucide-react";
 
 export const ColorRulesDialog = styled(Dialog)`
   .MuiDialog-paper {
@@ -65,9 +66,10 @@ export const DeleteRuleButton = styled(IconButton)`
   }
 `;
 
-export const DeleteRuleIcon = styled.img`
+export const DeleteRuleIcon = styled(Trash2)`
   width: 20px;
   height: 20px;
+  color: #e7000b;
 `;
 
 export const ModalContent = styled(DialogContent)`
@@ -102,9 +104,20 @@ export const EmptyStateContent = styled(Box)`
   gap: 18px;
 `;
 
-export const EmptyStateIcon = styled.img`
+export const EmptyStateIconWrapper = styled(Box)`
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  background-color: #e3f2fd;
+  border: 1px solid #bbdefb;
+`;
+
+export const EmptyStateIcon = styled(PaintRoller)`
   width: 46px;
   height: 46px;
+  color: #1e88e5;
 `;
 
 export const EmptyStateTitle = styled(Typography)`
@@ -118,12 +131,48 @@ export const EmptyStateDescription = styled(Typography)`
 `;
 
 export const RulesTableContainer = styled(Box)`
+  flex: 1;
   overflow-x: hidden;
-  overflow-y: auto;
-  max-height: 380px;
+  overflow-y: scroll !important;
+  height: 100%;
   padding-top: 8px;
-  padding-inline: 4px;
-  scrollbar-gutter: stable;
+  padding-inline: 10px 8px;
+  scrollbar-width: none !important;
+  -ms-overflow-style: auto !important;
+
+  &::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+  }
+`;
+
+export const RulesTableScrollArea = styled(Box)`
+  display: flex;
+  gap: 10px;
+  height: 360px;
+  min-height: 0;
+`;
+
+export const RulesScrollbarRail = styled(Box)`
+  position: relative;
+  flex: 0 0 8px;
+  height: 100%;
+  border-radius: 9999px;
+  background-color: #f1f1f1;
+  cursor: default;
+`;
+
+export const RulesScrollbarThumb = styled(Box)`
+  position: absolute;
+  inset-inline: 0;
+  border-radius: 9999px;
+  background-color: #c3c0c0;
+  cursor: default;
+
+  &:active {
+    cursor: default;
+    background-color: #aaa7a7;
+  }
 `;
 
 export const RulesGrid = styled(Box)`
@@ -198,6 +247,8 @@ export const DragHandle = styled(Box) <{ $isDragging?: boolean; $canDrag?: boole
 
   svg {
     font-size: 18px;
+    pointer-events: none;
+    user-select: none;
   }
 `;
 
@@ -219,15 +270,41 @@ export const ColorSelectValue = styled(Box)`
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 20px;
+  height: 24px;
   gap: 8px;
+`;
+
+export const ColorRulePickerWrapper = styled(Box)`
+  width: 100%;
+  min-width: 0;
+
+  .MuiInputBase-root {
+    min-height: 40px;
+    background-color: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 4px !important;
+  }
+
+  .MuiInputBase-root::before {
+    border: 0 !important;
+    border-radius: 4px !important;
+  }
+
+  .MuiInputBase-root.Mui-error {
+    border-color: #ef000b !important;
+  }
+
+  .MuiInputBase-root::after {
+    border: 0 !important;
+    border-radius: 4px !important;
+  }
 `;
 
 export const ColorSwatch = styled(Box) <{ $backgroundColor: string }>`
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  margin-block-start: 2px;
+  transform: translateY(2px);
   background-color: ${({ $backgroundColor }) => $backgroundColor};
 `;
 
@@ -267,7 +344,7 @@ export const AddRuleButton = styled(Button)`
 
 export const DeleteConfirmContent = styled(Box)`
   position: relative;
-  width: 280px;
+  width: 320px;
   padding: 16px 16px 14px;
   border-radius: 4px;
   background-color: #ffffff;
@@ -277,7 +354,7 @@ export const DeleteConfirmContent = styled(Box)`
     content: "";
     position: absolute;
     inset-block-start: -8px;
-    inset-inline-start: 50%;
+    inset-inline-start: calc(50% - 10px);
     width: 16px;
     height: 16px;
     background-color: #ffffff;
@@ -295,6 +372,7 @@ export const DeleteConfirmText = styled(Typography)`
 
 export const DeleteConfirmActions = styled(Box)`
   display: flex;
+  justify-content: flex-end;
   gap: 10px;
   margin-top: 18px;
 `;

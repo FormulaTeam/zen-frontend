@@ -7,6 +7,7 @@ interface ExpandableLongTextProps {
   text: string;
   onToggle?: (isExpanded: boolean) => void;
   highlightedText?: React.ReactNode;
+  disableTooltip?: boolean;
 }
 
 /**
@@ -16,6 +17,7 @@ export const ExpandableLongText = ({
   text,
   onToggle,
   highlightedText,
+  disableTooltip = false,
 }: ExpandableLongTextProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
@@ -74,13 +76,53 @@ export const ExpandableLongText = ({
     onToggle?.(newExpanded);
 
     reopenTooltipTimeoutRef.current = window.setTimeout(() => {
-      if (isButtonHoveredRef.current) {
+      if (!disableTooltip && isButtonHoveredRef.current) {
         setIsTooltipOpen(true);
       }
     }, 180);
   };
 
   const tooltipTitle = isExpanded ? "צמצם" : "הרחב";
+  const toggleButton = (
+    <IconButton
+      size="small"
+      aria-label={tooltipTitle}
+      onMouseEnter={() => {
+        isButtonHoveredRef.current = true;
+        if (!disableTooltip) {
+          setIsTooltipOpen(true);
+        }
+      }}
+      onMouseLeave={() => {
+        isButtonHoveredRef.current = false;
+        clearReopenTooltipTimeout();
+        setIsTooltipOpen(false);
+      }}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        clearReopenTooltipTimeout();
+        setIsTooltipOpen(false);
+      }}
+      onClick={handleToggle}
+      sx={{
+        width: 24,
+        height: 24,
+        padding: "2px",
+        flexShrink: 0,
+        "&:hover": {
+          backgroundColor: "rgba(0, 0, 0, 0.04)",
+        },
+        "& svg": {
+          transform: "rotate(45deg)",
+        },
+      }}>
+      {isExpanded ? (
+        <UnfoldLessIcon fontSize="small" />
+      ) : (
+        <UnfoldMoreIcon fontSize="small" />
+      )}
+    </IconButton>
+  );
 
   return (
     <Box
@@ -110,51 +152,20 @@ export const ExpandableLongText = ({
 
       {(isOverflowing || isExpanded) && (
         <Box sx={{ display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
-          <Tooltip
-            title={tooltipTitle}
-            placement="top"
-            arrow
-            open={isTooltipOpen}
-            disableFocusListener
-            disableTouchListener
-            disableInteractive>
-            <IconButton
-              size="small"
-              aria-label={tooltipTitle}
-              onMouseEnter={() => {
-                isButtonHoveredRef.current = true;
-                setIsTooltipOpen(true);
-              }}
-              onMouseLeave={() => {
-                isButtonHoveredRef.current = false;
-                clearReopenTooltipTimeout();
-                setIsTooltipOpen(false);
-              }}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                clearReopenTooltipTimeout();
-                setIsTooltipOpen(false);
-              }}
-              onClick={handleToggle}
-              sx={{
-                width: 24,
-                height: 24,
-                padding: "2px",
-                flexShrink: 0,
-                "&:hover": {
-                  backgroundColor: "rgba(0, 0, 0, 0.04)",
-                },
-                "& svg": {
-                  transform: "rotate(45deg)",
-                },
-              }}>
-              {isExpanded ? (
-                <UnfoldLessIcon fontSize="small" />
-              ) : (
-                <UnfoldMoreIcon fontSize="small" />
-              )}
-            </IconButton>
-          </Tooltip>
+          {disableTooltip ? (
+            toggleButton
+          ) : (
+            <Tooltip
+              title={tooltipTitle}
+              placement="top"
+              arrow
+              open={isTooltipOpen}
+              disableFocusListener
+              disableTouchListener
+              disableInteractive>
+              {toggleButton}
+            </Tooltip>
+          )}
         </Box>
       )}
     </Box>
