@@ -18,6 +18,7 @@ import syncGif from "../../images/sync.gif";
 import noData from "../../images/noData2.png";
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import FormCard from "../../components/FormCard/FormCard";
+import PinnedFormsRow from "../../components/MainPage/PinnedFormsRow";
 import wavingHand from "../../images/waving_hand.png";
 import "./MainPage.scss";
 import BasePopup from "../../components/BasePopup/BasePopup";
@@ -26,6 +27,7 @@ import MainSortSelect from "../../components/MainSortSelect/MainSortSelect";
 import SearchAndFilter from "../../components/SearchAndFilter/SearchAndFilter";
 import FormGroupSelect from "../../components/MainPage/FormGroupSelect";
 import { useGetMyPersonal } from "../../api/usersApi";
+import { useGetPinnedForms } from "../../api/formsApi";
 import {
   RowBox,
   StyledTypography,
@@ -84,6 +86,8 @@ function MainPage({
 
   const { data: myPersonal } = useGetMyPersonal({ enabled: !!user });
 
+  const { data: pinnedForms = [] } = useGetPinnedForms(!!user);
+
   const { scope, setScope } = useFormsScope({ isSuperAdmin: !!isSuperAdmin });
 
   useEffect(() => {
@@ -107,7 +111,7 @@ function MainPage({
     }
   }, [sortByParam, sortDirectionParam]);
 
-  const { formsData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetFormsData({
+  const { formsData: rawFormsData, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetFormsData({
     scope: scope,
     searchQuery: debouncedSearchValue || undefined,
     sortBy,
@@ -115,6 +119,16 @@ function MainPage({
     enabled: !!user,
     includePermissions: !isSuperAdmin && scope !== formsScopeOption.MyForms,
   });
+
+  const pinnedFormIds = useMemo(
+    () => new Set(pinnedForms.map((form) => form.id)),
+    [pinnedForms],
+  );
+
+  const formsData = useMemo(
+    () => rawFormsData.filter((form: FormOverviewDto) => !pinnedFormIds.has(form.id)),
+    [rawFormsData, pinnedFormIds],
+  );
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
@@ -227,42 +241,60 @@ function MainPage({
         </RowBox>
       </Box>
 
-      <Box className="main-page-content-wrapper">
+      <Box className="main-page-content-wrapper" onScroll={handleScroll}>
+        {!!user && (scope === formsScopeOption.MyForms || scope === formsScopeOption.AccessibleForms) && (
+          <Box className="pinned-forms-section">
+            <PinnedFormsRow
+              pinnedForms={pinnedForms}
+              isSuperAdmin={isSuperAdmin}
+              navigate={navigate}
+              resetSearchValue={resetSearchValue}
+              myUpn={myPersonal?.upn}
+            />
+          </Box>
+        )}
+
         {isLoading ? (
           <Box className="main-page-loading">
             <ReactLoading type="spinningBubbles" color={theme.palette.primary.main} />
           </Box>
         ) : formsData.length > 0 ? (
-          <Grid
-            container
-            columns={{ xs: 4, sm: 8, md: 12 }}
-            className="forms-grid"
-            id="forms-grid"
-            onScroll={handleScroll}
-            spacing={3}>
-            {formsData.map((form: FormOverviewDto, index: number) => (
-              <Grid key={form.id ?? index} size={{ xs: 4, sm: 4, md: 6, lg: 4, xl: 3 }}>
-                <FormCard
-                  form={form}
-                  searchValue={searchValue}
-                  resetSearchValue={resetSearchValue}
-                  isSuperAdmin={isSuperAdmin}
-                  navigate={navigate}
-                  isCreator={form.createdBy?.upn?.toLowerCase() === myPersonal?.upn?.toLowerCase()}
-                />
-              </Grid>
-            ))}
-            {isFetchingNextPage && (
-              <Box className="bottom-lbl" sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-                <ReactLoading
-                  type="spin"
-                  color={theme.palette.primary.main}
-                  height={30}
-                  width={30}
-                />
-              </Box>
-            )}
-          </Grid>
+          <>
+            <Box className="all-forms-heading">
+              <Typography sx={{ fontSize: "16px", fontWeight: 600, color: "#020618", mb: 1.5 }}>
+                כל הטפסים
+              </Typography>
+            </Box>
+            <Grid
+              container
+              columns={{ xs: 4, sm: 8, md: 12 }}
+              className="forms-grid"
+              id="forms-grid"
+              spacing={3}>
+              {formsData.map((form: FormOverviewDto, index: number) => (
+                <Grid key={form.id ?? index} size={{ xs: 4, sm: 4, md: 6, lg: 4, xl: 3 }}>
+                  <FormCard
+                    form={form}
+                    searchValue={searchValue}
+                    resetSearchValue={resetSearchValue}
+                    isSuperAdmin={isSuperAdmin}
+                    navigate={navigate}
+                    isCreator={form.createdBy?.upn?.toLowerCase() === myPersonal?.upn?.toLowerCase()}
+                  />
+                </Grid>
+              ))}
+              {isFetchingNextPage && (
+                <Box className="bottom-lbl" sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+                  <ReactLoading
+                    type="spin"
+                    color={theme.palette.primary.main}
+                    height={30}
+                    width={30}
+                  />
+                </Box>
+              )}
+            </Grid>
+          </>
         ) : showNoResults ? (
           <Box sx={{ width: "100%", display: "flex", justifyContent: "center", mt: 6 }}>
             <NoResultsState
@@ -287,7 +319,7 @@ function MainPage({
 
       <BasePopup
         open={false}
-        onClose={() => {}}
+        onClose={() => { }}
         title="סנכרון נתונים למטרו"
         content={
           <Box className="gifs-div">

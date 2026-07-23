@@ -14,6 +14,8 @@ import {
 } from "@mui/material";
 import { MoreVert, ChatBubbleOutline, EditOutlined, ShareOutlined, DeleteOutline } from "@mui/icons-material";
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
+import PushPinIcon from "@mui/icons-material/PushPin";
+import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import { permission } from "formula-gear";
 import UserPicker from "../UserPicker/UserPicker";
 import { getFormIconByName } from "../../utils/utils";
@@ -36,7 +38,7 @@ import {
   StyledCard,
 } from "./styled";
 import { FormOverviewDto } from "@src/types/shared";
-import { getFormById, useDeleteForm } from "../../api/formsApi";
+import { getFormById, useDeleteForm, usePinForm, useUnpinForm } from "../../api/formsApi";
 import { toast } from "sonner";
 import ConfirmDeleteDialog from "../BasePopup/ConfirmDeleteDialog";
 import DuplicateFormDialog from "./DuplicateFormDialog";
@@ -67,9 +69,13 @@ const FormCard = ({
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [showDuplicatePopup, setShowDuplicatePopup] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
   const openMenu = Boolean(anchorEl);
 
   const deleteFormMutation = useDeleteForm({ id: form.id.toString() });
+  const pinFormMutation = usePinForm();
+  const unpinFormMutation = useUnpinForm();
+
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -164,6 +170,29 @@ const FormCard = ({
     }
   };
 
+  const handlePinToggle = async (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+
+    if (form.isPinned) {
+      try {
+        await unpinFormMutation.mutateAsync(form.id);
+      } catch (error) {
+        toast.error("אירעה שגיאה בביטול נעיצת הטופס. נסו שוב.");
+      }
+      return;
+    }
+
+    try {
+      await pinFormMutation.mutateAsync(form.id);
+    } catch (error: any) {
+      if (error?.response?.status === 409) {
+        toast.error("לא ניתן לנעוץ יותר מ־4 טפסים.");
+      } else {
+        toast.error("אירעה שגיאה בנעיצת הטופס. נסו שוב.");
+      }
+    }
+  };
+
   const renderDynamicIcon = (name: string) => {
     const IconComponent = MuiIcons[name as keyof typeof MuiIcons];
 
@@ -222,10 +251,34 @@ const FormCard = ({
 
   return (
     <StyledCard
-      sx={{ backgroundcolor: theme.palette.background.paper, cursor: "pointer" }}
+      sx={{ backgroundcolor: theme.palette.background.paper, cursor: "pointer", position: "relative" }}
       data-testid={`form-id-${form.id}`}
       onClick={goToResponsesPage}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className="form-card">
+      {(isHovered || form.isPinned) && (
+        <Tooltip title={form.isPinned ? "ביטול נעיצה" : "נעיצת טופס"}>
+          <IconButton
+            aria-label={form.isPinned ? "unpin form" : "pin form"}
+            data-testid={`pin-form-button-${form.id}`}
+            onClick={handlePinToggle}
+            size="small"
+            sx={{
+              position: "absolute",
+              top: 8,
+              left: 8,
+              zIndex: 1,
+              color: form.isPinned ? theme.palette.primary.main : "#62748E",
+            }}>
+            {form.isPinned ? (
+              <PushPinIcon sx={{ fontSize: "18px" }} />
+            ) : (
+              <PushPinOutlinedIcon sx={{ fontSize: "18px" }} />
+            )}
+          </IconButton>
+        </Tooltip>
+      )}
       <ItemImgAndTitles>
         <ItemTitles>
           <ItemTitleAndNum>
