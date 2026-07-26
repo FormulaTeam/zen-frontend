@@ -56,6 +56,7 @@ import {
   EmptyStateIcon,
   EmptyStateIconWrapper,
   EmptyStateTitle,
+  FieldPlaceholder,
   ModalActions,
   ModalContent,
   ModalDescription,
@@ -377,6 +378,7 @@ export const ColorRulesModal = ({
   );
   const [draftRules, setDraftRules] = useState<ResponsesTableColorRuleDto[]>(rules);
   const [touchedTargetValueRuleIds, setTouchedTargetValueRuleIds] = useState<Set<string>>(new Set());
+  const [touchedFieldRuleIds, setTouchedFieldRuleIds] = useState<Set<string>>(new Set());
   const [draggedRuleId, setDraggedRuleId] = useState<string | null>(null);
   const [deleteAnchorEl, setDeleteAnchorEl] = useState<HTMLElement | null>(null);
   const [pendingDeleteRuleId, setPendingDeleteRuleId] = useState<string | null>(null);
@@ -390,6 +392,7 @@ export const ColorRulesModal = ({
     if (open) {
       setDraftRules(rules);
       setTouchedTargetValueRuleIds(new Set());
+      setTouchedFieldRuleIds(new Set());
       setDraggedRuleId(null);
       setDeleteAnchorEl(null);
       setPendingDeleteRuleId(null);
@@ -559,6 +562,15 @@ export const ColorRulesModal = ({
     });
   };
 
+  const markFieldTouched = (ruleId: string) => {
+    setTouchedFieldRuleIds((prev) => {
+      if (prev.has(ruleId)) return prev;
+      const next = new Set(prev);
+      next.add(ruleId);
+      return next;
+    });
+  };
+
   const resetTargetValueTouched = (ruleId: string) => {
     setTouchedTargetValueRuleIds((prev) => {
       if (!prev.has(ruleId)) return prev;
@@ -582,6 +594,8 @@ export const ColorRulesModal = ({
     const selectedField = manageableFields.find((field) => field.id === fieldId);
     if (!selectedField) return;
 
+    markFieldTouched(rule.id);
+
     const nextComparator = getComparatorOptions(selectedField.fieldType)[0]?.value ?? comparator.Equals;
 
     updateRule(rule.id, {
@@ -594,9 +608,10 @@ export const ColorRulesModal = ({
   };
 
   const handleAddRule = () => {
+    const defaultField = manageableFields.length === 1 ? manageableFields[0] : undefined;
     setDraftRules((prev) => [
       ...prev,
-      { ...createEmptyColorRule(manageableFields[0]), order: prev.length },
+      { ...createEmptyColorRule(defaultField), order: prev.length },
     ]);
   };
 
@@ -751,6 +766,7 @@ export const ColorRulesModal = ({
     const targetValueError = touchedTargetValueRuleIds.has(rule.id)
       ? ruleErrors.targetValue
       : undefined;
+    const fieldError = touchedFieldRuleIds.has(rule.id) ? ruleErrors.fieldId : undefined;
     const isDragging = draggedRuleId === rule.id;
     const isDragLocked = !!draggedRuleId && !isDragging;
 
@@ -767,10 +783,20 @@ export const ColorRulesModal = ({
           <DragIndicatorIcon />
         </DragHandle>
 
-        <FormControl size="small" error={!!ruleErrors.fieldId}>
+        <FormControl size="small" error={!!fieldError}>
           <Select
             value={rule.fieldId}
+            displayEmpty
+            onBlur={() => markFieldTouched(rule.id)}
             onChange={(event) => handleFieldChange(rule, event.target.value)}
+            renderValue={(value) => {
+              const field = manageableFields.find((item) => item.id === value);
+              return field ? (
+                field.displayName
+              ) : (
+                <FieldPlaceholder>בחירת שדה</FieldPlaceholder>
+              );
+            }}
             disabled={!canManage}>
             {manageableFields.map((field) => (
               <MenuItem key={field.id} value={field.id}>
@@ -778,6 +804,7 @@ export const ColorRulesModal = ({
               </MenuItem>
             ))}
           </Select>
+          {fieldError && <FormHelperText>{fieldError}</FormHelperText>}
         </FormControl>
 
         <FormControl size="small" error={!!ruleErrors.comparatorId}>
@@ -869,33 +896,35 @@ export const ColorRulesModal = ({
 
 
   const rulesTable: JSX.Element = (
-    <RulesTableScrollArea>
-      <RulesTableContainer ref={rulesTableRef}>
-        {rulesHeader}
-        {draftRules.map(renderRuleRow)}
-        {canManage && (
-          <AddRuleRow>
-            <span />
-            <AddRuleButton variant="contained" startIcon={<AddIcon />} onClick={handleAddRule}>
-              חוק חדש
-            </AddRuleButton>
-          </AddRuleRow>
+    <>
+      <RulesTableScrollArea>
+        <RulesTableContainer ref={rulesTableRef}>
+          {rulesHeader}
+          {draftRules.map(renderRuleRow)}
+        </RulesTableContainer>
+        {isScrollable && (
+          <RulesScrollbarRail
+            ref={rulesScrollbarRailRef}
+            onMouseDown={handleRulesScrollbarRailMouseDown}>
+            <RulesScrollbarThumb
+              onMouseDown={handleRulesScrollbarThumbMouseDown}
+              style={{
+                height: scrollThumb.height,
+                transform: `translateY(${scrollThumb.top}px)`,
+              }}
+            />
+          </RulesScrollbarRail>
         )}
-      </RulesTableContainer>
-      {isScrollable && (
-        <RulesScrollbarRail
-          ref={rulesScrollbarRailRef}
-          onMouseDown={handleRulesScrollbarRailMouseDown}>
-          <RulesScrollbarThumb
-            onMouseDown={handleRulesScrollbarThumbMouseDown}
-            style={{
-              height: scrollThumb.height,
-              transform: `translateY(${scrollThumb.top}px)`,
-            }}
-          />
-        </RulesScrollbarRail>
+      </RulesTableScrollArea>
+      {canManage && (
+        <AddRuleRow>
+          <span />
+          <AddRuleButton variant="contained" startIcon={<AddIcon />} onClick={handleAddRule}>
+            חוק חדש
+          </AddRuleButton>
+        </AddRuleRow>
       )}
-    </RulesTableScrollArea>
+    </>
   );
 
   const modalMainContent: JSX.Element = draftRules.length === 0 ? emptyState : rulesTable;

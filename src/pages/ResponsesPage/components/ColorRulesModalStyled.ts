@@ -149,7 +149,7 @@ export const RulesTableContainer = styled(Box)`
 export const RulesTableScrollArea = styled(Box)`
   display: flex;
   gap: 10px;
-  height: 360px;
+  max-height: 360px;
   min-height: 0;
 `;
 
@@ -204,6 +204,59 @@ export const RuleRow = styled(RulesGrid) <{
   border-radius: 4px;
   box-sizing: border-box;
   padding: 2px;
+
+  /* Unify the height and outline of every value control in a rule row */
+  .MuiOutlinedInput-root {
+    min-height: 40px;
+    height: 40px;
+    background-color: #ffffff;
+    border-radius: 4px;
+  }
+
+  /* Consistent inner padding across every control for a cohesive look */
+  .MuiOutlinedInput-input,
+  .MuiSelect-select {
+    padding-inline: 18px !important;
+    display: flex;
+    align-items: center;
+  }
+
+  .MuiAutocomplete-root .MuiOutlinedInput-root {
+    padding-inline: 18px !important;
+  }
+
+  .MuiAutocomplete-root .MuiOutlinedInput-root .MuiAutocomplete-input {
+    padding-inline: 0 !important;
+  }
+
+  /* Smaller icons so the extra padding is visible */
+  .MuiSelect-icon,
+  .MuiAutocomplete-popupIndicator svg,
+  .MuiAutocomplete-clearIndicator svg,
+  .MuiIconButton-root svg {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+
+  .MuiOutlinedInput-notchedOutline {
+    border-color: rgba(148, 163, 184, 0.35);
+    border-radius: 4px;
+  }
+
+  .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: rgba(148, 163, 184, 0.6);
+  }
+
+  .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #1e8fe5;
+    border-width: 1px;
+  }
+
+  .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+    border-color: #ef000b;
+  }
+
   transition:
     background-color 120ms ease,
     border-color 120ms ease,
@@ -259,7 +312,8 @@ export const AddRuleRow = styled(Box)`
   align-items: center;
   width: 100%;
   min-width: 0;
-  padding-top: 8px;
+  padding-top: 12px;
+  padding-inline: 12px 18px;
 
   > * {
     min-width: 0;
@@ -274,15 +328,62 @@ export const ColorSelectValue = styled(Box)`
   gap: 8px;
 `;
 
+export const FieldPlaceholder = styled("span")`
+  color: #94a3b8;
+`;
+
 export const ColorRulePickerWrapper = styled(Box)`
   width: 100%;
   min-width: 0;
 
   .MuiInputBase-root {
+    height: 40px;
     min-height: 40px;
+    box-sizing: border-box;
+    align-items: center;
+    padding-block: 0 !important;
+    padding-inline: 18px !important;
     background-color: #ffffff;
     border: 1px solid rgba(148, 163, 184, 0.35);
     border-radius: 4px !important;
+  }
+
+  /* Vertically center the date/time sections within the 40px control */
+  .MuiPickersInputBase-root,
+  .MuiPickersInputBase-sectionsContainer,
+  .MuiPickersSectionList-root {
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    padding-block: 0 !important;
+    line-height: normal !important;
+  }
+
+  .MuiPickersSectionList-section,
+  .MuiPickersSectionList-sectionContent {
+    display: inline-flex !important;
+    align-items: center !important;
+    line-height: normal !important;
+  }
+
+  /* Smaller picker icon so the extra padding is visible */
+  .MuiIconButton-root svg {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Space between the time/date text and the trailing icon */
+  .MuiInputAdornment-root {
+    margin-inline-start: 8px;
+  }
+
+  .MuiInputBase-input {
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    padding-block: 0 !important;
   }
 
   .MuiInputBase-root::before {
