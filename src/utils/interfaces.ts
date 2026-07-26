@@ -334,6 +334,7 @@ export interface Filter {
   createdBy?: string;
   deletedBy?: string;
   hasResponses?: boolean;
+  colorRuleIds?: string[];
 }
 
 export interface PageInfo {

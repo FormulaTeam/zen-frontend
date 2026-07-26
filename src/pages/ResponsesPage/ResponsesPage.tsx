@@ -45,6 +45,20 @@ import { formatColorRuleLabel } from "./utils/colorRules";
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
 const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
 
+const areStringArraysEqual = (
+  first: readonly string[] | undefined,
+  second: readonly string[] | undefined,
+): boolean => {
+  const firstValues = first ?? [];
+  const secondValues = second ?? [];
+
+  if (firstValues.length !== secondValues.length) return false;
+
+  const secondSet = new Set(secondValues);
+
+  return firstValues.every((value) => secondSet.has(value));
+};
+
 type SidePanelForm = Pick<FormDto, "id" | "name"> & {
   fields: FormFieldDto[];
 };
@@ -114,7 +128,8 @@ const ResponsesPageContent = (): JSX.Element => {
     setResponseFilters,
   } = useFormStore();
   const { user } = useAuth();
-  const { data: responsesTableColorRules = [] } = useGetResponsesTableColorRules(form?.id);
+  const { data: responsesTableColorRules = [], isSuccess: areColorRulesLoaded } =
+    useGetResponsesTableColorRules(form?.id);
 
   const [searchInput, setSearchInput] = useState(filter?.query || "");
   const debouncedSearchInput = useDebounce(searchInput, 500);
@@ -203,39 +218,46 @@ const ResponsesPageContent = (): JSX.Element => {
     [responsesTableColorRules, fieldsById, formFields],
   );
 
-  const [selectedColorRuleIds, setSelectedColorRuleIds] = useState<string[]>([]);
+  const [selectedColorRuleIds, setSelectedColorRuleIds] = useState<string[]>(
+    () => filter?.colorRuleIds ?? [],
+  );
   const hasInitializedColorRuleSelectionRef = useRef(false);
-  const previousColorRuleIdsRef = useRef<string[]>([]);
 
   useEffect(() => {
-    const activeRuleIds = colorRuleFilterOptions.map((rule) => rule.id);
-    const previousActiveRuleIds = previousColorRuleIdsRef.current;
-
-    previousColorRuleIdsRef.current = activeRuleIds;
+    if (!areColorRulesLoaded) return;
 
     setSelectedColorRuleIds((previousSelectedRuleIds) => {
-      if (activeRuleIds.length === 0) {
-        return [];
+      const activeRuleIds = new Set(colorRuleFilterOptions.map((rule) => rule.id));
+      const isInitialSelection = !hasInitializedColorRuleSelectionRef.current;
+      hasInitializedColorRuleSelectionRef.current = true;
+
+      if (isInitialSelection && previousSelectedRuleIds.length === 0) {
+        return [...activeRuleIds];
       }
 
-      if (!hasInitializedColorRuleSelectionRef.current) {
-        hasInitializedColorRuleSelectionRef.current = true;
-        return activeRuleIds;
-      }
-
-      const activeRuleIdSet = new Set(activeRuleIds);
-
-      const selectedExistingRuleIds = previousSelectedRuleIds.filter((ruleId) =>
-        activeRuleIdSet.has(ruleId),
+      const nextSelectedRuleIds = previousSelectedRuleIds.filter((ruleId) =>
+        activeRuleIds.has(ruleId),
       );
 
-      const wasAllPreviousRulesSelected =
-        previousActiveRuleIds.length > 0 &&
-        previousActiveRuleIds.every((ruleId) => previousSelectedRuleIds.includes(ruleId));
-
-      return wasAllPreviousRulesSelected ? activeRuleIds : selectedExistingRuleIds;
+      return areStringArraysEqual(previousSelectedRuleIds, nextSelectedRuleIds)
+        ? previousSelectedRuleIds
+        : nextSelectedRuleIds;
     });
-  }, [colorRuleFilterOptions]);
+  }, [areColorRulesLoaded, colorRuleFilterOptions]);
+
+  useEffect(() => {
+    const nextColorRuleIds = selectedColorRuleIds.length > 0 ? selectedColorRuleIds : undefined;
+
+    if (areStringArraysEqual(filter?.colorRuleIds, nextColorRuleIds)) return;
+
+    setFilter({
+      ...(filter || {}),
+      colorRuleIds: nextColorRuleIds,
+      pageNumber: 1,
+      before: undefined,
+      after: undefined,
+    });
+  }, [selectedColorRuleIds, filter, setFilter]);
 
   useEffect(() => {
     if (activeFiltersCount > 0) {
