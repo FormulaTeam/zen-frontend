@@ -2,6 +2,7 @@ import { Box, Popover, Tooltip, Typography } from "@mui/material";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
+import { Eye, EyeOff } from "lucide-react";
 import { useMemo, useState, type MouseEvent } from "react";
 
 import type { ResponsesTableColorRuleColor } from "../../../types/shared";
@@ -12,8 +13,8 @@ import { UnifiedButton } from "../styled";
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
 const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
 const COLOR_FILTER_BUTTON_WIDTH = 320;
-const COLOR_FILTER_POPOVER_WIDTH = 320;
-const COLOR_FILTER_RULE_FONT_SIZE = 9;
+const COLOR_FILTER_POPOVER_WIDTH = 340;
+const COLOR_FILTER_RULE_FONT_SIZE = "18px !important";
 
 export type ColorRuleFilterOption = {
   id: string;
@@ -25,6 +26,9 @@ interface ColorFilterButtonProps {
   rules: ColorRuleFilterOption[];
   selectedRuleIds: string[];
   onChange: (ruleIds: string[]) => void;
+  hiddenColorRuleIdSet: ReadonlySet<string>;
+  onToggleRuleColor: (ruleId: string) => void;
+  onToggleAllColors: () => void;
   disabled?: boolean;
 }
 
@@ -32,6 +36,9 @@ export function ColorFilterButton({
   rules,
   selectedRuleIds,
   onChange,
+  hiddenColorRuleIdSet,
+  onToggleRuleColor,
+  onToggleAllColors,
   disabled = false,
 }: ColorFilterButtonProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -40,13 +47,14 @@ export function ColorFilterButton({
   const allRuleIds = useMemo(() => rules.map((rule) => rule.id), [rules]);
 
   const selectedRuleIdSet = useMemo(() => new Set(selectedRuleIds), [selectedRuleIds]);
-
   const hasRules = rules.length > 0;
-  const isAllSelected = hasRules && selectedRuleIds.length === rules.length;
-
-  const isPartiallySelected = selectedRuleIds.length > 0 && selectedRuleIds.length < rules.length;
+  const selectedRuleCount = allRuleIds.filter((ruleId) => selectedRuleIdSet.has(ruleId)).length;
+  const isAllSelected = hasRules && selectedRuleCount === rules.length;
+  const isPartiallySelected = selectedRuleCount > 0 && !isAllSelected;
 
   const isDisabled = disabled || !hasRules;
+  const areAllColorsHidden =
+    hasRules && allRuleIds.every((ruleId) => hiddenColorRuleIdSet.has(ruleId));
 
   const buttonLabel = useMemo(() => {
     if (!hasRules) {
@@ -57,16 +65,16 @@ export function ColorFilterButton({
       return "כל חוקי הצבעים";
     }
 
-    if (selectedRuleIds.length === 0) {
+    if (selectedRuleCount === 0) {
       return "לא נבחרו חוקים";
     }
 
-    if (selectedRuleIds.length === 1) {
-      return rules.find((rule) => rule.id === selectedRuleIds[0])?.label ?? "חוק אחד";
+    if (selectedRuleCount === 1) {
+      return rules.find((rule) => selectedRuleIdSet.has(rule.id))?.label ?? "חוק אחד";
     }
 
-    return `${selectedRuleIds.length} חוקים`;
-  }, [hasRules, isAllSelected, selectedRuleIds, rules]);
+    return `${selectedRuleCount} חוקים`;
+  }, [hasRules, isAllSelected, rules, selectedRuleCount, selectedRuleIdSet]);
 
   const handleOpen = (event: MouseEvent<HTMLElement>) => {
     if (isDisabled) return;
@@ -95,7 +103,7 @@ export function ColorFilterButton({
 
   return (
     <Box sx={{ position: "relative", flexShrink: 0, overflow: "visible" }}>
-      <Tooltip title={hasRules ? "סינון לפי חוקי צבע" : "אין חוקי צבע פעילים"} arrow>
+      <Tooltip title={buttonLabel} arrow>
         <span>
           <UnifiedButton
             aria-label="סינון לפי חוקי צבע"
@@ -186,10 +194,10 @@ export function ColorFilterButton({
         PaperProps={{
           sx: {
             mt: 0.8,
-            borderRadius: "6px",
+            borderRadius: "12px",
             overflow: "hidden",
-            border: "1px solid #E5EAF0",
-            boxShadow: "0 4px 14px rgba(15, 23, 42, 0.14)",
+            border: "1px solid #DCE5EF",
+            boxShadow: "0 12px 32px rgba(15, 23, 42, 0.16)",
           },
         }}>
         <Box
@@ -201,18 +209,19 @@ export function ColorFilterButton({
           }}>
           <Box
             sx={{
-              height: 38,
+              height: 44,
               px: 1.75,
               display: "flex",
               alignItems: "center",
-              gap: 1.25,
-              borderBottom: "1px solid #E5EAF0",
+              gap: 0.75,
+              borderBottom: "1px solid #EDF1F5",
               backgroundColor: "#fff",
             }}>
             <AllCheckIndicator
               checked={isAllSelected}
               indeterminate={isPartiallySelected}
               onClick={handleToggleAll}
+              label={isAllSelected ? "בטל בחירת כל חוקי הצבע" : "בחר את כל חוקי הצבע"}
             />
 
             <Typography
@@ -220,7 +229,7 @@ export function ColorFilterButton({
                 flex: 1,
                 fontSize: COLOR_FILTER_RULE_FONT_SIZE,
                 fontWeight: 500,
-                color: "#111827",
+                color: "#334155",
                 lineHeight: 1.2,
                 whiteSpace: "nowrap",
                 overflow: "hidden",
@@ -228,9 +237,16 @@ export function ColorFilterButton({
               }}>
               כל חוקי הצבע
             </Typography>
+
+            <ColorVisibilityButton
+              visible={!areAllColorsHidden}
+              label={areAllColorsHidden ? "הצג את כל הצבעים" : "הסתר את כל הצבעים"}
+              onClick={onToggleAllColors}
+              showTooltip
+            />
           </Box>
 
-          <Box sx={{ py: 0.5 }}>
+          <Box sx={{ py: 0.5, maxHeight: 280, overflowY: "auto" }}>
             {rules.map((rule) => (
               <ColorRuleFilterRow
                 key={rule.id}
@@ -238,6 +254,8 @@ export function ColorFilterButton({
                 checked={selectedRuleIdSet.has(rule.id)}
                 color={COLOR_RULE_PALETTE[rule.color].swatch}
                 onClick={() => handleToggleRule(rule.id)}
+                colorVisible={!hiddenColorRuleIdSet.has(rule.id)}
+                onToggleColor={() => onToggleRuleColor(rule.id)}
               />
             ))}
           </Box>
@@ -252,49 +270,129 @@ interface ColorRuleFilterRowProps {
   checked: boolean;
   color: string;
   onClick: () => void;
+  colorVisible: boolean;
+  onToggleColor: () => void;
 }
 
-function ColorRuleFilterRow({ label, checked, color, onClick }: ColorRuleFilterRowProps) {
+function ColorRuleFilterRow({
+  label,
+  checked,
+  color,
+  onClick,
+  colorVisible,
+  onToggleColor,
+}: ColorRuleFilterRowProps) {
   return (
     <Box
-      component="button"
-      type="button"
-      onClick={onClick}
       sx={{
         width: "100%",
-        height: 36,
-        border: 0,
-        outline: 0,
-        backgroundColor: "transparent",
+        minHeight: 44,
         px: 1.75,
         display: "flex",
         alignItems: "center",
-        gap: 1.25,
-        cursor: "pointer",
-        textAlign: "left",
-        font: "inherit",
+        gap: 0.75,
 
         "&:hover": {
-          backgroundColor: "#F8FBFF",
+          backgroundColor: "#F6FAFE",
         },
       }}>
-      <ColorCircle checked={checked} color={color} />
-
-      <Typography
-        title={label}
+      <Box
+        component="button"
+        type="button"
+        aria-label={checked ? `בטל בחירת חוק: ${label}` : `בחר חוק: ${label}`}
+        aria-pressed={checked}
+        onClick={onClick}
         sx={{
           flex: 1,
-          fontSize: COLOR_FILTER_RULE_FONT_SIZE,
-          fontWeight: 500,
-          color: "#111827",
-          lineHeight: 1.2,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
+          minWidth: 0,
+          height: "100%",
+          p: 0,
+          border: 0,
+          outline: 0,
+          backgroundColor: "transparent",
+          display: "flex",
+          alignItems: "center",
+          gap: 1.1,
+          cursor: "pointer",
+          textAlign: "left",
+          font: "inherit",
         }}>
-        {label}
-      </Typography>
+        <ColorCircle checked={checked} color={color} />
+
+        <Typography
+          title={label}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            fontSize: COLOR_FILTER_RULE_FONT_SIZE,
+            fontWeight: 500,
+            color: "#111827",
+            lineHeight: 1.35,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}>
+          {label}
+        </Typography>
+      </Box>
+
+      <ColorVisibilityButton
+        visible={colorVisible}
+        label={colorVisible ? `הסתר צבע: ${label}` : `הצג צבע: ${label}`}
+        onClick={onToggleColor}
+      />
     </Box>
+  );
+}
+
+interface ColorVisibilityButtonProps {
+  visible: boolean;
+  label: string;
+  onClick: () => void;
+  showTooltip?: boolean;
+}
+
+function ColorVisibilityButton({
+  visible,
+  label,
+  onClick,
+  showTooltip = false,
+}: ColorVisibilityButtonProps) {
+  const button = (
+    <Box
+      component="button"
+      type="button"
+      aria-label={label}
+      aria-pressed={visible}
+      onClick={onClick}
+      sx={{
+        width: 30,
+        height: 30,
+        p: 0,
+        border: 0,
+        borderRadius: "8px",
+        backgroundColor: visible ? "#EEF6FF" : "#F1F5F9",
+        color: visible ? "#1E78C8" : "#94A3B8",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        flexShrink: 0,
+
+        "&:hover": {
+          backgroundColor: visible ? "#DCEEFF" : "#E2E8F0",
+        },
+      }}>
+      {visible ? <Eye size={17} aria-hidden="true" /> : <EyeOff size={17} aria-hidden="true" />}
+    </Box>
+  );
+
+  return showTooltip ? (
+    <Tooltip title={label} arrow>
+      {button}
+    </Tooltip>
+  ) : (
+    button
   );
 }
 
@@ -307,21 +405,22 @@ function ColorCircle({ checked, color }: ColorCircleProps) {
   return (
     <Box
       sx={{
-        width: 18,
-        height: 18,
+        width: 16,
+        height: 16,
         borderRadius: "50%",
         flexShrink: 0,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        border: `2px solid ${color}`,
-        backgroundColor: checked ? `${color}55` : "transparent",
+        border: `1.5px solid ${color}`,
+        backgroundColor: checked ? `${color}40` : "#fff",
+        boxShadow: checked ? `0 0 0 2px ${color}18` : "none",
         boxSizing: "border-box",
       }}>
       {checked && (
         <CheckRoundedIcon
           sx={{
-            fontSize: 13,
+            fontSize: 12,
             color,
           }}
         />
@@ -334,21 +433,24 @@ interface AllCheckIndicatorProps {
   checked: boolean;
   indeterminate: boolean;
   onClick: () => void;
+  label: string;
 }
 
-function AllCheckIndicator({ checked, indeterminate, onClick }: AllCheckIndicatorProps) {
+function AllCheckIndicator({ checked, indeterminate, onClick, label }: AllCheckIndicatorProps) {
   return (
     <Box
       component="button"
       type="button"
+      aria-label={label}
+      aria-pressed={checked}
       onClick={onClick}
       sx={{
-        width: 20,
-        height: 20,
-        borderRadius: "5px",
+        width: 16,
+        height: 16,
+        borderRadius: "4px",
         border: "none",
         backgroundColor: checked || indeterminate ? "#1E88E5" : "transparent",
-        outline: checked || indeterminate ? "none" : "2px solid #BFD7F1",
+        outline: checked || indeterminate ? "none" : "1.5px solid #BFD7F1",
         outlineOffset: "-2px",
         flexShrink: 0,
         display: "flex",
@@ -362,9 +464,9 @@ function AllCheckIndicator({ checked, indeterminate, onClick }: AllCheckIndicato
         },
       }}>
       {indeterminate ? (
-        <RemoveRoundedIcon sx={{ fontSize: 15, color: "#fff" }} />
+        <RemoveRoundedIcon sx={{ fontSize: 12, color: "#fff" }} />
       ) : checked ? (
-        <CheckRoundedIcon sx={{ fontSize: 15, color: "#fff" }} />
+        <CheckRoundedIcon sx={{ fontSize: 12, color: "#fff" }} />
       ) : null}
     </Box>
   );

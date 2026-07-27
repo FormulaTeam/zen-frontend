@@ -1,7 +1,11 @@
 import { comparator, fieldType } from "formula-gear";
 import type { FormFieldDto, ResponsesTableColorRuleDto } from "../../../types/shared";
 import { getFieldColumnKey } from "../../../api";
-import { getOptionResponseRawValue, type OptionResponseValue } from "../../../utils/optionResponseValue";
+import {
+  formatOptionLabel,
+  getOptionResponseRawValue,
+  type OptionResponseValue,
+} from "../../../utils/optionResponseValue";
 
 export const COLOR_RULE_PALETTE = {
   red: { label: "אדום", background: "#ffc7c7", swatch: "#ff9b9b" },
@@ -25,10 +29,46 @@ export const ROW_COLOR_RULE_FIELD = "__row_color_rule__";
 type ColorRuleFieldExtra = {
   linkedOptionsFieldId?: string | null;
   inactiveOptionIds?: string[];
+  options?: { items?: RawOptionValue[] } | RawOptionValue[];
+  items?: RawOptionValue[];
+  values?: RawOptionValue[];
 };
 
 type ColorRuleOptionsField = FormFieldDto & {
   options?: OptionResponseValue[];
+};
+
+type RawOptionValue =
+  | string
+  | OptionResponseValue
+  | { id?: string | number; text?: string; value?: string; isActive?: boolean };
+
+const normalizeOptionItem = (option: RawOptionValue): OptionResponseValue | null => {
+  if (typeof option === "string") {
+    return { id: option, text: formatOptionLabel(option) };
+  }
+
+  const optionId = option.id ?? ("value" in option ? option.value : undefined) ?? option.text;
+  if (optionId === undefined || optionId === null) return null;
+
+  return {
+    id: String(optionId),
+    text: formatOptionLabel(option.text ?? String(optionId)),
+    isActive: option.isActive,
+  };
+};
+
+const getRawFieldOptions = (field?: FormFieldDto): RawOptionValue[] => {
+  const extra = field?.extra as ColorRuleFieldExtra | undefined;
+  const extraOptions = Array.isArray(extra?.options) ? extra.options : extra?.options?.items;
+
+  return (
+    extraOptions ??
+    extra?.items ??
+    extra?.values ??
+    (field as ColorRuleOptionsField | undefined)?.options ??
+    []
+  );
 };
 
 export const getColorRuleOptionItems = (
@@ -43,8 +83,10 @@ export const getColorRuleOptionItems = (
   const sourceExtra = sourceField?.extra as ColorRuleFieldExtra | undefined;
   const inactiveOptionIds = new Set((sourceExtra?.inactiveOptionIds ?? []).map(String));
 
-  return ((sourceField as ColorRuleOptionsField | undefined)?.options ?? [])
-    .filter((option) => !inactiveOptionIds.has(String(option.id)) && option.isActive !== false);
+  return getRawFieldOptions(sourceField)
+    .map(normalizeOptionItem)
+    .filter((option): option is OptionResponseValue => option !== null)
+    .filter((option) => !inactiveOptionIds.has(option.id) && option.isActive !== false);
 };
 
 const formatColorRuleTargetValue = (

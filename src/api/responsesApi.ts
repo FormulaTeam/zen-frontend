@@ -77,7 +77,8 @@ const getChangedColorRuleFields = (
     (key) => JSON.stringify(previousRule[key]) !== JSON.stringify(nextRule[key]),
   );
 
-const colorRulesQueryKey = (formId: number) => ["responses", String(formId), "table-color-rules"];
+const colorRulesQueryKey = (formId: number) =>
+  ["responses", String(formId), "table-color-rules"] as const;
 
 export const getResponsesTableColorRules = async (
   formId: number,
@@ -91,11 +92,12 @@ export const getResponsesTableColorRules = async (
 
 export const useGetResponsesTableColorRules = (formId?: number) => {
   return useQuery({
-    queryKey: formId
+    queryKey: formId !== undefined
       ? colorRulesQueryKey(formId)
       : ["responses", "table-color-rules", "missing-form"],
-    queryFn: () => getResponsesTableColorRules(Number(formId)),
-    enabled: !!formId,
+    queryFn: () =>
+      formId === undefined ? Promise.resolve([]) : getResponsesTableColorRules(formId),
+    enabled: formId !== undefined,
   });
 };
 

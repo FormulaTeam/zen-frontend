@@ -41,24 +41,10 @@ import { useDebounce } from "@src/hooks/utilsHooks/useDebounce";
 import { LogOut } from "lucide-react";
 import { ColorFilterButton, type ColorRuleFilterOption } from "./components/ColorFilterButton";
 import { formatColorRuleLabel } from "./utils/colorRules";
+import { useColorRuleFilter } from "./hooks/useColorRuleFilter";
 
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
 const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
-
-const areStringArraysEqual = (
-  first: readonly string[] | undefined,
-  second: readonly string[] | undefined,
-): boolean => {
-  const firstValues = first ?? [];
-  const secondValues = second ?? [];
-
-  if (firstValues.length !== secondValues.length) return false;
-
-  const secondSet = new Set(secondValues);
-
-  return firstValues.every((value) => secondSet.has(value));
-};
-
 type SidePanelForm = Pick<FormDto, "id" | "name"> & {
   fields: FormFieldDto[];
 };
@@ -196,11 +182,6 @@ const ResponsesPageContent = (): JSX.Element => {
     [formFields],
   );
 
-  const visibleResponsesTableColorRules = useMemo(
-    () => (isInEditMode ? [] : responsesTableColorRules),
-    [isInEditMode, responsesTableColorRules],
-  );
-
   const colorRuleFilterOptions = useMemo<ColorRuleFilterOption[]>(
     () =>
       responsesTableColorRules
@@ -218,46 +199,30 @@ const ResponsesPageContent = (): JSX.Element => {
     [responsesTableColorRules, fieldsById, formFields],
   );
 
-  const [selectedColorRuleIds, setSelectedColorRuleIds] = useState<string[]>(
-    () => filter?.colorRuleIds ?? [],
+  const activeColorRuleIds = useMemo(
+    () => colorRuleFilterOptions.map((rule) => rule.id),
+    [colorRuleFilterOptions],
   );
-  const hasInitializedColorRuleSelectionRef = useRef(false);
+  const {
+    selectedRuleIds: selectedColorRuleIds,
+    setSelectedRuleIds: setSelectedColorRuleIds,
+    hiddenRuleIdSet: hiddenColorRuleIdSet,
+    toggleRuleColor,
+    toggleAllColors,
+  } = useColorRuleFilter({
+    formId: form?.id,
+    activeRuleIds: activeColorRuleIds,
+    areRulesLoaded: areColorRulesLoaded,
+    setFilter,
+  });
 
-  useEffect(() => {
-    if (!areColorRulesLoaded) return;
-
-    setSelectedColorRuleIds((previousSelectedRuleIds) => {
-      const activeRuleIds = new Set(colorRuleFilterOptions.map((rule) => rule.id));
-      const isInitialSelection = !hasInitializedColorRuleSelectionRef.current;
-      hasInitializedColorRuleSelectionRef.current = true;
-
-      if (isInitialSelection && previousSelectedRuleIds.length === 0) {
-        return [...activeRuleIds];
-      }
-
-      const nextSelectedRuleIds = previousSelectedRuleIds.filter((ruleId) =>
-        activeRuleIds.has(ruleId),
-      );
-
-      return areStringArraysEqual(previousSelectedRuleIds, nextSelectedRuleIds)
-        ? previousSelectedRuleIds
-        : nextSelectedRuleIds;
-    });
-  }, [areColorRulesLoaded, colorRuleFilterOptions]);
-
-  useEffect(() => {
-    const nextColorRuleIds = selectedColorRuleIds.length > 0 ? selectedColorRuleIds : undefined;
-
-    if (areStringArraysEqual(filter?.colorRuleIds, nextColorRuleIds)) return;
-
-    setFilter({
-      ...(filter || {}),
-      colorRuleIds: nextColorRuleIds,
-      pageNumber: 1,
-      before: undefined,
-      after: undefined,
-    });
-  }, [selectedColorRuleIds, filter, setFilter]);
+  const visibleResponsesTableColorRules = useMemo(
+    () =>
+      isInEditMode
+        ? []
+        : responsesTableColorRules.filter((rule) => !hiddenColorRuleIdSet.has(rule.id)),
+    [hiddenColorRuleIdSet, isInEditMode, responsesTableColorRules],
+  );
 
   useEffect(() => {
     if (activeFiltersCount > 0) {
@@ -729,6 +694,9 @@ const ResponsesPageContent = (): JSX.Element => {
                     rules={colorRuleFilterOptions}
                     selectedRuleIds={selectedColorRuleIds}
                     onChange={setSelectedColorRuleIds}
+                    hiddenColorRuleIdSet={hiddenColorRuleIdSet}
+                    onToggleRuleColor={toggleRuleColor}
+                    onToggleAllColors={toggleAllColors}
                     disabled={isInEditMode}
                   />
 
