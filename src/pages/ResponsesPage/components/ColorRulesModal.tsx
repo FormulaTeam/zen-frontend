@@ -848,12 +848,13 @@ export const ColorRulesModal = ({
             const fromComparable = toRangeComparable(from, rule.fieldType);
             const toComparable = toRangeComparable(to, rule.fieldType);
             if (
+              rule.fieldType !== fieldType.Time &&
               !Number.isNaN(fromComparable) &&
               !Number.isNaN(toComparable) &&
               fromComparable > toComparable
             ) {
               ruleErrors.targetValue =
-                rule.fieldType === fieldType.Date || rule.fieldType === fieldType.Time
+                rule.fieldType === fieldType.Date
                   ? "טווח הערכים לא תקין"
                   : 'ערך "מ-" חייב להיות קטן או שווה לערך "עד"';
             }

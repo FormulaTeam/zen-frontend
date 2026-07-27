@@ -100,10 +100,10 @@ const formatRuleTitle = (rule: ResponsesTableColorRuleDto): string => {
   const valueLabel =
     isRangeComparator(rule.comparatorId) && isRangeValue(rule.targetValue)
       ? (() => {
-          const { from, to } = getRangeValue(rule.targetValue);
-          if (!from && !to) return "";
-          return ` - ${from} ← → ${to}`;
-        })()
+        const { from, to } = getRangeValue(rule.targetValue);
+        if (!from && !to) return "";
+        return ` - ${from} ← → ${to}`;
+      })()
       : rule.targetValue === null || rule.targetValue === undefined || rule.targetValue === ""
         ? ""
         : ` - ${String(rule.targetValue)}`;
@@ -178,6 +178,10 @@ export const doesRuleMatchValue = (
 
       if (Number.isNaN(actualComparable) || Number.isNaN(fromComparable) || Number.isNaN(toComparable)) {
         return false;
+      }
+
+      if (rule.fieldType === fieldType.Time && fromComparable > toComparable) {
+        return actualComparable >= fromComparable || actualComparable <= toComparable;
       }
 
       const lower = Math.min(fromComparable, toComparable);

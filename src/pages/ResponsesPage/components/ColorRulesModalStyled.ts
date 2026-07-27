@@ -435,13 +435,10 @@ export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }
     line-height: 40px !important;
   }
 
-  /* Align the date/time text; time hugs the left, icon stays on the right */
   .MuiPickersInputBase-root .MuiPickersInputBase-sectionsContainer,
   .MuiPickersInputBase-root .MuiPickersSectionList-root {
     flex: 1 1 auto !important;
     width: 100% !important;
-    justify-content: ${({ $timeAlignRight }) => ($timeAlignRight ? "flex-start" : "flex-start")} !important;
-    text-align: ${({ $timeAlignRight }) => ($timeAlignRight ? "left" : "left")} !important;
   }
 
   .MuiPickersSectionList-section,
@@ -464,12 +461,13 @@ export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }
     margin-inline-start: 8px;
   }
 
-  .MuiInputBase-input {
+  && .MuiInputBase-input {
     height: 100%;
     box-sizing: border-box;
     display: flex;
     align-items: center;
     padding-block: 0 !important;
+    text-align: right !important;
   }
 
   .MuiInputBase-root::before {

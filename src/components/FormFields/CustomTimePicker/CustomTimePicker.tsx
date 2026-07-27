@@ -184,7 +184,6 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
 
     "& .MuiInputBase-input": {
       direction: "ltr !important",
-      textAlign: "right !important",
       unicodeBidi: "plaintext",
       ...inputTextSx,
       color: APP_TEXT,
@@ -380,13 +379,13 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
       },
 
       "& .MuiMultiSectionDigitalClockSection-root::before, & .MuiMultiSectionDigitalClockSection-root::after":
-        {
-          display: "none !important",
-          height: "0 !important",
-          minHeight: "0 !important",
-          maxHeight: "0 !important",
-          content: '""" !important"',
-        },
+      {
+        display: "none !important",
+        height: "0 !important",
+        minHeight: "0 !important",
+        maxHeight: "0 !important",
+        content: '""" !important"',
+      },
 
       "& .MuiMultiSectionDigitalClockSection-item": {
         width: `${TIME_ITEM_WIDTH} !important`,
