@@ -70,6 +70,9 @@ import {
   buildColorRuleMatches,
   COLOR_RULE_PALETTE,
   getComparatorOptions,
+  getRangeValue,
+  isRangeComparator,
+  isRangeValue,
   ROW_COLOR_RULE_FIELD,
 } from "../utils/colorRules";
 import "./responsesTableFilters.css";
@@ -990,9 +993,17 @@ export const ResponsesTable = React.memo(
             (option) => option.value === rule.comparatorId,
           )?.label ?? "";
         const targetValueLabel =
-          ruleField && rule.targetValue !== null && rule.targetValue !== undefined && rule.targetValue !== ""
-            ? formatCellTooltipValue(rule.targetValue, ruleField)
-            : "";
+          isRangeComparator(rule.comparatorId) && isRangeValue(rule.targetValue)
+            ? (() => {
+                const { from, to } = getRangeValue(rule.targetValue);
+                const fromLabel = ruleField && from ? formatCellTooltipValue(from, ruleField) : from;
+                const toLabel = ruleField && to ? formatCellTooltipValue(to, ruleField) : to;
+                if (!fromLabel && !toLabel) return "";
+                return `${fromLabel} - ${toLabel}`;
+              })()
+            : ruleField && rule.targetValue !== null && rule.targetValue !== undefined && rule.targetValue !== ""
+              ? formatCellTooltipValue(rule.targetValue, ruleField)
+              : "";
         const comparatorAndValue = targetValueLabel
           ? `${comparatorLabel}${/(?: ל| מ)$/.test(comparatorLabel) ? "" : " "}${targetValueLabel}`
           : comparatorLabel;

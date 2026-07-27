@@ -8,6 +8,7 @@ import {
   Select,
   Switch,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -16,6 +17,9 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { comparator, dateType, fieldType, timePrecision } from "formula-gear";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
 import { useSaveResponsesTableColorRules } from "../../../api/responsesApi";
 import CustomDateTime from "../../../components/FormFields/CustomDateTime/CustomDateTime";
@@ -29,6 +33,8 @@ import {
   COLOR_RULE_PALETTE,
   createEmptyColorRule,
   getComparatorOptions,
+  getRangeValue,
+  isRangeComparator,
 } from "../utils/colorRules";
 import { showErrorNotification, showSuccessNotification } from "../../../utils/utils";
 import {
@@ -42,6 +48,9 @@ import {
   ColorRulesDialog,
   ColorSelectValue,
   ColorSwatch,
+  DateTimeDateSlot,
+  DateTimeSplitRow,
+  DateTimeTimeSlot,
   DeleteCancelButton,
   DeleteConfirmActions,
   DeleteConfirmButton,
@@ -57,11 +66,17 @@ import {
   EmptyStateIconWrapper,
   EmptyStateTitle,
   FieldPlaceholder,
+  FieldMenuItemLabel,
+  FieldValueLabel,
   ModalActions,
   ModalContent,
   ModalDescription,
   ModalTitle,
   OverlapNotice,
+  RangeErrorColumn,
+  RangeInput,
+  RangeInputsWrapper,
+  RangePrefix,
   RuleRow,
   RulesHeader,
   RulesScrollbarRail,
@@ -111,6 +126,8 @@ type RawOptionValue =
 
 const stableRulesValue = (rules: ResponsesTableColorRuleDto[]) => JSON.stringify(rules);
 
+const REQUIRED_VALUE_MESSAGE = "יש להזין ערך";
+
 const requiresTargetValue = (rule: ResponsesTableColorRuleDto): boolean =>
   !!getComparatorOptions(rule.fieldType).find((option) => option.value === rule.comparatorId)
     ?.requiresValue;
@@ -127,6 +144,67 @@ const normalizeRuleBeforeSave = (rule: ResponsesTableColorRuleDto): ResponsesTab
 
 const getFieldExtra = (field?: FormFieldDto): ColorRuleFieldExtra =>
   (field?.extra as ColorRuleFieldExtra | undefined) ?? {};
+
+const toRangeComparable = (value: string, fieldTypeId: number): number => {
+  if (value === "" || value === null || value === undefined) return Number.NaN;
+
+  if (fieldTypeId === fieldType.Number) return Number(value);
+
+  if (fieldTypeId === fieldType.Time) {
+    const [hours, minutes, seconds = "0"] = String(value).split(":");
+    const total = Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds);
+    return Number.isNaN(total) ? Number.NaN : total;
+  }
+
+  if (fieldTypeId === fieldType.Date) {
+    const time = new Date(String(value)).getTime();
+    return Number.isNaN(time) ? Number.NaN : time;
+  }
+
+  return Number(value);
+};
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const ISRAEL_TZ = "Asia/Jerusalem";
+
+const isDateTimeField = (fieldExtra: ColorRuleFieldExtra): boolean =>
+  (fieldExtra.dateType ?? dateType.Date) === dateType.Datetime;
+
+const splitDateTimeIso = (
+  iso: string,
+  precision: "minutes" | "seconds",
+): { datePart: string; timePart: string } => {
+  if (!iso) return { datePart: "", timePart: "" };
+
+  const parsed = dayjs.utc(iso);
+  if (!parsed.isValid()) return { datePart: "", timePart: "" };
+
+  const local = parsed.tz(ISRAEL_TZ);
+  const datePart = local.startOf("day").utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
+  const timePart = precision === "seconds" ? local.format("HH:mm:ss") : local.format("HH:mm");
+
+  return { datePart, timePart };
+};
+
+const combineDateAndTime = (dateIso: string, timeStr: string): string => {
+  if (!dateIso || !timeStr) return "";
+
+  const datePart = dayjs.utc(dateIso).tz(ISRAEL_TZ);
+  if (!datePart.isValid()) return "";
+
+  const [hours, minutes, seconds = 0] = timeStr.split(":").map(Number);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return "";
+
+  return datePart
+    .hour(hours)
+    .minute(minutes)
+    .second(seconds || 0)
+    .millisecond(0)
+    .utc()
+    .format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
+};
 
 const getLinkedOptionsFieldId = (field?: FormFieldDto): string | undefined => {
   const linkedOptionsFieldId = getFieldExtra(field).linkedOptionsFieldId;
@@ -198,6 +276,84 @@ const createFallbackOption = (
   };
 };
 
+type ColorRuleDateTimeSplitInputProps = {
+  value: string;
+  timePrecision: "minutes" | "seconds";
+  canManage: boolean;
+  error?: string;
+  hasError?: boolean;
+  onChange: (value: string) => void;
+  onTouch: () => void;
+};
+
+const ColorRuleDateTimeSplitInput = ({
+  value,
+  timePrecision: precision,
+  canManage,
+  error,
+  hasError,
+  onChange,
+  onTouch,
+}: ColorRuleDateTimeSplitInputProps): JSX.Element => {
+  const { datePart, timePart } = splitDateTimeIso(value, precision);
+
+  const handleDateChange = (nextDateIso: string) => {
+    if (!nextDateIso) {
+      onChange("");
+      return;
+    }
+    const nextTime = timePart || (precision === "seconds" ? "00:00:00" : "00:00");
+    onChange(combineDateAndTime(nextDateIso, nextTime));
+  };
+
+  const handleTimeChange = (nextTime: string) => {
+    if (!nextTime) {
+      onChange("");
+      return;
+    }
+    const baseDate =
+      datePart || dayjs().tz(ISRAEL_TZ).startOf("day").utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]");
+    onChange(combineDateAndTime(baseDate, nextTime));
+  };
+
+  return (
+    <DateTimeSplitRow>
+      <DateTimeTimeSlot>
+        <ColorRulePickerWrapper $timeAlignRight>
+          <CustomTimePicker
+            value={timePart}
+            timePrecision={precision}
+            isTabularEdit
+            label=""
+            isRequired={false}
+            isDisabled={!canManage}
+            onChangeHandler={handleTimeChange}
+            onBlurHandler={onTouch}
+            validationMessage={error ?? null}
+            hasError={hasError}
+          />
+        </ColorRulePickerWrapper>
+      </DateTimeTimeSlot>
+      <DateTimeDateSlot>
+        <ColorRulePickerWrapper>
+          <CustomDateTime
+            value={datePart || null}
+            dateType={dateType.Date}
+            isTabularEdit
+            label=""
+            isRequired={false}
+            isDisabled={!canManage}
+            onChangeHandler={handleDateChange}
+            onBlurHandler={onTouch}
+            validationMessage={error ?? null}
+            hasError={hasError}
+          />
+        </ColorRulePickerWrapper>
+      </DateTimeDateSlot>
+    </DateTimeSplitRow>
+  );
+};
+
 type ColorRuleTargetValueInputProps = {
   rule: ResponsesTableColorRuleDto;
   fields: FormFieldDto[];
@@ -205,6 +361,7 @@ type ColorRuleTargetValueInputProps = {
   error?: string;
   canManage: boolean;
   onTouch: (ruleId: string) => void;
+  onTouchRangeSide?: (ruleId: string, side: "from" | "to") => void;
   onChange: (ruleId: string, targetValue: ResponsesTableColorRuleDto["targetValue"]) => void;
   onTrim: (rule: ResponsesTableColorRuleDto) => void;
 };
@@ -216,6 +373,7 @@ const ColorRuleTargetValueInput = ({
   error,
   canManage,
   onTouch,
+  onTouchRangeSide,
   onChange,
   onTrim,
 }: ColorRuleTargetValueInputProps): JSX.Element => {
@@ -232,6 +390,110 @@ const ColorRuleTargetValueInput = ({
 
   if (!requiresTargetValue(rule)) {
     return <TextField size="small" value="" disabled placeholder="ללא ערך" fullWidth />;
+  }
+
+  if (isRangeComparator(rule.comparatorId)) {
+    const { from, to } = getRangeValue(rule.targetValue);
+
+    const handleRangeChange = (key: "from" | "to", nextValue: string) => {
+      onTouchRangeSide?.(rule.id, key);
+      const current = getRangeValue(rule.targetValue);
+      onChange(rule.id, { ...current, [key]: nextValue });
+    };
+
+    const renderRangeField = (key: "from" | "to", currentValue: string) => {
+      const touchSide = () => {
+        onTouch(rule.id);
+        onTouchRangeSide?.(rule.id, key);
+      };
+      if (rule.fieldType === fieldType.Date) {
+        const currentDateType = fieldExtra.dateType ?? dateType.Date;
+        if (isDateTimeField(fieldExtra)) {
+          return (
+            <ColorRuleDateTimeSplitInput
+              value={currentValue}
+              timePrecision={fieldExtra.timePrecision ?? timePrecision.Minutes}
+              canManage={canManage}
+              error={undefined}
+              hasError={!!error}
+              onChange={(value) => handleRangeChange(key, value)}
+              onTouch={touchSide}
+            />
+          );
+        }
+        return (
+          <ColorRulePickerWrapper>
+            <CustomDateTime
+              value={currentValue || null}
+              dateType={currentDateType}
+              isTabularEdit
+              label=""
+              isRequired={false}
+              isDisabled={!canManage}
+              onChangeHandler={(value) => handleRangeChange(key, value)}
+              onBlurHandler={touchSide}
+              validationMessage={null}
+              hasError={!!error}
+            />
+          </ColorRulePickerWrapper>
+        );
+      }
+
+      if (rule.fieldType === fieldType.Time) {
+        const currentTimePrecision = fieldExtra.timePrecision ?? timePrecision.Minutes;
+        return (
+          <ColorRulePickerWrapper>
+            <CustomTimePicker
+              value={currentValue}
+              timePrecision={currentTimePrecision}
+              isTabularEdit
+              label=""
+              isRequired={false}
+              isDisabled={!canManage}
+              onChangeHandler={(value) => handleRangeChange(key, value)}
+              onBlurHandler={touchSide}
+              validationMessage={null}
+              hasError={!!error}
+            />
+          </ColorRulePickerWrapper>
+        );
+      }
+
+      return (
+        <TextField
+          size="small"
+          type="number"
+          value={currentValue}
+          onBlur={touchSide}
+          onChange={(event) => handleRangeChange(key, event.target.value)}
+          error={!!error}
+          disabled={!canManage}
+          fullWidth
+        />
+      );
+    };
+
+    const isDateTimeRange = rule.fieldType === fieldType.Date && isDateTimeField(fieldExtra);
+
+    return (
+      <RangeErrorColumn>
+        <RangeInputsWrapper $stacked={isDateTimeRange}>
+          <RangeInput>
+            <RangePrefix>מ-</RangePrefix>
+            {renderRangeField("from", from)}
+          </RangeInput>
+          <RangeInput>
+            <RangePrefix>עד</RangePrefix>
+            {renderRangeField("to", to)}
+          </RangeInput>
+        </RangeInputsWrapper>
+        {error && (
+          <FormHelperText error sx={{ textAlign: "right", mx: 0, mt: "2px" }}>
+            {error}
+          </FormHelperText>
+        )}
+      </RangeErrorColumn>
+    );
   }
 
   if (rule.fieldType === fieldType.Boolean) {
@@ -308,6 +570,19 @@ const ColorRuleTargetValueInput = ({
   if (rule.fieldType === fieldType.Date) {
     const currentDateType = fieldExtra.dateType ?? dateType.Date;
 
+    if (isDateTimeField(fieldExtra)) {
+      return (
+        <ColorRuleDateTimeSplitInput
+          value={typeof rule.targetValue === "string" ? rule.targetValue : ""}
+          timePrecision={fieldExtra.timePrecision ?? timePrecision.Minutes}
+          canManage={canManage}
+          error={error}
+          onChange={(value) => onChange(rule.id, value)}
+          onTouch={() => onTouch(rule.id)}
+        />
+      );
+    }
+
     return (
       <ColorRulePickerWrapper>
         <CustomDateTime
@@ -378,6 +653,7 @@ export const ColorRulesModal = ({
   );
   const [draftRules, setDraftRules] = useState<ResponsesTableColorRuleDto[]>(rules);
   const [touchedTargetValueRuleIds, setTouchedTargetValueRuleIds] = useState<Set<string>>(new Set());
+  const [touchedRangeSideKeys, setTouchedRangeSideKeys] = useState<Set<string>>(new Set());
   const [touchedFieldRuleIds, setTouchedFieldRuleIds] = useState<Set<string>>(new Set());
   const [draggedRuleId, setDraggedRuleId] = useState<string | null>(null);
   const [deleteAnchorEl, setDeleteAnchorEl] = useState<HTMLElement | null>(null);
@@ -392,6 +668,7 @@ export const ColorRulesModal = ({
     if (open) {
       setDraftRules(rules);
       setTouchedTargetValueRuleIds(new Set());
+      setTouchedRangeSideKeys(new Set());
       setTouchedFieldRuleIds(new Set());
       setDraggedRuleId(null);
       setDeleteAnchorEl(null);
@@ -527,13 +804,32 @@ export const ColorRulesModal = ({
       if (!rule.color) ruleErrors.color = "יש לבחור צבע";
       if (rule.comparatorId === undefined || rule.comparatorId === null) ruleErrors.comparatorId = "יש לבחור תנאי";
       if (!rule.targetType) ruleErrors.targetType = "יש לבחור סוג צביעה";
-      if (
-        requiresTargetValue(rule) &&
-        (rule.targetValue === undefined ||
+      if (requiresTargetValue(rule)) {
+        if (isRangeComparator(rule.comparatorId)) {
+          const { from, to } = getRangeValue(rule.targetValue);
+          if (normalizeTargetValue(from) === "" || normalizeTargetValue(to) === "") {
+            ruleErrors.targetValue = REQUIRED_VALUE_MESSAGE;
+          } else {
+            const fromComparable = toRangeComparable(from, rule.fieldType);
+            const toComparable = toRangeComparable(to, rule.fieldType);
+            if (
+              !Number.isNaN(fromComparable) &&
+              !Number.isNaN(toComparable) &&
+              fromComparable > toComparable
+            ) {
+              ruleErrors.targetValue =
+                rule.fieldType === fieldType.Date || rule.fieldType === fieldType.Time
+                  ? "טווח הערכים לא תקין"
+                  : 'ערך "מ-" חייב להיות קטן או שווה לערך "עד"';
+            }
+          }
+        } else if (
+          rule.targetValue === undefined ||
           rule.targetValue === null ||
-          normalizeTargetValue(rule.targetValue) === "")
-      ) {
-        ruleErrors.targetValue = "יש להזין ערך";
+          normalizeTargetValue(rule.targetValue) === ""
+        ) {
+          ruleErrors.targetValue = REQUIRED_VALUE_MESSAGE;
+        }
       }
 
       if (Object.keys(ruleErrors).length > 0) errors[rule.id] = ruleErrors;
@@ -558,6 +854,16 @@ export const ColorRulesModal = ({
       if (prev.has(ruleId)) return prev;
       const next = new Set(prev);
       next.add(ruleId);
+      return next;
+    });
+  };
+
+  const markRangeSideTouched = (ruleId: string, side: "from" | "to") => {
+    const key = `${ruleId}|${side}`;
+    setTouchedRangeSideKeys((prev) => {
+      if (prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.add(key);
       return next;
     });
   };
@@ -763,9 +1069,19 @@ export const ColorRulesModal = ({
   const renderRuleRow = (rule: ResponsesTableColorRuleDto): JSX.Element => {
     const ruleErrors = validationErrors[rule.id] ?? {};
     const selectedField = manageableFields.find((field) => field.id === rule.fieldId);
-    const targetValueError = touchedTargetValueRuleIds.has(rule.id)
+    let targetValueError = touchedTargetValueRuleIds.has(rule.id)
       ? ruleErrors.targetValue
       : undefined;
+    if (
+      isRangeComparator(rule.comparatorId) &&
+      targetValueError === REQUIRED_VALUE_MESSAGE &&
+      !(
+        touchedRangeSideKeys.has(`${rule.id}|from`) &&
+        touchedRangeSideKeys.has(`${rule.id}|to`)
+      )
+    ) {
+      targetValueError = undefined;
+    }
     const fieldError = touchedFieldRuleIds.has(rule.id) ? ruleErrors.fieldId : undefined;
     const isDragging = draggedRuleId === rule.id;
     const isDragLocked = !!draggedRuleId && !isDragging;
@@ -784,26 +1100,50 @@ export const ColorRulesModal = ({
         </DragHandle>
 
         <FormControl size="small" error={!!fieldError}>
-          <Select
-            value={rule.fieldId}
-            displayEmpty
-            onBlur={() => markFieldTouched(rule.id)}
-            onChange={(event) => handleFieldChange(rule, event.target.value)}
-            renderValue={(value) => {
-              const field = manageableFields.find((item) => item.id === value);
-              return field ? (
-                field.displayName
-              ) : (
-                <FieldPlaceholder>בחירת שדה</FieldPlaceholder>
-              );
-            }}
-            disabled={!canManage}>
-            {manageableFields.map((field) => (
-              <MenuItem key={field.id} value={field.id}>
-                {field.displayName}
-              </MenuItem>
-            ))}
-          </Select>
+          <Tooltip
+            title={manageableFields.find((item) => item.id === rule.fieldId)?.displayName ?? ""}
+            enterDelay={400}
+            disableInteractive>
+            <Select
+              value={rule.fieldId}
+              displayEmpty
+              onBlur={() => markFieldTouched(rule.id)}
+              onChange={(event) => handleFieldChange(rule, event.target.value)}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    maxWidth: "var(--color-rule-field-menu-width, 240px)",
+                  },
+                },
+                anchorOrigin: { vertical: "bottom", horizontal: "left" },
+                transformOrigin: { vertical: "top", horizontal: "left" },
+              }}
+              ref={(node) => {
+                const element = node as unknown as HTMLElement | null;
+                const width = element?.getBoundingClientRect().width;
+                if (width) {
+                  document.documentElement.style.setProperty(
+                    "--color-rule-field-menu-width",
+                    `${width}px`,
+                  );
+                }
+              }}
+              renderValue={(value) => {
+                const field = manageableFields.find((item) => item.id === value);
+                return field ? (
+                  <FieldValueLabel>{field.displayName}</FieldValueLabel>
+                ) : (
+                  <FieldPlaceholder>בחירת שדה</FieldPlaceholder>
+                );
+              }}
+              disabled={!canManage}>
+              {manageableFields.map((field) => (
+                <MenuItem key={field.id} value={field.id}>
+                  <FieldMenuItemLabel>{field.displayName}</FieldMenuItemLabel>
+                </MenuItem>
+              ))}
+            </Select>
+          </Tooltip>
           {fieldError && <FormHelperText>{fieldError}</FormHelperText>}
         </FormControl>
 
@@ -816,9 +1156,15 @@ export const ColorRulesModal = ({
                 (option) => option.value === comparatorId,
               )?.requiresValue;
 
+              const nextTargetValue = !comparatorRequiresValue
+                ? null
+                : isRangeComparator(comparatorId)
+                  ? { from: "", to: "" }
+                  : "";
+
               updateRule(rule.id, {
                 comparatorId,
-                targetValue: comparatorRequiresValue ? "" : null,
+                targetValue: nextTargetValue,
               });
               resetTargetValueTouched(rule.id);
             }}
@@ -838,6 +1184,7 @@ export const ColorRulesModal = ({
           error={targetValueError}
           canManage={canManage}
           onTouch={markTargetValueTouched}
+          onTouchRangeSide={markRangeSideTouched}
           onChange={updateRuleTargetValue}
           onTrim={trimRuleTargetValue}
         />

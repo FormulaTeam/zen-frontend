@@ -40,6 +40,7 @@ interface CustomTimePickerProps {
   onBlurHandler?: () => void;
   validationMessage?: string | null;
   validationDetail?: string | null;
+  hasError?: boolean;
 }
 
 const parseTimeStringToDayjs = (value: unknown): Dayjs | null => {
@@ -99,6 +100,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
   isTabularEdit = false,
   validationMessage,
   validationDetail,
+  hasError,
 }) => {
   const [timeValue, setTimeValue] = useState<Dayjs | null>(null);
   const didApplyDefaultRef = useRef(false);
@@ -468,7 +470,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
             textField: {
               isTabularEdit,
               required: isRequired,
-              error: Boolean(validationMessage),
+              error: Boolean(validationMessage) || Boolean(hasError),
               helperText: <FieldErrorText message={validationMessage} detail={validationDetail} />,
               size: isTabularEdit ? "medium" : undefined,
               sx: inputWrapperSx,

@@ -14,6 +14,8 @@ import { PaintRoller, Trash2 } from "lucide-react";
 export const ColorRulesDialog = styled(Dialog)`
   .MuiDialog-paper {
     outline: none;
+    max-width: 1320px;
+    width: 100%;
   }
 
   .MuiDialog-paper:focus,
@@ -177,7 +179,7 @@ export const RulesScrollbarThumb = styled(Box)`
 
 export const RulesGrid = styled(Box)`
   display: grid;
-  grid-template-columns: 24px minmax(145px, 1.1fr) minmax(120px, 0.85fr) minmax(165px, 1fr) 112px 78px 58px 32px;
+  grid-template-columns: 24px minmax(120px, 0.9fr) minmax(135px, 0.95fr) minmax(260px, 2fr) 100px 74px 54px 32px;
   gap: 6px;
   width: 100%;
   min-width: 0;
@@ -216,13 +218,13 @@ export const RuleRow = styled(RulesGrid) <{
   /* Consistent inner padding across every control for a cohesive look */
   .MuiOutlinedInput-input,
   .MuiSelect-select {
-    padding-inline: 18px !important;
+    padding-inline: 14px !important;
     display: flex;
     align-items: center;
   }
 
   .MuiAutocomplete-root .MuiOutlinedInput-root {
-    padding-inline: 18px !important;
+    padding-inline: 14px !important;
   }
 
   .MuiAutocomplete-root .MuiOutlinedInput-root .MuiAutocomplete-input {
@@ -307,7 +309,7 @@ export const DragHandle = styled(Box) <{ $isDragging?: boolean; $canDrag?: boole
 
 export const AddRuleRow = styled(Box)`
   display: grid;
-  grid-template-columns: 24px minmax(145px, 1.1fr) minmax(120px, 0.85fr) minmax(165px, 1fr) 112px 78px 58px 32px;
+  grid-template-columns: 24px minmax(120px, 0.9fr) minmax(135px, 0.95fr) minmax(260px, 2fr) 100px 74px 54px 32px;
   gap: 6px;
   align-items: center;
   width: 100%;
@@ -328,11 +330,83 @@ export const ColorSelectValue = styled(Box)`
   gap: 8px;
 `;
 
+export const RangeInputsWrapper = styled(Box) <{ $stacked?: boolean }>`
+  display: flex;
+  flex-direction: ${({ $stacked }) => ($stacked ? "column" : "row")};
+  align-items: ${({ $stacked }) => ($stacked ? "stretch" : "flex-start")};
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+`;
+
+export const RangeErrorColumn = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+`;
+
+export const RangeInput = styled(Box)`
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 1 1 0;
+  min-width: 0;
+`;
+
+export const DateTimeSplitRow = styled(Box)`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+`;
+
+/* Time is placed first (right side in RTL) and is narrower than the date */
+export const DateTimeTimeSlot = styled(Box)`
+  flex: 0 0 34%;
+  min-width: 0;
+`;
+
+export const DateTimeDateSlot = styled(Box)`
+  flex: 1 1 0;
+  min-width: 0;
+`;
+
+export const RangePrefix = styled("span")`
+  flex: 0 0 auto;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+`;
+
 export const FieldPlaceholder = styled("span")`
   color: #94a3b8;
 `;
 
-export const ColorRulePickerWrapper = styled(Box)`
+export const FieldValueLabel = styled("span")`
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+export const FieldMenuItemLabel = styled("span")`
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }>`
   width: 100%;
   min-width: 0;
 
@@ -342,7 +416,7 @@ export const ColorRulePickerWrapper = styled(Box)`
     box-sizing: border-box;
     align-items: center;
     padding-block: 0 !important;
-    padding-inline: 18px !important;
+    padding-inline: 10px !important;
     background-color: #ffffff;
     border: 1px solid rgba(148, 163, 184, 0.35);
     border-radius: 4px !important;
@@ -352,18 +426,29 @@ export const ColorRulePickerWrapper = styled(Box)`
   .MuiPickersInputBase-root,
   .MuiPickersInputBase-sectionsContainer,
   .MuiPickersSectionList-root {
-    height: 100% !important;
+    height: 40px !important;
     display: flex !important;
     align-items: center !important;
     padding-block: 0 !important;
-    line-height: normal !important;
+    margin-block: 0 !important;
+    line-height: 40px !important;
+  }
+
+  /* Align the date/time text; time hugs the right, icon stays on the left */
+  .MuiPickersInputBase-root .MuiPickersInputBase-sectionsContainer,
+  .MuiPickersInputBase-root .MuiPickersSectionList-root {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    justify-content: ${({ $timeAlignRight }) => ($timeAlignRight ? "flex-end" : "flex-start")} !important;
+    text-align: ${({ $timeAlignRight }) => ($timeAlignRight ? "right" : "left")} !important;
   }
 
   .MuiPickersSectionList-section,
   .MuiPickersSectionList-sectionContent {
     display: inline-flex !important;
     align-items: center !important;
-    line-height: normal !important;
+    height: 40px !important;
+    line-height: 40px !important;
   }
 
   /* Smaller picker icon so the extra padding is visible */

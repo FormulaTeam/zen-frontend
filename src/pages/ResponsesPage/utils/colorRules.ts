@@ -33,6 +33,7 @@ export const getComparatorOptions = (typeId?: number) => {
         { value: comparator.LessThan, label: "קטן מ", requiresValue: true },
         { value: comparator.GreaterThanOrEqual, label: "גדול או שווה ל", requiresValue: true },
         { value: comparator.LessThanOrEqual, label: "קטן או שווה ל", requiresValue: true },
+        { value: comparator.Between, label: "בטווח הערכים", requiresValue: true, isRange: true },
         { value: comparator.IsEmpty, label: "ריק" },
         { value: comparator.IsNotEmpty, label: "לא ריק" },
       ];
@@ -45,6 +46,7 @@ export const getComparatorOptions = (typeId?: number) => {
         { value: comparator.After, label: "אחרי", requiresValue: true },
         { value: comparator.BeforeOrEqual, label: "לפני או שווה ל", requiresValue: true },
         { value: comparator.AfterOrEqual, label: "אחרי או שווה ל", requiresValue: true },
+        { value: comparator.Between, label: "בטווח הערכים", requiresValue: true, isRange: true },
         { value: comparator.IsEmpty, label: "ריק" },
         { value: comparator.IsNotEmpty, label: "לא ריק" },
       ];
@@ -71,14 +73,40 @@ export const getComparatorOptions = (typeId?: number) => {
   }
 };
 
+export const isRangeComparator = (comparatorId?: number): boolean =>
+  comparatorId === comparator.Between;
+
+export type ColorRuleRangeValue = { from: string; to: string };
+
+export const isRangeValue = (value: unknown): value is ColorRuleRangeValue =>
+  typeof value === "object" &&
+  value !== null &&
+  ("from" in (value as Record<string, unknown>) || "to" in (value as Record<string, unknown>));
+
+export const getRangeValue = (value: unknown): ColorRuleRangeValue => {
+  if (isRangeValue(value)) {
+    return {
+      from: typeof value.from === "string" ? value.from : "",
+      to: typeof value.to === "string" ? value.to : "",
+    };
+  }
+  return { from: "", to: "" };
+};
+
 const formatRuleTitle = (rule: ResponsesTableColorRuleDto): string => {
   const comparatorLabel =
     getComparatorOptions(rule.fieldType).find((option) => option.value === rule.comparatorId)
       ?.label ?? "";
   const valueLabel =
-    rule.targetValue === null || rule.targetValue === undefined || rule.targetValue === ""
-      ? ""
-      : ` - ${String(rule.targetValue)}`;
+    isRangeComparator(rule.comparatorId) && isRangeValue(rule.targetValue)
+      ? (() => {
+          const { from, to } = getRangeValue(rule.targetValue);
+          if (!from && !to) return "";
+          return ` - ${from} ← → ${to}`;
+        })()
+      : rule.targetValue === null || rule.targetValue === undefined || rule.targetValue === ""
+        ? ""
+        : ` - ${String(rule.targetValue)}`;
 
   return `${comparatorLabel}${valueLabel}`.trim() || "חוק צבע";
 };
@@ -139,6 +167,24 @@ export const doesRuleMatchValue = (
   try {
     if (rule.comparatorId === comparator.IsEmpty) return isEmptyValue(actualValue);
     if (rule.comparatorId === comparator.IsNotEmpty) return !isEmptyValue(actualValue);
+
+    if (isRangeComparator(rule.comparatorId)) {
+      const { from, to } = getRangeValue(rule.targetValue);
+      if (isEmptyValue(actualValue) || isEmptyValue(from) || isEmptyValue(to)) return false;
+
+      const actualComparable = Number(normalizeComparable(actualValue, rule.fieldType));
+      const fromComparable = Number(normalizeComparable(from, rule.fieldType));
+      const toComparable = Number(normalizeComparable(to, rule.fieldType));
+
+      if (Number.isNaN(actualComparable) || Number.isNaN(fromComparable) || Number.isNaN(toComparable)) {
+        return false;
+      }
+
+      const lower = Math.min(fromComparable, toComparable);
+      const upper = Math.max(fromComparable, toComparable);
+      return actualComparable >= lower && actualComparable <= upper;
+    }
+
     if (isEmptyValue(actualValue) || isEmptyValue(rule.targetValue)) return false;
 
     const actual = normalizeComparable(actualValue, rule.fieldType);
