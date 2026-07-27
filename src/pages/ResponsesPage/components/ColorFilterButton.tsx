@@ -2,7 +2,7 @@ import { Box, Popover, Tooltip, Typography } from "@mui/material";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, SwatchBook } from "lucide-react";
 import { useMemo, useState, type MouseEvent } from "react";
 
 import type { ResponsesTableColorRuleColor } from "../../../types/shared";
@@ -29,6 +29,7 @@ interface ColorFilterButtonProps {
   hiddenColorRuleIdSet: ReadonlySet<string>;
   onToggleRuleColor: (ruleId: string) => void;
   onToggleAllColors: () => void;
+  showColorRulesIcon?: boolean;
   disabled?: boolean;
 }
 
@@ -39,6 +40,7 @@ export function ColorFilterButton({
   hiddenColorRuleIdSet,
   onToggleRuleColor,
   onToggleAllColors,
+  showColorRulesIcon = false,
   disabled = false,
 }: ColorFilterButtonProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -148,6 +150,15 @@ export function ColorFilterButton({
                 color: "rgba(0, 0, 0, 0.26) !important",
               },
             }}>
+            {showColorRulesIcon && (
+              <SwatchBook
+                size={21}
+                strokeWidth={2}
+                aria-hidden="true"
+                style={{ flexShrink: 0 }}
+              />
+            )}
+
             <Typography
               component="span"
               sx={{

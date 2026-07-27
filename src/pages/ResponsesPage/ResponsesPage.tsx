@@ -697,6 +697,7 @@ const ResponsesPageContent = (): JSX.Element => {
                     hiddenColorRuleIdSet={hiddenColorRuleIdSet}
                     onToggleRuleColor={toggleRuleColor}
                     onToggleAllColors={toggleAllColors}
+                    showColorRulesIcon={!canManageColorRules}
                     disabled={isInEditMode}
                   />
 
