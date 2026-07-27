@@ -352,7 +352,7 @@ export const RangeInput = styled(Box)`
   display: flex;
   align-items: center;
   gap: 3px;
-  flex: 1 1 0;
+  width: 100%;
   min-width: 0;
 `;
 
@@ -377,6 +377,7 @@ export const DateTimeDateSlot = styled(Box)`
 
 export const RangePrefix = styled("span")`
   flex: 0 0 auto;
+  width: 24px;
   font-size: 0.95rem;
   font-weight: 600;
   color: #475569;
@@ -434,13 +435,13 @@ export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }
     line-height: 40px !important;
   }
 
-  /* Align the date/time text; time hugs the right, icon stays on the left */
+  /* Align the date/time text; time hugs the left, icon stays on the right */
   .MuiPickersInputBase-root .MuiPickersInputBase-sectionsContainer,
   .MuiPickersInputBase-root .MuiPickersSectionList-root {
     flex: 1 1 auto !important;
     width: 100% !important;
-    justify-content: ${({ $timeAlignRight }) => ($timeAlignRight ? "flex-end" : "flex-start")} !important;
-    text-align: ${({ $timeAlignRight }) => ($timeAlignRight ? "right" : "left")} !important;
+    justify-content: ${({ $timeAlignRight }) => ($timeAlignRight ? "flex-start" : "flex-start")} !important;
+    text-align: ${({ $timeAlignRight }) => ($timeAlignRight ? "left" : "left")} !important;
   }
 
   .MuiPickersSectionList-section,

@@ -1,6 +1,7 @@
 import {
   Autocomplete,
   Button,
+  Box,
   FormControl,
   FormHelperText,
   MenuItem,
@@ -359,9 +360,11 @@ type ColorRuleTargetValueInputProps = {
   fields: FormFieldDto[];
   selectedField?: FormFieldDto;
   error?: string;
+  rangeSideErrors?: { from?: string; to?: string };
   canManage: boolean;
   onTouch: (ruleId: string) => void;
   onTouchRangeSide?: (ruleId: string, side: "from" | "to") => void;
+  onFillRangeSide?: (ruleId: string, side: "from" | "to") => void;
   onChange: (ruleId: string, targetValue: ResponsesTableColorRuleDto["targetValue"]) => void;
   onTrim: (rule: ResponsesTableColorRuleDto) => void;
 };
@@ -371,9 +374,11 @@ const ColorRuleTargetValueInput = ({
   fields,
   selectedField,
   error,
+  rangeSideErrors,
   canManage,
   onTouch,
   onTouchRangeSide,
+  onFillRangeSide,
   onChange,
   onTrim,
 }: ColorRuleTargetValueInputProps): JSX.Element => {
@@ -397,11 +402,16 @@ const ColorRuleTargetValueInput = ({
 
     const handleRangeChange = (key: "from" | "to", nextValue: string) => {
       onTouchRangeSide?.(rule.id, key);
+      if (normalizeTargetValue(nextValue) !== "") {
+        onFillRangeSide?.(rule.id, key);
+      }
       const current = getRangeValue(rule.targetValue);
       onChange(rule.id, { ...current, [key]: nextValue });
     };
 
     const renderRangeField = (key: "from" | "to", currentValue: string) => {
+      const sideError = rangeSideErrors?.[key];
+      const showError = !!error || !!sideError;
       const touchSide = () => {
         onTouch(rule.id);
         onTouchRangeSide?.(rule.id, key);
@@ -415,7 +425,7 @@ const ColorRuleTargetValueInput = ({
               timePrecision={fieldExtra.timePrecision ?? timePrecision.Minutes}
               canManage={canManage}
               error={undefined}
-              hasError={!!error}
+              hasError={showError}
               onChange={(value) => handleRangeChange(key, value)}
               onTouch={touchSide}
             />
@@ -433,7 +443,7 @@ const ColorRuleTargetValueInput = ({
               onChangeHandler={(value) => handleRangeChange(key, value)}
               onBlurHandler={touchSide}
               validationMessage={null}
-              hasError={!!error}
+              hasError={showError}
             />
           </ColorRulePickerWrapper>
         );
@@ -453,7 +463,7 @@ const ColorRuleTargetValueInput = ({
               onChangeHandler={(value) => handleRangeChange(key, value)}
               onBlurHandler={touchSide}
               validationMessage={null}
-              hasError={!!error}
+              hasError={showError}
             />
           </ColorRulePickerWrapper>
         );
@@ -466,7 +476,7 @@ const ColorRuleTargetValueInput = ({
           value={currentValue}
           onBlur={touchSide}
           onChange={(event) => handleRangeChange(key, event.target.value)}
-          error={!!error}
+          error={showError}
           disabled={!canManage}
           fullWidth
         />
@@ -474,21 +484,36 @@ const ColorRuleTargetValueInput = ({
     };
 
     const isDateTimeRange = rule.fieldType === fieldType.Date && isDateTimeField(fieldExtra);
+    const isDateOrTime = rule.fieldType === fieldType.Date || rule.fieldType === fieldType.Time;
+    const sideHelperSx = {
+      textAlign: isDateOrTime ? ("left" as const) : ("right" as const),
+      paddingInlineStart: isDateOrTime ? "27px" : 0,
+      mx: 0,
+      mt: "2px",
+    };
+
+    const renderRangeCell = (key: "from" | "to", prefix: string, currentValue: string) => (
+      <Box sx={{ display: "flex", flexDirection: "column", flex: "1 1 0", minWidth: 0 }}>
+        <RangeInput>
+          <RangePrefix>{prefix}</RangePrefix>
+          {renderRangeField(key, currentValue)}
+        </RangeInput>
+        {rangeSideErrors?.[key] && (
+          <FormHelperText error sx={sideHelperSx}>
+            {rangeSideErrors[key]}
+          </FormHelperText>
+        )}
+      </Box>
+    );
 
     return (
       <RangeErrorColumn>
         <RangeInputsWrapper $stacked={isDateTimeRange}>
-          <RangeInput>
-            <RangePrefix>מ-</RangePrefix>
-            {renderRangeField("from", from)}
-          </RangeInput>
-          <RangeInput>
-            <RangePrefix>עד</RangePrefix>
-            {renderRangeField("to", to)}
-          </RangeInput>
+          {renderRangeCell("from", "מ-", from)}
+          {renderRangeCell("to", "עד", to)}
         </RangeInputsWrapper>
         {error && (
-          <FormHelperText error sx={{ textAlign: "right", mx: 0, mt: "2px" }}>
+          <FormHelperText error sx={sideHelperSx}>
             {error}
           </FormHelperText>
         )}
@@ -654,6 +679,7 @@ export const ColorRulesModal = ({
   const [draftRules, setDraftRules] = useState<ResponsesTableColorRuleDto[]>(rules);
   const [touchedTargetValueRuleIds, setTouchedTargetValueRuleIds] = useState<Set<string>>(new Set());
   const [touchedRangeSideKeys, setTouchedRangeSideKeys] = useState<Set<string>>(new Set());
+  const [filledRangeSideKeys, setFilledRangeSideKeys] = useState<Set<string>>(new Set());
   const [touchedFieldRuleIds, setTouchedFieldRuleIds] = useState<Set<string>>(new Set());
   const [draggedRuleId, setDraggedRuleId] = useState<string | null>(null);
   const [deleteAnchorEl, setDeleteAnchorEl] = useState<HTMLElement | null>(null);
@@ -669,6 +695,15 @@ export const ColorRulesModal = ({
       setDraftRules(rules);
       setTouchedTargetValueRuleIds(new Set());
       setTouchedRangeSideKeys(new Set());
+      const initialFilled = new Set<string>();
+      rules.forEach((rule) => {
+        if (isRangeComparator(rule.comparatorId)) {
+          const { from, to } = getRangeValue(rule.targetValue);
+          if (normalizeTargetValue(from) !== "") initialFilled.add(`${rule.id}|from`);
+          if (normalizeTargetValue(to) !== "") initialFilled.add(`${rule.id}|to`);
+        }
+      });
+      setFilledRangeSideKeys(initialFilled);
       setTouchedFieldRuleIds(new Set());
       setDraggedRuleId(null);
       setDeleteAnchorEl(null);
@@ -861,6 +896,16 @@ export const ColorRulesModal = ({
   const markRangeSideTouched = (ruleId: string, side: "from" | "to") => {
     const key = `${ruleId}|${side}`;
     setTouchedRangeSideKeys((prev) => {
+      if (prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  };
+
+  const markRangeSideFilled = (ruleId: string, side: "from" | "to") => {
+    const key = `${ruleId}|${side}`;
+    setFilledRangeSideKeys((prev) => {
       if (prev.has(key)) return prev;
       const next = new Set(prev);
       next.add(key);
@@ -1072,14 +1117,18 @@ export const ColorRulesModal = ({
     let targetValueError = touchedTargetValueRuleIds.has(rule.id)
       ? ruleErrors.targetValue
       : undefined;
-    if (
-      isRangeComparator(rule.comparatorId) &&
-      targetValueError === REQUIRED_VALUE_MESSAGE &&
-      !(
-        touchedRangeSideKeys.has(`${rule.id}|from`) &&
-        touchedRangeSideKeys.has(`${rule.id}|to`)
-      )
-    ) {
+    let rangeSideErrors: { from?: string; to?: string } | undefined;
+    if (isRangeComparator(rule.comparatorId) && targetValueError === REQUIRED_VALUE_MESSAGE) {
+      const { from, to } = getRangeValue(rule.targetValue);
+      const fromShow =
+        normalizeTargetValue(from) === "" && filledRangeSideKeys.has(`${rule.id}|from`);
+      const toShow =
+        normalizeTargetValue(to) === "" && filledRangeSideKeys.has(`${rule.id}|to`);
+      rangeSideErrors = {
+        from: fromShow ? REQUIRED_VALUE_MESSAGE : undefined,
+        to: toShow ? REQUIRED_VALUE_MESSAGE : undefined,
+      };
+      // The required message is shown per-empty-side, not once.
       targetValueError = undefined;
     }
     const fieldError = touchedFieldRuleIds.has(rule.id) ? ruleErrors.fieldId : undefined;
@@ -1182,9 +1231,11 @@ export const ColorRulesModal = ({
           fields={fields}
           selectedField={selectedField}
           error={targetValueError}
+          rangeSideErrors={rangeSideErrors}
           canManage={canManage}
           onTouch={markTargetValueTouched}
           onTouchRangeSide={markRangeSideTouched}
+          onFillRangeSide={markRangeSideFilled}
           onChange={updateRuleTargetValue}
           onTrim={trimRuleTargetValue}
         />
