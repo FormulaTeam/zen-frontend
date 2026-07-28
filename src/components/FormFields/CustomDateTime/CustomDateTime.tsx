@@ -643,7 +643,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   const textFieldSlotProps = {
     isTabularEdit,
     required: isRequired,
-    error: Boolean(validationMessage) || Boolean(hasError),
+    error: Boolean(validationMessage || hasError),
     helperText: <FieldErrorText message={validationMessage} detail={validationDetail} />,
     size: isTabularEdit ? "medium" : undefined,
     onBlur: onBlurHandler,

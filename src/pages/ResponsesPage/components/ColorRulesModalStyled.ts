@@ -16,6 +16,7 @@ export const ColorRulesDialog = styled(Dialog)`
     outline: none;
     max-width: 1320px;
     width: 100%;
+    background-color: #f1f5f9;
   }
 
   .MuiDialog-paper:focus,
@@ -134,11 +135,13 @@ export const EmptyStateDescription = styled(Typography)`
 
 export const RulesTableContainer = styled(Box)`
   flex: 1;
-  overflow-x: hidden;
+  min-width: 0;
+  overflow-x: scroll;
   overflow-y: scroll !important;
   height: 100%;
   padding-top: 8px;
   padding-inline: 10px 8px;
+  padding-bottom: 10px;
   scrollbar-width: none !important;
   -ms-overflow-style: auto !important;
 
@@ -148,11 +151,20 @@ export const RulesTableContainer = styled(Box)`
   }
 `;
 
+export const RulesTableOuter = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  min-width: 0;
+`;
+
 export const RulesTableScrollArea = styled(Box)`
   display: flex;
   gap: 10px;
   max-height: 360px;
   min-height: 0;
+  min-width: 0;
 `;
 
 export const RulesScrollbarRail = styled(Box)`
@@ -177,12 +189,34 @@ export const RulesScrollbarThumb = styled(Box)`
   }
 `;
 
+export const RulesScrollbarRailHorizontal = styled(Box)`
+  position: relative;
+  flex: 0 0 8px;
+  width: 100%;
+  border-radius: 9999px;
+  background-color: #f1f1f1;
+  cursor: default;
+`;
+
+export const RulesScrollbarThumbHorizontal = styled(Box)`
+  position: absolute;
+  inset-block: 0;
+  border-radius: 9999px;
+  background-color: #c3c0c0;
+  cursor: default;
+
+  &:active {
+    cursor: default;
+    background-color: #aaa7a7;
+  }
+`;
+
 export const RulesGrid = styled(Box)`
   display: grid;
   grid-template-columns: 24px minmax(120px, 0.9fr) minmax(135px, 0.95fr) minmax(260px, 2fr) 100px 74px 54px 32px;
   gap: 6px;
   width: 100%;
-  min-width: 0;
+  min-width: 840px;
 
   > * {
     min-width: 0;
@@ -206,6 +240,13 @@ export const RuleRow = styled(RulesGrid) <{
   border-radius: 4px;
   box-sizing: border-box;
   padding: 2px;
+
+  /* Prevent the MuiTextField "paper" background from painting behind the
+     helper/error text; only the actual input surface should be white. */
+  .MuiFormControl-root,
+  .MuiTextField-root {
+    background-color: transparent !important;
+  }
 
   /* Unify the height and outline of every value control in a rule row */
   .MuiOutlinedInput-root {
@@ -313,7 +354,7 @@ export const AddRuleRow = styled(Box)`
   gap: 6px;
   align-items: center;
   width: 100%;
-  min-width: 0;
+  min-width: 840px;
   padding-top: 12px;
   padding-inline: 12px 18px;
 
@@ -358,7 +399,7 @@ export const RangeInput = styled(Box)`
 
 export const DateTimeSplitRow = styled(Box)`
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 6px;
   width: 100%;
   min-width: 0;
@@ -368,11 +409,13 @@ export const DateTimeSplitRow = styled(Box)`
 export const DateTimeTimeSlot = styled(Box)`
   flex: 0 0 34%;
   min-width: 0;
+  display: flex;
 `;
 
 export const DateTimeDateSlot = styled(Box)`
   flex: 1 1 0;
   min-width: 0;
+  display: flex;
 `;
 
 export const RangePrefix = styled("span")`
@@ -411,9 +454,14 @@ export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }
   width: 100%;
   min-width: 0;
 
+  .MuiFormControl-root {
+    width: 100%;
+  }
+
   .MuiInputBase-root {
-    height: 40px;
-    min-height: 40px;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
     box-sizing: border-box;
     align-items: center;
     padding-block: 0 !important;
@@ -421,6 +469,7 @@ export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }
     background-color: #ffffff;
     border: 1px solid rgba(148, 163, 184, 0.35);
     border-radius: 4px !important;
+    overflow: hidden;
   }
 
   /* Vertically center the date/time sections within the 40px control */
@@ -428,6 +477,8 @@ export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }
   .MuiPickersInputBase-sectionsContainer,
   .MuiPickersSectionList-root {
     height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
     display: flex !important;
     align-items: center !important;
     padding-block: 0 !important;
@@ -450,6 +501,10 @@ export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }
   }
 
   /* Smaller picker icon so the extra padding is visible */
+  .MuiIconButton-root {
+    padding: 4px !important;
+  }
+
   .MuiIconButton-root svg {
     font-size: 22px;
     width: 22px;
@@ -459,6 +514,8 @@ export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }
   /* Space between the time/date text and the trailing icon */
   .MuiInputAdornment-root {
     margin-inline-start: 8px;
+    height: 100% !important;
+    max-height: none !important;
   }
 
   && .MuiInputBase-input {
