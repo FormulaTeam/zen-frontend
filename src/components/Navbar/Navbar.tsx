@@ -61,7 +61,7 @@ const Navbar = () => {
   };
 
   const handleRestoreClick = () => {
-    navigate(IPath.DELETED_FORMS);
+    navigate(IPath.RECYCLE_BIN);
   };
 
   const navbarIconButtonSx = {
