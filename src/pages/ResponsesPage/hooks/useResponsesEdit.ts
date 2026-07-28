@@ -815,12 +815,6 @@ export const useResponsesEdit = () => {
       const dependentSourceFieldId = changedFieldExtra.linkedOptionsFieldId;
       const dependentValues = normalizeOptionValues(changedValue);
 
-      console.log("[dep-debug] changed", {
-        changedFieldId: String(changedField.id),
-        linkedOptionsFieldId: dependentSourceFieldId,
-        dependentValues,
-      });
-
       if (!dependentSourceFieldId || dependentValues.length === 0) return;
 
       const updates: Partial<Row> = {};
@@ -836,15 +830,6 @@ export const useResponsesEdit = () => {
 
           const candidateExtra = getFieldExtra(candidateField);
 
-          console.log("[dep-debug] candidate", {
-            candidateFieldId: String(candidateField.id),
-            dependentOptionsFieldId: candidateExtra.dependentOptionsFieldId,
-            linkedOptionsFieldId: candidateExtra.linkedOptionsFieldId,
-            matchesChanged:
-              String(candidateExtra.dependentOptionsFieldId ?? "") === String(changedField.id),
-            currentCellValue: row[getFieldColumnKey(candidateField)],
-          });
-
           if (
             String(candidateExtra.dependentOptionsFieldId ?? "") !== String(changedField.id) ||
             !candidateExtra.linkedOptionsFieldId
@@ -858,8 +843,6 @@ export const useResponsesEdit = () => {
           if (candidateValues.length === 0) return;
 
           const ownerFormId = await getFormIdByFieldId(candidateExtra.linkedOptionsFieldId);
-
-          console.log("[dep-debug] resolved", { candidateValues, ownerFormId });
 
           if (!ownerFormId) return;
 
