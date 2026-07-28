@@ -81,6 +81,12 @@ const Navbar = () => {
     user?.upn?.split("@")[0] ||
     "משתמש";
 
+  const resolvedFirstName =
+    user?.firstName?.trim() ||
+    user?.displayName?.trim()?.split(" ")[0] ||
+    user?.upn?.split("@")[0] ||
+    "משתמש";
+
   const navbarIconButtonSx = {
     width: 36,
     height: 36,
