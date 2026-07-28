@@ -15,7 +15,7 @@ import {
 import { MoreVert, ChatBubbleOutline, EditOutlined, ShareOutlined, DeleteOutline } from "@mui/icons-material";
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
 import { Pin } from "lucide-react";
-import { permission } from "formula-gear";
+import { permission, MAX_PINNED_FORMS } from "formula-gear";
 import UserPicker from "../UserPicker/UserPicker";
 import { getFormIconByName } from "../../utils/utils";
 import { highlightText } from "../../utils/highlighting";
@@ -185,7 +185,7 @@ const FormCard = ({
       await pinFormMutation.mutateAsync(form.id);
     } catch (error: any) {
       if (error?.response?.status === 409) {
-        toast.error("לא ניתן לנעוץ יותר מ־4 טפסים.");
+        toast.error(`לא ניתן לנעוץ יותר מ־${MAX_PINNED_FORMS} טפסים.`);
       } else {
         toast.error("אירעה שגיאה בנעיצת הטופס. נסו שוב.");
       }

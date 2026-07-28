@@ -118,7 +118,7 @@ function MainPage({
     sortDirection,
     enabled: !!user,
     includePermissions: !isSuperAdmin && scope !== formsScopeOption.MyForms,
-    excludePinned: true,
+    includePinned: false,
   });
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
