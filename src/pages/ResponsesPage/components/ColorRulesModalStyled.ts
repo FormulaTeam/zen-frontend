@@ -14,6 +14,9 @@ import { PaintRoller, Trash2 } from "lucide-react";
 export const ColorRulesDialog = styled(Dialog)`
   .MuiDialog-paper {
     outline: none;
+    max-width: 1320px;
+    width: 100%;
+    background-color: #f1f5f9;
   }
 
   .MuiDialog-paper:focus,
@@ -132,11 +135,13 @@ export const EmptyStateDescription = styled(Typography)`
 
 export const RulesTableContainer = styled(Box)`
   flex: 1;
-  overflow-x: hidden;
+  min-width: 0;
+  overflow-x: scroll;
   overflow-y: scroll !important;
   height: 100%;
   padding-top: 8px;
   padding-inline: 10px 8px;
+  padding-bottom: 10px;
   scrollbar-width: none !important;
   -ms-overflow-style: auto !important;
 
@@ -146,11 +151,20 @@ export const RulesTableContainer = styled(Box)`
   }
 `;
 
+export const RulesTableOuter = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  min-width: 0;
+`;
+
 export const RulesTableScrollArea = styled(Box)`
   display: flex;
   gap: 10px;
-  height: 360px;
+  max-height: 360px;
   min-height: 0;
+  min-width: 0;
 `;
 
 export const RulesScrollbarRail = styled(Box)`
@@ -175,12 +189,34 @@ export const RulesScrollbarThumb = styled(Box)`
   }
 `;
 
+export const RulesScrollbarRailHorizontal = styled(Box)`
+  position: relative;
+  flex: 0 0 8px;
+  width: 100%;
+  border-radius: 9999px;
+  background-color: #f1f1f1;
+  cursor: default;
+`;
+
+export const RulesScrollbarThumbHorizontal = styled(Box)`
+  position: absolute;
+  inset-block: 0;
+  border-radius: 9999px;
+  background-color: #c3c0c0;
+  cursor: default;
+
+  &:active {
+    cursor: default;
+    background-color: #aaa7a7;
+  }
+`;
+
 export const RulesGrid = styled(Box)`
   display: grid;
-  grid-template-columns: 24px minmax(145px, 1.1fr) minmax(120px, 0.85fr) minmax(165px, 1fr) 112px 78px 58px 32px;
+  grid-template-columns: 24px minmax(120px, 0.9fr) minmax(135px, 0.95fr) minmax(260px, 2fr) 100px 74px 54px 32px;
   gap: 6px;
   width: 100%;
-  min-width: 0;
+  min-width: 840px;
 
   > * {
     min-width: 0;
@@ -204,6 +240,66 @@ export const RuleRow = styled(RulesGrid) <{
   border-radius: 4px;
   box-sizing: border-box;
   padding: 2px;
+
+  /* Prevent the MuiTextField "paper" background from painting behind the
+     helper/error text; only the actual input surface should be white. */
+  .MuiFormControl-root,
+  .MuiTextField-root {
+    background-color: transparent !important;
+  }
+
+  /* Unify the height and outline of every value control in a rule row */
+  .MuiOutlinedInput-root {
+    min-height: 40px;
+    height: 40px;
+    background-color: #ffffff;
+    border-radius: 4px;
+  }
+
+  /* Consistent inner padding across every control for a cohesive look */
+  .MuiOutlinedInput-input,
+  .MuiSelect-select {
+    padding-inline: 14px !important;
+    display: flex;
+    align-items: center;
+  }
+
+  .MuiAutocomplete-root .MuiOutlinedInput-root {
+    padding-inline: 14px !important;
+  }
+
+  .MuiAutocomplete-root .MuiOutlinedInput-root .MuiAutocomplete-input {
+    padding-inline: 0 !important;
+  }
+
+  /* Smaller icons so the extra padding is visible */
+  .MuiSelect-icon,
+  .MuiAutocomplete-popupIndicator svg,
+  .MuiAutocomplete-clearIndicator svg,
+  .MuiIconButton-root svg {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+
+  .MuiOutlinedInput-notchedOutline {
+    border-color: rgba(148, 163, 184, 0.35);
+    border-radius: 4px;
+  }
+
+  .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: rgba(148, 163, 184, 0.6);
+  }
+
+  .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #1e8fe5;
+    border-width: 1px;
+  }
+
+  .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+    border-color: #ef000b;
+  }
+
   transition:
     background-color 120ms ease,
     border-color 120ms ease,
@@ -254,12 +350,13 @@ export const DragHandle = styled(Box) <{ $isDragging?: boolean; $canDrag?: boole
 
 export const AddRuleRow = styled(Box)`
   display: grid;
-  grid-template-columns: 24px minmax(145px, 1.1fr) minmax(120px, 0.85fr) minmax(165px, 1fr) 112px 78px 58px 32px;
+  grid-template-columns: 24px minmax(120px, 0.9fr) minmax(135px, 0.95fr) minmax(260px, 2fr) 100px 74px 54px 32px;
   gap: 6px;
   align-items: center;
   width: 100%;
-  min-width: 0;
-  padding-top: 8px;
+  min-width: 840px;
+  padding-top: 12px;
+  padding-inline: 12px 18px;
 
   > * {
     min-width: 0;
@@ -274,15 +371,160 @@ export const ColorSelectValue = styled(Box)`
   gap: 8px;
 `;
 
-export const ColorRulePickerWrapper = styled(Box)`
+export const RangeInputsWrapper = styled(Box) <{ $stacked?: boolean }>`
+  display: flex;
+  flex-direction: ${({ $stacked }) => ($stacked ? "column" : "row")};
+  align-items: ${({ $stacked }) => ($stacked ? "stretch" : "flex-start")};
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+`;
+
+export const RangeErrorColumn = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+`;
+
+export const RangeInput = styled(Box)`
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+`;
+
+export const DateTimeSplitRow = styled(Box)`
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+`;
+
+/* Time is placed first (right side in RTL) and is narrower than the date */
+export const DateTimeTimeSlot = styled(Box)`
+  flex: 0 0 34%;
+  min-width: 0;
+  display: flex;
+`;
+
+export const DateTimeDateSlot = styled(Box)`
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+`;
+
+export const RangePrefix = styled("span")`
+  flex: 0 0 auto;
+  width: 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+`;
+
+export const FieldPlaceholder = styled("span")`
+  color: #94a3b8;
+`;
+
+export const FieldValueLabel = styled("span")`
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+export const FieldMenuItemLabel = styled("span")`
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }>`
   width: 100%;
   min-width: 0;
 
+  .MuiFormControl-root {
+    width: 100%;
+  }
+
   .MuiInputBase-root {
-    min-height: 40px;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    box-sizing: border-box;
+    align-items: center;
+    padding-block: 0 !important;
+    padding-inline: 10px !important;
     background-color: #ffffff;
     border: 1px solid rgba(148, 163, 184, 0.35);
     border-radius: 4px !important;
+    overflow: hidden;
+  }
+
+  /* Vertically center the date/time sections within the 40px control */
+  .MuiPickersInputBase-root,
+  .MuiPickersInputBase-sectionsContainer,
+  .MuiPickersSectionList-root {
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    padding-block: 0 !important;
+    margin-block: 0 !important;
+    line-height: 40px !important;
+  }
+
+  .MuiPickersInputBase-root .MuiPickersInputBase-sectionsContainer,
+  .MuiPickersInputBase-root .MuiPickersSectionList-root {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+  }
+
+  .MuiPickersSectionList-section,
+  .MuiPickersSectionList-sectionContent {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 40px !important;
+    line-height: 40px !important;
+  }
+
+  /* Smaller picker icon so the extra padding is visible */
+  .MuiIconButton-root {
+    padding: 4px !important;
+  }
+
+  .MuiIconButton-root svg {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Space between the time/date text and the trailing icon */
+  .MuiInputAdornment-root {
+    margin-inline-start: 8px;
+    height: 100% !important;
+    max-height: none !important;
+  }
+
+  && .MuiInputBase-input {
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    padding-block: 0 !important;
+    text-align: right !important;
   }
 
   .MuiInputBase-root::before {
