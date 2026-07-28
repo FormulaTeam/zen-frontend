@@ -365,6 +365,108 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
     [formFields],
   );
 
+  const renderConnectedFormSegment = useCallback(
+    ({
+      linkedFormId,
+      childFormData,
+      childFormIndex,
+      parentResponse,
+      childFormTitle,
+      addResponseTitle,
+    }: {
+      linkedFormId: number;
+      childFormData: any;
+      childFormIndex: number;
+      parentResponse: ParentResponseRef | undefined;
+      childFormTitle: string;
+      addResponseTitle: string;
+    }) => {
+      const childSections = childFormData.shown
+        ? childFormData.children.map((child: any, index: number) => (
+          <ConnectedFormSection
+            key={child.instanceKey}
+            handleRemoveChildForm={() => handleRemoveChildForm(childFormIndex, index)}
+            formsLength={childFormData.children.length}
+            shouldSave={childFormsSaving}
+            user={user}
+            viewMode={viewMode}
+            copyMode={copyMode}
+            formId={formId!}
+            field={child}
+            parentResponse={parentResponse}
+            index={index}
+            childSaved={(success: boolean) => handleChildSaved(childFormIndex, success, index)}
+            shouldValidate={childFormsValidate}
+            childValid={(success: boolean) => handleChildValid(childFormIndex, success, index)}
+            id={child.responseId}
+            shouldLoad={false}
+          />
+        ))
+        : null;
+
+      const addResponseButton = !isLoading && !viewMode && childFormData.canCreate && (
+        <Box
+          sx={{
+            borderTop: "1px solid #f0f0f0",
+            mt: 2,
+            pt: 2,
+            display: "flex",
+            justifyContent: "flex-start",
+          }}>
+          <Button
+            variant="outlined"
+            startIcon={<Add />}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleAddChildForm(childFormData.formId);
+            }}
+            sx={{
+              height: "42px",
+              px: 2.5,
+              backgroundColor: "#FFFFFF !important",
+              color: "#020618",
+              borderColor: "#e2e8f0 !important",
+              borderRadius: "10px",
+              fontWeight: 600,
+              fontSize: "0.9375rem",
+              textTransform: "none",
+              boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+              "&:hover": {
+                backgroundColor: "#f8fafc !important",
+                borderColor: "#cbd5e1 !important",
+              },
+            }}>
+            {addResponseTitle}
+          </Button>
+        </Box>
+      );
+
+      return (
+        <ConnectedFormSegment
+          key={`child-form-${linkedFormId}`}
+          title={childFormTitle}
+          count={childFormData.children.length}>
+          {childSections}
+          {addResponseButton}
+        </ConnectedFormSegment>
+      );
+    },
+    [
+      childFormsSaving,
+      childFormsValidate,
+      copyMode,
+      formId,
+      handleAddChildForm,
+      handleChildSaved,
+      handleChildValid,
+      handleRemoveChildForm,
+      isLoading,
+      user,
+      viewMode,
+    ],
+  );
+
   const getFormInFormProperty = useCallback(
     (formField: any) => {
       if (formField.fieldType !== fieldType.Form || !formField.extra?.linkedFormId) {
@@ -389,90 +491,21 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
         }
         : undefined;
 
-      return (
-        <ConnectedFormSegment
-          key={`child-form-${linkedFormId}`}
-          title={childFormTitle}
-          count={childFormData.children.length}>
-          {childFormData.children.map(
-            (child, index) =>
-              childFormData.shown && (
-                <ConnectedFormSection
-                  key={child.instanceKey}
-                  handleRemoveChildForm={() => handleRemoveChildForm(childFormIndex, index)}
-                  formsLength={childFormData.children.length}
-                  shouldSave={childFormsSaving}
-                  user={user}
-                  viewMode={viewMode}
-                  copyMode={copyMode}
-                  formId={formId!}
-                  field={child}
-                  parentResponse={parentResponse}
-                  index={index}
-                  childSaved={(success: boolean) => handleChildSaved(childFormIndex, success, index)}
-                  shouldValidate={childFormsValidate}
-                  childValid={(success: boolean) => handleChildValid(childFormIndex, success, index)}
-                  id={child.responseId}
-                  shouldLoad={false}
-                />
-              ),
-          )}
-
-          {!isLoading && !viewMode && childFormData.canCreate && (
-            <Box
-              sx={{
-                borderTop: "1px solid #f0f0f0",
-                mt: 2,
-                pt: 2,
-                display: "flex",
-                justifyContent: "flex-start",
-              }}>
-              <Button
-                variant="outlined"
-                startIcon={<Add />}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleAddChildForm(childFormData.formId);
-                }}
-                sx={{
-                  height: "42px",
-                  px: 2.5,
-                  backgroundColor: "#FFFFFF !important",
-                  color: "#020618",
-                  borderColor: "#e2e8f0 !important",
-                  borderRadius: "10px",
-                  fontWeight: 600,
-                  fontSize: "0.9375rem",
-                  textTransform: "none",
-                  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
-                  "&:hover": {
-                    backgroundColor: "#f8fafc !important",
-                    borderColor: "#cbd5e1 !important",
-                  },
-                }}>
-                {addResponseTitle}
-              </Button>
-            </Box>
-          )}
-        </ConnectedFormSegment>
-      );
+      return renderConnectedFormSegment({
+        linkedFormId,
+        childFormData,
+        childFormIndex,
+        parentResponse,
+        childFormTitle,
+        addResponseTitle,
+      });
     },
     [
       childForms,
-      childFormsSaving,
-      childFormsValidate,
-      copyMode,
       formId,
       getChildFormTitle,
-      handleAddChildForm,
-      handleChildSaved,
-      handleChildValid,
-      handleRemoveChildForm,
-      isLoading,
+      renderConnectedFormSegment,
       savedParentResponseId,
-      user,
-      viewMode,
     ],
   );
 
