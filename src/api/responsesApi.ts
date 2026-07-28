@@ -841,7 +841,7 @@ export const getValidDependentValues = async (
   },
 ): Promise<string[]> => {
   const response = await apiClient.post<{ validValues: string[] }>(
-    `/forms/${formId}/responses/fields/${fieldId}/valid-dependent-values`,
+    `/forms/${formId}/responses/fields/${fieldId}/validate-dependent-values`,
     payload,
   );
 
