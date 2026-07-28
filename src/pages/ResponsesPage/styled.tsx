@@ -430,13 +430,13 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     boxShadow: "inset 0 0 0 1px #1976d2",
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus-within":
-    {
-      backgroundImage: "none",
-      boxShadow: "inset 0 0 0 1px #1976d2",
-      borderRadius: "2px",
-      outline: "none",
-      borderColor: "transparent",
-    },
+  {
+    backgroundImage: "none",
+    boxShadow: "inset 0 0 0 1px #1976d2",
+    borderRadius: "2px",
+    outline: "none",
+    borderColor: "transparent",
+  },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--editing": {
     backgroundImage: "none",
     boxShadow: "inset 0 0 0 1px #1976d2",
@@ -446,9 +446,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   },
 
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus::after, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus-within::after":
-    {
-      display: "none",
-    },
+  {
+    display: "none",
+  },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--has-error": {
     backgroundColor: "#ffebee",
     border: `1px solid ${theme.palette.error.main}`,
