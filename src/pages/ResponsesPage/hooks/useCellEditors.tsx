@@ -262,19 +262,17 @@ export const useCellEditors = ({
             const dependentRawValue = dependentTargetField
               ? getOptionResponseRawValue(params.row?.[`field:${dependentTargetField.id}`])
               : undefined;
-            const dependentValue = Array.isArray(dependentRawValue)
-              ? dependentRawValue.find((value) => !!value)
-              : dependentRawValue;
-            const dependentFilterValue =
-              dependentValue === undefined || dependentValue === null
-                ? undefined
-                : String(dependentValue).trim() || undefined;
+            const dependentFilterValues = (
+              Array.isArray(dependentRawValue) ? dependentRawValue : [dependentRawValue]
+            )
+              .map((value) => (value === undefined || value === null ? "" : String(value).trim()))
+              .filter((value) => value !== "");
 
             editor = (
               <ConnectedOptionsCellEditor
                 linkedOptionsFieldId={linkedOptionsFieldId}
-                dependentFieldId={dependentFilterValue ? dependentFieldId : undefined}
-                dependentValue={dependentFilterValue}
+                dependentFieldId={dependentFilterValues.length ? dependentFieldId : undefined}
+                dependentValues={dependentFilterValues}
                 value={getOptionResponseRawValue(params.value) as string | string[]}
                 onChange={handleChange}
                 selectionMode={selectionMode}

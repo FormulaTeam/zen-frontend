@@ -799,7 +799,7 @@ export const getFieldValues = async (
     offset?: number;
     search?: string;
     dependentFieldId?: string;
-    dependentValue?: string;
+    dependentValues?: string[];
   },
 ): Promise<{
   total: number;
@@ -814,8 +814,10 @@ export const getFieldValues = async (
         offset: params?.offset ?? 0,
         search: params?.search ?? "",
         dependentFieldId: params?.dependentFieldId,
-        dependentValue: params?.dependentValue,
+        dependentValues: params?.dependentValues,
       },
+      // Send arrays as repeated keys (`k=a&k=b`) instead of axios' `k[]=a`.
+      paramsSerializer: { indexes: null },
     });
 
     return response.data;
@@ -825,15 +827,36 @@ export const getFieldValues = async (
   }
 };
 
+/**
+ * Returns the subset of `dependentValues` that are still valid for the given
+ * controlling values, in a single request.
+ */
+export const getValidDependentValues = async (
+  formId: number,
+  fieldId: string,
+  payload: {
+    dependentValues: string[];
+    controllingFieldId: string;
+    controllingValues: string[];
+  },
+): Promise<string[]> => {
+  const response = await apiClient.post<{ validValues: string[] }>(
+    `/forms/${formId}/responses/fields/${fieldId}/valid-dependent-values`,
+    payload,
+  );
+
+  return response.data.validValues;
+};
+
 export const useGetInfiniteFieldValues = (
   formId?: number,
   fieldId?: string,
   search: string = "",
   dependentFieldId?: string,
-  dependentValue?: string,
+  dependentValues?: string[],
 ) => {
   return useInfiniteQuery({
-    queryKey: ["fieldValues", formId, fieldId, search, dependentFieldId, dependentValue],
+    queryKey: ["fieldValues", formId, fieldId, search, dependentFieldId, dependentValues],
     queryFn: async ({ pageParam = 0 }) => {
       if (!formId || !fieldId) {
         throw new Error("Missing formId or fieldId");
@@ -843,10 +866,10 @@ export const useGetInfiniteFieldValues = (
         offset: pageParam,
         search,
         dependentFieldId,
-        dependentValue,
+        dependentValues,
       });
     },
-    enabled: !!formId && !!fieldId && (!dependentFieldId || !!dependentValue),
+    enabled: !!formId && !!fieldId && (!dependentFieldId || !!dependentValues?.length),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
       if (lastPage.data.length < lastPage.limit) {
