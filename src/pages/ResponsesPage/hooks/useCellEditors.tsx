@@ -18,7 +18,7 @@ import {
   TimeCellEditor,
 } from "../components/CellEditors";
 import { CellErrorInfoIcon } from "../styled";
-import { getOptionResponseRawValue, OptionResponseValue, formatOptionLabel } from "../../../utils/optionResponseValue";
+import { getOptionResponseRawValue, OptionResponseValue, formatOptionLabel, toStringValues } from "../../../utils/optionResponseValue";
 import { ConnectedOptionsCellEditor } from "../components/CellEditors/ConnectedOptionsCellEditor";
 
 type QuickEditValidationError = {
@@ -262,19 +262,13 @@ export const useCellEditors = ({
             const dependentRawValue = dependentTargetField
               ? getOptionResponseRawValue(params.row?.[`field:${dependentTargetField.id}`])
               : undefined;
-            const dependentValue = Array.isArray(dependentRawValue)
-              ? dependentRawValue.find((value) => !!value)
-              : dependentRawValue;
-            const dependentFilterValue =
-              dependentValue === undefined || dependentValue === null
-                ? undefined
-                : String(dependentValue).trim() || undefined;
+            const dependentFilterValues = toStringValues(dependentRawValue);
 
             editor = (
               <ConnectedOptionsCellEditor
                 linkedOptionsFieldId={linkedOptionsFieldId}
-                dependentFieldId={dependentFilterValue ? dependentFieldId : undefined}
-                dependentValue={dependentFilterValue}
+                dependentFieldId={dependentFilterValues.length ? dependentFieldId : undefined}
+                dependentValues={dependentFilterValues}
                 value={getOptionResponseRawValue(params.value) as string | string[]}
                 onChange={handleChange}
                 selectionMode={selectionMode}

@@ -135,7 +135,6 @@ const FormCard = ({
       permissions: selections.permissions,
       fields: selections.fields,
       conditions: selections.conditions,
-      colors: selections.colors,
     };
     duplicateFormStructure.duplicate = {
       sourceFormId,
