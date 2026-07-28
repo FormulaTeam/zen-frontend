@@ -350,7 +350,8 @@ function ManualOptions(props: Props) {
           style={{ borderColor: controlledFieldId ? "#e1e7ec" : "transparent" }}>
           <Tooltip
             title={!otherManualOptionsFieldsIds.length ? "לא קיים שדה אפשרויות נוסף" : ""}
-            placement="top">
+            placement="top"
+            arrow>
             <span style={{ flex: 1, display: "flex" }}>
               <FormControl
                 className={styles.controllingFieldFormControl}
@@ -368,8 +369,8 @@ function ManualOptions(props: Props) {
                     const controllingItems =
                       (newValue
                         ? (
-                            formStructure.fields[newValue]?.data?.options as ManualItems | undefined
-                          )?.filter((item) => item.isActive !== false)
+                          formStructure.fields[newValue]?.data?.options as ManualItems | undefined
+                        )?.filter((item) => item.isActive !== false)
                         : []) ?? [];
 
                     onDataChange?.({
@@ -470,7 +471,7 @@ function ManualOptions(props: Props) {
       </div>
 
       <div className={styles.defaultFieldContainer}>
-        <Tooltip title={!definedItems.length ? "יש להזין אפשרויות" : ""} placement="top">
+        <Tooltip title={!definedItems.length ? "יש להזין אפשרויות" : ""} placement="top" arrow>
           <div className={styles.defaultFieldWrapper} style={{ display: "flex" }}>
             <span style={{ width: "100%", display: "flex" }}>
               <FormControl disabled={!definedItems.length} style={{ width: "100%" }}>

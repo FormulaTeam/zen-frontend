@@ -6,6 +6,8 @@ export const useLinkedFieldValueOptions = (
     linkedOptionsFieldId?: string,
     enabled = true,
     search = "",
+    dependentFieldId?: string,
+    dependentValues?: string[],
 ) => {
     const { findOwnerFormIdByFieldId } = useFindOwnerFormId();
     const [ownerFormId, setOwnerFormId] = useState<number | undefined>();
@@ -31,6 +33,8 @@ export const useLinkedFieldValueOptions = (
         formId: ownerFormId,
         fieldId: linkedOptionsFieldId,
         search,
+        dependentFieldId,
+        dependentValues,
     });
 
     return {

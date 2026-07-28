@@ -12,12 +12,11 @@ export type DuplicateFormSelections = {
   permissions: boolean;
   fields: boolean;
   conditions: boolean;
-  colors: boolean;
 };
 
 export type DuplicateFormComponentSelections = Pick<
   DuplicateFormSelections,
-  "permissions" | "fields" | "conditions" | "colors"
+  "permissions" | "fields" | "conditions"
 >;
 
 export type DuplicateFormRouteState = {

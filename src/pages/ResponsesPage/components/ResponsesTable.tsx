@@ -52,7 +52,7 @@ import { useDetailPanel } from "../hooks/useDetailPanel";
 import { useNavigate } from "react-router-dom";
 import moment from "moment";
 import { ResponsesView } from "../../../types/interfaces/tableViews.types";
-import { FormFieldDto } from "../../../types/shared";
+import { FormFieldDto, ResponsesTableColorRuleDto } from "../../../types/shared";
 import { MetaColumnIds } from "../../../utils/interfaces";
 import {
   DEFAULT_DATE_TIME_FORMAT,
@@ -66,6 +66,15 @@ import {
   useResponsesTableFilters,
 } from "./ResponsesFilters";
 import { useConnectedFormOptions } from "@src/hooks/useConnectedFormOptions";
+import {
+  buildColorRuleMatches,
+  COLOR_RULE_PALETTE,
+  getComparatorOptions,
+  getRangeValue,
+  isRangeComparator,
+  isRangeValue,
+  ROW_COLOR_RULE_FIELD,
+} from "../utils/colorRules";
 import "./responsesTableFilters.css";
 
 const responseHeaderFilterLocaleText = {
@@ -197,23 +206,17 @@ interface ResponsesTableProps {
   activeFiltersCount: number;
   onToggleFilters: () => void;
   onClearFilters: () => void;
+  colorRules?: ResponsesTableColorRuleDto[];
 }
-
-const SYNC_STATUS_HEBREW_LABELS: Record<number, string> = {
-  0: "ממתין לסנכרון",
-  1: "בתור לסנכרון",
-  2: "נשלח ל-Metro",
-  3: "נשלח ל-Dataverse",
-  4: "הסנכרון נכשל",
-  5: "הסנכרון הושלם",
-};
 
 const getSyncStatusLabel = (
   statusId?: number | null,
   statusDescription?: string | null,
 ): string => {
   if (typeof statusId === "number") {
-    return SYNC_STATUS_HEBREW_LABELS[statusId] ?? statusDescription ?? "סטטוס סנכרון לא ידוע";
+    return Gear.SYNC_STATUS_HEBREW_LABELS[statusId as Gear.SyncStatusId] ??
+      statusDescription ??
+      "סטטוס סנכרון לא ידוע";
   }
 
   return statusDescription ?? "סטטוס סנכרון לא ידוע";
@@ -222,21 +225,91 @@ const getSyncStatusLabel = (
 const SyncStatusIcon: React.FC<{
   statusId?: number | null;
   statusDescription?: string | null;
-}> = ({ statusId, statusDescription }) => {
+  disableTooltip?: boolean;
+}> = ({ statusId, statusDescription, disableTooltip = false }) => {
   const label = getSyncStatusLabel(statusId, statusDescription);
 
   const icon =
-    statusId === 5 ? (
+    statusId === Gear.syncStatus.Completed ? (
       <Cloud size={18} strokeWidth={2.4} />
-    ) : statusId === 4 ? (
+    ) : statusId === Gear.syncStatus.Failed ? (
       <CloudOff size={18} strokeWidth={2.4} color={"#E7000B"} />
     ) : (
       <RefreshCw size={18} strokeWidth={2.4} />
     );
 
+  const iconContent = (
+    <SyncStatusIconBox>{icon}</SyncStatusIconBox>
+  );
+
+  if (disableTooltip) return iconContent;
+
   return (
     <Tooltip title={label} arrow placement="top">
-      <SyncStatusIconBox>{icon}</SyncStatusIconBox>
+      {iconContent}
+    </Tooltip>
+  );
+};
+
+const hasOverflowingText = (root: HTMLElement | null): boolean => {
+  if (!root) return false;
+
+  const elements = [root, ...Array.from(root.querySelectorAll<HTMLElement>("*"))];
+
+  return elements.some((element) => {
+    if (!element.textContent?.trim()) return false;
+
+    return (
+      element.scrollWidth > element.clientWidth + 1 ||
+      element.scrollHeight > element.clientHeight + 1
+    );
+  });
+};
+
+const ColorRuleTooltipCell: React.FC<{
+  children: React.ReactNode;
+  cellTooltipText?: string;
+  ruleTooltipText: string;
+}> = ({ children, cellTooltipText, ruleTooltipText }) => {
+  const contentRef = useRef<HTMLSpanElement | null>(null);
+  const [showCellTooltipText, setShowCellTooltipText] = useState(false);
+
+  if (!ruleTooltipText) {
+    return <>{children}</>;
+  }
+
+  const title = (
+    <Box sx={{ whiteSpace: "pre-line" }}>
+      {showCellTooltipText && cellTooltipText && (
+        <Box component="span" sx={{ display: "block", fontWeight: 400 }}>
+          {cellTooltipText}
+        </Box>
+      )}
+      <Box component="span" sx={{ display: "block", fontWeight: showCellTooltipText ? 700 : 400 }}>
+        {ruleTooltipText}
+      </Box>
+    </Box>
+  );
+
+  return (
+    <Tooltip title={title} arrow placement="top">
+      <Box
+        ref={contentRef}
+        component="span"
+        className="cell-box"
+        onMouseEnter={() => {
+          setShowCellTooltipText(
+            Boolean(cellTooltipText) && hasOverflowingText(contentRef.current),
+          );
+        }}
+        sx={{
+          width: "100%",
+          alignSelf: "stretch",
+          display: "flex",
+          alignItems: "center",
+        }}>
+        {children}
+      </Box>
     </Tooltip>
   );
 };
@@ -273,13 +346,14 @@ export const ResponsesTable = React.memo(
     activeFiltersCount,
     onToggleFilters,
     onClearFilters,
+    colorRules = [],
   }: ResponsesTableProps) => {
     const { form, rows, pageInfo, filter, setFilter, setResponseFilters, isRowsLoading } =
       useFormStore();
 
     const navigate = useNavigate();
 
-    const displayRows = useMemo(() => {
+    const baseDisplayRows = useMemo(() => {
       let baseRows = isInEditMode && localRows.length > 0 ? localRows : rows;
 
       if (isInEditMode && deletedRowIds.length > 0) {
@@ -291,6 +365,15 @@ export const ResponsesTable = React.memo(
     }, [isInEditMode, localRows, rows, deletedRowIds]);
 
     const currentViewConfig = useMemo(() => currentView?.columns || [], [currentView]);
+    const colorRuleMatches = useMemo(
+      () => buildColorRuleMatches(baseDisplayRows, colorRules),
+      [baseDisplayRows, colorRules],
+    );
+    const colorRulesById = useMemo(
+      () => new Map(colorRules.map((colorRule) => [colorRule.id, colorRule])),
+      [colorRules],
+    );
+    const displayRows = baseDisplayRows;
 
     if (!form) return null;
 
@@ -374,6 +457,11 @@ export const ResponsesTable = React.memo(
       if (sectionsFields.length > 0) return sectionsFields;
       return form?.fields ?? [];
     }, [form]);
+
+    const formFieldsById = useMemo(
+      () => new Map(formFields.map((field) => [String(field.id), field])),
+      [formFields],
+    );
 
     const { fieldOptions } = useConnectedFormOptions({
       formFields,
@@ -884,13 +972,48 @@ export const ResponsesTable = React.memo(
       [form?.id],
     );
 
-    const { formatCellValue } = useCellDisplay({
+    const { formatCellValue, formatCellTooltipValue } = useCellDisplay({
       formId: form?.id,
       onFileClick: handleFileClick,
       searchQuery: filter?.query,
       isInEditMode,
       onCellExpandToggle: handleCellExpandToggle,
     });
+
+    const formatColorRuleTooltipText = useCallback(
+      (ruleId: string): string => {
+        const rule = colorRulesById.get(ruleId);
+
+        if (!rule) return "";
+
+        const ruleField = formFieldsById.get(String(rule.fieldId));
+        const fieldLabel = ruleField?.displayName ?? "";
+        const comparatorLabel =
+          getComparatorOptions(rule.fieldType).find(
+            (option) => option.value === rule.comparatorId,
+          )?.label ?? "";
+        const targetValueLabel =
+          isRangeComparator(rule.comparatorId) && isRangeValue(rule.targetValue)
+            ? (() => {
+              const { from, to } = getRangeValue(rule.targetValue);
+              const fromLabel = ruleField && from ? formatCellTooltipValue(from, ruleField) : from;
+              const toLabel = ruleField && to ? formatCellTooltipValue(to, ruleField) : to;
+              if (!fromLabel && !toLabel) return "";
+              return `${fromLabel} - ${toLabel}`;
+            })()
+            : ruleField && rule.targetValue !== null && rule.targetValue !== undefined && rule.targetValue !== ""
+              ? formatCellTooltipValue(rule.targetValue, ruleField)
+              : "";
+        const comparatorAndValue = targetValueLabel
+          ? `${comparatorLabel}${/(?: ל| מ)$/.test(comparatorLabel) ? "" : " "}${targetValueLabel}`
+          : comparatorLabel;
+        const colorLabel = COLOR_RULE_PALETTE[rule.color]?.label ?? "";
+        const conditionText = [fieldLabel, comparatorAndValue].filter(Boolean).join(" ");
+
+        return [conditionText, colorLabel].filter(Boolean).join(" ← ");
+      },
+      [colorRulesById, formFieldsById, formatCellTooltipValue],
+    );
 
     const handleCellClick = useCallback(
       (params: GridCellParams, event: any) => {
@@ -925,18 +1048,26 @@ export const ResponsesTable = React.memo(
 
     const getCellClassName = useCallback(
       (params: GridCellParams): string => {
+        const rowMatches = colorRuleMatches[String(params.id)] ?? {};
+        const colorMatch =
+          rowMatches[params.field] ?? rowMatches[ROW_COLOR_RULE_FIELD];
+        const colorClass = colorMatch
+          ? `response-color-rule-cell response-color-rule-cell--${colorMatch.color}`
+          : "";
+
         if (!isInEditMode || params.field === "__check__") {
-          return "";
+          return colorClass;
         }
 
         const hasError = !!validationErrors?.[params.id]?.[params.field];
         const editableClass = params.isEditable
           ? "MuiDataGrid-cell--editable"
           : "MuiDataGrid-cell--non-editable-in-edit-mode";
+        const classes = `${editableClass}${colorClass ? ` ${colorClass}` : ""}`;
 
-        return hasError ? `${editableClass} cell--has-error` : editableClass;
+        return hasError ? `${classes} cell--has-error` : classes;
       },
-      [isInEditMode, validationErrors],
+      [colorRuleMatches, isInEditMode, validationErrors],
     );
 
     const handleCellDoubleClick = useCallback(
@@ -994,6 +1125,31 @@ export const ResponsesTable = React.memo(
         Field: "field:",
         Meta: "meta:",
       };
+      const getColorMatchForCell = (params: GridRenderCellParams) => {
+        const rowMatches = colorRuleMatches[String(params.id)] ?? {};
+
+        return rowMatches[params.field] ?? rowMatches[ROW_COLOR_RULE_FIELD];
+      };
+      const renderDisplayWithColorRuleTooltip = (
+        params: GridRenderCellParams,
+        display: React.ReactNode,
+        cellTooltipText?: string,
+      ): React.ReactNode => {
+        const colorMatch = getColorMatchForCell(params);
+        const ruleTooltipText = colorMatch
+          ? formatColorRuleTooltipText(colorMatch.ruleId)
+          : "";
+
+        if (!ruleTooltipText) return display;
+
+        return (
+          <ColorRuleTooltipCell
+            cellTooltipText={cellTooltipText}
+            ruleTooltipText={ruleTooltipText}>
+            {display}
+          </ColorRuleTooltipCell>
+        );
+      };
 
       const dynamicColumnsMap = new Map<string, GridColDef>();
 
@@ -1030,13 +1186,21 @@ export const ResponsesTable = React.memo(
           renderCell: (params: GridRenderCellParams) => {
             const rowId = params.id;
             const cellError = validationErrors?.[rowId]?.[gridField];
+            const colorMatch = getColorMatchForCell(params);
 
             const content =
               params.value !== undefined && params.value !== null
-                ? formatCellValue(params.value, field, rowId)
+                ? formatCellValue(params.value, field, rowId, {
+                  disableTooltip: !!colorMatch,
+                })
                 : null;
 
             const display = content ?? <Box component="span" className="cell-box" />;
+            const displayWithTooltip = renderDisplayWithColorRuleTooltip(
+              params,
+              display,
+              formatCellTooltipValue(params.value, field),
+            );
 
             if (isInEditMode && cellError) {
               return (
@@ -1051,12 +1215,12 @@ export const ResponsesTable = React.memo(
                     )}
                   </CellErrorHeader>
 
-                  <CellValueFlex>{display}</CellValueFlex>
+                  <CellValueFlex>{displayWithTooltip}</CellValueFlex>
                 </CellErrorWrapper>
               );
             }
 
-            return display;
+            return displayWithTooltip;
           },
         };
 
@@ -1079,11 +1243,14 @@ export const ResponsesTable = React.memo(
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.index,
-        renderCell: (params: GridRenderCellParams) => (
-          <Box component="span" className="cell-box" dir="ltr">
-            {params.value}
-          </Box>
-        ),
+        renderCell: (params: GridRenderCellParams) =>
+          renderDisplayWithColorRuleTooltip(
+            params,
+            <Box component="span" className="cell-box" dir="ltr">
+              {params.value}
+            </Box>,
+            String(params.value ?? ""),
+          ),
         ...getResponseMetaFilterColumnProps("index"),
       });
 
@@ -1099,6 +1266,14 @@ export const ResponsesTable = React.memo(
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.createdByName,
+        renderCell: (params: GridRenderCellParams) =>
+          renderDisplayWithColorRuleTooltip(
+            params,
+            <Box component="span" className="cell-box">
+              {params.value}
+            </Box>,
+            String(params.value ?? ""),
+          ),
         ...getResponseMetaFilterColumnProps("created_by"),
       });
 
@@ -1110,12 +1285,21 @@ export const ResponsesTable = React.memo(
         sortable: true,
         valueGetter: (_value, row: Row) => row.created,
         ...getResponseMetaFilterColumnProps("created_at"),
-        renderCell: (params: GridRenderCellParams) =>
-          params.value ? (
-            <Box component="span" className="cell-box-date">
-              <label>{moment(params.value).format(DEFAULT_DATE_TIME_FORMAT)}</label>
-            </Box>
-          ) : null,
+        renderCell: (params: GridRenderCellParams) => {
+          const displayValue = params.value
+            ? moment(params.value).format(DEFAULT_DATE_TIME_FORMAT)
+            : "";
+
+          return renderDisplayWithColorRuleTooltip(
+            params,
+            displayValue ? (
+              <Box component="span" className="cell-box-date">
+                <label>{displayValue}</label>
+              </Box>
+            ) : null,
+            displayValue,
+          );
+        },
       });
 
       metaColumnsMap.set(`${prefixes.Meta}pushed_to_metro`, {
@@ -1136,12 +1320,16 @@ export const ResponsesTable = React.memo(
         editable: false,
         sortable: true,
         filterable: false,
-        renderCell: (params: GridRenderCellParams) => (
-          <SyncStatusIcon
-            statusId={params.row?.syncStatusId}
-            statusDescription={params.row?.syncStatusDescription}
-          />
-        ),
+        renderCell: (params: GridRenderCellParams) =>
+          renderDisplayWithColorRuleTooltip(
+            params,
+            <SyncStatusIcon
+              statusId={params.row?.syncStatusId}
+              statusDescription={params.row?.syncStatusDescription}
+              disableTooltip={!!getColorMatchForCell(params)}
+            />,
+            getSyncStatusLabel(params.row?.syncStatusId, params.row?.syncStatusDescription),
+          ),
       });
 
       metaColumnsMap.set(`${prefixes.Meta}updated_by`, {
@@ -1156,6 +1344,14 @@ export const ResponsesTable = React.memo(
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.editedByName,
+        renderCell: (params: GridRenderCellParams) =>
+          renderDisplayWithColorRuleTooltip(
+            params,
+            <Box component="span" className="cell-box">
+              {params.value}
+            </Box>,
+            String(params.value ?? ""),
+          ),
         ...getResponseMetaFilterColumnProps("updated_by"),
       });
 
@@ -1167,12 +1363,21 @@ export const ResponsesTable = React.memo(
         sortable: true,
         valueGetter: (_value, row: Row) => row.edited,
         ...getResponseMetaFilterColumnProps("updated_at"),
-        renderCell: (params: GridRenderCellParams) =>
-          params.value ? (
-            <Box component="span" className="cell-box-date">
-              <label>{moment(params.value).format(DEFAULT_DATE_TIME_FORMAT)}</label>
-            </Box>
-          ) : null,
+        renderCell: (params: GridRenderCellParams) => {
+          const displayValue = params.value
+            ? moment(params.value).format(DEFAULT_DATE_TIME_FORMAT)
+            : "";
+
+          return renderDisplayWithColorRuleTooltip(
+            params,
+            displayValue ? (
+              <Box component="span" className="cell-box-date">
+                <label>{displayValue}</label>
+              </Box>
+            ) : null,
+            displayValue,
+          );
+        },
       });
 
       metaColumnsMap.set(`${prefixes.Meta}id`, {
@@ -1182,6 +1387,14 @@ export const ResponsesTable = React.memo(
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.id,
+        renderCell: (params: GridRenderCellParams) =>
+          renderDisplayWithColorRuleTooltip(
+            params,
+            <Box component="span" className="cell-box" dir="ltr">
+              {params.value}
+            </Box>,
+            String(params.value ?? ""),
+          ),
         ...getResponseMetaFilterColumnProps("id"),
       });
 
@@ -1195,16 +1408,20 @@ export const ResponsesTable = React.memo(
 
       const parentResponseColumns: GridColDef[] = hasParentResponses
         ? [
-            {
-              field: "parentResponse",
-              headerName: "תגובת אב",
-              ...getResponsiveColumnProps(190, columnWidths.current["parentResponse"]),
-              editable: false,
-              filterable: false,
-              sortable: false,
-              renderCell: ({ row }: { row: Row }) => <ZoomCell row={row} form={form} />,
-            },
-          ]
+          {
+            field: "parentResponse",
+            headerName: "תגובת אב",
+            ...getResponsiveColumnProps(190, columnWidths.current["parentResponse"]),
+            editable: false,
+            filterable: false,
+            sortable: false,
+            renderCell: (params: GridRenderCellParams) =>
+              renderDisplayWithColorRuleTooltip(
+                params,
+                <ZoomCell row={params.row} form={form} />,
+              ),
+          },
+        ]
         : [];
 
       let resultColumns: GridColDef[] = [];
@@ -1257,8 +1474,11 @@ export const ResponsesTable = React.memo(
       hasFormInFormFields,
       isInEditMode,
       validationErrors,
+      colorRuleMatches,
       renderEditCell,
       formatCellValue,
+      formatCellTooltipValue,
+      formatColorRuleTooltipText,
       currentViewConfig,
       navigateToCreateResponseCopy,
       navigate,
@@ -1708,18 +1928,24 @@ export const ResponsesTable = React.memo(
                 row: {},
               }}
               sx={{
+                ...Object.fromEntries(
+                  Object.entries(COLOR_RULE_PALETTE).map(([color, meta]) => [
+                    `& .response-color-rule-cell--${color}`,
+                    { backgroundColor: `${meta.background} !important` },
+                  ]),
+                ),
                 "& .MuiDataGrid-columnHeader .MuiDataGrid-iconButtonContainer .MuiIconButton-root":
-                  {
-                    backgroundColor: "transparent !important",
-                    boxShadow: "none !important",
-                    border: "none !important",
-                  },
+                {
+                  backgroundColor: "transparent !important",
+                  boxShadow: "none !important",
+                  border: "none !important",
+                },
 
                 "& .MuiDataGrid-columnHeader .MuiDataGrid-iconButtonContainer .MuiIconButton-root:hover":
-                  {
-                    backgroundColor: "rgba(15, 23, 42, 0.06) !important",
-                    boxShadow: "none !important",
-                  },
+                {
+                  backgroundColor: "rgba(15, 23, 42, 0.06) !important",
+                  boxShadow: "none !important",
+                },
 
                 "& .response-field-column-header .MuiDataGrid-iconButtonContainer": {
                   visibility: "visible",
@@ -1729,10 +1955,10 @@ export const ResponsesTable = React.memo(
                 },
 
                 "& .response-field-column-header:hover .MuiDataGrid-iconButtonContainer, & .response-field-column-header.MuiDataGrid-columnHeader--sorted .MuiDataGrid-iconButtonContainer":
-                  {
-                    width: 24,
-                    opacity: 1,
-                  },
+                {
+                  width: 24,
+                  opacity: 1,
+                },
 
                 "& .response-field-column-header .MuiDataGrid-sortButton": {
                   width: 24,
@@ -1754,22 +1980,22 @@ export const ResponsesTable = React.memo(
 
                 ...(isInEditMode
                   ? {
-                      "& .active-editing-row .MuiDataGrid-cell": {
-                        paddingTop: "4px",
-                        paddingBottom: "4px",
-                        alignItems: "center",
-                      },
-                      "& .active-editing-row .MuiDataGrid-cell--editing": {
-                        padding: "4px 6px",
-                        overflow: "visible",
-                      },
-                      "& .active-editing-row .MuiDataGrid-cell--editing:focus-within": {
-                        outline: "none",
-                      },
-                      "& .active-editing-row .MuiDataGrid-cell--editing .MuiInputBase-root": {
-                        boxShadow: "none",
-                      },
-                    }
+                    "& .active-editing-row .MuiDataGrid-cell": {
+                      paddingTop: "4px",
+                      paddingBottom: "4px",
+                      alignItems: "center",
+                    },
+                    "& .active-editing-row .MuiDataGrid-cell--editing": {
+                      padding: "4px 6px",
+                      overflow: "visible",
+                    },
+                    "& .active-editing-row .MuiDataGrid-cell--editing:focus-within": {
+                      outline: "none",
+                    },
+                    "& .active-editing-row .MuiDataGrid-cell--editing .MuiInputBase-root": {
+                      boxShadow: "none",
+                    },
+                  }
                   : {}),
               }}
             />
@@ -1783,7 +2009,7 @@ export const ResponsesTable = React.memo(
                 backgroundColor: "#ffffff",
                 border: "1px solid #e2e8f0",
                 direction: "ltr",
-                cursor: "pointer",
+                cursor: "default",
                 pointerEvents: "auto",
                 zIndex: 20,
               }}>
@@ -1797,7 +2023,7 @@ export const ResponsesTable = React.memo(
                   minWidth: "64px",
                   borderRadius: "999px",
                   backgroundColor: "#cbd5e1",
-                  cursor: "grab",
+                  cursor: "default",
                   touchAction: "none",
                   transform: "translate3d(0, 0, 0)",
                   willChange: "transform",
@@ -1805,7 +2031,7 @@ export const ResponsesTable = React.memo(
                     backgroundColor: "#94a3b8",
                   },
                   "&:active": {
-                    cursor: "grabbing",
+                    cursor: "default",
                     backgroundColor: "#64748b",
                   },
                 }}
@@ -1821,7 +2047,7 @@ export const ResponsesTable = React.memo(
                 backgroundColor: "#ffffff",
                 border: "1px solid #e2e8f0",
                 direction: "ltr",
-                cursor: "pointer",
+                cursor: "default",
                 pointerEvents: "auto",
                 zIndex: 21,
               }}>
@@ -1835,7 +2061,7 @@ export const ResponsesTable = React.memo(
                   minHeight: "48px",
                   borderRadius: "999px",
                   backgroundColor: "#cbd5e1",
-                  cursor: "grab",
+                  cursor: "default",
                   touchAction: "none",
                   transform: "translate3d(0, 0, 0)",
                   willChange: "transform",
@@ -1843,7 +2069,7 @@ export const ResponsesTable = React.memo(
                     backgroundColor: "#94a3b8",
                   },
                   "&:active": {
-                    cursor: "grabbing",
+                    cursor: "default",
                     backgroundColor: "#64748b",
                   },
                 }}

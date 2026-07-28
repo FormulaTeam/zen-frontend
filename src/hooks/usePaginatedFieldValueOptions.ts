@@ -11,12 +11,16 @@ type UsePaginatedFieldValueOptionsParams = {
     formId?: number;
     fieldId?: string;
     search?: string;
+    dependentFieldId?: string;
+    dependentValues?: string[];
 };
 
 export const usePaginatedFieldValueOptions = ({
     formId,
     fieldId,
     search = "",
+    dependentFieldId,
+    dependentValues,
 }: UsePaginatedFieldValueOptionsParams) => {
     const {
         data,
@@ -24,7 +28,7 @@ export const usePaginatedFieldValueOptions = ({
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useGetInfiniteFieldValues(formId, fieldId, search);
+    } = useGetInfiniteFieldValues(formId, fieldId, search, dependentFieldId, dependentValues);
 
     const options = useMemo<PaginatedFieldValueOption[]>(() => {
         if (!data) return [];

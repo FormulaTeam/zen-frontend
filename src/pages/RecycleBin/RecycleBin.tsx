@@ -33,11 +33,11 @@ const groupResponsesByForm = (
 ): Record<number, string[]> => {
   const map: Record<number, string[]> = {};
 
-  forms.forEach(({ id: formId }) => {
-    formId.responses?.forEach(({ id: responseId }) => {
+  forms.forEach((form) => {
+    form.responses?.forEach(({ id: responseId }) => {
       if (selectedIds.has(responseId)) {
-        if (!map[formId]) map[formId] = [];
-        map[formId].push(responseId);
+        if (!map[form.id]) map[form.id] = [];
+        map[form.id].push(responseId);
       }
     });
   });

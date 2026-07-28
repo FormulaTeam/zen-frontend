@@ -130,7 +130,6 @@ const FormCard = ({
       permissions: selections.permissions,
       fields: selections.fields,
       conditions: selections.conditions,
-      colors: selections.colors,
     };
     duplicateFormStructure.duplicate = {
       sourceFormId,
@@ -197,9 +196,13 @@ const FormCard = ({
     );
   };
 
-  const goToResponsesPage = (event: React.MouseEvent<HTMLElement>) => {
+  const goToResponsesPage = (event?: React.MouseEvent<HTMLElement>) => {
+    event?.stopPropagation();
     resetSearchValue();
     navigate(`/forms/${form.id}/responses`, { replace: true });
+  };
+
+  const stopPropagation = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
   };
 
@@ -218,8 +221,9 @@ const FormCard = ({
 
   return (
     <StyledCard
-      sx={{ backgroundcolor: theme.palette.background.paper }}
+      sx={{ backgroundcolor: theme.palette.background.paper, cursor: "pointer" }}
       data-testid={`form-id-${form.id}`}
+      onClick={goToResponsesPage}
       className="form-card">
       <ItemImgAndTitles>
         <ItemTitles>
@@ -262,7 +266,10 @@ const FormCard = ({
                   aria-controls={openMenu ? "long-menu" : undefined}
                   aria-expanded={openMenu ? "true" : undefined}
                   aria-haspopup="true"
-                  onClick={handleMenuClick}
+                  onClick={(e) => {
+                    stopPropagation(e);
+                    handleMenuClick(e);
+                  }}
                   size="small"
                   sx={{ color: "#62748E" }}>
                   <MoreVert />
@@ -275,6 +282,7 @@ const FormCard = ({
                   anchorEl={anchorEl}
                   open={openMenu}
                   onClose={handleMenuClose}
+                  onClick={stopPropagation}
                   PaperProps={{
                     style: {
                       maxHeight: 48 * 4.5,
@@ -343,39 +351,45 @@ const FormCard = ({
           </ItemResponsesNum>
 
           {showSharePopup && (
-            <UserPicker
-              form={form}
-              closeSharePopupAndRefreshForm={() => {
-                setSearchParams((prev) => {
-                  const updated = new URLSearchParams(prev);
-                  updated.delete("modal");
-                  updated.delete("formId");
-                  return updated;
-                }, { replace: true });
-              }}
-            />
+            <Box onClick={stopPropagation}>
+              <UserPicker
+                form={form}
+                closeSharePopupAndRefreshForm={() => {
+                  setSearchParams((prev) => {
+                    const updated = new URLSearchParams(prev);
+                    updated.delete("modal");
+                    updated.delete("formId");
+                    return updated;
+                  }, { replace: true });
+                }}
+              />
+            </Box>
           )}
 
           {showDeletePopup && (
-            <ConfirmDeleteDialog
-              open={showDeletePopup}
-              title="מחיקת טופס"
-              message="האם אתה בטוח שברצונך למחוק את הטופס?"
-              onConfirm={confirmDelete}
-              onClose={() => setShowDeletePopup(false)}
-              confirmText="מחק טופס"
-            />
+            <Box onClick={stopPropagation}>
+              <ConfirmDeleteDialog
+                open={showDeletePopup}
+                title="מחיקת טופס"
+                message="האם אתה בטוח שברצונך למחוק את הטופס?"
+                onConfirm={confirmDelete}
+                onClose={() => setShowDeletePopup(false)}
+                confirmText="מחק טופס"
+              />
+            </Box>
           )}
 
           {showDuplicatePopup && (
-            <DuplicateFormDialog
-              open={showDuplicatePopup}
-              formName={form.name}
-              formDescription={form.description}
-              onClose={() => setShowDuplicatePopup(false)}
-              onDuplicateError={handleDuplicateError}
-              onDuplicate={handleDuplicateConfirm}
-            />
+            <Box onClick={stopPropagation}>
+              <DuplicateFormDialog
+                open={showDuplicatePopup}
+                formName={form.name}
+                formDescription={form.description}
+                onClose={() => setShowDuplicatePopup(false)}
+                onDuplicateError={handleDuplicateError}
+                onDuplicate={handleDuplicateConfirm}
+              />
+            </Box>
           )}
 
           <ItemBtnsDiv>
@@ -384,7 +398,10 @@ const FormCard = ({
               requiredPermissions={[permission.CreateResponse]}>
               <ItemButton
                 className="form-add-response-button"
-                onClick={() => navigate(`/forms/${form.id}/responses/new`)}
+                onClick={(e) => {
+                  stopPropagation(e);
+                  navigate(`/forms/${form.id}/responses/new`);
+                }}
                 variant="outlined"
                 sx={{
                   height: "32px",

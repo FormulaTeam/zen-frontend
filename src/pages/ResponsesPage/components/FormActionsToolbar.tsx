@@ -73,6 +73,7 @@ export const FormActionsToolbar = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const showSharePopup = searchParams.get("modal") === "permissions";
+  const isInEditMode = searchParams.get("mode") === "quick-edit";
   const [anchorElSourceType, setAnchorElSourceType] = useState<null | HTMLElement>(null);
   const [sourceOperationStatus, setSourceOperationStatus] = useState<SourceOperationStatusType>(
     SourceOperationStatus.NOT_IN_PROGRESS,
@@ -142,15 +143,18 @@ export const FormActionsToolbar = () => {
               requiredPermissions={[permission.UpdateForm]}
               userPermissions={permissions}>
               <Tooltip title="עריכת טופס">
-                <IconOnlyButton
-                  sx={responseIconButtonSx}
-                  onClick={() =>
-                    navigate(`/forms/${formId}/edit`, {
-                      state: { from: location.pathname },
-                    })
-                  }>
-                  <Pencil strokeWidth={2.4} />
-                </IconOnlyButton>
+                <span>
+                  <IconOnlyButton
+                    sx={responseIconButtonSx}
+                    disabled={isInEditMode}
+                    onClick={() =>
+                      navigate(`/forms/${formId}/edit`, {
+                        state: { from: location.pathname },
+                      })
+                    }>
+                    <Pencil strokeWidth={2.4} />
+                  </IconOnlyButton>
+                </span>
               </Tooltip>
             </PermissionGate>
           ),
@@ -165,10 +169,11 @@ export const FormActionsToolbar = () => {
               requiredPermissions={[permission.ShareForm]}
               userPermissions={permissions}>
               <Tooltip title="שיתוף">
-                <IconOnlyButton
-                  sx={responseIconButtonSx}
-                  disabled={!hasFormFields}
-                  onClick={() => {
+                <span>
+                  <IconOnlyButton
+                    sx={responseIconButtonSx}
+                    disabled={!hasFormFields || isInEditMode}
+                    onClick={() => {
                     setSearchParams(
                       (prev) => {
                         const updated = new URLSearchParams(prev);
@@ -178,8 +183,9 @@ export const FormActionsToolbar = () => {
                       { replace: true },
                     );
                   }}>
-                  <Share2 strokeWidth={2.4} />
-                </IconOnlyButton>
+                    <Share2 strokeWidth={2.4} />
+                  </IconOnlyButton>
+                </span>
               </Tooltip>
 
               {showSharePopup && (
@@ -224,6 +230,7 @@ export const FormActionsToolbar = () => {
                 pushToMetro={pushToMetro}
                 sourceOperationStatus={sourceOperationStatus}
                 buttonSx={responseIconButtonSx}
+                disabled={isInEditMode}
               />
             </PermissionGate>
           ),

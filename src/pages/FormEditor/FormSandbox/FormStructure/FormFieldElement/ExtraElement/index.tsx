@@ -14,10 +14,12 @@ import { $ZodErrorTree } from "zod/v4/core";
 
 type SetExtra<T extends FormFieldTypeId> = <D extends SpecificFormFieldData<T>>(extra: Partial<D["extra"]>) => void;
 
+type ExtraElementDataChange = (data: Partial<FormFieldData> & { replaceExtra?: boolean }) => void;
+
 type ExtraElementProps<T extends FormFieldTypeId> = {
   extra: FormFieldExtra<T>;
   onChange: SetExtra<T>;
-  onDataChange?: (data: Partial<FormFieldData>) => void;
+  onDataChange?: ExtraElementDataChange;
   disabled: boolean;
 
   validationErrors?: any;

@@ -31,7 +31,6 @@ const SupportPopup: React.FC<SupportPopupProps> = ({
   const {
     scrollAreaRef,
     scrollbarState,
-    isDraggingScrollbar,
     updateScrollbar,
     handleScrollbarThumbPointerDown,
     handleScrollbarTrackPointerDown,
@@ -91,7 +90,7 @@ const SupportPopup: React.FC<SupportPopupProps> = ({
                 height: scrollbarState.isScrollable ? `${scrollbarState.thumbHeight}px` : "100%",
                 transform: `translateY(${scrollbarState.thumbTop}px)`,
                 opacity: scrollbarState.isScrollable ? 1 : 0.35,
-                cursor: isDraggingScrollbar ? "grabbing" : "grab",
+                cursor: "default",
               }}
             />
           </VisibleScrollbar>

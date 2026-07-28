@@ -6,7 +6,9 @@ import {
   useCreateResponse,
   useCreateResponseWithFiles,
   useSoftDeleteResponses,
+  getValidDependentValues,
 } from "@api/responsesApi";
+import { getFormIdByFieldId } from "@api/formsApi";
 import { toStoredFile, uploadFile, type ResponseFileDto, type StoredFile } from "@api/filesApi";
 import { useFormStore } from "../stores/form.store";
 import { useAuth } from "@contexts/AuthContext";
@@ -19,7 +21,7 @@ import {
   ResponseFieldValueDto,
   UpdateOneResponseDto,
   UserPersonalDto,
-} from "src/types/shared";
+} from "@src/types/shared";
 import {
   fieldType,
   validateFormFieldValue,
@@ -42,6 +44,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import {
   getOptionResponseSubmitValue,
+  getOptionResponseRawValue,
   OptionResponseValue,
 } from "../../../utils/optionResponseValue";
 import { saveQuickEditDraft, clearQuickEditDraft } from "../../FormEditor/utils/draftPersistence";
@@ -108,15 +111,97 @@ type EditorFieldExtra = {
   dateType?: "datetime" | "date";
   timePrecision?: "seconds" | "minutes";
   options?:
-    | string[]
-    | {
-        items?: OptionResponseValue[];
-        defaultValue?: string[];
-      };
+  | string[]
+  | {
+    items?: OptionResponseValue[];
+    defaultValue?: string[];
+  };
+  linkedOptionsFieldId?: string | null;
+  dependentOptionsFieldId?: string | null;
+  parentFieldId?: string | null;
 };
 
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
+
+type OptionItemLike = {
+  id: string;
+  controllingItemsIds?: string[];
+  isActive?: boolean;
+};
+
+const getOptionItems = (field: FormFieldDto, includeInactive = false): OptionItemLike[] => {
+  if (Array.isArray((field as any).options)) {
+    return (field as any).options
+      .filter((item: any) => item && typeof item.id === "string")
+      .filter((item: any) => includeInactive || item.isActive !== false)
+      .map((item: any) => ({
+        id: item.id,
+        controllingItemsIds: Array.isArray(item.controllingItemsIds)
+          ? item.controllingItemsIds
+          : [],
+        isActive: item.isActive,
+      }));
+  }
+
+  const extra = getFieldExtra(field);
+
+  if (
+    extra.options &&
+    typeof extra.options === "object" &&
+    !Array.isArray(extra.options) &&
+    Array.isArray(extra.options.items)
+  ) {
+    return extra.options.items
+      .filter((item) => item && typeof item.id === "string")
+      .map((item: any) => ({
+        id: item.id,
+        controllingItemsIds: Array.isArray(item.controllingItemsIds)
+          ? item.controllingItemsIds
+          : [],
+        isActive: item.isActive,
+      }));
+  }
+
+  return [];
+};
+
+const normalizeOptionValues = (value: unknown): string[] => {
+  const rawValue = getOptionResponseRawValue(value);
+  const values = Array.isArray(rawValue) ? rawValue : [rawValue];
+
+  return values
+    .map((item) => {
+      if (item && typeof item === "object") {
+        return String((item as any).id ?? (item as any).value ?? "");
+      }
+
+      return String(item ?? "");
+    })
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+const getCleanedOptionValue = (field: FormFieldDto, value: unknown, allowedOptions: Set<string>) => {
+  const currentValues = normalizeOptionValues(value);
+
+  if (isMultipleOptionsField(field)) {
+    const validValues = currentValues.filter((item) => allowedOptions.has(item));
+
+    return validValues.length === currentValues.length ? value : validValues;
+  }
+
+  const currentValue = currentValues[0] ?? "";
+
+  if (!currentValue || allowedOptions.has(currentValue)) {
+    return value;
+  }
+
+  return "";
+};
+
+const valuesAreEqual = (left: unknown, right: unknown): boolean =>
+  JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
 
 const FIELD_COLUMN_PREFIX = "field:";
 
@@ -629,6 +714,166 @@ export const useResponsesEdit = () => {
     setPendingDeleteIds(ids);
   }, []);
 
+  const applyRowUpdates = useCallback((rowId: RowId, updates: Partial<Row>): void => {
+    if (Object.keys(updates).length === 0) return;
+
+    setLocalRows((prevRows) =>
+      prevRows.map((row) =>
+        String(row.id) === String(rowId)
+          ? ({
+            ...row,
+            ...updates,
+          } as Row)
+          : row,
+      ),
+    );
+
+    setEditedRows((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(rowId) || ({} as Row);
+
+      next.set(rowId, {
+        ...existing,
+        ...updates,
+      } as Row);
+
+      return next;
+    });
+  }, []);
+
+  const getManualDependentClears = useCallback(
+    (row: Row, changedField: FormFieldDto, changedValue: unknown): Partial<Row> => {
+      if (changedField.fieldType !== fieldType.Options) return {};
+
+      const parentValues = normalizeOptionValues(changedValue);
+      if (parentValues.length === 0) return {};
+
+      const parentValueSet = new Set(parentValues);
+      const updates: Partial<Row> = {};
+
+      formFields.forEach((candidateField) => {
+        if (
+          candidateField.fieldType !== fieldType.Options ||
+          String(candidateField.id) === String(changedField.id)
+        ) {
+          return;
+        }
+
+        const candidateKey = getFieldColumnKey(candidateField);
+        const candidateValue = row[candidateKey];
+        const candidateItems = getOptionItems(candidateField, true);
+        const candidateHasParentLinks = candidateItems.some((item) =>
+          (item.controllingItemsIds ?? []).some((controllingId) =>
+            parentValueSet.has(controllingId),
+          ),
+        );
+
+        let allowedOptions = new Set<string>();
+
+        if (candidateHasParentLinks) {
+          allowedOptions = new Set(
+            candidateItems
+              .filter((item) =>
+                (item.controllingItemsIds ?? []).some((controllingId) =>
+                  parentValueSet.has(controllingId),
+                ),
+              )
+              .map((item) => item.id),
+          );
+        } else {
+          const parentItems = getOptionItems(changedField, true);
+          const selectedParentItems = parentItems.filter((item) => parentValueSet.has(item.id));
+          const linkedChildIds = selectedParentItems.flatMap(
+            (item) => item.controllingItemsIds ?? [],
+          );
+
+          if (linkedChildIds.length === 0) return;
+
+          const candidateOptionIds = new Set(candidateItems.map((item) => item.id));
+          allowedOptions = new Set(linkedChildIds.filter((id) => candidateOptionIds.has(id)));
+        }
+
+        const cleanedValue = getCleanedOptionValue(
+          candidateField,
+          candidateValue,
+          allowedOptions,
+        );
+
+        if (!valuesAreEqual(cleanedValue, candidateValue)) {
+          updates[candidateKey] = cleanedValue;
+        }
+      });
+
+      return updates;
+    },
+    [formFields],
+  );
+
+  const clearInvalidExternalDependentValues = useCallback(
+    async (rowId: RowId, row: Row, changedField: FormFieldDto, changedValue: unknown) => {
+      const changedFieldExtra = getFieldExtra(changedField);
+      const dependentSourceFieldId = changedFieldExtra.linkedOptionsFieldId;
+      const dependentValues = normalizeOptionValues(changedValue);
+
+      if (!dependentSourceFieldId || dependentValues.length === 0) return;
+
+      const updates: Partial<Row> = {};
+
+      await Promise.all(
+        formFields.map(async (candidateField) => {
+          if (
+            candidateField.fieldType !== fieldType.Options ||
+            String(candidateField.id) === String(changedField.id)
+          ) {
+            return;
+          }
+
+          const candidateExtra = getFieldExtra(candidateField);
+
+          if (
+            String(candidateExtra.dependentOptionsFieldId ?? "") !== String(changedField.id) ||
+            !candidateExtra.linkedOptionsFieldId
+          ) {
+            return;
+          }
+
+          const candidateKey = getFieldColumnKey(candidateField);
+          const candidateValues = normalizeOptionValues(row[candidateKey]);
+
+          if (candidateValues.length === 0) return;
+
+          const ownerFormId = await getFormIdByFieldId(candidateExtra.linkedOptionsFieldId);
+
+          if (!ownerFormId) return;
+
+          const validValues = await getValidDependentValues(
+            ownerFormId,
+            candidateExtra.linkedOptionsFieldId,
+            {
+              dependentValues: candidateValues,
+              controllingFieldId: dependentSourceFieldId,
+              controllingValues: dependentValues,
+            },
+          );
+
+          const allowedValues = new Set(validValues);
+          const cleanedValue = getCleanedOptionValue(
+            candidateField,
+            row[candidateKey],
+            allowedValues,
+          );
+
+          if (!valuesAreEqual(cleanedValue, row[candidateKey])) {
+            updates[candidateKey] = cleanedValue;
+          }
+        }),
+      );
+
+      applyRowUpdates(rowId, updates);
+    },
+    [applyRowUpdates, formFields],
+  );
+
   const handleCellLiveChange = useCallback(
     <T>(rowId: RowId, columnName: string, value: T): void => {
       const fieldId = getFieldIdFromColumnKey(columnName);
@@ -638,15 +883,32 @@ export const useResponsesEdit = () => {
 
       const fieldKey = getFieldColumnKey(field);
 
+      let nextRowForExternalValidation: Row | undefined;
+      let dependentClearsForEditedRow: Partial<Row> = {};
+
       setLocalRows((prevRows) =>
-        prevRows.map((row) =>
-          String(row.id) === String(rowId)
-            ? ({
-                ...row,
-                [fieldKey]: value,
-              } as Row)
-            : row,
-        ),
+        prevRows.map((row) => {
+          if (String(row.id) !== String(rowId)) return row;
+
+          const rowWithChangedValue = {
+            ...row,
+            [fieldKey]: value,
+          } as Row;
+          const manualDependentClears = getManualDependentClears(
+            rowWithChangedValue,
+            field,
+            value,
+          );
+          dependentClearsForEditedRow = manualDependentClears;
+          const nextRow = {
+            ...rowWithChangedValue,
+            ...manualDependentClears,
+          } as Row;
+
+          nextRowForExternalValidation = nextRow;
+
+          return nextRow;
+        }),
       );
 
       setEditedRows((prev) => {
@@ -656,12 +918,22 @@ export const useResponsesEdit = () => {
         next.set(rowId, {
           ...existing,
           [fieldKey]: value,
+          ...dependentClearsForEditedRow,
         } as Row);
 
         return next;
       });
+
+      if (nextRowForExternalValidation) {
+        void clearInvalidExternalDependentValues(
+          rowId,
+          nextRowForExternalValidation,
+          field,
+          value,
+        );
+      }
     },
-    [formFields],
+    [clearInvalidExternalDependentValues, formFields, getManualDependentClears],
   );
 
   const processRowUpdate = useCallback(
@@ -681,9 +953,9 @@ export const useResponsesEdit = () => {
         prevRows.map((row) =>
           String(row.id) === String(rowId)
             ? ({
-                ...row,
-                ...typedNewRow,
-              } as Row)
+              ...row,
+              ...typedNewRow,
+            } as Row)
             : row,
         ),
       );
