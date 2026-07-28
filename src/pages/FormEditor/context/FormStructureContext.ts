@@ -33,7 +33,6 @@ interface FormStructure {
       permissions: boolean;
       fields: boolean;
       conditions: boolean;
-      colors: boolean;
     };
   };
   sections: Record<string, Section>;
