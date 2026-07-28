@@ -6,7 +6,7 @@ import {
   useCreateResponse,
   useCreateResponseWithFiles,
   useSoftDeleteResponses,
-  getFieldValues,
+  getValidDependentValues,
 } from "@api/responsesApi";
 import { getFormIdByFieldId } from "@api/formsApi";
 import { toStoredFile, uploadFile, type ResponseFileDto, type StoredFile } from "@api/filesApi";
@@ -111,11 +111,11 @@ type EditorFieldExtra = {
   dateType?: "datetime" | "date";
   timePrecision?: "seconds" | "minutes";
   options?:
-    | string[]
-    | {
-        items?: OptionResponseValue[];
-        defaultValue?: string[];
-      };
+  | string[]
+  | {
+    items?: OptionResponseValue[];
+    defaultValue?: string[];
+  };
   linkedOptionsFieldId?: string | null;
   dependentOptionsFieldId?: string | null;
   parentFieldId?: string | null;
@@ -721,9 +721,9 @@ export const useResponsesEdit = () => {
       prevRows.map((row) =>
         String(row.id) === String(rowId)
           ? ({
-              ...row,
-              ...updates,
-            } as Row)
+            ...row,
+            ...updates,
+          } as Row)
           : row,
       ),
     );
@@ -813,9 +813,9 @@ export const useResponsesEdit = () => {
     async (rowId: RowId, row: Row, changedField: FormFieldDto, changedValue: unknown) => {
       const changedFieldExtra = getFieldExtra(changedField);
       const dependentSourceFieldId = changedFieldExtra.linkedOptionsFieldId;
-      const dependentValue = normalizeOptionValues(changedValue)[0];
+      const dependentValues = normalizeOptionValues(changedValue);
 
-      if (!dependentSourceFieldId || !dependentValue) return;
+      if (!dependentSourceFieldId || dependentValues.length === 0) return;
 
       const updates: Partial<Row> = {};
 
@@ -843,24 +843,20 @@ export const useResponsesEdit = () => {
           if (candidateValues.length === 0) return;
 
           const ownerFormId = await getFormIdByFieldId(candidateExtra.linkedOptionsFieldId);
+
           if (!ownerFormId) return;
 
-          const allowedResults = await Promise.all(
-            candidateValues.map(async (candidateValue) => {
-              const result = await getFieldValues(ownerFormId, candidateExtra.linkedOptionsFieldId!, {
-                limit: 10,
-                search: candidateValue,
-                dependentFieldId: dependentSourceFieldId,
-                dependentValue,
-              });
-
-              return result.data.some((item) => String(item.value) === candidateValue);
-            }),
+          const validValues = await getValidDependentValues(
+            ownerFormId,
+            candidateExtra.linkedOptionsFieldId,
+            {
+              dependentValues: candidateValues,
+              controllingFieldId: dependentSourceFieldId,
+              controllingValues: dependentValues,
+            },
           );
 
-          const allowedValues = new Set(
-            candidateValues.filter((_candidateValue, index) => allowedResults[index]),
-          );
+          const allowedValues = new Set(validValues);
           const cleanedValue = getCleanedOptionValue(
             candidateField,
             row[candidateKey],
@@ -957,9 +953,9 @@ export const useResponsesEdit = () => {
         prevRows.map((row) =>
           String(row.id) === String(rowId)
             ? ({
-                ...row,
-                ...typedNewRow,
-              } as Row)
+              ...row,
+              ...typedNewRow,
+            } as Row)
             : row,
         ),
       );

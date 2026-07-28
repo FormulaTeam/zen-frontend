@@ -6,7 +6,7 @@ import { useLinkedFieldValueOptions } from "@src/hooks/useLinkedFieldValueOption
 interface ConnectedOptionsCellEditorProps {
     linkedOptionsFieldId: string;
     dependentFieldId?: string;
-    dependentValue?: string;
+    dependentValues?: string[];
     value: string | string[];
     onChange: (value: string | string[], isValid: boolean) => void;
     selectionMode?: "single" | "multiple";
@@ -17,7 +17,7 @@ interface ConnectedOptionsCellEditorProps {
 export const ConnectedOptionsCellEditor: React.FC<ConnectedOptionsCellEditorProps> = ({
     linkedOptionsFieldId,
     dependentFieldId,
-    dependentValue,
+    dependentValues,
     ...rest
 }) => {
     const {
@@ -30,8 +30,8 @@ export const ConnectedOptionsCellEditor: React.FC<ConnectedOptionsCellEditorProp
         linkedOptionsFieldId,
         true,
         "",
-        dependentValue ? dependentFieldId : undefined,
-        dependentValue,
+        dependentValues?.length ? dependentFieldId : undefined,
+        dependentValues,
     );
 
     const options = optionObjects.map((option) => option.id);
