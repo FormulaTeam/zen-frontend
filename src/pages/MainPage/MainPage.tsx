@@ -233,7 +233,7 @@ function MainPage({
       </Box>
 
       <Box className="main-page-content-wrapper" onScroll={handleScroll}>
-        {!!user && (scope === formsScopeOption.MyForms || scope === formsScopeOption.AccessibleForms) && (
+        {!!user && scope !== formsScopeOption.LinkableForms && (
           <Box className="pinned-forms-section">
             <PinnedFormsRow
               pinnedForms={pinnedForms}
