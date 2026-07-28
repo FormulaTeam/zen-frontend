@@ -14,7 +14,8 @@ import {
 } from "@mui/material";
 import { MoreVert, ChatBubbleOutline, EditOutlined, ShareOutlined, DeleteOutline } from "@mui/icons-material";
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
-import { permission } from "formula-gear";
+import { Pin } from "lucide-react";
+import { permission, MAX_PINNED_FORMS } from "formula-gear";
 import UserPicker from "../UserPicker/UserPicker";
 import { getFormIconByName } from "../../utils/utils";
 import { highlightText } from "../../utils/highlighting";
@@ -36,7 +37,7 @@ import {
   StyledCard,
 } from "./styled";
 import { FormOverviewDto } from "@src/types/shared";
-import { getFormById, useDeleteForm } from "../../api/formsApi";
+import { getFormById, useDeleteForm, usePinForm, useUnpinForm } from "../../api/formsApi";
 import { toast } from "sonner";
 import ConfirmDeleteDialog from "../BasePopup/ConfirmDeleteDialog";
 import DuplicateFormDialog from "./DuplicateFormDialog";
@@ -67,9 +68,13 @@ const FormCard = ({
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [showDuplicatePopup, setShowDuplicatePopup] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
   const openMenu = Boolean(anchorEl);
 
   const deleteFormMutation = useDeleteForm({ id: form.id.toString() });
+  const pinFormMutation = usePinForm();
+  const unpinFormMutation = useUnpinForm();
+
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -163,6 +168,29 @@ const FormCard = ({
     }
   };
 
+  const handlePinToggle = async (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+
+    if (form.isPinned) {
+      try {
+        await unpinFormMutation.mutateAsync(form.id);
+      } catch (error) {
+        toast.error("אירעה שגיאה בביטול נעיצת הטופס. נסו שוב.");
+      }
+      return;
+    }
+
+    try {
+      await pinFormMutation.mutateAsync(form.id);
+    } catch (error: any) {
+      if (error?.response?.status === 409) {
+        toast.error(`לא ניתן לנעוץ יותר מ־${MAX_PINNED_FORMS} טפסים.`);
+      } else {
+        toast.error("אירעה שגיאה בנעיצת הטופס. נסו שוב.");
+      }
+    }
+  };
+
   const renderDynamicIcon = (name: string) => {
     const IconComponent = MuiIcons[name as keyof typeof MuiIcons];
 
@@ -221,9 +249,11 @@ const FormCard = ({
 
   return (
     <StyledCard
-      sx={{ backgroundcolor: theme.palette.background.paper, cursor: "pointer" }}
+      sx={{ backgroundcolor: theme.palette.background.paper, cursor: "pointer", position: "relative" }}
       data-testid={`form-id-${form.id}`}
       onClick={goToResponsesPage}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className="form-card">
       <ItemImgAndTitles>
         <ItemTitles>
@@ -258,75 +288,92 @@ const FormCard = ({
               </Box>
             </Box>
 
-            {hasMenuPermissions && (
-              <>
-                <IconButton
-                  aria-label="more"
-                  id="long-button"
-                  aria-controls={openMenu ? "long-menu" : undefined}
-                  aria-expanded={openMenu ? "true" : undefined}
-                  aria-haspopup="true"
-                  onClick={(e) => {
-                    stopPropagation(e);
-                    handleMenuClick(e);
-                  }}
-                  size="small"
-                  sx={{ color: "#62748E" }}>
-                  <MoreVert />
-                </IconButton>
-                <Menu
-                  id="long-menu"
-                  MenuListProps={{
-                    "aria-labelledby": "long-button",
-                  }}
-                  anchorEl={anchorEl}
-                  open={openMenu}
-                  onClose={handleMenuClose}
-                  onClick={stopPropagation}
-                  PaperProps={{
-                    style: {
-                      maxHeight: 48 * 4.5,
-                      minWidth: "160px",
-                      borderRadius: "8px",
-                      boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-                    },
-                  }}>
-                  <PermissionGate
-                    userPermissions={userPermissions}
-                    requiredPermissions={[permission.UpdateForm]}>
-                    <MenuItem onClick={handleEditClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
-                      <EditOutlined fontSize="small" /> עריכה
-                    </MenuItem>
-                  </PermissionGate>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              {isHovered && (
+                <Tooltip arrow title={form.isPinned ? "ביטול נעיצה" : "נעיצת טופס"}>
+                  <IconButton
+                    aria-label={form.isPinned ? "unpin form" : "pin form"}
+                    data-testid={`pin-form-button-${form.id}`}
+                    onClick={handlePinToggle}
+                    size="small"
+                    sx={{
+                      color: form.isPinned ? theme.palette.primary.main : "#62748E",
+                    }}>
+                    <Pin size={18} fill={form.isPinned ? "currentColor" : "none"} />
+                  </IconButton>
+                </Tooltip>
+              )}
 
-                  <PermissionGate
-                    userPermissions={userPermissions}
-                    requiredPermissions={[permission.ShareForm]}>
-                    <MenuItem onClick={handleShareClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
-                      <ShareOutlined fontSize="small" /> שיתוף
-                    </MenuItem>
-                  </PermissionGate>
+              {hasMenuPermissions && (
+                <>
+                  <IconButton
+                    aria-label="more"
+                    id="long-button"
+                    aria-controls={openMenu ? "long-menu" : undefined}
+                    aria-expanded={openMenu ? "true" : undefined}
+                    aria-haspopup="true"
+                    onClick={(e) => {
+                      stopPropagation(e);
+                      handleMenuClick(e);
+                    }}
+                    size="small"
+                    sx={{ color: "#62748E" }}>
+                    <MoreVert />
+                  </IconButton>
+                  <Menu
+                    id="long-menu"
+                    MenuListProps={{
+                      "aria-labelledby": "long-button",
+                    }}
+                    anchorEl={anchorEl}
+                    open={openMenu}
+                    onClose={handleMenuClose}
+                    onClick={stopPropagation}
+                    PaperProps={{
+                      style: {
+                        maxHeight: 48 * 4.5,
+                        minWidth: "160px",
+                        borderRadius: "8px",
+                        boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+                      },
+                    }}>
+                    <PermissionGate
+                      userPermissions={userPermissions}
+                      requiredPermissions={[permission.UpdateForm]}>
+                      <MenuItem onClick={handleEditClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
+                        <EditOutlined fontSize="small" /> עריכה
+                      </MenuItem>
+                    </PermissionGate>
 
-                  {canDuplicateForm && (
-                    <MenuItem
-                      onClick={handleDuplicateClick}
-                      sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
-                      <ContentCopyOutlinedIcon fontSize="small" /> שכפול
-                    </MenuItem>
-                  )}
+                    <PermissionGate
+                      userPermissions={userPermissions}
+                      requiredPermissions={[permission.ShareForm]}>
+                      <MenuItem onClick={handleShareClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
+                        <ShareOutlined fontSize="small" /> שיתוף
+                      </MenuItem>
+                    </PermissionGate>
 
-                  <PermissionGate
-                    userPermissions={userPermissions}
-                    requiredPermissions={[permission.DeleteForm]}>
-                    <MenuItem
-                      onClick={handleDeleteClick}
-                      sx={{ fontSize: "14px", color: theme.palette.error.main, gap: 1 }}>
-                      <DeleteOutline fontSize="small" /> מחיקה
-                    </MenuItem>
-                  </PermissionGate>
-                </Menu>
-              </>
-            )}
+                    {canDuplicateForm && (
+                      <MenuItem
+                        onClick={handleDuplicateClick}
+                        sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
+                        <ContentCopyOutlinedIcon fontSize="small" /> שכפול
+                      </MenuItem>
+                    )}
+
+                    <PermissionGate
+                      userPermissions={userPermissions}
+                      requiredPermissions={[permission.DeleteForm]}>
+                      <MenuItem
+                        onClick={handleDeleteClick}
+                        sx={{ fontSize: "14px", color: theme.palette.error.main, gap: 1 }}>
+                        <DeleteOutline fontSize="small" /> מחיקה
+                      </MenuItem>
+                    </PermissionGate>
+                  </Menu>
+                </>
+              )}
+            </Box>
           </ItemTitleAndNum>
 
           <DescriptionDiv>
