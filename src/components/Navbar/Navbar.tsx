@@ -74,13 +74,7 @@ const Navbar = () => {
       navigate(IPath.RECYCLE_BIN);
     }
   };
-
-  const resolvedFirstName =
-    user?.firstName?.trim() ||
-    user?.displayName?.trim()?.split(" ")[0] ||
-    user?.upn?.split("@")[0] ||
-    "משתמש";
-
+  
   const resolvedFirstName =
     user?.firstName?.trim() ||
     user?.displayName?.trim()?.split(" ")[0] ||
