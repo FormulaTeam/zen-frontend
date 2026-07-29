@@ -116,7 +116,7 @@ export function EmptyState({ showHint = true }: { showHint?: boolean }) {
                   fontSize: "15px",
                   lineHeight: "1.4",
                   color: "#2d3748",
-                  textAlign: "left", 
+                  textAlign: "left",
                   fontWeight: 500,
                 }}>
                 <Box component="span" sx={{ whiteSpace: "nowrap", display: "block", fontWeight: 600 }}>

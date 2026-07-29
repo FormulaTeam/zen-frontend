@@ -47,6 +47,15 @@ export const PinBadgeBox = styled(Box)`
   border-radius: 8px;
   background-color: ${PIN_BADGE_COLORS.background};
   border: 1px solid ${PIN_BADGE_COLORS.border};
+  flex-shrink: 0;
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+`;
+
+export const PinBadgeBoxEmpty = styled(PinBadgeBox)`
+  top: 74px;
 `;
 
 /** Dashed border color for the empty pinned slots (Figma). */
@@ -74,16 +83,15 @@ export const PlaceholderCard = styled(Box) <{ $filled?: boolean }>`
   border: ${({ $filled }) => ($filled ? "1px solid transparent" : "none")};
   box-shadow: ${({ $filled }) =>
     $filled ? "0px 2px 8px rgba(0, 0, 0, 0.08)" : "none"};
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  padding: 72px 16px 16px 16px;
+  box-sizing: border-box;
   text-align: center;
 `;
 
 export const PlaceholderHintWrapper = styled(Box)`
+  position: absolute;
+  top: 124px;
+  left: 16px;
+  right: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;

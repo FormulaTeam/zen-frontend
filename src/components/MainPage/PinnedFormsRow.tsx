@@ -12,6 +12,7 @@ import {
   PinnedRowTitle,
   PinnedRowCounter,
   PinBadgeBox,
+  PinBadgeBoxEmpty,
   PlaceholderCard,
   PlaceholderHintWrapper,
   PlaceholderHintTitle,
@@ -28,16 +29,17 @@ interface PinnedFormsRowProps {
   myUpn?: string;
 }
 
-/** The rounded, tinted badge that wraps the pin icon in empty slots. */
-const PinBadge = () => (
-  <PinBadgeBox>
-    <Pin size={20} color={PIN_BADGE_COLORS.icon} />
-  </PinBadgeBox>
-);
-
 const PinnedPlaceholderCard = ({ showHint }: { showHint: boolean }) => (
   <PlaceholderCard $filled={showHint}>
-    <PinBadge />
+    {showHint ? (
+      <PinBadgeBox>
+        <Pin size={20} color={PIN_BADGE_COLORS.icon} />
+      </PinBadgeBox>
+    ) : (
+      <PinBadgeBoxEmpty>
+        <Pin size={20} color={PIN_BADGE_COLORS.icon} />
+      </PinBadgeBoxEmpty>
+    )}
     {showHint && (
       <PlaceholderHintWrapper>
         <PlaceholderHintTitle>כאן יהיה טופס נעוץ</PlaceholderHintTitle>
