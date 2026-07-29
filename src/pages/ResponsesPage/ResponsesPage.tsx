@@ -634,7 +634,8 @@ const ResponsesPageContent = (): JSX.Element => {
 
               <ToolbarDivider />
 
-              {canManageColorRules && (
+              {/* TODO: colors feature not fully tested yet - remove `false &&` below to re-enable */}
+              {false && canManageColorRules && (
                 <>
                   <Tooltip title={!isInEditMode && responsesTableColorRules.length > 0 ? "צביעת תגובות" : ""} arrow>
                     <UnifiedButton
