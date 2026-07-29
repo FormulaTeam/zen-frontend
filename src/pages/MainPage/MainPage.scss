@@ -35,7 +35,9 @@
 
   .pinned-forms-section {
     width: 100%;
-    padding: 0 32px;
+    padding: 0 32px 24px 32px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #e2e8f0;
     flex-shrink: 0;
   }
 

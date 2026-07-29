@@ -287,7 +287,7 @@ function MainPage({
             </Grid>
           </>
         ) : showNoResults ? (
-          <Box sx={{ width: "100%", display: "flex", justifyContent: "center", mt: 6 }}>
+          <Box sx={{ width: "100%", display: "flex", justifyContent: "center", mt: 6, px: "32px" }}>
             <NoResultsState
               onClearSearch={resetSearchValue}
               setScope={setScope}
@@ -302,7 +302,7 @@ function MainPage({
             id="forms-grid"
             spacing={3}>
             <Grid size={{ xs: 4, sm: 4, md: 6, lg: 4, xl: 3 }}>
-              <EmptyState />
+              <EmptyState showHint={pinnedForms.length === 0} />
             </Grid>
           </Grid>
         )}

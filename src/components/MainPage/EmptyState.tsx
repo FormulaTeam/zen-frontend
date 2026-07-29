@@ -10,7 +10,7 @@ const EmptyCard = styled(Button)(({ theme }) => ({
   minHeight: "220px",
   height: "100%",
   backgroundColor: "#ffffff",
-  borderRadius: "15px", // Matching FormCard
+  borderRadius: "8px", // Matching FormCard
   boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.04)",
   display: "flex",
   flexDirection: "column",
@@ -76,7 +76,7 @@ const DismissButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-export function EmptyState() {
+export function EmptyState({ showHint = true }: { showHint?: boolean }) {
   const navigate = useNavigate();
   const [showTooltip, setShowTooltip] = useState(true);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -96,7 +96,7 @@ export function EmptyState() {
       </EmptyCard>
 
       <Popper
-        open={showTooltip && Boolean(anchorEl)}
+        open={showHint && showTooltip && Boolean(anchorEl)}
         anchorEl={anchorEl}
         placement="right-start" // Aligns top of tooltip with top of card
         transition

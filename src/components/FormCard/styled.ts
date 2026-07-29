@@ -82,7 +82,7 @@ export const FormIconWrapper = muiStyled(Box)(({ theme }) => ({
 }));
 
 export const StyledCard = styled(Card)`
-  border-radius: 15px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
