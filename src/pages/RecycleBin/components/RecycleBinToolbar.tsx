@@ -37,7 +37,7 @@ interface RecycleBinToolbarProps {
 }
 
 const controlTextSx = {
-  fontSize: 13,
+  fontSize: "1.2rem !important",
   fontWeight: 500,
   fontFamily: "Heebo, sans-serif",
 };
@@ -178,11 +178,11 @@ const RecycleBinToolbar: React.FC<RecycleBinToolbarProps> = React.memo(({
             anchorEl={scopeAnchorEl}
             open={Boolean(scopeAnchorEl)}
             onClose={() => setScopeAnchorEl(null)}>
-            <MenuItem onClick={() => handleScopeClick("responses")}>
-              <ScopeOption value="responses" />
-            </MenuItem>
             <MenuItem onClick={() => handleScopeClick("forms")}>
               <ScopeOption value="forms" />
+            </MenuItem>
+            <MenuItem onClick={() => handleScopeClick("responses")}>
+              <ScopeOption value="responses" />
             </MenuItem>
           </Menu>
         </Box>
