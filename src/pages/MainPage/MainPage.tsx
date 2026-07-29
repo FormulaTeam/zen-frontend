@@ -25,7 +25,7 @@ import BasePopup from "../../components/BasePopup/BasePopup";
 import { AutoDelete, Add as AddIcon } from "@mui/icons-material";
 import MainSortSelect from "../../components/MainSortSelect/MainSortSelect";
 import SearchAndFilter from "../../components/SearchAndFilter/SearchAndFilter";
-import FormGroupSelect from "../../components/MainPage/FormGroupSelect";
+import FormGroupSelect, { formScopeLabels } from "../../components/MainPage/FormGroupSelect";
 import { useGetMyPersonal } from "../../api/usersApi";
 import { useGetPinnedForms } from "../../api/formsApi";
 import {
@@ -253,7 +253,7 @@ function MainPage({
           <>
             <Box className="all-forms-heading">
               <Typography sx={{ fontSize: "16px", fontWeight: 600, color: "#020618", mb: 1.5 }}>
-                כל הטפסים
+                {formScopeLabels[scope] ?? ""}
               </Typography>
             </Box>
             <Grid

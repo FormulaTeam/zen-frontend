@@ -9,6 +9,13 @@ interface FormGroupSelectProps {
   isSuperAdmin: boolean;
 }
 
+export const formScopeLabels: Partial<Record<FormsScopeOption, string>> = {
+  [formsScopeOption.AccessibleForms]: "כל הטפסים",
+  [formsScopeOption.MyForms]: "הטפסים שלי",
+  [formsScopeOption.SharedWithMeForms]: "הטפסים ששותפו איתי",
+  [formsScopeOption.AllForms]: "👈🏽👉🏽🥺",
+};
+
 const StyledFormControl = styled(Box)(({ theme }) => ({
   width: 190,
   position: "relative",
@@ -67,17 +74,17 @@ const FormGroupSelect = ({ value, onChange, isSuperAdmin }: FormGroupSelectProps
         onChange={handleChange}
         IconComponent={KeyboardArrowDownIcon}>
         <MenuItem value={formsScopeOption.AccessibleForms} sx={{ fontSize: "16px" }}>
-          כל הטפסים
+          {formScopeLabels[formsScopeOption.AccessibleForms]}
         </MenuItem>
         <MenuItem value={formsScopeOption.MyForms} sx={{ fontSize: "16px" }}>
-          הטפסים שלי
+          {formScopeLabels[formsScopeOption.MyForms]}
         </MenuItem>
         <MenuItem value={formsScopeOption.SharedWithMeForms} sx={{ fontSize: "16px" }}>
-          הטפסים ששותפו איתי
+          {formScopeLabels[formsScopeOption.SharedWithMeForms]}
         </MenuItem>
         {isSuperAdmin && (
           <MenuItem value={formsScopeOption.AllForms} sx={{ fontSize: "16px" }}>
-            👈🏽👉🏽🥺
+            {formScopeLabels[formsScopeOption.AllForms]}
           </MenuItem>
         )}
       </StyledSelect>
