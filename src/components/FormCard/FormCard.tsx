@@ -125,20 +125,22 @@ const FormCard = ({
       throw new Error("Source form could not be loaded for duplication");
     }
 
-    const duplicateFormStructure = buildDuplicatedFormStructure(
-      sourceForm,
-      selections,
-      duplicateName,
-      duplicateDescription,
-    );
+    const {
+      formStructure: duplicateFormStructure,
+      duplicateFieldIdMap,
+      duplicateOptionIdMap,
+    } = buildDuplicatedFormStructure(sourceForm, selections, duplicateName, duplicateDescription);
     const duplicateSelections = {
       permissions: selections.permissions,
       fields: selections.fields,
       conditions: selections.conditions,
+      colors: selections.colors,
     };
     duplicateFormStructure.duplicate = {
       sourceFormId,
       selections: duplicateSelections,
+      fieldIdMap: duplicateFieldIdMap,
+      optionIdMap: duplicateOptionIdMap,
     };
 
     setShowDuplicatePopup(false);
@@ -147,6 +149,8 @@ const FormCard = ({
         duplicateFormStructure,
         duplicateSourceFormId: sourceFormId,
         duplicateSelections,
+        duplicateFieldIdMap,
+        duplicateOptionIdMap,
       },
     });
   };

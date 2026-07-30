@@ -55,12 +55,17 @@ export function useFormEditor(formStructure: FormStructure): UseFormEditorReturn
         const sourceDuplicateFormId =
           duplicateSourceFormId ?? structureToSave.duplicate?.sourceFormId;
         const duplicateSelections = structureToSave.duplicate?.selections;
+        const duplicateFieldIdMap = structureToSave.duplicate?.fieldIdMap;
+        const duplicateOptionIdMap = structureToSave.duplicate?.optionIdMap;
 
         const payload = {
           ...convertFormStructureToCreateDto(structureToSave),
           ...(sourceDuplicateFormId ? { duplicateSourceFormId: sourceDuplicateFormId } : {}),
           ...(sourceDuplicateFormId && duplicateSelections
             ? { duplicateSelections }
+            : {}),
+          ...(sourceDuplicateFormId && duplicateSelections?.colors && duplicateFieldIdMap
+            ? { duplicateFieldIdMap, duplicateOptionIdMap }
             : {}),
         };
 

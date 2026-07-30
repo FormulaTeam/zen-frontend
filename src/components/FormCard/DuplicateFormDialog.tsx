@@ -44,12 +44,14 @@ const initialSelections: DuplicateFormSelections = {
   permissions: true,
   fields: true,
   conditions: true,
+  colors: true,
 };
 
 const checklistSelectionKeys: Array<keyof DuplicateFormSelections> = [
   "permissions",
   "fields",
   "conditions",
+  "colors",
 ];
 
 type DuplicateFormDialogProps = {
@@ -85,6 +87,12 @@ const checklistItems: Array<{
       key: "conditions",
       label: "התניות",
       description: "התניות יועתקו יחד עם השדות הרלוונטיים בלבד.",
+      dependsOnFields: true,
+    },
+    {
+      key: "colors",
+      label: "צבעים",
+      description: "חוקי צבע ותצוגה בטבלה יועתקו לטופס החדש.",
       dependsOnFields: true,
     },
   ];
@@ -148,6 +156,7 @@ function DuplicateFormDialog({
           ...prev,
           fields: false,
           conditions: false,
+          colors: false,
         };
       }
 
@@ -168,6 +177,7 @@ function DuplicateFormDialog({
           permissions: false,
           fields: false,
           conditions: false,
+          colors: false,
         },
     );
   };
