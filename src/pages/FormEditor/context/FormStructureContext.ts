@@ -33,7 +33,10 @@ interface FormStructure {
       permissions: boolean;
       fields: boolean;
       conditions: boolean;
+      colors: boolean;
     };
+    fieldIdMap?: Record<string, string>;
+    optionIdMap?: Record<string, string>;
   };
   sections: Record<string, Section>;
   orderedSectionIds: string[];
