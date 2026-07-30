@@ -1,4 +1,5 @@
 import { cloneDeep } from "lodash";
+import type { DuplicateFormSelections as DuplicateFormComponentSelectionsContract } from "formula-gear";
 
 import type { FormDto } from "@src/types/shared";
 import type { FormStructure } from "../context/FormStructureContext";
@@ -15,10 +16,7 @@ export type DuplicateFormSelections = {
   colors: boolean;
 };
 
-export type DuplicateFormComponentSelections = Pick<
-  DuplicateFormSelections,
-  "permissions" | "fields" | "conditions" | "colors"
->;
+export type DuplicateFormComponentSelections = DuplicateFormComponentSelectionsContract;
 
 export type DuplicateFormRouteState = {
   duplicateFormStructure: FormStructure;
