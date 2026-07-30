@@ -1,6 +1,5 @@
 import { Box, TextField, Tooltip } from "@mui/material";
-import { GridRenderEditCellParams } from "@mui/x-data-grid-pro";
-import { GridApiPro } from "@mui/x-data-grid-pro/models/gridApiPro";
+import { GridApiPro, GridRenderEditCellParams } from "@mui/x-data-grid-pro";
 import { useCallback, useMemo } from "react";
 
 import { fieldType } from "formula-gear";
@@ -19,7 +18,7 @@ import {
   TimeCellEditor,
 } from "../components/CellEditors";
 import { CellErrorInfoIcon } from "../styled";
-import { getOptionResponseRawValue, OptionResponseValue, formatOptionLabel } from "../../../utils/optionResponseValue";
+import { getOptionResponseRawValue, OptionResponseValue, formatOptionLabel, toStringValues } from "../../../utils/optionResponseValue";
 import { ConnectedOptionsCellEditor } from "../components/CellEditors/ConnectedOptionsCellEditor";
 
 type QuickEditValidationError = {
@@ -35,6 +34,7 @@ type EditorFieldExtra = {
   };
   selectionMode?: "multiple" | "single";
   linkedOptionsFieldId?: string | null;
+  dependentOptionsFieldId?: string | null;
   parentFieldId?: string | null;
   validationRegex?: string;
   locationFormat?: "utm" | "wkt";
@@ -253,9 +253,22 @@ export const useCellEditors = ({
             : false;
 
           if (isExternallyConnected && linkedOptionsFieldId) {
+            const dependentTargetField = fieldExtra.dependentOptionsFieldId
+              ? formFields?.find((field) => String(field.id) === String(fieldExtra.dependentOptionsFieldId))
+              : undefined;
+            const dependentFieldId = dependentTargetField
+              ? getFieldExtra(dependentTargetField).linkedOptionsFieldId ?? undefined
+              : undefined;
+            const dependentRawValue = dependentTargetField
+              ? getOptionResponseRawValue(params.row?.[`field:${dependentTargetField.id}`])
+              : undefined;
+            const dependentFilterValues = toStringValues(dependentRawValue);
+
             editor = (
               <ConnectedOptionsCellEditor
                 linkedOptionsFieldId={linkedOptionsFieldId}
+                dependentFieldId={dependentFilterValues.length ? dependentFieldId : undefined}
+                dependentValues={dependentFilterValues}
                 value={getOptionResponseRawValue(params.value) as string | string[]}
                 onChange={handleChange}
                 selectionMode={selectionMode}

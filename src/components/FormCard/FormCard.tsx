@@ -13,10 +13,10 @@ import {
   useTheme,
 } from "@mui/material";
 import { MoreVert, ChatBubbleOutline, EditOutlined, ShareOutlined, DeleteOutline } from "@mui/icons-material";
-import { permission } from "formula-gear";
+import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
+import { Pin } from "lucide-react";
+import { permission, MAX_PINNED_FORMS } from "formula-gear";
 import UserPicker from "../UserPicker/UserPicker";
-import ShareIcon from "../../icons/share.svg";
-import { CustomIcon } from "../../theme/icons";
 import { getFormIconByName } from "../../utils/utils";
 import { highlightText } from "../../utils/highlighting";
 import CardCreationDetails from "./CardCreationDetails";
@@ -36,11 +36,16 @@ import {
   ItemTitles,
   StyledCard,
 } from "./styled";
-import { GrayShareIcon } from "./styled";
 import { FormOverviewDto } from "@src/types/shared";
-import { useDeleteForm } from "../../api/formsApi";
+import { getFormById, useDeleteForm, usePinForm, useUnpinForm } from "../../api/formsApi";
 import { toast } from "sonner";
 import ConfirmDeleteDialog from "../BasePopup/ConfirmDeleteDialog";
+import DuplicateFormDialog from "./DuplicateFormDialog";
+import {
+  buildDuplicatedFormStructure,
+  type DuplicateFormSelections,
+} from "@pages/FormEditor/utils/duplicateForm";
+import { IPath } from "@src/types/enums/global.enums";
 
 const FormCard = ({
   form,
@@ -61,10 +66,15 @@ const FormCard = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const showSharePopup = searchParams.get("modal") === "permissions" && searchParams.get("formId") === form.id.toString();
   const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [showDuplicatePopup, setShowDuplicatePopup] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
   const openMenu = Boolean(anchorEl);
 
   const deleteFormMutation = useDeleteForm({ id: form.id.toString() });
+  const pinFormMutation = usePinForm();
+  const unpinFormMutation = useUnpinForm();
+
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -94,12 +104,90 @@ const FormCard = ({
     setShowDeletePopup(true);
   };
 
+  const handleDuplicateClick = () => {
+    handleMenuClose();
+    setShowDuplicatePopup(true);
+  };
+
+  const handleDuplicateConfirm = async ({
+    selections,
+    duplicateName,
+    duplicateDescription,
+  }: {
+    selections: DuplicateFormSelections;
+    duplicateName: string;
+    duplicateDescription: string;
+  }) => {
+    const sourceFormId = Number(form.id);
+    const sourceForm = await getFormById(sourceFormId);
+
+    if (!sourceForm) {
+      throw new Error("Source form could not be loaded for duplication");
+    }
+
+    const duplicateFormStructure = buildDuplicatedFormStructure(
+      sourceForm,
+      selections,
+      duplicateName,
+      duplicateDescription,
+    );
+    const duplicateSelections = {
+      permissions: selections.permissions,
+      fields: selections.fields,
+      conditions: selections.conditions,
+    };
+    duplicateFormStructure.duplicate = {
+      sourceFormId,
+      selections: duplicateSelections,
+    };
+
+    setShowDuplicatePopup(false);
+    navigate(IPath.FORM_CREATE, {
+      state: {
+        duplicateFormStructure,
+        duplicateSourceFormId: sourceFormId,
+        duplicateSelections,
+      },
+    });
+  };
+
+  const handleDuplicateError = () => {
+    setShowDuplicatePopup(false);
+    toast.error(`לא ניתן היה לשכפל את הטופס "${form.name}".`, {
+      duration: 4000,
+      position: "top-right",
+    });
+  };
+
   const confirmDelete = async () => {
     try {
       await deleteFormMutation.mutateAsync();
       toast.success("הטופס נמחק בהצלחה");
     } catch (error) {
       toast.error("מחיקת הטופס נכשלה");
+    }
+  };
+
+  const handlePinToggle = async (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+
+    if (form.isPinned) {
+      try {
+        await unpinFormMutation.mutateAsync(form.id);
+      } catch (error) {
+        toast.error("אירעה שגיאה בביטול נעיצת הטופס. נסו שוב.");
+      }
+      return;
+    }
+
+    try {
+      await pinFormMutation.mutateAsync(form.id);
+    } catch (error: any) {
+      if (error?.response?.status === 409) {
+        toast.error(`לא ניתן לנעוץ יותר מ־${MAX_PINNED_FORMS} טפסים.`);
+      } else {
+        toast.error("אירעה שגיאה בנעיצת הטופס. נסו שוב.");
+      }
     }
   };
 
@@ -136,9 +224,13 @@ const FormCard = ({
     );
   };
 
-  const goToResponsesPage = (event: React.MouseEvent<HTMLElement>) => {
+  const goToResponsesPage = (event?: React.MouseEvent<HTMLElement>) => {
+    event?.stopPropagation();
     resetSearchValue();
     navigate(`/forms/${form.id}/responses`, { replace: true });
+  };
+
+  const stopPropagation = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
   };
 
@@ -151,10 +243,17 @@ const FormCard = ({
     [permission.UpdateForm, permission.ShareForm, permission.DeleteForm].includes(perm as any),
   );
 
+  const canDuplicateForm = [permission.UpdateForm, permission.ShareForm, permission.DeleteForm].every(
+    (perm) => userPermissions.includes(perm as any),
+  );
+
   return (
     <StyledCard
-      sx={{ backgroundcolor: theme.palette.background.paper }}
+      sx={{ backgroundcolor: theme.palette.background.paper, cursor: "pointer", position: "relative" }}
       data-testid={`form-id-${form.id}`}
+      onClick={goToResponsesPage}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className="form-card">
       <ItemImgAndTitles>
         <ItemTitles>
@@ -189,63 +288,92 @@ const FormCard = ({
               </Box>
             </Box>
 
-            {hasMenuPermissions && (
-              <>
-                <IconButton
-                  aria-label="more"
-                  id="long-button"
-                  aria-controls={openMenu ? "long-menu" : undefined}
-                  aria-expanded={openMenu ? "true" : undefined}
-                  aria-haspopup="true"
-                  onClick={handleMenuClick}
-                  size="small"
-                  sx={{ color: "#62748E" }}>
-                  <MoreVert />
-                </IconButton>
-                <Menu
-                  id="long-menu"
-                  MenuListProps={{
-                    "aria-labelledby": "long-button",
-                  }}
-                  anchorEl={anchorEl}
-                  open={openMenu}
-                  onClose={handleMenuClose}
-                  PaperProps={{
-                    style: {
-                      maxHeight: 48 * 4.5,
-                      minWidth: "160px",
-                      borderRadius: "8px",
-                      boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-                    },
-                  }}>
-                  <PermissionGate
-                    userPermissions={userPermissions}
-                    requiredPermissions={[permission.UpdateForm]}>
-                    <MenuItem onClick={handleEditClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
-                      <EditOutlined fontSize="small" /> עריכת טופס
-                    </MenuItem>
-                  </PermissionGate>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              {isHovered && (
+                <Tooltip arrow title={form.isPinned ? "ביטול נעיצה" : "נעיצת טופס"}>
+                  <IconButton
+                    aria-label={form.isPinned ? "unpin form" : "pin form"}
+                    data-testid={`pin-form-button-${form.id}`}
+                    onClick={handlePinToggle}
+                    size="small"
+                    sx={{
+                      color: form.isPinned ? theme.palette.primary.main : "#62748E",
+                    }}>
+                    <Pin size={18} fill={form.isPinned ? "currentColor" : "none"} />
+                  </IconButton>
+                </Tooltip>
+              )}
 
-                  <PermissionGate
-                    userPermissions={userPermissions}
-                    requiredPermissions={[permission.ShareForm]}>
-                    <MenuItem onClick={handleShareClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
-                      <ShareOutlined fontSize="small" /> שיתוף טופס
-                    </MenuItem>
-                  </PermissionGate>
+              {hasMenuPermissions && (
+                <>
+                  <IconButton
+                    aria-label="more"
+                    id="long-button"
+                    aria-controls={openMenu ? "long-menu" : undefined}
+                    aria-expanded={openMenu ? "true" : undefined}
+                    aria-haspopup="true"
+                    onClick={(e) => {
+                      stopPropagation(e);
+                      handleMenuClick(e);
+                    }}
+                    size="small"
+                    sx={{ color: "#62748E" }}>
+                    <MoreVert />
+                  </IconButton>
+                  <Menu
+                    id="long-menu"
+                    MenuListProps={{
+                      "aria-labelledby": "long-button",
+                    }}
+                    anchorEl={anchorEl}
+                    open={openMenu}
+                    onClose={handleMenuClose}
+                    onClick={stopPropagation}
+                    PaperProps={{
+                      style: {
+                        maxHeight: 48 * 4.5,
+                        minWidth: "160px",
+                        borderRadius: "8px",
+                        boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+                      },
+                    }}>
+                    <PermissionGate
+                      userPermissions={userPermissions}
+                      requiredPermissions={[permission.UpdateForm]}>
+                      <MenuItem onClick={handleEditClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
+                        <EditOutlined fontSize="small" /> עריכה
+                      </MenuItem>
+                    </PermissionGate>
 
-                  <PermissionGate
-                    userPermissions={userPermissions}
-                    requiredPermissions={[permission.DeleteForm]}>
-                    <MenuItem
-                      onClick={handleDeleteClick}
-                      sx={{ fontSize: "14px", color: theme.palette.error.main, gap: 1 }}>
-                      <DeleteOutline fontSize="small" /> מחיקת טופס
-                    </MenuItem>
-                  </PermissionGate>
-                </Menu>
-              </>
-            )}
+                    <PermissionGate
+                      userPermissions={userPermissions}
+                      requiredPermissions={[permission.ShareForm]}>
+                      <MenuItem onClick={handleShareClick} sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
+                        <ShareOutlined fontSize="small" /> שיתוף
+                      </MenuItem>
+                    </PermissionGate>
+
+                    {canDuplicateForm && (
+                      <MenuItem
+                        onClick={handleDuplicateClick}
+                        sx={{ fontSize: "14px", gap: 1, color: "#020618" }}>
+                        <ContentCopyOutlinedIcon fontSize="small" /> שכפול
+                      </MenuItem>
+                    )}
+
+                    <PermissionGate
+                      userPermissions={userPermissions}
+                      requiredPermissions={[permission.DeleteForm]}>
+                      <MenuItem
+                        onClick={handleDeleteClick}
+                        sx={{ fontSize: "14px", color: theme.palette.error.main, gap: 1 }}>
+                        <DeleteOutline fontSize="small" /> מחיקה
+                      </MenuItem>
+                    </PermissionGate>
+                  </Menu>
+                </>
+              )}
+            </Box>
           </ItemTitleAndNum>
 
           <DescriptionDiv>
@@ -270,28 +398,45 @@ const FormCard = ({
           </ItemResponsesNum>
 
           {showSharePopup && (
-            <UserPicker
-              form={form}
-              closeSharePopupAndRefreshForm={() => {
-                setSearchParams((prev) => {
-                  const updated = new URLSearchParams(prev);
-                  updated.delete("modal");
-                  updated.delete("formId");
-                  return updated;
-                }, { replace: true });
-              }}
-            />
+            <Box onClick={stopPropagation}>
+              <UserPicker
+                form={form}
+                closeSharePopupAndRefreshForm={() => {
+                  setSearchParams((prev) => {
+                    const updated = new URLSearchParams(prev);
+                    updated.delete("modal");
+                    updated.delete("formId");
+                    return updated;
+                  }, { replace: true });
+                }}
+              />
+            </Box>
           )}
 
           {showDeletePopup && (
-            <ConfirmDeleteDialog
-              open={showDeletePopup}
-              title="מחיקת טופס"
-              message="האם אתה בטוח שברצונך למחוק את הטופס?"
-              onConfirm={confirmDelete}
-              onClose={() => setShowDeletePopup(false)}
-              confirmText="מחק טופס"
-            />
+            <Box onClick={stopPropagation}>
+              <ConfirmDeleteDialog
+                open={showDeletePopup}
+                title="מחיקת טופס"
+                message="האם אתה בטוח שברצונך למחוק את הטופס?"
+                onConfirm={confirmDelete}
+                onClose={() => setShowDeletePopup(false)}
+                confirmText="מחק טופס"
+              />
+            </Box>
+          )}
+
+          {showDuplicatePopup && (
+            <Box onClick={stopPropagation}>
+              <DuplicateFormDialog
+                open={showDuplicatePopup}
+                formName={form.name}
+                formDescription={form.description}
+                onClose={() => setShowDuplicatePopup(false)}
+                onDuplicateError={handleDuplicateError}
+                onDuplicate={handleDuplicateConfirm}
+              />
+            </Box>
           )}
 
           <ItemBtnsDiv>
@@ -300,7 +445,10 @@ const FormCard = ({
               requiredPermissions={[permission.CreateResponse]}>
               <ItemButton
                 className="form-add-response-button"
-                onClick={() => navigate(`/forms/${form.id}/responses/new`)}
+                onClick={(e) => {
+                  stopPropagation(e);
+                  navigate(`/forms/${form.id}/responses/new`);
+                }}
                 variant="outlined"
                 sx={{
                   height: "32px",
@@ -322,7 +470,7 @@ const FormCard = ({
           </ItemBtnsDiv>
         </ItemBottomDiv>
       </Box>
-      </StyledCard>
-      );
-      };
+    </StyledCard>
+  );
+};
 export default FormCard;

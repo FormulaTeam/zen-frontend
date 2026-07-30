@@ -8,10 +8,11 @@ export const DetailsRowContainer = styled(Box)<BoxProps>(({ theme }) => ({
     display: "flex",
     alignItems: "start",
     flexDirection: "column",
+    position: "relative",
     width: "100%",
-    maxWidth: "1200px",
+    overflow: "hidden",
     gap: theme.spacing(0.5),
-    padding: theme.spacing(1, 0),
+    padding: theme.spacing(1, 0, 2.5),
 }));
 
 export const ResponseTitle = styled(Typography)<TypographyProps>(({ theme }) => ({
@@ -40,6 +41,8 @@ interface StyledTableProps extends TableProps {
 export const StyledTable = styled(Table, {
     shouldForwardProp: (prop) => prop !== 'isInEditMode',
 })<StyledTableProps>(({ isInEditMode }) => ({
+    width: "max-content",
+    minWidth: "100%",
     "& .MuiTableHead-root .MuiTableCell-root": {
         fontWeight: 700,
         backgroundColor: "#ffffff",

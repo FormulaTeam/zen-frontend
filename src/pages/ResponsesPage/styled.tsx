@@ -430,13 +430,13 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     boxShadow: "inset 0 0 0 1px #1976d2",
   },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--editable:focus-within":
-    {
-      backgroundImage: "none",
-      boxShadow: "inset 0 0 0 1px #1976d2",
-      borderRadius: "2px",
-      outline: "none",
-      borderColor: "transparent",
-    },
+  {
+    backgroundImage: "none",
+    boxShadow: "inset 0 0 0 1px #1976d2",
+    borderRadius: "2px",
+    outline: "none",
+    borderColor: "transparent",
+  },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell--editing": {
     backgroundImage: "none",
     boxShadow: "inset 0 0 0 1px #1976d2",
@@ -446,9 +446,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   },
 
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus::after, &.MuiDataGrid-root--edit-mode .MuiDataGrid-cell:focus-within::after":
-    {
-      display: "none",
-    },
+  {
+    display: "none",
+  },
   "&.MuiDataGrid-root--edit-mode .MuiDataGrid-cell.MuiDataGrid-cell--has-error": {
     backgroundColor: "#ffebee",
     border: `1px solid ${theme.palette.error.main}`,
@@ -478,6 +478,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   },
   "& .MuiDataGrid-scrollbar": {
     display: "block !important",
+    cursor: "default !important",
     backgroundColor: "#ffffff !important",
     borderRadius: "999px",
     scrollbarColor: "#cbd5e1 transparent !important",
@@ -496,11 +497,13 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
     },
     "&::-webkit-scrollbar-track": {
       display: "block !important",
+      cursor: "default !important",
       backgroundColor: "transparent !important",
       borderRadius: "999px !important",
     },
     "&::-webkit-scrollbar-thumb": {
       display: "block !important",
+      cursor: "default !important",
       backgroundColor: "#cbd5e1 !important",
       border: "3px solid #ffffff !important",
       borderRadius: "999px !important",
@@ -817,8 +820,8 @@ export const PaginationButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
-export const HighlightedText = styled("mark")({
-  backgroundColor: "#fff59d",
+export const HighlightedText = styled("span")({
+  backgroundColor: "#d5e6f6 !important",
   color: "inherit",
   padding: 0,
   borderRadius: "2px",

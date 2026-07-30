@@ -503,9 +503,14 @@ function applyComponentDeletionToConditions(
   return modifiedConditions;
 }
 
-function useFormStructure(editedForm?: ExtendedFormDto) {
+function useFormStructure(
+  editedForm?: ExtendedFormDto,
+  initialCreateFormStructure?: FormStructure,
+  draftKey?: number | string,
+  draftEnabled = true,
+) {
   const [initialFormStructure, setInitialFormStructure] = useState<FormStructure>(() =>
-    editedForm ? yieldFormStructure(editedForm) : { ...getEmptyForm() },
+    editedForm ? yieldFormStructure(editedForm) : cloneDeep(initialCreateFormStructure ?? getEmptyForm()),
   );
   const [formStructure, setFormStructure] = useState<FormStructure>(initialFormStructure);
 
@@ -516,6 +521,14 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
       setFormStructure(newStructure);
     }
   }, [editedForm]);
+
+  useEffect(() => {
+    if (!editedForm && initialCreateFormStructure) {
+      const newStructure = cloneDeep(initialCreateFormStructure);
+      setInitialFormStructure(newStructure);
+      setFormStructure(newStructure);
+    }
+  }, [editedForm, initialCreateFormStructure]);
 
   const appendSection = useCallback(() => {
     setFormStructure((prev) => {
@@ -678,12 +691,16 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
   }, []);
 
   const setFieldData = useCallback(
-    <T extends FormFieldTypeId>(fieldId: string, data: Partial<FormFieldData & { typeId: T }>) => {
+    <T extends FormFieldTypeId>(
+      fieldId: string,
+      data: Partial<FormFieldData & { typeId: T }> & { replaceExtra?: boolean },
+    ) => {
       setFormStructure((prev) => {
         if (!(fieldId in prev.fields)) {
           return prev;
         }
 
+        const { replaceExtra, ...fieldData } = data;
         const fields = { ...prev.fields };
         const field = fields[fieldId];
         const originalData = field.data;
@@ -691,11 +708,13 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
 
         const dataToValidate = {
           ...originalData,
-          ...data,
-          extra: {
-            ...originalData.extra,
-            ...data.extra,
-          },
+          ...fieldData,
+          extra: replaceExtra
+            ? fieldData.extra
+            : {
+                ...originalData.extra,
+                ...fieldData.extra,
+              },
         } as FormFieldData & { typeId: T };
 
         const validationErrors = pickSharedKeysDeep(
@@ -892,10 +911,10 @@ function useFormStructure(editedForm?: ExtendedFormDto) {
   }, [formStructure, initialFormStructure]);
 
   useEffect(() => {
-    if (checkHasChanges()) {
-      saveFormDraft(formStructure.metadata.id, formStructure);
+    if (draftEnabled && checkHasChanges()) {
+      saveFormDraft(draftKey ?? formStructure.metadata.id, formStructure);
     }
-  }, [formStructure, checkHasChanges]);
+  }, [formStructure, checkHasChanges, draftKey, draftEnabled]);
 
   return {
     formStructure,

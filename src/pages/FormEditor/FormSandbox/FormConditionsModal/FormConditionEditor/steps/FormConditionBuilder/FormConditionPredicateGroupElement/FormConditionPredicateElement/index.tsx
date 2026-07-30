@@ -77,10 +77,12 @@ function FormConditionPredicateElement({
     | FormFieldExtra<OptionsFieldTypeId>
     | undefined;
 
-  const linkedOptionsFieldId =
+  const rawLinkedOptionsFieldId =
     condition.field?.typeId === ConditionFieldTypeIds.options
-      ? selectedFieldExtra?.linkedOptionsFieldId ?? undefined
+      ? selectedFieldExtra?.linkedOptionsFieldId
       : undefined;
+  const linkedOptionsFieldId =
+    typeof rawLinkedOptionsFieldId === "string" ? rawLinkedOptionsFieldId : undefined;
 
   const isLinkedOptionsField = Boolean(linkedOptionsFieldId);
 

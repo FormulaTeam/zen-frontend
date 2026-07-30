@@ -40,6 +40,7 @@ interface CustomTimePickerProps {
   onBlurHandler?: () => void;
   validationMessage?: string | null;
   validationDetail?: string | null;
+  hasError?: boolean;
 }
 
 const parseTimeStringToDayjs = (value: unknown): Dayjs | null => {
@@ -99,6 +100,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
   isTabularEdit = false,
   validationMessage,
   validationDetail,
+  hasError,
 }) => {
   const [timeValue, setTimeValue] = useState<Dayjs | null>(null);
   const didApplyDefaultRef = useRef(false);
@@ -182,7 +184,6 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
 
     "& .MuiInputBase-input": {
       direction: "ltr !important",
-      textAlign: "right !important",
       unicodeBidi: "plaintext",
       ...inputTextSx,
       color: APP_TEXT,
@@ -378,13 +379,13 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
       },
 
       "& .MuiMultiSectionDigitalClockSection-root::before, & .MuiMultiSectionDigitalClockSection-root::after":
-        {
-          display: "none !important",
-          height: "0 !important",
-          minHeight: "0 !important",
-          maxHeight: "0 !important",
-          content: '""" !important"',
-        },
+      {
+        display: "none !important",
+        height: "0 !important",
+        minHeight: "0 !important",
+        maxHeight: "0 !important",
+        content: '""" !important"',
+      },
 
       "& .MuiMultiSectionDigitalClockSection-item": {
         width: `${TIME_ITEM_WIDTH} !important`,
@@ -468,7 +469,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
             textField: {
               isTabularEdit,
               required: isRequired,
-              error: Boolean(validationMessage),
+              error: Boolean(validationMessage) || Boolean(hasError),
               helperText: <FieldErrorText message={validationMessage} detail={validationDetail} />,
               size: isTabularEdit ? "medium" : undefined,
               sx: inputWrapperSx,

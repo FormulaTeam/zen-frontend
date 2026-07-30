@@ -29,8 +29,14 @@ interface UseCellDisplayReturn {
     value: any,
     field: FormFieldDto,
     rowId?: string | number,
+    options?: FormatCellValueOptions,
   ) => React.ReactElement | null;
+  formatCellTooltipValue: (value: any, field: FormFieldDto) => string;
 }
+
+type FormatCellValueOptions = {
+  disableTooltip?: boolean;
+};
 
 type EditorFieldExtra = {
   dateType?: "datetime" | "date";
@@ -262,6 +268,17 @@ const getFileDisplayItems = (value: unknown): Array<StoredFile | LocalDisplayFil
   return [];
 };
 
+const renderOptionalOverflowTooltip = (
+  children: React.ReactElement,
+  title: string,
+  disabled?: boolean,
+): React.ReactElement =>
+  disabled ? children : (
+    <OverflowTooltip title={title} arrow>
+      {children}
+    </OverflowTooltip>
+  );
+
 export const useCellDisplay = ({
   formId,
   onFileClick,
@@ -276,13 +293,19 @@ export const useCellDisplay = ({
   );
 
   const formatLongTextCell = useCallback(
-    (value: any, fieldId: string, rowId?: string | number): React.ReactElement => {
+    (
+      value: any,
+      fieldId: string,
+      rowId?: string | number,
+      options?: FormatCellValueOptions,
+    ): React.ReactElement => {
       const displayValue = String(value ?? "");
 
       return (
         <ExpandableLongText
           text={displayValue}
           highlightedText={highlightText(displayValue)}
+          disableTooltip={options?.disableTooltip}
           onToggle={(isExpanded) => {
             if (onCellExpandToggle && rowId !== undefined) {
               onCellExpandToggle(rowId, fieldId, isExpanded);
@@ -295,7 +318,7 @@ export const useCellDisplay = ({
   );
 
   const formatLinkCell = useCallback(
-    (value: LinkValue): React.ReactElement => {
+    (value: LinkValue, options?: FormatCellValueOptions): React.ReactElement => {
       if (!value || !value.link) return <Box component="span" className="cell-box"></Box>;
 
       const href = /^https?:\/\//.test(value.link) ? value.link : `https://${value.link}`;
@@ -303,7 +326,7 @@ export const useCellDisplay = ({
 
       return (
         <Box component="span" className="cell-box">
-          <OverflowTooltip title={value.link} arrow>
+          {renderOptionalOverflowTooltip(
             <MuiLink
               href={href}
               target="_blank"
@@ -317,8 +340,10 @@ export const useCellDisplay = ({
                 },
               }}>
               {highlightText(displayText)}
-            </MuiLink>
-          </OverflowTooltip>
+            </MuiLink>,
+            value.link,
+            options?.disableTooltip,
+          )}
         </Box>
       );
     },
@@ -349,24 +374,32 @@ export const useCellDisplay = ({
   );
 
   const formatDateCell = useCallback(
-    (value: any, type?: "datetime" | "date"): React.ReactElement => {
+    (
+      value: any,
+      type?: "datetime" | "date",
+      precision?: "seconds" | "minutes",
+      options?: FormatCellValueOptions,
+    ): React.ReactElement => {
       if (!value || !moment(value).isValid()) {
         return <Box component="span" className="cell-box-date"></Box>;
       }
 
       const isDateTime = type === dateType.Datetime;
       const datePart = moment(value).format(DEFAULT_DATE_FORMAT);
-      const timePart = isDateTime ? ` ${moment(value).format("HH:mm")}` : "";
+      const timeFormat = precision === timePrecision.Seconds ? "HH:mm:ss" : "HH:mm";
+      const timePart = isDateTime ? ` ${moment(value).format(timeFormat)}` : "";
       const fullText = `${datePart}${timePart}`;
 
       return (
         <Box component="span" className="cell-box-date">
-          <OverflowTooltip title={fullText} arrow>
+          {renderOptionalOverflowTooltip(
             <label>
               {highlightText(datePart)}
               {timePart}
-            </label>
-          </OverflowTooltip>
+            </label>,
+            fullText,
+            options?.disableTooltip,
+          )}
         </Box>
       );
     },
@@ -374,7 +407,11 @@ export const useCellDisplay = ({
   );
 
   const formatTimeCell = useCallback(
-    (value: any, precision?: "seconds" | "minutes"): React.ReactElement => {
+    (
+      value: any,
+      precision?: "seconds" | "minutes",
+      options?: FormatCellValueOptions,
+    ): React.ReactElement => {
       const displayValue = formatTimeDisplayValue(value, precision);
 
       if (!displayValue) {
@@ -383,9 +420,11 @@ export const useCellDisplay = ({
 
       return (
         <Box component="span" className="cell-box-date">
-          <OverflowTooltip title={displayValue} arrow>
-            <label>{highlightText(displayValue)}</label>
-          </OverflowTooltip>
+          {renderOptionalOverflowTooltip(
+            <label>{highlightText(displayValue)}</label>,
+            displayValue,
+            options?.disableTooltip,
+          )}
         </Box>
       );
     },
@@ -393,7 +432,7 @@ export const useCellDisplay = ({
   );
 
   const formatLocationCell = useCallback(
-    (value: LocationValue): React.ReactElement | null => {
+    (value: LocationValue, options?: FormatCellValueOptions): React.ReactElement | null => {
       if (!value || value.x == null || value.y == null) return null;
 
       const x = String(value.x);
@@ -402,24 +441,30 @@ export const useCellDisplay = ({
       const displayText = `${x}, ${y}`;
       const fullText = `x: ${x}, y: ${y}`;
 
+      const content = (
+        <Box
+          component="span"
+          className="cell-box"
+          dir="ltr"
+          sx={{
+            width: "100%",
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            display: "block",
+            textAlign: "left",
+            cursor: "default",
+          }}>
+          {highlightText(displayText)}
+        </Box>
+      );
+
+      if (options?.disableTooltip) return content;
+
       return (
         <Tooltip title={fullText} arrow placement="bottom">
-          <Box
-            component="span"
-            className="cell-box"
-            dir="ltr"
-            sx={{
-              width: "100%",
-              minWidth: 0,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              display: "block",
-              textAlign: "left",
-              cursor: "default",
-            }}>
-            {highlightText(displayText)}
-          </Box>
+          {content}
         </Tooltip>
       );
     },
@@ -434,63 +479,115 @@ export const useCellDisplay = ({
   );
 
   const formatListCell = useCallback(
-    (value: any): React.ReactElement => {
+    (value: any, options?: FormatCellValueOptions): React.ReactElement => {
       if (!Array.isArray(value)) return <Box component="span" className="cell-box"></Box>;
 
       const stringValue = value.join(", ");
 
-      return (
-        <OverflowTooltip title={stringValue} arrow>
-          <label>{highlightText(stringValue)}</label>
-        </OverflowTooltip>
+      return renderOptionalOverflowTooltip(
+        <label>{highlightText(stringValue)}</label>,
+        stringValue,
+        options?.disableTooltip,
       );
     },
     [highlightText],
   );
 
   const formatOptionsCell = useCallback(
-    (value: any, field: FormFieldDto): React.ReactElement => {
+    (
+      value: any,
+      field: FormFieldDto,
+      options?: FormatCellValueOptions,
+    ): React.ReactElement => {
       const displayValue = getOptionDisplayText(value, field);
 
       if (!displayValue) {
         return <Box component="span" className="cell-box"></Box>;
       }
 
-      return (
-        <OverflowTooltip title={displayValue} arrow>
-          <label>{highlightText(displayValue)}</label>
-        </OverflowTooltip>
+      return renderOptionalOverflowTooltip(
+        <label>{highlightText(displayValue)}</label>,
+        displayValue,
+        options?.disableTooltip,
       );
     },
     [highlightText],
   );
 
   const formatDefaultCell = useCallback(
-    (value: any): React.ReactElement => {
+    (value: any, options?: FormatCellValueOptions): React.ReactElement => {
       if (typeof value === "string" || typeof value === "number") {
         const displayValue = String(value);
         const isNumber = typeof value === "number" || /^-?\d+(\.\d)?$/.test(displayValue);
 
-        return (
-          <OverflowTooltip title={displayValue} arrow>
-            {isNumber ? (
-              <span dir="ltr">{highlightText(displayValue)}</span>
-            ) : (
-              <label>{highlightText(displayValue)}</label>
-            )}
-          </OverflowTooltip>
+        return renderOptionalOverflowTooltip(
+          isNumber ? (
+            <span dir="ltr">{highlightText(displayValue)}</span>
+          ) : (
+            <label>{highlightText(displayValue)}</label>
+          ),
+          displayValue,
+          options?.disableTooltip,
         );
       }
 
-      if (Array.isArray(value)) return formatListCell(value);
+      if (Array.isArray(value)) return formatListCell(value, options);
 
       return <Box component="span" className="cell-box"></Box>;
     },
     [formatListCell, highlightText],
   );
 
+  const formatCellTooltipValue = useCallback((value: any, field: FormFieldDto): string => {
+    const extra = getFieldExtra(field);
+
+    if (value === null || value === undefined || value === "") return "";
+
+    switch (field.fieldType) {
+      case fieldType.Options:
+        return getOptionDisplayText(value, field);
+
+      case fieldType.Link:
+        return String((value as LinkValue)?.linkTxt || (value as LinkValue)?.link || "");
+
+      case fieldType.File:
+        return getFileDisplayItems(value)
+          .map((file) => file.name)
+          .filter(Boolean)
+          .join(", ");
+
+      case fieldType.Date:
+        return moment(value).isValid()
+          ? moment(value).format(
+              extra.dateType === dateType.Datetime
+                ? `${DEFAULT_DATE_FORMAT} HH:mm`
+                : DEFAULT_DATE_FORMAT,
+            )
+          : "";
+
+      case fieldType.Time:
+        return formatTimeDisplayValue(value, extra.timePrecision);
+
+      case fieldType.Location:
+        return (value as LocationValue)?.x != null && (value as LocationValue)?.y != null
+          ? `x: ${(value as LocationValue).x}, y: ${(value as LocationValue).y}`
+          : "";
+
+      case fieldType.Boolean:
+        return value ? "כן" : "לא";
+
+      default:
+        return Array.isArray(value) ? value.join(", ") : String(value);
+    }
+  }, []);
+
   const formatCellValue = useCallback(
-    (value: any, field: FormFieldDto, rowId?: string | number): React.ReactElement | null => {
+    (
+      value: any,
+      field: FormFieldDto,
+      rowId?: string | number,
+      options?: FormatCellValueOptions,
+    ): React.ReactElement | null => {
       const extra = getFieldExtra(field);
 
       if (value === null || value === undefined || value === "") {
@@ -503,31 +600,31 @@ export const useCellDisplay = ({
 
       switch (field.fieldType) {
         case fieldType.LongText:
-          return formatLongTextCell(value, String(field.id), rowId);
+          return formatLongTextCell(value, String(field.id), rowId, options);
 
         case fieldType.Options:
-          return formatOptionsCell(value, field);
+          return formatOptionsCell(value, field, options);
 
         case fieldType.Link:
-          return formatLinkCell(value as LinkValue);
+          return formatLinkCell(value as LinkValue, options);
 
         case fieldType.File:
           return formatFileCell(value, rowId);
 
         case fieldType.Date:
-          return formatDateCell(value, extra.dateType);
+          return formatDateCell(value, extra.dateType, extra.timePrecision, options);
 
         case fieldType.Time:
-          return formatTimeCell(value, extra.timePrecision);
+          return formatTimeCell(value, extra.timePrecision, options);
 
         case fieldType.Location:
-          return formatLocationCell(value as LocationValue);
+          return formatLocationCell(value as LocationValue, options);
 
         case fieldType.Boolean:
           return formatCheckboxCell(value as boolean);
 
         default:
-          return formatDefaultCell(value);
+          return formatDefaultCell(value, options);
       }
     },
     [
@@ -542,5 +639,8 @@ export const useCellDisplay = ({
     ],
   );
 
-  return useMemo(() => ({ formatCellValue }), [formatCellValue]);
+  return useMemo(
+    () => ({ formatCellValue, formatCellTooltipValue }),
+    [formatCellTooltipValue, formatCellValue],
+  );
 };

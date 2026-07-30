@@ -36,6 +36,7 @@ import { clearFormDraft } from "../utils/draftPersistence";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { Save, LogOut } from "lucide-react";
 import { FormMetadataSchema } from "../schemas/metadata";
+import { useFormEditorContext } from "../context/FormEditorContext";
 
 type FormValidationResult = {
   isValid: boolean;
@@ -145,6 +146,7 @@ const collectValidationMessages = (validationNode: unknown): string[] => {
 function FormEditorHeader() {
   const { formStructure, validateForm, setFormMetadata, checkHasChanges } =
     useFormStructureContext();
+  const { formDraftKey, draftEnabled = true } = useFormEditorContext();
   const { handleSaveForm, handleExit, handleDiscardAndExit, isLoading } =
     useFormEditor(formStructure);
 
@@ -336,7 +338,7 @@ function FormEditorHeader() {
   const [logoNavigateCallback, setLogoNavigateCallback] = useState<(() => void) | null>(null);
 
   useEffect(() => {
-    const handleLogoClick = (e: Event) => {
+    const handleBeforeNavigate = (e: Event) => {
       if (checkHasChanges()) {
         e.preventDefault();
         setShowAlertMsg(true);
@@ -344,15 +346,17 @@ function FormEditorHeader() {
       }
     };
 
-    window.addEventListener("logo-click", handleLogoClick);
-    return () => window.removeEventListener("logo-click", handleLogoClick);
+    window.addEventListener("before-navigate", handleBeforeNavigate);
+    return () => window.removeEventListener("before-navigate", handleBeforeNavigate);
   }, [checkHasChanges]);
 
   const handleDiscard = () => {
     setShowAlertMsg(false);
 
     if (logoNavigateCallback) {
-      clearFormDraft(formStructure.metadata.id);
+      if (draftEnabled) {
+        clearFormDraft(formDraftKey ?? formStructure.metadata.id);
+      }
       logoNavigateCallback();
       setLogoNavigateCallback(null);
       return;

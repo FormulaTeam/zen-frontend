@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useInfiniteQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 import { responsesScopeOption, SortDirection } from "formula-gear";
@@ -22,11 +22,191 @@ import {
   CreateResponseFileAttachmentDto,
   FormDto,
   ResponseDto,
+  ResponsesTableColorRuleDto,
 } from "../types/shared";
 
 const FIELD_COLUMN_PREFIX = "field:";
 
 export const getFieldColumnKey = (fieldId: string): string => `${FIELD_COLUMN_PREFIX}${fieldId}`;
+
+export type SaveResponsesTableColorRulePayload = Omit<
+  ResponsesTableColorRuleDto,
+  "id" | "formId" | "fieldType"
+>;
+
+type ColorRuleCreatedEntry = {
+  ruleId: string;
+  fieldId: string;
+};
+
+type ColorRuleUpdatedEntry = {
+  ruleId: string;
+  fieldId: string;
+};
+
+type ColorRuleDeletedEntry = {
+  ruleId: string;
+  fieldId: string;
+};
+
+type ColorRulesActivityMetadata = {
+  created: ColorRuleCreatedEntry[];
+  updated: ColorRuleUpdatedEntry[];
+  deleted: ColorRuleDeletedEntry[];
+};
+
+const COLOR_RULE_ACTIVITY_HEADER = "x-color-rule-activity";
+
+const toColorRulePayload = (
+  rule: ResponsesTableColorRuleDto,
+): SaveResponsesTableColorRulePayload => ({
+  fieldId: rule.fieldId,
+  comparatorId: rule.comparatorId,
+  targetValue: rule.targetValue,
+  color: rule.color,
+  targetType: rule.targetType,
+  order: rule.order,
+  isActive: rule.isActive,
+});
+
+const getChangedColorRuleFields = (
+  previousRule: SaveResponsesTableColorRulePayload,
+  nextRule: SaveResponsesTableColorRulePayload,
+): Array<keyof SaveResponsesTableColorRulePayload> =>
+  (Object.keys(nextRule) as Array<keyof SaveResponsesTableColorRulePayload>).filter(
+    (key) => JSON.stringify(previousRule[key]) !== JSON.stringify(nextRule[key]),
+  );
+
+const colorRulesQueryKey = (formId: number) =>
+  ["responses", String(formId), "table-color-rules"] as const;
+
+export const getResponsesTableColorRules = async (
+  formId: number,
+): Promise<ResponsesTableColorRuleDto[]> => {
+  const response = await apiClient.get<ResponsesTableColorRuleDto[]>(
+    `/forms/${formId}/responses-table-color-rules`,
+  );
+
+  return response.data ?? [];
+};
+
+export const useGetResponsesTableColorRules = (formId?: number) => {
+  return useQuery({
+    queryKey: formId !== undefined
+      ? colorRulesQueryKey(formId)
+      : ["responses", "table-color-rules", "missing-form"],
+    queryFn: () =>
+      formId === undefined ? Promise.resolve([]) : getResponsesTableColorRules(formId),
+    enabled: formId !== undefined,
+  });
+};
+
+type BulkUpdateResponsesTableColorRulesDto = {
+  toCreate: SaveResponsesTableColorRulePayload[];
+  toUpdate: Array<{ id: string } & Partial<SaveResponsesTableColorRulePayload>>;
+  toDeleteIds: string[];
+};
+
+/**
+ * Save all color-rule changes (creates, updates, deletes) in a single
+ * transactional request so the operation either fully succeeds or fully
+ * fails, keeping the server and client in sync.
+ *
+ * Backed by `PUT /forms/{formId}/responses-table-color-rules/bulk`, which
+ * performs the create/update/delete operations inside a single database
+ * transaction and returns the full, up-to-date, ordered list of rules.
+ */
+export const bulkUpdateResponsesTableColorRules = async (
+  formId: number,
+  payload: BulkUpdateResponsesTableColorRulesDto,
+  activityMetadata?: ColorRulesActivityMetadata,
+): Promise<ResponsesTableColorRuleDto[]> => {
+  const hasActivity =
+    !!activityMetadata &&
+    (activityMetadata.created.length > 0 ||
+      activityMetadata.updated.length > 0 ||
+      activityMetadata.deleted.length > 0);
+
+  const response = await apiClient.put<ResponsesTableColorRuleDto[]>(
+    `/forms/${formId}/responses-table-color-rules/bulk`,
+    payload,
+    hasActivity
+      ? {
+          headers: {
+            [COLOR_RULE_ACTIVITY_HEADER]: JSON.stringify(activityMetadata),
+          },
+        }
+      : undefined,
+  );
+
+  return response.data;
+};
+
+export const useSaveResponsesTableColorRules = () => {
+  return useMutation({
+    mutationFn: async ({
+      formId,
+      previousRules,
+      nextRules,
+    }: {
+      formId: number;
+      previousRules: ResponsesTableColorRuleDto[];
+      nextRules: ResponsesTableColorRuleDto[];
+    }) => {
+      const previousIds = new Set(previousRules.map((rule) => rule.id));
+      const previousRulesById = new Map(previousRules.map((rule) => [rule.id, rule]));
+      const nextIds = new Set(nextRules.map((rule) => rule.id));
+
+      const created: ColorRuleCreatedEntry[] = [];
+      const updated: ColorRuleUpdatedEntry[] = [];
+      const deleted: ColorRuleDeletedEntry[] = [];
+
+      const toDelete = previousRules.filter((rule) => !nextIds.has(rule.id));
+      toDelete.forEach((rule) => {
+        deleted.push({ ruleId: rule.id, fieldId: rule.fieldId });
+      });
+
+      const toCreate: SaveResponsesTableColorRulePayload[] = [];
+      const toUpdate: Array<{ id: string } & Partial<SaveResponsesTableColorRulePayload>> = [];
+
+      nextRules.forEach((rule) => {
+        const payload = toColorRulePayload(rule);
+
+        if (previousIds.has(rule.id)) {
+          const previousRule = previousRulesById.get(rule.id);
+          const previousPayload = previousRule ? toColorRulePayload(previousRule) : undefined;
+          const changedFields = previousPayload
+            ? getChangedColorRuleFields(previousPayload, payload)
+            : [];
+
+          if (changedFields.length === 0) return;
+
+          toUpdate.push({ id: rule.id, ...payload });
+          updated.push({ ruleId: rule.id, fieldId: rule.fieldId });
+        } else {
+          toCreate.push(payload);
+          created.push({ ruleId: rule.id, fieldId: rule.fieldId });
+        }
+      });
+
+      const savedRules = await bulkUpdateResponsesTableColorRules(
+        formId,
+        {
+          toCreate,
+          toUpdate,
+          toDeleteIds: toDelete.map((rule) => rule.id),
+        },
+        { created, updated, deleted },
+      );
+
+      return savedRules.sort((a, b) => a.order - b.order);
+    },
+    mutationKey: ["save-responses-table-color-rules"],
+    onSuccess: (data: ResponsesTableColorRuleDto[], variables) => {
+      queryClient.setQueryData(colorRulesQueryKey(variables.formId), data);
+    },
+  });
+};
 
 const stringifyQuery = (query: any): string => {
   if (query && typeof query === "object") return JSON.stringify(query);
@@ -67,6 +247,10 @@ const formatParams = (filter?: Filter) => {
     }
   }
 
+  const colorRuleIdsParam = filter?.colorRuleIds?.length
+    ? filter.colorRuleIds.join(",")
+    : undefined;
+
   return {
     limit: filter?.pageSize ?? 25,
     filters: filtersParam,
@@ -77,6 +261,7 @@ const formatParams = (filter?: Filter) => {
     after: filter?.after,
     softDeleted: filter?.softDeleted,
     deletedWithForm: filter?.deletedWithForm,
+    colorRuleIds: colorRuleIdsParam,
   };
 };
 
@@ -614,7 +799,13 @@ export const OPTIONS_PAGINATION_LIMIT = 50;
 export const getFieldValues = async (
   formId: number,
   fieldId: string,
-  params?: { limit?: number; offset?: number; search?: string },
+  params?: {
+    limit?: number;
+    offset?: number;
+    search?: string;
+    dependentFieldId?: string;
+    dependentValues?: string[];
+  },
 ): Promise<{
   total: number;
   limit: number;
@@ -627,7 +818,11 @@ export const getFieldValues = async (
         limit: params?.limit ?? 50,
         offset: params?.offset ?? 0,
         search: params?.search ?? "",
+        dependentFieldId: params?.dependentFieldId,
+        dependentValues: params?.dependentValues,
       },
+      // Send arrays as repeated keys (`k=a&k=b`) instead of axios' `k[]=a`.
+      paramsSerializer: { indexes: null },
     });
 
     return response.data;
@@ -637,13 +832,36 @@ export const getFieldValues = async (
   }
 };
 
+/**
+ * Returns the subset of `dependentValues` that are still valid for the given
+ * controlling values, in a single request.
+ */
+export const getValidDependentValues = async (
+  formId: number,
+  fieldId: string,
+  payload: {
+    dependentValues: string[];
+    controllingFieldId: string;
+    controllingValues: string[];
+  },
+): Promise<string[]> => {
+  const response = await apiClient.post<{ validValues: string[] }>(
+    `/forms/${formId}/responses/fields/${fieldId}/validate-dependent-values`,
+    payload,
+  );
+
+  return response.data.validValues;
+};
+
 export const useGetInfiniteFieldValues = (
   formId?: number,
   fieldId?: string,
   search: string = "",
+  dependentFieldId?: string,
+  dependentValues?: string[],
 ) => {
   return useInfiniteQuery({
-    queryKey: ["fieldValues", formId, fieldId, search],
+    queryKey: ["fieldValues", formId, fieldId, search, dependentFieldId, dependentValues],
     queryFn: async ({ pageParam = 0 }) => {
       if (!formId || !fieldId) {
         throw new Error("Missing formId or fieldId");
@@ -652,9 +870,11 @@ export const useGetInfiniteFieldValues = (
         limit: OPTIONS_PAGINATION_LIMIT,
         offset: pageParam,
         search,
+        dependentFieldId,
+        dependentValues,
       });
     },
-    enabled: !!formId && !!fieldId,
+    enabled: !!formId && !!fieldId && (!dependentFieldId || !!dependentValues?.length),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
       if (lastPage.data.length < lastPage.limit) {
