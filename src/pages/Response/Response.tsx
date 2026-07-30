@@ -349,111 +349,165 @@ export default function Response({ user, viewMode = false, copyMode = false }: R
         prev.map((childForm) =>
           childForm.shown
             ? {
-                ...childForm,
-                valid: [],
-              }
+              ...childForm,
+              valid: [],
+            }
             : childForm,
         ),
       );
     }, 250);
   };
 
-  const getChildFormTitle = (childFormId: number) =>
-    formFields.find((field: any) => Number(field.extra?.linkedFormId) === childFormId)
-      ?.displayName || "";
+  const getChildFormTitle = useCallback(
+    (childFormId: number) =>
+      formFields.find((field: any) => Number(field.extra?.linkedFormId) === childFormId)
+        ?.displayName || "",
+    [formFields],
+  );
 
-  const getFormInFormProperty = (formField: any) => {
-    if (formField.fieldType !== fieldType.Form || !formField.extra?.linkedFormId) {
-      return null;
-    }
+  const renderConnectedFormSegment = useCallback(
+    ({
+      linkedFormId,
+      childFormData,
+      childFormIndex,
+      parentResponse,
+      childFormTitle,
+      addResponseTitle,
+    }: {
+      linkedFormId: number;
+      childFormData: any;
+      childFormIndex: number;
+      parentResponse: ParentResponseRef | undefined;
+      childFormTitle: string;
+      addResponseTitle: string;
+    }) => {
+      const childSections = childFormData.shown
+        ? childFormData.children.map((child: any, index: number) => (
+          <ConnectedFormSection
+            key={child.instanceKey}
+            handleRemoveChildForm={() => handleRemoveChildForm(childFormIndex, index)}
+            formsLength={childFormData.children.length}
+            shouldSave={childFormsSaving}
+            user={user}
+            viewMode={viewMode}
+            copyMode={copyMode}
+            formId={formId!}
+            field={child}
+            parentResponse={parentResponse}
+            index={index}
+            childSaved={(success: boolean) => handleChildSaved(childFormIndex, success, index)}
+            shouldValidate={childFormsValidate}
+            childValid={(success: boolean) => handleChildValid(childFormIndex, success, index)}
+            id={child.responseId}
+            shouldLoad={false}
+          />
+        ))
+        : null;
 
-    const linkedFormId = Number(formField.extra.linkedFormId);
-    const childFormIndex = childForms.findIndex((childForm) => childForm.formId === linkedFormId);
-    const childFormData = childForms[childFormIndex];
+      const addResponseButton = !isLoading && !viewMode && childFormData.canCreate && (
+        <Box
+          sx={{
+            borderTop: "1px solid #f0f0f0",
+            mt: 2,
+            pt: 2,
+            display: "flex",
+            justifyContent: "flex-start",
+          }}>
+          <Button
+            variant="outlined"
+            startIcon={<Add />}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleAddChildForm(childFormData.formId);
+            }}
+            sx={{
+              height: "42px",
+              px: 2.5,
+              backgroundColor: "#FFFFFF !important",
+              color: "#020618",
+              borderColor: "#e2e8f0 !important",
+              borderRadius: "10px",
+              fontWeight: 600,
+              fontSize: "0.9375rem",
+              textTransform: "none",
+              boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+              "&:hover": {
+                backgroundColor: "#f8fafc !important",
+                borderColor: "#cbd5e1 !important",
+              },
+            }}>
+            {addResponseTitle}
+          </Button>
+        </Box>
+      );
 
-    if (!childFormData || childFormIndex === -1) return null;
+      return (
+        <ConnectedFormSegment
+          key={`child-form-${linkedFormId}`}
+          title={childFormTitle}
+          count={childFormData.children.length}>
+          {childSections}
+          {addResponseButton}
+        </ConnectedFormSegment>
+      );
+    },
+    [
+      childFormsSaving,
+      childFormsValidate,
+      copyMode,
+      formId,
+      handleAddChildForm,
+      handleChildSaved,
+      handleChildValid,
+      handleRemoveChildForm,
+      isLoading,
+      user,
+      viewMode,
+    ],
+  );
 
-    if (childFormData.children.length === 0 && !childFormData.canCreate) return null;
+  const getFormInFormProperty = useCallback(
+    (formField: any) => {
+      if (formField.fieldType !== fieldType.Form || !formField.extra?.linkedFormId) {
+        return null;
+      }
 
-    const childFormTitle = getChildFormTitle(childFormData.formId);
-    const addResponseTitle = `תגובה חדשה ב${childFormTitle || ""}`;
+      const linkedFormId = Number(formField.extra.linkedFormId);
+      const childFormIndex = childForms.findIndex((childForm) => childForm.formId === linkedFormId);
+      const childFormData = childForms[childFormIndex];
 
-    const parentResponse: ParentResponseRef | undefined = savedParentResponseId
-      ? {
+      if (!childFormData || childFormIndex === -1) return null;
+
+      if (childFormData.children.length === 0 && !childFormData.canCreate) return null;
+
+      const childFormTitle = getChildFormTitle(childFormData.formId);
+      const addResponseTitle = `תגובה חדשה ב${childFormTitle || ""}`;
+
+      const parentResponse: ParentResponseRef | undefined = savedParentResponseId
+        ? {
           formId: Number(formId),
           responseId: savedParentResponseId,
         }
-      : undefined;
+        : undefined;
 
-    return (
-      <ConnectedFormSegment
-        key={`child-form-${linkedFormId}`}
-        title={childFormTitle}
-        count={childFormData.children.length}>
-        {childFormData.children.map(
-          (child, index) =>
-            childFormData.shown && (
-              <ConnectedFormSection
-                key={child.instanceKey}
-                handleRemoveChildForm={() => handleRemoveChildForm(childFormIndex, index)}
-                formsLength={childFormData.children.length}
-                shouldSave={childFormsSaving}
-                user={user}
-                viewMode={viewMode}
-                copyMode={copyMode}
-                formId={formId!}
-                field={child}
-                parentResponse={parentResponse}
-                index={index}
-                childSaved={(success: boolean) => handleChildSaved(childFormIndex, success, index)}
-                shouldValidate={childFormsValidate}
-                childValid={(success: boolean) => handleChildValid(childFormIndex, success, index)}
-                id={child.responseId}
-                shouldLoad={false}
-              />
-            ),
-        )}
-
-        {!isLoading && !viewMode && childFormData.canCreate && (
-          <Box
-            sx={{
-              borderTop: "1px solid #f0f0f0",
-              mt: 2,
-              pt: 2,
-              display: "flex",
-              justifyContent: "flex-start",
-            }}>
-            <Button
-              variant="outlined"
-              startIcon={<Add />}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleAddChildForm(childFormData.formId);
-              }}
-              sx={{
-                height: "42px",
-                px: 2.5,
-                backgroundColor: "#FFFFFF !important",
-                color: "#020618",
-                borderColor: "#e2e8f0 !important",
-                borderRadius: "10px",
-                fontWeight: 600,
-                fontSize: "0.9375rem",
-                textTransform: "none",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
-                "&:hover": {
-                  backgroundColor: "#f8fafc !important",
-                  borderColor: "#cbd5e1 !important",
-                },
-              }}>
-              {addResponseTitle}
-            </Button>
-          </Box>
-        )}
-      </ConnectedFormSegment>
-    );
-  };
+      return renderConnectedFormSegment({
+        linkedFormId,
+        childFormData,
+        childFormIndex,
+        parentResponse,
+        childFormTitle,
+        addResponseTitle,
+      });
+    },
+    [
+      childForms,
+      formId,
+      getChildFormTitle,
+      renderConnectedFormSegment,
+      savedParentResponseId,
+    ],
+  );
 
   const sortedSections = useMemo(
     () =>

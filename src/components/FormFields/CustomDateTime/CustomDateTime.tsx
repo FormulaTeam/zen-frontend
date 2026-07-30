@@ -49,6 +49,7 @@ interface CustomDateTimeProps {
   onBlurHandler?: () => void;
   validationMessage?: string | null;
   validationDetail?: string | null;
+  hasError?: boolean;
 }
 
 const isCurrentDateDefault = (defaultValue?: string) =>
@@ -254,6 +255,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   isTabularEdit = false,
   validationMessage,
   validationDetail,
+  hasError,
 }) => {
   const [dateValue, setDateValue] = useState<Dayjs | null>(null);
   const [datePickerView, setDatePickerView] = useState<DateOnlyView>("day");
@@ -641,7 +643,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   const textFieldSlotProps = {
     isTabularEdit,
     required: isRequired,
-    error: Boolean(validationMessage),
+    error: Boolean(validationMessage || hasError),
     helperText: <FieldErrorText message={validationMessage} detail={validationDetail} />,
     size: isTabularEdit ? "medium" : undefined,
     onBlur: onBlurHandler,

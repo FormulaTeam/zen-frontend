@@ -44,6 +44,11 @@ export const getOptionResponseSubmitValue = (value: unknown): unknown => {
   return isOptionResponseValue(value) ? value.id : value;
 };
 
+export const toStringValues = (value: unknown): string[] =>
+  (Array.isArray(value) ? value : [value])
+    .map((item) => (item === undefined || item === null ? "" : String(item).trim()))
+    .filter((item) => item !== "");
+
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 const ISO_DATE_TIME_PATTERN =

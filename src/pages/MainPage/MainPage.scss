@@ -26,10 +26,23 @@
   .main-page-content-wrapper {
     width: 100%;
     flex: 1;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     padding-top: 16px;
+  }
+
+  .pinned-forms-section {
+    width: 100%;
+    padding: 0 32px;
+    flex-shrink: 0;
+  }
+
+  .all-forms-heading {
+    width: 100%;
+    padding: 0 32px;
+    flex-shrink: 0;
   }
 
   .forms-grid {
@@ -39,9 +52,6 @@
     padding-bottom: 10vh !important;
     position: relative;
     align-content: start;
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
 
     .bottom-lbl {
       min-height: 50px;

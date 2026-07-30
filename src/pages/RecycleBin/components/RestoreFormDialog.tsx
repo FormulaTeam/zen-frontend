@@ -65,7 +65,7 @@ const RestoreFormDialog: React.FC<RestoreFormDialogProps> = ({
             sx={{
               fontFamily: "Heebo, sans-serif",
               fontWeight: 600,
-              fontSize: "20px",
+              fontSize: "24px !important",
               color: "#020618",
               textAlign: "center",
             }}>

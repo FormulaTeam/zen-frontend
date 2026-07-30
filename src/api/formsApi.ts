@@ -247,6 +247,42 @@ export const restoreForms = async (
 };
 
 /**
+ * Fetch the current user's pinned forms.
+ *
+ * @returns A promise that resolves to an array of pinned forms.
+ */
+export const getPinnedForms = async (): Promise<FormOverviewDto[]> => {
+  const response = await apiClient.get<FormOverviewDto[]>("/forms/pinned");
+  return response?.data || [];
+};
+
+export const useGetPinnedForms = (enabled = true) => {
+  return useQuery({
+    queryKey: ["forms", "pinned"],
+    queryFn: getPinnedForms,
+    enabled,
+  });
+};
+
+/**
+ * Pin a form for the current user.
+ *
+ * @param id - The ID of the form to pin.
+ */
+export const pinForm = async (id: number): Promise<void> => {
+  await apiClient.post(`/forms/pinned/${id}`);
+};
+
+/**
+ * Unpin a form for the current user.
+ *
+ * @param id - The ID of the form to unpin.
+ */
+export const unpinForm = async (id: number): Promise<void> => {
+  await apiClient.delete(`/forms/pinned/${id}`);
+};
+
+/**
  * Soft deletes a form.
  *
  * @param id - The ID of the form to delete.
@@ -453,6 +489,85 @@ export const useDeleteForm = ({ id }: { id: string }) => {
     mutationFn: () => deleteForm(Number(id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["forms"] });
+    },
+  });
+};
+
+/**
+ * Sets `isPinned` for the given form id across every cached "forms" infinite
+ * query (all scopes) as well as the flat pinned-forms list cache, returning
+ * the previous cache snapshots so callers can roll back on failure.
+ */
+const setIsPinnedInFormsCache = (formId: number, isPinned: boolean) => {
+  const infiniteQueries = queryClient.getQueriesData<{ pages: FormOverviewDto[][] }>({
+    queryKey: ["forms"],
+    predicate: (query) => Array.isArray((query.state.data as any)?.pages),
+  });
+
+  for (const [queryKey, data] of infiniteQueries) {
+    if (!data) continue;
+
+    queryClient.setQueryData(queryKey, {
+      ...data,
+      pages: data.pages.map((page) =>
+        page.map((form) => (form.id === formId ? { ...form, isPinned } : form)),
+      ),
+    });
+  }
+
+  const pinnedListQueries = queryClient.getQueriesData<FormOverviewDto[]>({
+    queryKey: ["forms", "pinned"],
+    predicate: (query) => Array.isArray(query.state.data),
+  });
+
+  for (const [queryKey, data] of pinnedListQueries) {
+    if (!data) continue;
+
+    queryClient.setQueryData(
+      queryKey,
+      data.map((form) => (form.id === formId ? { ...form, isPinned } : form)),
+    );
+  }
+
+  return [...infiniteQueries, ...pinnedListQueries];
+};
+
+const restoreFormsCache = (queries: ReturnType<typeof queryClient.getQueriesData>) => {
+  for (const [queryKey, data] of queries) {
+    queryClient.setQueryData(queryKey, data);
+  }
+};
+
+export const usePinForm = () => {
+  return useMutation({
+    mutationFn: (formId: number) => pinForm(formId),
+    onMutate: (formId: number) => {
+      const previousQueries = setIsPinnedInFormsCache(formId, true);
+      return { previousQueries };
+    },
+    onError: (_error, _formId, context) => {
+      if (context?.previousQueries) restoreFormsCache(context.previousQueries);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["forms"] });
+      queryClient.invalidateQueries({ queryKey: ["forms", "pinned"] });
+    },
+  });
+};
+
+export const useUnpinForm = () => {
+  return useMutation({
+    mutationFn: (formId: number) => unpinForm(formId),
+    onMutate: (formId: number) => {
+      const previousQueries = setIsPinnedInFormsCache(formId, false);
+      return { previousQueries };
+    },
+    onError: (_error, _formId, context) => {
+      if (context?.previousQueries) restoreFormsCache(context.previousQueries);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["forms"] });
+      queryClient.invalidateQueries({ queryKey: ["forms", "pinned"] });
     },
   });
 };
