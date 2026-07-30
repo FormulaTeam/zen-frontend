@@ -5,6 +5,8 @@ const envVars = {
   REACT_APP_API_URL: process.env.REACT_APP_API_URL || "http://localhost:3000",
   REACT_APP_KEYCLOAK_URL: process.env.REACT_APP_KEYCLOAK_URL || "",
   REACT_MAX_PAYLOAD_SIZE_MB: process.env.REACT_MAX_PAYLOAD_SIZE_MB || 1,
+  REACT_APP_SUPPORT_CONTACT_URL: process.env.REACT_APP_SUPPORT_CONTACT_URL || "",
+  REACT_APP_SUPPORT_TICKET_URL: process.env.REACT_APP_SUPPORT_TICKET_URL || "",
   IS_PROD: process.env.IS_PROD || false,
 };
 
