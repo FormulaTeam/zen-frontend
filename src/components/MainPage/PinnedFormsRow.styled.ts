@@ -16,7 +16,7 @@ export const PinnedRowContainer = styled(Box)`
 export const PinnedRowHeader = styled(Box)`
   display: flex;
   align-items: center;
-  gap: 24px;
+  justify-content: space-between;
   margin-bottom: 12px;
 `;
 
@@ -33,7 +33,7 @@ export const PinnedRowTitle = styled(Typography)`
 `;
 
 export const PinnedRowCounter = styled(Typography)`
-  font-size: 14px;
+  font-size: 14px !important;
   font-weight: 600;
   color: #62748e;
 `;
@@ -47,6 +47,15 @@ export const PinBadgeBox = styled(Box)`
   border-radius: 8px;
   background-color: ${PIN_BADGE_COLORS.background};
   border: 1px solid ${PIN_BADGE_COLORS.border};
+  flex-shrink: 0;
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+`;
+
+export const PinBadgeBoxEmpty = styled(PinBadgeBox)`
+  top: 74px;
 `;
 
 /** Dashed border color for the empty pinned slots (Figma). */
@@ -57,7 +66,7 @@ const PLACEHOLDER_BORDER_COLOR = "#62748E";
  * can control the dash length/gap, which plain `border-style: dashed` can't do.
  */
 const dashedBorder = (color: string) =>
-  `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='15' ry='15' stroke='${encodeURIComponent(
+  `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='8' ry='8' stroke='${encodeURIComponent(
     color,
   )}' stroke-width='1' stroke-dasharray='9%2c 9'/%3e%3c/svg%3e")`;
 
@@ -67,28 +76,22 @@ export const PlaceholderCard = styled(Box) <{ $filled?: boolean }>`
   max-width: 440px;
   min-height: 220px;
   height: 100%;
-  border-radius: 15px;
+  border-radius: 8px;
   background-image: ${({ $filled }) =>
     $filled ? "none" : dashedBorder(PLACEHOLDER_BORDER_COLOR)};
   background-color: ${({ $filled }) => ($filled ? "#FFFFFF" : "transparent")};
   border: ${({ $filled }) => ($filled ? "1px solid transparent" : "none")};
   box-shadow: ${({ $filled }) =>
     $filled ? "0px 2px 8px rgba(0, 0, 0, 0.08)" : "none"};
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 16px 16px 72px 16px;
+  box-sizing: border-box;
   text-align: center;
 `;
 
 export const PlaceholderHintWrapper = styled(Box)`
   position: absolute;
+  top: 124px;
   left: 16px;
   right: 16px;
-  top: 50%;
-  margin-top: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;

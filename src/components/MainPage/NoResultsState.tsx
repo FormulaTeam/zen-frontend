@@ -17,7 +17,6 @@ const NoResultsContainer = styled(Box)({
   width: "100%",
   minHeight: "350px",
   margin: "0 auto",
-  maxWidth: "500px",
 });
 
 interface NoResultsStateProps {
