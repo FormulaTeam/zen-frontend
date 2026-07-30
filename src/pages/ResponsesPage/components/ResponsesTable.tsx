@@ -18,14 +18,7 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "@components/formInForm/ZoomCell";
-import {
-  Box,
-  MenuItem,
-  Stack,
-  Typography,
-  Select,
-  Tooltip,
-} from "@mui/material";
+import { Box, MenuItem, Stack, Typography, Select, Tooltip } from "@mui/material";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
 import { useResponsesTableSorting } from "../hooks/useResponsesTableSorting";
@@ -69,7 +62,7 @@ import { useConnectedFormOptions } from "@src/hooks/useConnectedFormOptions";
 import {
   buildColorRuleMatches,
   COLOR_RULE_PALETTE,
-  getComparatorOptions,
+  formatColorRuleLabel,
   getRangeValue,
   isRangeComparator,
   isRangeValue,
@@ -214,9 +207,11 @@ const getSyncStatusLabel = (
   statusDescription?: string | null,
 ): string => {
   if (typeof statusId === "number") {
-    return Gear.SYNC_STATUS_HEBREW_LABELS[statusId as Gear.SyncStatusId] ??
+    return (
+      Gear.SYNC_STATUS_HEBREW_LABELS[statusId as Gear.SyncStatusId] ??
       statusDescription ??
-      "סטטוס סנכרון לא ידוע";
+      "סטטוס סנכרון לא ידוע"
+    );
   }
 
   return statusDescription ?? "סטטוס סנכרון לא ידוע";
@@ -238,9 +233,7 @@ const SyncStatusIcon: React.FC<{
       <RefreshCw size={18} strokeWidth={2.4} />
     );
 
-  const iconContent = (
-    <SyncStatusIconBox>{icon}</SyncStatusIconBox>
-  );
+  const iconContent = <SyncStatusIconBox>{icon}</SyncStatusIconBox>;
 
   if (disableTooltip) return iconContent;
 
@@ -572,8 +565,7 @@ export const ResponsesTable = React.memo(
           );
           const maxThumbLeft = Math.max(trackWidth - thumbWidth, 0);
           const normalizedLeft = getNormalizedScrollLeft(currentScroller);
-          const thumbLeft =
-            maxScrollLeft > 0 ? (normalizedLeft / maxScrollLeft) * maxThumbLeft : 0;
+          const thumbLeft = maxScrollLeft > 0 ? (normalizedLeft / maxScrollLeft) * maxThumbLeft : 0;
 
           track.style.display = "block";
           track.style.left = `${scrollerRect.left - containerRect.left}px`;
@@ -673,9 +665,7 @@ export const ResponsesTable = React.memo(
 
         const maxThumbLeft = Math.max(track.clientWidth - thumb.offsetWidth, 0);
         const ratio =
-          maxThumbLeft > 0
-            ? Math.min(Math.max(thumbLeft, 0), maxThumbLeft) / maxThumbLeft
-            : 0;
+          maxThumbLeft > 0 ? Math.min(Math.max(thumbLeft, 0), maxThumbLeft) / maxThumbLeft : 0;
 
         setNormalizedScrollLeft(scroller, ratio * getScrollRange(scroller));
       };
@@ -793,10 +783,22 @@ export const ResponsesTable = React.memo(
         scroller.addEventListener("scroll", updateVerticalScrollbar, { passive: true });
         window.addEventListener("resize", updateHorizontalScrollbar);
         window.addEventListener("resize", updateVerticalScrollbar);
-        horizontalScrollbarTrackRef.current?.addEventListener("pointerdown", handleTrackPointerDown);
-        horizontalScrollbarThumbRef.current?.addEventListener("pointerdown", handleThumbPointerDown);
-        verticalScrollbarTrackRef.current?.addEventListener("pointerdown", handleVerticalTrackPointerDown);
-        verticalScrollbarThumbRef.current?.addEventListener("pointerdown", handleVerticalThumbPointerDown);
+        horizontalScrollbarTrackRef.current?.addEventListener(
+          "pointerdown",
+          handleTrackPointerDown,
+        );
+        horizontalScrollbarThumbRef.current?.addEventListener(
+          "pointerdown",
+          handleThumbPointerDown,
+        );
+        verticalScrollbarTrackRef.current?.addEventListener(
+          "pointerdown",
+          handleVerticalTrackPointerDown,
+        );
+        verticalScrollbarThumbRef.current?.addEventListener(
+          "pointerdown",
+          handleVerticalThumbPointerDown,
+        );
         window.addEventListener("pointermove", handlePointerMove);
         window.addEventListener("pointermove", handleVerticalPointerMove);
         window.addEventListener("pointerup", handlePointerUp);
@@ -826,10 +828,22 @@ export const ResponsesTable = React.memo(
         scroller?.removeEventListener("scroll", updateVerticalScrollbar);
         window.removeEventListener("resize", updateHorizontalScrollbar);
         window.removeEventListener("resize", updateVerticalScrollbar);
-        horizontalScrollbarTrackRef.current?.removeEventListener("pointerdown", handleTrackPointerDown);
-        horizontalScrollbarThumbRef.current?.removeEventListener("pointerdown", handleThumbPointerDown);
-        verticalScrollbarTrackRef.current?.removeEventListener("pointerdown", handleVerticalTrackPointerDown);
-        verticalScrollbarThumbRef.current?.removeEventListener("pointerdown", handleVerticalThumbPointerDown);
+        horizontalScrollbarTrackRef.current?.removeEventListener(
+          "pointerdown",
+          handleTrackPointerDown,
+        );
+        horizontalScrollbarThumbRef.current?.removeEventListener(
+          "pointerdown",
+          handleThumbPointerDown,
+        );
+        verticalScrollbarTrackRef.current?.removeEventListener(
+          "pointerdown",
+          handleVerticalTrackPointerDown,
+        );
+        verticalScrollbarThumbRef.current?.removeEventListener(
+          "pointerdown",
+          handleVerticalThumbPointerDown,
+        );
         window.removeEventListener("pointermove", handlePointerMove);
         window.removeEventListener("pointermove", handleVerticalPointerMove);
         window.removeEventListener("pointerup", handlePointerUp);
@@ -987,32 +1001,30 @@ export const ResponsesTable = React.memo(
         if (!rule) return "";
 
         const ruleField = formFieldsById.get(String(rule.fieldId));
-        const fieldLabel = ruleField?.displayName ?? "";
-        const comparatorLabel =
-          getComparatorOptions(rule.fieldType).find(
-            (option) => option.value === rule.comparatorId,
-          )?.label ?? "";
         const targetValueLabel =
           isRangeComparator(rule.comparatorId) && isRangeValue(rule.targetValue)
             ? (() => {
-              const { from, to } = getRangeValue(rule.targetValue);
-              const fromLabel = ruleField && from ? formatCellTooltipValue(from, ruleField) : from;
-              const toLabel = ruleField && to ? formatCellTooltipValue(to, ruleField) : to;
-              if (!fromLabel && !toLabel) return "";
-              return `${fromLabel} - ${toLabel}`;
-            })()
-            : ruleField && rule.targetValue !== null && rule.targetValue !== undefined && rule.targetValue !== ""
+                const { from, to } = getRangeValue(rule.targetValue);
+                const fromLabel =
+                  ruleField && from ? formatCellTooltipValue(from, ruleField) : from;
+                const toLabel = ruleField && to ? formatCellTooltipValue(to, ruleField) : to;
+
+                if (!fromLabel && !toLabel) return "";
+
+                return `${fromLabel} - ${toLabel}`;
+              })()
+            : ruleField &&
+                rule.targetValue !== null &&
+                rule.targetValue !== undefined &&
+                rule.targetValue !== ""
               ? formatCellTooltipValue(rule.targetValue, ruleField)
               : "";
-        const comparatorAndValue = targetValueLabel
-          ? `${comparatorLabel}${/(?: ל| מ)$/.test(comparatorLabel) ? "" : " "}${targetValueLabel}`
-          : comparatorLabel;
         const colorLabel = COLOR_RULE_PALETTE[rule.color]?.label ?? "";
-        const conditionText = [fieldLabel, comparatorAndValue].filter(Boolean).join(" ");
+        const conditionText = formatColorRuleLabel(rule, ruleField, formFields, targetValueLabel);
 
         return [conditionText, colorLabel].filter(Boolean).join(" ← ");
       },
-      [colorRulesById, formFieldsById, formatCellTooltipValue],
+      [colorRulesById, formFields, formFieldsById, formatCellTooltipValue],
     );
 
     const handleCellClick = useCallback(
@@ -1049,8 +1061,7 @@ export const ResponsesTable = React.memo(
     const getCellClassName = useCallback(
       (params: GridCellParams): string => {
         const rowMatches = colorRuleMatches[String(params.id)] ?? {};
-        const colorMatch =
-          rowMatches[params.field] ?? rowMatches[ROW_COLOR_RULE_FIELD];
+        const colorMatch = rowMatches[params.field] ?? rowMatches[ROW_COLOR_RULE_FIELD];
         const colorClass = colorMatch
           ? `response-color-rule-cell response-color-rule-cell--${colorMatch.color}`
           : "";
@@ -1136,16 +1147,12 @@ export const ResponsesTable = React.memo(
         cellTooltipText?: string,
       ): React.ReactNode => {
         const colorMatch = getColorMatchForCell(params);
-        const ruleTooltipText = colorMatch
-          ? formatColorRuleTooltipText(colorMatch.ruleId)
-          : "";
+        const ruleTooltipText = colorMatch ? formatColorRuleTooltipText(colorMatch.ruleId) : "";
 
         if (!ruleTooltipText) return display;
 
         return (
-          <ColorRuleTooltipCell
-            cellTooltipText={cellTooltipText}
-            ruleTooltipText={ruleTooltipText}>
+          <ColorRuleTooltipCell cellTooltipText={cellTooltipText} ruleTooltipText={ruleTooltipText}>
             {display}
           </ColorRuleTooltipCell>
         );
@@ -1191,8 +1198,8 @@ export const ResponsesTable = React.memo(
             const content =
               params.value !== undefined && params.value !== null
                 ? formatCellValue(params.value, field, rowId, {
-                  disableTooltip: !!colorMatch,
-                })
+                    disableTooltip: !!colorMatch,
+                  })
                 : null;
 
             const display = content ?? <Box component="span" className="cell-box" />;
@@ -1408,20 +1415,20 @@ export const ResponsesTable = React.memo(
 
       const parentResponseColumns: GridColDef[] = hasParentResponses
         ? [
-          {
-            field: "parentResponse",
-            headerName: "תגובת אב",
-            ...getResponsiveColumnProps(190, columnWidths.current["parentResponse"]),
-            editable: false,
-            filterable: false,
-            sortable: false,
-            renderCell: (params: GridRenderCellParams) =>
-              renderDisplayWithColorRuleTooltip(
-                params,
-                <ZoomCell row={params.row} form={form} />,
-              ),
-          },
-        ]
+            {
+              field: "parentResponse",
+              headerName: "תגובת אב",
+              ...getResponsiveColumnProps(190, columnWidths.current["parentResponse"]),
+              editable: false,
+              filterable: false,
+              sortable: false,
+              renderCell: (params: GridRenderCellParams) =>
+                renderDisplayWithColorRuleTooltip(
+                  params,
+                  <ZoomCell row={params.row} form={form} />,
+                ),
+            },
+          ]
         : [];
 
       let resultColumns: GridColDef[] = [];
@@ -1935,17 +1942,17 @@ export const ResponsesTable = React.memo(
                   ]),
                 ),
                 "& .MuiDataGrid-columnHeader .MuiDataGrid-iconButtonContainer .MuiIconButton-root":
-                {
-                  backgroundColor: "transparent !important",
-                  boxShadow: "none !important",
-                  border: "none !important",
-                },
+                  {
+                    backgroundColor: "transparent !important",
+                    boxShadow: "none !important",
+                    border: "none !important",
+                  },
 
                 "& .MuiDataGrid-columnHeader .MuiDataGrid-iconButtonContainer .MuiIconButton-root:hover":
-                {
-                  backgroundColor: "rgba(15, 23, 42, 0.06) !important",
-                  boxShadow: "none !important",
-                },
+                  {
+                    backgroundColor: "rgba(15, 23, 42, 0.06) !important",
+                    boxShadow: "none !important",
+                  },
 
                 "& .response-field-column-header .MuiDataGrid-iconButtonContainer": {
                   visibility: "visible",
@@ -1955,10 +1962,10 @@ export const ResponsesTable = React.memo(
                 },
 
                 "& .response-field-column-header:hover .MuiDataGrid-iconButtonContainer, & .response-field-column-header.MuiDataGrid-columnHeader--sorted .MuiDataGrid-iconButtonContainer":
-                {
-                  width: 24,
-                  opacity: 1,
-                },
+                  {
+                    width: 24,
+                    opacity: 1,
+                  },
 
                 "& .response-field-column-header .MuiDataGrid-sortButton": {
                   width: 24,
@@ -1980,22 +1987,22 @@ export const ResponsesTable = React.memo(
 
                 ...(isInEditMode
                   ? {
-                    "& .active-editing-row .MuiDataGrid-cell": {
-                      paddingTop: "4px",
-                      paddingBottom: "4px",
-                      alignItems: "center",
-                    },
-                    "& .active-editing-row .MuiDataGrid-cell--editing": {
-                      padding: "4px 6px",
-                      overflow: "visible",
-                    },
-                    "& .active-editing-row .MuiDataGrid-cell--editing:focus-within": {
-                      outline: "none",
-                    },
-                    "& .active-editing-row .MuiDataGrid-cell--editing .MuiInputBase-root": {
-                      boxShadow: "none",
-                    },
-                  }
+                      "& .active-editing-row .MuiDataGrid-cell": {
+                        paddingTop: "4px",
+                        paddingBottom: "4px",
+                        alignItems: "center",
+                      },
+                      "& .active-editing-row .MuiDataGrid-cell--editing": {
+                        padding: "4px 6px",
+                        overflow: "visible",
+                      },
+                      "& .active-editing-row .MuiDataGrid-cell--editing:focus-within": {
+                        outline: "none",
+                      },
+                      "& .active-editing-row .MuiDataGrid-cell--editing .MuiInputBase-root": {
+                        boxShadow: "none",
+                      },
+                    }
                   : {}),
               }}
             />

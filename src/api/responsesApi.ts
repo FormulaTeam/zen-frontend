@@ -77,11 +77,8 @@ const getChangedColorRuleFields = (
     (key) => JSON.stringify(previousRule[key]) !== JSON.stringify(nextRule[key]),
   );
 
-const colorRulesQueryKey = (formId: number) => [
-  "responses",
-  String(formId),
-  "table-color-rules",
-];
+const colorRulesQueryKey = (formId: number) =>
+  ["responses", String(formId), "table-color-rules"] as const;
 
 export const getResponsesTableColorRules = async (
   formId: number,
@@ -95,9 +92,12 @@ export const getResponsesTableColorRules = async (
 
 export const useGetResponsesTableColorRules = (formId?: number) => {
   return useQuery({
-    queryKey: formId ? colorRulesQueryKey(formId) : ["responses", "table-color-rules", "missing-form"],
-    queryFn: () => getResponsesTableColorRules(Number(formId)),
-    enabled: !!formId,
+    queryKey: formId !== undefined
+      ? colorRulesQueryKey(formId)
+      : ["responses", "table-color-rules", "missing-form"],
+    queryFn: () =>
+      formId === undefined ? Promise.resolve([]) : getResponsesTableColorRules(formId),
+    enabled: formId !== undefined,
   });
 };
 
@@ -132,10 +132,10 @@ export const bulkUpdateResponsesTableColorRules = async (
     payload,
     hasActivity
       ? {
-        headers: {
-          [COLOR_RULE_ACTIVITY_HEADER]: JSON.stringify(activityMetadata),
-        },
-      }
+          headers: {
+            [COLOR_RULE_ACTIVITY_HEADER]: JSON.stringify(activityMetadata),
+          },
+        }
       : undefined,
   );
 
@@ -247,6 +247,10 @@ const formatParams = (filter?: Filter) => {
     }
   }
 
+  const colorRuleIdsParam = filter?.colorRuleIds?.length
+    ? filter.colorRuleIds.join(",")
+    : undefined;
+
   return {
     limit: filter?.pageSize ?? 25,
     filters: filtersParam,
@@ -257,6 +261,7 @@ const formatParams = (filter?: Filter) => {
     after: filter?.after,
     softDeleted: filter?.softDeleted,
     deletedWithForm: filter?.deletedWithForm,
+    colorRuleIds: colorRuleIdsParam,
   };
 };
 

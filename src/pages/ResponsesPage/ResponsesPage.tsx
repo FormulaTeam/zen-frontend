@@ -39,10 +39,12 @@ import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialo
 import ConfirmDeleteDialog from "../../components/BasePopup/ConfirmDeleteDialog";
 import { useDebounce } from "@src/hooks/utilsHooks/useDebounce";
 import { LogOut } from "lucide-react";
+import { ColorFilterButton, type ColorRuleFilterOption } from "./components/ColorFilterButton";
+import { formatColorRuleLabel } from "./utils/colorRules";
+import { useColorRuleFilter } from "./hooks/useColorRuleFilter";
 
 const ACTION_BUTTON_BACKGROUND = "#DFECF9";
 const ACTION_BUTTON_HOVER_BACKGROUND = "#D4E6F8";
-
 type SidePanelForm = Pick<FormDto, "id" | "name"> & {
   fields: FormFieldDto[];
 };
@@ -112,7 +114,8 @@ const ResponsesPageContent = (): JSX.Element => {
     setResponseFilters,
   } = useFormStore();
   const { user } = useAuth();
-  const { data: responsesTableColorRules = [] } = useGetResponsesTableColorRules(form?.id);
+  const { data: responsesTableColorRules = [], isSuccess: areColorRulesLoaded } =
+    useGetResponsesTableColorRules(form?.id);
 
   const [searchInput, setSearchInput] = useState(filter?.query || "");
   const debouncedSearchInput = useDebounce(searchInput, 500);
@@ -168,9 +171,57 @@ const ResponsesPageContent = (): JSX.Element => {
   const [showFilters, setShowFilters] = useState(false);
   const [isColorRulesModalOpen, setIsColorRulesModalOpen] = useState(false);
   const activeFiltersCount = filter?.responseFilters?.items?.length ?? 0;
+
+  const formFields = useMemo(
+    () => form?.sections?.flatMap((section) => section.fields ?? []) ?? form?.fields ?? [],
+    [form],
+  );
+
+  const fieldsById = useMemo(
+    () => new Map(formFields.map((field) => [String(field.id), field])),
+    [formFields],
+  );
+
+  const colorRuleFilterOptions = useMemo<ColorRuleFilterOption[]>(
+    () =>
+      responsesTableColorRules
+        .filter((rule) => rule.isActive)
+        .sort((a, b) => a.order - b.order)
+        .map((rule) => {
+          const field = fieldsById.get(String(rule.fieldId));
+
+          return {
+            id: rule.id,
+            label: formatColorRuleLabel(rule, field, formFields),
+            color: rule.color,
+          };
+        }),
+    [responsesTableColorRules, fieldsById, formFields],
+  );
+
+  const activeColorRuleIds = useMemo(
+    () => colorRuleFilterOptions.map((rule) => rule.id),
+    [colorRuleFilterOptions],
+  );
+  const {
+    selectedRuleIds: selectedColorRuleIds,
+    setSelectedRuleIds: setSelectedColorRuleIds,
+    hiddenRuleIdSet: hiddenColorRuleIdSet,
+    toggleRuleColor,
+    toggleAllColors,
+  } = useColorRuleFilter({
+    formId: form?.id,
+    activeRuleIds: activeColorRuleIds,
+    areRulesLoaded: areColorRulesLoaded,
+    setFilter,
+  });
+
   const visibleResponsesTableColorRules = useMemo(
-    () => (isInEditMode ? [] : responsesTableColorRules),
-    [isInEditMode, responsesTableColorRules],
+    () =>
+      isInEditMode
+        ? []
+        : responsesTableColorRules.filter((rule) => !hiddenColorRuleIdSet.has(rule.id)),
+    [hiddenColorRuleIdSet, isInEditMode, responsesTableColorRules],
   );
 
   useEffect(() => {
@@ -484,10 +535,6 @@ const ResponsesPageContent = (): JSX.Element => {
   }, []);
 
   const showStandardActions = !isInEditMode && selectedRows.length === 0;
-  const formFields = useMemo(
-    () => form?.sections?.flatMap((section) => section.fields ?? []) ?? form?.fields ?? [],
-    [form],
-  );
   const canManageColorRules = useMemo(
     () => !!permissions?.includes(permission.UpdateAnyResponse),
     [permissions],
@@ -522,7 +569,14 @@ const ResponsesPageContent = (): JSX.Element => {
               <Header />
             </Box>
 
-            <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end", gap: "8px", alignItems: "center" }}>
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "8px",
+                alignItems: "center",
+              }}>
               <FormActionsToolbar />
               <Tooltip title="יציאה">
                 <IconOnlyButton
@@ -634,9 +688,30 @@ const ResponsesPageContent = (): JSX.Element => {
 
               <ToolbarDivider />
 
+              {colorRuleFilterOptions.length > 0 && (
+                <>
+                  <ColorFilterButton
+                    rules={colorRuleFilterOptions}
+                    selectedRuleIds={selectedColorRuleIds}
+                    onChange={setSelectedColorRuleIds}
+                    hiddenColorRuleIdSet={hiddenColorRuleIdSet}
+                    onToggleRuleColor={toggleRuleColor}
+                    onToggleAllColors={toggleAllColors}
+                    showColorRulesIcon={!canManageColorRules}
+                    disabled={isInEditMode}
+                  />
+
+                  <ToolbarDivider />
+                </>
+              )}
+
               {canManageColorRules && (
                 <>
-                  <Tooltip title={!isInEditMode && responsesTableColorRules.length > 0 ? "צביעת תגובות" : ""} arrow>
+                  <Tooltip
+                    title={
+                      !isInEditMode && responsesTableColorRules.length > 0 ? "צביעת תגובות" : ""
+                    }
+                    arrow>
                     <UnifiedButton
                       aria-label="צביעת תגובות"
                       onClick={() => setIsColorRulesModalOpen(true)}

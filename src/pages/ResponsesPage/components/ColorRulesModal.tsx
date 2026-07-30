@@ -14,7 +14,12 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 import { FormFieldDto, ResponsesTableColorRuleDto } from "../../../types/shared";
-import { COLOR_RULE_PALETTE, getComparatorOptions, isRangeComparator, getRangeValue } from "../utils/colorRules";
+import {
+  COLOR_RULE_PALETTE,
+  getComparatorOptions,
+  getRangeValue,
+  isRangeComparator,
+} from "../utils/colorRules";
 import { REQUIRED_VALUE_MESSAGE } from "../utils/colorRulesModal.helpers";
 import { useColorRulesModal } from "../hooks/useColorRulesModal";
 import { ColorRuleTargetValueInput } from "./ColorRuleTargetValueInput";
@@ -43,8 +48,8 @@ import {
   EmptyStateIcon,
   EmptyStateIconWrapper,
   EmptyStateTitle,
-  FieldPlaceholder,
   FieldMenuItemLabel,
+  FieldPlaceholder,
   FieldValueLabel,
   ModalActions,
   ModalContent,
@@ -171,25 +176,34 @@ export const ColorRulesModal = ({
   const renderRuleRow = (rule: ResponsesTableColorRuleDto): JSX.Element => {
     const ruleErrors = validationErrors[rule.id] ?? {};
     const selectedField = manageableFields.find((field) => field.id === rule.fieldId);
-    let targetValueError = touchedTargetValueRuleIds.has(rule.id) ? ruleErrors.targetValue : undefined;
+    let targetValueError = touchedTargetValueRuleIds.has(rule.id)
+      ? ruleErrors.targetValue
+      : undefined;
     let rangeSideErrors: { from?: string; to?: string } | undefined;
+
     if (isRangeComparator(rule.comparatorId) && targetValueError === REQUIRED_VALUE_MESSAGE) {
       const { from, to } = getRangeValue(rule.targetValue);
       const fromShow = from === "" && filledRangeSideKeys.has(`${rule.id}|from`);
       const toShow = to === "" && filledRangeSideKeys.has(`${rule.id}|to`);
+
       rangeSideErrors = {
         from: fromShow ? REQUIRED_VALUE_MESSAGE : undefined,
         to: toShow ? REQUIRED_VALUE_MESSAGE : undefined,
       };
-      // The required message is shown per-empty-side, not once.
+
       targetValueError = undefined;
     }
+
     const fieldError = touchedFieldRuleIds.has(rule.id) ? ruleErrors.fieldId : undefined;
     const isDragging = draggedRuleId === rule.id;
     const isDragLocked = !!draggedRuleId && !isDragging;
 
     return (
-      <RuleRow key={rule.id} data-color-rule-id={rule.id} $isDragging={isDragging} $isDragLocked={isDragLocked}>
+      <RuleRow
+        key={rule.id}
+        data-color-rule-id={rule.id}
+        $isDragging={isDragging}
+        $isDragLocked={isDragLocked}>
         <DragHandle
           $isDragging={isDragging}
           $canDrag={canManage}
@@ -215,12 +229,17 @@ export const ColorRulesModal = ({
             ref={(node) => {
               const element = node as unknown as HTMLElement | null;
               const width = element?.getBoundingClientRect().width;
+
               if (width) {
-                document.documentElement.style.setProperty("--color-rule-field-menu-width", `${width}px`);
+                document.documentElement.style.setProperty(
+                  "--color-rule-field-menu-width",
+                  `${width}px`,
+                );
               }
             }}
             renderValue={(value) => {
               const field = manageableFields.find((item) => item.id === value);
+
               return field ? (
                 <EllipsisTooltip text={field.displayName}>
                   <FieldValueLabel>{field.displayName}</FieldValueLabel>
@@ -246,7 +265,10 @@ export const ColorRulesModal = ({
             value={rule.comparatorId}
             onChange={(event) => handleComparatorChange(rule, Number(event.target.value))}
             renderValue={(value) => {
-              const option = getComparatorOptions(rule.fieldType).find((item) => item.value === value);
+              const option = getComparatorOptions(rule.fieldType).find(
+                (item) => item.value === value,
+              );
+
               return (
                 <EllipsisTooltip text={option?.label ?? ""}>
                   <FieldValueLabel>{option?.label ?? ""}</FieldValueLabel>
@@ -296,7 +318,9 @@ export const ColorRulesModal = ({
           <Select
             value={rule.color}
             onChange={(event) =>
-              updateRule(rule.id, { color: event.target.value as ResponsesTableColorRuleDto["color"] })
+              updateRule(rule.id, {
+                color: event.target.value as ResponsesTableColorRuleDto["color"],
+              })
             }
             disabled={!canManage}
             renderValue={(value) => (
@@ -320,7 +344,9 @@ export const ColorRulesModal = ({
         />
 
         <span>
-          <DeleteRuleButton disabled={!canManage} onClick={(event) => openDeletePopover(event, rule.id)}>
+          <DeleteRuleButton
+            disabled={!canManage}
+            onClick={(event) => openDeletePopover(event, rule.id)}>
             <DeleteRuleIcon aria-hidden="true" />
           </DeleteRuleButton>
         </span>
@@ -337,7 +363,9 @@ export const ColorRulesModal = ({
             {draftRules.map(renderRuleRow)}
           </RulesTableContainer>
           {isScrollable && (
-            <RulesScrollbarRail ref={rulesScrollbarRailRef} onMouseDown={handleRulesScrollbarRailMouseDown}>
+            <RulesScrollbarRail
+              ref={rulesScrollbarRailRef}
+              onMouseDown={handleRulesScrollbarRailMouseDown}>
               <RulesScrollbarThumb
                 onMouseDown={handleRulesScrollbarThumbMouseDown}
                 style={{
@@ -389,7 +417,10 @@ export const ColorRulesModal = ({
       <ActionButtons>
         <CancelButton onClick={requestClose}>ביטול</CancelButton>
         {canManage && (
-          <SaveButton variant="contained" onClick={handleSave} disabled={isPending || !hasChanges || hasErrors}>
+          <SaveButton
+            variant="contained"
+            onClick={handleSave}
+            disabled={isPending || !hasChanges || hasErrors}>
             שמירה
           </SaveButton>
         )}
@@ -423,7 +454,13 @@ export const ColorRulesModal = ({
   );
 
   return (
-    <ColorRulesDialog open={open} onClose={handleDialogClose} maxWidth="lg" fullWidth dir="rtl" disableEscapeKeyDown>
+    <ColorRulesDialog
+      open={open}
+      onClose={handleDialogClose}
+      maxWidth="lg"
+      fullWidth
+      dir="rtl"
+      disableEscapeKeyDown>
       {modalTitle}
       <ModalContent>
         {modalDescription}
