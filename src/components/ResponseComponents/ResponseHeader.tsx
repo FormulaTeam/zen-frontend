@@ -43,7 +43,10 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
     <Header>
       <HeaderSection sx={{ gap: 1 }}>
         <Typography variant="h5" sx={{ fontSize: "1.5rem" }}>
-          <Box component="span" sx={{ fontWeight: 400, color: "#64748b" }}>
+          <Box
+            component="span"
+            onClick={onBack}
+            sx={{ fontWeight: 400, color: "#64748b", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>
             {formTitle}
           </Box>
           <Box component="span" sx={{ mx: 2, color: "#020618", fontWeight: 400 }}>
