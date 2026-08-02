@@ -174,6 +174,22 @@ function RecycleBin({ user }: { user: User | null }) {
     });
   }, []);
 
+  const handleToggleSelectResponses = useCallback((ids: string[], shouldSelect: boolean) => {
+    setSelectedResponseIds((prev) => {
+      const next = new Set(prev);
+
+      ids.forEach((id) => {
+        if (shouldSelect) {
+          next.add(id);
+        } else {
+          next.delete(id);
+        }
+      });
+
+      return next;
+    });
+  }, []);
+
   const handleToggleExpand = useCallback((id: number) => {
     setExpandedForms((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
@@ -426,6 +442,7 @@ function RecycleBin({ user }: { user: User | null }) {
       hasFilters: hasActiveFilters,
       onToggleSelectForm: handleToggleSelectForm,
       onToggleSelectResponse: handleToggleSelectResponse,
+      onToggleSelectResponses: handleToggleSelectResponses,
       onToggleExpand: handleToggleExpand,
       onRestoreForm: handleRestoreForm,
       onRestoreResponse: handleRestoreResponse,
@@ -445,6 +462,7 @@ function RecycleBin({ user }: { user: User | null }) {
       hasActiveFilters,
       handleToggleSelectForm,
       handleToggleSelectResponse,
+      handleToggleSelectResponses,
       handleToggleExpand,
       handleRestoreForm,
       handleRestoreResponse,
