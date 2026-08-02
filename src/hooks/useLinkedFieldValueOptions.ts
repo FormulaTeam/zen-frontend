@@ -11,17 +11,25 @@ export const useLinkedFieldValueOptions = (
 ) => {
     const { findOwnerFormIdByFieldId } = useFindOwnerFormId();
     const [ownerFormId, setOwnerFormId] = useState<number | undefined>();
+    const [resolvedFieldId, setResolvedFieldId] = useState<string | undefined>();
 
     useEffect(() => {
         if (!enabled || !linkedOptionsFieldId) {
             setOwnerFormId(undefined);
+            setResolvedFieldId(undefined);
             return;
         }
 
         let cancelled = false;
 
+        setOwnerFormId(undefined);
+        setResolvedFieldId(undefined);
+
         findOwnerFormIdByFieldId(linkedOptionsFieldId).then((formId) => {
-            if (!cancelled) setOwnerFormId(formId);
+            if (!cancelled) {
+                setOwnerFormId(formId);
+                setResolvedFieldId(linkedOptionsFieldId);
+            }
         });
 
         return () => {
@@ -37,9 +45,14 @@ export const useLinkedFieldValueOptions = (
         dependentValues,
     });
 
+    const isResolvingOwner =
+        enabled &&
+        !!linkedOptionsFieldId &&
+        resolvedFieldId !== linkedOptionsFieldId;
+
     return {
         options,
-        isLoading,
+        isLoading: isResolvingOwner || isLoading,
         isFetchingNextPage,
         loadMore,
         hasNextPage,

@@ -29,6 +29,8 @@ import {
   type FormFieldLike,
   getFieldValidationMessage,
   selectionMode,
+  findManualOptionsParent,
+  getAllowedManualOptionIds,
 } from "formula-gear";
 import {
   CustomError,
@@ -123,48 +125,6 @@ type EditorFieldExtra = {
 
 const getFieldExtra = (field: FormFieldDto): EditorFieldExtra =>
   (field.extra as EditorFieldExtra | undefined) ?? {};
-
-type OptionItemLike = {
-  id: string;
-  controllingItemsIds?: string[];
-  isActive?: boolean;
-};
-
-const getOptionItems = (field: FormFieldDto, includeInactive = false): OptionItemLike[] => {
-  if (Array.isArray((field as any).options)) {
-    return (field as any).options
-      .filter((item: any) => item && typeof item.id === "string")
-      .filter((item: any) => includeInactive || item.isActive !== false)
-      .map((item: any) => ({
-        id: item.id,
-        controllingItemsIds: Array.isArray(item.controllingItemsIds)
-          ? item.controllingItemsIds
-          : [],
-        isActive: item.isActive,
-      }));
-  }
-
-  const extra = getFieldExtra(field);
-
-  if (
-    extra.options &&
-    typeof extra.options === "object" &&
-    !Array.isArray(extra.options) &&
-    Array.isArray(extra.options.items)
-  ) {
-    return extra.options.items
-      .filter((item) => item && typeof item.id === "string")
-      .map((item: any) => ({
-        id: item.id,
-        controllingItemsIds: Array.isArray(item.controllingItemsIds)
-          ? item.controllingItemsIds
-          : [],
-        isActive: item.isActive,
-      }));
-  }
-
-  return [];
-};
 
 const normalizeOptionValues = (value: unknown): string[] => {
   const rawValue = getOptionResponseRawValue(value);
@@ -742,64 +702,49 @@ export const useResponsesEdit = () => {
     (row: Row, changedField: FormFieldDto, changedValue: unknown): Partial<Row> => {
       if (changedField.fieldType !== fieldType.Options) return {};
 
-      const parentValues = normalizeOptionValues(changedValue);
-      if (parentValues.length === 0) return {};
-
-      const parentValueSet = new Set(parentValues);
       const updates: Partial<Row> = {};
+      const workingRow = { ...row, [getFieldColumnKey(changedField)]: changedValue } as Row;
+      const pendingParents: FormFieldDto[] = [changedField];
+      const visitedParentIds = new Set<string>();
 
-      formFields.forEach((candidateField) => {
-        if (
-          candidateField.fieldType !== fieldType.Options ||
-          String(candidateField.id) === String(changedField.id)
-        ) {
-          return;
-        }
+      while (pendingParents.length > 0) {
+        const currentParent = pendingParents.shift()!;
+        const currentParentId = String(currentParent.id);
 
-        const candidateKey = getFieldColumnKey(candidateField);
-        const candidateValue = row[candidateKey];
-        const candidateItems = getOptionItems(candidateField, true);
-        const candidateHasParentLinks = candidateItems.some((item) =>
-          (item.controllingItemsIds ?? []).some((controllingId) =>
-            parentValueSet.has(controllingId),
-          ),
+        if (visitedParentIds.has(currentParentId)) continue;
+        visitedParentIds.add(currentParentId);
+
+        const parentValues = normalizeOptionValues(
+          workingRow[getFieldColumnKey(currentParent)],
         );
 
-        let allowedOptions = new Set<string>();
+        formFields.forEach((candidateField) => {
+          if (candidateField.fieldType !== fieldType.Options) return;
 
-        if (candidateHasParentLinks) {
-          allowedOptions = new Set(
-            candidateItems
-              .filter((item) =>
-                (item.controllingItemsIds ?? []).some((controllingId) =>
-                  parentValueSet.has(controllingId),
-                ),
-              )
-              .map((item) => item.id),
+          const candidateParent = findManualOptionsParent(candidateField, formFields);
+          if (!candidateParent || String(candidateParent.id) !== currentParentId) return;
+
+          const candidateKey = getFieldColumnKey(candidateField);
+          const candidateValue = workingRow[candidateKey];
+          const allowedOptions = getAllowedManualOptionIds(
+            candidateField,
+            currentParent,
+            parentValues,
           );
-        } else {
-          const parentItems = getOptionItems(changedField, true);
-          const selectedParentItems = parentItems.filter((item) => parentValueSet.has(item.id));
-          const linkedChildIds = selectedParentItems.flatMap(
-            (item) => item.controllingItemsIds ?? [],
+          const cleanedValue = getCleanedOptionValue(
+            candidateField,
+            candidateValue,
+            allowedOptions,
           );
 
-          if (linkedChildIds.length === 0) return;
+          if (!valuesAreEqual(cleanedValue, candidateValue)) {
+            updates[candidateKey] = cleanedValue;
+            workingRow[candidateKey] = cleanedValue;
+          }
 
-          const candidateOptionIds = new Set(candidateItems.map((item) => item.id));
-          allowedOptions = new Set(linkedChildIds.filter((id) => candidateOptionIds.has(id)));
-        }
-
-        const cleanedValue = getCleanedOptionValue(
-          candidateField,
-          candidateValue,
-          allowedOptions,
-        );
-
-        if (!valuesAreEqual(cleanedValue, candidateValue)) {
-          updates[candidateKey] = cleanedValue;
-        }
-      });
+          pendingParents.push(candidateField);
+        });
+      }
 
       return updates;
     },
