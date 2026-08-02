@@ -467,10 +467,7 @@ const getDefaultFieldValue = (field: FormFieldDto): unknown => {
   const extra = getFieldExtra(field);
 
   if (field.fieldType === fieldType.Options) {
-    const defaultValue =
-      extra.options && typeof extra.options === "object" && !Array.isArray(extra.options)
-        ? extra.options.defaultValue
-        : undefined;
+    const defaultValue = extra.defaultValue;
 
     if (defaultValue && Array.isArray(defaultValue)) {
       return extra.selectionMode === selectionMode.Multiple
