@@ -56,14 +56,16 @@ export const isNoValueFilterOperator = (
 };
 
 const withUiValueForNoValueOperator = (item: GridFilterItem): GridFilterItem => {
-  if (!isNoValueFilterOperator(item.operator)) {
-    return item;
+  if (isNoValueFilterOperator(item.operator)) {
+    return { ...item, value: NO_VALUE_FILTER_VALUE };
   }
 
-  return {
-    ...item,
-    value: NO_VALUE_FILTER_VALUE,
-  };
+  // Clear the sentinel when switching away from a no-value operator
+  if (item.value === NO_VALUE_FILTER_VALUE) {
+    return { ...item, value: undefined };
+  }
+
+  return item;
 };
 
 export const normalizeGridFilterItemsForResponseFilters = (
