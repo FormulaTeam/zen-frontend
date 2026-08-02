@@ -295,7 +295,7 @@ function FormEditorHeader() {
   };
 
   const onSaveClick = () => {
-    void runSaveFlow();
+    void runSaveFlow({ navigateToResponses: true });
   };
 
   const handleAcceptSuggestedTitle = async () => {
