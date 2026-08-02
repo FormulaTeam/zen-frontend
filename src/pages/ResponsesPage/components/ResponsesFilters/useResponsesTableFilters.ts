@@ -57,7 +57,12 @@ export const useResponsesTableFilters = ({
         return;
       }
 
-      const { filters } = buildResponseFiltersFromGridFilterModel(normalizedItems, formFields);
+      const { filters, hasIncompleteItems } = buildResponseFiltersFromGridFilterModel(normalizedItems, formFields);
+
+      // Skip update while user is mid-entry only if there are already some complete filters active
+      if (hasIncompleteItems && filters !== null) {
+        return;
+      }
 
       setResponseFilters(filters);
     },
