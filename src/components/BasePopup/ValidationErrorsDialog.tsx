@@ -141,21 +141,6 @@ const CancelButton = styled(Button)(() => ({
   },
 }));
 
-const ContinueButton = styled(Button)(({ theme }) => ({
-  minWidth: "98px",
-  height: "40px",
-  borderRadius: "9px",
-  fontSize: "0.95rem",
-  fontWeight: 700,
-  textTransform: "none",
-  backgroundColor: theme.palette.primary.main,
-  boxShadow: "none",
-  "&:hover": {
-    backgroundColor: theme.palette.primary.dark,
-    boxShadow: "none",
-  },
-}));
-
 export type ValidationError =
   | string
   | {
@@ -172,10 +157,7 @@ interface ValidationErrorsDialogProps {
   errors: ValidationError[];
   title?: string;
   subtitle?: string;
-  onCancel?: () => void;
-  onContinue?: () => void;
-  cancelText?: string;
-  continueText?: string;
+  closeText?: string;
 }
 
 const getErrorParts = (error: ValidationError) => {
@@ -200,14 +182,8 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
   errors,
   title = "נמצאו שגיאות בטופס",
   subtitle = "יש לתקן את השדות הבאים לפני שמירה:",
-  onCancel,
-  onContinue,
-  cancelText = "בטל",
-  continueText = "המשך",
+  closeText = "סגירה",
 }) => {
-  const handleCancel = onCancel ?? onClose;
-  const handleContinue = onContinue ?? onClose;
-
   return (
     <StyledDialog open={open} onClose={onClose} scroll="paper">
       <StyledDialogTitle>
@@ -267,13 +243,9 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
       </Content>
 
       <Actions>
-        <CancelButton onClick={handleCancel} variant="outlined" disableElevation>
-          {cancelText}
+        <CancelButton onClick={onClose} variant="outlined" disableElevation>
+          {closeText}
         </CancelButton>
-
-        <ContinueButton onClick={handleContinue} variant="contained" disableElevation>
-          {continueText}
-        </ContinueButton>
       </Actions>
     </StyledDialog>
   );
