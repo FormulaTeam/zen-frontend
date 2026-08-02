@@ -34,7 +34,7 @@ import ValidationErrorsDialog, {
 import UnsavedChangesDialog from "../../../components/BasePopup/UnsavedChangesDialog";
 import { clearFormDraft } from "../utils/draftPersistence";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import { Save, LogOut } from "lucide-react";
+import { Save, ChevronLeft } from "lucide-react";
 import { FormMetadataSchema } from "../schemas/metadata";
 import { useFormEditorContext } from "../context/FormEditorContext";
 
@@ -630,7 +630,7 @@ function FormEditorHeader() {
             disableElevation
             aria-label="יציאה"
             sx={exitHeaderButtonSx}>
-            <LogOut size={24} strokeWidth={2.4} />
+            <ChevronLeft size={24} strokeWidth={2.4} />
           </Button>
         </span>
       </Tooltip>
