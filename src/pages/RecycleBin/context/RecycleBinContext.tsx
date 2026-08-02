@@ -12,6 +12,7 @@ interface RecycleBinContextType {
   hasFilters: boolean;
   onToggleSelectForm: (id: number) => void;
   onToggleSelectResponse: (id: string) => void;
+  onToggleSelectResponses: (ids: string[], shouldSelect: boolean) => void;
   onToggleExpand: (id: number) => void;
   onRestoreForm: (id: number) => void;
   onRestoreResponse: (formId: number, responseId: string) => Promise<void>;
