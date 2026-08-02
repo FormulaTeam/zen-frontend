@@ -3,30 +3,31 @@ import { FormEditor } from "../FormEditor";
 import { useGetForm } from "../../api";
 import { FORM_EDITOR_MODE } from "../FormEditor/context/FormEditorContext";
 import { useEffect } from "react";
-import { StatusCodes } from "http-status-codes";
+import { permission } from "formula-gear";
 
 export default function EditForm({ }) {
   const { formId } = useParams();
   const navigate = useNavigate();
 
-  const { data: formToEdit, isLoading, error, isError } = useGetForm({
+  const { data: formToEdit, isLoading, isError } = useGetForm({
     formId: formId,
+    includePermissions: true,
     config: {
       enabled: !!formId,
     },
   });
 
+  const canEditForm = formToEdit?.permissions?.includes(permission.UpdateForm) ?? false;
+
   useEffect(() => {
-    if (isError) {
+    if (isError || (!isLoading && formToEdit && !canEditForm)) {
       navigate("/error", { replace: true });
     }
-  }, [isError, navigate]);
+  }, [canEditForm, formToEdit, isError, isLoading, navigate]);
 
-  if (isLoading) {
+  if (isLoading || isError || !formToEdit || !canEditForm) {
     return null;
   }
 
-  return <>
-    {formToEdit && <FormEditor mode={FORM_EDITOR_MODE.EDIT} editedForm={formToEdit} />}
-  </>;
+  return <FormEditor mode={FORM_EDITOR_MODE.EDIT} editedForm={formToEdit} />;
 }
