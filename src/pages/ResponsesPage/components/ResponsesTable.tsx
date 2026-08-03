@@ -1938,9 +1938,17 @@ export const ResponsesTable = React.memo(
                 ...Object.fromEntries(
                   Object.entries(COLOR_RULE_PALETTE).map(([color, meta]) => [
                     `& .response-color-rule-cell--${color}`,
-                    { backgroundColor: `${meta.background} !important` },
+                    {
+                      "--response-color-rule-background": meta.background,
+                      backgroundColor: `${meta.background} !important`,
+                    },
                   ]),
                 ),
+                "& .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedLeft.response-color-rule-cell, & .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedRight.response-color-rule-cell":
+                  {
+                    backgroundColor:
+                      "var(--response-color-rule-background) !important",
+                  },
                 "& .MuiDataGrid-columnHeader .MuiDataGrid-iconButtonContainer .MuiIconButton-root":
                   {
                     backgroundColor: "transparent !important",
