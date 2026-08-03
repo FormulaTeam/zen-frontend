@@ -1,11 +1,12 @@
 import { FieldTypeIds } from "./interfaces";
-import { getKeyByValue } from "./utils";
 import { getOptionResponseRawValue } from "./optionResponseValue";
 import { selectionMode } from "formula-gear";
 
 export const normalizeFieldValue = (field: any, value: any): any => {
   let newValue = value;
-  const key = getKeyByValue(FieldTypeIds, field.typeId);
+  const key = Object.keys(FieldTypeIds).find(
+    (fieldTypeKey) => (FieldTypeIds as Record<string, unknown>)[fieldTypeKey] === field.typeId,
+  );
 
   if (key) {
     if (!["date", "hour", "checkbox", "number"].includes(key) && newValue === undefined) {
