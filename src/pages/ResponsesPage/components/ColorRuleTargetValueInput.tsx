@@ -341,6 +341,25 @@ export const ColorRuleTargetValueInput = ({
             isFetchingNextPage,
           } as any
         }
+        renderOption={(props, option) => {
+          const { key, ...optionProps } = props;
+
+          return (
+            <li
+              {...optionProps}
+              key={key}
+              style={{
+                ...optionProps.style,
+                width: "100%",
+                direction: "rtl",
+                textAlign: "right",
+                justifyContent: "flex-start",
+                fontSize: "1rem",
+              }}>
+              {option.text ?? ""}
+            </li>
+          );
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
