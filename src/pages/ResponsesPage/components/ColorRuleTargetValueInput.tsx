@@ -354,6 +354,7 @@ export const ColorRuleTargetValueInput = ({
                 direction: "rtl",
                 textAlign: "right",
                 justifyContent: "flex-start",
+                fontSize: "1rem",
               }}>
               {option.text ?? ""}
             </li>

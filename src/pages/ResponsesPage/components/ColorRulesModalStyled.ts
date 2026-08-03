@@ -262,6 +262,7 @@ export const RuleRow = styled(RulesGrid) <{
     padding-inline: 14px !important;
     display: flex;
     align-items: center;
+    font-size: 1rem !important;
   }
 
   .MuiAutocomplete-root .MuiOutlinedInput-root {
@@ -270,6 +271,7 @@ export const RuleRow = styled(RulesGrid) <{
 
   .MuiAutocomplete-root .MuiOutlinedInput-root .MuiAutocomplete-input {
     padding-inline: 0 !important;
+    font-size: 1rem !important;
   }
 
   /* Smaller icons so the extra padding is visible */
