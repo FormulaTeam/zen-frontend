@@ -262,7 +262,7 @@ export const ColorRuleTargetValueInput = ({
     const renderRangeCell = (key: "from" | "to", prefix: string, currentValue: string) => (
       <Box sx={{ display: "flex", flexDirection: "column", flex: "1 1 0", minWidth: 0 }}>
         <RangeInput>
-          <RangePrefix>{prefix}</RangePrefix>
+          <RangePrefix $nudgeUp={prefix === "עד"}>{prefix}</RangePrefix>
           {renderRangeField(key, currentValue)}
         </RangeInput>
         {rangeSideErrors?.[key] && (
