@@ -11,6 +11,12 @@ import {
 import styled from "styled-components";
 import { PaintRoller, Trash2 } from "lucide-react";
 
+export const colorRuleMenuPaperSx = {
+  "& .MuiMenuItem-root": {
+    fontSize: "1rem",
+  },
+};
+
 export const ColorRulesDialog = styled(Dialog)`
   .MuiDialog-paper {
     outline: none;
@@ -495,11 +501,17 @@ export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }
   }
 
   .MuiPickersSectionList-section,
-  .MuiPickersSectionList-sectionContent {
+  .MuiPickersSectionList-sectionContent,
+  .MuiPickersSectionList-sectionSeparator,
+  .MuiPickersInputBase-sectionsContainer,
+  .MuiPickersSectionList-root,
+  [contenteditable="true"],
+  [role="spinbutton"] {
     display: inline-flex !important;
     align-items: center !important;
     height: 40px !important;
     line-height: 40px !important;
+    font-size: 1rem !important;
   }
 
   /* Smaller picker icon so the extra padding is visible */
@@ -527,6 +539,7 @@ export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }
     align-items: center;
     padding-block: 0 !important;
     text-align: right !important;
+    font-size: 1rem !important;
   }
 
   .MuiInputBase-root::before {

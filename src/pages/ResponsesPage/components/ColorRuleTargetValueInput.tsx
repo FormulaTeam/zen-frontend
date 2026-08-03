@@ -27,6 +27,7 @@ import {
 } from "../utils/colorRulesModal.helpers";
 import {
   ColorRulePickerWrapper,
+  colorRuleMenuPaperSx,
   DateTimeDateSlot,
   DateTimeSplitRow,
   DateTimeTimeSlot,
@@ -87,6 +88,7 @@ export const ColorRuleDateTimeSplitInput = ({
             value={timePart}
             timePrecision={precision}
             isTabularEdit
+            inputFontSize="1rem"
             label=""
             isRequired={false}
             isDisabled={!canManage}
@@ -103,6 +105,7 @@ export const ColorRuleDateTimeSplitInput = ({
             value={datePart || null}
             dateType={dateType.Date}
             isTabularEdit
+            inputFontSize="1rem"
             label=""
             isRequired={false}
             isDisabled={!canManage}
@@ -199,6 +202,7 @@ export const ColorRuleTargetValueInput = ({
               value={currentValue || null}
               dateType={currentDateType}
               isTabularEdit
+              inputFontSize="1rem"
               label=""
               isRequired={false}
               isDisabled={!canManage}
@@ -219,6 +223,7 @@ export const ColorRuleTargetValueInput = ({
               value={currentValue}
               timePrecision={currentTimePrecision}
               isTabularEdit
+              inputFontSize="1rem"
               label=""
               isRequired={false}
               isDisabled={!canManage}
@@ -288,6 +293,7 @@ export const ColorRuleTargetValueInput = ({
       <FormControl size="small" fullWidth error={!!error}>
         <Select
           value={rule.targetValue === true || rule.targetValue === "true" ? "true" : rule.targetValue === false || rule.targetValue === "false" ? "false" : ""}
+          MenuProps={{ PaperProps: { sx: colorRuleMenuPaperSx } }}
           onBlur={() => onTouch(rule.id)}
           onChange={(event) => onChange(rule.id, event.target.value === "true")}
           disabled={!canManage}>
@@ -395,6 +401,7 @@ export const ColorRuleTargetValueInput = ({
           value={typeof rule.targetValue === "string" ? rule.targetValue : null}
           dateType={currentDateType}
           isTabularEdit
+          inputFontSize="1rem"
           label=""
           isRequired={false}
           isDisabled={!canManage}
@@ -415,6 +422,7 @@ export const ColorRuleTargetValueInput = ({
           value={typeof rule.targetValue === "string" ? rule.targetValue : ""}
           timePrecision={currentTimePrecision}
           isTabularEdit
+          inputFontSize="1rem"
           label=""
           isRequired={false}
           isDisabled={!canManage}

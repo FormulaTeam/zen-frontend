@@ -32,6 +32,7 @@ import {
   CloseButton,
   ColorMenuSwatch,
   ColorRulesDialog,
+  colorRuleMenuPaperSx,
   ColorSelectValue,
   ColorSwatch,
   DeleteCancelButton,
@@ -220,6 +221,7 @@ export const ColorRulesModal = ({
             MenuProps={{
               PaperProps: {
                 sx: {
+                  ...colorRuleMenuPaperSx,
                   maxWidth: "var(--color-rule-field-menu-width, 240px)",
                 },
               },
@@ -263,6 +265,7 @@ export const ColorRulesModal = ({
         <FormControl size="small" error={!!ruleErrors.comparatorId}>
           <Select
             value={rule.comparatorId}
+            MenuProps={{ PaperProps: { sx: colorRuleMenuPaperSx } }}
             onChange={(event) => handleComparatorChange(rule, Number(event.target.value))}
             renderValue={(value) => {
               const option = getComparatorOptions(rule.fieldType).find(
@@ -303,6 +306,7 @@ export const ColorRulesModal = ({
         <FormControl size="small" error={!!ruleErrors.targetType}>
           <Select
             value={rule.targetType}
+            MenuProps={{ PaperProps: { sx: colorRuleMenuPaperSx } }}
             onChange={(event) =>
               updateRule(rule.id, {
                 targetType: event.target.value as ResponsesTableColorRuleDto["targetType"],
@@ -317,6 +321,7 @@ export const ColorRulesModal = ({
         <FormControl size="small">
           <Select
             value={rule.color}
+            MenuProps={{ PaperProps: { sx: colorRuleMenuPaperSx } }}
             onChange={(event) =>
               updateRule(rule.id, {
                 color: event.target.value as ResponsesTableColorRuleDto["color"],
