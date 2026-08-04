@@ -118,6 +118,16 @@ const singleOptionOperators = (
 ): GridFilterOperator[] => {
   const linkedOptionsFieldId = (field.extra as any)?.linkedOptionsFieldId;
 
+  if (!linkedOptionsFieldId) {
+    const InputComponent = createMultiOptionInput(field);
+
+    return [
+      makeOperator(ResponseFilterOperator.ContainsAny, "מכיל", InputComponent),
+      makeOperator(ResponseFilterOperator.NotContainsAny, "לא מכיל", InputComponent),
+      ...emptyOperators,
+    ];
+  }
+
   const InputComponent = isExternallyConnectedField(field, formFields)
     ? createConnectedSingleOptionInput(linkedOptionsFieldId)
     : createSingleOptionInput(field);
@@ -140,10 +150,10 @@ const multiOptionOperators = (
     : createMultiOptionInput(field);
 
   return [
-    makeOperator(ResponseFilterOperator.ContainsAny, "מכיל אחד מתוך", InputComponent),
-    makeOperator(ResponseFilterOperator.NotContainsAny, "לא מכיל אף אחד מתוך", InputComponent),
-    makeOperator(ResponseFilterOperator.ContainsAll, "מכיל את כולם", InputComponent),
-    makeOperator(ResponseFilterOperator.NotContainsAll, "לא מכיל את כולם", InputComponent),
+    makeOperator(ResponseFilterOperator.ContainsAny, "מכיל לפחות אחד מהערכים", InputComponent),
+    makeOperator(ResponseFilterOperator.NotContainsAny, "לא מכיל אף אחד מהערכים", InputComponent),
+    makeOperator(ResponseFilterOperator.ContainsAll, "מכיל את כל הערכים", InputComponent),
+    makeOperator(ResponseFilterOperator.NotContainsAll, "לא מכיל את כל הערכים", InputComponent),
     ...emptyOperators,
   ];
 };

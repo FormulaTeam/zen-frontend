@@ -1,5 +1,13 @@
 import React from "react";
-import { Autocomplete, Box, Checkbox, FormControl, Stack, TextField } from "@mui/material";
+import {
+  Autocomplete,
+  Box,
+  Checkbox,
+  FormControl,
+  Stack,
+  TextField,
+  Tooltip,
+} from "@mui/material";
 import { DatePicker, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
@@ -19,6 +27,11 @@ export type FilterInputProps = {
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
   onLoadMore?: () => void;
+  slotProps?: {
+    root?: {
+      label?: React.ReactNode;
+    };
+  };
 };
 
 type RangeValue = {
@@ -40,7 +53,25 @@ const HeaderFilterInputShell: React.FC<{
   clearButton?: React.ReactNode;
   children: React.ReactNode;
   noValue?: boolean;
-}> = ({ headerFilterMenu, clearButton, children, noValue = false }) => {
+  filterProps: FilterInputProps;
+}> = ({ headerFilterMenu, clearButton, children, filterProps, noValue = false }) => {
+  const operatorMenuRef = React.useRef<HTMLDivElement>(null);
+  const filterValue = filterProps.item?.value;
+  const hasFilterValue = Array.isArray(filterValue)
+    ? filterValue.length > 0
+    : filterValue !== undefined && filterValue !== null && filterValue !== "";
+  const operatorLabel = hasFilterValue ? filterProps.slotProps?.root?.label : undefined;
+
+  React.useLayoutEffect(() => {
+    const operatorButton = operatorMenuRef.current?.querySelector("button");
+
+    operatorButton?.removeAttribute("title");
+
+    if (typeof operatorLabel === "string") {
+      operatorButton?.setAttribute("aria-label", operatorLabel);
+    }
+  });
+
   return (
     <Stack
       direction="row"
@@ -50,7 +81,13 @@ const HeaderFilterInputShell: React.FC<{
           ? "responses-header-filter-shell responses-header-filter-shell--no-value"
           : "responses-header-filter-shell"
       }>
-      {headerFilterMenu && <Box className="responses-header-filter-menu">{headerFilterMenu}</Box>}
+      {headerFilterMenu && (
+        <Tooltip title={operatorLabel ?? ""} arrow>
+          <Box ref={operatorMenuRef} className="responses-header-filter-menu">
+            {headerFilterMenu}
+          </Box>
+        </Tooltip>
+      )}
 
       {!noValue && <Box className="responses-header-filter-value">{children}</Box>}
 
@@ -114,14 +151,18 @@ const optionAutocompleteSlotProps = {
         border: "1px solid #d7e4f2",
         boxShadow: "0 10px 28px rgba(15, 23, 42, 0.1)",
         overflow: "hidden",
-        direction: "rtl",
+        direction: "ltr",
         maxHeight: "300px",
       },
 
       "& .MuiAutocomplete-listbox": {
         p: "4px",
-        direction: "rtl",
-        textAlign: "right",
+        maxHeight: "280px",
+        overflowY: "auto",
+        overflowX: "hidden",
+        overscrollBehavior: "contain",
+        direction: "ltr",
+        textAlign: "left",
       },
 
       "& .MuiAutocomplete-option": {
@@ -132,8 +173,8 @@ const optionAutocompleteSlotProps = {
         px: "9px",
         py: "6px",
         fontSize: "0.95rem",
-        direction: "rtl",
-        textAlign: "right",
+        direction: "ltr",
+        textAlign: "left",
 
         "&[aria-selected='true']": {
           backgroundColor: "#eef4ff",
@@ -244,7 +285,11 @@ export const NoValueFilterInput: React.FC<FilterInputProps> = (props) => {
   const { headerFilterMenu, clearButton } = props;
 
   return (
-    <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton} noValue>
+    <HeaderFilterInputShell
+      headerFilterMenu={headerFilterMenu}
+      clearButton={clearButton}
+      filterProps={props}
+      noValue>
       <span />
     </HeaderFilterInputShell>
   );
@@ -254,7 +299,10 @@ export const TextFilterInput: React.FC<FilterInputProps> = (props) => {
   const { item, applyValue, headerFilterMenu, clearButton } = props;
 
   return (
-    <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
+    <HeaderFilterInputShell
+      headerFilterMenu={headerFilterMenu}
+      clearButton={clearButton}
+      filterProps={props}>
       <TextField
         inputRef={getInputRef(props)}
         value={item.value ?? ""}
@@ -273,7 +321,10 @@ export const NumberFilterInput: React.FC<FilterInputProps> = (props) => {
   const { item, applyValue, headerFilterMenu, clearButton } = props;
 
   return (
-    <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
+    <HeaderFilterInputShell
+      headerFilterMenu={headerFilterMenu}
+      clearButton={clearButton}
+      filterProps={props}>
       <TextField
         inputRef={getInputRef(props)}
         type="number"
@@ -293,7 +344,10 @@ export const DateFilterInput: React.FC<FilterInputProps> = (props) => {
   const { item, applyValue, headerFilterMenu, clearButton } = props;
 
   return (
-    <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
+    <HeaderFilterInputShell
+      headerFilterMenu={headerFilterMenu}
+      clearButton={clearButton}
+      filterProps={props}>
       <HeaderFilterPickerContainer>
         <PickerProvider>
           <DatePicker
@@ -315,7 +369,10 @@ export const TimeFilterInput: React.FC<FilterInputProps & { timePrecision?: stri
   const showSeconds = timePrecision === "seconds";
 
   return (
-    <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
+    <HeaderFilterInputShell
+      headerFilterMenu={headerFilterMenu}
+      clearButton={clearButton}
+      filterProps={props}>
       <HeaderFilterPickerContainer>
         <PickerProvider>
           <TimePicker
@@ -342,7 +399,10 @@ const RangeFilterInput: React.FC<RangeFilterInputProps> = (props) => {
   const range = (item.value ?? {}) as RangeValue;
 
   return (
-    <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
+    <HeaderFilterInputShell
+      headerFilterMenu={headerFilterMenu}
+      clearButton={clearButton}
+      filterProps={props}>
       <Stack direction="row" className="responses-header-filter-range">
         <TextField
           inputRef={getInputRef(props)}
@@ -390,7 +450,10 @@ export const DateRangeFilterInput: React.FC<FilterInputProps> = (props) => {
   const range = (item.value ?? {}) as RangeValue;
 
   return (
-    <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
+    <HeaderFilterInputShell
+      headerFilterMenu={headerFilterMenu}
+      clearButton={clearButton}
+      filterProps={props}>
       <HeaderFilterPickerContainer>
         <PickerProvider>
           <DateTimeRangeContainer direction="row">
@@ -432,7 +495,10 @@ export const TimeRangeFilterInput: React.FC<FilterInputProps & { timePrecision?:
   const showSeconds = timePrecision === "seconds";
 
   return (
-    <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
+    <HeaderFilterInputShell
+      headerFilterMenu={headerFilterMenu}
+      clearButton={clearButton}
+      filterProps={props}>
       <HeaderFilterPickerContainer>
         <PickerProvider>
           <DateTimeRangeContainer direction="row">
@@ -484,7 +550,10 @@ export const SingleOptionFilterInput: React.FC<FilterInputProps> = (props) => {
   const selectedOption = options.find((option) => String(option.id) === String(item.value)) ?? null;
 
   return (
-    <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
+    <HeaderFilterInputShell
+      headerFilterMenu={headerFilterMenu}
+      clearButton={clearButton}
+      filterProps={props}>
       <FormControl size="small" variant="standard" fullWidth>
         <Autocomplete<OptionResponseValue, false, false, false>
           fullWidth
@@ -557,12 +626,29 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
   const selectedOptions = options.filter((option) => selectedValues.includes(String(option.id)));
 
   return (
-    <HeaderFilterInputShell headerFilterMenu={headerFilterMenu} clearButton={clearButton}>
+    <HeaderFilterInputShell
+      headerFilterMenu={headerFilterMenu}
+      clearButton={clearButton}
+      filterProps={props}>
       <FormControl size="small" variant="standard" fullWidth>
         <Autocomplete<OptionResponseValue, true, false, false>
           fullWidth
           multiple
           disableCloseOnSelect
+          sx={{
+            "& .MuiAutocomplete-inputRoot": {
+              flexWrap: "nowrap",
+              alignItems: "center",
+              overflow: "hidden",
+              paddingInlineStart: "8px !important",
+              paddingInlineEnd: "28px !important",
+            },
+            "& .MuiAutocomplete-input": {
+              flex: selectedValues.length > 0 ? "0 0 0" : "1 1 auto",
+              width: selectedValues.length > 0 ? "0 !important" : "auto !important",
+              minWidth: selectedValues.length > 0 ? "0 !important" : "42px !important",
+            },
+          }}
           options={options}
           value={selectedOptions}
           loading={loading}
@@ -609,13 +695,17 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
                 component="span"
                 sx={{
                   minWidth: 0,
+                  maxWidth: "100%",
+                  flex: "1 1 auto",
+                  alignSelf: "center",
+                  lineHeight: 1.4,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
                   direction: "rtl",
                   textAlign: "right",
                 }}>
-                {labels.length > 0 ? labels.join(", ") : ""}
+                {labels.join(", ")}
               </Box>
             );
           }}
