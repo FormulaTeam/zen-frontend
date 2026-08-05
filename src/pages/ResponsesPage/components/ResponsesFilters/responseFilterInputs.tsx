@@ -15,6 +15,7 @@ import { PaginatedAutocompleteListbox } from "@src/components/PaginatedAutocompl
 import { OptionResponseValue } from "@src/utils/optionResponseValue";
 import { dateType, type DateType } from "formula-gear";
 import {
+  calendarNavigationSx,
   compactDateTimeLayoutSx,
   dateTimePickerPopperSx,
   getMultiOptionAutocompleteSx,
@@ -178,6 +179,7 @@ const commonPickerSlotProps = (props: FilterInputProps, placeholder?: string) =>
   },
   popper: {
     placement: "bottom-start" as const,
+    sx: calendarNavigationSx,
   },
   openPickerButton: {
     style: {

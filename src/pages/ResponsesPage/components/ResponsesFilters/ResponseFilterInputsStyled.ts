@@ -104,6 +104,12 @@ export const selectedOptionsTextSx: SxProps<Theme> = {
   textAlign: "left",
 };
 
+export const calendarNavigationSx: SxProps<Theme> = {
+  "& .MuiPickersArrowSwitcher-button .MuiSvgIcon-root": {
+    transform: "rotate(180deg)",
+  },
+};
+
 export const timePickerPopperSx: SxProps<Theme> = {
   "& .MuiMultiSectionDigitalClock-root": {
     direction: "rtl",
@@ -192,6 +198,7 @@ export const compactDateTimeLayoutSx: SxProps<Theme> = {
 };
 
 export const dateTimePickerPopperSx: SxProps<Theme> = {
+  ...calendarNavigationSx,
   "& .MuiPaper-root": {
     width: "476px !important",
     minWidth: "476px !important",

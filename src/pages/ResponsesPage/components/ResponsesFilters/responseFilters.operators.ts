@@ -25,12 +25,14 @@ const noClientFilter = () => null;
 const makeOperator = (
   operator: ResponseFilterOperator,
   label: string,
-  InputComponent: GridFilterOperator["InputComponent"] = NoValueFilterInput,
+  InputComponent: React.JSXElementConstructor<any> = NoValueFilterInput,
   requiresFilterValue = true,
+  inputComponentProps?: Record<string, unknown>,
 ): GridFilterOperator => ({
   label,
   value: operator,
   InputComponent,
+  InputComponentProps: inputComponentProps,
   requiresFilterValue,
   getApplyFilterFn: noClientFilter,
 });
@@ -41,50 +43,6 @@ const isExternallyConnectedField = (field: FormFieldDto, formFields: FormFieldDt
   if (!linkedOptionsFieldId) return false;
 
   return !formFields.some((f) => String(f.id) === String(linkedOptionsFieldId));
-};
-
-const createSingleOptionInput = (field: FormFieldDto): GridFilterOperator["InputComponent"] => {
-  const options = getFieldOptions(field);
-
-  return function SingleOptionInput(props: any) {
-    return React.createElement(SingleOptionFilterInput, {
-      ...props,
-      options,
-    });
-  };
-};
-
-const createMultiOptionInput = (field: FormFieldDto): GridFilterOperator["InputComponent"] => {
-  const options = getFieldOptions(field);
-
-  return function MultiOptionInput(props: any) {
-    return React.createElement(MultiOptionFilterInput, {
-      ...props,
-      options,
-    });
-  };
-};
-
-const createConnectedSingleOptionInput = (
-  linkedOptionsFieldId: string,
-): GridFilterOperator["InputComponent"] => {
-  return function ConnectedSingleOptionInput(props: any) {
-    return React.createElement(ConnectedSingleOptionFilterInput, {
-      ...props,
-      linkedOptionsFieldId,
-    });
-  };
-};
-
-const createConnectedMultiOptionInput = (
-  linkedOptionsFieldId: string,
-): GridFilterOperator["InputComponent"] => {
-  return function ConnectedMultiOptionInput(props: any) {
-    return React.createElement(ConnectedMultiOptionFilterInput, {
-      ...props,
-      linkedOptionsFieldId,
-    });
-  };
 };
 
 const emptyOperators: GridFilterOperator[] = [
@@ -119,22 +77,44 @@ const singleOptionOperators = (
   const linkedOptionsFieldId = (field.extra as any)?.linkedOptionsFieldId;
 
   if (!linkedOptionsFieldId) {
-    const InputComponent = createMultiOptionInput(field);
+    const inputComponentProps = { options: getFieldOptions(field) };
 
     return [
-      makeOperator(ResponseFilterOperator.ContainsAny, "מכיל", InputComponent),
-      makeOperator(ResponseFilterOperator.NotContainsAny, "לא מכיל", InputComponent),
+      makeOperator(
+        ResponseFilterOperator.ContainsAny,
+        "מכיל",
+        MultiOptionFilterInput,
+        true,
+        inputComponentProps,
+      ),
+      makeOperator(
+        ResponseFilterOperator.NotContainsAny,
+        "לא מכיל",
+        MultiOptionFilterInput,
+        true,
+        inputComponentProps,
+      ),
       ...emptyOperators,
     ];
   }
 
-  const InputComponent = isExternallyConnectedField(field, formFields)
-    ? createConnectedSingleOptionInput(linkedOptionsFieldId)
-    : createSingleOptionInput(field);
+  const isExternallyConnected = isExternallyConnectedField(field, formFields);
+  const InputComponent = isExternallyConnected
+    ? ConnectedSingleOptionFilterInput
+    : SingleOptionFilterInput;
+  const inputComponentProps = isExternallyConnected
+    ? { linkedOptionsFieldId }
+    : { options: getFieldOptions(field) };
 
   return [
-    makeOperator(ResponseFilterOperator.Equals, "שווה ל", InputComponent),
-    makeOperator(ResponseFilterOperator.NotEquals, "שונה מ", InputComponent),
+    makeOperator(ResponseFilterOperator.Equals, "שווה ל", InputComponent, true, inputComponentProps),
+    makeOperator(
+      ResponseFilterOperator.NotEquals,
+      "שונה מ",
+      InputComponent,
+      true,
+      inputComponentProps,
+    ),
     ...emptyOperators,
   ];
 };
@@ -145,15 +125,43 @@ const multiOptionOperators = (
 ): GridFilterOperator[] => {
   const linkedOptionsFieldId = (field.extra as any)?.linkedOptionsFieldId;
 
-  const InputComponent = isExternallyConnectedField(field, formFields)
-    ? createConnectedMultiOptionInput(linkedOptionsFieldId)
-    : createMultiOptionInput(field);
+  const isExternallyConnected = isExternallyConnectedField(field, formFields);
+  const InputComponent = isExternallyConnected
+    ? ConnectedMultiOptionFilterInput
+    : MultiOptionFilterInput;
+  const inputComponentProps = isExternallyConnected
+    ? { linkedOptionsFieldId }
+    : { options: getFieldOptions(field) };
 
   return [
-    makeOperator(ResponseFilterOperator.ContainsAny, "מכיל לפחות אחד מהערכים", InputComponent),
-    makeOperator(ResponseFilterOperator.NotContainsAny, "לא מכיל אף אחד מהערכים", InputComponent),
-    makeOperator(ResponseFilterOperator.ContainsAll, "מכיל את כל הערכים", InputComponent),
-    makeOperator(ResponseFilterOperator.NotContainsAll, "לא מכיל את כל הערכים", InputComponent),
+    makeOperator(
+      ResponseFilterOperator.ContainsAny,
+      "מכיל לפחות אחד מהערכים",
+      InputComponent,
+      true,
+      inputComponentProps,
+    ),
+    makeOperator(
+      ResponseFilterOperator.NotContainsAny,
+      "לא מכיל אף אחד מהערכים",
+      InputComponent,
+      true,
+      inputComponentProps,
+    ),
+    makeOperator(
+      ResponseFilterOperator.ContainsAll,
+      "מכיל את כל הערכים",
+      InputComponent,
+      true,
+      inputComponentProps,
+    ),
+    makeOperator(
+      ResponseFilterOperator.NotContainsAll,
+      "לא מכיל את כל הערכים",
+      InputComponent,
+      true,
+      inputComponentProps,
+    ),
     ...emptyOperators,
   ];
 };
