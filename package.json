@@ -59,7 +59,7 @@
     "build": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject",
-    "gear:update": "npm pack ../formula-gear --silent && npm install formula-gear@file:../formula-gear/formula-gear-1.0.0.tgz"
+    "gear:update": "npm install formula-gear@github:FormulaTeam/formula-gear"
   },
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.16.7",
