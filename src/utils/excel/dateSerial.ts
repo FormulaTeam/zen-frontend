@@ -35,7 +35,7 @@ export const toExcelSerialDate = (
   const rawSerial = (wallClockUtcMillis - EXCEL_EPOCH_UTC) / 86400000;
 
   if (precision === "date") {
-    return Math.round(rawSerial);
+    return Math.floor(rawSerial);
   }
 
   return Math.round(rawSerial * MINUTES_PER_DAY) / MINUTES_PER_DAY;

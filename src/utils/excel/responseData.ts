@@ -134,8 +134,21 @@ const formatFieldValue = (
     case fieldType.Number:
       return { formattedValue: String(value) };
 
-    case fieldType.Boolean:
+    case fieldType.Boolean: {
+      if (typeof value === "string") {
+        const normalized = value.trim().toLowerCase();
+
+        if (normalized === "true") {
+          return { formattedValue: "כן" };
+        }
+
+        if (normalized === "false") {
+          return { formattedValue: "לא" };
+        }
+      }
+
       return { formattedValue: value === true ? "כן" : "לא" };
+    }
 
     case fieldType.List: {
       const multiInputFieldValue = value as MultiInputFieldValues;
