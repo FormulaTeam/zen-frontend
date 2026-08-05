@@ -276,12 +276,3 @@
   margin: 6px 4px;
   border-color: #e2e8f0;
 }
-
-.MuiAutocomplete-popper .paginated-autocomplete-listbox {
-  overflow-y: scroll !important;
-  scrollbar-width: none;
-}
-
-.MuiAutocomplete-popper .paginated-autocomplete-listbox::-webkit-scrollbar {
-  display: none !important;
-}

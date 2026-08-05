@@ -10,17 +10,26 @@ import {
 } from "@mui/material";
 import { DatePicker, DateTimePicker, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs, { Dayjs } from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
 import "dayjs/locale/he";
 import { PaginatedAutocompleteListbox } from "@src/components/PaginatedAutocompleteListbox";
 import { OptionResponseValue } from "@src/utils/optionResponseValue";
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
-const ISRAEL_TZ = "Asia/Jerusalem";
+import { dateType, type DateType } from "formula-gear";
+import {
+  compactDateTimeLayoutSx,
+  dateTimePickerPopperSx,
+  getMultiOptionAutocompleteSx,
+  optionAutocompleteSlotProps,
+  selectedOptionsTextSx,
+  timePickerPopperSx,
+} from "./ResponseFilterInputsStyled";
+import {
+  formatDateFilterValue,
+  formatDateTimeFilterValue,
+  formatTimeFilterValue,
+  parseDateFilterValue,
+  parseDateTimeFilterValue,
+  parseTimeFilterValue,
+} from "./responseFilterDateTime.utils";
 
 export type FilterInputProps = {
   item: any;
@@ -80,6 +89,9 @@ const HeaderFilterInputShell: React.FC<{
   }, [filterProps.item?.operator]);
 
   React.useLayoutEffect(() => {
+    // MUI creates this button inside GridHeaderFilterMenuContainer and does not
+    // expose per-button title/tooltip props. Keep the DOM workaround scoped to
+    // this shell so the tooltip only reacts to the operator icon, not its portal menu.
     const operatorButton = operatorMenuRef.current?.querySelector("button");
 
     if (!operatorButton) return;
@@ -154,175 +166,6 @@ const DateTimeRangeContainer: React.FC<DateTimeRangeContainerProps> = ({ classNa
   );
 };
 
-const optionAutocompleteSlotProps = {
-  clearIndicator: {
-    title: "",
-    sx: {
-      display: "none",
-    },
-  },
-  popupIndicator: {
-    title: "",
-    sx: {
-      width: 20,
-      height: 20,
-      padding: 0,
-      margin: 0,
-      color: "#64748b",
-
-      "& .MuiSvgIcon-root": {
-        fontSize: 18,
-      },
-
-      "&:hover": {
-        backgroundColor: "#f1f5f9",
-        color: "#334155",
-      },
-    },
-  },
-  popper: {
-    placement: "bottom-start" as const,
-    sx: {
-      minWidth: 190,
-      maxWidth: "calc(100vw - 32px)",
-
-      "& .MuiAutocomplete-paper": {
-        mt: "4px",
-        borderRadius: "10px",
-        border: "1px solid #d7e4f2",
-        boxShadow: "0 10px 28px rgba(15, 23, 42, 0.1)",
-        overflow: "hidden",
-        direction: "ltr",
-        maxHeight: "300px",
-      },
-
-      "& .MuiAutocomplete-listbox": {
-        p: "4px",
-        maxHeight: "280px",
-        overflowY: "auto",
-        overflowX: "hidden",
-        overscrollBehavior: "contain",
-        scrollbarGutter: "stable",
-        scrollbarWidth: "thin",
-        scrollbarColor: "#94a3b8 #f1f5f9",
-        direction: "ltr",
-        textAlign: "left",
-
-        "&::-webkit-scrollbar": {
-          width: "7px",
-        },
-
-        "&::-webkit-scrollbar-track": {
-          backgroundColor: "#f1f5f9",
-          borderRadius: "999px",
-        },
-
-        "&::-webkit-scrollbar-thumb": {
-          backgroundColor: "#94a3b8",
-          borderRadius: "999px",
-          border: "2px solid #f1f5f9",
-        },
-
-        "&::-webkit-scrollbar-thumb:hover": {
-          backgroundColor: "#64748b",
-        },
-      },
-
-      "& .MuiAutocomplete-option": {
-        minHeight: "34px",
-        borderRadius: "7px",
-        mx: 0,
-        my: "1px",
-        px: "9px",
-        py: "6px",
-        fontSize: "0.95rem",
-        direction: "ltr",
-        textAlign: "left",
-
-        "&[aria-selected='true']": {
-          backgroundColor: "#eef4ff",
-          fontWeight: 600,
-        },
-
-        "&.Mui-focused": {
-          backgroundColor: "#f8fafc",
-        },
-      },
-    },
-  },
-} as const;
-
-const parseDateFilterValue = (value: unknown): Dayjs | null => {
-  if (typeof value !== "string" || value.trim() === "") {
-    return null;
-  }
-
-  const [year, month, day] = value.split("-").map(Number);
-
-  if (!year || !month || !day) {
-    return null;
-  }
-
-  const parsedValue = dayjs()
-    .year(year)
-    .month(month - 1)
-    .date(day)
-    .startOf("day");
-
-  return parsedValue.isValid() ? parsedValue : null;
-};
-
-const parseDateTimeFilterValue = (value: unknown): Dayjs | null => {
-  if (typeof value !== "string" || value.trim() === "") {
-    return null;
-  }
-
-  const parsedValue = dayjs.utc(value);
-
-  return parsedValue.isValid() ? parsedValue.tz(ISRAEL_TZ) : null;
-};
-
-const parseTimeFilterValue = (value: unknown): Dayjs | null => {
-  if (typeof value !== "string" || value.trim() === "" || !value.includes(":")) {
-    return null;
-  }
-
-  const [hours, minutes, seconds] = value.split(":").map(Number);
-
-  if (
-    Number.isNaN(hours) ||
-    Number.isNaN(minutes) ||
-    hours < 0 ||
-    hours > 23 ||
-    minutes < 0 ||
-    minutes > 59 ||
-    (seconds !== undefined && (Number.isNaN(seconds) || seconds < 0 || seconds > 59))
-  ) {
-    return null;
-  }
-
-  return dayjs()
-    .hour(hours)
-    .minute(minutes)
-    .second(seconds ?? 0)
-    .millisecond(0);
-};
-
-const formatDateFilterValue = (value: Dayjs | null): string => {
-  return value?.isValid() ? value.format("YYYY-MM-DD") : "";
-};
-
-const formatDateTimeFilterValue = (value: Dayjs | null): string => {
-  return value?.isValid()
-    ? value.tz(ISRAEL_TZ, true).utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]")
-    : "";
-};
-
-const formatTimeFilterValue = (value: Dayjs | null, timePrecision = "minutes"): string => {
-  const includeSeconds = timePrecision === "seconds";
-  return value?.isValid() ? value.format(includeSeconds ? "HH:mm:ss" : "HH:mm") : "";
-};
-
 const commonPickerSlotProps = (props: FilterInputProps, placeholder?: string) => ({
   textField: {
     inputRef: getInputRef(props),
@@ -352,114 +195,22 @@ const timePickerSlotProps = (props: FilterInputProps, placeholder?: string) => {
     ...slotProps,
     popper: {
       ...slotProps.popper,
-      sx: {
-        "& .MuiMultiSectionDigitalClock-root": {
-          direction: "rtl",
-        },
-        "& .MuiMultiSectionDigitalClockSection-item, & .MuiClockNumber-root": {
-          fontSize: "13.5px",
-        },
-      },
+      sx: timePickerPopperSx,
     },
   };
 };
 
 const dateTimePickerSlotProps = (props: FilterInputProps, placeholder?: string) => {
   const slotProps = commonPickerSlotProps(props, placeholder);
-  const compactDateTimeLayout = {
-    direction: "ltr !important",
-    width: "476px !important",
-    minWidth: "476px !important",
-    maxWidth: "476px !important",
-    boxSizing: "border-box",
-
-    "& .MuiPickersLayout-contentWrapper": {
-      direction: "ltr !important",
-      display: "flex !important",
-      flexDirection: "row-reverse !important",
-      alignItems: "stretch",
-      width: "476px !important",
-      minWidth: "476px !important",
-      maxWidth: "476px !important",
-    },
-
-    "& .MuiDateCalendar-root": {
-      width: "320px !important",
-      minWidth: "320px !important",
-      maxWidth: "320px !important",
-      flex: "0 0 320px !important",
-      margin: "0 auto",
-    },
-
-    "& .MuiMultiSectionDigitalClock-root": {
-      direction: "ltr !important",
-      display: "flex !important",
-      flexDirection: "row-reverse !important",
-      justifyContent: "center !important",
-      gap: "8px",
-      width: "156px !important",
-      minWidth: "156px !important",
-      maxWidth: "156px !important",
-      flex: "0 0 156px !important",
-      boxSizing: "border-box",
-      padding: "8px 6px",
-    },
-
-    "& .MuiMultiSectionDigitalClockSection-root": {
-      width: "48px !important",
-      minWidth: "48px !important",
-      maxWidth: "48px !important",
-      flex: "0 0 48px !important",
-      padding: "3px 0 !important",
-      margin: "0 !important",
-      scrollbarWidth: "none",
-    },
-
-    "& .MuiMultiSectionDigitalClockSection-root::-webkit-scrollbar": {
-      display: "none",
-    },
-
-    "& .MuiMultiSectionDigitalClockSection-root::before, & .MuiMultiSectionDigitalClockSection-root::after":
-    {
-      display: "none !important",
-      height: "0 !important",
-      minHeight: "0 !important",
-      maxHeight: "0 !important",
-    },
-
-    "& .MuiMultiSectionDigitalClockSection-item": {
-      width: "42px !important",
-      minWidth: "42px !important",
-      maxWidth: "42px !important",
-      height: "30px",
-      marginLeft: "auto !important",
-      marginRight: "auto !important",
-      borderRadius: "8px",
-      justifyContent: "center !important",
-      fontSize: "13.5px",
-    },
-
-    "& .MuiClockNumber-root": {
-      fontSize: "13.5px",
-    },
-  } as const;
 
   return {
     ...slotProps,
     popper: {
       ...slotProps.popper,
-      sx: {
-        "& .MuiPaper-root": {
-          width: "476px !important",
-          minWidth: "476px !important",
-          maxWidth: "476px !important",
-          overflow: "hidden !important",
-        },
-        "& .MuiPickersLayout-root": compactDateTimeLayout,
-      },
+      sx: dateTimePickerPopperSx,
     },
     layout: {
-      sx: compactDateTimeLayout,
+      sx: compactDateTimeLayoutSx,
     },
   };
 };
@@ -538,9 +289,9 @@ export const NumberFilterInput: React.FC<FilterInputProps> = (props) => {
   );
 };
 
-export const DateFilterInput: React.FC<FilterInputProps & { dateType?: string }> = (props) => {
+export const DateFilterInput: React.FC<FilterInputProps & { dateType?: DateType }> = (props) => {
   const { item, applyValue, headerFilterMenu, clearButton } = props;
-  const isDateTime = props.dateType === "datetime";
+  const isDateTime = props.dateType === dateType.Datetime;
 
   return (
     <HeaderFilterInputShell
@@ -659,10 +410,10 @@ export const NumberRangeFilterInput: React.FC<FilterInputProps> = (props) => (
   <RangeFilterInput {...props} inputType="number" />
 );
 
-export const DateRangeFilterInput: React.FC<FilterInputProps & { dateType?: string }> = (props) => {
+export const DateRangeFilterInput: React.FC<FilterInputProps & { dateType?: DateType }> = (props) => {
   const { item, applyValue, headerFilterMenu, clearButton } = props;
   const range = (item.value ?? {}) as RangeValue;
-  const isDateTime = props.dateType === "datetime";
+  const isDateTime = props.dateType === dateType.Datetime;
 
   const renderPicker = (rangeKey: "from" | "to", placeholder: string) =>
     isDateTime ? (
@@ -861,20 +612,7 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
           fullWidth
           multiple
           disableCloseOnSelect
-          sx={{
-            "& .MuiAutocomplete-inputRoot": {
-              flexWrap: "nowrap",
-              alignItems: "center",
-              overflow: "hidden",
-              paddingInlineStart: "8px !important",
-              paddingInlineEnd: "28px !important",
-            },
-            "& .MuiAutocomplete-input": {
-              flex: selectedValues.length > 0 ? "0 0 0" : "1 1 auto",
-              width: selectedValues.length > 0 ? "0 !important" : "auto !important",
-              minWidth: selectedValues.length > 0 ? "0 !important" : "42px !important",
-            },
-          }}
+          sx={getMultiOptionAutocompleteSx(selectedValues.length > 0)}
           options={options}
           value={selectedOptions}
           loading={loading}
@@ -917,20 +655,7 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
             const labels = tagValue.map((option) => option.text).filter(Boolean);
 
             return (
-              <Box
-                component="span"
-                sx={{
-                  minWidth: 0,
-                  maxWidth: "100%",
-                  flex: "1 1 auto",
-                  alignSelf: "center",
-                  lineHeight: 1.4,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  direction: "ltr",
-                  textAlign: "left",
-                }}>
+              <Box component="span" sx={selectedOptionsTextSx}>
                 {labels.join(", ")}
               </Box>
             );
