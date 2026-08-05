@@ -1154,7 +1154,7 @@ export const ResponsesTable = React.memo(
       [form, softDeleteResponses],
     );
 
-    const getFormColumns = useMemo((): GridColDef[] => {
+    const baseFormColumns = useMemo((): GridColDef[] => {
       const prefixes = {
         Field: "field:",
         Meta: "meta:",
@@ -1496,49 +1496,7 @@ export const ResponsesTable = React.memo(
         ];
       }
 
-      const columnsInOriginalOrder = [
-        ...structuralColumns,
-        ...resultColumns,
-        ...parentResponseColumns,
-      ];
-      const columnsWithPinning = columnsInOriginalOrder.map((column) => {
-        if (column.field === GRID_DETAIL_PANEL_TOGGLE_FIELD) return column;
-
-        const originalRenderHeader = column.renderHeader;
-
-        return {
-          ...column,
-          headerClassName: clsx(column.headerClassName, "response-pinnable-column-header"),
-          renderHeader: (params: GridColumnHeaderParams) => {
-            const isPinned = pinnedColumnFields.includes(column.field);
-            const headerContent = originalRenderHeader
-              ? originalRenderHeader(params)
-              : <span>{column.headerName}</span>;
-
-            return (
-              <Box className="response-pinnable-header-content">
-                <Box className="response-pinnable-header-label">{headerContent}</Box>
-                <Tooltip title={isPinned ? "בטל נעיצה" : "נעץ עמודה"} arrow>
-                  <IconButton
-                    className="response-column-pin-button"
-                    size="small"
-                    aria-label={isPinned ? "בטל נעיצה" : "נעץ עמודה"}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      toggleColumnPin(column.field);
-                    }}
-                    onMouseDown={(event) => event.stopPropagation()}>
-                    {isPinned ? <PinOff size={17} /> : <Pin size={17} />}
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            );
-          },
-        };
-      });
-
-      return columnsWithPinning;
+      return [...structuralColumns, ...resultColumns, ...parentResponseColumns];
     }, [
       form,
       formFields,
@@ -1555,20 +1513,16 @@ export const ResponsesTable = React.memo(
       currentViewConfig,
       navigateToCreateResponseCopy,
       navigate,
-      pinnedColumnFields,
-      toggleColumnPin,
     ]);
 
     const orderedPinnedColumnFields = useMemo(() => {
       const selectedFields = new Set(pinnedColumnFields);
-      return getFormColumns
+      return baseFormColumns
         .map((column) => column.field)
         .filter(
-          (field) =>
-            selectedFields.has(field) &&
-            !(STRUCTURAL_PINNED_COLUMNS as readonly string[]).includes(field),
+          (field) => selectedFields.has(field) && field !== GRID_DETAIL_PANEL_TOGGLE_FIELD,
         );
-    }, [getFormColumns, pinnedColumnFields]);
+    }, [baseFormColumns, pinnedColumnFields]);
 
     useEffect(() => {
       if (
@@ -1588,6 +1542,44 @@ export const ResponsesTable = React.memo(
       }),
       [orderedPinnedColumnFields],
     );
+
+    const getFormColumns = useMemo((): GridColDef[] => {
+      const pinnedFields = new Set(pinnedColumnFields);
+
+      return baseFormColumns.map((column) => {
+        if (column.field === GRID_DETAIL_PANEL_TOGGLE_FIELD) return column;
+
+        const originalRenderHeader = column.renderHeader;
+        const isPinned = pinnedFields.has(column.field);
+        const pinLabel = isPinned ? "בטל נעיצה" : "נעץ עמודה";
+
+        return {
+          ...column,
+          headerClassName: clsx(column.headerClassName, "response-pinnable-column-header"),
+          renderHeader: (params: GridColumnHeaderParams) => (
+            <Box className="response-pinnable-header-content">
+              <Box className="response-pinnable-header-label">
+                {originalRenderHeader ? originalRenderHeader(params) : column.headerName}
+              </Box>
+              <Tooltip title={pinLabel} arrow>
+                <IconButton
+                  className="response-column-pin-button"
+                  size="small"
+                  aria-label={pinLabel}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    toggleColumnPin(column.field);
+                  }}
+                  onMouseDown={(event) => event.stopPropagation()}>
+                  {isPinned ? <PinOff size={17} /> : <Pin size={17} />}
+                </IconButton>
+              </Tooltip>
+            </Box>
+          ),
+        };
+      });
+    }, [baseFormColumns, pinnedColumnFields, toggleColumnPin]);
 
     const editableColumnFields = useMemo(
       () =>
