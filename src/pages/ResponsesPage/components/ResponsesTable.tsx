@@ -10,15 +10,17 @@ import {
   GridRenderCellParams,
   GridRowSelectionModel,
   GRID_DETAIL_PANEL_TOGGLE_FIELD,
+  GridColumnHeaderParams,
 } from "@mui/x-data-grid-pro";
 import { useFormStore, useInitiateFormStore } from "../stores/form.store";
 import clsx from "clsx";
-import { ArrowDown, ArrowDownUp, ArrowUp, Cloud, CloudOff, RefreshCw } from "lucide-react";
+import { ArrowDown, ArrowDownUp, ArrowUp, Cloud, CloudOff, Pin, PinOff, RefreshCw } from "lucide-react";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { heIL } from "@mui/x-data-grid/locales";
 import ZoomCell from "@components/formInForm/ZoomCell";
-import { Box, MenuItem, Stack, Typography, Select, Tooltip } from "@mui/material";
+import { Box, IconButton, MenuItem, Stack, Typography, Select, Tooltip } from "@mui/material";
+import RtlProvider from "@mui/system/RtlProvider";
 import { useCellEditors } from "../hooks/useCellEditors";
 import { useCellDisplay } from "../hooks/useCellDisplay";
 import { useResponsesTableSorting } from "../hooks/useResponsesTableSorting";
@@ -69,6 +71,8 @@ import {
   ROW_COLOR_RULE_FIELD,
 } from "../utils/colorRules";
 import "./responsesTableFilters.css";
+import { useAuth } from "../../../contexts/AuthContext";
+import { readPinnedColumns, writePinnedColumns } from "../utils/columnPinningCache";
 
 const responseHeaderFilterLocaleText = {
   headerFilterOperatorContains: "מכיל",
@@ -139,6 +143,10 @@ const SortDescendingIcon = () => <ArrowDown size={16} strokeWidth={2.4} />;
 
 const FIELD_COLUMN_WIDTH = 190;
 const FIELD_COLUMN_MAX_WIDTH = 450;
+const STRUCTURAL_PINNED_COLUMNS = [
+  "__check__",
+  GRID_DETAIL_PANEL_TOGGLE_FIELD,
+] as const;
 
 const getResponsiveColumnProps = (
   minWidth: number,
@@ -343,6 +351,7 @@ export const ResponsesTable = React.memo(
   }: ResponsesTableProps) => {
     const { form, rows, pageInfo, filter, setFilter, setResponseFilters, isRowsLoading } =
       useFormStore();
+    const { user } = useAuth();
 
     const navigate = useNavigate();
 
@@ -369,6 +378,20 @@ export const ResponsesTable = React.memo(
     const displayRows = baseDisplayRows;
 
     if (!form) return null;
+
+    const userIdentifier =
+      user?.upn ?? user?.email ?? user?.UPN ?? user?.mail;
+    const [pinnedColumnFields, setPinnedColumnFields] = useState<string[]>(() =>
+      readPinnedColumns(userIdentifier, form.id),
+    );
+
+    const toggleColumnPin = useCallback((field: string) => {
+      setPinnedColumnFields((currentFields) =>
+        currentFields.includes(field)
+          ? currentFields.filter((currentField) => currentField !== field)
+          : [...currentFields, field],
+      );
+    }, []);
 
     const [isNavigating, setIsNavigating] = useState(false);
 
@@ -1239,6 +1262,7 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}index`, {
         field: `${prefixes.Meta}index`,
         headerName: "מזהה",
+        headerClassName: "response-index-column-header",
         renderHeader: () => (
           <HeaderFlex>
             <span>מזהה</span>
@@ -1472,7 +1496,49 @@ export const ResponsesTable = React.memo(
         ];
       }
 
-      return [...structuralColumns, ...resultColumns, ...parentResponseColumns];
+      const columnsInOriginalOrder = [
+        ...structuralColumns,
+        ...resultColumns,
+        ...parentResponseColumns,
+      ];
+      const columnsWithPinning = columnsInOriginalOrder.map((column) => {
+        if (column.field === GRID_DETAIL_PANEL_TOGGLE_FIELD) return column;
+
+        const originalRenderHeader = column.renderHeader;
+
+        return {
+          ...column,
+          headerClassName: clsx(column.headerClassName, "response-pinnable-column-header"),
+          renderHeader: (params: GridColumnHeaderParams) => {
+            const isPinned = pinnedColumnFields.includes(column.field);
+            const headerContent = originalRenderHeader
+              ? originalRenderHeader(params)
+              : <span>{column.headerName}</span>;
+
+            return (
+              <Box className="response-pinnable-header-content">
+                <Box className="response-pinnable-header-label">{headerContent}</Box>
+                <Tooltip title={isPinned ? "בטל נעיצה" : "נעץ עמודה"} arrow>
+                  <IconButton
+                    className="response-column-pin-button"
+                    size="small"
+                    aria-label={isPinned ? "בטל נעיצה" : "נעץ עמודה"}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      toggleColumnPin(column.field);
+                    }}
+                    onMouseDown={(event) => event.stopPropagation()}>
+                    {isPinned ? <PinOff size={17} /> : <Pin size={17} />}
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            );
+          },
+        };
+      });
+
+      return columnsWithPinning;
     }, [
       form,
       formFields,
@@ -1489,7 +1555,39 @@ export const ResponsesTable = React.memo(
       currentViewConfig,
       navigateToCreateResponseCopy,
       navigate,
+      pinnedColumnFields,
+      toggleColumnPin,
     ]);
+
+    const orderedPinnedColumnFields = useMemo(() => {
+      const selectedFields = new Set(pinnedColumnFields);
+      return getFormColumns
+        .map((column) => column.field)
+        .filter(
+          (field) =>
+            selectedFields.has(field) &&
+            !(STRUCTURAL_PINNED_COLUMNS as readonly string[]).includes(field),
+        );
+    }, [getFormColumns, pinnedColumnFields]);
+
+    useEffect(() => {
+      if (
+        orderedPinnedColumnFields.length !== pinnedColumnFields.length ||
+        orderedPinnedColumnFields.some((field, index) => field !== pinnedColumnFields[index])
+      ) {
+        setPinnedColumnFields(orderedPinnedColumnFields);
+        return;
+      }
+
+      writePinnedColumns(userIdentifier, form.id, orderedPinnedColumnFields);
+    }, [form.id, orderedPinnedColumnFields, pinnedColumnFields, userIdentifier]);
+
+    const pinnedColumns = useMemo(
+      () => ({
+        left: [...STRUCTURAL_PINNED_COLUMNS, ...orderedPinnedColumnFields],
+      }),
+      [orderedPinnedColumnFields],
+    );
 
     const editableColumnFields = useMemo(
       () =>
@@ -1815,7 +1913,8 @@ export const ResponsesTable = React.memo(
       <ContentContainer>
         <MainContent>
           <TableContainer>
-            <StyledDataGrid
+            <RtlProvider value>
+              <StyledDataGrid
               scrollbarSize={14}
               key={isInEditMode ? "quick-edit-grid" : "view-grid"}
               apiRef={apiRef}
@@ -1823,7 +1922,6 @@ export const ResponsesTable = React.memo(
               disableColumnMenu
               disableColumnSorting={isInEditMode}
               disableColumnFilter={isInEditMode}
-              disableColumnPinning
               disableVirtualization
               headerFilters={shouldUseHeaderFilters}
               autosizeOptions={{
@@ -1832,11 +1930,8 @@ export const ResponsesTable = React.memo(
                 expand: true,
               }}
               columnBufferPx={5000}
-              initialState={{
-                pinnedColumns: {
-                  left: ["__check__", "meta:index", GRID_DETAIL_PANEL_TOGGLE_FIELD],
-                },
-              }}
+              pinnedColumns={pinnedColumns}
+              pinnedColumnsSectionSeparator="border"
               sortingMode="server"
               sortingOrder={["asc", "desc"]}
               onSortModelChange={handleSortModelChange}
@@ -1906,6 +2001,7 @@ export const ResponsesTable = React.memo(
                 columnMenuLabel: "פעולות",
                 pinToLeft: "נעץ מימין",
                 pinToRight: "נעץ משמאל",
+                unpin: "בטל נעיצה",
               }}
               columns={getFormColumns}
               sortModel={sortModel}
@@ -2013,7 +2109,8 @@ export const ResponsesTable = React.memo(
                     }
                   : {}),
               }}
-            />
+              />
+            </RtlProvider>
             <Box
               ref={horizontalScrollbarTrackRef}
               sx={{
