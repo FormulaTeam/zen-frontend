@@ -19,9 +19,11 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 const StyledDialog = styled(Dialog)(() => ({
   "& .MuiPaper-root": {
+    padding: "5px",
     borderRadius: "16px",
-    maxWidth: "540px",
-    width: "calc(100% - 40px)",
+    maxWidth: "560px",
+    width: "min(560px, calc(100% - 15px))",
+    margin: "12px",
     maxHeight: "min(620px, calc(100vh - 80px))",
     backgroundColor: "#F1F5F9",
     boxShadow: "0 20px 55px rgba(15, 23, 42, 0.18), 0 8px 22px rgba(15, 23, 42, 0.08)",
@@ -31,7 +33,7 @@ const StyledDialog = styled(Dialog)(() => ({
 
 const StyledDialogTitle = styled(DialogTitle)(() => ({
   position: "relative",
-  padding: "28px 32px 12px",
+  padding: "24px 24px 12px",
 }));
 
 const CloseButton = styled(IconButton)(() => ({
@@ -50,14 +52,15 @@ const CloseButton = styled(IconButton)(() => ({
 }));
 
 const HeaderText = styled(Box)(() => ({
-  paddingInlineEnd: "42px",
+  paddingInline: "34px",
 }));
 
-const TitleText = styled(Typography)(() => ({
+const TitleText = styled("div")(() => ({
   fontWeight: 700,
-  fontSize: "1.28rem",
+  fontSize: "1.65rem",
   lineHeight: 1.35,
   color: "#0f172a",
+  textAlign: "center",
 }));
 
 const SubtitleText = styled(Typography)(() => ({
@@ -69,7 +72,7 @@ const SubtitleText = styled(Typography)(() => ({
 }));
 
 const Content = styled(DialogContent)(() => ({
-  padding: "18px 32px 0",
+  padding: "16px 24px 0",
   maxHeight: "280px",
   overflowY: "auto",
 }));
@@ -118,7 +121,7 @@ const ErrorDescription = styled(Typography)(() => ({
 }));
 
 const Actions = styled(DialogActions)(() => ({
-  padding: "30px 32px 30px",
+  padding: "24px 24px 24px",
   gap: "10px",
   justifyContent: "flex-end",
 }));
