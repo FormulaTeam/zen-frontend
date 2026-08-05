@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { ResponsesView, ViewColumn } from "../types/interfaces/tableViews.types";
 import { ViewUserBase } from "../types/interfaces/view.types";
-import { FormFieldDto, UserPersonalDto } from "../types/shared";
+import { FormFieldDto, ResponseFiltersDto, UserPersonalDto } from "../types/shared";
 import { getUserName } from "../utils/utils";
 import { PRE_SYSTEM_COLUMNS, POST_SYSTEM_VIEW_COLUMNS } from "./useViewColumnConfiguration";
 import { MetaColumnIds } from "../utils/interfaces";
@@ -71,6 +71,7 @@ type ViewLogicForm = {
 
 interface UseViewFormLogicProps {
   currentView?: ResponsesView;
+  stagedResponseFilters?: ResponseFiltersDto | null;
   savedViews?: ResponsesView[];
   user?: ViewUserBase | UserPersonalDto;
   form?: ViewLogicForm;
@@ -87,10 +88,15 @@ interface OriginalState {
   isPublic: boolean;
   isDefault: boolean;
   columns: ViewColumn[];
+  responseFilters?: ResponseFiltersDto | null;
 }
+
+const getResponseFiltersSignature = (responseFilters?: ResponseFiltersDto | null): string =>
+  JSON.stringify(responseFilters ?? null);
 
 export const useViewFormLogic = ({
   currentView,
+  stagedResponseFilters,
   savedViews = [],
   user,
   form,
@@ -111,9 +117,11 @@ export const useViewFormLogic = ({
     isPublic: false,
     isDefault: false,
     columns: cloneColumns(columns),
+    responseFilters: undefined,
   });
 
   const lastSyncedViewId = useRef<string | number | undefined>(undefined);
+  const effectiveResponseFilters = currentView?.responseFilters ?? stagedResponseFilters;
 
   useEffect(() => {
     if (!currentView) return;
@@ -132,6 +140,7 @@ export const useViewFormLogic = ({
       isPublic: currentView.isPublic,
       isDefault: currentView.isDefault,
       columns: mapResponseViewColumnsToViewColumns(currentView),
+      responseFilters: currentView.responseFilters,
     });
   }, [currentView]);
 
@@ -152,15 +161,27 @@ export const useViewFormLogic = ({
   const hasChanges = useMemo(() => {
     const columnsChanged = !areColumnsEqual(columns, originalState.columns);
     const nameChanged = normalizeViewName(viewName) !== normalizeViewName(originalState.viewName);
+    const responseFiltersChanged =
+      getResponseFiltersSignature(effectiveResponseFilters) !==
+      getResponseFiltersSignature(originalState.responseFilters);
 
     return (
       isCreatingNew ||
       nameChanged ||
       isPublic !== originalState.isPublic ||
       isDefault !== originalState.isDefault ||
-      columnsChanged
+      columnsChanged ||
+      responseFiltersChanged
     );
-  }, [viewName, isPublic, isDefault, columns, originalState, isCreatingNew]);
+  }, [
+    viewName,
+    isPublic,
+    isDefault,
+    columns,
+    originalState,
+    isCreatingNew,
+    effectiveResponseFilters,
+  ]);
 
   const canSave = useMemo(
     () => !!viewName.trim() && hasChanges && !isSaving,
@@ -187,7 +208,10 @@ export const useViewFormLogic = ({
     }
 
     if (currentView) {
-      onApplyView?.(currentView);
+      onApplyView?.({
+        ...currentView,
+        responseFilters: originalState.responseFilters,
+      });
     }
   }, [originalState, resetToOriginalColumns, onApplyView, currentView, isCreatingNew]);
 
@@ -203,6 +227,7 @@ export const useViewFormLogic = ({
       createdBy: (user as any)?.upn || (user as any)?.UPN || "unknown",
       isPublic,
       isDefault,
+      responseFilters: effectiveResponseFilters,
       sortDirection: sortedCol?.sortDirection || "desc",
       columns: columns.map((column, index) => {
         const isSystem =
@@ -226,7 +251,18 @@ export const useViewFormLogic = ({
     };
 
     onApplyView?.(view);
-  }, [columns, onApplyView, form, viewName, user, isPublic, isDefault, currentView, isCreatingNew]);
+  }, [
+    columns,
+    onApplyView,
+    form,
+    viewName,
+    user,
+    isPublic,
+    isDefault,
+    currentView,
+    isCreatingNew,
+    effectiveResponseFilters,
+  ]);
 
   const handleSwitchPublic = useCallback(
     (next: boolean) => {
@@ -260,6 +296,7 @@ export const useViewFormLogic = ({
       createdByName: getViewUserDisplayName(user),
       isPublic: effectiveIsPublic,
       isDefault,
+      responseFilters: effectiveResponseFilters,
       sortDirection: sortedCol?.sortDirection || "desc",
       columns: columns.map((column, index) => {
         const isSystem =
@@ -292,6 +329,7 @@ export const useViewFormLogic = ({
       isPublic: view.isPublic,
       isDefault: view.isDefault,
       columns: cloneColumns(columns),
+      responseFilters: view.responseFilters,
     });
 
     setIsCreatingNew(false);
@@ -304,6 +342,7 @@ export const useViewFormLogic = ({
     isDefault,
     columns,
     currentView,
+    effectiveResponseFilters,
     isCreatingNew,
     onSaveView,
     hasDuplicatePublicViewName,

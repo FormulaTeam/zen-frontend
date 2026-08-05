@@ -13,7 +13,10 @@ const TITLE_BY_MODE: Record<ViewDisplayMode, string> = {
   list: "תצוגות שמורות",
 };
 
-export function ViewModeHeader({ mode, onBack }: ViewModeHeaderProps) {
+export function ViewModeHeader({
+  mode,
+  onBack,
+}: ViewModeHeaderProps) {
   const title = TITLE_BY_MODE[mode];
   const showBackButton = mode !== "list";
 

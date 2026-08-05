@@ -1,6 +1,7 @@
 import React, { useMemo, useCallback } from "react";
 import {
   Box,
+  Button,
   Typography,
   FormControl,
   InputLabel,
@@ -8,12 +9,11 @@ import {
   MenuItem,
   ToggleButton,
   ToggleButtonGroup,
-  IconButton,
   Tooltip,
-  Stack,
   Switch,
 } from "@mui/material";
 import { ArrowUp, ArrowDown, Info, X } from "lucide-react";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import BaseFieldInput from "../../FormFields/BaseFieldInput/BaseFieldInput";
 import { ViewColumn } from "../../../types/interfaces/tableViews.types";
 import { SubtitlesTypography } from "../ViewManager/styled";
@@ -46,6 +46,7 @@ const isSortable = (typeId?: number): boolean => {
 interface ResponsesViewSettingsProps {
   formId?: number;
   formName?: string;
+  activeViewId?: string | number;
   columns: ViewColumn[];
   formFields?: FormFieldDto[];
   viewName: string;
@@ -60,6 +61,13 @@ interface ResponsesViewSettingsProps {
   getSortedColumns: () => { columnId: string; direction: "asc" | "desc" }[];
   setSortColumn: (id: string, direction: "asc" | "desc") => void;
   clearSort: () => void;
+  onSaveFiltersPreset?: (viewId?: string | number) => void | Promise<void>;
+  onClearFiltersPreset?: (viewId?: string | number) => void | Promise<void>;
+  canSaveFiltersPreset?: boolean;
+  canClearFiltersPreset?: boolean;
+  canApplyFilterPresetChange?: boolean;
+  hasSavedFiltersPresetOnView?: boolean;
+  hasActiveResponseFilters?: boolean;
 }
 
 enum HebrewTitles {
@@ -76,11 +84,21 @@ enum HebrewTitles {
   INCREASING_ORDER_TOOLTIP = "מיון הנתונים בסדר עולה (א'-ת')",
   PUBLIC_VIEW_TOOLTIP = "נראית לכל המשתמשים",
   DEFAULT_VIEW_TOOLTIP = "מוחלת אוטומטית לטופס זה",
+  FILTER_PRESET = "קישור סינון נוכחי לתצוגה",
+  VIEW_IS_LINKED_TO_FILTER = "התצוגה מקושרת לסינון",
+  VIEW_IS_CLEAN_FROM_FILTER = "התצוגה נקייה מסינון",
+  CURRENT_FILTER_WILL_BE_LINKED_TO_VIEW = "הסינון הנוכחי יקושר לתצוגה",
+  CURRENT_FILTER_WILL_BE_CLEARED = "התצוגה תרוקן מסינון",
+  LINK_FILTER = "קישור",
+  UPDATE_FILTER = "עדכון",
+  CLEAR_FILTER = "ניקוי סינון",
+  FILTER_PRESET_INFO = "ניתן להחיל סינונים רצויים בטבלת התגובות ולאחר מכן לקשר אותם לתצוגה הנוכחית",
 }
 
 export function ResponsesViewSettings({
   formId,
   formName,
+  activeViewId,
   columns,
   formFields = [],
   viewName,
@@ -95,6 +113,13 @@ export function ResponsesViewSettings({
   getSortedColumns,
   setSortColumn,
   clearSort,
+  onSaveFiltersPreset,
+  onClearFiltersPreset,
+  canSaveFiltersPreset = false,
+  canClearFiltersPreset = false,
+  canApplyFilterPresetChange = false,
+  hasSavedFiltersPresetOnView = false,
+  hasActiveResponseFilters = false,
 }: ResponsesViewSettingsProps) {
   const VIEW_NAME_PLACEHOLDER = `תצוגה חדשה ב${formName}`;
   const sortedColumn = useMemo(() => getSortedColumns()[0], [getSortedColumns]);
@@ -113,6 +138,18 @@ export function ResponsesViewSettings({
     },
     [formFields],
   );
+
+  const filterPresetButtonLabel = hasSavedFiltersPresetOnView
+    ? HebrewTitles.UPDATE_FILTER
+    : HebrewTitles.LINK_FILTER;
+
+  const filterPresetStateLabel = canApplyFilterPresetChange
+    ? hasActiveResponseFilters
+      ? HebrewTitles.CURRENT_FILTER_WILL_BE_LINKED_TO_VIEW
+      : HebrewTitles.CURRENT_FILTER_WILL_BE_CLEARED
+    : hasSavedFiltersPresetOnView
+      ? HebrewTitles.VIEW_IS_LINKED_TO_FILTER
+      : HebrewTitles.VIEW_IS_CLEAN_FROM_FILTER;
 
   return (
     <Box
@@ -313,6 +350,113 @@ export function ResponsesViewSettings({
               </Tooltip>
             </Box>
           )}
+        </Box>
+      </Box>
+
+      <Box>
+        <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+          <SubtitlesTypography
+            sx={{
+              m: 0,
+              mb: "0 !important",
+              display: "flex",
+              alignItems: "center",
+              lineHeight: "18px",
+              fontSize: "0.84rem",
+            }}>
+            {HebrewTitles.FILTER_PRESET}
+          </SubtitlesTypography>
+
+          <Tooltip title={HebrewTitles.FILTER_PRESET_INFO} slotProps={formInfoTooltipSlotProps} arrow>
+            <Box
+              display="flex"
+              sx={{
+                color: "#94a3b8",
+                cursor: "help",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "18px",
+                lineHeight: "18px",
+                alignSelf: "center",
+              }}>
+              <Info size={14} strokeWidth={2.4} />
+            </Box>
+          </Tooltip>
+        </Box>
+
+        <Box display="flex" gap={1.5} alignItems="center" justifyContent="space-between">
+          <Button
+            size="small"
+            onClick={() => onSaveFiltersPreset?.(activeViewId)}
+            disabled={!onSaveFiltersPreset || !canSaveFiltersPreset}
+            startIcon={<FilterListRoundedIcon fontSize="small" />}
+            sx={{
+              height: 36,
+              minWidth: 92,
+              px: 1.25,
+              borderRadius: "8px",
+              backgroundColor: "#f8fafc",
+              border: "1px solid",
+              borderColor: (theme) =>
+                canApplyFilterPresetChange ? theme.palette.primary.main : "#e2e8f0",
+              color: (theme) =>
+                canApplyFilterPresetChange ? theme.palette.primary.main : "#1e293b",
+              "&:hover": {
+                borderColor: (theme) =>
+                  canApplyFilterPresetChange ? theme.palette.primary.main : "#cbd5e1",
+                backgroundColor: (theme) =>
+                  canApplyFilterPresetChange ? `${theme.palette.primary.main}14` : "#f1f5f9",
+              },
+              "&.Mui-disabled": {
+                borderColor: "#e2e8f0",
+                backgroundColor: "#f8fafc",
+                color: "#94a3b8",
+              },
+              "& .MuiButton-startIcon": {
+                marginInlineStart: 0,
+                marginInlineEnd: "6px",
+              },
+              fontWeight: 700,
+              fontSize: "0.7rem",
+              textTransform: "none",
+            }}>
+            {filterPresetButtonLabel}
+          </Button>
+
+          <Typography
+            variant="body2"
+            sx={{
+              flex: 1,
+              fontWeight: 500,
+              fontSize: "0.62rem",
+              color: "#1e293b",
+              lineHeight: 1.15,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              minWidth: 0,
+            }}>
+            {filterPresetStateLabel}
+          </Typography>
+
+          <Tooltip title={HebrewTitles.CLEAR_FILTER} arrow>
+            <span>
+              <IconOnlyButton
+                size="small"
+                onClick={() => onClearFiltersPreset?.(activeViewId)}
+                disabled={!hasSavedFiltersPresetOnView || !canClearFiltersPreset || !onClearFiltersPreset}
+                $hoverColor="#ef4444"
+                sx={{
+                  width: 36,
+                  height: 36,
+                  backgroundColor: "#f8fafc",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                }}>
+                <X size={16} strokeWidth={2.4} />
+              </IconOnlyButton>
+            </span>
+          </Tooltip>
         </Box>
       </Box>
     </Box>

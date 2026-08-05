@@ -19,7 +19,7 @@ interface ViewsButtonProps extends Pick<
 }
 
 const MANAGE_VIEWS_LABEL = "ניהול תצוגות";
-const SELECT_VIEW_LABEL = "בחר תצוגה";
+const SELECT_VIEW_LABEL = "בחירת תצוגה";
 
 const viewIconOnlyButtonSx = {
   minWidth: "40px",

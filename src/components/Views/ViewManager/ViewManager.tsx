@@ -27,6 +27,12 @@ interface ViewManagerProps {
   savedViews?: ResponsesView[];
   permissionTypes?: number[];
   isSaving?: boolean;
+  onSaveFiltersPreset?: (viewId?: string | number) => void | Promise<void>;
+  onClearFiltersPreset?: (viewId?: string | number) => void | Promise<void>;
+  canSaveFiltersPreset?: boolean;
+  canClearFiltersPreset?: boolean;
+  isCurrentFilterPresetSaved?: boolean;
+  hasActiveResponseFilters?: boolean;
 }
 
 enum Modes {
@@ -45,8 +51,14 @@ export function ViewManager({
   savedViews,
   permissionTypes = [],
   isSaving = false,
+  onSaveFiltersPreset,
+  onClearFiltersPreset,
+  canSaveFiltersPreset = false,
+  canClearFiltersPreset = false,
+  isCurrentFilterPresetSaved = false,
+  hasActiveResponseFilters = false,
 }: ViewManagerProps) {
-  const { mode, editingView, switchToList, switchToCreate, switchToEdit } = useViewMode();
+  const { mode, editingView, setEditingView, switchToList, switchToCreate, switchToEdit } = useViewMode();
 
   const isListMode: boolean = mode === Modes.LIST;
   const isFormMode: boolean = mode === Modes.CREATE || mode === Modes.EDIT;
@@ -55,6 +67,14 @@ export function ViewManager({
   const handleSave = async (view: ResponsesView) => {
     await onSaveView(view);
     switchToList();
+  };
+
+  const handleApplyInForm = (view: ResponsesView) => {
+    if (isFormMode) {
+      setEditingView(view);
+    }
+
+    onApplyView?.(view);
   };
 
   return (
@@ -89,7 +109,13 @@ export function ViewManager({
             permissionTypes={permissionTypes}
             isSaving={isSaving}
             onSaveView={handleSave}
-            onApplyView={onApplyView}
+            onApplyView={handleApplyInForm}
+            onSaveFiltersPreset={onSaveFiltersPreset}
+            onClearFiltersPreset={onClearFiltersPreset}
+            canSaveFiltersPreset={canSaveFiltersPreset || !!editingView?.id}
+            canClearFiltersPreset={canClearFiltersPreset || !!editingView?.id}
+            isCurrentFilterPresetSaved={isCurrentFilterPresetSaved}
+            hasActiveResponseFilters={hasActiveResponseFilters}
           />
         )}
       </Box>
