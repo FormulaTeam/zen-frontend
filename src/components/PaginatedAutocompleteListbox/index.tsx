@@ -1,5 +1,5 @@
 import { useTheme } from "@mui/material";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useLayoutEffect, useRef } from "react";
 import { useLoadMoreOnVisible } from "@src/pages/ResponsesPage/hooks/useLoadMoreOnVisible";
 
 export const PaginatedAutocompleteListbox = React.forwardRef<
@@ -21,18 +21,39 @@ export const PaginatedAutocompleteListbox = React.forwardRef<
   } = props;
   const [rootNode, setRootNode] = useState<HTMLElement | null>(null);
   const [sentinelNode, setSentinelNode] = useState<HTMLElement | null>(null);
+  const [scrollbar, setScrollbar] = useState({ visible: false, top: 0, height: 0 });
+  const [isScrollbarHovered, setIsScrollbarHovered] = useState(false);
+  const [isScrollbarDragging, setIsScrollbarDragging] = useState(false);
+  const scrollbarTrackRef = useRef<HTMLDivElement>(null);
+  const dragStateRef = useRef<{ pointerId: number; startY: number; startTop: number } | null>(null);
   const theme = useTheme();
+
+  const updateScrollbar = useCallback((node: HTMLElement | null) => {
+    if (!node || node.scrollHeight <= node.clientHeight) {
+      setScrollbar({ visible: false, top: 0, height: 0 });
+      return;
+    }
+
+    const trackHeight = node.clientHeight - 8;
+    const height = Math.max(48, (node.clientHeight / node.scrollHeight) * trackHeight);
+    const maxScrollTop = node.scrollHeight - node.clientHeight;
+    const maxThumbTop = trackHeight - height;
+    const top = (node.scrollTop / maxScrollTop) * maxThumbTop;
+
+    setScrollbar({ visible: true, top, height });
+  }, []);
 
   const rootRef = useCallback(
     (node: HTMLUListElement | null) => {
       setRootNode(node);
+      updateScrollbar(node);
       if (typeof ref === "function") {
         ref(node);
       } else if (ref) {
         ref.current = node;
       }
     },
-    [ref],
+    [ref, updateScrollbar],
   );
 
   const sentinelRef = useCallback((node: HTMLLIElement | null) => {
@@ -41,22 +62,149 @@ export const PaginatedAutocompleteListbox = React.forwardRef<
 
   useLoadMoreOnVisible(rootNode, sentinelNode, onLoadMore, !isFetchingNextPage && hasNextPage);
 
+  useLayoutEffect(() => {
+    if (!rootNode) return;
+
+    updateScrollbar(rootNode);
+    const resizeObserver = new ResizeObserver(() => updateScrollbar(rootNode));
+    resizeObserver.observe(rootNode);
+
+    return () => resizeObserver.disconnect();
+  }, [children, rootNode, updateScrollbar]);
+
+  const handleScroll = (event: React.UIEvent<HTMLUListElement>) => {
+    updateScrollbar(event.currentTarget);
+    otherProps.onScroll?.(event);
+  };
+
+  const scrollToThumbTop = (nextTop: number) => {
+    const track = scrollbarTrackRef.current;
+
+    if (!rootNode || !track) return;
+
+    const maxThumbTop = Math.max(track.clientHeight - scrollbar.height, 0);
+    const clampedTop = Math.min(Math.max(nextTop, 0), maxThumbTop);
+    const maxScrollTop = Math.max(rootNode.scrollHeight - rootNode.clientHeight, 0);
+
+    rootNode.scrollTop = maxThumbTop > 0 ? (clampedTop / maxThumbTop) * maxScrollTop : 0;
+    updateScrollbar(rootNode);
+  };
+
+  const handleTrackPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const trackRect = event.currentTarget.getBoundingClientRect();
+    scrollToThumbTop(event.clientY - trackRect.top - scrollbar.height / 2);
+  };
+
+  const handleThumbPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startTop: scrollbar.top,
+    };
+    setIsScrollbarDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleThumbPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const dragState = dragStateRef.current;
+
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+
+    event.preventDefault();
+    scrollToThumbTop(dragState.startTop + event.clientY - dragState.startY);
+  };
+
+  const handleThumbPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStateRef.current?.pointerId !== event.pointerId) return;
+
+    dragStateRef.current = null;
+    setIsScrollbarDragging(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
   return (
-    <ul
-      ref={rootRef}
-      {...otherProps}
+    <div
       style={{
-        ...otherProps.style,
-        fontFamily: theme.typography.fontFamily,
+        position: "relative",
+        width: "100%",
+        maxHeight: 280,
+        overflow: "hidden",
       }}>
-      {children}
-      {!isFetchingNextPage && hasNextPage && (
-        <li
+      <ul
+        ref={rootRef}
+        {...otherProps}
+        onScroll={handleScroll}
+        className={[otherProps.className, "paginated-autocomplete-listbox"]
+          .filter(Boolean)
+          .join(" ")}
+        style={{
+          ...otherProps.style,
+          fontFamily: theme.typography.fontFamily,
+          maxHeight: 280,
+          overflowY: "scroll",
+          overflowX: "hidden",
+          scrollbarWidth: "none",
+        }}>
+        {children}
+        {!isFetchingNextPage && hasNextPage && (
+          <li
+            aria-hidden
+            ref={sentinelRef}
+            style={{ height: 10, width: "100%", padding: 0, margin: 0, listStyle: "none" }}
+          />
+        )}
+      </ul>
+
+      {scrollbar.visible && (
+        <div
           aria-hidden
-          ref={sentinelRef}
-          style={{ height: 10, width: "100%", padding: 0, margin: 0, listStyle: "none" }}
-        />
+          ref={scrollbarTrackRef}
+          onPointerDown={handleTrackPointerDown}
+          style={{
+            position: "absolute",
+            top: 4,
+            bottom: 4,
+            left: 0,
+            width: 14,
+            borderRadius: 999,
+            backgroundColor: "#ffffff",
+            border: "1px solid #e2e8f0",
+            boxSizing: "border-box",
+            cursor: "default",
+          }}>
+          <div
+            onPointerDown={handleThumbPointerDown}
+            onPointerMove={handleThumbPointerMove}
+            onPointerUp={handleThumbPointerUp}
+            onPointerCancel={handleThumbPointerUp}
+            onMouseEnter={() => setIsScrollbarHovered(true)}
+            onMouseLeave={() => setIsScrollbarHovered(false)}
+            style={{
+              position: "absolute",
+              top: scrollbar.top,
+              left: 2,
+              width: 8,
+              height: scrollbar.height,
+              borderRadius: 999,
+              backgroundColor: isScrollbarDragging
+                ? "#64748b"
+                : isScrollbarHovered
+                  ? "#94a3b8"
+                  : "#cbd5e1",
+              cursor: "default",
+              touchAction: "none",
+            }}
+          />
+        </div>
       )}
-    </ul>
+    </div>
   );
 });

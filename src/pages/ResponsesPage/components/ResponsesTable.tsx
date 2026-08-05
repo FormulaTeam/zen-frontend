@@ -476,12 +476,17 @@ export const ResponsesTable = React.memo(
     const apiRef = useGridApiRef();
 
     const columnWidths = useRef<Record<string, number>>({});
-
-    const handleColumnWidthChange = useCallback((params: { colDef: GridColDef; width: number }) => {
-      columnWidths.current[params.colDef.field] = params.width;
-    }, []);
-
     const shouldUseHeaderFilters = showFilters && !isInEditMode;
+
+    const handleColumnWidthChange = useCallback(
+      (params: { colDef: GridColDef; width: number }) => {
+        if (!shouldUseHeaderFilters) {
+          columnWidths.current[params.colDef.field] = params.width;
+        }
+      },
+      [shouldUseHeaderFilters],
+    );
+
     const shouldRequestTableSkeleton = !isInEditMode && isRowsLoading;
     const [showTableSkeleton, setShowTableSkeleton] = useState(false);
 
@@ -1170,13 +1175,25 @@ export const ResponsesTable = React.memo(
 
         const columnId = `${prefixes.Field}${field.id}`;
         const gridField = columnId;
+        const isDateTimeField =
+          field.fieldType === Gear.fieldType.Date &&
+          (field.extra as any)?.dateType === Gear.dateType.Datetime;
+        const filterColumnMinWidth = shouldUseHeaderFilters
+          ? isDateTimeField
+            ? 250
+            : field.fieldType === Gear.fieldType.Date
+              ? 205
+              : field.fieldType === Gear.fieldType.Time
+                ? 190
+                : FIELD_COLUMN_WIDTH
+          : FIELD_COLUMN_WIDTH;
 
         const col: GridColDef = {
           field: gridField,
           headerName: field.displayName,
           headerClassName: "response-field-column-header",
           ...getResponsiveColumnProps(
-            FIELD_COLUMN_WIDTH,
+            filterColumnMinWidth,
             columnWidths.current[gridField],
             FIELD_COLUMN_MAX_WIDTH,
           ),
@@ -1487,6 +1504,7 @@ export const ResponsesTable = React.memo(
       formatCellTooltipValue,
       formatColorRuleTooltipText,
       currentViewConfig,
+      shouldUseHeaderFilters,
       navigateToCreateResponseCopy,
       navigate,
     ]);

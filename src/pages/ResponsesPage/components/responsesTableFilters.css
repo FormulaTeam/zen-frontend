@@ -138,6 +138,10 @@
   background-color: #ffffff;
 }
 
+.MuiDataGrid-root .responses-header-filter-shell--active .MuiInputBase-root:not(.Mui-focused) {
+  border-color: #62748e;
+}
+
 .MuiDataGrid-root .responses-header-filter-shell .MuiInputBase-input {
   min-width: 0;
   height: 40px;
@@ -195,6 +199,8 @@
 
 .MuiDataGrid-root .responses-header-filter-picker .MuiIconButton-root .MuiSvgIcon-root {
   font-size: 22px;
+  position: relative;
+  inset-inline-end: 5px;
 }
 
 .MuiDataGrid-root .responses-header-filter-range {
@@ -233,16 +239,23 @@
 }
 
 .MuiDataGrid-menu .MuiMenuItem-root {
-  min-height: 38px;
+  min-height: 34px;
   border-radius: 10px;
-  padding: 8px 12px;
-  margin: 2px 0;
+  padding: 5px 12px;
+  margin: 0;
   color: #0f172a;
   font-size: 0.92rem;
   font-weight: 500;
   direction: rtl;
   text-align: right;
   justify-content: flex-start;
+}
+
+.MuiDataGrid-menu .MuiMenuItem-root .MuiListItemText-primary {
+  font-size: 1rem;
+  direction: rtl;
+  text-align: right;
+  padding-left: 12px;
 }
 
 .MuiDataGrid-menu .MuiMenuItem-root:hover {
@@ -262,4 +275,13 @@
 .MuiDataGrid-menu .MuiDivider-root {
   margin: 6px 4px;
   border-color: #e2e8f0;
+}
+
+.MuiAutocomplete-popper .paginated-autocomplete-listbox {
+  overflow-y: scroll !important;
+  scrollbar-width: none;
+}
+
+.MuiAutocomplete-popper .paginated-autocomplete-listbox::-webkit-scrollbar {
+  display: none !important;
 }

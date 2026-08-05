@@ -8,12 +8,19 @@ import {
   TextField,
   Tooltip,
 } from "@mui/material";
-import { DatePicker, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
+import { DatePicker, DateTimePicker, LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import "dayjs/locale/he";
 import { PaginatedAutocompleteListbox } from "@src/components/PaginatedAutocompleteListbox";
 import { OptionResponseValue } from "@src/utils/optionResponseValue";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const ISRAEL_TZ = "Asia/Jerusalem";
 
 export type FilterInputProps = {
   item: any;
@@ -56,33 +63,67 @@ const HeaderFilterInputShell: React.FC<{
   filterProps: FilterInputProps;
 }> = ({ headerFilterMenu, clearButton, children, filterProps, noValue = false }) => {
   const operatorMenuRef = React.useRef<HTMLDivElement>(null);
+  const initialOperatorRef = React.useRef(filterProps.item?.operator);
+  const [hasChosenOperator, setHasChosenOperator] = React.useState(false);
+  const [operatorTooltipOpen, setOperatorTooltipOpen] = React.useState(false);
   const filterValue = filterProps.item?.value;
   const hasFilterValue = Array.isArray(filterValue)
     ? filterValue.length > 0
     : filterValue !== undefined && filterValue !== null && filterValue !== "";
-  const operatorLabel = hasFilterValue ? filterProps.slotProps?.root?.label : undefined;
+  const operatorLabel =
+    hasFilterValue || hasChosenOperator ? filterProps.slotProps?.root?.label : undefined;
+
+  React.useEffect(() => {
+    if (filterProps.item?.operator !== initialOperatorRef.current) {
+      setHasChosenOperator(true);
+    }
+  }, [filterProps.item?.operator]);
 
   React.useLayoutEffect(() => {
     const operatorButton = operatorMenuRef.current?.querySelector("button");
 
-    operatorButton?.removeAttribute("title");
+    if (!operatorButton) return;
+
+    const showTooltip = () => setOperatorTooltipOpen(true);
+    const hideTooltip = () => setOperatorTooltipOpen(false);
+    const markOperatorAsChosen = () => setHasChosenOperator(true);
+
+    operatorButton.removeAttribute("title");
 
     if (typeof operatorLabel === "string") {
-      operatorButton?.setAttribute("aria-label", operatorLabel);
+      operatorButton.setAttribute("aria-label", operatorLabel);
     }
-  });
+
+    operatorButton.addEventListener("mouseenter", showTooltip);
+    operatorButton.addEventListener("mouseleave", hideTooltip);
+    operatorButton.addEventListener("click", markOperatorAsChosen);
+
+    return () => {
+      operatorButton.removeEventListener("mouseenter", showTooltip);
+      operatorButton.removeEventListener("mouseleave", hideTooltip);
+      operatorButton.removeEventListener("click", markOperatorAsChosen);
+    };
+  }, [operatorLabel]);
 
   return (
     <Stack
       direction="row"
       alignItems="center"
-      className={
-        noValue
-          ? "responses-header-filter-shell responses-header-filter-shell--no-value"
-          : "responses-header-filter-shell"
-      }>
+      className={[
+        "responses-header-filter-shell",
+        noValue ? "responses-header-filter-shell--no-value" : "",
+        hasFilterValue ? "responses-header-filter-shell--active" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}>
       {headerFilterMenu && (
-        <Tooltip title={operatorLabel ?? ""} arrow>
+        <Tooltip
+          title={operatorLabel ?? ""}
+          open={Boolean(operatorLabel) && operatorTooltipOpen}
+          disableFocusListener
+          disableHoverListener
+          disableTouchListener
+          arrow>
           <Box ref={operatorMenuRef} className="responses-header-filter-menu">
             {headerFilterMenu}
           </Box>
@@ -161,8 +202,30 @@ const optionAutocompleteSlotProps = {
         overflowY: "auto",
         overflowX: "hidden",
         overscrollBehavior: "contain",
+        scrollbarGutter: "stable",
+        scrollbarWidth: "thin",
+        scrollbarColor: "#94a3b8 #f1f5f9",
         direction: "ltr",
         textAlign: "left",
+
+        "&::-webkit-scrollbar": {
+          width: "7px",
+        },
+
+        "&::-webkit-scrollbar-track": {
+          backgroundColor: "#f1f5f9",
+          borderRadius: "999px",
+        },
+
+        "&::-webkit-scrollbar-thumb": {
+          backgroundColor: "#94a3b8",
+          borderRadius: "999px",
+          border: "2px solid #f1f5f9",
+        },
+
+        "&::-webkit-scrollbar-thumb:hover": {
+          backgroundColor: "#64748b",
+        },
       },
 
       "& .MuiAutocomplete-option": {
@@ -209,6 +272,16 @@ const parseDateFilterValue = (value: unknown): Dayjs | null => {
   return parsedValue.isValid() ? parsedValue : null;
 };
 
+const parseDateTimeFilterValue = (value: unknown): Dayjs | null => {
+  if (typeof value !== "string" || value.trim() === "") {
+    return null;
+  }
+
+  const parsedValue = dayjs.utc(value);
+
+  return parsedValue.isValid() ? parsedValue.tz(ISRAEL_TZ) : null;
+};
+
 const parseTimeFilterValue = (value: unknown): Dayjs | null => {
   if (typeof value !== "string" || value.trim() === "" || !value.includes(":")) {
     return null;
@@ -239,6 +312,12 @@ const formatDateFilterValue = (value: Dayjs | null): string => {
   return value?.isValid() ? value.format("YYYY-MM-DD") : "";
 };
 
+const formatDateTimeFilterValue = (value: Dayjs | null): string => {
+  return value?.isValid()
+    ? value.tz(ISRAEL_TZ, true).utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]")
+    : "";
+};
+
 const formatTimeFilterValue = (value: Dayjs | null, timePrecision = "minutes"): string => {
   const includeSeconds = timePrecision === "seconds";
   return value?.isValid() ? value.format(includeSeconds ? "HH:mm:ss" : "HH:mm") : "";
@@ -265,6 +344,125 @@ const commonPickerSlotProps = (props: FilterInputProps, placeholder?: string) =>
     },
   },
 });
+
+const timePickerSlotProps = (props: FilterInputProps, placeholder?: string) => {
+  const slotProps = commonPickerSlotProps(props, placeholder);
+
+  return {
+    ...slotProps,
+    popper: {
+      ...slotProps.popper,
+      sx: {
+        "& .MuiMultiSectionDigitalClock-root": {
+          direction: "rtl",
+        },
+        "& .MuiMultiSectionDigitalClockSection-item, & .MuiClockNumber-root": {
+          fontSize: "13.5px",
+        },
+      },
+    },
+  };
+};
+
+const dateTimePickerSlotProps = (props: FilterInputProps, placeholder?: string) => {
+  const slotProps = commonPickerSlotProps(props, placeholder);
+  const compactDateTimeLayout = {
+    direction: "ltr !important",
+    width: "476px !important",
+    minWidth: "476px !important",
+    maxWidth: "476px !important",
+    boxSizing: "border-box",
+
+    "& .MuiPickersLayout-contentWrapper": {
+      direction: "ltr !important",
+      display: "flex !important",
+      flexDirection: "row-reverse !important",
+      alignItems: "stretch",
+      width: "476px !important",
+      minWidth: "476px !important",
+      maxWidth: "476px !important",
+    },
+
+    "& .MuiDateCalendar-root": {
+      width: "320px !important",
+      minWidth: "320px !important",
+      maxWidth: "320px !important",
+      flex: "0 0 320px !important",
+      margin: "0 auto",
+    },
+
+    "& .MuiMultiSectionDigitalClock-root": {
+      direction: "ltr !important",
+      display: "flex !important",
+      flexDirection: "row-reverse !important",
+      justifyContent: "center !important",
+      gap: "8px",
+      width: "156px !important",
+      minWidth: "156px !important",
+      maxWidth: "156px !important",
+      flex: "0 0 156px !important",
+      boxSizing: "border-box",
+      padding: "8px 6px",
+    },
+
+    "& .MuiMultiSectionDigitalClockSection-root": {
+      width: "48px !important",
+      minWidth: "48px !important",
+      maxWidth: "48px !important",
+      flex: "0 0 48px !important",
+      padding: "3px 0 !important",
+      margin: "0 !important",
+      scrollbarWidth: "none",
+    },
+
+    "& .MuiMultiSectionDigitalClockSection-root::-webkit-scrollbar": {
+      display: "none",
+    },
+
+    "& .MuiMultiSectionDigitalClockSection-root::before, & .MuiMultiSectionDigitalClockSection-root::after":
+    {
+      display: "none !important",
+      height: "0 !important",
+      minHeight: "0 !important",
+      maxHeight: "0 !important",
+    },
+
+    "& .MuiMultiSectionDigitalClockSection-item": {
+      width: "42px !important",
+      minWidth: "42px !important",
+      maxWidth: "42px !important",
+      height: "30px",
+      marginLeft: "auto !important",
+      marginRight: "auto !important",
+      borderRadius: "8px",
+      justifyContent: "center !important",
+      fontSize: "13.5px",
+    },
+
+    "& .MuiClockNumber-root": {
+      fontSize: "13.5px",
+    },
+  } as const;
+
+  return {
+    ...slotProps,
+    popper: {
+      ...slotProps.popper,
+      sx: {
+        "& .MuiPaper-root": {
+          width: "476px !important",
+          minWidth: "476px !important",
+          maxWidth: "476px !important",
+          overflow: "hidden !important",
+        },
+        "& .MuiPickersLayout-root": compactDateTimeLayout,
+      },
+    },
+    layout: {
+      sx: compactDateTimeLayout,
+    },
+  };
+};
 
 const PickerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -340,8 +538,9 @@ export const NumberFilterInput: React.FC<FilterInputProps> = (props) => {
   );
 };
 
-export const DateFilterInput: React.FC<FilterInputProps> = (props) => {
+export const DateFilterInput: React.FC<FilterInputProps & { dateType?: string }> = (props) => {
   const { item, applyValue, headerFilterMenu, clearButton } = props;
+  const isDateTime = props.dateType === "datetime";
 
   return (
     <HeaderFilterInputShell
@@ -350,14 +549,28 @@ export const DateFilterInput: React.FC<FilterInputProps> = (props) => {
       filterProps={props}>
       <HeaderFilterPickerContainer>
         <PickerProvider>
-          <DatePicker
-            value={parseDateFilterValue(item.value)}
-            onChange={(newValue) =>
-              applyFilterValue(item, applyValue, formatDateFilterValue(newValue))
-            }
-            format="DD/MM/YYYY"
-            slotProps={commonPickerSlotProps(props, "תאריך")}
-          />
+          {isDateTime ? (
+            <DateTimePicker
+              value={parseDateTimeFilterValue(item.value)}
+              onChange={(newValue) =>
+                applyFilterValue(item, applyValue, formatDateTimeFilterValue(newValue))
+              }
+              format="DD/MM/YYYY HH:mm"
+              views={["year", "month", "day", "hours", "minutes"]}
+              ampm={false}
+              closeOnSelect={false}
+              slotProps={dateTimePickerSlotProps(props, "תאריך ושעה")}
+            />
+          ) : (
+            <DatePicker
+              value={parseDateFilterValue(item.value)}
+              onChange={(newValue) =>
+                applyFilterValue(item, applyValue, formatDateFilterValue(newValue))
+              }
+              format="DD/MM/YYYY"
+              slotProps={commonPickerSlotProps(props, "תאריך")}
+            />
+          )}
         </PickerProvider>
       </HeaderFilterPickerContainer>
     </HeaderFilterInputShell>
@@ -381,8 +594,9 @@ export const TimeFilterInput: React.FC<FilterInputProps & { timePrecision?: stri
               applyFilterValue(item, applyValue, formatTimeFilterValue(newValue, timePrecision))
             }
             views={showSeconds ? ["hours", "minutes", "seconds"] : ["hours", "minutes"]}
+            format={showSeconds ? "HH:mm:ss" : "HH:mm"}
             ampm={false}
-            slotProps={commonPickerSlotProps(props, "שעה")}
+            slotProps={timePickerSlotProps(props, "שעה")}
           />
         </PickerProvider>
       </HeaderFilterPickerContainer>
@@ -445,9 +659,40 @@ export const NumberRangeFilterInput: React.FC<FilterInputProps> = (props) => (
   <RangeFilterInput {...props} inputType="number" />
 );
 
-export const DateRangeFilterInput: React.FC<FilterInputProps> = (props) => {
+export const DateRangeFilterInput: React.FC<FilterInputProps & { dateType?: string }> = (props) => {
   const { item, applyValue, headerFilterMenu, clearButton } = props;
   const range = (item.value ?? {}) as RangeValue;
+  const isDateTime = props.dateType === "datetime";
+
+  const renderPicker = (rangeKey: "from" | "to", placeholder: string) =>
+    isDateTime ? (
+      <DateTimePicker
+        value={parseDateTimeFilterValue(range[rangeKey])}
+        onChange={(newValue) =>
+          applyFilterValue(item, applyValue, {
+            ...range,
+            [rangeKey]: formatDateTimeFilterValue(newValue),
+          })
+        }
+        format="DD/MM/YYYY HH:mm"
+        views={["year", "month", "day", "hours", "minutes"]}
+        ampm={false}
+        closeOnSelect={false}
+        slotProps={dateTimePickerSlotProps(props, placeholder)}
+      />
+    ) : (
+      <DatePicker
+        value={parseDateFilterValue(range[rangeKey])}
+        onChange={(newValue) =>
+          applyFilterValue(item, applyValue, {
+            ...range,
+            [rangeKey]: formatDateFilterValue(newValue),
+          })
+        }
+        format="DD/MM/YYYY"
+        slotProps={commonPickerSlotProps(props, placeholder)}
+      />
+    );
 
   return (
     <HeaderFilterInputShell
@@ -457,29 +702,8 @@ export const DateRangeFilterInput: React.FC<FilterInputProps> = (props) => {
       <HeaderFilterPickerContainer>
         <PickerProvider>
           <DateTimeRangeContainer direction="row">
-            <DatePicker
-              value={parseDateFilterValue(range.from)}
-              onChange={(newValue) =>
-                applyFilterValue(item, applyValue, {
-                  ...range,
-                  from: formatDateFilterValue(newValue),
-                })
-              }
-              format="DD/MM/YYYY"
-              slotProps={commonPickerSlotProps(props, "מ")}
-            />
-
-            <DatePicker
-              value={parseDateFilterValue(range.to)}
-              onChange={(newValue) =>
-                applyFilterValue(item, applyValue, {
-                  ...range,
-                  to: formatDateFilterValue(newValue),
-                })
-              }
-              format="DD/MM/YYYY"
-              slotProps={commonPickerSlotProps(props, "עד")}
-            />
+            {renderPicker("from", "מ")}
+            {renderPicker("to", "עד")}
           </DateTimeRangeContainer>
         </PickerProvider>
       </HeaderFilterPickerContainer>
@@ -511,8 +735,9 @@ export const TimeRangeFilterInput: React.FC<FilterInputProps & { timePrecision?:
                 })
               }
               views={showSeconds ? ["hours", "minutes", "seconds"] : ["hours", "minutes"]}
+              format={showSeconds ? "HH:mm:ss" : "HH:mm"}
               ampm={false}
-              slotProps={commonPickerSlotProps(props, "מ")}
+              slotProps={timePickerSlotProps(props, "מ")}
             />
 
             <TimePicker
@@ -524,8 +749,9 @@ export const TimeRangeFilterInput: React.FC<FilterInputProps & { timePrecision?:
                 })
               }
               views={showSeconds ? ["hours", "minutes", "seconds"] : ["hours", "minutes"]}
+              format={showSeconds ? "HH:mm:ss" : "HH:mm"}
               ampm={false}
-              slotProps={commonPickerSlotProps(props, "עד")}
+              slotProps={timePickerSlotProps(props, "עד")}
             />
           </DateTimeRangeContainer>
         </PickerProvider>
@@ -702,8 +928,8 @@ export const MultiOptionFilterInput: React.FC<FilterInputProps> = (props) => {
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
-                  direction: "rtl",
-                  textAlign: "right",
+                  direction: "ltr",
+                  textAlign: "left",
                 }}>
                 {labels.join(", ")}
               </Box>

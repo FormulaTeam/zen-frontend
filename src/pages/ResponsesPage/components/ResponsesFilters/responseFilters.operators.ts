@@ -158,15 +158,31 @@ const multiOptionOperators = (
   ];
 };
 
-const dateOperators = (): GridFilterOperator[] => [
-  makeOperator(ResponseFilterOperator.On, "בתאריך", DateFilterInput),
-  makeOperator(ResponseFilterOperator.NotOn, "לא בתאריך", DateFilterInput),
-  makeOperator(ResponseFilterOperator.Before, "לפני", DateFilterInput),
-  makeOperator(ResponseFilterOperator.BeforeOrEqual, "לפני או בתאריך", DateFilterInput),
-  makeOperator(ResponseFilterOperator.After, "אחרי", DateFilterInput),
-  makeOperator(ResponseFilterOperator.AfterOrEqual, "אחרי או בתאריך", DateFilterInput),
-  makeOperator(ResponseFilterOperator.Between, "בין", DateRangeFilterInput),
-  makeOperator(ResponseFilterOperator.NotBetween, "לא בין", DateRangeFilterInput),
+const createDateInput = (field: FormFieldDto): GridFilterOperator["InputComponent"] => {
+  const dateType = (field.extra as any)?.dateType;
+
+  return function DateInput(props: any) {
+    return React.createElement(DateFilterInput, { ...props, dateType });
+  };
+};
+
+const createDateRangeInput = (field: FormFieldDto): GridFilterOperator["InputComponent"] => {
+  const dateType = (field.extra as any)?.dateType;
+
+  return function DateRangeInput(props: any) {
+    return React.createElement(DateRangeFilterInput, { ...props, dateType });
+  };
+};
+
+const dateOperators = (field: FormFieldDto): GridFilterOperator[] => [
+  makeOperator(ResponseFilterOperator.On, "בתאריך", createDateInput(field)),
+  makeOperator(ResponseFilterOperator.NotOn, "לא בתאריך", createDateInput(field)),
+  makeOperator(ResponseFilterOperator.Before, "לפני", createDateInput(field)),
+  makeOperator(ResponseFilterOperator.BeforeOrEqual, "לפני או בתאריך", createDateInput(field)),
+  makeOperator(ResponseFilterOperator.After, "אחרי", createDateInput(field)),
+  makeOperator(ResponseFilterOperator.AfterOrEqual, "אחרי או בתאריך", createDateInput(field)),
+  makeOperator(ResponseFilterOperator.Between, "בין", createDateRangeInput(field)),
+  makeOperator(ResponseFilterOperator.NotBetween, "לא בין", createDateRangeInput(field)),
   ...emptyOperators,
 ];
 
@@ -247,7 +263,7 @@ export const getFilterOperatorsForField = (
         : singleOptionOperators(field, formFields);
 
     case fieldType.Date:
-      return dateOperators();
+      return dateOperators(field);
 
     case fieldType.Time:
       return timeOperators(field);
