@@ -1849,7 +1849,7 @@ export const ResponsesTable = React.memo(
               }}
               columnBufferPx={5000}
               pinnedColumns={{
-                left: ["__check__", GRID_DETAIL_PANEL_TOGGLE_FIELD],
+                left: [GRID_DETAIL_PANEL_TOGGLE_FIELD],
                 right: [],
               }}
               sortingMode="server"
