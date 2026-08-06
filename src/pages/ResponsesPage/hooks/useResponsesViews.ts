@@ -3,9 +3,14 @@ import { useViewManager } from "../../../hooks/useViewManager";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useFormStore } from "../stores/form.store";
 import { ResponsesView, ViewColumn } from "../../../types/interfaces/tableViews.types";
-import { FormDto, FormFieldDto, UserPersonalDto } from "../../../types/shared";
+import { FormDto, FormFieldDto, ResponseFiltersDto, UserPersonalDto } from "../../../types/shared";
 import { MetaColumnIds } from "../../../utils/interfaces";
 import { IOrderBy } from "../../../types/enums/filtersAndSorts.enum";
+import { showErrorNotification, showSuccessNotification } from "../../../utils/utils";
+import {
+  applyResponseFiltersToViewColumns,
+  getResponseFiltersFromViewColumns,
+} from "../utils/viewResponseFilters";
 
 export interface UseResponsesViewsReturn {
   isSidePanelOpen: boolean;
@@ -22,6 +27,11 @@ export interface UseResponsesViewsReturn {
   handleViewDropdownChange: (viewId: string) => void;
   handleApplyView: (view: ResponsesView) => void;
   handleDeleteView: (view: ResponsesView) => Promise<void>;
+  handleSaveCurrentFiltersPreset: (viewId?: string | number) => Promise<void>;
+  handleClearSavedFiltersPreset: (viewId?: string | number) => Promise<void>;
+  hasSavedFiltersPresetOnSelectedView: boolean;
+  isCurrentFilterPresetSaved: boolean;
+  hasActiveResponseFilters: boolean;
 }
 
 type ViewManagerForm = Pick<FormDto, "id" | "name"> & {
@@ -35,6 +45,8 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const lastSyncedViewId = useRef<string | number | undefined>(undefined);
   const lastViewSortDef = useRef({ sortBy: "", orderBy: "" });
+  const lastViewFiltersSignature = useRef("");
+  const forceExactFilterSyncOnNextViewUpdate = useRef(false);
 
   const viewManagerForm = useMemo<ViewManagerForm | undefined>(() => {
     if (!form) {
@@ -98,11 +110,129 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
 
   const hasSavedViews = useMemo(() => savedViews.length > 0, [savedViews]);
 
+  const selectedOrCurrentView = useMemo(
+    () => currentView ?? savedViews.find((view) => view.id && String(view.id) === selectedViewId),
+    [currentView, savedViews, selectedViewId],
+  );
+
+  const getFiltersSignature = (responseFilters?: ResponseFiltersDto | null): string =>
+    JSON.stringify(responseFilters?.items ?? []);
+
+  const selectedViewResponseFilters = useMemo(
+    () =>
+      selectedOrCurrentView?.responseFilters ??
+      getResponseFiltersFromViewColumns((selectedOrCurrentView?.columns as any) ?? undefined),
+    [selectedOrCurrentView],
+  );
+
+  const hasSavedFiltersPresetOnSelectedView = useMemo(
+    () => !!(selectedViewResponseFilters?.items && selectedViewResponseFilters.items.length > 0),
+    [selectedViewResponseFilters],
+  );
+
+  const hasActiveResponseFilters = useMemo(
+    () => !!(filter?.responseFilters?.items && filter.responseFilters.items.length > 0),
+    [filter?.responseFilters],
+  );
+
+  const isCurrentFilterPresetSaved = useMemo(() => {
+    const currentSignature = getFiltersSignature(filter?.responseFilters);
+    const savedSignature = getFiltersSignature(selectedViewResponseFilters);
+
+    return currentSignature === savedSignature;
+  }, [filter?.responseFilters, selectedViewResponseFilters]);
+
+  const handleSaveViewWithResponseFilters = async (view: ResponsesView): Promise<void> => {
+    const currentResponseFilters =
+      filter?.responseFilters?.items?.length && filter.responseFilters.items.length > 0
+        ? filter.responseFilters
+        : { items: [] };
+
+    const responseFiltersForSave =
+      view.responseFilters !== undefined ? view.responseFilters : currentResponseFilters;
+
+    await handleSaveView({
+      ...view,
+      responseFilters: responseFiltersForSave,
+      columns: applyResponseFiltersToViewColumns(view.columns as any, responseFiltersForSave) as any,
+    });
+  };
+
+  const resolveTargetView = (viewId?: string | number): ResponsesView | undefined => {
+    if (viewId !== undefined && viewId !== null) {
+      const byId = savedViews.find((view) => view.id && String(view.id) === String(viewId));
+
+      if (byId) return byId;
+      if (currentView?.id && String(currentView.id) === String(viewId)) return currentView;
+    }
+
+    return selectedOrCurrentView;
+  };
+
+  const handleSaveCurrentFiltersPreset = async (
+    viewId?: string | number,
+  ): Promise<void> => {
+    const targetView = resolveTargetView(viewId);
+
+    if (!targetView?.id) {
+      showErrorNotification("יש לבחור תצוגה לפני שמירת הסינון");
+      return;
+    }
+
+    const currentResponseFilters =
+      filter?.responseFilters?.items?.length && filter.responseFilters.items.length > 0
+        ? filter.responseFilters
+        : { items: [] };
+
+    forceExactFilterSyncOnNextViewUpdate.current = true;
+
+    try {
+      await handleSaveViewWithResponseFilters({
+        ...targetView,
+        responseFilters: currentResponseFilters,
+        columns: applyResponseFiltersToViewColumns(
+          targetView.columns as any,
+          currentResponseFilters,
+        ) as any,
+      });
+
+      showSuccessNotification("הסינון נשמר לתצוגה");
+    } catch {
+      forceExactFilterSyncOnNextViewUpdate.current = false;
+    }
+  };
+
+  const handleClearSavedFiltersPreset = async (
+    viewId?: string | number,
+  ): Promise<void> => {
+    const targetView = resolveTargetView(viewId);
+
+    if (!targetView?.id) {
+      showErrorNotification("יש לבחור תצוגה לפני הסרת הסינון השמור");
+      return;
+    }
+
+    forceExactFilterSyncOnNextViewUpdate.current = true;
+
+    try {
+      await handleSaveView({
+        ...targetView,
+        responseFilters: { items: [] },
+        columns: applyResponseFiltersToViewColumns(targetView.columns as any, null) as any,
+      });
+
+      showSuccessNotification("הסינון השמור הוסר מהתצוגה");
+    } catch {
+      forceExactFilterSyncOnNextViewUpdate.current = false;
+    }
+  };
+
   // Sync view sorting to store filter
   useEffect(() => {
     // 1. Determine target sort state
     let targetSortBy = "meta:index";
     let targetOrderBy = IOrderBy.DESC;
+    let targetResponseFilters: ResponseFiltersDto | undefined = undefined;
 
     if (currentView) {
       // Find the intended sort column
@@ -138,22 +268,37 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
         }
       }
       targetOrderBy = (currentView.sortDirection || "desc").toUpperCase() as any;
+      targetResponseFilters =
+        currentView.responseFilters ??
+        getResponseFiltersFromViewColumns((currentView.columns as any) ?? undefined) ??
+        undefined;
     }
+
+    const nextFiltersSignature = JSON.stringify(targetResponseFilters?.items ?? []);
 
     // 2. Check if the view or its sort definition changed
     const isNewViewSelection = currentView?.id !== lastSyncedViewId.current;
     const viewSortChanged =
       targetSortBy !== lastViewSortDef.current.sortBy ||
       targetOrderBy !== lastViewSortDef.current.orderBy;
+    const viewFiltersChanged = nextFiltersSignature !== lastViewFiltersSignature.current;
 
-    if (isNewViewSelection || viewSortChanged) {
+    if (isNewViewSelection || viewSortChanged || viewFiltersChanged) {
+      const shouldApplyExactViewFilters =
+        isNewViewSelection || forceExactFilterSyncOnNextViewUpdate.current;
+
+      forceExactFilterSyncOnNextViewUpdate.current = false;
       lastSyncedViewId.current = currentView?.id;
       lastViewSortDef.current = { sortBy: targetSortBy, orderBy: targetOrderBy };
+      lastViewFiltersSignature.current = nextFiltersSignature;
 
       setFilter((prev) => ({
         ...prev,
         sortBy: targetSortBy,
         orderBy: targetOrderBy,
+        responseFilters: shouldApplyExactViewFilters
+          ? targetResponseFilters
+          : targetResponseFilters ?? prev?.responseFilters,
         before: undefined,
         after: undefined,
         pageNumber: 1,
@@ -171,10 +316,15 @@ export const useResponsesViews = (): UseResponsesViewsReturn => {
     selectedViewId,
     defaultViewId,
     isSaving,
-    handleSaveView,
+    handleSaveView: handleSaveViewWithResponseFilters,
     handleLoadView,
     handleViewDropdownChange,
     handleApplyView,
     handleDeleteView,
+    handleSaveCurrentFiltersPreset,
+    handleClearSavedFiltersPreset,
+    hasSavedFiltersPresetOnSelectedView,
+    isCurrentFilterPresetSaved,
+    hasActiveResponseFilters,
   };
 };

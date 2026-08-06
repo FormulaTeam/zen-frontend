@@ -1,3 +1,5 @@
+import { ResponseFiltersDto } from "../shared";
+
 export interface ResponsesViewColumn {
   id?: string | number;
   viewId?: string | number;
@@ -7,6 +9,8 @@ export interface ResponsesViewColumn {
   isVisible: boolean;
   index: number; // Horizontal position (0-indexed)
   isSortColumn: boolean; // Critical: True if this is the primary sort column
+  comparatorId?: number | null;
+  targetValue?: unknown | null;
 }
 
 /**
@@ -37,6 +41,7 @@ export interface ResponsesView {
   columns: ResponsesViewColumn[];
   sortColumnId?: string | number | null; // Engine calculated based on isSortColumn
   sortDirection: "asc" | "desc";
+  responseFilters?: ResponseFiltersDto | null;
   config?: ViewConfig; // Legacy config support
   createdAt?: Date;
   updatedAt?: Date;

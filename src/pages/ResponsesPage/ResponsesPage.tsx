@@ -376,6 +376,11 @@ const ResponsesPageContent = (): JSX.Element => {
     handleDeleteView,
     handleApplyView,
     handleSaveView,
+    handleSaveCurrentFiltersPreset,
+    handleClearSavedFiltersPreset,
+    hasSavedFiltersPresetOnSelectedView,
+    isCurrentFilterPresetSaved,
+    hasActiveResponseFilters,
     isSaving,
     currentView,
   } = useResponsesViews();
@@ -686,8 +691,6 @@ const ResponsesPageContent = (): JSX.Element => {
                 )}
               </Box>
 
-              <ToolbarDivider />
-
               {colorRuleFilterOptions.length > 0 && (
                 <>
                   <ColorFilterButton
@@ -879,6 +882,14 @@ const ResponsesPageContent = (): JSX.Element => {
         savedViews={savedViews}
         permissionTypes={permissions}
         isSaving={isSaving}
+        onSaveFiltersPreset={handleSaveCurrentFiltersPreset}
+        onClearFiltersPreset={handleClearSavedFiltersPreset}
+        canSaveFiltersPreset={!isInEditMode && (!!currentView || !!selectedViewId)}
+        canClearFiltersPreset={
+          !isInEditMode && (hasSavedFiltersPresetOnSelectedView || hasActiveResponseFilters)
+        }
+        isCurrentFilterPresetSaved={isCurrentFilterPresetSaved}
+        hasActiveResponseFilters={hasActiveResponseFilters}
       />
 
       <DraftRecoveryBanner

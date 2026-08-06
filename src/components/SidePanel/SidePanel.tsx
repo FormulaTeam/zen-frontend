@@ -33,6 +33,12 @@ interface SidePanelProps {
   savedViews?: ResponsesView[];
   permissionTypes?: number[];
   isSaving?: boolean;
+  onSaveFiltersPreset?: (viewId?: string | number) => void | Promise<void>;
+  onClearFiltersPreset?: (viewId?: string | number) => void | Promise<void>;
+  canSaveFiltersPreset?: boolean;
+  canClearFiltersPreset?: boolean;
+  isCurrentFilterPresetSaved?: boolean;
+  hasActiveResponseFilters?: boolean;
 }
 
 const SidePanel: React.FC<SidePanelProps> = ({
@@ -50,6 +56,12 @@ const SidePanel: React.FC<SidePanelProps> = ({
   savedViews,
   permissionTypes,
   isSaving = false,
+  onSaveFiltersPreset,
+  onClearFiltersPreset,
+  canSaveFiltersPreset = false,
+  canClearFiltersPreset = false,
+  isCurrentFilterPresetSaved = false,
+  hasActiveResponseFilters = false,
 }) => {
   const handleSaveView = useCallback(
     async (view: ResponsesView): Promise<void> => {
@@ -90,6 +102,12 @@ const SidePanel: React.FC<SidePanelProps> = ({
             savedViews={savedViews}
             permissionTypes={permissionTypes}
             isSaving={isSaving}
+            onSaveFiltersPreset={onSaveFiltersPreset}
+            onClearFiltersPreset={onClearFiltersPreset}
+            canSaveFiltersPreset={canSaveFiltersPreset}
+            canClearFiltersPreset={canClearFiltersPreset}
+            isCurrentFilterPresetSaved={isCurrentFilterPresetSaved}
+            hasActiveResponseFilters={hasActiveResponseFilters}
           />
         )}
       </SidePanelContent>
