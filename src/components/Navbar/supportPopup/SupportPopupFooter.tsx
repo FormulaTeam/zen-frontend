@@ -31,7 +31,7 @@ const SupportPopupFooter = ({
         </PrimaryActionButton>
 
         <ActionButton variant="outlined" disableElevation onClick={onOpenTicket}>
-          Ticket פתיחת
+          פתיחת פנייה 
           <Ticket />
         </ActionButton>
 

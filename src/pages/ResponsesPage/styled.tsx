@@ -280,6 +280,33 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
         borderRight: `none`,
       },
     },
+    "& .response-pinnable-header-content": {
+      width: "100%",
+      minWidth: 0,
+      display: "flex",
+      alignItems: "center",
+      gap: "4px",
+    },
+    "& .response-pinnable-header-label": {
+      minWidth: 0,
+      overflow: "hidden",
+      flex: 1,
+      fontWeight: 700,
+    },
+    "& .response-column-pin-button": {
+      width: 24,
+      height: 24,
+      padding: 3,
+      flex: "0 0 auto",
+      color: "#334155",
+      opacity: 0,
+      visibility: "hidden",
+      transition: "opacity 0.15s ease",
+    },
+    "& .response-pinnable-column-header:hover .response-column-pin-button, & .response-column-pin-button:focus-visible": {
+      opacity: 1,
+      visibility: "visible",
+    },
     "& .MuiDataGrid-row--even": {
       backgroundColor: "#ffffff",
     },
@@ -300,11 +327,33 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
         justifyContent: "flex-start !important",
       },
     },
+    "& .response-index-column-header .MuiDataGrid-columnHeaderDraggableContainer, & .response-index-column-header .MuiDataGrid-columnHeaderTitleContainer": {
+      width: "100%",
+    },
+    "& .response-index-column-header .MuiDataGrid-columnHeaderTitleContainer": {
+      direction: "ltr !important",
+      flexDirection: "row !important",
+      justifyContent: "flex-start !important",
+    },
+    "& .response-index-column-header .MuiDataGrid-columnHeaderTitleContainerContent": {
+      width: "auto",
+      flex: "0 0 auto",
+    },
+    "& .response-index-column-header .response-pinnable-header-content": {
+      width: "auto",
+      direction: "ltr !important",
+      flexDirection: "row !important",
+    },
+    "& .response-index-column-header .response-pinnable-header-label": {
+      flex: "0 0 auto",
+      direction: "rtl",
+    },
     "& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight": {
-      backgroundColor: "inherit",
+      backgroundColor: "#ffffff",
       justifyContent: "flex-start !important",
     },
     "& .MuiDataGrid-columnHeader--pinnedLeft, & .MuiDataGrid-columnHeader--pinnedRight": {
+      backgroundColor: "#D6E7F6 !important",
       "& .MuiDataGrid-columnHeaderTitleContainer": {
         justifyContent: "flex-start !important",
         flexDirection: "row !important",
@@ -312,6 +361,9 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
       "&[data-field='__detail_panel_toggle__'] .MuiDataGrid-columnHeaderTitleContainer": {
         justifyContent: "center !important",
       },
+    },
+    "& .MuiDataGrid-cell--pinnedLeft.MuiDataGrid-cell--withRightBorder, & .MuiDataGrid-columnHeader--pinnedLeft.MuiDataGrid-columnHeader--withRightBorder": {
+      borderInlineEnd: "1px solid rgba(148, 163, 184, 0.4) !important",
     },
     "& .MuiDataGrid-row": {
       borderBottom: "none",
@@ -321,6 +373,12 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
           backgroundColor: "#f0f7ff !important",
         },
       },
+    },
+    "& .MuiDataGrid-row--even .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-row--even .MuiDataGrid-cell--pinnedRight": {
+      backgroundColor: "#ffffff",
+    },
+    "& .MuiDataGrid-row--odd .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-row--odd .MuiDataGrid-cell--pinnedRight": {
+      backgroundColor: "#f5f5f5",
     },
     "& .active-editing-row": {
       backgroundColor: "rgba(25, 118, 210, 0.08) !important",
