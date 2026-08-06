@@ -72,7 +72,7 @@ import {
 } from "../utils/colorRules";
 import "./responsesTableFilters.css";
 import { useAuth } from "../../../contexts/AuthContext";
-import { readPinnedColumns, writePinnedColumns } from "../utils/columnPinningCache";
+import { useResponsesColumnPinning } from "../hooks/useResponsesColumnPinning";
 
 const responseHeaderFilterLocaleText = {
   headerFilterOperatorContains: "מכיל",
@@ -143,11 +143,6 @@ const SortDescendingIcon = () => <ArrowDown size={16} strokeWidth={2.4} />;
 
 const FIELD_COLUMN_WIDTH = 190;
 const FIELD_COLUMN_MAX_WIDTH = 450;
-const STRUCTURAL_PINNED_COLUMNS = [
-  "__check__",
-  GRID_DETAIL_PANEL_TOGGLE_FIELD,
-] as const;
-
 const getResponsiveColumnProps = (
   minWidth: number,
   savedWidth?: number,
@@ -379,20 +374,7 @@ export const ResponsesTable = React.memo(
 
     if (!form) return null;
 
-    const userIdentifier =
-      user?.upn ?? user?.email ?? user?.UPN ?? user?.mail;
-    const [pinnedColumnFields, setPinnedColumnFields] = useState<string[]>(() =>
-      readPinnedColumns(userIdentifier, form.id),
-    );
-
-    const toggleColumnPin = useCallback((field: string) => {
-      setPinnedColumnFields((currentFields) =>
-        currentFields.includes(field)
-          ? currentFields.filter((currentField) => currentField !== field)
-          : [...currentFields, field],
-      );
-    }, []);
-
+    const userIdentifier = user?.upn;
     const [isNavigating, setIsNavigating] = useState(false);
 
     const transitionInProgress = useRef(false);
@@ -1515,33 +1497,15 @@ export const ResponsesTable = React.memo(
       navigate,
     ]);
 
-    const orderedPinnedColumnFields = useMemo(() => {
-      const selectedFields = new Set(pinnedColumnFields);
-      return baseFormColumns
-        .map((column) => column.field)
-        .filter(
-          (field) => selectedFields.has(field) && field !== GRID_DETAIL_PANEL_TOGGLE_FIELD,
-        );
-    }, [baseFormColumns, pinnedColumnFields]);
-
-    useEffect(() => {
-      if (
-        orderedPinnedColumnFields.length !== pinnedColumnFields.length ||
-        orderedPinnedColumnFields.some((field, index) => field !== pinnedColumnFields[index])
-      ) {
-        setPinnedColumnFields(orderedPinnedColumnFields);
-        return;
-      }
-
-      writePinnedColumns(userIdentifier, form.id, orderedPinnedColumnFields);
-    }, [form.id, orderedPinnedColumnFields, pinnedColumnFields, userIdentifier]);
-
-    const pinnedColumns = useMemo(
-      () => ({
-        left: [...STRUCTURAL_PINNED_COLUMNS, ...orderedPinnedColumnFields],
-      }),
-      [orderedPinnedColumnFields],
-    );
+    const {
+      pinnedFields: pinnedColumnFields,
+      pinnedColumns,
+      togglePinnedField: toggleColumnPin,
+    } = useResponsesColumnPinning({
+      columns: baseFormColumns,
+      formId: form.id,
+      userIdentifier,
+    });
 
     const getFormColumns = useMemo((): GridColDef[] => {
       const pinnedFields = new Set(pinnedColumnFields);

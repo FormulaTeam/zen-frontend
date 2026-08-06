@@ -291,6 +291,7 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
       minWidth: 0,
       overflow: "hidden",
       flex: 1,
+      fontWeight: 700,
     },
     "& .response-column-pin-button": {
       width: 24,

@@ -1,5 +1,6 @@
 const STORAGE_PREFIX = "formula-responses-pinned-columns";
 type FormId = string | number;
+let hasWarnedAboutWriteFailure = false;
 
 const getStorageKey = (userIdentifier: string, formId: FormId): string =>
   `${STORAGE_PREFIX}:${encodeURIComponent(userIdentifier.toLowerCase())}:${formId}`;
@@ -32,7 +33,10 @@ export const writePinnedColumns = (
 
   try {
     localStorage.setItem(getStorageKey(userIdentifier, formId), JSON.stringify(fields));
-  } catch {
-    // Pinning remains available for the current session when storage is unavailable.
+  } catch (error) {
+    if (!hasWarnedAboutWriteFailure) {
+      hasWarnedAboutWriteFailure = true;
+      console.warn("Failed to persist pinned response columns", error);
+    }
   }
 };
