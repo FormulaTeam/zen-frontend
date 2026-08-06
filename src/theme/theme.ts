@@ -70,6 +70,10 @@ const palette = {
 };
 
 export let theme = createTheme({
+  // Keep MUI's logical direction in sync with the RTL DOM/CSS. DataGrid uses
+  // this value (via RtlProvider) to calculate which way a column resize drag
+  // changes the width.
+  direction: "rtl",
   typography: {
     fontFamily: "Heebo, assistant, sans-serif",
     fontSize: 19,

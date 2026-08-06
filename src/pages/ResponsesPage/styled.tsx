@@ -272,6 +272,10 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
       alignItems: "center",
       justifyContent: "flex-start",
       color: "#020618",
+      minWidth: 0,
+      overflow: "hidden",
+      whiteSpace: "nowrap",
+      textOverflow: "ellipsis",
     },
     "& .MuiDataGrid-columnHeader": {
       borderBottom: "none",
@@ -406,6 +410,10 @@ export const StyledDataGrid = styled(DataGridPro)(({ theme }) => ({
   },
   "& .MuiDataGrid-cellContent": {
     width: "100%",
+    minWidth: 0,
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    textOverflow: "ellipsis",
     textAlign: "right",
   },
   "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
