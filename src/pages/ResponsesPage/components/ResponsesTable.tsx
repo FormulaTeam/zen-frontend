@@ -1848,11 +1848,6 @@ export const ResponsesTable = React.memo(
                 expand: true,
               }}
               columnBufferPx={5000}
-              initialState={{
-                pinnedColumns: {
-                  left: ["__check__", "meta:index", GRID_DETAIL_PANEL_TOGGLE_FIELD],
-                },
-              }}
               sortingMode="server"
               sortingOrder={["asc", "desc"]}
               onSortModelChange={handleSortModelChange}
