@@ -25,12 +25,14 @@ const noClientFilter = () => null;
 const makeOperator = (
   operator: ResponseFilterOperator,
   label: string,
-  InputComponent: GridFilterOperator["InputComponent"] = NoValueFilterInput,
+  InputComponent: React.JSXElementConstructor<any> = NoValueFilterInput,
   requiresFilterValue = true,
+  inputComponentProps?: Record<string, unknown>,
 ): GridFilterOperator => ({
   label,
   value: operator,
   InputComponent,
+  InputComponentProps: inputComponentProps,
   requiresFilterValue,
   getApplyFilterFn: noClientFilter,
 });
@@ -41,50 +43,6 @@ const isExternallyConnectedField = (field: FormFieldDto, formFields: FormFieldDt
   if (!linkedOptionsFieldId) return false;
 
   return !formFields.some((f) => String(f.id) === String(linkedOptionsFieldId));
-};
-
-const createSingleOptionInput = (field: FormFieldDto): GridFilterOperator["InputComponent"] => {
-  const options = getFieldOptions(field);
-
-  return function SingleOptionInput(props: any) {
-    return React.createElement(SingleOptionFilterInput, {
-      ...props,
-      options,
-    });
-  };
-};
-
-const createMultiOptionInput = (field: FormFieldDto): GridFilterOperator["InputComponent"] => {
-  const options = getFieldOptions(field);
-
-  return function MultiOptionInput(props: any) {
-    return React.createElement(MultiOptionFilterInput, {
-      ...props,
-      options,
-    });
-  };
-};
-
-const createConnectedSingleOptionInput = (
-  linkedOptionsFieldId: string,
-): GridFilterOperator["InputComponent"] => {
-  return function ConnectedSingleOptionInput(props: any) {
-    return React.createElement(ConnectedSingleOptionFilterInput, {
-      ...props,
-      linkedOptionsFieldId,
-    });
-  };
-};
-
-const createConnectedMultiOptionInput = (
-  linkedOptionsFieldId: string,
-): GridFilterOperator["InputComponent"] => {
-  return function ConnectedMultiOptionInput(props: any) {
-    return React.createElement(ConnectedMultiOptionFilterInput, {
-      ...props,
-      linkedOptionsFieldId,
-    });
-  };
 };
 
 const emptyOperators: GridFilterOperator[] = [
@@ -118,13 +76,45 @@ const singleOptionOperators = (
 ): GridFilterOperator[] => {
   const linkedOptionsFieldId = (field.extra as any)?.linkedOptionsFieldId;
 
-  const InputComponent = isExternallyConnectedField(field, formFields)
-    ? createConnectedSingleOptionInput(linkedOptionsFieldId)
-    : createSingleOptionInput(field);
+  if (!linkedOptionsFieldId) {
+    const inputComponentProps = { options: getFieldOptions(field) };
+
+    return [
+      makeOperator(
+        ResponseFilterOperator.ContainsAny,
+        "מכיל",
+        MultiOptionFilterInput,
+        true,
+        inputComponentProps,
+      ),
+      makeOperator(
+        ResponseFilterOperator.NotContainsAny,
+        "לא מכיל",
+        MultiOptionFilterInput,
+        true,
+        inputComponentProps,
+      ),
+      ...emptyOperators,
+    ];
+  }
+
+  const isExternallyConnected = isExternallyConnectedField(field, formFields);
+  const InputComponent = isExternallyConnected
+    ? ConnectedSingleOptionFilterInput
+    : SingleOptionFilterInput;
+  const inputComponentProps = isExternallyConnected
+    ? { linkedOptionsFieldId }
+    : { options: getFieldOptions(field) };
 
   return [
-    makeOperator(ResponseFilterOperator.Equals, "שווה ל", InputComponent),
-    makeOperator(ResponseFilterOperator.NotEquals, "שונה מ", InputComponent),
+    makeOperator(ResponseFilterOperator.Equals, "שווה ל", InputComponent, true, inputComponentProps),
+    makeOperator(
+      ResponseFilterOperator.NotEquals,
+      "שונה מ",
+      InputComponent,
+      true,
+      inputComponentProps,
+    ),
     ...emptyOperators,
   ];
 };
@@ -135,28 +125,72 @@ const multiOptionOperators = (
 ): GridFilterOperator[] => {
   const linkedOptionsFieldId = (field.extra as any)?.linkedOptionsFieldId;
 
-  const InputComponent = isExternallyConnectedField(field, formFields)
-    ? createConnectedMultiOptionInput(linkedOptionsFieldId)
-    : createMultiOptionInput(field);
+  const isExternallyConnected = isExternallyConnectedField(field, formFields);
+  const InputComponent = isExternallyConnected
+    ? ConnectedMultiOptionFilterInput
+    : MultiOptionFilterInput;
+  const inputComponentProps = isExternallyConnected
+    ? { linkedOptionsFieldId }
+    : { options: getFieldOptions(field) };
 
   return [
-    makeOperator(ResponseFilterOperator.ContainsAny, "מכיל אחד מתוך", InputComponent),
-    makeOperator(ResponseFilterOperator.NotContainsAny, "לא מכיל אף אחד מתוך", InputComponent),
-    makeOperator(ResponseFilterOperator.ContainsAll, "מכיל את כולם", InputComponent),
-    makeOperator(ResponseFilterOperator.NotContainsAll, "לא מכיל את כולם", InputComponent),
+    makeOperator(
+      ResponseFilterOperator.ContainsAny,
+      "מכיל לפחות אחד מהערכים",
+      InputComponent,
+      true,
+      inputComponentProps,
+    ),
+    makeOperator(
+      ResponseFilterOperator.NotContainsAny,
+      "לא מכיל אף אחד מהערכים",
+      InputComponent,
+      true,
+      inputComponentProps,
+    ),
+    makeOperator(
+      ResponseFilterOperator.ContainsAll,
+      "מכיל את כל הערכים",
+      InputComponent,
+      true,
+      inputComponentProps,
+    ),
+    makeOperator(
+      ResponseFilterOperator.NotContainsAll,
+      "לא מכיל את כל הערכים",
+      InputComponent,
+      true,
+      inputComponentProps,
+    ),
     ...emptyOperators,
   ];
 };
 
-const dateOperators = (): GridFilterOperator[] => [
-  makeOperator(ResponseFilterOperator.On, "בתאריך", DateFilterInput),
-  makeOperator(ResponseFilterOperator.NotOn, "לא בתאריך", DateFilterInput),
-  makeOperator(ResponseFilterOperator.Before, "לפני", DateFilterInput),
-  makeOperator(ResponseFilterOperator.BeforeOrEqual, "לפני או בתאריך", DateFilterInput),
-  makeOperator(ResponseFilterOperator.After, "אחרי", DateFilterInput),
-  makeOperator(ResponseFilterOperator.AfterOrEqual, "אחרי או בתאריך", DateFilterInput),
-  makeOperator(ResponseFilterOperator.Between, "בין", DateRangeFilterInput),
-  makeOperator(ResponseFilterOperator.NotBetween, "לא בין", DateRangeFilterInput),
+const createDateInput = (field: FormFieldDto): GridFilterOperator["InputComponent"] => {
+  const dateType = (field.extra as any)?.dateType;
+
+  return function DateInput(props: any) {
+    return React.createElement(DateFilterInput, { ...props, dateType });
+  };
+};
+
+const createDateRangeInput = (field: FormFieldDto): GridFilterOperator["InputComponent"] => {
+  const dateType = (field.extra as any)?.dateType;
+
+  return function DateRangeInput(props: any) {
+    return React.createElement(DateRangeFilterInput, { ...props, dateType });
+  };
+};
+
+const dateOperators = (field: FormFieldDto): GridFilterOperator[] => [
+  makeOperator(ResponseFilterOperator.On, "בתאריך", createDateInput(field)),
+  makeOperator(ResponseFilterOperator.NotOn, "לא בתאריך", createDateInput(field)),
+  makeOperator(ResponseFilterOperator.Before, "לפני", createDateInput(field)),
+  makeOperator(ResponseFilterOperator.BeforeOrEqual, "לפני או בתאריך", createDateInput(field)),
+  makeOperator(ResponseFilterOperator.After, "אחרי", createDateInput(field)),
+  makeOperator(ResponseFilterOperator.AfterOrEqual, "אחרי או בתאריך", createDateInput(field)),
+  makeOperator(ResponseFilterOperator.Between, "בין", createDateRangeInput(field)),
+  makeOperator(ResponseFilterOperator.NotBetween, "לא בין", createDateRangeInput(field)),
   ...emptyOperators,
 ];
 
@@ -237,7 +271,7 @@ export const getFilterOperatorsForField = (
         : singleOptionOperators(field, formFields);
 
     case fieldType.Date:
-      return dateOperators();
+      return dateOperators(field);
 
     case fieldType.Time:
       return timeOperators(field);

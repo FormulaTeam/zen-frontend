@@ -91,10 +91,10 @@ const responseHeaderFilterLocaleText = {
   headerFilterOperatorAfter: "אחרי",
   headerFilterOperatorAfterOrEqual: "אחרי או שווה ל",
 
-  headerFilterOperatorContainsAny: "מכיל אחד מתוך",
-  headerFilterOperatorNotContainsAny: "לא מכיל אף אחד מתוך",
-  headerFilterOperatorContainsAll: "מכיל את כולם",
-  headerFilterOperatorNotContainsAll: "לא מכיל את כולם",
+  headerFilterOperatorContainsAny: "מכיל לפחות אחד מהערכים",
+  headerFilterOperatorNotContainsAny: "לא מכיל אף אחד מהערכים",
+  headerFilterOperatorContainsAll: "מכיל את כל הערכים",
+  headerFilterOperatorNotContainsAll: "לא מכיל את כל הערכים",
 
   headerFilterOperatorIsEmpty: "ריק",
   headerFilterOperatorIsNotEmpty: "לא ריק",
@@ -476,12 +476,17 @@ export const ResponsesTable = React.memo(
     const apiRef = useGridApiRef();
 
     const columnWidths = useRef<Record<string, number>>({});
-
-    const handleColumnWidthChange = useCallback((params: { colDef: GridColDef; width: number }) => {
-      columnWidths.current[params.colDef.field] = params.width;
-    }, []);
-
     const shouldUseHeaderFilters = showFilters && !isInEditMode;
+
+    const handleColumnWidthChange = useCallback(
+      (params: { colDef: GridColDef; width: number }) => {
+        if (!shouldUseHeaderFilters) {
+          columnWidths.current[params.colDef.field] = params.width;
+        }
+      },
+      [shouldUseHeaderFilters],
+    );
+
     const shouldRequestTableSkeleton = !isInEditMode && isRowsLoading;
     const [showTableSkeleton, setShowTableSkeleton] = useState(false);
 
@@ -1004,19 +1009,19 @@ export const ResponsesTable = React.memo(
         const targetValueLabel =
           isRangeComparator(rule.comparatorId) && isRangeValue(rule.targetValue)
             ? (() => {
-                const { from, to } = getRangeValue(rule.targetValue);
-                const fromLabel =
-                  ruleField && from ? formatCellTooltipValue(from, ruleField) : from;
-                const toLabel = ruleField && to ? formatCellTooltipValue(to, ruleField) : to;
+              const { from, to } = getRangeValue(rule.targetValue);
+              const fromLabel =
+                ruleField && from ? formatCellTooltipValue(from, ruleField) : from;
+              const toLabel = ruleField && to ? formatCellTooltipValue(to, ruleField) : to;
 
-                if (!fromLabel && !toLabel) return "";
+              if (!fromLabel && !toLabel) return "";
 
-                return `${fromLabel} - ${toLabel}`;
-              })()
+              return `${fromLabel} - ${toLabel}`;
+            })()
             : ruleField &&
-                rule.targetValue !== null &&
-                rule.targetValue !== undefined &&
-                rule.targetValue !== ""
+              rule.targetValue !== null &&
+              rule.targetValue !== undefined &&
+              rule.targetValue !== ""
               ? formatCellTooltipValue(rule.targetValue, ruleField)
               : "";
         const colorLabel = COLOR_RULE_PALETTE[rule.color]?.label ?? "";
@@ -1170,13 +1175,25 @@ export const ResponsesTable = React.memo(
 
         const columnId = `${prefixes.Field}${field.id}`;
         const gridField = columnId;
+        const isDateTimeField =
+          field.fieldType === Gear.fieldType.Date &&
+          (field.extra as any)?.dateType === Gear.dateType.Datetime;
+        const filterColumnMinWidth = shouldUseHeaderFilters
+          ? isDateTimeField
+            ? 250
+            : field.fieldType === Gear.fieldType.Date
+              ? 205
+              : field.fieldType === Gear.fieldType.Time
+                ? 190
+                : FIELD_COLUMN_WIDTH
+          : FIELD_COLUMN_WIDTH;
 
         const col: GridColDef = {
           field: gridField,
           headerName: field.displayName,
           headerClassName: "response-field-column-header",
           ...getResponsiveColumnProps(
-            FIELD_COLUMN_WIDTH,
+            filterColumnMinWidth,
             columnWidths.current[gridField],
             FIELD_COLUMN_MAX_WIDTH,
           ),
@@ -1198,8 +1215,8 @@ export const ResponsesTable = React.memo(
             const content =
               params.value !== undefined && params.value !== null
                 ? formatCellValue(params.value, field, rowId, {
-                    disableTooltip: !!colorMatch,
-                  })
+                  disableTooltip: !!colorMatch,
+                })
                 : null;
 
             const display = content ?? <Box component="span" className="cell-box" />;
@@ -1415,20 +1432,20 @@ export const ResponsesTable = React.memo(
 
       const parentResponseColumns: GridColDef[] = hasParentResponses
         ? [
-            {
-              field: "parentResponse",
-              headerName: "תגובת אב",
-              ...getResponsiveColumnProps(190, columnWidths.current["parentResponse"]),
-              editable: false,
-              filterable: false,
-              sortable: false,
-              renderCell: (params: GridRenderCellParams) =>
-                renderDisplayWithColorRuleTooltip(
-                  params,
-                  <ZoomCell row={params.row} form={form} />,
-                ),
-            },
-          ]
+          {
+            field: "parentResponse",
+            headerName: "תגובת אב",
+            ...getResponsiveColumnProps(190, columnWidths.current["parentResponse"]),
+            editable: false,
+            filterable: false,
+            sortable: false,
+            renderCell: (params: GridRenderCellParams) =>
+              renderDisplayWithColorRuleTooltip(
+                params,
+                <ZoomCell row={params.row} form={form} />,
+              ),
+          },
+        ]
         : [];
 
       let resultColumns: GridColDef[] = [];
@@ -1487,6 +1504,7 @@ export const ResponsesTable = React.memo(
       formatCellTooltipValue,
       formatColorRuleTooltipText,
       currentViewConfig,
+      shouldUseHeaderFilters,
       navigateToCreateResponseCopy,
       navigate,
     ]);
@@ -1945,22 +1963,22 @@ export const ResponsesTable = React.memo(
                   ]),
                 ),
                 "& .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedLeft.response-color-rule-cell, & .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedRight.response-color-rule-cell":
-                  {
-                    backgroundColor:
-                      "var(--response-color-rule-background) !important",
-                  },
+                {
+                  backgroundColor:
+                    "var(--response-color-rule-background) !important",
+                },
                 "& .MuiDataGrid-columnHeader .MuiDataGrid-iconButtonContainer .MuiIconButton-root":
-                  {
-                    backgroundColor: "transparent !important",
-                    boxShadow: "none !important",
-                    border: "none !important",
-                  },
+                {
+                  backgroundColor: "transparent !important",
+                  boxShadow: "none !important",
+                  border: "none !important",
+                },
 
                 "& .MuiDataGrid-columnHeader .MuiDataGrid-iconButtonContainer .MuiIconButton-root:hover":
-                  {
-                    backgroundColor: "rgba(15, 23, 42, 0.06) !important",
-                    boxShadow: "none !important",
-                  },
+                {
+                  backgroundColor: "rgba(15, 23, 42, 0.06) !important",
+                  boxShadow: "none !important",
+                },
 
                 "& .response-field-column-header .MuiDataGrid-iconButtonContainer": {
                   visibility: "visible",
@@ -1970,10 +1988,10 @@ export const ResponsesTable = React.memo(
                 },
 
                 "& .response-field-column-header:hover .MuiDataGrid-iconButtonContainer, & .response-field-column-header.MuiDataGrid-columnHeader--sorted .MuiDataGrid-iconButtonContainer":
-                  {
-                    width: 24,
-                    opacity: 1,
-                  },
+                {
+                  width: 24,
+                  opacity: 1,
+                },
 
                 "& .response-field-column-header .MuiDataGrid-sortButton": {
                   width: 24,
@@ -1995,22 +2013,22 @@ export const ResponsesTable = React.memo(
 
                 ...(isInEditMode
                   ? {
-                      "& .active-editing-row .MuiDataGrid-cell": {
-                        paddingTop: "4px",
-                        paddingBottom: "4px",
-                        alignItems: "center",
-                      },
-                      "& .active-editing-row .MuiDataGrid-cell--editing": {
-                        padding: "4px 6px",
-                        overflow: "visible",
-                      },
-                      "& .active-editing-row .MuiDataGrid-cell--editing:focus-within": {
-                        outline: "none",
-                      },
-                      "& .active-editing-row .MuiDataGrid-cell--editing .MuiInputBase-root": {
-                        boxShadow: "none",
-                      },
-                    }
+                    "& .active-editing-row .MuiDataGrid-cell": {
+                      paddingTop: "4px",
+                      paddingBottom: "4px",
+                      alignItems: "center",
+                    },
+                    "& .active-editing-row .MuiDataGrid-cell--editing": {
+                      padding: "4px 6px",
+                      overflow: "visible",
+                    },
+                    "& .active-editing-row .MuiDataGrid-cell--editing:focus-within": {
+                      outline: "none",
+                    },
+                    "& .active-editing-row .MuiDataGrid-cell--editing .MuiInputBase-root": {
+                      boxShadow: "none",
+                    },
+                  }
                   : {}),
               }}
             />
