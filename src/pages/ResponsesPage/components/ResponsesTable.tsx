@@ -61,6 +61,7 @@ import {
 import { useConnectedFormOptions } from "@src/hooks/useConnectedFormOptions";
 import {
   buildColorRuleMatches,
+  COLOR_RULE_CELL_STYLES,
   COLOR_RULE_PALETTE,
   formatColorRuleLabel,
   getRangeValue,
@@ -69,6 +70,14 @@ import {
   ROW_COLOR_RULE_FIELD,
 } from "../utils/colorRules";
 import "./responsesTableFilters.css";
+import { useAuth } from "../../../contexts/AuthContext";
+import { OverflowTooltip } from "../../../components/OverflowTooltip";
+import {
+  DEFAULT_FIELD_COLUMN_WIDTH,
+  getHugContentWidth,
+  getResponsiveColumnProps,
+  useResponsesTableColumnSizing,
+} from "../hooks/useResponsesTableColumnSizing";
 
 const responseHeaderFilterLocaleText = {
   headerFilterOperatorContains: "מכיל",
@@ -136,29 +145,6 @@ const EmptyColumnFilteredIcon = () => null;
 const SortUnsortedIcon = () => <ArrowDownUp size={16} strokeWidth={2.4} />;
 const SortAscendingIcon = () => <ArrowUp size={16} strokeWidth={2.4} />;
 const SortDescendingIcon = () => <ArrowDown size={16} strokeWidth={2.4} />;
-
-const FIELD_COLUMN_WIDTH = 190;
-const FIELD_COLUMN_MAX_WIDTH = 450;
-
-const getResponsiveColumnProps = (
-  minWidth: number,
-  savedWidth?: number,
-  maxWidth?: number,
-  flex = 1,
-): Pick<GridColDef, "width" | "minWidth" | "maxWidth" | "flex"> => {
-  if (savedWidth) {
-    return {
-      width: Math.max(savedWidth, minWidth),
-      minWidth,
-      maxWidth,
-    };
-  }
-
-  return {
-    minWidth,
-    flex,
-  };
-};
 
 type Row = GridRowModel & {
   id: string | number;
@@ -343,6 +329,7 @@ export const ResponsesTable = React.memo(
   }: ResponsesTableProps) => {
     const { form, rows, pageInfo, filter, setFilter, setResponseFilters, isRowsLoading } =
       useFormStore();
+    const { user } = useAuth();
 
     const navigate = useNavigate();
 
@@ -475,11 +462,11 @@ export const ResponsesTable = React.memo(
 
     const apiRef = useGridApiRef();
 
-    const columnWidths = useRef<Record<string, number>>({});
-
-    const handleColumnWidthChange = useCallback((params: { colDef: GridColDef; width: number }) => {
-      columnWidths.current[params.colDef.field] = params.width;
-    }, []);
+    const userIdentifier = user?.upn || user?.UPN || user?.email || user?.mail || "anonymous";
+    const { columnWidths, handleColumnWidthChange } = useResponsesTableColumnSizing({
+      formId: form?.id,
+      userIdentifier,
+    });
 
     const shouldUseHeaderFilters = showFilters && !isInEditMode;
     const shouldRequestTableSkeleton = !isInEditMode && isRowsLoading;
@@ -1145,11 +1132,22 @@ export const ResponsesTable = React.memo(
         params: GridRenderCellParams,
         display: React.ReactNode,
         cellTooltipText?: string,
+        addOverflowTooltip = false,
       ): React.ReactNode => {
         const colorMatch = getColorMatchForCell(params);
         const ruleTooltipText = colorMatch ? formatColorRuleTooltipText(colorMatch.ruleId) : "";
 
-        if (!ruleTooltipText) return display;
+        if (!ruleTooltipText) {
+          if (!addOverflowTooltip || !cellTooltipText) return display;
+
+          return (
+            <OverflowTooltip title={cellTooltipText} arrow placement="top">
+              <Box component="span" className="cell-box">
+                {display}
+              </Box>
+            </OverflowTooltip>
+          );
+        }
 
         return (
           <ColorRuleTooltipCell cellTooltipText={cellTooltipText} ruleTooltipText={ruleTooltipText}>
@@ -1176,9 +1174,8 @@ export const ResponsesTable = React.memo(
           headerName: field.displayName,
           headerClassName: "response-field-column-header",
           ...getResponsiveColumnProps(
-            FIELD_COLUMN_WIDTH,
-            columnWidths.current[gridField],
-            FIELD_COLUMN_MAX_WIDTH,
+            DEFAULT_FIELD_COLUMN_WIDTH,
+            columnWidths[gridField],
           ),
           editable: true,
           sortable: isSortable(field.fieldType),
@@ -1244,9 +1241,11 @@ export const ResponsesTable = React.memo(
             <span>מזהה</span>
           </HeaderFlex>
         ),
-        width: columnWidths.current[`${prefixes.Meta}index`] || 190,
-        minWidth: 170,
-        maxWidth: 220,
+        ...getResponsiveColumnProps(
+          getHugContentWidth(["מזהה", ...responsesRows.map((row) => row.index)]),
+          columnWidths[`${prefixes.Meta}index`],
+          0,
+        ),
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.index,
@@ -1257,6 +1256,7 @@ export const ResponsesTable = React.memo(
               {params.value}
             </Box>,
             String(params.value ?? ""),
+            true,
           ),
         ...getResponseMetaFilterColumnProps("index"),
       });
@@ -1265,10 +1265,9 @@ export const ResponsesTable = React.memo(
         field: `${prefixes.Meta}created_by`,
         headerName: "נוצר ע״י",
         ...getResponsiveColumnProps(
-          180,
-          columnWidths.current[`${prefixes.Meta}created_by`],
-          280,
-          0.9,
+          getHugContentWidth(["נוצר ע״י", ...responsesRows.map((row) => row.createdByName)]),
+          columnWidths[`${prefixes.Meta}created_by`],
+          0,
         ),
         editable: false,
         sortable: true,
@@ -1280,6 +1279,7 @@ export const ResponsesTable = React.memo(
               {params.value}
             </Box>,
             String(params.value ?? ""),
+            true,
           ),
         ...getResponseMetaFilterColumnProps("created_by"),
       });
@@ -1287,7 +1287,11 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}created_at`, {
         field: `${prefixes.Meta}created_at`,
         headerName: "תאריך יצירה",
-        ...getResponsiveColumnProps(190, columnWidths.current[`${prefixes.Meta}created_at`], 300),
+        ...getResponsiveColumnProps(
+          getHugContentWidth(["תאריך יצירה", ...responsesRows.map((row) => row.created)]),
+          columnWidths[`${prefixes.Meta}created_at`],
+          0,
+        ),
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.created,
@@ -1305,6 +1309,7 @@ export const ResponsesTable = React.memo(
               </Box>
             ) : null,
             displayValue,
+            true,
           );
         },
       });
@@ -1321,9 +1326,7 @@ export const ResponsesTable = React.memo(
             </SyncStatusIconBox>
           </Tooltip>
         ),
-        minWidth: 90,
-        width: columnWidths.current["sync"] || 90,
-        maxWidth: 110,
+        ...getResponsiveColumnProps(90, columnWidths["sync"], 0),
         editable: false,
         sortable: true,
         filterable: false,
@@ -1336,6 +1339,7 @@ export const ResponsesTable = React.memo(
               disableTooltip={!!getColorMatchForCell(params)}
             />,
             getSyncStatusLabel(params.row?.syncStatusId, params.row?.syncStatusDescription),
+            true,
           ),
       });
 
@@ -1343,10 +1347,9 @@ export const ResponsesTable = React.memo(
         field: `${prefixes.Meta}updated_by`,
         headerName: "השתנה ע״י",
         ...getResponsiveColumnProps(
-          180,
-          columnWidths.current[`${prefixes.Meta}updated_by`],
-          280,
-          0.9,
+          getHugContentWidth(["השתנה ע״י", ...responsesRows.map((row) => row.editedByName)]),
+          columnWidths[`${prefixes.Meta}updated_by`],
+          0,
         ),
         editable: false,
         sortable: true,
@@ -1358,6 +1361,7 @@ export const ResponsesTable = React.memo(
               {params.value}
             </Box>,
             String(params.value ?? ""),
+            true,
           ),
         ...getResponseMetaFilterColumnProps("updated_by"),
       });
@@ -1365,7 +1369,11 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}updated_at`, {
         field: `${prefixes.Meta}updated_at`,
         headerName: "תאריך שינוי",
-        ...getResponsiveColumnProps(190, columnWidths.current[`${prefixes.Meta}updated_at`], 300),
+        ...getResponsiveColumnProps(
+          getHugContentWidth(["תאריך שינוי", ...responsesRows.map((row) => row.edited)]),
+          columnWidths[`${prefixes.Meta}updated_at`],
+          0,
+        ),
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.edited,
@@ -1383,6 +1391,7 @@ export const ResponsesTable = React.memo(
               </Box>
             ) : null,
             displayValue,
+            true,
           );
         },
       });
@@ -1390,7 +1399,11 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}id`, {
         field: `${prefixes.Meta}id`,
         headerName: "ID",
-        ...getResponsiveColumnProps(180, columnWidths.current[`${prefixes.Meta}id`], 300, 0.9),
+        ...getResponsiveColumnProps(
+          getHugContentWidth(["ID", ...responsesRows.map((row) => row.id)]),
+          columnWidths[`${prefixes.Meta}id`],
+          0,
+        ),
         editable: false,
         sortable: true,
         valueGetter: (_value, row: Row) => row.id,
@@ -1401,6 +1414,7 @@ export const ResponsesTable = React.memo(
               {params.value}
             </Box>,
             String(params.value ?? ""),
+            true,
           ),
         ...getResponseMetaFilterColumnProps("id"),
       });
@@ -1418,7 +1432,7 @@ export const ResponsesTable = React.memo(
             {
               field: "parentResponse",
               headerName: "תגובת אב",
-              ...getResponsiveColumnProps(190, columnWidths.current["parentResponse"]),
+              ...getResponsiveColumnProps(190, columnWidths["parentResponse"]),
               editable: false,
               filterable: false,
               sortable: false,
@@ -1487,6 +1501,8 @@ export const ResponsesTable = React.memo(
       formatCellTooltipValue,
       formatColorRuleTooltipText,
       currentViewConfig,
+      columnWidths,
+      responsesRows,
       navigateToCreateResponseCopy,
       navigate,
     ]);
@@ -1873,7 +1889,6 @@ export const ResponsesTable = React.memo(
               loading={showTableSkeleton}
               checkboxSelection
               disableRowSelectionOnClick
-              disableColumnResize
               onColumnWidthChange={handleColumnWidthChange}
               rowSelectionModel={rowSelectionModel}
               onRowSelectionModelChange={onRowSelectionModelChange}
@@ -1935,15 +1950,7 @@ export const ResponsesTable = React.memo(
                 row: {},
               }}
               sx={{
-                ...Object.fromEntries(
-                  Object.entries(COLOR_RULE_PALETTE).map(([color, meta]) => [
-                    `& .response-color-rule-cell--${color}`,
-                    {
-                      "--response-color-rule-background": meta.background,
-                      backgroundColor: `${meta.background} !important`,
-                    },
-                  ]),
-                ),
+                ...COLOR_RULE_CELL_STYLES,
                 "& .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedLeft.response-color-rule-cell, & .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedRight.response-color-rule-cell":
                   {
                     backgroundColor:

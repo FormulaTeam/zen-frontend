@@ -34,6 +34,18 @@ export const COLOR_RULE_PALETTE = {
   },
 } as const;
 
+// The broad type prevents DataGrid's `sx` union from exceeding TypeScript's
+// inference complexity limit when these computed selectors are spread into it.
+export const COLOR_RULE_CELL_STYLES: Record<string, Record<string, string>> = Object.fromEntries(
+  Object.entries(COLOR_RULE_PALETTE).map(([color, meta]) => [
+    `& .response-color-rule-cell--${color}`,
+    {
+      "--response-color-rule-background": meta.background,
+      backgroundColor: `${meta.background} !important`,
+    },
+  ]),
+);
+
 export type ColorRuleMatch = {
   ruleId: string;
   color: keyof typeof COLOR_RULE_PALETTE;
