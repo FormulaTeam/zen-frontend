@@ -1244,15 +1244,19 @@ export const ResponsesTable = React.memo(
         ...getResponsiveColumnProps(
           getHugContentWidth(["מזהה", ...responsesRows.map((row) => row.index)]),
           columnWidths[`${prefixes.Meta}index`],
-          0,
         ),
         editable: false,
         sortable: true,
+        align: "left",
         valueGetter: (_value, row: Row) => row.index,
         renderCell: (params: GridRenderCellParams) =>
           renderDisplayWithColorRuleTooltip(
             params,
-            <Box component="span" className="cell-box" dir="ltr">
+            <Box
+              component="span"
+              className="cell-box"
+              dir="ltr"
+              sx={{ width: "100%", textAlign: "left" }}>
               {params.value}
             </Box>,
             String(params.value ?? ""),
@@ -1267,7 +1271,6 @@ export const ResponsesTable = React.memo(
         ...getResponsiveColumnProps(
           getHugContentWidth(["נוצר ע״י", ...responsesRows.map((row) => row.createdByName)]),
           columnWidths[`${prefixes.Meta}created_by`],
-          0,
         ),
         editable: false,
         sortable: true,
@@ -1290,7 +1293,6 @@ export const ResponsesTable = React.memo(
         ...getResponsiveColumnProps(
           getHugContentWidth(["תאריך יצירה", ...responsesRows.map((row) => row.created)]),
           columnWidths[`${prefixes.Meta}created_at`],
-          0,
         ),
         editable: false,
         sortable: true,
@@ -1326,7 +1328,7 @@ export const ResponsesTable = React.memo(
             </SyncStatusIconBox>
           </Tooltip>
         ),
-        ...getResponsiveColumnProps(90, columnWidths["sync"], 0),
+        ...getResponsiveColumnProps(90, columnWidths["sync"]),
         editable: false,
         sortable: true,
         filterable: false,
@@ -1349,7 +1351,6 @@ export const ResponsesTable = React.memo(
         ...getResponsiveColumnProps(
           getHugContentWidth(["השתנה ע״י", ...responsesRows.map((row) => row.editedByName)]),
           columnWidths[`${prefixes.Meta}updated_by`],
-          0,
         ),
         editable: false,
         sortable: true,
@@ -1372,7 +1373,6 @@ export const ResponsesTable = React.memo(
         ...getResponsiveColumnProps(
           getHugContentWidth(["תאריך שינוי", ...responsesRows.map((row) => row.edited)]),
           columnWidths[`${prefixes.Meta}updated_at`],
-          0,
         ),
         editable: false,
         sortable: true,
@@ -1402,7 +1402,6 @@ export const ResponsesTable = React.memo(
         ...getResponsiveColumnProps(
           getHugContentWidth(["ID", ...responsesRows.map((row) => row.id)]),
           columnWidths[`${prefixes.Meta}id`],
-          0,
         ),
         editable: false,
         sortable: true,

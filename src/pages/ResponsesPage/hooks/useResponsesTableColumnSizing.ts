@@ -53,8 +53,7 @@ export const getHugContentWidth = (values: unknown[]): number => {
 export const getResponsiveColumnProps = (
   defaultWidth: number,
   savedWidth?: number,
-  flex = 1,
-): Pick<GridColDef, "width" | "minWidth" | "maxWidth" | "flex"> => {
+): Pick<GridColDef, "width" | "minWidth" | "maxWidth"> => {
   if (savedWidth) {
     return {
       width: clampColumnWidth(savedWidth),
@@ -67,7 +66,6 @@ export const getResponsiveColumnProps = (
     width: Math.min(defaultWidth, COLUMN_MAX_WIDTH),
     minWidth: COLUMN_MIN_WIDTH,
     maxWidth: COLUMN_MAX_WIDTH,
-    flex,
   };
 };
 
