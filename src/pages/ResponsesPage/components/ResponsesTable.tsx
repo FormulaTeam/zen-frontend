@@ -1236,9 +1236,10 @@ export const ResponsesTable = React.memo(
       metaColumnsMap.set(`${prefixes.Meta}index`, {
         field: `${prefixes.Meta}index`,
         headerName: "מזהה",
+        headerAlign: "left",
         renderHeader: () => (
-          <HeaderFlex>
-            <span>מזהה</span>
+          <HeaderFlex sx={{ width: "100%", direction: "ltr", justifyContent: "flex-start" }}>
+            <span dir="rtl">מזהה</span>
           </HeaderFlex>
         ),
         ...getResponsiveColumnProps(
@@ -1847,10 +1848,9 @@ export const ResponsesTable = React.memo(
                 expand: true,
               }}
               columnBufferPx={5000}
-              initialState={{
-                pinnedColumns: {
-                  left: ["__check__", "meta:index", GRID_DETAIL_PANEL_TOGGLE_FIELD],
-                },
+              pinnedColumns={{
+                left: ["__check__", GRID_DETAIL_PANEL_TOGGLE_FIELD],
+                right: [],
               }}
               sortingMode="server"
               sortingOrder={["asc", "desc"]}
