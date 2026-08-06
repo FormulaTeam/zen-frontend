@@ -15,7 +15,7 @@ export const DEFAULT_FIELD_COLUMN_WIDTH = 190;
 type ColumnWidths = Record<string, number>;
 type ColumnWidthProps = Pick<GridColDef, "width" | "minWidth" | "maxWidth">;
 
-const clampColumnWidth = (width: number): number =>
+const limitColumnWidth = (width: number): number =>
   Math.min(COLUMN_MAX_WIDTH, Math.max(COLUMN_MIN_WIDTH, Math.round(width)));
 
 const getColumnWidthsStorageKey = (userIdentifier: string, formId: string | number): string =>
@@ -33,7 +33,7 @@ const readColumnWidths = (storageKey: string | null): ColumnWidths => {
 
     return Object.entries(parsed).reduce<ColumnWidths>((widths, [field, width]) => {
       if (typeof width === "number" && Number.isFinite(width)) {
-        widths[field] = clampColumnWidth(width);
+        widths[field] = limitColumnWidth(width);
       }
 
       return widths;
@@ -70,7 +70,7 @@ export const getResponsiveColumnProps = (
   defaultWidth: number,
   savedWidth?: number,
 ): ColumnWidthProps => ({
-  width: savedWidth ? clampColumnWidth(savedWidth) : Math.min(defaultWidth, COLUMN_MAX_WIDTH),
+  width: savedWidth ? limitColumnWidth(savedWidth) : Math.min(defaultWidth, COLUMN_MAX_WIDTH),
   minWidth: COLUMN_MIN_WIDTH,
   maxWidth: COLUMN_MAX_WIDTH,
 });
@@ -96,7 +96,7 @@ export const useResponsesTableColumnSizing = ({
 
   const handleColumnWidthChange = useCallback(
     ({ colDef, width: nextWidth }: GridColumnResizeParams) => {
-      const width = clampColumnWidth(nextWidth);
+      const width = limitColumnWidth(nextWidth);
 
       setColumnWidths((currentWidths) => {
         if (currentWidths[colDef.field] === width) return currentWidths;
