@@ -82,6 +82,7 @@ const HeaderFilterInputShell: React.FC<{
     : filterValue !== undefined && filterValue !== null && filterValue !== "";
   const operatorLabel =
     hasFilterValue || hasChosenOperator ? filterProps.slotProps?.root?.label : undefined;
+  const activeNoValueOperatorLabel = noValue && hasFilterValue ? operatorLabel : undefined;
 
   React.useEffect(() => {
     if (filterProps.item?.operator !== initialOperatorRef.current) {
@@ -144,6 +145,12 @@ const HeaderFilterInputShell: React.FC<{
       )}
 
       {!noValue && <Box className="responses-header-filter-value">{children}</Box>}
+
+      {activeNoValueOperatorLabel && (
+        <Box className="responses-header-filter-static-value" aria-disabled="true">
+          {activeNoValueOperatorLabel}
+        </Box>
+      )}
 
       {clearButton && <Box className="responses-header-filter-clear">{clearButton}</Box>}
     </Stack>

@@ -6,6 +6,8 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const ISRAEL_TZ = "Asia/Jerusalem";
+const DATE_FILTER_FORMAT = "YYYY-MM-DD";
+const DATE_TIME_FILTER_FORMAT = "YYYY-MM-DD[T]HH:mm:ss.000[Z]";
 
 export const parseDateFilterValue = (value: unknown): Dayjs | null => {
   if (typeof value !== "string" || value.trim() === "") return null;
@@ -56,13 +58,13 @@ export const parseTimeFilterValue = (value: unknown): Dayjs | null => {
 };
 
 export const formatDateFilterValue = (value: Dayjs | null): string =>
-  value?.isValid() ? value.format("YYYY-MM-DD") : "";
+  value?.isValid() ? value.format(DATE_FILTER_FORMAT) : "";
 
 export const formatDateTimeFilterValue = (value: Dayjs | null): string =>
   value?.isValid()
     // Match response creation: interpret the picker value as Israel wall time,
     // then persist the equivalent UTC timestamp used by backend filtering.
-    ? value.tz(ISRAEL_TZ, true).utc().format("YYYY-MM-DD[T]HH:mm:ss.000[Z]")
+    ? value.tz(ISRAEL_TZ, true).utc().format(DATE_TIME_FILTER_FORMAT)
     : "";
 
 export const formatTimeFilterValue = (
