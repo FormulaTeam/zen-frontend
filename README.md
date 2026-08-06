@@ -378,6 +378,20 @@ The application uses React Router with protected routes based on user permission
 
 The application uses runtime environment configuration through `runtime-env.js` for deployment flexibility.
 
+Set `REACT_APP_ENVIRONMENT` to one of:
+
+- `development`
+- `test`
+- `pre-production`
+- `production`
+
+You can provide shared URLs with:
+
+- `REACT_APP_API_URL`
+- `REACT_APP_KEYCLOAK_URL`
+
+If `REACT_APP_ENVIRONMENT` is missing or invalid, the runtime falls back to `development`.
+
 ### Nginx Configuration
 
 The production build uses Nginx to serve static files and proxy API requests. Configuration is defined in `nginx.conf`.
