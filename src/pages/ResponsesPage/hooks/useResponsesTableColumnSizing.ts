@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { GridColDef } from "@mui/x-data-grid-pro";
+import { useCallback, useEffect, useState } from "react";
+import type { GridColDef, GridColumnResizeParams } from "@mui/x-data-grid-pro";
 
 // DataGrid accepts pixels. These values approximate the design's character-based
 // limits using the table font size, with room for the cell's horizontal padding.
@@ -8,32 +8,48 @@ const COLUMN_HORIZONTAL_PADDING = 32;
 const COLUMN_MIN_WIDTH = 8 * COLUMN_CHARACTER_WIDTH + COLUMN_HORIZONTAL_PADDING;
 const COLUMN_MAX_WIDTH = 60 * COLUMN_CHARACTER_WIDTH + COLUMN_HORIZONTAL_PADDING;
 const DEFAULT_SYSTEM_COLUMN_MAX_CHARACTERS = 24;
+const STORAGE_PREFIX = "responses-table-column-widths";
 
 export const DEFAULT_FIELD_COLUMN_WIDTH = 190;
+
+type ColumnWidths = Record<string, number>;
+type ColumnWidthProps = Pick<GridColDef, "width" | "minWidth" | "maxWidth">;
 
 const clampColumnWidth = (width: number): number =>
   Math.min(COLUMN_MAX_WIDTH, Math.max(COLUMN_MIN_WIDTH, Math.round(width)));
 
 const getColumnWidthsStorageKey = (userIdentifier: string, formId: string | number): string =>
-  `responses-table-column-widths:${encodeURIComponent(userIdentifier)}:${formId}`;
+  `${STORAGE_PREFIX}:${encodeURIComponent(userIdentifier.toLowerCase())}:${formId}`;
 
-const readColumnWidths = (storageKey: string | null): Record<string, number> => {
+const readColumnWidths = (storageKey: string | null): ColumnWidths => {
   if (!storageKey) return {};
 
   try {
-    const value = localStorage.getItem(storageKey);
-    if (!value) return {};
+    const cachedValue = localStorage.getItem(storageKey);
+    if (!cachedValue) return {};
 
-    const parsed = JSON.parse(value);
+    const parsed: unknown = JSON.parse(cachedValue);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
 
-    return Object.fromEntries(
-      Object.entries(parsed)
-        .filter(([, width]) => typeof width === "number" && Number.isFinite(width))
-        .map(([field, width]) => [field, clampColumnWidth(width as number)]),
-    );
+    return Object.entries(parsed).reduce<ColumnWidths>((widths, [field, width]) => {
+      if (typeof width === "number" && Number.isFinite(width)) {
+        widths[field] = clampColumnWidth(width);
+      }
+
+      return widths;
+    }, {});
   } catch {
     return {};
+  }
+};
+
+const writeColumnWidths = (storageKey: string | null, widths: ColumnWidths): void => {
+  if (!storageKey) return;
+
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(widths));
+  } catch {
+    // Storage can be unavailable in private/restricted browser modes.
   }
 };
 
@@ -53,21 +69,11 @@ export const getHugContentWidth = (values: unknown[]): number => {
 export const getResponsiveColumnProps = (
   defaultWidth: number,
   savedWidth?: number,
-): Pick<GridColDef, "width" | "minWidth" | "maxWidth"> => {
-  if (savedWidth) {
-    return {
-      width: clampColumnWidth(savedWidth),
-      minWidth: COLUMN_MIN_WIDTH,
-      maxWidth: COLUMN_MAX_WIDTH,
-    };
-  }
-
-  return {
-    width: Math.min(defaultWidth, COLUMN_MAX_WIDTH),
-    minWidth: COLUMN_MIN_WIDTH,
-    maxWidth: COLUMN_MAX_WIDTH,
-  };
-};
+): ColumnWidthProps => ({
+  width: savedWidth ? clampColumnWidth(savedWidth) : Math.min(defaultWidth, COLUMN_MAX_WIDTH),
+  minWidth: COLUMN_MIN_WIDTH,
+  maxWidth: COLUMN_MAX_WIDTH,
+});
 
 type UseResponsesTableColumnSizingParams = {
   formId?: string | number;
@@ -78,14 +84,9 @@ export const useResponsesTableColumnSizing = ({
   formId,
   userIdentifier,
 }: UseResponsesTableColumnSizingParams) => {
-  const storageKey = useMemo(
-    () =>
-      formId !== undefined
-        ? getColumnWidthsStorageKey(userIdentifier.toLowerCase(), formId)
-        : null,
-    [formId, userIdentifier],
-  );
-  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() =>
+  const storageKey =
+    formId === undefined ? null : getColumnWidthsStorageKey(userIdentifier, formId);
+  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(() =>
     readColumnWidths(storageKey),
   );
 
@@ -94,21 +95,14 @@ export const useResponsesTableColumnSizing = ({
   }, [storageKey]);
 
   const handleColumnWidthChange = useCallback(
-    (params: { colDef: GridColDef; width: number }) => {
-      const width = clampColumnWidth(params.width);
+    ({ colDef, width: nextWidth }: GridColumnResizeParams) => {
+      const width = clampColumnWidth(nextWidth);
 
       setColumnWidths((currentWidths) => {
-        if (currentWidths[params.colDef.field] === width) return currentWidths;
+        if (currentWidths[colDef.field] === width) return currentWidths;
 
-        const nextWidths = { ...currentWidths, [params.colDef.field]: width };
-
-        if (storageKey) {
-          try {
-            localStorage.setItem(storageKey, JSON.stringify(nextWidths));
-          } catch {
-            // Storage can be unavailable in private/restricted browser modes.
-          }
-        }
+        const nextWidths = { ...currentWidths, [colDef.field]: width };
+        writeColumnWidths(storageKey, nextWidths);
 
         return nextWidths;
       });
