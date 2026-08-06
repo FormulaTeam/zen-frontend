@@ -25,6 +25,7 @@ export const useResponsesTableFilters = ({
   setResponseFilters,
 }: UseResponsesTableFiltersParams) => {
   const externalFilterKey = stringifyResponseFilters(filter?.responseFilters);
+  const hasActiveResponseFilters = Boolean(filter?.responseFilters?.items?.length);
 
   const externalFilterModel = useMemo<GridFilterModel>(() => {
     return getGridFilterModelFromResponseFilters(filter?.responseFilters);
@@ -57,11 +58,22 @@ export const useResponsesTableFilters = ({
         return;
       }
 
-      const { filters } = buildResponseFiltersFromGridFilterModel(normalizedItems, formFields);
+      const { filters, hasIncompleteItems } = buildResponseFiltersFromGridFilterModel(normalizedItems, formFields);
+
+      // Skip update while user is mid-entry only if there are already some complete filters active
+      if (hasIncompleteItems && filters !== null) {
+        return;
+      }
+
+      // When value input is empty and there are no active filters, avoid no-op updates
+      // that can trigger unnecessary loading placeholders.
+      if (hasIncompleteItems && filters === null && !hasActiveResponseFilters) {
+        return;
+      }
 
       setResponseFilters(filters);
     },
-    [formFields, setResponseFilters],
+    [formFields, hasActiveResponseFilters, setResponseFilters],
   );
 
   return {

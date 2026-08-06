@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Card, Typography, Tooltip, IconButton, Collapse, Stack } from "@mui/material";
+import { Box, Button, Card, Typography, Tooltip, IconButton, Collapse, Stack, Checkbox } from "@mui/material";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { RecycleBinItemWithResponses } from "../types";
 import { useRecycleBin } from "../context/RecycleBinContext";
@@ -12,9 +12,14 @@ interface ActiveFormWithRecycleBinResponsesCardProps {
 const ActiveFormWithRecycleBinResponsesCard: React.FC<
   ActiveFormWithRecycleBinResponsesCardProps
 > = ({ form }) => {
-  const { expandedForms, onToggleExpand, getIconContent } = useRecycleBin();
+  const { expandedForms, selectedResponseIds, onToggleSelectResponses, onToggleExpand, getIconContent } =
+    useRecycleBin();
   const isExpanded = !!expandedForms[form.id];
   const responsesCount = form.responsesCount ?? 0;
+  const formResponseIds = (form.responses ?? []).map((response) => response.id);
+  const hasResponses = formResponseIds.length > 0;
+  const areAllResponsesSelected =
+    hasResponses && formResponseIds.every((responseId) => selectedResponseIds.has(responseId));
 
   return (
     <Card
@@ -109,6 +114,45 @@ const ActiveFormWithRecycleBinResponsesCard: React.FC<
           }}>
           {form.responses?.length ? (
             <Stack spacing={1}>
+              <Box sx={{ display: "flex", justifyContent: "flex-end", pb: 0.5 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onToggleSelectResponses(formResponseIds, !areAllResponsesSelected);
+                  }}
+                  sx={{
+                    height: "30px",
+                    borderRadius: "4px",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    bgcolor: "#ffffff",
+                    borderColor: "#cbd5e1",
+                    color: "#0f172a",
+                    "&:hover": {
+                      bgcolor: "#f8fafc",
+                      borderColor: "#94a3b8",
+                    },
+                  }}>
+                  <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
+                    <Box component="span">{areAllResponsesSelected ? "ביטול בחירה" : "בחירת כל התגובות"}</Box>
+                    <Checkbox
+                      checked={areAllResponsesSelected}
+                      disableRipple
+                      tabIndex={-1}
+                      sx={{
+                        p: 0,
+                        pointerEvents: "none",
+                        color: "#94a3b8",
+                        "&.Mui-checked": {
+                          color: "primary.main",
+                        },
+                      }}
+                    />
+                  </Box>
+                </Button>
+              </Box>
               {form.responses.map((resp) => (
                 <RecycleBinResponseRow key={resp.id} response={resp} />
               ))}

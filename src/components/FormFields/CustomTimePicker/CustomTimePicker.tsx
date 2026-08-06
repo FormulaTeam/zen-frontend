@@ -41,6 +41,7 @@ interface CustomTimePickerProps {
   validationMessage?: string | null;
   validationDetail?: string | null;
   hasError?: boolean;
+  inputFontSize?: string;
 }
 
 const parseTimeStringToDayjs = (value: unknown): Dayjs | null => {
@@ -80,9 +81,13 @@ const formatDayjsToTimeString = (value: Dayjs, timePrecision?: string): string =
   return `${hours}:${minutes}:${seconds}`;
 };
 
-const getClosedInputTextSx = (isTabularEdit: boolean) => ({
+const getClosedInputTextSx = (isTabularEdit: boolean, inputFontSize?: string) => ({
   fontFamily: "inherit",
-  fontSize: isTabularEdit ? "0.95rem" : "1rem",
+  fontSize: inputFontSize
+    ? `${inputFontSize} !important`
+    : isTabularEdit
+      ? "0.95rem"
+      : "1rem",
   fontWeight: 400,
   lineHeight: 1.5,
   letterSpacing: 0,
@@ -101,6 +106,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
   validationMessage,
   validationDetail,
   hasError,
+  inputFontSize,
 }) => {
   const [timeValue, setTimeValue] = useState<Dayjs | null>(null);
   const didApplyDefaultRef = useRef(false);
@@ -137,7 +143,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
   const showSeconds = timePrecision === "seconds";
   const pickerWidth = showSeconds ? TIME_PICKER_SECONDS_WIDTH : TIME_PICKER_WIDTH;
   const clockWidth = showSeconds ? THREE_SECTION_CLOCK_WIDTH : TWO_SECTION_CLOCK_WIDTH;
-  const inputTextSx = getClosedInputTextSx(isTabularEdit);
+  const inputTextSx = getClosedInputTextSx(isTabularEdit, inputFontSize);
 
   const triggerValidationOnce = () => {
     if (!didTriggerValidationRef.current) {

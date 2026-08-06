@@ -38,7 +38,7 @@ import { getQuickEditDraft, clearQuickEditDraft } from "../FormEditor/utils/draf
 import UnsavedChangesDialog from "../../components/BasePopup/UnsavedChangesDialog";
 import ConfirmDeleteDialog from "../../components/BasePopup/ConfirmDeleteDialog";
 import { useDebounce } from "@src/hooks/utilsHooks/useDebounce";
-import { LogOut } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { ColorFilterButton, type ColorRuleFilterOption } from "./components/ColorFilterButton";
 import { formatColorRuleLabel } from "./utils/colorRules";
 import { useColorRuleFilter } from "./hooks/useColorRuleFilter";
@@ -583,7 +583,7 @@ const ResponsesPageContent = (): JSX.Element => {
                   sx={responseIconButtonSx}
                   aria-label="יציאה"
                   onClick={handleBackClick}>
-                  <LogOut size={24} strokeWidth={2.4} />
+                  <ChevronLeft size={24} strokeWidth={2.4} />
                 </IconOnlyButton>
               </Tooltip>
             </Box>

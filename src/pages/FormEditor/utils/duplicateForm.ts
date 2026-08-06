@@ -1,4 +1,6 @@
 import { cloneDeep } from "lodash";
+import { DuplicateFormSelectionsSchema } from "formula-gear";
+import type { z } from "zod";
 
 import type { FormDto } from "@src/types/shared";
 import type { FormStructure } from "../context/FormStructureContext";
@@ -12,17 +14,23 @@ export type DuplicateFormSelections = {
   permissions: boolean;
   fields: boolean;
   conditions: boolean;
+  colors: boolean;
 };
 
-export type DuplicateFormComponentSelections = Pick<
-  DuplicateFormSelections,
-  "permissions" | "fields" | "conditions"
->;
+export type DuplicateFormComponentSelections = z.infer<typeof DuplicateFormSelectionsSchema>;
 
 export type DuplicateFormRouteState = {
   duplicateFormStructure: FormStructure;
   duplicateSourceFormId: number;
   duplicateSelections: DuplicateFormComponentSelections;
+  duplicateFieldIdMap: Record<string, string>;
+  duplicateOptionIdMap: Record<string, string>;
+};
+
+export type DuplicatedFormStructure = {
+  formStructure: FormStructure;
+  duplicateFieldIdMap: Record<string, string>;
+  duplicateOptionIdMap: Record<string, string>;
 };
 
 const remapConditionIds = (
@@ -75,7 +83,7 @@ export const buildDuplicatedFormStructure = (
   selections: DuplicateFormSelections,
   duplicateName: string,
   duplicateDescription: string,
-): FormStructure => {
+): DuplicatedFormStructure => {
   const emptyForm = getEmptyForm();
 
   const metadata: FormStructure["metadata"] = {
@@ -86,8 +94,9 @@ export const buildDuplicatedFormStructure = (
 
   if (!selections.fields) {
     return {
-      ...emptyForm,
-      metadata,
+      formStructure: { ...emptyForm, metadata },
+      duplicateFieldIdMap: {},
+      duplicateOptionIdMap: {},
     };
   }
 
@@ -175,17 +184,21 @@ export const buildDuplicatedFormStructure = (
   });
 
   return {
-    metadata,
-    sections,
-    orderedSectionIds,
-    fields,
-    conditions: selections.conditions
-      ? remapConditionIds(
-          (sourceForm.conditions ?? []) as FormConditions,
-          fieldIdMap,
-          sectionIdMap,
-          optionIdMap,
-        )
-      : [],
+    formStructure: {
+      metadata,
+      sections,
+      orderedSectionIds,
+      fields,
+      conditions: selections.conditions
+        ? remapConditionIds(
+            (sourceForm.conditions ?? []) as FormConditions,
+            fieldIdMap,
+            sectionIdMap,
+            optionIdMap,
+          )
+        : [],
+    },
+    duplicateFieldIdMap: Object.fromEntries(fieldIdMap),
+    duplicateOptionIdMap: Object.fromEntries(optionIdMap),
   };
 };

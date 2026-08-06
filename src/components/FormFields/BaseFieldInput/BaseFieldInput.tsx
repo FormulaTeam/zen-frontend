@@ -86,6 +86,7 @@ const BaseFieldInput = React.forwardRef<HTMLDivElement, BaseFieldInputProps>(
           },
           "& .MuiInputBase-root": {
             fontSize: '1.2rem',
+            alignItems: "center",
             "::before": {
               border: isTabularEdit ? "none" : "1px solid",
               borderColor: isTabularEdit ? "transparent" : theme.palette.input?.border,
@@ -117,6 +118,14 @@ const BaseFieldInput = React.forwardRef<HTMLDivElement, BaseFieldInputProps>(
               border: isTabularEdit ? "none" : undefined,
             },
           },
+          ...(!isTabularEdit && {
+            "& input.MuiInputBase-input": {
+              height: "auto",
+              paddingBlock: "0 !important",
+              lineHeight: 1.5,
+              alignSelf: "center",
+            },
+          }),
         }}
       />
     );

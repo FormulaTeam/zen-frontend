@@ -19,9 +19,11 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 const StyledDialog = styled(Dialog)(() => ({
   "& .MuiPaper-root": {
+    padding: "5px",
     borderRadius: "16px",
-    maxWidth: "540px",
-    width: "calc(100% - 40px)",
+    maxWidth: "560px",
+    width: "min(560px, calc(100% - 15px))",
+    margin: "12px",
     maxHeight: "min(620px, calc(100vh - 80px))",
     backgroundColor: "#F1F5F9",
     boxShadow: "0 20px 55px rgba(15, 23, 42, 0.18), 0 8px 22px rgba(15, 23, 42, 0.08)",
@@ -31,7 +33,7 @@ const StyledDialog = styled(Dialog)(() => ({
 
 const StyledDialogTitle = styled(DialogTitle)(() => ({
   position: "relative",
-  padding: "28px 32px 12px",
+  padding: "24px 24px 12px",
 }));
 
 const CloseButton = styled(IconButton)(() => ({
@@ -50,14 +52,15 @@ const CloseButton = styled(IconButton)(() => ({
 }));
 
 const HeaderText = styled(Box)(() => ({
-  paddingInlineEnd: "42px",
+  paddingInline: "34px",
 }));
 
-const TitleText = styled(Typography)(() => ({
+const TitleText = styled("div")(() => ({
   fontWeight: 700,
-  fontSize: "1.28rem",
+  fontSize: "1.65rem",
   lineHeight: 1.35,
   color: "#0f172a",
+  textAlign: "center",
 }));
 
 const SubtitleText = styled(Typography)(() => ({
@@ -69,7 +72,7 @@ const SubtitleText = styled(Typography)(() => ({
 }));
 
 const Content = styled(DialogContent)(() => ({
-  padding: "18px 32px 0",
+  padding: "16px 24px 0",
   maxHeight: "280px",
   overflowY: "auto",
 }));
@@ -118,7 +121,7 @@ const ErrorDescription = styled(Typography)(() => ({
 }));
 
 const Actions = styled(DialogActions)(() => ({
-  padding: "30px 32px 30px",
+  padding: "24px 24px 24px",
   gap: "10px",
   justifyContent: "flex-end",
 }));
@@ -141,21 +144,6 @@ const CancelButton = styled(Button)(() => ({
   },
 }));
 
-const ContinueButton = styled(Button)(({ theme }) => ({
-  minWidth: "98px",
-  height: "40px",
-  borderRadius: "9px",
-  fontSize: "0.95rem",
-  fontWeight: 700,
-  textTransform: "none",
-  backgroundColor: theme.palette.primary.main,
-  boxShadow: "none",
-  "&:hover": {
-    backgroundColor: theme.palette.primary.dark,
-    boxShadow: "none",
-  },
-}));
-
 export type ValidationError =
   | string
   | {
@@ -172,10 +160,7 @@ interface ValidationErrorsDialogProps {
   errors: ValidationError[];
   title?: string;
   subtitle?: string;
-  onCancel?: () => void;
-  onContinue?: () => void;
-  cancelText?: string;
-  continueText?: string;
+  closeText?: string;
 }
 
 const getErrorParts = (error: ValidationError) => {
@@ -200,14 +185,8 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
   errors,
   title = "נמצאו שגיאות בטופס",
   subtitle = "יש לתקן את השדות הבאים לפני שמירה:",
-  onCancel,
-  onContinue,
-  cancelText = "בטל",
-  continueText = "המשך",
+  closeText = "סגירה",
 }) => {
-  const handleCancel = onCancel ?? onClose;
-  const handleContinue = onContinue ?? onClose;
-
   return (
     <StyledDialog open={open} onClose={onClose} scroll="paper">
       <StyledDialogTitle>
@@ -267,13 +246,9 @@ export const ValidationErrorsDialog: React.FC<ValidationErrorsDialogProps> = ({
       </Content>
 
       <Actions>
-        <CancelButton onClick={handleCancel} variant="outlined" disableElevation>
-          {cancelText}
+        <CancelButton onClick={onClose} variant="outlined" disableElevation>
+          {closeText}
         </CancelButton>
-
-        <ContinueButton onClick={handleContinue} variant="contained" disableElevation>
-          {continueText}
-        </ContinueButton>
       </Actions>
     </StyledDialog>
   );

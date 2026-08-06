@@ -11,10 +11,19 @@ import {
 import styled from "styled-components";
 import { PaintRoller, Trash2 } from "lucide-react";
 
+export const colorRuleMenuPaperSx = {
+  "& .MuiMenuItem-root": {
+    fontSize: "1rem",
+  },
+};
+
+const COLOR_RULES_GRID_COLUMNS =
+  "24px minmax(170px, 1.25fr) minmax(135px, 0.9fr) minmax(220px, 1.35fr) 100px 74px 54px 32px";
+
 export const ColorRulesDialog = styled(Dialog)`
   .MuiDialog-paper {
     outline: none;
-    max-width: 1320px;
+    max-width: 1180px;
     width: 100%;
     background-color: #f1f5f9;
   }
@@ -213,10 +222,10 @@ export const RulesScrollbarThumbHorizontal = styled(Box)`
 
 export const RulesGrid = styled(Box)`
   display: grid;
-  grid-template-columns: 24px minmax(120px, 0.9fr) minmax(135px, 0.95fr) minmax(260px, 2fr) 100px 74px 54px 32px;
+  grid-template-columns: ${COLOR_RULES_GRID_COLUMNS};
   gap: 6px;
   width: 100%;
-  min-width: 840px;
+  min-width: 852px;
 
   > * {
     min-width: 0;
@@ -262,6 +271,7 @@ export const RuleRow = styled(RulesGrid) <{
     padding-inline: 14px !important;
     display: flex;
     align-items: center;
+    font-size: 1rem !important;
   }
 
   .MuiAutocomplete-root .MuiOutlinedInput-root {
@@ -270,6 +280,7 @@ export const RuleRow = styled(RulesGrid) <{
 
   .MuiAutocomplete-root .MuiOutlinedInput-root .MuiAutocomplete-input {
     padding-inline: 0 !important;
+    font-size: 1rem !important;
   }
 
   /* Smaller icons so the extra padding is visible */
@@ -350,11 +361,11 @@ export const DragHandle = styled(Box) <{ $isDragging?: boolean; $canDrag?: boole
 
 export const AddRuleRow = styled(Box)`
   display: grid;
-  grid-template-columns: 24px minmax(120px, 0.9fr) minmax(135px, 0.95fr) minmax(260px, 2fr) 100px 74px 54px 32px;
+  grid-template-columns: ${COLOR_RULES_GRID_COLUMNS};
   gap: 6px;
   align-items: center;
   width: 100%;
-  min-width: 840px;
+  min-width: 852px;
   padding-top: 12px;
   padding-inline: 12px 18px;
 
@@ -407,7 +418,7 @@ export const DateTimeSplitRow = styled(Box)`
 
 /* Time is placed first (right side in RTL) and is narrower than the date */
 export const DateTimeTimeSlot = styled(Box)`
-  flex: 0 0 34%;
+  flex: 0 0 40%;
   min-width: 0;
   display: flex;
 `;
@@ -418,13 +429,19 @@ export const DateTimeDateSlot = styled(Box)`
   display: flex;
 `;
 
-export const RangePrefix = styled("span")`
+export const RangePrefix = styled("span") <{ $nudgeUp?: boolean }>`
   flex: 0 0 auto;
   width: 24px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.95rem;
+  line-height: 1;
   font-weight: 600;
   color: #475569;
   white-space: nowrap;
+  transform: ${({ $nudgeUp }) => ($nudgeUp ? "translateY(-1px)" : "none")};
 `;
 
 export const FieldPlaceholder = styled("span")`
@@ -493,16 +510,22 @@ export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }
   }
 
   .MuiPickersSectionList-section,
-  .MuiPickersSectionList-sectionContent {
+  .MuiPickersSectionList-sectionContent,
+  .MuiPickersSectionList-sectionSeparator,
+  .MuiPickersInputBase-sectionsContainer,
+  .MuiPickersSectionList-root,
+  [contenteditable="true"],
+  [role="spinbutton"] {
     display: inline-flex !important;
     align-items: center !important;
     height: 40px !important;
     line-height: 40px !important;
+    font-size: 1rem !important;
   }
 
   /* Smaller picker icon so the extra padding is visible */
   .MuiIconButton-root {
-    padding: 4px !important;
+    padding: 10px !important;
   }
 
   .MuiIconButton-root svg {
@@ -525,6 +548,7 @@ export const ColorRulePickerWrapper = styled(Box) <{ $timeAlignRight?: boolean }
     align-items: center;
     padding-block: 0 !important;
     text-align: right !important;
+    font-size: 1rem !important;
   }
 
   .MuiInputBase-root::before {

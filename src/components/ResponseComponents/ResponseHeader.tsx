@@ -1,7 +1,7 @@
 import { Box, CircularProgress, Tooltip, Typography } from "@mui/material";
 import React from "react";
 import { permission } from "formula-gear";
-import { LogOut, Pencil, Save } from "lucide-react";
+import { ChevronLeft, Pencil, Save } from "lucide-react";
 import { Header, HeaderSection, HeaderButton } from "../../pages/Response/styled";
 
 interface ResponseHeaderProps {
@@ -43,7 +43,10 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
     <Header>
       <HeaderSection sx={{ gap: 1 }}>
         <Typography variant="h5" sx={{ fontSize: "1.5rem" }}>
-          <Box component="span" sx={{ fontWeight: 400, color: "#64748b" }}>
+          <Box
+            component="span"
+            onClick={onBack}
+            sx={{ fontWeight: 400, color: "#64748b", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>
             {formTitle}
           </Box>
           <Box component="span" sx={{ mx: 2, color: "#020618", fontWeight: 400 }}>
@@ -82,7 +85,7 @@ const ResponseHeader: React.FC<ResponseHeaderProps> = ({
         )}
 
         <HeaderButton onClick={onBack} size="small" sx={{ minWidth: "50px", p: "0 !important" }}>
-          <LogOut size={24} strokeWidth={2.4} />
+          <ChevronLeft size={24} strokeWidth={2.4} />
         </HeaderButton>
       </HeaderSection>
     </Header>

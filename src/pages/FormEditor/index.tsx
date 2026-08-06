@@ -43,9 +43,19 @@ function FormEditor({ mode, editedForm }: Props) {
 
     return {
       ...duplicateRouteState.duplicateFormStructure,
-      duplicate: duplicateRouteState.duplicateFormStructure.duplicate ?? {
-        sourceFormId: duplicateRouteState.duplicateSourceFormId as number,
-        selections: duplicateRouteState.duplicateSelections,
+      duplicate: {
+        sourceFormId:
+          duplicateRouteState.duplicateFormStructure.duplicate?.sourceFormId
+          ?? (duplicateRouteState.duplicateSourceFormId as number),
+        selections:
+          duplicateRouteState.duplicateFormStructure.duplicate?.selections
+          ?? duplicateRouteState.duplicateSelections,
+        fieldIdMap:
+          duplicateRouteState.duplicateFormStructure.duplicate?.fieldIdMap
+          ?? duplicateRouteState.duplicateFieldIdMap,
+        optionIdMap:
+          duplicateRouteState.duplicateFormStructure.duplicate?.optionIdMap
+          ?? duplicateRouteState.duplicateOptionIdMap,
       },
     };
   }, [duplicateRouteState]);

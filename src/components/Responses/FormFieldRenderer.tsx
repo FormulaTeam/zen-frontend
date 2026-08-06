@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 
 import { useLinkedFieldValueOptions } from "../../hooks/useLinkedFieldValueOptions";
 import type { FormFieldDto } from "../../types/shared";
@@ -244,8 +244,6 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
     .map((value) => (value === undefined || value === null ? "" : String(value).trim()))
     .filter((value) => value !== "");
 
-  const [searchTerm, setSearchTerm] = useState("");
-
   const {
     options: connectedOptions,
     isLoading: isLoadingConnected,
@@ -255,7 +253,7 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
   } = useLinkedFieldValueOptions(
     linkedOptionsFieldId,
     connectedToForm,
-    searchTerm,
+    "",
     dependentFilterValues.length ? dependentSourceFieldId : undefined,
     dependentFilterValues,
   );
@@ -649,18 +647,6 @@ const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
           loading={connectedToForm ? isLoadingConnected || isFetchingMoreConnected : false}
           hasNextPage={connectedToForm ? hasNextPageConnected : false}
           isFetchingNextPage={connectedToForm ? isFetchingMoreConnected : false}
-          filterOptions={connectedToForm ? (options: unknown[]) => options : undefined}
-          onInputChange={
-            connectedToForm
-              ? (_, value, reason) => {
-                if (reason === "input") {
-                  setSearchTerm(value);
-                } else if (reason === "clear") {
-                  setSearchTerm("");
-                }
-              }
-              : undefined
-          }
           onScrollToBottom={connectedToForm ? loadMoreConnectedOptions : undefined}
         />
       );

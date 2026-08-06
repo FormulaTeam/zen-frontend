@@ -2,7 +2,11 @@ import { Box, TextField, Tooltip } from "@mui/material";
 import { GridApiPro, GridRenderEditCellParams } from "@mui/x-data-grid-pro";
 import { useCallback, useMemo } from "react";
 
-import { fieldType } from "formula-gear";
+import {
+  fieldType,
+  findManualOptionsParent,
+  getAllowedManualOptionIds,
+} from "formula-gear";
 
 import { FormFieldDto } from "../../../types/shared";
 import {
@@ -282,6 +286,23 @@ export const useCellEditors = ({
 
           let options = getOptionIds(formField);
           const optionLabelMap = getOptionLabelMap(formField);
+          const parentField = formFields
+            ? findManualOptionsParent(formField, formFields)
+            : undefined;
+
+          if (parentField) {
+            const parentValue = getOptionResponseRawValue(
+              params.row?.[`field:${parentField.id}`],
+            );
+            const selectedParentValues = toStringValues(parentValue);
+            const allowedOptions = getAllowedManualOptionIds(
+              formField,
+              parentField,
+              selectedParentValues,
+            );
+
+            options = options.filter((optionId) => allowedOptions.has(optionId));
+          }
 
           editor = (
             <OptionsCellEditor

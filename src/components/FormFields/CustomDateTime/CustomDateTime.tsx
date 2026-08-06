@@ -50,6 +50,7 @@ interface CustomDateTimeProps {
   validationMessage?: string | null;
   validationDetail?: string | null;
   hasError?: boolean;
+  inputFontSize?: string;
 }
 
 const isCurrentDateDefault = (defaultValue?: string) =>
@@ -235,9 +236,13 @@ const CompactCalendarHeader = (props: any) => {
   );
 };
 
-const getClosedInputTextSx = (isTabularEdit: boolean) => ({
+const getClosedInputTextSx = (isTabularEdit: boolean, inputFontSize?: string) => ({
   fontFamily: "inherit",
-  fontSize: isTabularEdit ? "0.95rem" : "1rem",
+  fontSize: inputFontSize
+    ? `${inputFontSize} !important`
+    : isTabularEdit
+      ? "0.95rem"
+      : "1rem",
   fontWeight: 400,
   lineHeight: 1.5,
   letterSpacing: 0,
@@ -256,6 +261,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
   validationMessage,
   validationDetail,
   hasError,
+  inputFontSize,
 }) => {
   const [dateValue, setDateValue] = useState<Dayjs | null>(null);
   const [datePickerView, setDatePickerView] = useState<DateOnlyView>("day");
@@ -298,7 +304,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
     onChangeHandler(toStoredUtcIso(nextValue, shouldKeepTime ? "datetime" : "date"));
   };
 
-  const inputTextSx = getClosedInputTextSx(isTabularEdit);
+  const inputTextSx = getClosedInputTextSx(isTabularEdit, inputFontSize);
 
   const inputWrapperSx: SxProps<Theme> = {
     width: "100%",
@@ -340,6 +346,7 @@ const CustomDateTime: React.FC<CustomDateTimeProps> = ({
       direction: "ltr !important",
       textAlign: "left !important",
       unicodeBidi: "plaintext",
+      ...inputTextSx,
       color: APP_TEXT,
     },
 
